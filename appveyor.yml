@@ -1,0 +1,44 @@
+build: false
+
+environment:
+  matrix:
+    - PYTHON: "C:\\Miniconda-x64"
+      PYTHON_VERSION: "2.7.x"
+      PYTHON_ARCH: "64"
+      NUMPY_VERSION: "1.13.1"
+      SCIPY_VERSION: "0.19.1"
+      SKLEARN_VERSION: "0.19.1"
+
+    - PYTHON: "C:\\Miniconda3-x64"
+      PYTHON_VERSION: "3.5.x"
+      PYTHON_ARCH: "64"
+      NUMPY_VERSION: "1.13.1"
+      SCIPY_VERSION: "0.19.1"
+      SKLEARN_VERSION: "0.19.1"
+
+    - PYTHON: "C:\\Miniconda3-x64"
+      PYTHON_VERSION: "3.6.x"
+      PYTHON_ARCH: "64"
+      NUMPY_VERSION: "*"
+      SCIPY_VERSION: "*"
+      SKLEARN_VERSION: "*"
+
+install:
+  # Prepend miniconda installed Python to the PATH of this build
+  # Add Library/bin directory to fix issue
+  # https://github.com/conda/conda/issues/1753
+  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PYTHON%\\Library\\bin;%PATH%"
+  # install the dependencies
+  - "conda install --yes pip numpy==%NUMPY_VERSION% scipy==%SCIPY_VERSION% scikit-learn==%SKLEARN_VERSION% nose pytest pytest-cov"
+  - pip install codecov
+  - pip install .
+
+test_script:
+  - mkdir for_test
+  - cd for_test
+  - pytest -v --cov=skltemplate --pyargs skltemplate
+
+after_test:
+  - cp .coverage %APPVEYOR_BUILD_FOLDER%
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - codecov
