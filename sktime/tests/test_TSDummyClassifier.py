@@ -2,6 +2,7 @@ from io import BytesIO
 from urllib.request import urlopen
 from zipfile import ZipFile
 
+import pytest
 import numpy as np
 import pandas as pd
 from xpandas.data_container import XSeries, XDataFrame
@@ -12,6 +13,9 @@ from sktime import TSDummyClassifier
 
 
 def read_data(file):
+    '''
+    adhoc function to read data
+    '''
     data = file.readlines()
     rows = [row.decode('utf-8').strip().split('  ') for row in data]
     X = pd.DataFrame(rows, dtype=np.float)
@@ -63,3 +67,10 @@ def test_dataframe_TSDummyClassifier_least_strategy():
     model.fit(X, y)
     preds = model.predict(X)
     assert_array_equal(preds, np.ones(X.shape[0])*1)
+
+def test_dataframe_TSDummyClassifier_error_strategy():
+    X = Xdf_train
+    y = y_train
+    with pytest.raises(ValueError, match="Unknown Strategy"):
+        model = TSDummyClassifier(strategy='42')
+        model.fit(X, y)
