@@ -1,0 +1,38 @@
+dist: trusty
+sudo: false
+
+language: python
+
+cache:
+  directories:
+  - $HOME/.cache/pip
+
+matrix:
+  include:
+    - env: PYTHON_VERSION="3.6" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
+           SKLEARN_VERSION="0.19.1" PANDAS_VERSION="0.18.1"
+    - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
+           SKLEARN_VERSION="*" PANDAS_VERSION="*"
+
+install:
+  # install miniconda
+  - deactivate
+  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - MINICONDA_PATH=/home/travis/miniconda
+  - chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
+  - export PATH=$MINICONDA_PATH/bin:$PATH
+  - conda update --yes conda
+  # create the testing environment
+  - conda create -n testenv --yes python=$PYTHON_VERSION pip
+  - source activate testenv
+  - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov
+  - pip install xpandas
+  - pip install codecov
+
+script:
+  - mkdir for_test
+  - cd for_test
+  - pytest -v --cov=sktime --pyargs ../sktime --cov-report html
+
+after_success:
+- codecov
