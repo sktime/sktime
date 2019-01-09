@@ -1,5 +1,0 @@
-name: project-template
-dependencies:
-  - numpy
-  - scipy
-  - scikit-learn
