@@ -9,7 +9,7 @@ from xpandas.data_container import XSeries, XDataFrame
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime import TSDummyClassifier
+from sktime import TSDummyRegressor
 
 
 def read_data(file):
@@ -22,6 +22,7 @@ def read_data(file):
     y = X.pop(0)
     return X, y
 
+# For simplicity, the classification labels are used as regression targets for testing
 url = 'http://www.timeseriesclassification.com/Downloads/GunPoint.zip'
 url = urlopen(url)
 zipfile = ZipFile(BytesIO(url.read()))
@@ -36,41 +37,41 @@ y_train = XSeries(np.array(y_train_pd, dtype=np.int))
 Xsf_train = XSeries([row for _, row in X_train_pd.iterrows()])
 Xdf_train = XDataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
 
-def test_series_TSDummyClassifier_most_strategy():
-    X = Xsf_train
-    y = y_train
-    model = TSDummyClassifier(strategy='most')
-    model.fit(X, y)
-    preds = model.predict(X)
-    assert_array_equal(preds, np.ones(X.shape[0])*2)
-
-def test_dataframe_TSDummyClassifier_most_strategy():
+def test_dataframe_TSDummyRegressor_constant_strategy():
     X = Xdf_train
     y = y_train
-    model = TSDummyClassifier(strategy='most')
+    model = TSDummyRegressor(strategy='constant')
     model.fit(X, y)
     preds = model.predict(X)
-    assert_array_equal(preds, np.ones(X.shape[0])*2)
+    assert_array_equal(preds, np.ones(X.shape[0])*42)
 
-def test_series_TSDummyClassifier_least_strategy():
-    X = Xsf_train
-    y = y_train
-    model = TSDummyClassifier(strategy='least')
-    model.fit(X, y)
-    preds = model.predict(X)
-    assert_array_equal(preds, np.ones(X.shape[0])*1)
-
-def test_dataframe_TSDummyClassifier_least_strategy():
+def test_dataframe_TSDummyRegressor_average_strategy():
     X = Xdf_train
     y = y_train
-    model = TSDummyClassifier(strategy='least')
+    model = TSDummyRegressor(strategy='average')
     model.fit(X, y)
     preds = model.predict(X)
-    assert_array_equal(preds, np.ones(X.shape[0])*1)
+    assert_array_equal(preds, np.ones(X.shape[0])*np.mean(y_train))
+
+def test_series_TSDummyRegressor_constant_strategy():
+    X = Xsf_train
+    y = y_train
+    model = TSDummyRegressor(strategy='constant')
+    model.fit(X, y)
+    preds = model.predict(X)
+    assert_array_equal(preds, np.ones(X.shape[0])*42)
+
+def test_series_TSDummyRegressor_average_strategy():
+    X = Xsf_train
+    y = y_train
+    model = TSDummyRegressor(strategy='average')
+    model.fit(X, y)
+    preds = model.predict(X)
+    assert_array_equal(preds, np.ones(X.shape[0])*np.mean(y_train))
 
 def test_dataframe_TSDummyClassifier_error_strategy():
     X = Xdf_train
     y = y_train
     with pytest.raises(ValueError, match="Unknown Strategy"):
-        model = TSDummyClassifier(strategy='magic')
+        model = TSDummyRegressor(strategy='magic')
         model.fit(X, y)
