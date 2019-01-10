@@ -14,7 +14,7 @@ class TSDummyRegressor(BaseEstimator):
     Parameters
     ----------
     strategy : str, default='constant'
-        A parameter defining the prediction strategy of the dummy classifier
+        A parameter defining the prediction strategy of the dummy regressor
         constant: always predicts the constant value supplied
         average: predicts the average of training targets
     constant : float, default="42.0"
