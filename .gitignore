@@ -67,6 +67,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+doc/_build/
+doc/generated/
 
 # PyBuilder
 target/
@@ -115,3 +117,14 @@ dmypy.json
 .spyderproject
 .spyproject
 .ropeproject
+
+# scikit-learn specific
+doc/_build/
+doc/auto_examples/
+doc/modules/generated/
+doc/datasets/generated/
+
+# vim swap files
+*.swp
+
+
