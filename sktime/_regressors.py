@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from xpandas.data_container import XSeries, XDataFrame
 from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
+from .utils.validation import check_ts_X_y, check_array, check_is_fitted
 from sklearn.ensemble import RandomForestRegressor
 
 
@@ -40,14 +40,7 @@ class TSDummyRegressor(BaseEstimator):
         self : object
             Returns self.
         """
-        if isinstance(X, (XSeries, XDataFrame, pd.Series, pd.DataFrame)) or \
-            isinstance(y, (XSeries, XDataFrame, pd.Series, pd.DataFrame)):
-            # do custom checks as per fit() implementation requirements
-            # checking that the first dimensions are equal and other basic stuff as per sklearn req.
-            X, y = check_X_y(X, y, dtype=None, ensure_2d=False)
-        else:
-            # check as per sklearn default requirements
-            X, y = check_X_y(X, y)
+        X, y = check_ts_X_y(X, y)
         # fitting (finding the value of dummy prediction theta_) the model based on strategy
         if self.strategy == 'constant':
             self.theta_ = self.constant
@@ -111,15 +104,7 @@ class TSExampleRegressor(BaseEstimator):
         # simple feature extraction
         X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
-        # input checks
-        if isinstance(X, (XSeries, XDataFrame, pd.Series, pd.DataFrame)) or \
-                isinstance(y, (XSeries, XDataFrame, pd.Series, pd.DataFrame)):
-            # do custom checks as per fit() implementation requirements
-            # checking that the first dimensions are equal and other basic stuff as per sklearn req.
-            X, y = check_X_y(X, y, dtype=None, ensure_2d=False)
-        else:
-            # check as per sklearn default requirements
-            X, y = check_X_y(X, y)
+        X, y = check_ts_X_y(X, y)
         # fitting (finding the value of dummy prediction theta_) the model based on strategy
 
         # fitting

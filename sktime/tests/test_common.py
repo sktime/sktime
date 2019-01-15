@@ -1,6 +1,6 @@
 import pytest
 
-from sklearn.utils.estimator_checks import check_estimator
+from ..utils.estimator_checks import check_ts_estimator
 
 from sktime import TSDummyClassifier
 from sktime import TSDummyRegressor
@@ -10,4 +10,4 @@ from sktime import TSDummyRegressor
     "Estimator", [TSDummyClassifier, TSDummyRegressor]
 )
 def test_all_estimators(Estimator):
-    return check_estimator(Estimator)
+    return check_ts_estimator(Estimator)
