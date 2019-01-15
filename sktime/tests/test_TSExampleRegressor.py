@@ -10,6 +10,7 @@ from xpandas.data_container import XSeries, XDataFrame
 from sklearn.utils.testing import assert_array_equal
 
 from sktime import TSExampleRegressor
+from sklearn.ensemble import RandomForestRegressor
 
 
 def read_data(file):
@@ -42,6 +43,13 @@ Xdf_train = XDataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
 def test_xdataframe_TSExampleRegressor():
     X = Xdf_train
     y = y_train
-    model = TSExampleRegressor(func=np.mean, columns=X.columns, random_state=123, n_estimators=10)
+    model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=RandomForestRegressor(random_state=123, n_estimators=10))
     model.fit(X, y)
     assert_array_equal(model.predict(Xdf_test), np.ones(y_test_pd.shape[0]) * 1.502)
+
+def test_set_get_param():
+    X = Xdf_train
+    y = y_train
+    model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=RandomForestRegressor(random_state=123, n_estimators=10))
+    model.set_params(estimator__random_state=42)
+    assert model.get_params()['estimator__random_state'] == 42

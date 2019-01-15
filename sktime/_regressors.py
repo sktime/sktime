@@ -80,10 +80,10 @@ class TSExampleRegressor(BaseEstimator):
     """ An example regressor that makes use of the xpandas input.
     """
 
-    def __init__(self, func=np.mean, columns=None, **kwargs):
+    def __init__(self, func=np.mean, columns=None, estimator=RandomForestRegressor()):
         self.func = func
         self.columns = columns
-        self.estimator = RandomForestRegressor(**kwargs)
+        self.estimator = estimator
 
     def fit(self, X, y):
         """ A reference implementation of a fitting function.
