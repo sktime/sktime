@@ -11,7 +11,9 @@ from sklearn.utils.testing import assert_array_equal
 
 from sktime import TSExampleRegressor
 from sklearn.ensemble import RandomForestRegressor
-
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import mean_squared_error, make_scorer
 
 def read_data(file):
     '''
@@ -53,3 +55,20 @@ def test_set_get_param():
     model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=RandomForestRegressor(random_state=123, n_estimators=10))
     model.set_params(estimator__random_state=42)
     assert model.get_params()['estimator__random_state'] == 42
+
+def test_grid_search_cv():
+    X = Xdf_train
+    y = y_train
+    model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=LinearRegression(fit_intercept=False))
+    model.fit(X, y)
+    expected = model.predict(X)
+
+    # give (deep) parameter tuning details
+    parameters = {'estimator__fit_intercept': (True, False)}
+    # as we are not using a mixin, we need an external scorer
+    external_scorer = make_scorer(mean_squared_error)
+    # fit and predict GridSearchCV
+    clf = GridSearchCV(model, parameters, scoring=external_scorer, cv=5)
+    clf.fit(X, y)
+    got = clf.predict(X)
+    assert_array_equal(expected, got)
