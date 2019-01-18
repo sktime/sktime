@@ -1,16 +1,14 @@
 from xpandas.data_container import XSeries, XDataFrame
 import pandas as pd
-import numpy as np
-import requests, zipfile, io
+import zipfile
 import urllib.request
 import os
 
 # Please note that this code is to enable development - it may not cover all cases and elements of the design could be
 # improved on later.
-
-# 1. load_from_tsfile_to_xdataframe - loading from a .ts file directly into XPandas. Anticipated to be the most typical
-# usecase
-
+#
+# The objective is to prove code that loads univariate and multivariate time series data that may have unequal
+# lengths and missing values. Code is provided to load from local files or via the web/cached files
 
 
 # load the data into an XDataFrame. XSeries for each dimension of the problem
