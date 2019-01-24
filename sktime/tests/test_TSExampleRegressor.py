@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sktime import TSExampleRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import GridSearchCV
+from sktime import GridSearchCV
 from sklearn.metrics import mean_squared_error, make_scorer
 
 def read_data(file):
@@ -72,3 +72,14 @@ def test_grid_search_cv():
     clf.fit(X, y)
     got = clf.predict(X)
     assert_array_equal(expected, got)
+
+def test_grid_search_cv_scorer_not_found_error():
+    X = Xdf_train
+    y = y_train
+    with pytest.raises(AttributeError, match="supply an external scorer for GridSearchCV"):
+        model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=LinearRegression(fit_intercept=False))
+        model.fit(X, y)
+        # give (deep) parameter tuning details
+        parameters = {'estimator__fit_intercept': (True, False)}
+        # fit and predict GridSearchCV
+        GridSearchCV(model, parameters, cv=5)
