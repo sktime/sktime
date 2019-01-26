@@ -9,7 +9,7 @@ from xpandas.data_container import XSeries, XDataFrame
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime import TSExampleClassifier
+from sktime.classifiers import TSExampleClassifier
 from sklearn.ensemble import RandomForestClassifier
 
 

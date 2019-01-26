@@ -9,10 +9,10 @@ from xpandas.data_container import XSeries, XDataFrame
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime import TSExampleRegressor
+from sktime.regressors import TSExampleRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sktime import GridSearchCV
+from sktime.model_selection import GridSearchCV
 from sklearn.metrics import mean_squared_error, make_scorer
 
 def read_data(file):

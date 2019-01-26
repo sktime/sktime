@@ -2,8 +2,8 @@ import pytest
 
 from ..utils.estimator_checks import check_ts_estimator
 
-from sktime import TSDummyClassifier
-from sktime import TSDummyRegressor
+from sktime.classifiers import TSDummyClassifier
+from sktime.regressors import TSDummyRegressor
 
 
 @pytest.mark.parametrize(
