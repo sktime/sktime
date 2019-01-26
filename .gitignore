@@ -127,4 +127,5 @@ doc/datasets/generated/
 # vim swap files
 *.swp
 
-
+# autogen stuff
+/docs/source/autogen
