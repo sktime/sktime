@@ -128,4 +128,4 @@ doc/datasets/generated/
 *.swp
 
 # autogen stuff
-/docs/source/autogen
+/documentation/source/autogen
