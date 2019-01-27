@@ -1,0 +1,7 @@
+sktime.load\_data module
+========================
+
+.. automodule:: sktime.load_data
+    :members:
+    :undoc-members:
+    :show-inheritance:
