@@ -7,10 +7,12 @@ Welcome to sktime's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: Contents:
 
    autogen/sktime
+   quickstart
+   examples
 
 
 Indices and tables
