@@ -4,12 +4,12 @@ This is a module containing time series classifiers
 import numpy as np
 import pandas as pd
 from xpandas.data_container import XSeries, XDataFrame
-from sklearn.base import BaseEstimator
 from .utils.validation import check_ts_X_y, check_array, check_is_fitted
 from sklearn.ensemble import RandomForestClassifier
+from .base import BaseClassifier
 
 
-class TSDummyClassifier(BaseEstimator):
+class TSDummyClassifier(BaseClassifier):
     """ A dummy classifier to be used as a reference implementation.
 
     Parameters
@@ -77,7 +77,7 @@ class TSDummyClassifier(BaseEstimator):
         return np.ones(X.shape[0], dtype=np.int64) * self.theta_
 
 
-class TSExampleClassifier(BaseEstimator):
+class TSExampleClassifier(BaseClassifier):
     """ An example regressor that makes use of the xpandas input.
     """
 

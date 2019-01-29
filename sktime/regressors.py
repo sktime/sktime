@@ -4,12 +4,12 @@ This is a module containing time series regressors
 import numpy as np
 import pandas as pd
 from xpandas.data_container import XSeries, XDataFrame
-from sklearn.base import BaseEstimator
 from .utils.validation import check_ts_X_y, check_array, check_is_fitted
 from sklearn.ensemble import RandomForestRegressor
+from .base import BaseRegressor
 
 
-class TSDummyRegressor(BaseEstimator):
+class TSDummyRegressor(BaseRegressor):
     """ A dummy regressor to be used as a reference implementation.
 
     Parameters
@@ -21,6 +21,7 @@ class TSDummyRegressor(BaseEstimator):
     constant : float, default="42.0"
         The parameter to be always predicted, if that's the strategy
     """
+
     def __init__(self, strategy='constant', constant=42.0):
         self.strategy = strategy
         self.constant = constant
@@ -76,7 +77,7 @@ class TSDummyRegressor(BaseEstimator):
         return np.ones(X.shape[0], dtype=np.int64) * self.theta_
 
 
-class TSExampleRegressor(BaseEstimator):
+class TSExampleRegressor(BaseRegressor):
     """ An example regressor that makes use of the xpandas input.
     """
 
