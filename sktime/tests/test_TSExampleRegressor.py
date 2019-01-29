@@ -73,13 +73,17 @@ def test_grid_search_cv():
     got = clf.predict(X)
     assert_array_equal(expected, got)
 
-def test_grid_search_cv_scorer_not_found_error():
+def test_grid_search_cv_default_scorer():
     X = Xdf_train
     y = y_train
-    with pytest.raises(AttributeError, match="supply an external scorer for GridSearchCV"):
-        model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=LinearRegression(fit_intercept=False))
-        model.fit(X, y)
-        # give (deep) parameter tuning details
-        parameters = {'estimator__fit_intercept': (True, False)}
-        # fit and predict GridSearchCV
-        GridSearchCV(model, parameters, cv=5)
+    model = TSExampleRegressor(func=np.mean, columns=X.columns, estimator=LinearRegression(fit_intercept=False))
+    model.fit(X, y)
+    expected = model.predict(X)
+
+    # give (deep) parameter tuning details
+    parameters = {'estimator__fit_intercept': (True, False)}
+    # fit and predict GridSearchCV without an explicit scorer
+    clf = GridSearchCV(model, parameters, cv=5)
+    clf.fit(X, y)
+    got = clf.predict(X)
+    assert_array_equal(expected, got)

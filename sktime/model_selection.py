@@ -1,10 +1,20 @@
 '''
 classes and functions for model validation
 '''
-import sklearn
+from sklearn.model_selection import GridSearchCV as skGSCV
+from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
+from .base import BaseClassifier, BaseRegressor
 
-class GridSearchCV(sklearn.model_selection.GridSearchCV):
+
+class GridSearchCV(skGSCV):
+    '''A wrapper to provide default scorers
+    '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.scoring is None:
-            raise AttributeError('supply an external scorer for GridSearchCV')
+            # using accuracy score as default for classifiers
+            if isinstance(self.estimator, BaseClassifier):
+                self.scoring = make_scorer(accuracy_score)
+            # using mean squared error as default for regressors
+            elif isinstance(self.estimator, BaseRegressor):
+                self.scoring = make_scorer(mean_squared_error)
