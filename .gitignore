@@ -129,3 +129,6 @@ doc/datasets/generated/
 
 # autogen stuff
 /documentation/source/autogen
+
+# macOS files
+.DS_Store
