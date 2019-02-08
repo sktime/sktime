@@ -9,7 +9,7 @@ def _yield_ts_checks():
     '''
     list of checks to be made
     '''
-    # TODO: remove/add appropriate tests (now many tests are removed)
+    # TODO: remove/add appropriate tests (now many tests are removed and some commented)
     yield check_estimators_dtypes  # TODO: add test for xpandas dtypes
     yield check_fit_score_takes_y
 #    yield check_dtype_object
@@ -19,7 +19,7 @@ def _yield_ts_checks():
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
     yield check_complex_data
-    yield check_fit2d_predict1d
+#    yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature

@@ -3,8 +3,7 @@ This is a module containing time series classifiers
 """
 import numpy as np
 import pandas as pd
-from xpandas.data_container import XSeries, XDataFrame
-from .utils.validation import check_ts_X_y, check_array, check_is_fitted
+from .utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
 from sklearn.ensemble import RandomForestClassifier
 from .base import BaseClassifier
 
@@ -27,9 +26,9 @@ class TSDummyClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : array-like, xpandas XDataFrame or XSeries, shape (n_samples, ...)
+        X : array-like, pandas DataFrame or Series, shape (n_samples, ...)
             The training input samples.
-        y : array-like, xpandas XdataFrame Xseries, shape (n_samples,)
+        y : array-like, pandas dataFrame series, shape (n_samples,)
             The target values (class labels in classification)
 
         Returns
@@ -59,20 +58,14 @@ class TSDummyClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : array-like, xpandas XDataFrame or XSeries, shape (n_samples, ...)
+        X : array-like, pandas DataFrame or Series, shape (n_samples, ...)
             The training input samples.
         Returns
         -------
         y : ndarray, shape (n_samples,)
             Returns the dummy predictions
         """
-        if isinstance(X, (XSeries, XDataFrame, pd.Series, pd.DataFrame)):
-            # do custom checks as per predict() implementation requirements
-            # basic stuff as per sklearn req.
-            X = check_array(X, dtype=None, ensure_2d=False)
-        else:
-            # check as per sklearn default requirements
-            X = check_array(X)
+        X = check_ts_array(X)
         check_is_fitted(self, 'is_fitted_')
         return np.ones(X.shape[0], dtype=np.int64) * self.theta_
 
@@ -91,9 +84,9 @@ class TSExampleClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : array-like, xpandas XDataFrame or XSeries, shape (n_samples, ...)
+        X : array-like, pandas DataFrame or Series, shape (n_samples, ...)
             The training input samples.
-        y : array-like, xpandas XdataFrame Xseries, shape (n_samples,)
+        y : array-like, pandas dataFrame series, shape (n_samples,)
             The target values (class labels in classification)
 
         Returns
@@ -121,7 +114,7 @@ class TSExampleClassifier(BaseClassifier):
 
         Parameters
         ----------
-        X : array-like, xpandas XDataFrame or XSeries, shape (n_samples, ...)
+        X : array-like, pandas DataFrame or Series, shape (n_samples, ...)
             The training input samples.
         Returns
         -------
@@ -130,13 +123,7 @@ class TSExampleClassifier(BaseClassifier):
         """
         X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
-        if isinstance(X, (XSeries, XDataFrame, pd.Series, pd.DataFrame)):
-            # do custom checks as per predict() implementation requirements
-            # basic stuff as per sklearn req.
-            X = check_array(X, dtype=None, ensure_2d=False)
-        else:
-            # check as per sklearn default requirements
-            X = check_array(X)
+        X = check_ts_array(X)
 
         check_is_fitted(self, 'is_fitted_')
 
