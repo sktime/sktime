@@ -62,7 +62,7 @@ def test_grid_search_cv():
     y = y_train
     model = TSExampleClassifier(func=np.mean,
                                 columns=X.columns,
-                                estimator=LogisticRegression(fit_intercept=False,
+                                estimator=LogisticRegression(fit_intercept=True,
                                                              solver='lbfgs'))
     model.fit(X, y)
     expected = model.predict(X)
@@ -82,7 +82,7 @@ def test_grid_search_cv_default_scorer():
     y = y_train
     model = TSExampleClassifier(func=np.mean,
                                 columns=X.columns,
-                                estimator=LogisticRegression(fit_intercept=False,
+                                estimator=LogisticRegression(fit_intercept=True,
                                                              solver='lbfgs'))
     model.fit(X, y)
     expected = model.predict(X)
