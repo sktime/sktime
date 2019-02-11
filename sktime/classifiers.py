@@ -96,7 +96,8 @@ class TSExampleClassifier(BaseClassifier):
         """
 
         # simple feature extraction
-        X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
+        if self.columns is not None:
+            X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
         X, y = check_ts_X_y(X, y)
         # fitting (finding the value of dummy prediction theta_) the model based on strategy
@@ -121,7 +122,8 @@ class TSExampleClassifier(BaseClassifier):
         y : ndarray, shape (n_samples,)
             Returns the dummy predictions
         """
-        X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
+        if self.columns is not None:
+            X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
         X = check_ts_array(X)
 
