@@ -5,7 +5,6 @@ from zipfile import ZipFile
 import pytest
 import numpy as np
 import pandas as pd
-from xpandas.data_container import XSeries, XDataFrame
 
 from sklearn.utils.testing import assert_array_equal
 
@@ -32,9 +31,9 @@ X_train_pd, y_train_pd = read_data(train_file)
 test_file = zipfile.open('GunPoint_TEST.txt')
 X_test_pd, y_test_pd = read_data(test_file)
 
-y_train = XSeries(np.array(y_train_pd, dtype=np.int))
-Xsf_train = XSeries([row for _, row in X_train_pd.iterrows()])
-Xdf_train = XDataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
+y_train = pd.Series(np.array(y_train_pd, dtype=np.int))
+Xsf_train = pd.Series([row for _, row in X_train_pd.iterrows()])
+Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
 
 def test_series_TSDummyClassifier_most_strategy():
     X = Xsf_train
