@@ -15,11 +15,11 @@ from sklearn.tree._tree import DepthFirstTreeBuilder
 from sklearn.tree._tree import BestFirstTreeBuilder
 from sklearn.tree._tree import Tree
 from sklearn.tree import _tree, _splitter, _criterion
-from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.pipeline import Pipeline
 
-from .utils.validation import check_equal_index
+from .transformers import RandomIntervalSegmenter, FeatureExtractor
 
-from warnings import warn, catch_warnings, simplefilter
+from warnings import warn
 import threading
 
 from abc import ABCMeta, abstractmethod
@@ -38,8 +38,9 @@ from sklearn.utils.fixes import parallel_helper, _joblib_parallel_args
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble.forest import (MAX_INT,
+                                     _parallel_build_trees,
+                                     _accumulate_prediction,
                                      _generate_sample_indices,
                                      _generate_unsampled_indices)
 
@@ -545,11 +546,6 @@ class TSBaseDecisionTree(six.with_metaclass(ABCMeta, BaseClassifier)):
         return self.tree_.compute_feature_importances()
 
 
-# =============================================================================
-# Public estimators
-# =============================================================================
-
-
 class TSDecisionTreeClassifier(TSBaseDecisionTree, ClassifierMixin):
 
     def __init__(self,
@@ -689,25 +685,6 @@ class TSDecisionTreeClassifier(TSBaseDecisionTree, ClassifierMixin):
                 proba[k] = np.log(proba[k])
 
             return proba
-
-
-class Entrace(ClassificationCriterion):
-    #     """
-    #     Entrance (entropy gain and distance measure) impurity criterion.
-    #     """
-    #
-    #     def node_impurity(self, alpha=None):
-    #
-    #         entropy = Entropy(n_ouputs, n_classes)
-    #
-    #         entropy_gain = weighted_sum_children_entropy - entropy
-    #         entrance = entropy_gain + alpha * margin
-    #
-    #         return entrance
-    #
-    #     def children_impurity(self, impurity_left, impurity_right):
-    #         pass
-    pass
 
 
 class TSBaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
@@ -1185,92 +1162,6 @@ class TSForestClassifier(six.with_metaclass(ABCMeta, TSBaseForest,
 
             return proba
 
-class TimeSeriesRandomForest(TSForestClassifier):
-
-    def __init__(self,
-                 base_estimator=None,
-                 n_estimators='warn',
-                 criterion="entropy",
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.,
-                 max_features="auto",
-                 max_leaf_nodes=None,
-                 min_impurity_decrease=0.,
-                 min_impurity_split=None,
-                 bootstrap=True,
-                 oob_score=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False,
-                 class_weight=None):
-
-        if base_estimator is None:
-            # Set default base_estimator for time-series forest.
-            def _ts_slope(ts):
-                """
-                Compute slope of time series using linear regression
-                """
-                n = ts.shape[0]
-                if n < 2:
-                    return 0
-                else:
-                    x = np.arange(n) + 1
-                    y = np.asarray(ts)
-                    return (((x * y).mean() - x.mean() * y.mean())
-                            / ((x ** 2).mean() - (x.mean()) ** 2))
-
-            feature_calculators = [np.mean, np.std, _ts_slope]
-            base_estimator = TSPipeline([('segment', RandomIntervalSegmenter()),
-                                         ('extract', FeatureExtractor(feature_calculators=
-                                                                      feature_calculators)),
-                                         ('clf', DecisionTreeClassifier())])
-
-        else:
-            # Check input.
-            if not isinstance(base_estimator, Pipeline):
-                raise ValueError('Base estimator in time-series forest must be pipeline with transforms.')
-
-        # Rename estimator params according to name in pipeline.
-        params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-            "random_state": random_state
-        }
-        final_estimator = base_estimator.get_params()['steps'][-1][0]
-        params = {f'{final_estimator}__' + name: value for name, value in params.items()}
-
-        # Pass on param names.
-        estimator_params = tuple(params.keys())
-
-        # Assign random state to pipeline.
-        base_estimator.random_state = random_state
-
-        super().__init__(
-            base_estimator=base_estimator,
-            n_estimators=n_estimators,
-            estimator_params=estimator_params,
-            bootstrap=bootstrap,
-            oob_score=oob_score,
-            n_jobs=n_jobs,
-            random_state=random_state,
-            verbose=verbose,
-            warm_start=warm_start,
-            class_weight=class_weight)
-
-        # Set params.
-        for name, value in params.items():
-            self.__setattr__(name, value)
-
 
 class TSRandomForestClassifier(TSForestClassifier):
 
@@ -1317,186 +1208,3 @@ class TSRandomForestClassifier(TSForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
-
-
-class RandomIntervalSegmenter(BaseEstimator, TransformerMixin):
-    """
-    Series-to-series transformer.
-    """
-    def __init__(self):
-        self.input_shape_ = None
-        self.input_indexes_ = []  # list of time-series indexes of each column
-        self.intervals_ = []  # list of random intervals of each column
-
-    def fit(self, X, y=None):
-        self.input_shape_ = X.shape
-        self.input_indexes_ = check_equal_index(X)
-
-        # Compute random intervals
-        def _compute_random_intervals(index):
-            """
-            Obtain random intervals from index.
-            """
-            starts = []
-            ends = []
-            m = index.shape[0]  # series length
-            idx = np.arange(1, m + 1)
-
-            W = np.random.choice(idx, replace=False, size=int(np.sqrt(m)))
-            for w in W:
-                size = m - w + 1
-                start = np.random.choice(np.arange(1, size + 1),
-                                         replace=False, size=int(np.sqrt(size))) - 1
-                starts.extend(start)
-                for s in start:
-                    end = s + w
-                    ends.append(end)
-            return starts, ends
-
-        n_cols = self.input_shape_[1]
-        for col in range(n_cols):
-            starts, ends = _compute_random_intervals(self.input_indexes_[col])
-            self.intervals_.append(np.column_stack([starts, ends]))
-
-        # Return the transformer
-        return self
-
-    def transform(self, X, y=None):
-        """
-        Segment series into random intervals. Series-to-series transformer.
-        """
-
-        # Check is fit had been called
-        check_is_fitted(self, ['input_shape_', 'intervals_'])
-
-        # Check that the input is of the same shape as the one passed
-        # during fit.
-        if X.shape[1] != self.input_shape_[1]:
-            raise ValueError('Number of columns of input is different from what was seen'
-                             'in `fit`')
-        # Input validation
-        if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                            self.input_indexes_)]):
-            raise ValueError('Indexes of time-series are different from what was seen in `fit`')
-
-        # Transform input data using random intervals from `fit`
-        n_rows, n_cols = X.shape
-        interval_data_dict = {}
-        for col in range(n_cols):
-            col_name = X.columns[col]
-            for start, end in self.intervals_[col]:
-                interval_data_list = []
-                for row in range(n_rows):
-                    interval_data = X.iloc[row, col].iloc[start:end]
-                    interval_data_list.append(interval_data)
-                interval_data_dict[f'{col_name}_{start}_{end}'] = interval_data_list
-
-        return pd.DataFrame(interval_data_dict)
-
-
-class FeatureExtractor(BaseEstimator, TransformerMixin):
-    """
-    Series-to-tabular transformer.
-    """
-    def __init__(self, feature_calculators=None):
-        self.input_shape_ = None
-        self.input_indexes_ = []  # list of time-series indexes of each column
-
-        # Check input of feature calculators, i.e list of functions to be applied to time-series
-        if feature_calculators is None:
-            self.feature_calculators = [np.mean]
-        else:
-            if not isinstance(feature_calculators, list):
-                if not all([callable(f) for f in feature_calculators]):
-                    raise ValueError('Features must be list containing only functions (callable) to be '
-                                     'applied to the data columns')
-            else:
-                self.feature_calculators = feature_calculators
-
-    def fit(self, X, y=None):
-        self.input_shape_ = X.shape
-        self.input_indexes_ = check_equal_index(X)
-
-        # Return the transformer
-        return self
-
-    def transform(self, X):
-        """
-        Segment series into random intervals.
-        """
-        # Check is fit had been called
-        check_is_fitted(self, ['input_shape_'])
-
-        # Check that the input is of the same shape as the one passed
-        # during fit.
-        if X.shape[1] != self.input_shape_[1]:
-            raise ValueError('Number of columns of input is different from what was seen'
-                             'in `fit`')
-        # Input validation
-        if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                            self.input_indexes_)]):
-            raise ValueError('Indexes of time-series are different from what was seen in `fit`')
-
-        # Transform input data
-        n_rows, n_cols = X.shape
-
-        calculated_features_dict = {}
-        for calculator in self.feature_calculators:
-            for col in range(n_cols):
-                col_name = f'{X.columns[col]}_{calculator.__name__}'
-                calculated_features_dict[col_name] = X.iloc[:, col].apply(calculator)
-
-        return pd.DataFrame(calculated_features_dict)
-
-
-class TSPipeline(Pipeline):
-    def __init__(self, steps, memory=None):
-        super().__init__(steps, memory)
-        self.random_state = None
-
-
-
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None):
-    """Private function used to fit a single tree in parallel."""
-    if verbose > 1:
-        print("building tree %d of %d" % (tree_idx + 1, n_trees))
-
-    if forest.bootstrap:
-        n_samples = X.shape[0]
-        if sample_weight is None:
-            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-        else:
-            curr_sample_weight = sample_weight.copy()
-
-        indices = _generate_sample_indices(tree.random_state, n_samples)
-        sample_counts = np.bincount(indices, minlength=n_samples)
-        curr_sample_weight *= sample_counts
-
-        if class_weight == 'subsample':
-            with catch_warnings():
-                simplefilter('ignore', DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight('auto', y, indices)
-        elif class_weight == 'balanced_subsample':
-            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
-
-        tree.fit(X, y)
-    else:
-        tree.fit(X, y)
-
-    return tree
-
-
-def _accumulate_prediction(predict, X, out, lock):
-    """This is a utility function for joblib's Parallel.
-
-    It can't go locally in ForestClassifier or ForestRegressor, because joblib
-    complains that it cannot pickle it when placed there.
-    """
-    prediction = predict(X)
-    with lock:
-        if len(out) == 1:
-            out[0] += prediction
-        else:
-            for i in range(len(out)):
-                out[i] += prediction[i]
