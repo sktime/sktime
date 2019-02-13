@@ -29,7 +29,7 @@ from sklearn.ensemble.forest import (MAX_INT,
                                      _generate_sample_indices,
                                      _generate_unsampled_indices)
 
-__all__ = ["TimeSeriesForest"]
+__all__ = ["TimeSeriesForestClassifier"]
 
 class TSBaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for forests of trees.
@@ -506,7 +506,7 @@ class TSForestClassifier(six.with_metaclass(ABCMeta, TSBaseForest,
             return proba
 
 
-class TimeSeriesForest(TSForestClassifier):
+class TimeSeriesForestClassifier(TSForestClassifier):
 
     def __init__(self,
                  base_estimator=None,
