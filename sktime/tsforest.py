@@ -1,6 +1,6 @@
 from __future__ import division
 
-from .transformers import RandomIntervalSegmenter, FeatureExtractor
+from .transformers import RandomIntervalFeatureExtractor
 from sklearn.base import ClassifierMixin
 
 from sklearn.pipeline import Pipeline
@@ -30,6 +30,7 @@ from sklearn.ensemble.forest import (MAX_INT,
                                      _generate_unsampled_indices)
 
 __all__ = ["TimeSeriesForestClassifier"]
+
 
 class TSBaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for forests of trees.
@@ -542,10 +543,9 @@ class TimeSeriesForestClassifier(TSForestClassifier):
                     return (((x * y).mean() - x.mean() * y.mean())
                             / ((x ** 2).mean() - (x.mean()) ** 2))
 
-            feature_calculators = [np.mean, np.std, _ts_slope]
+            features = [np.mean, np.std, _ts_slope]
             base_estimator = TSPipeline([
-                ('segment', RandomIntervalSegmenter()),
-                ('extract', FeatureExtractor(feature_calculators=feature_calculators)),
+                ('extract', RandomIntervalFeatureExtractor(features=features)),
                 ('clf', DecisionTreeClassifier())
             ])
 
@@ -573,17 +573,12 @@ class TimeSeriesForestClassifier(TSForestClassifier):
         params = {f'{final_estimator}__' + name: value for name, value in params.items()}
 
         # Assign random state to pipeline.
-        base_estimator.random_state = random_state
-
-        # # Set random state to all pipeline components with randomness.
-        # for step in base_estimator.steps:
-        #     if hasattr(step[1], 'random_state'):
-        #         step[1].set_params(**{'random_state': random_state})
+        base_estimator.set_params(**{'random_state': random_state})
 
         # Pass on param names.
         estimator_params = tuple(params.keys())
 
-        super().__init__(
+        super(TimeSeriesForestClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
@@ -593,17 +588,32 @@ class TimeSeriesForestClassifier(TSForestClassifier):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight)
+            class_weight=class_weight
+        )
 
-        # Set params.
+        # Set renamed estimator params.
         for name, value in params.items():
             self.__setattr__(name, value)
 
 
 class TSPipeline(Pipeline):
-    def __init__(self, steps, memory=None):
-        super().__init__(steps, memory)
-        self.random_state = None
+    def __init__(self, steps, memory=None, random_state=None):
+        super(TSPipeline, self).__init__(steps, memory)
+        self.random_state = random_state
+
+    @property
+    def random_state(self):
+        return self._random_state
+
+    @random_state.setter
+    def random_state(self, random_state):
+        self._random_state = random_state
+
+        # If random state is set for entire pipeline, set random state for all components
+        if random_state is not None:
+            for step in self.steps:
+                if hasattr(step[1], 'random_state'):
+                    step[1].set_params(**{'random_state': self.random_state})
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
