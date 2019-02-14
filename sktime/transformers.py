@@ -5,7 +5,119 @@ import pandas as pd
 from .utils.validation import check_equal_index
 
 
-__all__ = ["RandomIntervalSegmenter", "FeatureExtractor"]
+__all__ = ["RandomIntervalSegmenter",
+           "FeatureExtractor",
+           "RandomIntervalFeatureExtractor"]
+
+
+class RandomIntervalFeatureExtractor(BaseEstimator, TransformerMixin):
+    """
+    Splits time-series into random intervals and extracts features from each interval.
+    Series-to-tabular transformer.
+    """
+
+    def __init__(self, random_state=None, features=None):
+        self.input_shape_ = None
+        self.input_indexes_ = []  # list of time-series indexes of each column
+        self.random_state = random_state
+
+        self.intervals_ = []  # list of random intervals of each column
+        self.computed_features_ = []
+
+        # Check input of feature calculators, i.e list of functions to be applied to time-series
+        if features is None:
+            self.features = [np.mean]
+        else:
+            if not isinstance(features, list):
+                if not all([callable(f) for f in features]):
+                    raise ValueError('Features must be list containing only functions (callable) to be '
+                                     'applied to the data columns')
+            else:
+                self.features = features
+
+    def fit(self, X, y=None, check_input=True):
+        self.input_shape_ = X.shape
+
+        if check_input:
+            self.input_indexes_ = check_equal_index(X)
+
+        # Define helper function for computing random intervals
+        def random_intervals(index, random_state=self.random_state):
+            """
+            Obtain random intervals from index.
+            """
+            rng = check_random_state(random_state)
+
+            def random_choice(x, size):
+                return rng.choice(x, size=size, replace=False)
+
+            starts = []
+            ends = []
+            m = index.size  # series length
+            idx = np.arange(1, m + 1)
+
+            W = random_choice(idx, size=int(np.sqrt(m)))
+            for w in W:
+                size = m - w + 1
+                start = random_choice(np.arange(1, size + 1),
+                                      size=int(np.sqrt(size))) - 1
+                starts.extend(start)
+                for s in start:
+                    end = s + w
+                    ends.append(end)
+            return starts, ends
+
+        # Compute random intervals for each column
+        for col in range(self.input_shape_[1]):
+            starts, ends = random_intervals(self.input_indexes_[col])
+            self.intervals_.append(np.column_stack([starts, ends]))
+
+        # Return the transformer
+        return self
+
+    def transform(self, X, y=None, check_input=True):
+        """
+        Segment series into random intervals. Series-to-series transformer.
+        """
+
+        # Check is fit had been called
+        check_is_fitted(self, ['input_shape_', 'intervals_'])
+
+        columns = X.columns
+        n_rows, n_cols = X.shape
+
+        if check_input:
+            # Check that the input is of the same shape as the one passed
+            # during fit.
+            if n_cols != self.input_shape_[1]:
+                raise ValueError('Number of columns of input is different from what was seen'
+                                 'in `fit`')
+            # Input validation
+            if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
+                                                                                self.input_indexes_)]):
+                raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
+
+        X = np.array([np.array([row[col] for _, row in X.iterrows()])
+                      for col, _ in enumerate(columns)])
+
+        # Split input data into random intervals from `fit`
+        n_features = len(self.features)
+
+        # Total number of intervals of all columns
+        n_intervals = sum([len(intervals) for intervals in self.intervals_])
+
+        # Allocate output array for transformed data
+        Xt = np.zeros((n_rows, n_features * n_intervals))
+
+        # Compute features on intervals
+        for c, col in enumerate(columns):
+            for i, (start, end) in enumerate(self.intervals_[c]):
+                interval = X[c, :, start:end]
+                for f, func in enumerate(self.features):
+                    Xt[:, c + i + f] = np.apply_along_axis(func, 1, interval)
+                    self.computed_features_.append(f'{col}_{start}_{end}_{func.__name__}')
+
+        return Xt
 
 
 class RandomIntervalSegmenter(BaseEstimator, TransformerMixin):
