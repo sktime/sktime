@@ -16,6 +16,7 @@ from sklearn.pipeline import Pipeline
 
 from sktime.classifiers import TSExampleClassifier
 from sktime.transformers import TSExampleTransformer, TSDummyTransformer
+from sktime.transformers import TSColumnTransformer
 
 def read_data(file):
     '''
@@ -84,6 +85,27 @@ def test_series_pipeline():
 
     column_transformer = TSDummyTransformer()
     estimator = TSExampleClassifier(func=np.mean, columns=X.columns, estimator=RandomForestClassifier(random_state=123, n_estimators=10))
+    strategy = [
+        ('feature_extract', column_transformer),
+        ('rfestimator', estimator)]
+    model = Pipeline(memory=None,
+                     steps=strategy)
+    model.fit(X, y)
+    assert_array_equal(model.predict(Xdf_test), np.ones(y_test_pd.shape[0]) * 2)
+
+def test_pandas_friendly_column_transformer_pipeline():
+    '''
+    there is a series to series transformer tested in here
+    '''
+    X = Xdf_train
+    y = y_train
+
+    estimator = TSExampleClassifier(func=np.mean, columns=X.columns, estimator=RandomForestClassifier(random_state=123, n_estimators=10))
+    # using Identity function transformers (transform series to series)
+    id_func = lambda X: X
+    column_transformer = TSColumnTransformer(
+        [('ts', FunctionTransformer(func=id_func, validate=False), 'ts'),
+         ('ts_copy', FunctionTransformer(func=id_func, validate=False), 'ts_copy')])
     strategy = [
         ('feature_extract', column_transformer),
         ('rfestimator', estimator)]
