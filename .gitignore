@@ -132,3 +132,6 @@ doc/datasets/generated/
 
 # macOS files
 .DS_Store
+
+# dask-worker-space
+dask-worker-space
