@@ -129,4 +129,9 @@ doc/datasets/generated/
 
 # autogen stuff
 /documentation/source/autogen
-sktime/classifiers/mesh_grid_expr.py
+
+# macOS files
+.DS_Store
+
+# dask-worker-space
+dask-worker-space
