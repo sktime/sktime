@@ -1,5 +1,5 @@
 """
-This is a module containing time series classifiers
+This is a module containing time series time_domain_classification
 """
 import numpy as np
 import pandas as pd
