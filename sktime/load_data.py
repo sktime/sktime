@@ -211,12 +211,12 @@ def load_from_tsfile_to_dataframe(file_path, file_name, replace_missing_vals_wit
                         class_val_list.append(dimensions[num_dimensions].strip())
 
     # note: creating a pandas.DataFrame here, NOT an xpandas.xdataframe
-    x_data = pd.DataFrame()
+    x_data = pd.DataFrame(dtype=np.float32)
     for dim in range(0, num_dimensions):
         x_data['dim_' + str(dim)] = instance_list[dim]
 
     if has_class_labels:
-        return x_data, class_val_list
+        return x_data, np.asarray(class_val_list)
     #
     # # otherwise just return an XDataFrame
     return x_data
@@ -435,9 +435,9 @@ def long_format_to_wide_format(long_dataframe, class_dimension_name=None):
 
 
 if __name__ == "__main__":
-    # example of loading into a pandas (NOT XPANDAS) dataframe
-    cache_path = "C:/temp/sktime_temp_data/"
-    dataset_name = "Gunpoint"
-    suffix = "_TRAIN.ts"
-    train_x, train_y = load_from_tsfile_to_dataframe(cache_path + dataset_name + "/", dataset_name + suffix)
-    print(train_x)
+    dir = "C:/Users/jason/Dropbox/TSCProblems/"
+    dataset_name = "GunPoint"
+
+    long = load_from_file_to_long_format(dir+dataset_name+"/"+dataset_name+"_TRAIN.arff", reading_delimiter=",")
+    train_x, train_y = long_format_to_wide_format_with_last_reading_as_class(long)
+

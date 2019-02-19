@@ -1,75 +1,35 @@
-from sktime.load_data import load_from_web_to_xdataframe
 import numpy as np
+
+from sktime.load_data import load_from_tsfile_to_dataframe
+from sktime.classifiers.time_domain_classification.using_sklearn_univariate import load_univariate_arff_to_dataframe as load_data
+from sklearn.neighbors.classification import KNeighborsClassifier as KNN
+
 from sklearn.model_selection import GridSearchCV
-from sklearn.base import BaseEstimator
-import time
 
 
-class DynamicTimeWarping1NNTSClassifier(BaseEstimator):
-    """ A 1-nearest neighbour classifier using dynamic time warping for time series data.
+def dtw_distance(first, second, **kwargs):
 
-        NOTE: prototype code - thorough testing required
-        TO-DO:
-            add k-NN (currently 1-NN for simple testing)
-            add type checks
-    """
+    def dtw_single_channel(first, second, **kwargs):
+        cutoff = np.inf
+        try:
+            window = kwargs["window"]
+        except:
+            window = 1.0
+        # print("window: "+str(window))
 
-    def __init__(self, window_width=1.0, use_independent_dimension_distances=True):
-        """ A constructor for a nearest neighbour classifier using dynamic time warping.
-            Parameters
-            ----------
-            window_width : float
-                The proportion of warping that is allowed between two series
-                0 = Euclidean distance, 1 = full warping
-            use_independent_dimension_distances : boolean
-                Determine whether distances should be calculated independently for each dimension
-                in multi-variate problems. True allows unique warping paths for each dimension,
-                False uses a single path across all dimensions for calculating distances
-            """
-        self.window_width=window_width
-        self.x_train = None
-        self.y_train = None
-        self.is_fitted_ = False
-        self.use_independent_dimension_distances = use_independent_dimension_distances
-
-    def distance(self, first, second, cutoff=None, use_single_dimension=True, single_dimension_to_use=0) -> float:
-        """ For calculating the dynamic time warping distance between two Series. This can be two Series of the
-            underlying data, or two Series containing Series of all dimensions of a case (e.g. a slice of a dataframe)
-            Parameters
-            ----------
-            first : pandas.Series
-                The first case in the comparison
-            second : pandas.Series
-                The second case in the comparison
-            use_single_dimension : boolean
-                Allows the distance to be calculated for a single dimension in multi-dimensional problems, if desired
-            single_dimension_to_use : int
-                If using a single dimension of a multivariate problem, this is the dimension to use when
-                computing distances
-            """
-        window_proportion = self.window_width
-
-        n = len(first[single_dimension_to_use])
-        m = len(second[single_dimension_to_use])
+        n = len(first)
+        m = len(second)
 
         warp_matrix = np.full([n, m], np.inf)
         if n > m:
-            window_size = n * window_proportion
+            window_size = n * window
         else:
-            window_size = m * window_proportion
+            window_size = m * window
         window_size = int(window_size)
 
         dist = lambda x1, x2: ((x1 - x2) ** 2)
 
-        if use_single_dimension:
-            pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second[single_dimension_to_use]] for x1 in first[single_dimension_to_use]])
-        else:
-            # distance matrix for first dimension
-            pairwise_distances = np.asarray([[dist(p1, p2) for p2 in second[0]] for p1 in first[0]])
-            # add distances for dimensions 1 to d-1 for d dimensions
-            if len(first) > 1:
-                for dim in range(1, len(first)):
-                    pairwise_distances += np.asarray([[dist(p1, p2) for p2 in second[dim]] for p1 in first[dim]])
+        pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second] for x1 in first])
 
         # initialise edges of the warping matrix
         warp_matrix[0][0] = pairwise_distances[0][0]
@@ -89,10 +49,10 @@ class DynamicTimeWarping1NNTSClassifier(BaseEstimator):
                 # find smallest entry in the warping matrix, either above, to the left, or diagonally left and up
                 above = warp_matrix[row - 1][column]
                 left = warp_matrix[row][column - 1]
-                diag = warp_matrix[row-1][column-1]
+                diag = warp_matrix[row - 1][column - 1]
 
                 # add the pairwise distance for [row][column] to the minimum of the three possible potential cells
-                warp_matrix[row][column] = pairwise_distances[row][column]+np.min([above, left, diag])
+                warp_matrix[row][column] = pairwise_distances[row][column] + min([above, left, diag])
 
                 # check for evidence that cutoff has been beaten on this row (if using)
                 if cutoff is not None and warp_matrix[row][column] < cutoff:
@@ -104,273 +64,724 @@ class DynamicTimeWarping1NNTSClassifier(BaseEstimator):
                 return float("inf")
 
         return warp_matrix[n - 1][m - 1]
+    print("first: "+str(len(first)))
+    print(type(first))
+    print(len(first[0]))
 
-    def fit(self, x, y):
-        """ To initialise a DTW 1NN.
-        Parameters
-        ----------
-        x : dataframe-like of pandas.Series objects
-            The training input samples. Each column represents a dimension of the
-            problem, each row represents a case/instance
-        y : array-like, xpandas XdataFrame Xseries, shape (n_samples,)
-            The target values (class labels)
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        self.x_train = x
-        self.y_train = y
+    if isinstance(first, np.ndarray) and isinstance(first[0], list) == False:
+        return dtw_single_channel(first, second, **kwargs)
 
-        # let the model know that it is fitted
-        self.is_fitted_ = True
-        # `fit` should always return `self`
-        return self
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += dtw_single_channel(first[dim], second[dim], **kwargs)
 
-    def predict(self, x):
-        """ Predicting function.
-        Parameters
-        ----------
-        X : dataframe-like of pandas.Series objects
-            The test data. Each column represents a dimension of the
-            problem, each row represents a case/instance
-        Returns
-        -------
-        predictions : ndarray, shape (n_samples,)
-            Returns the predicted class labels
-        """
-        if self.window_width < 0:
-            raise Exception("Negative window value")
+    return dist
 
-        predictions = []
 
-        for test in range(0, len(x)):
-            bsf_class_id = -1
-            bsf_dist = float("inf")
-            for train in range(0, len(self.x_train)):
-                dist = 0
+def derivative_dtw_distance(first, second, **kwargs):
 
-                # calculate distances for each dimension independently (withing specified warping window) and sum together (i.e. potentially unique warping path for each dimension)
-                if self.use_independent_dimension_distances:
-                    for dim in range(0,len(self.x_train.iloc[train])):
-                        dist += self.distance(self.x_train.iloc[train], x.iloc[test], cutoff=bsf_dist-dist, use_single_dimension=True, single_dimension_to_use=dim)
-                # otherwise, use a combined distance calculation across all dimensions (i.e. single warping path, combined pointwise matrix)
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += dtw_distance([first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs)
+    return dist
+
+
+def weighted_dtw_distance(first, second, **kwargs):
+
+    def wdtw_single_channel(first, second, **kwargs):
+        try:
+            g = kwargs["g"]
+        except:
+            g = 0.0
+
+        m = len(first);
+        n = len(second);
+
+        weight_vector = [1/(1+np.exp(-g*(i-m/2))) for i in range(0,m)]
+
+        dist = lambda x1, x2: ((x1 - x2) ** 2)
+        pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second] for x1 in first])
+
+        # initialise edges of the warping matrix
+        distances = np.full([n, m], np.inf)
+        distances[0][0] = weight_vector[0]*pairwise_distances[0][0]
+
+        # top row
+        for i in range(1,n):
+            distances[0][i] = distances[0][i - 1] + weight_vector[i] * pairwise_distances[0][i]
+
+        # first column
+        for i in range(1, m):
+            distances[i][0] = distances[i - 1][0] + weight_vector[i] * pairwise_distances[i][0]
+
+        # warp rest
+        for i in range(1,m):
+            for j in range(1,n):
+                min_dist = np.min([distances[i][j - 1], distances[i - 1][j], distances[i - 1][j - 1]])
+                # print(min_dist)
+                distances[i][j] = min_dist+weight_vector[np.abs(i-j)] * pairwise_distances[i][j]
+        return distances[m-1][n-1]
+
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += wdtw_single_channel(first[dim], second[dim], **kwargs)
+
+    return dist
+
+
+def weighted_derivative_dtw_distance(first, second, **kwargs):
+
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += weighted_dtw_distance([first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs)
+    return dist
+
+
+def lcss_distance(first, second, **kwargs):
+
+    def lcss_single_channel(first, second, **kwargs) -> float:
+        try:
+            delta = kwargs["delta"]
+        except KeyError:
+            delta = 3
+
+        try:
+            epsilon = kwargs["epsilon"]
+        except KeyError:
+            epsilon = 1
+
+        print("de: "+str(delta)+" "+str(epsilon))
+        m = len(first)
+        n = len(second)
+
+        lcss = np.zeros([m + 1, n + 1])
+
+        for i in range(0, m):
+            # for (int j = i-delta; j <= i+delta; j++){
+            for j in range(i - delta, i + delta + 1):
+                if j < 0:
+                    j = -1
+                elif j >= n:
+                    j = i + delta
+                elif second[j] + epsilon >= first[i] and second[j] - epsilon <= first[i]:
+                    lcss[i + 1][j + 1] = lcss[i][j] + 1
+                elif lcss[i][j + 1] > lcss[i + 1][j]:
+                    lcss[i + 1][j + 1] = lcss[i][j + 1]
                 else:
-                    dist = self.distance(self.x_train.iloc[train], x.iloc[test], use_single_dimension=False, cutoff=bsf_dist)
-                if dist < bsf_dist:
-                    bsf_dist = dist
-                    bsf_class_id = train_y[train]
-            predictions.append(bsf_class_id)
+                    lcss[i + 1][j + 1] = lcss[i + 1][j]
 
-        return predictions
+        max_val = -1;
+        for i in range(1, len(lcss[len(lcss) - 1])):
+            if lcss[len(lcss) - 1][i] > max_val:
+                max_val = lcss[len(lcss) - 1][i];
 
-# testing code to demonstrate the use of scikit-learn's GridSearchCV
-def example_grid_search(train_x, train_y, num_folds = 10):
-    classifier = DynamicTimeWarping1NNTSClassifier()
+        return 1 - (max_val / m);
 
-    # param_grid = {'window_width': [0.1, 0.5, 1.0], 'use_independent_dimension_distances': [True, False]}
-    param_grid = {'window_width': [0.1, 0.5, 1.0]}
-    grid = GridSearchCV(classifier, param_grid, cv=num_folds, scoring='accuracy')
+    dist = 0
+    for dim in range(0,len(first)):
+        dist += lcss_single_channel(first[dim],second[dim],**kwargs)
+    return dist
 
-    grid.fit(train_x, train_y)
 
+def msm_distance(first, second, **kwargs):
+
+    def msm_single_channel(first, second, **kwargs) -> float:
+        try:
+            c = kwargs["c"]
+        except KeyError:
+            c = 0.1
+
+        m = len(first)
+        n = len(second)
+
+        cost = np.zeros([m, n])
+
+        def calc_cost(new_point, x, y):
+            dist = 0
+
+            if ((x <= new_point) and (new_point <= y)) or ((y <= new_point) and (new_point <= x)):
+                return c
+            else:
+                return c + min(np.abs(new_point - x), np.abs(new_point - y))
+
+        # Initialization
+        cost[0][0] = np.abs(first[0] - second[0])
+        for i in range(1, m):
+            cost[i][0] = cost[i - 1][0] + calc_cost(first[i], first[i - 1], second[0])
+
+        for i in range(1, n):
+            cost[0][i] = cost[0][i - 1] + calc_cost(second[i], first[0], second[i - 1])
+
+        # Main Loop
+        for i in range(1, m):
+            for j in range(1, n):
+                d1 = cost[i - 1][j - 1] + np.abs(first[i] - second[j])
+                d2 = cost[i - 1][j] + calc_cost(first[i], first[i - 1], second[j])
+                d3 = cost[i][j - 1] + calc_cost(second[j], first[i], second[j - 1])
+                cost[i][j] = min(d1, d2, d3)
+
+        return cost[m - 1][n - 1];
+
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += msm_single_channel(first[dim], second[dim], **kwargs)
+    return dist
+
+
+def erp_distance(first, second, **kwargs):
+    def erp_single_channel(first, second, **kwargs):
+        """
+        Adapted from:
+            This file is part of ELKI:
+            Environment for Developing KDD-Applications Supported by Index-Structures
+
+            Copyright (C) 2011
+            Ludwig-Maximilians-UniversitÃ¤t MÃ¼nchen
+            Lehr- und Forschungseinheit fÃ¼r Datenbanksysteme
+            ELKI Development Team
+
+            This program is free software: you can redistribute it and/or modify
+            it under the terms of the GNU Affero General Public License as published by
+            the Free Software Foundation, either version 3 of the License, or
+            (at your option) any later version.
+
+            This program is distributed in the hope that it will be useful,
+            but WITHOUT ANY WARRANTY; without even the implied warranty of
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+            GNU Affero General Public License for more details.
+
+            You should have received a copy of the GNU Affero General Public License
+            along with this program.  If not, see <http://www.gnu.org/licenses/>.
+        """
+
+        try:
+            band_size = kwargs["band_size"]
+        except KeyError:
+            band_size = 5
+        try:
+            g = kwargs["g"]
+        except KeyError:
+            g = 0.5
+
+        m = len(first)
+        n = len(second)
+        band = np.ceil(band_size * m)
+        curr = np.empty(m)
+        prev = np.empty(m)
+
+        for i in range(0, m):
+            temp = prev
+            prev = curr
+            curr = temp
+            l = i - (band + 1)
+
+            if l < 0:
+                l = 0
+
+            r = i + (band + 1);
+            if r > m - 1:
+                r = (m - 1)
+
+            for j in range(l, r + 1):
+                if np.abs(i - j) <= band:
+                    val1 = first[i]
+                    val2 = g
+                    diff = (val1 - val2)
+                    d1 = np.sqrt(diff * diff)
+
+                    val1 = g
+                    val2 = second[j]
+                    diff = (val1 - val2)
+                    d2 = np.sqrt(diff * diff)
+
+                    val1 = first[i]
+                    val2 = second[j]
+                    diff = (val1 - val2)
+                    d12 = np.sqrt(diff * diff)
+
+                    dist1 = d1 * d1
+                    dist2 = d2 * d2
+                    dist12 = d12 * d12
+
+                    if i + j != 0:
+                        if i == 0 or (j != 0 and (((prev[j - 1] + dist12) > (curr[j - 1] + dist2)) and ((curr[j - 1] + dist2) < (prev[j] + dist1)))):
+                            # del
+                            cost = curr[j - 1] + dist2
+                        elif (j == 0) or ((i != 0) and (((prev[j - 1] + dist12) > (prev[j] + dist1)) and ((prev[j] + dist1) < (curr[j - 1] + dist2)))):
+                            # ins
+                            cost = prev[j] + dist1;
+                        else:
+                            # match
+                            cost = prev[j - 1] + dist12
+                    else:
+                        cost = 0
+
+                    curr[j] = cost
+
+        return np.sqrt(curr[m - 1]);
+
+    dist = 0
+    for dim in range(0, len(first)):
+        dist += erp_single_channel(first[dim], second[dim], **kwargs)
+    return dist
+
+# twe
+
+class ElasticEnsemble:
+
+    def __init__(self):
+        self.classifiers = [
+            KNN(metric=dtw_distance, n_neighbors=1, algorithm="brute"),
+            KNN(metric=dtw_distance, n_neighbors=1, algorithm="brute"),
+            # KNN(metric=derivative_dtw_distance, n_neighbors=1, algorithm="brute"),
+            # KNN(metric=dtw_distance, n_neighbors=1, algorithm="brute"),
+        ]
+
+        self.params_to_search = [
+            {'metric_params': [{'window': 0.0}]}, # Euclidean distance
+            {'metric_params': [{'window': 1.0}]}, # DTW Full
+            {'metric_params': [{'window': 1.0}]}, # DDTW Full
+            {'metric_params': [{'window': x / 10} for x in range(0, 10)]} # DTW CV
+        ]
+
+        self.cv_accs = np.zeros(len(self.classifiers))
+        self.cv_sum = 0
+
+    def fit(self, X, y):
+        # get each classifier
+        for c in range(0,len(self.classifiers)):
+            grid = GridSearchCV(
+                estimator=self.classifiers[c],
+                param_grid=self.params_to_search[c],
+                cv=3,
+                scoring='accuracy'
+            )
+            grid.fit(X,y)
+            self.classifiers[c] = grid
+            self.cv_accs[c] = grid.best_score_
+            print(grid.best_score_)
+        self.cv_sum = np.sum(self.cv_accs)
+
+    def predict_proba(self, X):
+
+        output_probs = None
+        for c in range(len(self.classifiers)):
+            this_probs = self.classifiers[c].predict_proba(X)
+            this_probs = this_probs*self.cv_accs[c]
+
+            if output_probs is None:
+                output_probs = this_probs
+            else:
+                output_probs = [[output_probs[x][y] + this_probs[x][y] for y in range(0,len(output_probs[x]))] for x in range(0,len(output_probs))]
+
+        output_probs /= self.cv_sum
+        return output_probs
+
+    def predict(self, X):
+        probs = self.predict_proba(X)
+        labels = self.classifiers[0].classes_
+        preds = [labels[np.argmax(probs[x])] for x in range(0,len(probs))]
+        return preds
+
+def test_knns_univariate_data():
+    # dataset = "GunPoint"
+    dataset = "ItalyPowerDemand"
+    train_x, train_y = load_data("C:/users/Jason/Dropbox/TSCProblems/" + dataset + "/" + dataset + "_TRAIN.arff")
+    test_x, test_y = load_data("C:/users/Jason/Dropbox/TSCProblems/" + dataset + "/" + dataset + "_TEST.arff")
+
+    knn = KNN(metric=dtw_distance, n_neighbors=1, algorithm="brute")
+    knn.fit(train_x, train_y)
+    preds = knn.predict(test_x)
+    print("DTW: " + str(sum(preds == test_y) / len(test_y)))
+
+    knn = KNN(metric=lcss_distance, n_neighbors=1, algorithm="brute")
+    knn.fit(train_x, train_y)
+    preds = knn.predict(test_x)
+    print("LCSS: " + str(sum(preds == test_y) / len(test_y)))
+
+    knn = KNN(metric=msm_distance, n_neighbors=1, algorithm="brute")
+    knn.fit(train_x, train_y)
+    preds = knn.predict(test_x)
+    print("MSM: " + str(sum(preds == test_y) / len(test_y)))
+
+    """
+    DTW: 0.9504373177842566
+    LCSS: 0.8007774538386784
+    MSM: 0.9455782312925171
+    """
+
+# multivariate
+
+
+def dtw_dist_multi(first, second, **kwargs):
+    dist = 0
+    for dim in range(0,len(first)):
+        # dist += dtw_dist(first.iloc[dim],second.iloc[dim],**kwargs)
+        dist += dtw_distance(first[dim],second[dim],**kwargs)
+        # print(dist)
+    return dist
+
+
+def lcss_dist_multi(first, second, **kwargs):
+    dist = 0
+    for dim in range(0,len(first)):
+        # dist += dtw_dist(first.iloc[dim],second.iloc[dim],**kwargs)
+        dist += lcss_distance(first[dim],second[dim],**kwargs)
+        # print(dist)
+    return dist
+
+
+def test_knns_multivariate_data():
+    dataset = "BasicMotions"
+
+    train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/"+dataset+"/", file_name=dataset+"_TRAIN.ts")
+
+    # CONFIRMED OK
+    # dist = dtw_dist_multi(train_x.iloc[0], train_x.iloc[1])
+    # dist = lcss_dist_multi(train_x.iloc[0], train_x.iloc[1])
+    # print(dist)
+
+    knn = KNN(metric=lcss_dist_multi, n_neighbors=1, algorithm="brute")
+    knn.fit(train_x.iloc[0:10], train_y[0:10])
+    preds = knn.predict(train_x.iloc[11:14])
+
+    print(preds)
+
+
+def test_ee_logic():
+
+    # tidy
+    dataset = "GunPoint"
+    train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
+    knn = KNN(metric=dtw_dist_multi, n_neighbors=1, algorithm="brute")
+    # params = {'metric_params': [{'window': 0.1}, {'window': 0.5}]}
+    params = {'metric_params': [{'window': x/10} for x in range(0,10)]}
+    # print(params)
+
+    # print(type(train_x.iloc[0][0]))
+    # print(len(train_x.iloc[0][0]))
+    # print(len(train_x.iloc[0][0].diff()))
+    # print(train_x.iloc[0][0].diff()[1:])
+    from sktime.transformers.derivative_transformer import DerivativeTransformer
+    dt = DerivativeTransformer()
+    dt.transform(train_x)
+
+
+    return
+    grid = GridSearchCV(estimator=knn, param_grid=params, cv=3, scoring='accuracy')
+    grid.fit(train_x.iloc[0:10], train_y[0:10])
     print(grid.cv_results_)
+    print()
     print(grid.best_params_)
-    print(grid.best_estimator_.get_params())
-    return grid.best_estimator_
+
+def grid_test():
+    dataset = "GunPoint"
+    # train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
+    # knn = KNN(metric=dtw_distance, n_neighbors=1, algorithm="brute")
+    # # params = {'metric_params': [{'window': 0.1}, {'window': 0.5}]}
+    # params = {'metric_params': [{'window': 0.1}]}
+    # # params = []
+    # grid = GridSearchCV(estimator=knn, param_grid=params, cv=3, scoring='accuracy')
+    # grid.fit(train_x.iloc[0:10], train_y[0:10])
+    # print(grid.cv_results_)
+    # print()
+    # # print(grid.cv_results_['mean_test_score'])
+    # print(grid.best_score_)    dataset = "GunPoint"
+    #
+
+    # train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
+    # knn = KNN(metric=euclidean_distances, n_neighbors=1, algorithm="brute")
+    # # params = {'metric_params': [{'window': 0.1}, {'window': 0.5}]}
+    # params = {'metric_params': [{'squared': True}, {'squared: False'}]}
+    # # params = []
+    # grid = GridSearchCV(estimator=knn, param_grid=params, cv=3, scoring='accuracy')
+    # grid.fit(train_x.iloc[0:10], train_y[0:10])
+    # print(grid.cv_results_)
+    # print()
+    # # print(grid.cv_results_['mean_test_score'])
+    # print(grid.best_score_)
 
 
-# main method includes a simple experiment
+    train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
+    ee = ElasticEnsemble()
+    ee.fit(train_x.iloc[0:10],train_y[0:10])
+    probs = ee.predict_proba(train_x[11:15])
+    preds = ee.predict(train_x[11:15])
+    print(probs)
+    print()
+    print(preds)
+
+    # dist = erp_distance(train_x.iloc[0], train_x.iloc[1], band_size=5, g=0.1)
+    # dist = derivative_dtw_distance(train_x.iloc[0], train_x.iloc[1], band_size=5, g=0.1)
+    # dist = weighted_dtw_distance(train_x.iloc[0], train_x.iloc[1], g=0.2)
+    # print(dist)
+
+
+    # knn = knn = KNN(metric=dtw_distance, metric_params={"window":0}, n_neighbors=1, algorithm="brute")
+    # knn = knn = KNN(metric=lcss_distance, metric_params={"delta": 15, "epsilon": 0.23}, n_neighbors=1, algorithm="brute")
+    # knn.fit(train_x,train_y)
+    # output = knn.predict_proba(train_x.iloc[11:15])
+    # print(output)
+
 if __name__ == "__main__":
-    start = time.time()
-    dataset_name = "GunPoint"
-    # dataset_name = "BasicMotions"
-    train_x, train_y = load_from_web_to_xdataframe(dataset_name,is_train_file=True)
-    test_x, test_y = load_from_web_to_xdataframe(dataset_name, is_test_file=True)
+    # test_ee_logic()
+    grid_test()
 
-    # use the grid search example
-    # trained_dtw = example_grid_search(train_x,train_y)
 
-    # or build a simple classifier with no window optimisation
-    trained_dtw = DynamicTimeWarping1NNTSClassifier()
-    trained_dtw.fit(train_x,train_y)
 
-    print("time to train: " + str(time.time() - start))
-    preds = trained_dtw.predict(test_x)
-    print("time to train+pred: "+str(time.time()-start))
-    correct = 0
-    for i in range(0,len(test_x)):
-        print(str(test_y[i])+","+str(preds[i]))
-        if preds[i] == test_y[i]:
-            correct += 1
-    print("\ncorrect: "+str(correct)+"/"+str(len(test_y)))
 
-# Example output code - not to be included in release, obviously! Example from using grid search with GunPoint
-# overall acc = 94% (timeseriesclassification.com says 0.947 with DTW 1NN and a warping window set through CV (100 param options))
+
+
+
+# import numpy as np
+# import pandas as pd
 #
-# C:\Users\jason\Anaconda3\envs\sktime\python.exe C:/Users/jason/Documents/GitHub/sktime/sktime/classifiers/nearest_neighbour_classifiers.py
-# C:\Users\jason\Anaconda3\envs\sktime\lib\site-packages\sklearn\externals\joblib\externals\cloudpickle\cloudpickle.py:47: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
-#   import imp
-# {'mean_fit_time': array([0.0007977 , 0.00089839, 0.0004988 ]), 'std_fit_time': array([0.00039885, 0.00029951, 0.0004988 ]), 'mean_score_time': array([ 4.18143818,  9.55397735, 12.51285794]), 'std_score_time': array([0.32151874, 1.13589433, 1.6812154 ]), 'param_window_width': masked_array(data=[0.1, 0.5, 1.0],
-#              mask=[False, False, False],
-#        fill_value='?',
-#             dtype=object), 'params': [{'window_width': 0.1}, {'window_width': 0.5}, {'window_width': 1.0}], 'split0_test_score': array([0., 0., 0.]), 'split1_test_score': array([0.4, 0.4, 0.4]), 'split2_test_score': array([0.4, 0.2, 0.2]), 'split3_test_score': array([0.8, 0.8, 0.8]), 'split4_test_score': array([0.4, 0.4, 0.4]), 'split5_test_score': array([0.8, 0.6, 0.6]), 'split6_test_score': array([0.8, 0.8, 0.8]), 'split7_test_score': array([0.8, 0.8, 0.8]), 'split8_test_score': array([0.8, 0.8, 0.8]), 'split9_test_score': array([0.6, 0.6, 0.6]), 'mean_test_score': array([0.58, 0.54, 0.54]), 'std_test_score': array([0.26      , 0.26907248, 0.26907248]), 'rank_test_score': array([1, 2, 2]), 'split0_train_score': array([0.42222222, 0.42222222, 0.42222222]), 'split1_train_score': array([0.48888889, 0.48888889, 0.48888889]), 'split2_train_score': array([0.6, 0.6, 0.6]), 'split3_train_score': array([0.64444444, 0.64444444, 0.64444444]), 'split4_train_score': array([0.73333333, 0.73333333, 0.73333333]), 'split5_train_score': array([0.75555556, 0.75555556, 0.75555556]), 'split6_train_score': array([0.86666667, 0.86666667, 0.86666667]), 'split7_train_score': array([0.88888889, 0.88888889, 0.88888889]), 'split8_train_score': array([0.97777778, 0.97777778, 0.97777778]), 'split9_train_score': array([1., 1., 1.]), 'mean_train_score': array([0.73777778, 0.73777778, 0.73777778]), 'std_train_score': array([0.18850942, 0.18850942, 0.18850942])}
-# {'window_width': 0.1}
-# {'use_independent_dimension_distances': True, 'window_width': 0.1}
-# time to train: 2190.3773922920227
-# time to train+pred: 2322.36062002182
-# 1,1
-# 2,2
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 2,2
-# 1,2
-# 1,1
-# 1,1
-# 2,1
-# 1,1
-# 1,1
-# 1,1
-# 1,2
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 1,2
-# 1,1
-# 1,1
-# 1,1
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 2,2
-# 1,2
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 1,1
-# 2,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 2,1
-# 1,1
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 1,2
-# 1,1
-# 2,2
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 2,2
-# 2,2
-# 2,2
-# 1,1
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,1
-# 1,1
-# 2,2
-# 1,2
-# 2,2
-# 1,1
-# 2,2
-# 2,2
-# 1,1
+# from sktime.load_data import load_from_tsfile_to_dataframe
+# from sktime.time_domain_classification.using_sklearn_univariate import load_univariate_arff_to_dataframe as load_data
+# from sklearn.neighbors.classification import KNeighborsClassifier as KNN
 #
-# correct: 141/150
+# from sklearn.model_selection import GridSearchCV
 #
-# Process finished with exit code 0
-
+#
+# # univariate
+#
+# def dtw_dist(first, second, **kwargs):
+#     cutoff = np.inf
+#     try:
+#         window = kwargs["window"]
+#     except:
+#         window = 1.0
+#     # print("window: "+str(window))
+#
+#     n = len(first)
+#     m = len(second)
+#
+#     warp_matrix = np.full([n, m], np.inf)
+#     if n > m:
+#         window_size = n * window
+#     else:
+#         window_size = m * window
+#     window_size = int(window_size)
+#
+#     dist = lambda x1, x2: ((x1 - x2) ** 2)
+#
+#     pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second] for x1 in first])
+#
+#     # initialise edges of the warping matrix
+#     warp_matrix[0][0] = pairwise_distances[0][0]
+#     for i in range(1, window_size):
+#         warp_matrix[0][i] = pairwise_distances[0][i] + warp_matrix[0][i - 1]
+#         warp_matrix[i][0] = pairwise_distances[i][0] + warp_matrix[i - 1][0]
+#
+#     # now visit all allowed cells, calculate the value as the distance in this cell + min(top, left, or top-left)
+#     # traverse each row,
+#     for row in range(1, n):
+#         cutoff_beaten = False
+#         # traverse left and right by the allowed window
+#         for column in range(row - window_size, row + 1 + window_size):
+#             if column < 1 or column >= m:
+#                 continue
+#
+#             # find smallest entry in the warping matrix, either above, to the left, or diagonally left and up
+#             above = warp_matrix[row - 1][column]
+#             left = warp_matrix[row][column - 1]
+#             diag = warp_matrix[row - 1][column - 1]
+#
+#             # add the pairwise distance for [row][column] to the minimum of the three possible potential cells
+#             warp_matrix[row][column] = pairwise_distances[row][column] + min([above, left, diag])
+#
+#             # check for evidence that cutoff has been beaten on this row (if using)
+#             if cutoff is not None and warp_matrix[row][column] < cutoff:
+#                 cutoff_beaten = True
+#
+#         # if using a cutoff, at least one calculated value on this row MUST be less than the cutoff otherwise the
+#         # final distance is guaranteed not to be less. Therefore, if the cutoff has not been beaten, early-abandon
+#         if cutoff is not None and cutoff_beaten is False:
+#             return float("inf")
+#
+#     return warp_matrix[n - 1][m - 1]
+#
+#
+#
+# class ElasticEnsemble():
+#
+#     def __init__(self):
+#         pass
+#
+#     def get_constituent_classifier(self, distance_function):
+#
+#
+# def lcss_dist(first, second, **kwargs) -> float:
+#     try:
+#         delta = kwargs["delta"]
+#     except KeyError:
+#         delta = 3
+#
+#     try:
+#         epsilon = kwargs["epsilon"]
+#     except KeyError:
+#         epsilon = 1
+#
+#     m = len(first)
+#     n = len(second)
+#
+#     lcss = np.zeros([m + 1, n + 1])
+#
+#     for i in range(0, m):
+#         # for (int j = i-delta; j <= i+delta; j++){
+#         for j in range(i - delta, i + delta + 1):
+#             if j < 0:
+#                 j = -1
+#             elif j >= n:
+#                 j = i + delta
+#             elif second[j] + epsilon >= first[i] and second[j] - epsilon <= first[i]:
+#                 lcss[i + 1][j + 1] = lcss[i][j] + 1
+#             elif lcss[i][j + 1] > lcss[i + 1][j]:
+#                 lcss[i + 1][j + 1] = lcss[i][j + 1]
+#             else:
+#                 lcss[i + 1][j + 1] = lcss[i + 1][j]
+#
+#     max_val = -1;
+#     for i in range(1, len(lcss[len(lcss) - 1])):
+#         if lcss[len(lcss) - 1][i] > max_val:
+#             max_val = lcss[len(lcss) - 1][i];
+#
+#     return 1 - (max_val / m);
+#
+#
+# def msm_dist(first, second, **kwargs) -> float:
+#     try:
+#         c = kwargs["c"]
+#     except KeyError:
+#         c = 0.1
+#
+#     m = len(first)
+#     n = len(second)
+#
+#     cost = np.zeros([m, n])
+#
+#     def calc_cost(new_point, x, y):
+#         dist = 0
+#
+#         if ((x <= new_point) and (new_point <= y)) or ((y <= new_point) and (new_point <= x)):
+#             return c
+#         else:
+#             return c + min(np.abs(new_point - x), np.abs(new_point - y))
+#
+#     # Initialization
+#     cost[0][0] = np.abs(first[0] - second[0])
+#     for i in range(1, m):
+#         cost[i][0] = cost[i - 1][0] + calc_cost(first[i], first[i - 1], second[0])
+#
+#     for i in range(1, n):
+#         cost[0][i] = cost[0][i - 1] + calc_cost(second[i], first[0], second[i - 1])
+#
+#     # Main Loop
+#     for i in range(1, m):
+#         for j in range(1, n):
+#             d1 = cost[i - 1][j - 1] + np.abs(first[i] - second[j])
+#             d2 = cost[i - 1][j] + calc_cost(first[i], first[i - 1], second[j])
+#             d3 = cost[i][j - 1] + calc_cost(second[j], first[i], second[j - 1])
+#             cost[i][j] = min(d1, d2, d3)
+#
+#     return cost[m - 1][n - 1];
+#
+#
+# def test_knns_univariate_data():
+#     # dataset = "GunPoint"
+#     dataset = "ItalyPowerDemand"
+#     train_x, train_y = load_data("C:/users/Jason/Dropbox/TSCProblems/" + dataset + "/" + dataset + "_TRAIN.arff")
+#     test_x, test_y = load_data("C:/users/Jason/Dropbox/TSCProblems/" + dataset + "/" + dataset + "_TEST.arff")
+#
+#     knn = KNN(metric=dtw_dist, n_neighbors=1, algorithm="brute")
+#     knn.fit(train_x, train_y)
+#     preds = knn.predict(test_x)
+#     print("DTW: " + str(sum(preds == test_y) / len(test_y)))
+#
+#     knn = KNN(metric=lcss_dist, n_neighbors=1, algorithm="brute")
+#     knn.fit(train_x, train_y)
+#     preds = knn.predict(test_x)
+#     print("LCSS: " + str(sum(preds == test_y) / len(test_y)))
+#
+#     knn = KNN(metric=msm_dist, n_neighbors=1, algorithm="brute")
+#     knn.fit(train_x, train_y)
+#     preds = knn.predict(test_x)
+#     print("MSM: " + str(sum(preds == test_y) / len(test_y)))
+#
+#     """
+#     DTW: 0.9504373177842566
+#     LCSS: 0.8007774538386784
+#     MSM: 0.9455782312925171
+#     """
+#
+# # multivariate
+#
+#
+# def dtw_dist_multi(first, second, **kwargs):
+#     dist = 0
+#     for dim in range(0,len(first)):
+#         # dist += dtw_dist(first.iloc[dim],second.iloc[dim],**kwargs)
+#         dist += dtw_dist(first[dim],second[dim],**kwargs)
+#         # print(dist)
+#     return dist
+#
+#
+# def lcss_dist_multi(first, second, **kwargs):
+#     dist = 0
+#     for dim in range(0,len(first)):
+#         # dist += dtw_dist(first.iloc[dim],second.iloc[dim],**kwargs)
+#         dist += lcss_dist(first[dim],second[dim],**kwargs)
+#         # print(dist)
+#     return dist
+#
+#
+# def test_knns_multivariate_data():
+#     dataset = "BasicMotions"
+#
+#     train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/"+dataset+"/", file_name=dataset+"_TRAIN.ts")
+#
+#     # CONFIRMED OK
+#     # dist = dtw_dist_multi(train_x.iloc[0], train_x.iloc[1])
+#     # dist = lcss_dist_multi(train_x.iloc[0], train_x.iloc[1])
+#     # print(dist)
+#
+#     knn = KNN(metric=lcss_dist_multi, n_neighbors=1, algorithm="brute")
+#     knn.fit(train_x.iloc[0:10], train_y[0:10])
+#     preds = knn.predict(train_x.iloc[11:14])
+#
+#     print(preds)
+#
+#
+# def test_ee_logic():
+#
+#     # tidy
+#     dataset = "GunPoint"
+#     train_x, train_y = load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
+#     knn = KNN(metric=dtw_dist_multi, n_neighbors=1, algorithm="brute")
+#     # params = {'metric_params': [{'window': 0.1}, {'window': 0.5}]}
+#     params = {'metric_params': [{'window': x/10} for x in range(0,10)]}
+#     # print(params)
+#
+#     # print(type(train_x.iloc[0][0]))
+#     # print(len(train_x.iloc[0][0]))
+#     # print(len(train_x.iloc[0][0].diff()))
+#     # print(train_x.iloc[0][0].diff()[1:])
+#     from sktime.transformers.derivative_transformer import DerivativeTransformer
+#     dt = DerivativeTransformer()
+#     dt.transform(train_x)
+#
+#
+#     return
+#     grid = GridSearchCV(estimator=knn, param_grid=params, cv=3, scoring='accuracy')
+#     grid.fit(train_x.iloc[0:10], train_y[0:10])
+#     print(grid.cv_results_)
+#     print()
+#     print(grid.best_params_)
+#
+#
+#
+#
+#
+# if __name__ == "__main__":
+#     test_ee_logic()
+#
