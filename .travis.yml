@@ -1,3 +1,9 @@
+# whitelist the following branches for building
+branches:
+  only:
+    - master
+    - dev
+
 dist: trusty
 sudo: false
 

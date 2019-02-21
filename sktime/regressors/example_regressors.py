@@ -3,9 +3,9 @@ This is a module containing time series regressors
 """
 import numpy as np
 import pandas as pd
-from .utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+from sktime.utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
 from sklearn.ensemble import RandomForestRegressor
-from .base import BaseRegressor
+from sktime.regressors.base import BaseRegressor
 
 
 class TSDummyRegressor(BaseRegressor):

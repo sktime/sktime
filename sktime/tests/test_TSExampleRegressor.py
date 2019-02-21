@@ -8,7 +8,7 @@ import pandas as pd
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime.regressors import TSExampleRegressor
+from sktime.regressors.example_regressors import TSExampleRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sktime.model_selection import GridSearchCV

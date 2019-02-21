@@ -2,21 +2,19 @@ from io import BytesIO
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-import pytest
 import numpy as np
 import pandas as pd
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
-from sktime.model_selection import GridSearchCV
-from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.pipeline import Pipeline
 
-from sktime.classifiers import TSExampleClassifier
-from sktime.transformers import TSExampleTransformer, TSDummyTransformer
-from sktime.transformers import TSColumnTransformer
+from sktime.classifiers.example_classifiers import TSExampleClassifier
+from sktime.transformers.example_transformers import TSExampleTransformer, TSDummyTransformer
+from sktime.transformers.compose import TSColumnTransformer
+
 
 def read_data(file):
     '''
@@ -44,6 +42,7 @@ Xdf_test = pd.DataFrame({'ts': Xsf_test, 'ts_copy': Xsf_test})
 y_train = pd.Series(np.array(y_train_pd, dtype=np.int))
 Xsf_train = pd.Series([row for _, row in X_train_pd.iterrows()])
 Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
+
 
 def test_pipeline():
     X = Xdf_train
@@ -76,6 +75,7 @@ def test_pipeline():
     got = model.predict(X)
     assert_array_equal(expected, got)
 
+
 def test_series_pipeline():
     '''
     there is a series to series transformer tested in here
@@ -92,6 +92,7 @@ def test_series_pipeline():
                      steps=strategy)
     model.fit(X, y)
     assert_array_equal(model.predict(Xdf_test), np.ones(y_test_pd.shape[0]) * 2)
+
 
 def test_pandas_friendly_column_transformer_pipeline():
     '''

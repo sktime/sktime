@@ -2,13 +2,12 @@ from io import BytesIO
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-import pytest
 import numpy as np
 import pandas as pd
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime.classifiers import TSExampleClassifier
+from sktime.classifiers.example_classifiers import TSExampleClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sktime.model_selection import GridSearchCV
