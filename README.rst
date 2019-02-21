@@ -19,7 +19,7 @@ to install the development version:
 2. Move into the root directory: :code:`cd sktime`
 3. Make sure your local version is up-to-date: :code:`git pull`
 4. Switch onto the development branch: :code:`git checkout dev`
-5. Optionally, activate environment, e.g. with conda: :code:`conda activate <env>`
+5. Optionally, activate destination environment for package, e.g. with conda: :code:`conda activate <env>`
 6. Install package: :code:`pip install .`
 
 
