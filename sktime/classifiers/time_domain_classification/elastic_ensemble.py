@@ -1,8 +1,8 @@
 import numpy as np
-from sktime.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 from sklearn.neighbors.classification import KNeighborsClassifier as KNN
 from sklearn.model_selection import GridSearchCV
-from sktime.classifiers.time_domain_classification.ts_distance_measures import dtw_distance, derivative_dtw_distance, weighted_dtw_distance, weighted_derivative_dtw_distance, lcss_distance, erp_distance, msm_distance
+from sktime.classifiers.example_classifiers import dtw_distance, derivative_dtw_distance, weighted_dtw_distance, weighted_derivative_dtw_distance, lcss_distance, erp_distance, msm_distance
 
 
 class ElasticEnsemble:

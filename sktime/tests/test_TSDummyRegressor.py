@@ -8,7 +8,7 @@ import pandas as pd
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime.regressors import TSDummyRegressor
+from sktime.regressors.example_regressors import TSDummyRegressor
 
 
 def read_data(file):

@@ -2,17 +2,33 @@
 """Install script for sktime"""
 
 import codecs
+import re
+from setuptools import find_packages, setup
 import os
 
-from setuptools import find_packages, setup
 
-# get __version__ from _version.py
-ver_file = os.path.join('sktime', '_version.py')
-with open(ver_file) as f:
-    exec(f.read())
+here = os.path.abspath(os.path.dirname(__file__))
+
+
+def read(*parts):
+    # intentionally *not* adding an encoding option to open, See:
+    #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
+    with codecs.open(os.path.join(here, *parts), 'r') as fp:
+        return fp.read()
+
+
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file,
+                              re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn like package for time-series regression, classification and forecasting'
+DESCRIPTION = 'scikit-learn compatible toolbox for supervised learning with time-series/panel data'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Kiraly'
@@ -20,7 +36,7 @@ MAINTAINER_EMAIL = 'f.kiraly@ucl.ac.uk'
 URL = 'https://github.com/kiraly-group/sktime'
 LICENSE = 'undecided'
 DOWNLOAD_URL = 'https://github.com/kiraly-group/sktime'
-VERSION = __version__
+VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas', 'xpandas']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
@@ -51,7 +67,7 @@ setup(name=DISTNAME,
       maintainer=MAINTAINER,
       maintainer_email=MAINTAINER_EMAIL,
       description=DESCRIPTION,
-#      license=LICENSE,
+      # license=LICENSE,
       url=URL,
       version=VERSION,
       download_url=DOWNLOAD_URL,
@@ -60,4 +76,4 @@ setup(name=DISTNAME,
       classifiers=CLASSIFIERS,
       packages=find_packages(),
       install_requires=INSTALL_REQUIRES,
-extras_require=EXTRAS_REQUIRE)
+      extras_require=EXTRAS_REQUIRE)

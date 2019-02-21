@@ -8,7 +8,7 @@ import pandas as pd
 
 from sklearn.utils.testing import assert_array_equal
 
-from sktime.classifiers import TSDummyClassifier
+from sktime.classifiers.example_classifiers import TSDummyClassifier
 
 
 def read_data(file):

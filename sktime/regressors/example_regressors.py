@@ -1,25 +1,29 @@
 """
-This is a module containing time series time_domain_classification
+This is a module containing time series regressors
 """
 import numpy as np
 import pandas as pd
-from .utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
-from sklearn.ensemble import RandomForestClassifier
-from .base import BaseClassifier
+from sktime.utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+from sklearn.ensemble import RandomForestRegressor
+from sktime.regressors.base import BaseRegressor
 
 
-class TSDummyClassifier(BaseClassifier):
-    """ A dummy classifier to be used as a reference implementation.
+class TSDummyRegressor(BaseRegressor):
+    """ A dummy regressor to be used as a reference implementation.
 
     Parameters
     ----------
-    strategy : str, default='most'
-        A parameter defining the prediction strategy of the dummy classifier
-        most: predicts the most frequent class in the dataset
-        least: predicts the least frequent class in the dataset
+    strategy : str, default='constant'
+        A parameter defining the prediction strategy of the dummy regressor
+        constant: always predicts the constant value supplied
+        average: predicts the average of training targets
+    constant : float, default="42.0"
+        The parameter to be always predicted, if that's the strategy
     """
-    def __init__(self, strategy='most'):
+
+    def __init__(self, strategy='constant', constant=42.0):
         self.strategy = strategy
+        self.constant = constant
 
     def fit(self, X, y):
         """ A reference implementation of a fitting function.
@@ -37,15 +41,11 @@ class TSDummyClassifier(BaseClassifier):
             Returns self.
         """
         X, y = check_ts_X_y(X, y)
-        # convert xpandas or pandas into primitive numpy array (implicit) and get counts
-        unique, counts = np.unique(y, return_counts=True)
-        # fitting (finding the value of dummy prediciton theta_) the model based on strategy
-        if self.strategy == 'most':
-            index = np.argmax(counts)
-            self.theta_ = unique[index]
-        elif self.strategy == 'least':
-            index = np.argmin(counts)
-            self.theta_ = unique[index]
+        # fitting (finding the value of dummy prediction theta_) the model based on strategy
+        if self.strategy == 'constant':
+            self.theta_ = self.constant
+        elif self.strategy == 'average':
+            self.theta_ = np.mean(y)
         else:
             raise ValueError('Unknown Strategy')
         # let the model know that it is fitted
@@ -70,11 +70,11 @@ class TSDummyClassifier(BaseClassifier):
         return np.ones(X.shape[0], dtype=np.int64) * self.theta_
 
 
-class TSExampleClassifier(BaseClassifier):
+class TSExampleRegressor(BaseRegressor):
     """ An example regressor that makes use of the xpandas input.
     """
 
-    def __init__(self, func=np.mean, columns=None, estimator=RandomForestClassifier()):
+    def __init__(self, func=np.mean, columns=None, estimator=RandomForestRegressor()):
         self.func = func
         self.columns = columns
         self.estimator = estimator
@@ -96,8 +96,7 @@ class TSExampleClassifier(BaseClassifier):
         """
 
         # simple feature extraction
-        if self.columns is not None:
-            X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
+        X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
         X, y = check_ts_X_y(X, y)
         # fitting (finding the value of dummy prediction theta_) the model based on strategy
@@ -122,8 +121,7 @@ class TSExampleClassifier(BaseClassifier):
         y : ndarray, shape (n_samples,)
             Returns the dummy predictions
         """
-        if self.columns is not None:
-            X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
+        X = pd.DataFrame([X[col].apply(self.func) for col in self.columns]).T
 
         X = check_ts_array(X)
 
