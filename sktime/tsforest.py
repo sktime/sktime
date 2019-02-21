@@ -28,6 +28,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble.forest import (MAX_INT,
                                      _generate_sample_indices,
                                      _generate_unsampled_indices)
+from numba import jit
 
 __all__ = ["TimeSeriesForestClassifier"]
 
@@ -508,7 +509,9 @@ class TSForestClassifier(six.with_metaclass(ABCMeta, TSBaseForest,
 
 
 class TimeSeriesForestClassifier(TSForestClassifier):
-
+    """
+    Time-Series Forest Classifier.
+    """
     def __init__(self,
                  base_estimator=None,
                  n_estimators='warn',
@@ -521,7 +524,7 @@ class TimeSeriesForestClassifier(TSForestClassifier):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 bootstrap=True,
+                 bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
                  random_state=None,
@@ -531,6 +534,7 @@ class TimeSeriesForestClassifier(TSForestClassifier):
 
         if base_estimator is None:
             # Set default base_estimator for time-series forest.
+            @jit('float64(float64[:])')
             def _ts_slope(y):
                 """
                 Compute slope of time series using linear regression
@@ -540,12 +544,14 @@ class TimeSeriesForestClassifier(TSForestClassifier):
                     return 0
                 else:
                     x = np.arange(n) + 1
-                    return (((x * y).mean() - x.mean() * y.mean())
-                            / ((x ** 2).mean() - (x.mean()) ** 2))
+                    x_mu = x.mean()
+                    return (((x * y).mean() - x_mu * y.mean())
+                            / ((x ** 2).mean() - x_mu ** 2))
 
             features = [np.mean, np.std, _ts_slope]
             base_estimator = TSPipeline([
-                ('extract', RandomIntervalFeatureExtractor(features=features)),
+                ('extract', RandomIntervalFeatureExtractor(features=features,
+                                                           check_input=False)),
                 ('clf', DecisionTreeClassifier())
             ])
 
