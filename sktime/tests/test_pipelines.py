@@ -14,6 +14,7 @@ from sklearn.pipeline import Pipeline
 from sktime.classifiers.example_classifiers import TSExampleClassifier
 from sktime.transformers.example_transformers import TSExampleTransformer, TSDummyTransformer
 from sktime.transformers.compose import TSColumnTransformer
+from sktime.transformers.compose import RowwiseTransformer
 
 
 def read_data(file):
@@ -114,3 +115,38 @@ def test_pandas_friendly_column_transformer_pipeline():
                      steps=strategy)
     model.fit(X, y)
     assert_array_equal(model.predict(Xdf_test), np.ones(y_test_pd.shape[0]) * 2)
+
+
+def test_RowwiseTransformer_pipeline():
+    X = Xdf_train
+    y = y_train
+
+    # using pure sklearn
+    mean_func = lambda X: pd.DataFrame([np.mean(row) for row in X])
+    first_func = lambda X: pd.DataFrame([row.iloc[0] for row in X])
+    column_transformer = ColumnTransformer(
+        [('mean', FunctionTransformer(func=mean_func, validate=False), 'ts'),
+         ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
+    estimator = RandomForestClassifier(random_state=1)
+    strategy = [
+        ('feature_extract', column_transformer),
+        ('rfestimator', estimator)]
+    model = Pipeline(memory=None,
+                     steps=strategy)
+    model.fit(X, y)
+    expected = model.predict(X)
+
+    # using sktime with sklearn pipeline
+    first_func = lambda X: pd.DataFrame([row.iloc[0] for row in X])
+    column_transformer = TSColumnTransformer(
+        [('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), 'ts'),
+         ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
+    estimator = RandomForestClassifier(random_state=1)
+    strategy = [
+        ('feature_extract', column_transformer),
+        ('rfestimator', estimator)]
+    model = Pipeline(memory=None,
+                     steps=strategy)
+    model.fit(X, y)
+    got = model.predict(X)
+    assert_array_equal(expected, got)
