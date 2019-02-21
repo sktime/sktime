@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=dev
+    :target: https://travis-ci.com/alan-turing-institute/sktime
+    
 sktime
 ======
 
