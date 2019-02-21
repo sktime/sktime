@@ -9,10 +9,9 @@ cache:
 
 matrix:
   include:
-    - env: PYTHON_VERSION="3.6" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           SKLEARN_VERSION="0.19.1" PANDAS_VERSION="0.18.1"
-    - env: PYTHON_VERSION="3.7" NUMPY_VERSION="*" SCIPY_VERSION="*"
-           SKLEARN_VERSION="*" PANDAS_VERSION="*"
+    # add more combinations here as per requirement
+    - env: PYTHON_VERSION="3.7" NUMPY_VERSION="1.15" SCIPY_VERSION="1.1"
+           SKLEARN_VERSION="0.20" PANDAS_VERSION="0.24"
 
 install:
   # install miniconda
