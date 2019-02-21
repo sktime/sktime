@@ -15,12 +15,12 @@ Installation
 The package is currently not available directly via PyPI. Instead, follow these steps
 to install the development version:
 
-1. Download the repository if you have not done so already: `git clone https://github.com/mloning/python_utils.git`
-2. Move into the root directory: `cd sktime`
-3. Make sure your local version is up-to-date: `git pull`
-4. Switch onto the development branch: `git checkout dev`
-5. Optionally, activate environment, e.g. with conda: `conda activate <env>`
-6. Install package: `pip install .`
+1. Download the repository if you have not done so already: :code:`git clone https://github.com/mloning/python_utils.git`
+2. Move into the root directory: :code:`cd sktime`
+3. Make sure your local version is up-to-date: :code:`git pull`
+4. Switch onto the development branch: :code:`git checkout dev`
+5. Optionally, activate environment, e.g. with conda: :code:`conda activate <env>`
+6. Install package: :code:`pip install .`
 
 
 Project development
