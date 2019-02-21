@@ -54,8 +54,8 @@ class TSDummyTransformer(BaseTransformer):
         T : array-like, pandas DataFrame or Series, shape (n_samples, ...)
             The transformed data
         """
-        # TODO: implement new checks (check_array remoes column names and X is no longer pandas)
-        #X = check_ts_array(X)
+        # check validity of input
+        X = check_ts_array(X)
         check_is_fitted(self, 'is_fitted_')
 
         T = X
