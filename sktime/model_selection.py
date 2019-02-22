@@ -3,7 +3,8 @@ classes and functions for model validation
 '''
 from sklearn.model_selection import GridSearchCV as skGSCV
 from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
-from .base import BaseClassifier, BaseRegressor
+from sktime.regressors.base import BaseRegressor
+from sktime.classifiers.base import BaseClassifier
 
 
 class GridSearchCV(skGSCV):
