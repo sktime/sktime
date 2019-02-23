@@ -2,26 +2,19 @@ from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
-from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
 from .series_to_series import RandomIntervalSegmenter
 
 __all__ = ["RandomIntervalFeatureExtractor"]
 
 
-class RandomIntervalFeatureExtractor(BaseTransformer, RandomIntervalSegmenter):
+class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
     """
     Splits time-series into random intervals and extracts features from each interval.
     Series-to-tabular transformer.
     """
 
     def __init__(self, n_intervals='random', features=None, random_state=None, check_input=True):
-        super(RandomIntervalFeatureExtractor, self).__init__(
-            n_intervals=n_intervals,
-            features=features,
-            random_state=random_state,
-            check_input=check_input
-        )
         """
         Creates instance of RandomIntervalFeatureExtractor transformer.
 
@@ -32,6 +25,12 @@ class RandomIntervalFeatureExtractor(BaseTransformer, RandomIntervalSegmenter):
         :param random_state:
         :param check_input:
         """
+        super(RandomIntervalFeatureExtractor, self).__init__(
+            n_intervals=n_intervals,
+            features=features,
+            random_state=random_state,
+            check_input=check_input
+        )
         self.feature_names_ = []
 
         # Check input of feature calculators, i.e list of functions to be applied to time-series
@@ -44,13 +43,6 @@ class RandomIntervalFeatureExtractor(BaseTransformer, RandomIntervalSegmenter):
                                      'applied to the data columns')
                 else:
                     self.features = features
-
-        if n_intervals == 'fixed':
-            self.n_intervals = None
-        elif np.issubdtype(type(n_intervals), np.integer) or 'random':
-            self.n_intervals = n_intervals
-        else:
-            raise ValueError('Number of intervals must be either "random", "fixed" or integer')
 
     def transform(self, X, y=None):
         """
@@ -82,12 +74,15 @@ class RandomIntervalFeatureExtractor(BaseTransformer, RandomIntervalSegmenter):
 
         # Compute features on intervals
         Xt = np.zeros((n_rows, n_features * n_intervals))  # Allocate output array for transformed data
-
+        feature_names_ = []
         for c, col in enumerate(X.columns):
             for i, (start, end) in enumerate(self.intervals_[c]):
                 interval = Xarr[c, :, start:end]
                 for f, func in enumerate(self.features):
-                    Xt[:, c + i + f] = np.apply_along_axis(func, 1, interval)
-                    self.feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
+                    Xt[:, (c * n_intervals * n_features) + (i * n_features) + f] = np.apply_along_axis(func, 1,
+                                                                                                       interval)
+                    feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
 
-        return Xt
+        self.feature_names_ = feature_names_
+        return pd.DataFrame(Xt, columns=self.feature_names_)
+
