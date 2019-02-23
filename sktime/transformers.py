@@ -100,7 +100,7 @@ class RandomIntervalFeatureExtractor(BaseEstimator, TransformerMixin):
                                                                                 self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
-        X = np.array([np.array([row[col] for _, row in X.iterrows()])
+        Xarr = np.array([np.array([row[col] for _, row in X.iterrows()])
                       for col, _ in enumerate(columns)])
 
         # Split input data into random intervals from `fit`
@@ -115,7 +115,7 @@ class RandomIntervalFeatureExtractor(BaseEstimator, TransformerMixin):
         # Compute features on intervals
         for c, col in enumerate(columns):
             for i, (start, end) in enumerate(self.intervals_[c]):
-                interval = X[c, :, start:end]
+                interval = Xarr[c, :, start:end]
                 for f, func in enumerate(self.features):
                     Xt[:, c + i + f] = np.apply_along_axis(func, 1, interval)
                     # self.computed_features_.append(f'{col}_{start}_{end}_{func.__name__}')
