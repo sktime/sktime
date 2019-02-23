@@ -1,19 +1,27 @@
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
+import pandas as pd
 from ..utils.validation import check_equal_index
 from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
+from .series_to_series import RandomIntervalSegmenter
 
 __all__ = ["RandomIntervalFeatureExtractor"]
 
 
-class RandomIntervalFeatureExtractor(BaseTransformer):
+class RandomIntervalFeatureExtractor(BaseTransformer, RandomIntervalSegmenter):
     """
     Splits time-series into random intervals and extracts features from each interval.
     Series-to-tabular transformer.
     """
 
     def __init__(self, n_intervals='random', features=None, random_state=None, check_input=True):
+        super(RandomIntervalFeatureExtractor, self).__init__(
+            n_intervals=n_intervals,
+            features=features,
+            random_state=random_state,
+            check_input=check_input
+        )
         """
         Creates instance of RandomIntervalFeatureExtractor transformer.
 
@@ -24,12 +32,6 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         :param random_state:
         :param check_input:
         """
-        self.input_indexes_ = []  # list of time-series indexes of each column
-        self.random_state = random_state
-        self.check_input = check_input
-        self.intervals_ = []
-        self.input_shape_ = ()
-        self.is_fitted_ = False
         self.feature_names_ = []
 
         # Check input of feature calculators, i.e list of functions to be applied to time-series
@@ -49,32 +51,6 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
             self.n_intervals = n_intervals
         else:
             raise ValueError('Number of intervals must be either "random", "fixed" or integer')
-
-    def fit(self, X, y=None):
-        self.input_shape_ = X.shape
-
-        if self.check_input:
-            self.input_indexes_ = check_equal_index(X)
-        else:
-            self.input_indexes_ = [X.iloc[0, c].index for c in range(self.input_shape_[1])]
-
-        # Compute random intervals for each column
-        intervals_ = []
-        if self.n_intervals == 'random':
-            for c in range(self.input_shape_[1]):
-                intervals = rand_intervals_rand_n(self.input_indexes_[c],
-                                                  random_state=self.random_state)
-                intervals_.append(intervals)
-        else:
-            for c in range(self.input_shape_[1]):
-                intervals = rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals,
-                                                   random_state=self.random_state)
-                intervals_.append(intervals)
-
-        self.intervals_ = intervals_
-        self.is_fitted_ = True
-
-        return self
 
     def transform(self, X, y=None):
         """
@@ -115,4 +91,3 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
                     self.feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
 
         return Xt
-
