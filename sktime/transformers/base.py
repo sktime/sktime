@@ -1,6 +1,6 @@
-'''
+"""
 Base estimator for transformers
-'''
+"""
 import abc
 from sklearn.base import BaseEstimator
 
@@ -10,18 +10,18 @@ class BaseTransformer(BaseEstimator, metaclass=abc.ABCMeta):
     Base class for transformers, for identification.
     """
     @abc.abstractmethod
-    def fit(self):
-        '''
+    def fit(self, X, y=None):
+        """
         Function to fit transformer
         As fit_transform calls it, its implementation is made mandatory
-        '''
+        """
 
     @abc.abstractmethod
-    def transform(self):
-        '''
+    def transform(self, X, y=None):
+        """
         Function to perform actual transformation
         As fit_transform calls it, its implementation is made mandatory
-        '''
+        """
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit to data, then transform it.
