@@ -47,6 +47,6 @@ deploy:
     skip-cleanup: true
     local_dir: "./documentation/build_doc_site/html"
     github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-    keep-history: true
+    keep-history: false
     on:
         branch: dev
