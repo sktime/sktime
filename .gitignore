@@ -135,3 +135,6 @@ doc/datasets/generated/
 
 # dask-worker-space
 dask-worker-space
+
+# documentation build files
+build_doc_site/

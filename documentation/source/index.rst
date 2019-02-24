@@ -13,6 +13,7 @@ Welcome to sktime's documentation!
    autogen/sktime
    quickstart
    examples
+   extension
 
 
 Indices and tables
