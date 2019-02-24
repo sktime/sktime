@@ -42,8 +42,10 @@ after_success:
     - make html
 
 deploy:
-    - provider: pages
-    - skip-cleanup: true
-    - local_dir: "./build_doc_site/html"
-    - github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-    - keep-history: true
+    provider: pages
+    skip-cleanup: true
+    local_dir: "./build_doc_site/html"
+    github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+    keep-history: true
+    on:
+        brnach: dev
