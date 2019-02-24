@@ -30,7 +30,7 @@ install:
     # create the testing environment
     - conda create -n testenv --yes python=$PYTHON_VERSION pip
     - source activate testenv
-    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov
+    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov sphinx
 
 script:
     - mkdir for_test
@@ -44,7 +44,7 @@ after_success:
 deploy:
     provider: pages
     skip-cleanup: true
-    local_dir: "./build_doc_site/html"
+    local_dir: "./documentation/build_doc_site/html"
     github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
     keep-history: true
     on:
