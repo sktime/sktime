@@ -3,7 +3,8 @@ This is a module containing time series time_domain_classification
 """
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+from sktime.utils.validation import check_ts_X_y, check_ts_array
+from sklearn.utils.validation import check_is_fitted
 from sklearn.ensemble import RandomForestClassifier
 from sktime.classifiers.base import BaseClassifier
 

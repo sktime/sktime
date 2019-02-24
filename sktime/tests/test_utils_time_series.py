@@ -1,8 +1,8 @@
 from ..utils.time_series import rand_intervals_fixed_n, rand_intervals_rand_n
 import numpy as np
+import pytest
 
-N_ITER = 10_000
-
+N_ITER = 100
 
 
 def _test_rand_intervals(func):
@@ -40,6 +40,17 @@ def test_rand_intervals_fixed_n():
 
     # test number of intervals
     x = np.arange(10)
-    for i in range(2, 100, 2):
+    for i in range(1, 100, 2):
         intervals = rand_intervals_fixed_n(x, n=i)
         assert intervals.shape[0] == i
+
+
+def test_bad_input_args():
+    bad_n_intervals = [0, 'abc', 1.0]
+    m = 10
+    x = np.arange(m)
+    for arg in bad_n_intervals:
+        with pytest.raises(ValueError):
+            rand_intervals_fixed_n(x, n=arg)
+
+

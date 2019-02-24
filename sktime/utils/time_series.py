@@ -45,18 +45,20 @@ def rand_intervals_rand_n(x, random_state=None):
     return np.column_stack([starts, ends])
 
 
-def rand_intervals_fixed_n(x, n=None, random_state=None):
+def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
     """
     Computes a fixed number (n) of overlapping intervals from index (x) with
     random starting points and lengths.
 
     :param x : array_like, shape = [n_observations]
         Array containing the time-series index.
-    :param n : None or int
+    :param n : 'sqrt' or int
         Number of random intervals to compute.
 
-        - If n, n random intervals are generated.
-        - If None, int(sqrt(m)) intervals are generated where m is the length of the time-series.
+        - If int, n random intervals are generated.
+        - If 'sqrt', int(sqrt(m)) intervals are generated where m is the length of the time-series.
+
+        The default is 'sqrt'.
     :param random_state : int, RandomState instance or None, optional (default=None)
 
         - If int, random_state is the seed used by the random number generator;
@@ -73,15 +75,20 @@ def rand_intervals_fixed_n(x, n=None, random_state=None):
 
     rng = check_random_state(random_state)
 
-    m = x.size + 1  # series length, plus one for half-open interval indexing in Python
-    if n is None:
+    m = x.size  # series length
+    if n == 'sqrt':
         n = int(np.sqrt(m))  # number of random intervals
+    elif not (np.issubdtype(type(n), np.integer) and (n > 0)):
+        raise ValueError(f'n must be either "sqrt" or positive integer, but found {type(n)}')
 
     min_length = 1
-    starts = rng.randint(m - min_length, size=n)
-    ends = np.zeros(n, dtype=int)
+    starts = rng.randint(m - min_length + 1, size=n)
+    if n == 1:
+        starts = np.array([starts, ], dtype=np.integer)  # make it iterable
+
+    ends = np.zeros(n, dtype=np.integer)
     for i, start in enumerate(starts):
-        length = rng.randint(min_length, m - start)
+        length = rng.randint(min_length, m - start + 1)
         end = start + length
         if end > m:
             end = m

@@ -2,7 +2,6 @@ from io import BytesIO
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-import pytest
 import numpy as np
 import pandas as pd
 

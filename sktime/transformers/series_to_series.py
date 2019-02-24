@@ -13,14 +13,16 @@ class RandomIntervalSegmenter(BaseTransformer):
     Series-to-series transformer.
     """
 
-    def __init__(self, n_intervals='random', features=None, random_state=None, check_input=True):
+    def __init__(self, n_intervals='sqrt', random_state=None, check_input=True):
         """
         Creates instance of RandomIntervalFeatureExtractor transformer.
 
         :param n_intervals: str or int
-            If "fixed", sqrt of length of time-series is used. If "random", random number of intervals is generated.
-            Use integer to specify (fixed) number of intervals to generate. Default is "random".
-        :param features:
+            - If "sqrt", sqrt of length of time-series is used.
+            - If "random", random number of intervals is generated.
+            - If int, n_intervals intervals are generated.
+
+            Default is "sqrt".
         :param random_state:
         :param check_input:
         """
@@ -30,24 +32,17 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.intervals_ = []
         self.input_shape_ = ()
         self.is_fitted_ = False
+        self.n_intervals = n_intervals
 
-        # Check input of feature calculators, i.e list of functions to be applied to time-series
-        if features is None:
-            raise ValueError('Must supply a list of functions to extract features')
-        else:
-            if isinstance(features, list):
-                if not all([callable(f) for f in features]):
-                    raise ValueError('Features must be list containing only functions (callable) to be '
-                                     'applied to the data columns')
-                else:
-                    self.features = features
-
-        if n_intervals == 'fixed':
-            self.n_intervals = None
-        elif np.issubdtype(type(n_intervals), np.integer) or 'random':
+        if n_intervals in ('sqrt', 'random'):
+            self.n_intervals = n_intervals
+        elif np.issubdtype(type(n_intervals), np.integer):
+            if n_intervals == 0:
+                raise ValueError('Number of intervals must be positive')
             self.n_intervals = n_intervals
         else:
-            raise ValueError('Number of intervals must be either "random", "fixed" or integer')
+            raise ValueError(f'Number of intervals must be either "random", "sqrt" or positive integer, '
+                             f'but found {type(n_intervals)}')
 
     def fit(self, X, y=None):
         self.input_shape_ = X.shape
@@ -98,23 +93,6 @@ class RandomIntervalSegmenter(BaseTransformer):
             if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
                                                                                 self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
-
-        n_rows, n_cols = X.shape
-        n_features = len(self.features)
-        n_intervals = sum([len(intervals) for intervals in self.intervals_])  # total number of intervals of all columns
-
-        # Convert into 3d numpy array, only possible for equal-index time-series data
-        Xarr = np.array([np.array([row for row in X.iloc[:, col].tolist()])
-                         for col, _ in enumerate(X.columns)])
-
-        # Compute features on intervals
-        Xt = np.zeros((n_rows, n_intervals))  # Allocate output array for transformed data
-
-        intervals_ = []
-        for c, col in enumerate(X.columns):
-            for i, (start, end) in enumerate(self.intervals_[c]):
-                interval = Xarr[c, :, start:end]
-                intervals_.append(interval)
 
         raise NotImplementedError
 

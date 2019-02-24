@@ -346,12 +346,12 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
 
         fit_params = {f'{estimator}__sample_weight': curr_sample_weight,
-                      f'{estimator}__check_input': False}
+                      f'{estimator}__check_input': True}
         tree.fit(X, y, **fit_params)
 
     else:
         fit_params = {f'{estimator}__sample_weight': sample_weight,
-                      f'{estimator}__check_input': False}
+                      f'{estimator}__check_input': True}
         tree.fit(X, y, **fit_params)
 
     return tree

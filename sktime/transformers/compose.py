@@ -5,8 +5,8 @@ transformers as building blocks.
 """
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import check_ts_array, check_is_fitted
-from sktime.transformers.base import BaseTransformer
+from sktime.utils.validation import check_ts_array
+from sklearn.utils.validation import check_is_fitted
 from sklearn.compose import ColumnTransformer
 from scipy import sparse
 
