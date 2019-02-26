@@ -31,8 +31,8 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.check_input = check_input
         self.intervals_ = []
         self.input_shape_ = ()
-        self.is_fitted_ = False
         self.n_intervals = n_intervals
+        self.feature_names_ = []
 
         if n_intervals in ('sqrt', 'random'):
             self.n_intervals = n_intervals
@@ -66,7 +66,6 @@ class RandomIntervalSegmenter(BaseTransformer):
                 intervals_.append(intervals)
 
         self.intervals_ = intervals_
-        self.is_fitted_ = True
 
         return self
 
@@ -80,7 +79,7 @@ class RandomIntervalSegmenter(BaseTransformer):
         """
 
         # Check is fit had been called
-        check_is_fitted(self, 'is_fitted_')
+        check_is_fitted(self, 'intervals_')
 
         # check inputs
         if self.check_input:
@@ -94,5 +93,17 @@ class RandomIntervalSegmenter(BaseTransformer):
                                                                                 self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
-        raise NotImplementedError
+        # Segment into intervals
+        Xarr = np.array([np.array([row for row in X.iloc[:, col].tolist()])
+                         for col, _ in enumerate(X.columns)])
 
+        intervals = []
+        for c, col in enumerate(X.columns):
+            for start, end in self.intervals_[c]:
+                interval = Xarr[c, :, start:end]
+                intervals.append(interval)
+                self.feature_names_.append(f'{col}_{start}_{end}')
+
+        Xt = pd.DataFrame([pd.Series([pd.Series(row) for row in interval]) for interval in intervals]).T
+        Xt.columns = self.feature_names_
+        return Xt
