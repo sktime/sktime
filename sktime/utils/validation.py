@@ -1,8 +1,3 @@
-'''
-validation utilities for sktime
-'''
-# build on top of sklearn
-from sklearn.utils.validation import check_X_y
 
 
 def check_ts_X_y(X, y):
@@ -31,11 +26,16 @@ def check_equal_index(X):
     """
     n_rows, n_cols = X.shape
     indexes = []
-    for c in range(n_cols):
+    for c, col in enumerate(X.columns):
         first_index = X.iloc[0, c].index
+
+        if first_index.size < 2:
+            raise ValueError(f'Time series must contain at least 2 observations, '
+                             f'found time series in column {col} with less than 2 observations')
+
         for i in range(1, n_rows):
             if not first_index.equals(X.iloc[i, c].index):
-                raise ValueError(f'Found time series with unequal index in column {c}. '
-                                 'Input time-series must have the same index.')
+                raise ValueError(f'Found time series with unequal index in column {col}. '
+                                 f'Input time-series must have the same index.')
         indexes.append(first_index)
     return indexes
