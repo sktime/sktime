@@ -61,7 +61,7 @@ for i, pig in enumerate(pigs):
     #  create classifier
     clf = TimeSeriesForestClassifier(base_estimator=base_estimator,
                                      criterion='entropy',
-                                     n_estimators=1,
+                                     n_estimators=500,
                                      bootstrap=False,
                                      oob_score=False,
                                      n_jobs=1)
