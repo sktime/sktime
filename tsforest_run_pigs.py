@@ -11,15 +11,15 @@ import time
 
 
 @jit  # simple but effective optimisation
-def time_series_slope(y):
-    n = y.shape[0]
-    if n < 2:
-        return 0
+def time_series_slope(y, axis=0):
+    n, m = np.atleast_2d(y).shape
+    if m < 2:
+        return np.zeros(n)
     else:
-        x = np.arange(n) + 1
-        x_mu = x.mean()
-        return (((x * y).mean() - x_mu * y.mean())
-                / ((x ** 2).mean() - x_mu ** 2))
+        x = np.arange(m) + 1
+        x_mean = (m + 1) / 2  # x.mean()
+        return (((x * y).mean(axis=axis) - x_mean * y.mean(axis=axis))
+                / ((x ** 2).mean() - x_mean ** 2))
 
 
 def load_data(file_path):
@@ -60,11 +60,7 @@ for i, pig in enumerate(pigs):
 
     #  create classifier
     clf = TimeSeriesForestClassifier(base_estimator=base_estimator,
-                                     criterion='entropy',
-                                     n_estimators=500,
-                                     bootstrap=False,
-                                     oob_score=False,
-                                     n_jobs=1)
+                                     n_estimators=500)
     # fit
     s = time.time()
     clf.fit(X_train, y_train)
@@ -79,4 +75,4 @@ for i, pig in enumerate(pigs):
     results[i, 2] = accuracy_score(y_test, y_pred)
 
 results = pd.DataFrame(results, columns=['fit_time', 'predict_time', 'accuracy'], index=pigs)
-results.to_csv('tsforest_pigs_results.csv')
+results.to_csv('tsf_pigs_500_sqrt.csv')
