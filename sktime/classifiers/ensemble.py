@@ -10,11 +10,11 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.tree import DecisionTreeClassifier
-
 import threading
-
-
 from ..pipeline import TSPipeline
+from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from ..utils.time_series import time_series_slope
+
 
 __all__ = ["TimeSeriesForestClassifier"]
 
@@ -174,13 +174,13 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=100,
+                 n_estimators=500,
                  criterion='gini',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
                  min_weight_fraction_leaf=0.,
-                 max_features="auto",
+                 max_features=None,
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
@@ -194,13 +194,17 @@ class TimeSeriesForestClassifier(ForestClassifier):
                  check_input=True):
 
         self.check_input = check_input
-        if self.check_input:
-            if base_estimator is None:
-                raise ValueError('Must supply a base estimator.')
-            if not isinstance(base_estimator, TSPipeline):
-                raise ValueError('Base estimator must be pipeline with transforms.')
-            if not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
-                raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
+
+        if base_estimator is None:
+            features = [np.mean, np.std, time_series_slope]
+            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='rand', features=features)),
+                     ('clf', DecisionTreeClassifier())]
+            base_estimator = TSPipeline(steps)
+
+        elif not isinstance(base_estimator, TSPipeline):
+            raise ValueError('Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
+            raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
 
         # Rename estimator params according to name in pipeline.
         estimator = base_estimator.steps[-1][0]
