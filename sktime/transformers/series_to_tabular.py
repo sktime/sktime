@@ -1,6 +1,7 @@
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
+from inspect import signature
 from ..utils.validation import check_equal_index
 from .series_to_series import RandomIntervalSegmenter
 
@@ -70,28 +71,32 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                                                                                 self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
-        # Convert into 3d numpy array, only possible for equal-index time-series data.
-        Xarr = np.array([np.array([row for row in X.iloc[:, col].tolist()])
-                         for col, _ in enumerate(X.columns)])
-
-        # Pre-allocate arrays.
         n_rows, n_cols = X.shape
         n_features = len(self.features)
         n_cols_intervals = sum([intervals.shape[0] for intervals in self.intervals_])
+        is_applicable_along_axis = {func: 'axis' in signature(func).parameters for func in self.features}
+
+        # Convert into 3d numpy array, only possible for equal-index time-series data.
+        Xa = np.array([np.array([row for row in X.iloc[:, col].tolist()])
+                       for col, _ in enumerate(X.columns)])
+
+        # Pre-allocate arrays.
         Xt = np.zeros((n_rows, n_features * n_cols_intervals))  # Allocate output array for transformed data
-        feature_names_ = []
+        self.feature_names_ = []
 
         # Compute features on intervals.
         i = 0
         for c, col in enumerate(X.columns):
             for start, end in self.intervals_[c]:
-                interval = Xarr[c, :, start:end]
+                interval = Xa[c, :, start:end]
                 for func in self.features:
-                    Xt[:, i] = np.apply_along_axis(func, 1, interval)
+                    if is_applicable_along_axis[func]:
+                        Xt[:, i] = func(interval, axis=1)
+                    else:
+                        Xt[:, i] = np.apply_along_axis(func, 1, interval)
                     i += 1
-                    feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
+                    self.feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
 
-        self.feature_names_ = feature_names_
         return pd.DataFrame(Xt, columns=self.feature_names_)
 
 
