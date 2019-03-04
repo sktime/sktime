@@ -48,7 +48,7 @@ def rand_intervals_rand_n(x, random_state=None):
 def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
     """
     Computes a fixed number (n) of intervals from index (x) with
-    random starting points and lengths. Intervals may overlap.
+    random starting points and lengths. Intervals may overlap and may be non-unique.
 
     :param x : array_like, shape = [n_observations]
         Array containing the time-series index.
@@ -115,5 +115,5 @@ def time_series_slope(y, axis=0):
     else:
         x = np.arange(m) + 1
         x_mean = (m + 1) / 2  # x.mean()
-        return (((x * y).mean(axis=axis) - x_mean * y.mean(axis=axis))
-                / ((x ** 2).mean() - x_mean ** 2))
+        return (np.mean(x * y, axis=axis) - x_mean * np.mean(y, axis=axis)) / (np.mean(x ** 2) - x_mean ** 2)
+
