@@ -1,19 +1,14 @@
-from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from sktime.utils.time_series import time_series_slope
+from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from ..utils.time_series import time_series_slope
+from ..utils.testing import generate_df_from_array
 import pytest
 import pandas as pd
 import numpy as np
-
 
 N_ITER = 10
 
 
 # Test output format and dimensions.
-def generate_df_from_array(array, n_rows=10, n_cols=1):
-    return pd.DataFrame([[pd.Series(array) for _ in range(n_cols)] for _ in range(n_rows)],
-                        columns=[f'col{c}' for c in range(n_cols)])
-
-
 def _test_output_format_dim(X):
     n_rows, n_cols = X.shape
     n_intervals_args = [1, 3, 10, 'sqrt', 'random']
