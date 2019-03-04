@@ -1,11 +1,10 @@
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
-from inspect import signature
 from ..utils.validation import check_equal_index
 from .series_to_series import RandomIntervalSegmenter
 
-__all__ = ["RandomIntervalFeatureExtractor"]
+__all__ = ['RandomIntervalFeatureExtractor']
 
 
 class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
@@ -74,7 +73,6 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         n_rows, n_cols = X.shape
         n_features = len(self.features)
         n_cols_intervals = sum([intervals.shape[0] for intervals in self.intervals_])
-        is_applicable_along_axis = {func: 'axis' in signature(func).parameters for func in self.features}
 
         # Convert into 3d numpy array, only possible for equal-index time-series data.
         Xa = np.array([np.array([row for row in X.iloc[:, col].tolist()])
@@ -90,67 +88,14 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
             for start, end in self.intervals_[c]:
                 interval = Xa[c, :, start:end]
                 for func in self.features:
-                    if is_applicable_along_axis[func]:
+                    try:
                         Xt[:, i] = func(interval, axis=1)
-                    else:
-                        Xt[:, i] = np.apply_along_axis(func, 1, interval)
+                    except TypeError as e:
+                        if str(e) == f"{func.__name__} got an unexpected keyword argument 'axis'":
+                            Xt[:, i] = np.apply_along_axis(func, 1, interval)
+                        else:
+                            raise
                     i += 1
                     self.feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
 
         return pd.DataFrame(Xt, columns=self.feature_names_)
-
-
-# class FeatureExtractor(BaseTransformer):
-#     """
-#     Series-to-tabular transformer.
-#     """
-#     def __init__(self, feature_calculators=None):
-#         self.input_shape_ = None
-#         self.input_indexes_ = []  # list of time-series indexes of each column
-#
-#         # Check input of feature calculators, i.e list of functions to be applied to time-series
-#         if feature_calculators is None:
-#             self.feature_calculators = [np.mean]
-#         else:
-#             if not isinstance(feature_calculators, list):
-#                 if not all([callable(f) for f in feature_calculators]):
-#                     raise ValueError('Features must be list containing only functions (callable) to be '
-#                                      'applied to the data columns')
-#             else:
-#                 self.feature_calculators = feature_calculators
-#
-#     def fit(self, X, y=None):
-#         self.input_shape_ = X.shape
-#         self.input_indexes_ = check_equal_index(X)
-#
-#         # Return the transformer
-#         return self
-#
-#     def transform(self, X):
-#         """
-#         Segment series into random intervals.
-#         """
-#         # Check is fit had been called
-#         check_is_fitted(self, ['input_shape_'])
-#
-#         # Check that the input is of the same shape as the one passed
-#         # during fit.
-#         if X.shape[1] != self.input_shape_[1]:
-#             raise ValueError('Number of columns of input is different from what was seen'
-#                              'in `fit`')
-#         # Input validation
-#         if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-#                                                                             self.input_indexes_)]):
-#             raise ValueError('Indexes of time-series are different from what was seen in `fit`')
-#
-#         # Transform input data
-#         n_rows, n_cols = X.shape
-#
-#         calculated_features_dict = {}
-#         for calculator in self.feature_calculators:
-#             for col in range(n_cols):
-#                 col_name = f'{X.columns[col]}_{calculator.__name__}'
-#                 calculated_features_dict[col_name] = X.iloc[:, col].apply(calculator)
-#
-#         return pd.DataFrame(calculated_features_dict)
-
