@@ -194,7 +194,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='rand', features=features)),
+            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='random', features=features)),
                      ('clf', DecisionTreeClassifier())]
             base_estimator = TSPipeline(steps)
 
