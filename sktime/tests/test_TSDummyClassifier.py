@@ -9,6 +9,12 @@ import pandas as pd
 from sklearn.utils.testing import assert_array_equal
 
 from sktime.classifiers.example_classifiers import TSDummyClassifier
+from sktime.datasets import load_gunpoint
+
+Xsf_train, y_train = load_gunpoint()
+Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
+Xsf_test, y_test = load_gunpoint("TEST")
+Xdf_test = pd.DataFrame({'ts': Xsf_test, 'ts_copy': Xsf_test})
 
 
 def read_data(file):
@@ -20,20 +26,6 @@ def read_data(file):
     X = pd.DataFrame(rows, dtype=np.float)
     y = X.pop(0)
     return X, y
-
-url = 'http://www.timeseriesclassification.com/Downloads/GunPoint.zip'
-url = urlopen(url)
-zipfile = ZipFile(BytesIO(url.read()))
-
-train_file = zipfile.open('GunPoint_TRAIN.txt')
-X_train_pd, y_train_pd = read_data(train_file)
-
-test_file = zipfile.open('GunPoint_TEST.txt')
-X_test_pd, y_test_pd = read_data(test_file)
-
-y_train = pd.Series(np.array(y_train_pd, dtype=np.int))
-Xsf_train = pd.Series([row for _, row in X_train_pd.iterrows()])
-Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
 
 def test_series_TSDummyClassifier_most_strategy():
     X = Xsf_train
