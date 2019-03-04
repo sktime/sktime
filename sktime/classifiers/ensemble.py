@@ -8,13 +8,10 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_random_state, check_array, compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
-from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.tree import DecisionTreeClassifier
-import threading
 from ..pipeline import TSPipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
-
 
 __all__ = ["TimeSeriesForestClassifier"]
 
@@ -338,14 +335,12 @@ class TimeSeriesForestClassifier(ForestClassifier):
                                           random_state=random_state)
                      for i in range(n_more_estimators)]
 
-            # Parallel loop: we prefer the threading backend as the Cython code
-            # for fitting the trees is internally releasing the Python GIL
-            # making threading more efficient than multiprocessing in
-            # that case. However, for joblib 0.12+ we respect any
-            # parallel_backend contexts set at a higher level,
-            # since correctness does not rely on using threads.
-            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                             **_joblib_parallel_args(prefer='threads'))(
+            # Parallel loop: for standard random forests, the threading
+            # backend is preferred as the Cython code for fitting the trees
+            # is internally releasing the Python GIL making threading more
+            # efficient than multiprocessing in that case. However, in this case,
+            # for fitting pipelines in parallel, multiprocessing is more efficient.
+            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
                     verbose=self.verbose, class_weight=self.class_weight)
@@ -392,18 +387,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        # avoid storing the output of every estimator by summing them here
-        all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
-                     for j in np.atleast_1d(self.n_classes_)]
-        lock = threading.Lock()
-        Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                 **_joblib_parallel_args(require="sharedmem"))(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba,
-                                            lock)
-            for e in self.estimators_)
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(e.predict_proba)(X) for e in self.estimators_)
 
-        for proba in all_proba:
-            proba /= len(self.estimators_)
+        all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
         if len(all_proba) == 1:
             return all_proba[0]
@@ -510,16 +497,3 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-def _accumulate_prediction(predict, X, out, lock):
-    """This is a utility function for joblib's Parallel.
-
-    It can't go locally in ForestClassifier or ForestRegressor, because joblib
-    complains that it cannot pickle it when placed there.
-    """
-    prediction = predict(X)
-    with lock:
-        if len(out) == 1:
-            out[0] += prediction
-        else:
-            for i in range(len(out)):
-                out[i] += prediction[i]
