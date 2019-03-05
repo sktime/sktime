@@ -1,3 +1,5 @@
+#!/usr/bin/env python3 -u
+
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from sktime.pipeline import TSPipeline
