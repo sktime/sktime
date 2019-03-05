@@ -111,7 +111,7 @@ def time_series_slope(y, axis=0):
 
     n, m = np.atleast_2d(y).shape
     if m < 2:
-        return np.zeros(n)
+        return np.zeros(n) if n > 1 else 0
     else:
         x = np.arange(m) + 1
         x_mean = (m + 1) / 2  # x.mean()
