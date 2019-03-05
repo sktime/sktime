@@ -5,7 +5,7 @@ from ..utils.validation import check_equal_index
 from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
 
-__all__ = ["RandomIntervalSegmenter"]
+__all__ = ['RandomIntervalSegmenter']
 
 
 class RandomIntervalSegmenter(BaseTransformer):
@@ -26,6 +26,7 @@ class RandomIntervalSegmenter(BaseTransformer):
         :param random_state:
         :param check_input:
         """
+
         self.input_indexes_ = []  # list of time-series indexes of each column
         self.random_state = random_state
         self.check_input = check_input
@@ -70,10 +71,6 @@ class RandomIntervalSegmenter(BaseTransformer):
         return self
 
     def transform(self, X, y=None):
-        """
-        Segment series into random intervals. Series-to-series transformer.
-        """
-
         """
         Segment series into random intervals. Series-to-series transformer.
         """

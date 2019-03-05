@@ -12,6 +12,8 @@ from scipy import sparse
 
 from .base import BaseTransformer
 
+__all__ = ['TSColumnTransformer', 'RowwiseTransformer']
+
 
 class TSColumnTransformer(ColumnTransformer):
     """Applies transformers to columns of an array or pandas DataFrame.
