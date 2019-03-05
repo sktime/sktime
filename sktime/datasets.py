@@ -59,5 +59,5 @@ def load_gunpoint(split='TRAIN'):
     with open(abspath) as f:
         X, y = read_single_series_data(f)
     # create series of series
-    X = pd.Series([row for _, row in X.iterrows()])
+    X = pd.Series([np.array(row) for row in X.itertuples(index=False)])
     return X, y

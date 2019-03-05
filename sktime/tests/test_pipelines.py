@@ -25,7 +25,7 @@ def test_pipeline():
 
     # using pure sklearn
     mean_func = lambda X: pd.DataFrame([np.mean(row) for row in X])
-    first_func = lambda X: pd.DataFrame([row.iloc[0] for row in X])
+    first_func = lambda X: pd.DataFrame([row[0] for row in X])
     column_transformer = ColumnTransformer(
         [('mean', FunctionTransformer(func=mean_func, validate=False), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
@@ -97,7 +97,7 @@ def test_RowwiseTransformer_pipeline():
 
     # using pure sklearn
     mean_func = lambda X: pd.DataFrame([np.mean(row) for row in X])
-    first_func = lambda X: pd.DataFrame([row.iloc[0] for row in X])
+    first_func = lambda X: pd.DataFrame([row[0] for row in X])
     column_transformer = ColumnTransformer(
         [('mean', FunctionTransformer(func=mean_func, validate=False), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
@@ -111,7 +111,7 @@ def test_RowwiseTransformer_pipeline():
     expected = model.predict(X)
 
     # using sktime with sklearn pipeline
-    first_func = lambda X: pd.DataFrame([row.iloc[0] for row in X])
+    first_func = lambda X: pd.DataFrame([row[0] for row in X])
     column_transformer = TSColumnTransformer(
         [('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
