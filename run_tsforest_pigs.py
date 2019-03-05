@@ -5,23 +5,11 @@ from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from sktime.pipeline import TSPipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import accuracy_score
-from numba import jit
+from sktime.utils.time_series import time_series_slope
 import os
 import numpy as np
 import pandas as pd
 import time
-
-
-@jit  # simple but effective optimisation
-def time_series_slope(y, axis=0):
-    n, m = np.atleast_2d(y).shape
-    if m < 2:
-        return np.zeros(n)
-    else:
-        x = np.arange(m) + 1
-        x_mean = (m + 1) / 2  # x.mean()
-        return (((x * y).mean(axis=axis) - x_mean * y.mean(axis=axis))
-                / ((x ** 2).mean() - x_mean ** 2))
 
 
 def load_data(file_path):
@@ -29,7 +17,6 @@ def load_data(file_path):
         for line in f:
             if line.strip():
                 if "@data" in line.lower():
-                    data_started = True
                     break
 
         df = pd.read_csv(f, delimiter=',', header=None)
@@ -39,7 +26,6 @@ def load_data(file_path):
 
 
 data_path = os.path.abspath('/Users/mloning/Documents/Research/python_methods/sktime/data/Downloads')
-
 
 # read in list of smaller time-series classification datasets
 with open('pigs.txt', 'r') as f:
@@ -77,4 +63,4 @@ for i, pig in enumerate(pigs):
     results[i, 2] = accuracy_score(y_test, y_pred)
 
 results = pd.DataFrame(results, columns=['fit_time', 'predict_time', 'accuracy'], index=pigs)
-results.to_csv('tsf_pigs_500_sqrt.csv')
+results.to_csv('tsf_pigs.csv')
