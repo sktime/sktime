@@ -1,8 +1,8 @@
+from ..utils.validation import check_equal_index
+from .series_to_series import RandomIntervalSegmenter
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
-from ..utils.validation import check_equal_index
-from .series_to_series import RandomIntervalSegmenter
 
 __all__ = ['RandomIntervalFeatureExtractor']
 
@@ -91,7 +91,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                     try:
                         Xt[:, i] = func(interval, axis=1)
                     except TypeError as e:
-                        if str(e) == f"{func.__name__} got an unexpected keyword argument 'axis'":
+                        if str(e) == f"{func.__name__}() got an unexpected keyword argument 'axis'":
                             Xt[:, i] = np.apply_along_axis(func, 1, interval)
                         else:
                             raise
