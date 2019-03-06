@@ -75,5 +75,6 @@ setup(name=DISTNAME,
       zip_safe=False,  # the package can run out of an .egg file
       classifiers=CLASSIFIERS,
       packages=find_packages(),
+      include_package_data=True,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE)
