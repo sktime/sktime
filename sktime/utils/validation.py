@@ -40,7 +40,7 @@ def check_equal_index(X):
         first_index = X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index') else np.arange(X.iloc[c, 0].shape[0])
 
         # Series must contain at least 2 observations, otherwise should be primitive.
-        if first_index.size < 2:
+        if len(first_index) < 2:
             raise ValueError(f'Time series must contain at least 2 observations, '
                              f'found time series in column {col} with less than 2 observations')
 

@@ -21,12 +21,6 @@ def _test_output_format_dim(X):
             assert Xt.shape[0] == n_rows
             assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
-            multiplier_factor = 3
-            Xt = trans.fit_transform(X * multiplier_factor)
-            assert isinstance(Xt, pd.DataFrame)
-            assert Xt.shape[0] == n_rows
-            assert np.array_equal(Xt.values, np.ones(Xt.shape) * multiplier_factor)
-
 
 def test_output_format_dim():
     for n_cols in range(1, 3, 10):

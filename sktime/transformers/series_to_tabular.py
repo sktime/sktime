@@ -1,4 +1,5 @@
 from ..utils.validation import check_equal_index
+from ..utils.transformations import tabularize
 from .series_to_series import RandomIntervalSegmenter
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
@@ -74,19 +75,16 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         n_features = len(self.features)
         n_cols_intervals = sum([intervals.shape[0] for intervals in self.intervals_])
 
-        # Convert into 3d numpy array, only possible for equal-index time-series data.
-        Xa = np.array([np.array([row for row in X.iloc[:, col].tolist()])
-                       for col, _ in enumerate(X.columns)])
-
-        # Pre-allocate arrays.
-        Xt = np.zeros((n_rows, n_features * n_cols_intervals))  # Allocate output array for transformed data
-        self.feature_names_ = []
-
         # Compute features on intervals.
+        Xt = np.zeros((n_rows, n_features * n_cols_intervals))  # Allocate output array for transformed data
+        self.columns_ = []
         i = 0
-        for c, col in enumerate(X.columns):
+        for c, (colname, col) in enumerate(X.items()):
+            # Tabularize each column assuming series have equal indexes in any given column.
+            # TODO generalise to non-equal-index cases
+            arr = tabularize(col, return_array=True)
             for start, end in self.intervals_[c]:
-                interval = Xa[c, :, start:end]
+                interval = arr[:, start:end]
                 for func in self.features:
                     try:
                         Xt[:, i] = func(interval, axis=1)
@@ -96,6 +94,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                         else:
                             raise
                     i += 1
-                    self.feature_names_.append(f'{col}_{start}_{end}_{func.__name__}')
-
-        return pd.DataFrame(Xt, columns=self.feature_names_)
+                    self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
+        Xt = pd.DataFrame(Xt)
+        Xt.columns = self.columns_
+        return Xt

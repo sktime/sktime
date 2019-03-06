@@ -2,6 +2,7 @@ from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
+from ..utils.transformations import tabularize, concat_nested_arrays
 from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
 
@@ -33,7 +34,7 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.intervals_ = []
         self.input_shape_ = ()
         self.n_intervals = n_intervals
-        self.feature_names_ = []
+        self.columns_ = []
 
         if n_intervals in ('sqrt', 'random'):
             self.n_intervals = n_intervals
@@ -49,11 +50,16 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.input_shape_ = X.shape
 
         if self.check_input:
+            # TODO check input is series column, not column of primitives
             self.input_indexes_ = check_equal_index(X)
         else:
-            self.input_indexes_ = [X.iloc[0, c].index for c in range(self.input_shape_[1])]
+            self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
+                                   else np.arange(X.iloc[c, 0].shape[0])
+                                   for c in range(self.input_shape_[1])]
 
-        # Compute random intervals for each column
+        # Compute random intervals for each column.
+        # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
+        #  or use ColumnTransformer?
         intervals_ = []
         if self.n_intervals == 'random':
             for c in range(self.input_shape_[1]):
@@ -65,9 +71,7 @@ class RandomIntervalSegmenter(BaseTransformer):
                 intervals = rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals,
                                                    random_state=self.random_state)
                 intervals_.append(intervals)
-
         self.intervals_ = intervals_
-
         return self
 
     def transform(self, X, y=None):
@@ -78,7 +82,7 @@ class RandomIntervalSegmenter(BaseTransformer):
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
 
-        # check inputs
+        # Check inputs.
         if self.check_input:
             # Check that the input is of the same shape as the one passed
             # during fit.
@@ -90,17 +94,19 @@ class RandomIntervalSegmenter(BaseTransformer):
                                                                                 self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
-        # Segment into intervals
-        Xarr = np.array([np.array([row for row in X.iloc[:, col].tolist()])
-                         for col, _ in enumerate(X.columns)])
-
+        # Segment into intervals.
         intervals = []
-        for c, col in enumerate(X.columns):
-            for start, end in self.intervals_[c]:
-                interval = Xarr[c, :, start:end]
-                intervals.append(interval)
-                self.feature_names_.append(f'{col}_{start}_{end}')
+        for c, (colname, col) in enumerate(X.items()):
 
-        Xt = pd.DataFrame([pd.Series([pd.Series(row) for row in interval]) for interval in intervals]).T
-        Xt.columns = self.feature_names_
+            # Tabularize each column assuming series have equal indexes in any given column.
+            # TODO generalise to non-equal-index cases
+            arr = tabularize(col, return_array=True)
+            for start, end in self.intervals_[c]:
+                interval = arr[:, start:end]
+                intervals.append(interval)
+                self.columns_.append(f'{colname}_{start}_{end}')
+
+        # Return nested pandas DataFrame.
+        Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
+        Xt.columns = self.columns_
         return Xt
