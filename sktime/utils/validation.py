@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-import numpy as np
-
-=======
 '''
 validation utilities for sktime
 '''
 # build on top of sklearn
->>>>>>> dev
+import numpy as np
 
 def check_ts_X_y(X, y):
     '''
