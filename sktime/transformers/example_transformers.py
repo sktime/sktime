@@ -3,7 +3,8 @@ This is a module containing time series transformers
 """
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import check_ts_array, check_is_fitted
+from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_ts_array
 from sktime.transformers.base import BaseTransformer
 
 

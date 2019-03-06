@@ -8,7 +8,8 @@ from sktime.classifiers.base import BaseClassifier
 
 
 class GridSearchCV(skGSCV):
-    '''A wrapper to provide default scorers
+    '''
+    A wrapper to provide default scorers
     '''
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
