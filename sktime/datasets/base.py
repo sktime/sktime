@@ -53,7 +53,7 @@ def load_gunpoint(split='TRAIN'):
     y       : A pandas Series containing the targets
     '''
     module_path = path.dirname(__file__)
-    dname = 'datasets'
+    dname = 'data'
     fname = 'GunPoint_'+split+'.txt'
     abspath = path.join(module_path, dname, fname)
     with open(abspath) as f:
