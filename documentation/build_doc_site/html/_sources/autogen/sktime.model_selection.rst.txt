@@ -1,7 +1,0 @@
-sktime.model\_selection module
-==============================
-
-.. automodule:: sktime.model_selection
-    :members:
-    :undoc-members:
-    :show-inheritance:
