@@ -7,6 +7,7 @@ from sktime.utils.validation import check_ts_array
 from sktime.transformers.base import BaseTransformer
 from sklearn.utils.validation import check_is_fitted
 
+
 class TSDummyTransformer(BaseTransformer):
     """ An example transformer that makes use of the pandas input.
 

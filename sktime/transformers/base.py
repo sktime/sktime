@@ -8,12 +8,11 @@ class BaseTransformer(BaseEstimator):
     """
     Base class for transformers, for identification.
     """
-
-    def fit(self):
-        '''
+    def fit(self, X, y=None):
+        """
         empty fit function, which inheriting transformers can override
         if need be.
-        '''
+        """
         # let the model know that it is fitted
         self.is_fitted_ = True
         # `fit` should always return `self`
