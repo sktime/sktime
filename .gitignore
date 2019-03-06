@@ -127,4 +127,14 @@ doc/datasets/generated/
 # vim swap files
 *.swp
 
+# autogen stuff
+/documentation/source/autogen
 
+# macOS files
+.DS_Store
+
+# dask-worker-space
+dask-worker-space
+
+# documentation build files
+build_doc_site/
