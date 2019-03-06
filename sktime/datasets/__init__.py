@@ -1,1 +1,1 @@
-from ..utils.datasets import load_gunpoint
+from .base import load_gunpoint
