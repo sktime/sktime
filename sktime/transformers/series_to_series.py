@@ -96,6 +96,7 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         # Segment into intervals.
         intervals = []
+        self.columns_ = []
         for c, (colname, col) in enumerate(X.items()):
 
             # Tabularize each column assuming series have equal indexes in any given column.

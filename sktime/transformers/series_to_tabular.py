@@ -86,6 +86,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
             for start, end in self.intervals_[c]:
                 interval = arr[:, start:end]
                 for func in self.features:
+                    # TODO generalise to series-to-series functions and function kwargs
                     try:
                         Xt[:, i] = func(interval, axis=1)
                     except TypeError as e:
