@@ -2,7 +2,6 @@
 validation utilities for sktime
 '''
 # build on top of sklearn
-from sklearn.utils.validation import *
 
 def check_ts_X_y(X, y):
     '''

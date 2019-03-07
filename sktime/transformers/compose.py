@@ -3,14 +3,18 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-import numpy as np
-import pandas as pd
-from sktime.utils.validation import check_ts_array, check_is_fitted
-from sktime.transformers.base import BaseTransformer
-from sklearn.compose import ColumnTransformer
-from scipy import sparse
 
 from .base import BaseTransformer
+from ..utils.validation import check_ts_array
+from ..utils.transformations import tabularize
+from sklearn.utils.validation import check_is_fitted
+from sklearn.compose import ColumnTransformer
+from scipy import sparse
+import numpy as np
+import pandas as pd
+
+
+__all__ = ['TSColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
 
 
 class TSColumnTransformer(ColumnTransformer):
@@ -130,3 +134,62 @@ class RowwiseTransformer(BaseTransformer):
         T = X.apply(self.transformer.fit_transform)
 
         return T
+
+
+class Tabularizer(BaseTransformer):
+    def __init__(self, check_input=True):
+        """
+        Parameters
+        ----------
+        transformer : A transformer that could act on a
+            row (one univariate time series array or pd.Series).
+            Note that this should be an instance of a transformer class.
+        """
+        self.check_input = check_input
+
+    def fit(self, X, y=None):
+        """Empty fit function that does nothing.
+
+        Parameters
+        ----------
+        X : 1D array-like, pandas Series, shape (n_samples, 1)
+            The training input samples. Shoould not be a DataFrame.
+        y : None, as it is transformer on X
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        # check the validity of input
+        # TODO check if for each column, all rows have equal-index series
+        if self.check_input:
+            X = check_ts_array(X)
+
+        # let the model know that it is fitted
+        self.is_fitted_ = True
+        # `fit` should always return `self`
+        return self
+
+    def transform(self, X):
+        """
+        Transform nested pandas dataframe into tabular pandas dataframe.
+        :param X : pandas dataframe
+            Nested dataframe with series or arrays in cells.
+        :return : pandas dataframe
+            Tabular dataframe with only primitives in cells.
+        """
+
+        # check the validity of input
+        check_is_fitted(self, 'is_fitted_')
+
+        # TODO check if for each column, all rows have equal-index series
+        if self.check_input:
+            X = check_ts_array(X)
+
+        Xt = tabularize(X)
+        return Xt
+
+
+Tabulariser = Tabularizer
