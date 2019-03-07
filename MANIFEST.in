@@ -1,4 +1,0 @@
-include *.rst
-recursive-include examples *
-recursive-include sklearn *.c *.h *.pyx *.pxd *.pxi
-recursive-include sktime/datasets *.csv *.csv.gz *.arff *.arff.gz *.txt
