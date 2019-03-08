@@ -29,15 +29,13 @@ def rand_intervals_rand_n(x, random_state=None):
     """
 
     rng = check_random_state(random_state)
-
     starts = []
     ends = []
     m = x.shape[0]  # series length
-
-    W = rng.choice(x + 1, replace=False, size=int(np.sqrt(m)))
+    W = rng.randint(1, m, size=int(np.sqrt(m)))
     for w in W:
         size = m - w + 1
-        start = rng.choice(np.arange(size), replace=False, size=int(np.sqrt(size)))
+        start = rng.randint(size, size=int(np.sqrt(size)))
         starts.extend(start)
         for s in start:
             end = s + w
@@ -48,7 +46,7 @@ def rand_intervals_rand_n(x, random_state=None):
 def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
     """
     Computes a fixed number (n) of intervals from index (x) with
-    random starting points and lengths. Intervals may overlap and may be non-unique.
+    random starting points and lengths. Intervals may overlap and may not be unique.
 
     :param x : array_like, shape = [n_observations]
         Array containing the time-series index.
@@ -83,17 +81,11 @@ def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
 
     min_length = 1
     starts = rng.randint(m - min_length + 1, size=n)
+
     if n == 1:
-        starts = np.array([starts, ], dtype=np.integer)  # make it iterable
+        starts = [starts]  # make it an iterable
 
-    ends = np.zeros(n, dtype=np.integer)
-    for i, start in enumerate(starts):
-        length = rng.randint(min_length, m - start + 1)
-        end = start + length
-        if end > m:
-            end = m
-        ends[i] = end
-
+    ends = [start + rng.randint(min_length, m - start + 1) for start in starts]
     return np.column_stack([starts, ends])
 
 

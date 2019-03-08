@@ -7,11 +7,12 @@ import pytest
 N_ITER = 100
 
 
-def _test_rand_intervals(func):
-    m = 100
+def _test_rand_intervals(func, **kwargs):
+    m = 30
     x = np.arange(m)
     for _ in range(N_ITER):
-        intervals = func(x)
+        intervals = func(x, **kwargs)
+        assert intervals.ndim == 2
         assert np.issubdtype(intervals.dtype, np.integer)
         # assert intervals.shape[0] == np.unique(intervals, axis=0).shape[0]  # no duplicates
 
@@ -23,7 +24,7 @@ def _test_rand_intervals(func):
 
 
 def _test_rand_intervals_random_state(func):
-    m = 100
+    m = 10
     x = np.arange(m)
     random_state = 1234
     first_intervals = func(x, random_state=random_state)
@@ -38,7 +39,8 @@ def test_rand_intervals_rand_n():
 
 
 def test_rand_intervals_fixed_n():
-    _test_rand_intervals(rand_intervals_fixed_n)
+    for n in [1, 3, 'sqrt']:
+        _test_rand_intervals(rand_intervals_fixed_n, n=n)
     _test_rand_intervals_random_state(rand_intervals_fixed_n)
 
     # test number of intervals
