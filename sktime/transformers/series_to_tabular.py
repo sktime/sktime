@@ -59,6 +59,10 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
 
+        # Cast into 2d dataframe
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
+
         # check inputs
         if self.check_input:
             # Check that the input is of the same shape as the one passed
@@ -67,8 +71,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                 raise ValueError('Number of columns of input is different from what was seen'
                                  'in `fit`')
             # Input validation
-            if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                                self.input_indexes_)]):
+            if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
+                                                                                         self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
         n_rows, n_cols = X.shape
@@ -83,10 +87,12 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
             # Tabularize each column assuming series have equal indexes in any given column.
             # TODO generalise to non-equal-index cases
             arr = tabularize(col, return_array=True)
-            for start, end in self.intervals_[c]:
-                interval = arr[:, start:end]
-                for func in self.features:
-                    # TODO generalise to series-to-series functions and function kwargs
+            for func in self.features:
+                # TODO generalise to series-to-series functions and function kwargs
+                for start, end in self.intervals_[c]:
+                    interval = arr[:, start:end]
+
+                    # Try to use optimised computations over axis if possible, otherwise iterate over rows.
                     try:
                         Xt[:, i] = func(interval, axis=1)
                     except TypeError as e:
@@ -98,4 +104,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                     self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
+
+        if Xt.shape[1] == 1:
+            return Xt.iloc[:, 0]
+
         return Xt

@@ -31,7 +31,7 @@ def check_equal_index(X):
     :param X:
     :return:
     """
-
+    # TODO handle 1d series, not only 2d dataframes
     # TODO assumes columns are typed (i.e. all rows for a given column have the same type)
     # TODO only handles series columns, raises error for columns with primitives
 

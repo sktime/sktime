@@ -47,31 +47,31 @@ class RandomIntervalSegmenter(BaseTransformer):
                              f'but found {type(n_intervals)}')
 
     def fit(self, X, y=None):
-        self.input_shape_ = X.shape
-
         if self.check_input:
             # TODO check input is series column, not column of primitives
-            self.input_indexes_ = check_equal_index(X)
-        else:
-            self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
-                                   else np.arange(X.iloc[c, 0].shape[0])
-                                   for c in range(self.input_shape_[1])]
+            pass
+
+        # Cast into 2d dataframe
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
+
+        self.input_shape_ = X.shape
+
+        # Retrieve time-series indexes from each column.
+        # TODO generalise to columns with series of unequal length
+        self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
+                               else np.arange(X.iloc[0, c].shape[0]) for c in range(self.input_shape_[1])]
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
         #  or use ColumnTransformer?
-        intervals_ = []
         if self.n_intervals == 'random':
-            for c in range(self.input_shape_[1]):
-                intervals = rand_intervals_rand_n(self.input_indexes_[c],
-                                                  random_state=self.random_state)
-                intervals_.append(intervals)
+            self.intervals_ = [rand_intervals_rand_n(self.input_indexes_[c], random_state=self.random_state)
+                               for c in range(self.input_shape_[1])]
         else:
-            for c in range(self.input_shape_[1]):
-                intervals = rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals,
-                                                   random_state=self.random_state)
-                intervals_.append(intervals)
-        self.intervals_ = intervals_
+            self.intervals_ = [rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals,
+                                                      random_state=self.random_state)
+                               for c in range(self.input_shape_[1])]
         return self
 
     def transform(self, X, y=None):
@@ -82,23 +82,26 @@ class RandomIntervalSegmenter(BaseTransformer):
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
 
+        # Cast into 2d dataframe
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
+
         # Check inputs.
         if self.check_input:
             # Check that the input is of the same shape as the one passed
             # during fit.
-            if X.shape[1] != self.input_shape_[1]:
+            if (X.shape[1] if X.ndim == 2 else 1) != self.input_shape_[1]:
                 raise ValueError('Number of columns of input is different from what was seen'
                                  'in `fit`')
             # Input validation
-            if not all([fit_idx.equals(trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                                self.input_indexes_)]):
+            if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
+                                                                                         self.input_indexes_)]):
                 raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
         # Segment into intervals.
         intervals = []
         self.columns_ = []
         for c, (colname, col) in enumerate(X.items()):
-
             # Tabularize each column assuming series have equal indexes in any given column.
             # TODO generalise to non-equal-index cases
             arr = tabularize(col, return_array=True)
@@ -107,7 +110,7 @@ class RandomIntervalSegmenter(BaseTransformer):
                 intervals.append(interval)
                 self.columns_.append(f'{colname}_{start}_{end}')
 
-        # Return nested pandas DataFrame.
+        # Return nested pandas Series or DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
         Xt.columns = self.columns_
         return Xt
