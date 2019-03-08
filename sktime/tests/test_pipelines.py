@@ -13,6 +13,10 @@ from sktime.transformers.compose import TSColumnTransformer
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.datasets import load_gunpoint
 
+from sktime.pipeline import TSFeatureUnion, TSPipeline
+from sklearn.tree import DecisionTreeClassifier
+from sktime.transformers.series_to_series import RandomIntervalSegmenter
+
 Xsf_train, y_train = load_gunpoint()
 Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
 Xsf_test, y_test = load_gunpoint("TEST")
@@ -124,3 +128,25 @@ def test_RowwiseTransformer_pipeline():
     model.fit(X, y)
     got = model.predict(X)
     assert_array_equal(expected, got)
+
+
+def test_TSFeatureUnion_pipeline():
+
+    # pipeline with segmentation plus multiple feature extraction
+    steps = [
+        ('segment', RandomIntervalSegmenter(n_intervals=3, check_input=False)),
+        ('transform', TSFeatureUnion([
+            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
+        ])),
+        ('clf', DecisionTreeClassifier())
+    ]
+    clf = TSPipeline(steps)
+
+    clf.fit(Xdf_train, y_train)
+    y_pred = clf.predict(Xdf_test)
+
+    assert y_pred.shape[0] == y_test.shape[0]
+    np.testing.assert_array_equal(np.unique(y_pred), np.unique(y_test))
+
+

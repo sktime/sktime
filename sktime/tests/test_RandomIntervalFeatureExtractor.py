@@ -1,9 +1,14 @@
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from ..utils.time_series import time_series_slope
 from ..utils.testing import generate_df_from_array
 import pytest
 import pandas as pd
 import numpy as np
+from sktime.transformers.compose import RowwiseTransformer
+from sktime.datasets import load_gunpoint
+from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sklearn.preprocessing import FunctionTransformer
+from sktime.utils.time_series import time_series_slope
+from sktime.pipeline import TSPipeline, TSFeatureUnion
 
 N_ITER = 10
 
@@ -17,7 +22,7 @@ def _test_output_format_dim(X):
         for features in feature_args:
             trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
             Xt = trans.fit_transform(X)
-            assert isinstance(Xt, pd.DataFrame)
+            assert isinstance(Xt, (pd.DataFrame, pd.Series))
             assert Xt.shape[0] == n_rows
             assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
@@ -77,3 +82,38 @@ def test_results():
             for n_intervals in [1, 3, 10]:
                 _test_results(n_cols, n_obs, n_intervals)
 
+
+# Test against equivalent pipelines.
+def test_different_implementations():
+    random_seed = 1233
+    X_train, y_train = load_gunpoint()
+
+    # Compare with chained transformations.
+    tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
+    tran2 = RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))
+    A = tran2.fit_transform(tran1.fit_transform(X_train))
+
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_seed)
+    B = tran.fit_transform(X_train)
+
+    np.testing.assert_array_equal(A, B)
+
+    # Compare with transformer pipeline using TSFeatureUnion.
+    steps = [
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),
+        ('transform', TSFeatureUnion([
+            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
+        ])),
+    ]
+    pipe = TSPipeline(steps, random_state=random_seed)
+    a = pipe.fit_transform(X_train)
+    n_ints = a.shape[1] // 2  # Rename columns for comparing re-ordered arrays.
+    a.columns = [*a.columns[:n_ints] + '_mean', *a.columns[n_ints:n_ints * 2] + '_std']
+    a = a.reindex(np.sort(a.columns), axis=1)
+
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean, np.std],
+                                          random_state=random_seed)
+    b = tran.fit_transform(X_train)
+    b = b.reindex(np.sort(b.columns), axis=1)
+    np.testing.assert_array_equal(a, b)

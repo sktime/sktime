@@ -19,7 +19,7 @@ def test_output_format_dim():
                     trans = RandomIntervalSegmenter(n_intervals=n_intervals)
                     Xt = trans.fit_transform(X)
 
-                    assert isinstance(Xt, pd.DataFrame)
+                    assert isinstance(Xt, (pd.DataFrame, pd.Series))
                     assert Xt.shape[0] == X.shape[0]
 
 

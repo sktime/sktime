@@ -1,7 +1,11 @@
-from sktime.pipeline import TSPipeline
 from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from sklearn.tree import DecisionTreeClassifier
+from sktime.datasets import load_gunpoint
 import numpy as np
+from sktime.pipeline import TSPipeline
+from sktime.transformers.compose import RowwiseTransformer
+from sklearn.tree import DecisionTreeClassifier
+from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sklearn.preprocessing import FunctionTransformer
 
 
 def test_random_state():
@@ -27,6 +31,25 @@ def test_random_state():
     for step in pipe.steps:
         assert step[1].random_state == rs
         assert step[1].get_params()['random_state'] == rs
+
+    # Check specific results
+    X_train, y_train = load_gunpoint()
+    X_test, y_test = load_gunpoint("TEST")
+
+    steps = [
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),
+        ('extract', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
+        ('clf', DecisionTreeClassifier())
+    ]
+    pipe = TSPipeline(steps, random_state=rs)
+    pipe.fit(X_train, y_train)
+    y_pred_first = pipe.predict(X_test)
+    N_ITER = 10
+    for _ in range(N_ITER):
+        pipe = TSPipeline(steps, random_state=rs)
+        pipe.fit(X_train, y_train)
+        y_pred = pipe.predict(X_test)
+        np.testing.assert_array_equal(y_pred_first, y_pred)
 
 
 def test_check_input():
