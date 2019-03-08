@@ -172,7 +172,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
     def __init__(self,
                  base_estimator=None,
                  n_estimators=500,
-                 criterion='gini',
+                 criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -190,11 +190,9 @@ class TimeSeriesForestClassifier(ForestClassifier):
                  class_weight=None,
                  check_input=True):
 
-        self.check_input = check_input
-
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='random', features=features)),
+            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
                      ('clf', DecisionTreeClassifier())]
             base_estimator = TSPipeline(steps)
 
@@ -215,11 +213,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
             "max_leaf_nodes": max_leaf_nodes,
             "min_impurity_decrease": min_impurity_decrease,
             "min_impurity_split": min_impurity_split,
-            "random_state": random_state
         }
         estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
 
-        # Pass on param names.
+        # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -236,9 +233,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         # Assign random state to pipeline.
         base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
 
-        # Set renamed estimator params.
+        # Store renamed estimator params.
         for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
+        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -275,7 +273,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
             X.sort_indices()
 
         # Remap output
-        self.n_features_ = X.shape[1]
+        self.n_features_ = X.shape[1] if X.ndim == 2 else 1
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -398,7 +396,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
             return all_proba
 
     def _validate_X_predict(self, X):
-        n_features = X.shape[1]
+        n_features = X.shape[1] if X.ndim == 2 else 1
         if self.n_features_ != n_features:
             raise ValueError("Number of features of the model must "
                              "match the input. Model n_features is %s and "
