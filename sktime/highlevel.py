@@ -1,7 +1,7 @@
 '''
 A Helper interface for high level operations
 
-Implementats the Task and Strategy classes for
+Implements the Task and Strategy classes for
 high level operations
 '''
 
@@ -18,8 +18,7 @@ class Task:
             The string value could be either "TSC" for time series
             classification of "TSR" for time series regression.
         data : a pandas DataFrame
-            The DataFrame should have an attrutube sign such that
-            data.sign contains the SHA-256 hash of the source file.
+            Contains the data that the task is expected to work with.
         target : string
             The column header for the target variable to be predicted.
         features : list of string
@@ -27,14 +26,13 @@ class Task:
             If omitted, every column apart from target would be a feature.
         '''
         self._case = case
-        self._sign = data.sign
         self._target = target
         self._features = features
         # by default every column apart from target is a feature
         if self._features is None:
-            self._features = list(data.columns).remove(self._target)
-            # make the list of features read-only
-            self._features = tuple(self._features)
+            self._features = data.columns.drop(self._target)
+        # set the user-supplied feature list as read-only
+        self._features = tuple(self._features)
 
         # glean metadata from the dataset
         self._meta = {"nrow": data.shape[0],
@@ -50,13 +48,6 @@ class Task:
         exposes the private variable _case as read only
         '''
         return self._case
-
-    @property
-    def sign(self):
-        '''
-        exposes the private variable _sign as read only
-        '''
-        return self._sign
 
     @property
     def target(self):
@@ -97,7 +88,6 @@ class BaseStrategy:
         # construct and initialize the estimator
         self._estimator = estimator
         self._case = None
-        self._sign = None
         self._task = None
         self._meta = {"tags": None}
 
@@ -107,13 +97,6 @@ class BaseStrategy:
         exposes the private variable _case as read only
         '''
         return self._case
-
-    @property
-    def sign(self):
-        '''
-        exposes the private variable _sign as read only
-        '''
-        return self._sign
 
     def __getitem__(self, key):
         '''
@@ -133,13 +116,7 @@ class BaseStrategy:
             A task initialized with the same kind of data
         data : a pandas DataFrame
             Training Data
-            The DataFrame should have an attrutube sign such that
-            data.sign contains the SHA-256 hash of the source file.
         '''
-        # check task compatibility with data
-        if data.sign != task.sign:
-            raise ValueError("Hash mismatch: the supplied data is\
-                             incompatible with the task")
         # check task compatibility with Strategy
         if self._case != task.case:
             raise ValueError("Hash mismatch: the supplied data is\
@@ -150,28 +127,19 @@ class BaseStrategy:
         self._estimator.fit(data[self._task.features],
                             data[self._task.target])
 
-    def predict(self, data, check_compatibility=True):
+    def predict(self, data):
         '''Predict the targets for the test data
 
         Parameters
         ----------
-        check_compatibility : Bool
-            Data source compatibility with task is checked by default.
-            Set to False in production, if need be.
         data : a pandas DataFrame
             Prediction Data
-            The DataFrame should have an attrutube sign such that
-            data.sign contains the SHA-256 hash of the source file.
 
         Returns
         -------
         predictions: a pd.Dataframe or pd.Series
             returns the predictions
         '''
-        # check task compatibility if required
-        if check_compatibility is True and data.sign != self._task.sign:
-            raise ValueError("Hash mismatch: the supplied data is\
-                             incompatible with the task")
         # predict
         predictions = self._estimator.predict(data[self._task.features])
         return predictions
