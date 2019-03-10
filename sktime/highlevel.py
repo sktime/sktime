@@ -124,8 +124,14 @@ class BaseStrategy:
         # link task
         self._task = task
         # fit the estimator
-        self._estimator.fit(data[self._task.features],
-                            data[self._task.target])
+        try:
+            X = data[self._task.features]
+            y = data[self._task.target]
+        except KeyError:
+            raise ValueError("task <-> data mismatch. The necessary target/features\
+                              are not available in the supplied data")
+        # fit the estimator
+        self._estimator.fit(X, y)
 
     def predict(self, data):
         '''Predict the targets for the test data
@@ -141,7 +147,13 @@ class BaseStrategy:
             returns the predictions
         '''
         # predict
-        predictions = self._estimator.predict(data[self._task.features])
+        try:
+            X = data[self._task.features]
+        except KeyError:
+            raise ValueError("task <-> data mismatch. The necessary features\
+                              are not available in the supplied data")
+        # estimate predictions and return
+        predictions = self._estimator.predict(X)
         return predictions
 
     def get_params(self, deep=True):
