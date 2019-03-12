@@ -3,7 +3,6 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-
 from .base import BaseTransformer
 from ..utils.validation import check_ts_array
 from ..utils.transformations import tabularize
@@ -131,9 +130,18 @@ class RowwiseTransformer(BaseTransformer):
         X = check_ts_array(X)
         check_is_fitted(self, 'is_fitted_')
 
-        T = X.apply(self.transformer.fit_transform)
+        # Works on single column, but on multiple columns only if columns have equal-length series.
+        try:
+            Xt = X.apply(self.transformer.fit_transform)
 
-        return T
+        # Otherwise call apply on each column separately.
+        except ValueError as e:
+            if str(e) == 'arrays must all be same length':
+                Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform)) for _, col in X.items()], axis=1)
+            else:
+                raise
+
+        return Xt
 
 
 class Tabularizer(BaseTransformer):
