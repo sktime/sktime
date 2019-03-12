@@ -61,10 +61,11 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
         X = read_single_series_data(f)
     # remove the target before wrapping with series
     y = X.pop(0)
+    y = y.astype(int)
     # create series of series
     X = pd.Series([np.array(row) for row in X.itertuples(index=False)])
     # set names for both series
-    y.name = 'target'
+    y.name = 'label'
     X.name = 'x_axis'
     # return as per user request
     if return_X_y:
