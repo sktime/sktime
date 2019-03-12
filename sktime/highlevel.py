@@ -4,6 +4,7 @@ A Helper interface for high level operations
 Implements the Task and Strategy classes for
 high level operations
 '''
+import pandas as pd
 
 
 class Task:
@@ -27,12 +28,12 @@ class Task:
         '''
         self._case = case
         self._target = target
-        self._features = features
         # by default every column apart from target is a feature
-        if self._features is None:
+        if features is None:
             self._features = data.columns.drop(self._target)
-        # set the user-supplied feature list as read-only
-        self._features = tuple(self._features)
+        else:
+            # set the user-supplied feature list as read-only
+            self._features = pd.Index(features)
 
         # glean metadata from the dataset
         self._meta = {"nrow": data.shape[0],
