@@ -11,9 +11,9 @@ from sklearn.utils.testing import assert_array_equal
 from sktime.regressors.example_regressors import TSDummyRegressor
 from sktime.datasets import load_gunpoint
 
-Xsf_train, y_train = load_gunpoint()
+Xsf_train, y_train = load_gunpoint(return_X_y=True)
 Xdf_train = pd.DataFrame({'ts': Xsf_train, 'ts_copy': Xsf_train})
-Xsf_test, y_test = load_gunpoint("TEST")
+Xsf_test, y_test = load_gunpoint("TEST", return_X_y=True)
 Xdf_test = pd.DataFrame({'ts': Xsf_test, 'ts_copy': Xsf_test})
 
 def test_dataframe_TSDummyRegressor_constant_strategy():
