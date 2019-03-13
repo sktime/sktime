@@ -25,7 +25,7 @@ def test_output_format_dim():
 
 # Check that exception is raised for bad input args.
 def test_bad_input_args():
-    bad_n_intervals = [0, 'abc', 1.0]
+    bad_n_intervals = [0, 'abc', 1.0, -1]
     for arg in bad_n_intervals:
         with pytest.raises(ValueError):
             RandomIntervalSegmenter(n_intervals=arg)

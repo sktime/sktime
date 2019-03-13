@@ -39,7 +39,7 @@ class RandomIntervalSegmenter(BaseTransformer):
         if n_intervals in ('sqrt', 'random'):
             self.n_intervals = n_intervals
         elif np.issubdtype(type(n_intervals), np.integer):
-            if n_intervals == 0:
+            if n_intervals <= 0:
                 raise ValueError('Number of intervals must be positive')
             self.n_intervals = n_intervals
         else:
