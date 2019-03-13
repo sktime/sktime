@@ -20,12 +20,10 @@ def read_single_series_data(f):
     '''
     data = f.readlines()
     rows = [row.strip().split('  ') for row in data]
-    X = pd.DataFrame(rows, dtype=np.float)
-    y = X.pop(0)
-    return X, y
+    return pd.DataFrame(rows, dtype=np.float)
 
 
-def load_gunpoint(split='TRAIN'):
+def load_gunpoint(split='TRAIN', return_X_y=False):
     '''Loads the gunpoint dataset as a pandas DataFrame
 
     This dataset involves one female actor and one male actor making a
@@ -42,9 +40,12 @@ def load_gunpoint(split='TRAIN'):
 
     Parameters
     ----------
-    split   : string (either "TRAIN" or "TEST"
+    split       : string (either "TRAIN" or "TEST"
         takes the default value "TRAIN". Used to specify the appropriate
         part of the dataset to be loaded.
+    return_X_y  : bool
+        If True, returns the features and target separately, each as pd.Series
+        If False, returns both features and target in one DataFrame
 
     Returns
     -------
@@ -57,7 +58,16 @@ def load_gunpoint(split='TRAIN'):
     fname = 'GunPoint_'+split+'.txt'
     abspath = path.join(module_path, dname, fname)
     with open(abspath) as f:
-        X, y = read_single_series_data(f)
+        X = read_single_series_data(f)
+    # remove the target before wrapping with series
+    y = X.pop(0)
+    y = y.astype(int)
     # create series of series
     X = pd.Series([np.array(row) for row in X.itertuples(index=False)])
-    return X, y
+    # set names for both series
+    y.name = 'label'
+    X.name = 'x_axis'
+    # return as per user request
+    if return_X_y:
+        return X, y
+    return pd.concat([X, y], axis=1)
