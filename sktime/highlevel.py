@@ -11,7 +11,7 @@ class Task:
     '''
     A data container with the task description
     '''
-    def __init__(self, case, data, target, features=None):
+    def __init__(self, case, data, dataset_name, target, features=None):
         '''
         Parameters
         ----------
@@ -22,12 +22,16 @@ class Task:
             Contains the data that the task is expected to work with.
         target : string
             The column header for the target variable to be predicted.
+        dataset_name: string
+            Name of the dataset
         features : list of string
             The column header for the target variable to be predicted.
             If omitted, every column apart from target would be a feature.
         '''
         self._case = case
         self._target = target
+        self._data = data
+        self._dataset_name = dataset_name
         # by default every column apart from target is a feature
         if features is None:
             self._features = data.columns.drop(self._target)
@@ -56,6 +60,16 @@ class Task:
         exposes the private variable _target in a controlled way
         '''
         return self._target
+    @property
+    def data(self):
+        '''
+        Exposes the private variable _data in a controlled way
+        '''
+        return self._data
+    
+    @property
+    def dataset_name(self):
+        return self._dataset_name
 
     @property
     def features(self):
@@ -73,7 +87,19 @@ class Task:
             raise KeyError
         return self._meta[key]
 
+    def save_resampling_splits(self, train_idx, test_idx):
+        """
+        Saves the train test indices after the data is resampled
 
+        Parameters
+        -----------
+        train_idx: numpy array
+            array with indices of the train set
+        test_idx: numpy array
+            array with indices of the test set
+        """
+        self._train_idx = train_idx
+        self._test_idx = test_idx
 class BaseStrategy:
     '''
     A meta-estimator that employs a low level estimator to
@@ -91,6 +117,7 @@ class BaseStrategy:
         self._case = None
         self._task = None
         self._meta = {"tags": None}
+        self._name = estimator.__class__.__name__ #TODO: sets the name of the estimator. Not sure if this works for estimators other than scikit learn
 
     @property
     def case(self):
@@ -98,7 +125,9 @@ class BaseStrategy:
         exposes the private variable _case as read only
         '''
         return self._case
-
+    @property
+    def name(self):
+        return self._name
     def __getitem__(self, key):
         '''
         provided read only access via keys
@@ -109,6 +138,7 @@ class BaseStrategy:
         return self._meta[key]
 
     def fit(self, task, data):
+        #TODO: why is it necessary to pass the data? The task already has the data.
         ''' Fit the estimator as per task details
 
         Parameters
