@@ -1,5 +1,6 @@
 from warnings import warn, catch_warnings, simplefilter
 import numpy as np
+import pandas as pd
 from scipy.sparse import issparse
 from sklearn.ensemble.forest import ForestClassifier, MAX_INT, _generate_sample_indices, _generate_unsampled_indices
 from sklearn.ensemble.base import _partition_estimators
@@ -416,6 +417,9 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
+
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 

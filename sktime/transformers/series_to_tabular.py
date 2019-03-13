@@ -35,9 +35,10 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         and no checks are performed. Use with caution.
     """
 
-    def __init__(self, n_intervals='sqrt', features=None, random_state=None, check_input=True):
+    def __init__(self, n_intervals='sqrt', min_length=None, features=None, random_state=None, check_input=True):
         super(RandomIntervalFeatureExtractor, self).__init__(
             n_intervals=n_intervals,
+            min_length=min_length,
             random_state=random_state,
             check_input=check_input
         )

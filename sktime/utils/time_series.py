@@ -43,7 +43,7 @@ def rand_intervals_rand_n(x, random_state=None):
     return np.column_stack([starts, ends])
 
 
-def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
+def rand_intervals_fixed_n(x, n='sqrt', min_length=1, random_state=None):
     """
     Computes a fixed number (n) of intervals from index (x) with
     random starting points and lengths. Intervals may overlap and may not be unique.
@@ -79,7 +79,6 @@ def rand_intervals_fixed_n(x, n='sqrt', random_state=None):
     elif not (np.issubdtype(type(n), np.integer) and (n > 0)):
         raise ValueError(f'n must be either "sqrt" or positive integer, but found {type(n)}')
 
-    min_length = 1
     starts = rng.randint(m - min_length + 1, size=n)
 
     if n == 1:

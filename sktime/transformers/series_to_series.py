@@ -14,7 +14,7 @@ class RandomIntervalSegmenter(BaseTransformer):
     Series-to-series transformer.
     """
 
-    def __init__(self, n_intervals='sqrt', random_state=None, check_input=True):
+    def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
         """
         Creates instance of RandomIntervalFeatureExtractor transformer.
 
@@ -35,6 +35,10 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.input_shape_ = ()
         self.n_intervals = n_intervals
         self.columns_ = []
+        if min_length is None:
+            self.min_length = 1
+        else:
+            self.min_length = min_length
 
         if n_intervals in ('sqrt', 'random'):
             self.n_intervals = n_intervals
@@ -66,10 +70,13 @@ class RandomIntervalSegmenter(BaseTransformer):
         # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
         #  or use ColumnTransformer?
         if self.n_intervals == 'random':
-            self.intervals_ = [rand_intervals_rand_n(self.input_indexes_[c], random_state=self.random_state)
+            self.intervals_ = [rand_intervals_rand_n(self.input_indexes_[c],
+                                                     random_state=self.random_state)
                                for c in range(self.input_shape_[1])]
         else:
-            self.intervals_ = [rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals,
+            self.intervals_ = [rand_intervals_fixed_n(self.input_indexes_[c],
+                                                      n=self.n_intervals,
+                                                      min_length=self.min_length,
                                                       random_state=self.random_state)
                                for c in range(self.input_shape_[1])]
         return self
