@@ -86,7 +86,7 @@ def test_results():
 # Test against equivalent pipelines.
 def test_different_implementations():
     random_seed = 1233
-    X_train, y_train = load_gunpoint()
+    X_train, y_train = load_gunpoint(return_X_y=True)
 
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
