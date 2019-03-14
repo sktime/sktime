@@ -87,7 +87,7 @@ class Task:
             raise KeyError
         return self._meta[key]
 
-    def save_resampling_splits(self, train_idx, test_idx):
+    def set_resampling_splits(self, train_idx, test_idx):
         """
         Saves the train test indices after the data is resampled
 
