@@ -1,5 +1,5 @@
 from sktime.experiments.orchestrator import Orchestrator
-from sktime.resampling.single_split import Single_Split
+from sktime.model_selection import Single_Split
 import sktime
 from sktime.highlevel import Task, TSCStrategy
 from sktime.datasets import load_gunpoint
@@ -14,8 +14,7 @@ task = Task(case='TSC', data=data, dataset_name='gunpoint',target='label')
 clf = TimeSeriesForestClassifier()
 strategy = TSCStrategy(clf)
 
-orchestrator = Orchestrator()
-orchestrator.set_tasks([task])
+orchestrator = Orchestrator(tasks=[task], data=[data], dataset_names=['GunPoint'])
 orchestrator.set_strategies([strategy])
 orchestrator.set_resampling(Single_Split())
 
