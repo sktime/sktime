@@ -458,13 +458,6 @@ if __name__ == "__main__":
     st = ContractedRandomShapeletTransform(time_limit_in_mins=0, min_shapelet_length=10, initial_num_shapelets_per_case=10, verbose=True)
     st.fit(train_x, train_y)
 
-    # for s in st.get_shapelets():
-    #     print(s.info_gain)
-
-    for s in st.get_shapelets():
-        print(s)
-        s.get_drawing_information(train_x)
-
     pipeline = Pipeline([
         ('st', ContractedRandomShapeletTransform(time_limit_in_mins=1, min_shapelet_length=10, max_shapelet_length=12, initial_num_shapelets_per_case=3, verbose=True)),
         ('rf', RandomForestClassifier()),
