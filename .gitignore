@@ -24,6 +24,10 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+#TSC results
+results/
+
 MANIFEST
 
 # PyInstaller
