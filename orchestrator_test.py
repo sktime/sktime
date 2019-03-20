@@ -26,5 +26,10 @@ orchestrator = Orchestrator(data_holders=[dh], strategies=[strategy], resampling
 results = orchestrator.run()
 
 analyze = AnalyseResults(results)
-analyze.prediction_errors()
+losses = analyze.prediction_errors(metric=ScoreAccuracy())
+
+avg_and_std = analyze.average_and_std_error(losses)
+
+
+print(avg_and_std)
 

@@ -263,8 +263,8 @@ class Result:
     def dataset_name(self):
         return self._dataset_name
     @property
-    def estimator_name(self):
-        return self._estimator_name
+    def strategy_name(self):
+        return self._strategy_name
     @property
     def true_labels(self):
         return self._true_labels
