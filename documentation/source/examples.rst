@@ -6,6 +6,6 @@ Examples
    :caption: Demos:
 
    examples/shapelet_transform
-   examples/high_level.ipynb
-   examples/pipe_line.ipynb
-   examples/loading_data.ipynb
+   examples/high_level
+   examples/pipe_line
+   examples/loading_data
