@@ -11,7 +11,6 @@ Welcome to sktime's documentation!
    :caption: Contents:
 
    autogen/sktime
-   quickstart
    examples
    extension
 
