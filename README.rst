@@ -8,14 +8,18 @@ A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`_ compatible Pyth
 time-series/panel data.
 
 
-The package is under active development. Currently, various approaches to time-series classification have been implemented.
+The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`_ repository on Github.
+
+Currently, various approaches to time-series classification have been implemented.
+
+
 
 Installation
 ------------
 The package is currently not available directly via PyPI. Instead, follow these steps
 to install the development version:
 
-1. Download the repository if you have not done so already: :code:`git clone https://github.com/mloning/python_utils.git`
+1. Download the repository if you have not done so already: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
 2. Move into the root directory: :code:`cd sktime`
 3. Make sure your local version is up-to-date: :code:`git pull`
 4. Switch onto the development branch: :code:`git checkout dev`
