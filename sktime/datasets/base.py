@@ -3,6 +3,7 @@
 from os import path
 import numpy as np
 import pandas as pd
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
 def read_single_series_data(f):
@@ -71,14 +72,6 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     if return_X_y:
         return X, y
     return pd.concat([X, y], axis=1)
-
-"""Utilities for loading datasets for testing"""
-
-from os import path
-import numpy as np
-import pandas as pd
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
-
 
 def load_gunpoint_dataframe(split='TRAIN', return_X_y=False):
 
