@@ -55,8 +55,8 @@ following rules before you submit a pull request:
 -  Follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) coding 
 guidelines. A good example can be found [here](https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01).
 In addition, we add the following guidelines:
-    - Use underscores to separate words in non class names: n_samples rather than
-  nsamples.
+    - Use underscores to separate words in non class names: `n_samples` rather than
+  `nsamples`.
     - Avoid multiple statements on one line. Prefer a line return after a 
   control flow statement (`if`/`for`).
     - Use relative imports for references inside sktime.
@@ -68,16 +68,8 @@ In addition, we add the following guidelines:
  official Python recommendations. It makes the code harder to read as the 
  origin of symbols is no longer explicitly referenced, but most important, 
  it prevents using a static analysis tool like pyflakes to automatically 
- find bugs in sktime.
+ find bugs.
     - Use the [numpy docstring standard](https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard) in all your docstrings.
-
-
-
-
-  
-
--  Use, when applicable, the validation tools and scripts in the
-   `sklearn.utils` submodule.  
 
 -  Give your pull request a helpful title that summarises what your
    contribution does. In some cases `Fix <ISSUE TITLE>` is enough.
@@ -96,56 +88,6 @@ In addition, we add the following guidelines:
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
 
--  Please prefix the title of your pull request with `[MRG]` (Ready for
-   Merge), if the contribution is complete and ready for a detailed review.
-   Two core developers will review your code and change the prefix of the pull
-   request to `[MRG + 1]` and `[MRG + 2]` on approval, making it eligible
-   for merging. An incomplete contribution -- where you expect to do more work before
-   receiving a full review -- should be prefixed `[WIP]` (to indicate a work
-   in progress) and changed to `[MRG]` when it matures. WIPs may be useful
-   to: indicate you are working on something to avoid duplicated work,
-   request broad review of functionality or API, or seek collaborators.
-   WIPs often benefit from the inclusion of a
-   [task list](https://github.com/blog/1375-task-lists-in-gfm-issues-pulls-comments)
-   in the PR description.
-
--  When adding additional functionality, provide at least one
-   example script in the ``examples/`` folder. Have a look at other
-   examples for reference. Examples should demonstrate why the new
-   functionality is useful in practice and, if possible, compare it
-   to other methods available in scikit-learn.
-
--  At least one paragraph of narrative documentation with links to
-   references in the literature (with PDF links when possible) and
-   the example.
-
--  The documentation should also include expected time and space
-   complexity of the algorithm and scalability, e.g. "this algorithm
-   can scale to a large number of samples > 100000, but does not
-   scale in dimensionality: n_features is expected to be lower than
-   100".
-
-You can also check for common programming errors with the following
-tools:
-
--  Code with good unittest **coverage** (at least 80%), check with:
-
-  ```bash
-  $ pip install pytest pytest-cov
-  $ pytest --cov sklearn path/to/tests_for_package
-  ```
-
--  No flake8 warnings, check with:
-
-  ```bash
-  $ pip install flake8
-  $ flake8 path/to/module.py
-  ```
-
-Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (please report on the mailing
-list or on the GitHub issue).
-
 Filing bugs
 -----------
 We use GitHub issues to track all bugs and feature requests; feel free to
@@ -155,8 +97,8 @@ It is recommended to check that your issue complies with the
 following rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/scikit-learn/sktime/issues?q=)
-   or [pull requests](https://github.com/sktime/sktime/pulls?q=).
+   [issues](https://github.com/kiraly-group/sktime/issues)
+   or [pull requests](https://github.com/kiraly-group/sktime/pulls).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.

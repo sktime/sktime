@@ -24,6 +24,10 @@ share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+
+#TSC results
+results/
+
 MANIFEST
 
 # PyInstaller
@@ -67,6 +71,8 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+doc/_build/
+doc/generated/
 
 # PyBuilder
 target/
@@ -115,3 +121,24 @@ dmypy.json
 .spyderproject
 .spyproject
 .ropeproject
+
+# scikit-learn specific
+doc/_build/
+doc/auto_examples/
+doc/modules/generated/
+doc/datasets/generated/
+
+# vim swap files
+*.swp
+
+# autogen stuff
+/documentation/source/autogen
+
+# macOS files
+.DS_Store
+
+# dask-worker-space
+dask-worker-space
+
+# documentation build files
+build_doc_site/
