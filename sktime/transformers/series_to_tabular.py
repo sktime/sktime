@@ -12,25 +12,26 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
     """Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
 
-    param n_intervals: str or int
+    n_intervals: str or int
+        Number of random intervals to generate.
         - If "fixed", sqrt of length of time-series is used.
         - If "random", random number of intervals is generated.
         - If integer, integer gives (fixed) number of intervals to generate.
 
         Default is "sqrt".
-    param features: None or list of functions
+    features: None or list of functions
         - If list of function, applies each function to random intervals to extract features.
         - If None, only the mean is extracted.
         Default is None.
 
-    param random_state: : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
+    random_state: : int, RandomState instance or None, optional (default=None)
+        - If int, random_state is the seed used by the random number generator;
+        - If RandomState instance, random_state is the random number generator;
+        - If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    param check_input: boolean, optional (default=True)
-    e    When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+    check_input: boolean, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
 
