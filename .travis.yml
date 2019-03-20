@@ -32,6 +32,7 @@ install:
     - source activate testenv
     - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov sphinx
     - pip install sphinx_rtd_theme
+    - pip install nbsphinx
 
 script:
     - mkdir for_test
