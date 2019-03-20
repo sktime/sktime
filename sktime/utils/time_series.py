@@ -7,19 +7,19 @@ def rand_intervals_rand_n(x, random_state=None):
     Computes a random number of intervals from index (x) with
     random starting points and lengths. Intervals are unique, but may overlap.
 
-    :param x : array_like, shape = [n_observations]
-    :param random_state : int, RandomState instance or None, optional (default=None)
+    param x : array_like, shape = [n_observations]
+    param random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-    :return : array-like, shape = [n, 2]
+    return : array-like, shape = [n, 2]
         2d array containing start and end points of intervals
 
 
     References
     ----------
-    .. [1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
+    [1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
     Information Sciences 239 (2013): 142-153.
 
 
@@ -48,21 +48,22 @@ def rand_intervals_fixed_n(x, n='sqrt', min_length=1, random_state=None):
     Computes a fixed number (n) of intervals from index (x) with
     random starting points and lengths. Intervals may overlap and may not be unique.
 
-    :param x : array_like, shape = [n_observations]
+    param x : array_like, shape = [n_observations]
         Array containing the time-series index.
-    :param n : 'sqrt' or int
+    param n : 'sqrt' or int
         Number of random intervals to compute.
 
         - If int, n random intervals are generated.
         - If 'sqrt', int(sqrt(m)) intervals are generated where m is the length of the time-series.
 
         The default is 'sqrt'.
-    :param random_state : int, RandomState instance or None, optional (default=None)
+    param random_state : int, RandomState instance or None, optional (default=None)
 
         - If int, random_state is the seed used by the random number generator;
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used by `np.random`.
-    :return : array-like, shape = [n, 2]
+
+    return : array-like, shape = [n, 2]
         2d array containing start and end points of intervals
 
 

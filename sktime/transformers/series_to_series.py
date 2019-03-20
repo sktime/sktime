@@ -12,6 +12,9 @@ __all__ = ['RandomIntervalSegmenter']
 class RandomIntervalSegmenter(BaseTransformer):
     """Transformer that segments time-series into random intervals.
 
+    Parameters
+    ----------
+
     param n_intervals: str or int
         Number of intervals to generate.
         - If "sqrt", sqrt of length of time-series is used.
@@ -67,7 +70,7 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         Returns
         -------
-        self : ColumnTransformer
+        self : RandomIntervalSegmenter
             This estimator
         """
         if self.check_input:
