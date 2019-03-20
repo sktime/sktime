@@ -64,7 +64,7 @@ The full API documentation can be found `here <https://alan-turing-institute.git
 
 Development road map
 --------------------
-1. Extension of high-level interface to classical and supervised/panel forecasting, including reduction strategies in which time-series/panel data prediction tasks are reducted to tasks that can be solved with classical supervised learning algorithms,
+1. Extension of high-level interface to classical and supervised/panel forecasting, including reduction strategies in which time-series/panel data prediction tasks are reduced to tasks that can be solved with classical supervised learning algorithms,
 2. Integration of algorithms for classical forecasting (e.g. ARIMA), deep learning, and third-party feature extraction tools,
-3. Design and implementation of specialised data-container for efficient handling of time-series/panel data in a supervised learning workflow with separated meta-data, re-utilising existing data-containers wherever possible,
-4. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods.
+3. Design and implementation of specialised data-container for efficient handling of time-series/panel data in a supervised learning workflow and separation of time-series meta-data, re-utilising existing data-containers wherever possible,
+4. Implementation of automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods.
