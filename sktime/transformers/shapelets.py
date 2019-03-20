@@ -6,6 +6,7 @@ import time
 from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.base import TransformerMixin
+from sktime.datasets import load_gunpoint
 
 # TO-DO: thorough testing (some initial testing completed, but passing the code to David to develop
 #        before everything has been fully verified)
@@ -35,19 +36,91 @@ from sklearn.base import TransformerMixin
 
 
 class RandomShapeletTransform(TransformerMixin):
+    """
+    Random Shapelet Transform.
+
+    A transformer to extract shapelets from a training dataset, then transform any
+    passed dataset into primitives using each extracted shapelet. For k shapelets,
+    an input case q is transformed by calculating the distance from q to each shapelet
+    and the transformed output case is composed of k features, where the kth attribute
+    is the distance from q to the kth shapelet.
+
+    This implementation of the transform is based on the findings in [2]; it uses random
+    sampling of candidate shapelets, rather than a full enumeration of candidates as
+    originally proposed in [1], as it has been shown that there is no significant
+    decrease in accuracy but a significant reduction in runtime through this approach.
+
+    There are two versions of the transform: RandomShapeletTransform and
+    ContractedRandomShapeletTransform. For each training series visited, both
+    implementations assess a specified number of candidate shapelets per series. However,
+    this version visits an explict number of cases to extract these shapelets from (from
+    1 to len(X), whereas ContractedRandomShapeletTransform visits training cases while
+    time remains on a contact (specified in minutes).
+
+
+    References:
+    [1] Hills, Jon, Jason Lines, Edgaras Baranauskas, James Mapp, and Anthony Bagnall.
+    "Classification of time series by shapelet transformation." Data Mining and Knowledge
+    Discovery 28, no. 4 (2014): 851-881.
+
+    [2] Bostrom, Aaron, and Anthony Bagnall.
+    "Binary shapelet transform for multiclass time series classification."
+    In Transactions on Large-Scale Data-and Knowledge-Centered Systems XXXII,
+    pp. 24-46. Springer, Berlin, Heidelberg, 2017.
+
+    Parameters
+    ----------
+    min_shapelet_length : int (default = 3)
+        The minimum candidate shapelet length
+    max_shapelet_length :int (default = np.inf)
+        The maximum candidate shapelet length (default = np.inf). This value is
+        an upper-bound and is automatically capped to the series length if the
+        specified value exceeds the length of the shapelet.
+    num_cases_to_sample: int (default = 5)
+        The number of training cases to extract candidate shapelets from.
+    num_shapelets_to_sample_per_case: int (default = 15)
+        The number of shapelet candidates to evaluate per series in the fit method
+    seed: int (default = 0)
+        To seed the shapelet discovery to ensure deterministic results across multiple runs
+    dim_to_use: int (default = 0)
+        Which dimension of the data to use
+    remove_self_similar: bool (default = True)
+        Whether to remove self-similar shapelets before transforming. A candidate shapelet
+        is considered to be self-similar to another candidate if they are taken from the
+        same dimension of the same training series. With this set to True, any overlapping
+        candidates will be removed to preserve the best candidate (i.e. highest info gain)
+    verbose: bool (default = False)
+        Whether to print information during shapelet extraction
+    use_binary_info_gain: bool (default = True)
+        Whether to use one-vs-all information gain (as in [2]) or consider each class
+        independently when calculating the information gain of a candidate (as in [1])
+    trim_shapelets: bool (default = True)
+        Whether to crop the final list of extracted shapelets to the top k. If specified,
+        this is an upper-bound; if less than k shapelets are found then this parameter will
+        have no effect
+    num_shapelets_to_trim_to: int (default = 200)
+        If trim_shapelets = True, this is the number of shapelets to trim to.
+
+
+
+    Attributes
+    ----------
+    shapelets: list of Shapelet objects
+        The list of extracted shapelets after fit is called (initially shapelets = None)
+    """
 
     def __init__(self,
-                 min_shapelet_length = 3,
-                 max_shapelet_length = np.inf,
-                 num_cases_to_sample = 5,
-                 num_shapelets_to_sample_per_case = 15,
-                 seed = 0,
-                 dim_to_use = 0,
-                 remove_self_similar = True,
-                 verbose = False,
-                 use_binary_info_gain = True,
-                 trim_shapelets = True,
-                 num_shapelets_to_trim_to = 200
+                 min_shapelet_length=3,
+                 max_shapelet_length=np.inf,
+                 num_cases_to_sample=5,
+                 num_shapelets_to_sample_per_case=15,
+                 seed=0,
+                 dim_to_use=0,
+                 remove_self_similar=True,
+                 verbose=False,
+                 use_binary_info_gain=True,
+                 trim_shapelets=True,
+                 num_shapelets_to_trim_to=200
                  ):
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
@@ -65,6 +138,16 @@ class RandomShapeletTransform(TransformerMixin):
         self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
 
     def fit(self, X, y, **fit_params):
+        """ A method to fit the shapelet transform to a specified X and y
+
+        Parameters
+        ----------
+        X: pandas DataFrame
+            The training input samples.
+        y: array-like or list
+            The class values for X
+
+        """
         X = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
         num_ins = len(y)
         class_vals = np.sort(np.array([x for x in set(y)]))
@@ -92,12 +175,12 @@ class RandomShapeletTransform(TransformerMixin):
 
         # indices by class
         idxs_to_sample_by_class = {x:[] for x in class_vals}
-        for i in range(0,len(y)):
+        for i in range(0, len(y)):
             idxs_to_sample_by_class[y[i]].append((i,y[i]))  # (index, class_val)
 
         # shuffle lists and get iterators for each class list
         class_val_iterators = {}
-        for c in range(0,len(class_vals)):
+        for c in range(0, len(class_vals)):
             rand.shuffle(idxs_to_sample_by_class[class_vals[c]])
             class_val_iterators[class_vals[c]] = (iter(idxs_to_sample_by_class[class_vals[c]]))
 
@@ -275,10 +358,22 @@ class RandomShapeletTransform(TransformerMixin):
 
         self.shapelets = all_shapelets
 
-
     # two "self-similar" shapelets are subsequences from the same series that are overlapping. This method
     @staticmethod
     def remove_self_similar(shapelet_list):
+        """ Remove self-similar shapelets from an input list. Note: this method assumes
+        that shapelets are pre-sorted in descending order of quality (i.e. if two candidates
+        are self-similar, the one with the later index will be removed)
+
+        Parameters
+        ----------
+        shapelet_list: list of Shapelet objects
+
+        Returns
+        -------
+        shapelet_list: list of Shapelet objects
+        """
+
         # IMPORTANT: shapelets must be in descending order of quality. This is preferable in the fit method as removing self-similar
         # shapelets may be False. However, could be dangerous if something else uses this code later. TO-DO: decide the best place to sort
         #
@@ -308,6 +403,16 @@ class RandomShapeletTransform(TransformerMixin):
 
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, **transform_params):
+        """ Transforms X according to the extracted shapelets (self.shapelets)
+
+        Parameters
+        ----------
+        X: pandas.DataFrame the input data to transform
+
+        Returns
+        -------
+        output: pandas DataFrame in a scikit-learn compatible format
+        """
         start = time.time()
         if self.shapelets is None:
             raise Exception("Fit not called yet - no shapelets exist!")
@@ -338,6 +443,13 @@ class RandomShapeletTransform(TransformerMixin):
         return output
 
     def fit_transform(self, X, y=None, **fit_params):
+        """ Fits and transforms a given input X and y
+
+        Parameters
+        ----------
+        X: pandas.DataFrame the input data to transform
+        y: list or array like of class values corresponding to the indices in X
+        """
         if self.shapelets is None and y is not None:
             self.fit(X,y)
         elif self.shapelets is not None:
@@ -347,12 +459,28 @@ class RandomShapeletTransform(TransformerMixin):
 
         return self.transform(X)
 
-
     def get_shapelets(self):
+        """ An accessor method to return the extracted shapelets
+
+        Returns
+        -------
+        shapelets: a list of Shapelet objects
+        """
         return self.shapelets
 
     @staticmethod
     def calc_info_gain(orderline, class_counts, total):
+        """ A static method to calculate the information gain of a candidate shapelet
+        when given an orderline and class distribution of distances to a dataset.
+
+        Parameters
+        ----------
+        orderline: pandas.DataFrame the input data to transform
+
+        Returns
+        -------
+        output: pandas DataFrame in a scikit-learn compatible format
+        """
 
         def entropy(ent_class_counts, all_class_count):
             ent = 0
@@ -389,8 +517,26 @@ class RandomShapeletTransform(TransformerMixin):
 
     @staticmethod
     def zscore(a, axis=0, ddof=0):
-        """
-        Adapted from scipy zscore to avoid /0 issue
+        """ A static method to return the normalised version of series.  This mirrors the scipy implementation
+        with a small difference - rather than allowing /0, the function returns output = np.zeroes(len(input)).
+        This is to allow for sensible processing of candidate shapelets/comparison subseries that are a straight
+        line. Original version: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.zscore.html
+
+        Parameters
+        ----------
+        a : array_like
+            An array like object containing the sample data.
+
+        axis : int or None, optional
+            Axis along which to operate. Default is 0. If None, compute over the whole array a.
+
+        ddof : int, optional
+            Degrees of freedom correction in the calculation of the standard deviation. Default is 0.
+
+        Returns
+        -------
+        zscore : array_like
+            The z-scores, standardized by mean and standard deviation of input array a.
         """
         a = np.asanyarray(a)
         sstd = a.std(axis=axis, ddof=ddof)
@@ -408,6 +554,85 @@ class RandomShapeletTransform(TransformerMixin):
 
 
 class ContractedRandomShapeletTransform(RandomShapeletTransform):
+    """
+    Contracted Random Shapelet Transform (extends Random Shapelet Transform).
+
+    A transformer to extract shapelets from a training dataset, then transform any
+    passed dataset into primitives using each extracted shapelet. For k shapelets,
+    an input case q is transformed by calculating the distance from q to each shapelet
+    and the transformed output case is composed of k features, where the kth attribute
+    is the distance from q to the kth shapelet.
+
+    This implementation of the transform is based on the findings in [2]; it uses random
+    sampling of candidate shapelets, rather than a full enumeration of candidates as
+    originally proposed in [1], as it has been shown that there is no significant
+    decrease in accuracy but a significant reduction in runtime through this approach.
+
+    There are two versions of the transform: RandomShapeletTransform and
+    ContractedRandomShapeletTransform. For each training series visited, both
+    implementations assess a specified number of candidate shapelets per series. However,
+    this version uses a contracted time limit; it visits a series, extracts an explict
+    number of shapelets, and then moves onto the next series. This continues until the
+    time limit is breached, and if the end of the data is reached first, the algorithm
+    will loop back round to the first series and extract the specified number of shapelets
+    again. The time limit is specified in minutes and is a lower-bound; if a shapelet is
+    being evaluated when the time limit is reached, it will complete before the extraction
+    process exits.
+
+    References:
+    [1] Hills, Jon, Jason Lines, Edgaras Baranauskas, James Mapp, and Anthony Bagnall.
+    "Classification of time series by shapelet transformation." Data Mining and Knowledge
+    Discovery 28, no. 4 (2014): 851-881.
+
+    [2] Bostrom, Aaron, and Anthony Bagnall.
+    "Binary shapelet transform for multiclass time series classification."
+    In Transactions on Large-Scale Data-and Knowledge-Centered Systems XXXII,
+    pp. 24-46. Springer, Berlin, Heidelberg, 2017.
+
+    Parameters
+    ----------
+    min_shapelet_length : int (default = 3)
+        The minimum candidate shapelet length
+    max_shapelet_length :int (default = np.inf)
+        The maximum candidate shapelet length (default = np.inf). This value is
+        an upper-bound and is automatically capped to the series length if the
+        specified value exceeds the length of the shapelet.
+    time_limit_in_mins: float (default = 60.0)
+        The contract time limit to continue shapelet extraction. This is a lower-bound as a
+        shapelet candidate will not be abandoned if the time limit runs out.
+    initial_num_shapelets_per_case: int (default = 15)
+        The number of shapelet candidates to evaluate per series in the fit method initially.
+        If there is sufficient time remaining on the contract after this number of shapelets
+        have been evaluated from all training series, the search will continue at the start
+        of the data and extract this many shapelets from each series again.
+    seed: int (default = 0)
+        To seed the shapelet discovery to ensure deterministic results across multiple runs
+    dim_to_use: int (default = 0)
+        Which dimension of the data to use
+    remove_self_similar: bool (default = True)
+        Whether to remove self-similar shapelets before transforming. A candidate shapelet
+        is considered to be self-similar to another candidate if they are taken from the
+        same dimension of the same training series. With this set to True, any overlapping
+        candidates will be removed to preserve the best candidate (i.e. highest info gain)
+    verbose: bool (default = False)
+        Whether to print information during shapelet extraction
+    use_binary_info_gain: bool (default = True)
+        Whether to use one-vs-all information gain (as in [2]) or consider each class
+        independently when calculating the information gain of a candidate (as in [1])
+    trim_shapelets: bool (default = True)
+        Whether to crop the final list of extracted shapelets to the top k. If specified,
+        this is an upper-bound; if less than k shapelets are found then this parameter will
+        have no effect
+    num_shapelets_to_trim_to: int (default = 200)
+        If trim_shapelets = True, this is the number of shapelets to trim to.
+
+
+
+    Attributes
+    ----------
+    shapelets: list of Shapelet objects
+        The list of extracted shapelets after fit is called (initially shapelets = None)
+    """
     def __init__(self,
                  min_shapelet_length=3,
                  max_shapelet_length=np.inf,
@@ -437,7 +662,25 @@ class ContractedRandomShapeletTransform(RandomShapeletTransform):
         self.trim_shapelets = trim_shapelets
         self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
 
+
 class Shapelet:
+    """
+    A simple class to model a Shapelet with associated information
+
+    Parameters
+    ----------
+    series_id: int
+        The index of the series within the data (X) that was passed to fit.
+    start_pos: int
+        The starting position of the shapelet within the original series
+    length: int
+        The length of the shapelet
+    info_gain: flaot
+        The calculated information gain of this shapelet
+    data: array-like
+        The (z-normalised) data of this shapelet
+    """
+
     def __init__(self, series_id, start_pos, length, info_gain, data):
         self.series_id = series_id
         self.start_pos = start_pos
@@ -450,13 +693,12 @@ class Shapelet:
 
 
 if __name__ == "__main__":
+    """Example usage"""
 
     dataset = "GunPoint"
-    train_x, train_y = load_from_tsfile_to_dataframe("C:/temp/sktime_temp_data/" + dataset + "/"+dataset + "_TRAIN.ts")
-    test_x, test_y = load_from_tsfile_to_dataframe("C:/temp/sktime_temp_data/" + dataset + "/"+dataset + "_TEST.ts")
 
-    st = ContractedRandomShapeletTransform(time_limit_in_mins=0, min_shapelet_length=10, initial_num_shapelets_per_case=10, verbose=True)
-    st.fit(train_x, train_y)
+    train_x, train_y = load_gunpoint(split='TRAIN')
+    test_x, test_y = load_gunpoint(split='TEST')
 
     pipeline = Pipeline([
         ('st', ContractedRandomShapeletTransform(time_limit_in_mins=1, min_shapelet_length=10, max_shapelet_length=12, initial_num_shapelets_per_case=3, verbose=True)),
@@ -473,7 +715,7 @@ if __name__ == "__main__":
     print("Correct:")
     correct = sum(preds == test_y)
     print("\t"+str(correct)+"/"+str(len(test_y)))
-    print("\t"+str(correct/len(test_y))+"%")
+    print("\t"+str(correct/len(test_y)))
     print("\nTiming:")
     print("\tTo build:   "+str(end_build-start)+" secs")
     print("\tTo predict: "+str(end_test-end_build)+" secs")
