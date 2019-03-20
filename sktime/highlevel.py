@@ -5,27 +5,27 @@ Implements the Task and Strategy classes for
 high level operations
 '''
 import pandas as pd
+from sklearn.base import BaseEstimator
 
 
 class Task:
     '''
     A data container with the task description
+
+    Parameters
+    ----------
+    case : string
+        The string value could be either "TSC" for time series
+        classification of "TSR" for time series regression.
+    data : pd.DataFrame
+        Contains the data that the task is expected to work with.
+    target : string
+        The column header for the target variable to be predicted.
+    features : list of string
+        The column header for the target variable to be predicted.
+        If omitted, every column apart from target would be a feature.
     '''
     def __init__(self, case, data, target, features=None):
-        '''
-        Parameters
-        ----------
-        case : string
-            The string value could be either "TSC" for time series
-            classification of "TSR" for time series regression.
-        data : a pandas DataFrame
-            Contains the data that the task is expected to work with.
-        target : string
-            The column header for the target variable to be predicted.
-        features : list of string
-            The column header for the target variable to be predicted.
-            If omitted, every column apart from target would be a feature.
-        '''
         self._case = case
         self._target = target
         # by default every column apart from target is a feature
@@ -78,14 +78,14 @@ class BaseStrategy:
     '''
     A meta-estimator that employs a low level estimator to
     perform a pescribed task
+
+    Parameters
+    ----------
+    estimator : BaseEstimator
+        An instance of an appropriately initialized
+        low-level estimator
     '''
     def __init__(self, estimator):
-        '''
-        Parameters
-        ----------
-        estimator : An instance of an appropriately initialized
-        low-level estimator
-        '''
         # construct and initialize the estimator
         self._estimator = estimator
         self._case = None
@@ -115,8 +115,13 @@ class BaseStrategy:
         ----------
         task : Task
             A task initialized with the same kind of data
-        data : a pandas DataFrame
+        data : pd.DataFrame
             Training Data
+
+        Returns
+        -------
+        self: the instance being fitted
+            returns the predictions
         '''
         # check task compatibility with Strategy
         if self._case != task.case:
