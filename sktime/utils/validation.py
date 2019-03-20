@@ -1,13 +1,8 @@
-'''
-validation utilities for sktime
-'''
-# build on top of sklearn
 import numpy as np
 
 def check_ts_X_y(X, y):
-    '''
-    use preexisting ones with bypass (temporarily)
-    '''
+    """Placeholder function for input validation.
+    """
     # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
     # currently it checks neither the data nor the datatype
     # return check_X_y(X, y, dtype=None, ensure_2d=False)
@@ -15,9 +10,8 @@ def check_ts_X_y(X, y):
 
 
 def check_ts_array(X):
-    '''
-    use preexisting ones with bypass (temporarily)
-    '''
+    """Placeholder function for input validation.
+    """
     # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
     # currently it checks neither the data nor the datatype
     # return check_array(X, dtype=None, ensure_2d=False)
@@ -26,10 +20,17 @@ def check_ts_array(X):
 
 def check_equal_index(X):
     """
-    Check for each column in dataframe if all series have the same index.
+    Function to check if all time-series for a given column in a nested pandas DataFrame have the same index.
 
-    :param X:
-    :return:
+    Parameters
+    ----------
+    param X : nested pandas DataFrame
+        Input dataframe with time-series in cells.
+
+    Returns
+    -------
+    indexes : list of indixes
+        List of indixes with one index for each column
     """
     # TODO handle 1d series, not only 2d dataframes
     # TODO assumes columns are typed (i.e. all rows for a given column have the same type)
