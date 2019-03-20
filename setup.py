@@ -37,7 +37,7 @@ URL = 'https://github.com/kiraly-group/sktime'
 LICENSE = 'undecided'
 DOWNLOAD_URL = 'https://github.com/kiraly-group/sktime'
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas', 'xpandas']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
