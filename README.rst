@@ -59,7 +59,6 @@ Currently, the package implements various state-of-the-art approaches to time-se
 
 Documentation
 -------------
-
 The full API documentation can be found `here <https://alan-turing-institute.github.io/sktime/>`_.
 
 
