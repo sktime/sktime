@@ -1,12 +1,19 @@
-from warnings import warn, catch_warnings, simplefilter
+from warnings import warn
+from warnings import catch_warnings
+from warnings import simplefilter
 import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
-from sklearn.ensemble.forest import ForestClassifier, MAX_INT, _generate_sample_indices, _generate_unsampled_indices
+from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble.forest import MAX_INT
+from sklearn.ensemble.forest import _generate_sample_indices
+from sklearn.ensemble.forest import _generate_unsampled_indices
 from sklearn.ensemble.base import _partition_estimators
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import check_random_state
+from sklearn.utils import check_array
+from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
@@ -18,8 +25,7 @@ __all__ = ["TimeSeriesForestClassifier"]
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
-    """
-    Time-Series Forest Classifier.
+    """Time-Series Forest Classifier.
 
     A time series forest is a meta estimator and an adaptation of the random forest
     for time-series/panel data that fits a number of decision tree classifiers on

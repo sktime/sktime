@@ -10,23 +10,28 @@ __all__ = ['RandomIntervalSegmenter']
 
 
 class RandomIntervalSegmenter(BaseTransformer):
-    """
-    Series-to-series transformer.
+    """Transformer that segments time-series into random intervals.
+
+    param n_intervals: str or int
+        Number of intervals to generate.
+        - If "sqrt", sqrt of length of time-series is used.
+        - If "random", random number of intervals is generated.
+        - If int, n_intervals intervals are generated.
+        Default is "sqrt".
+
+    param random_state: : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    param check_input: bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
     """
 
     def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
-        """
-        Creates instance of RandomIntervalFeatureExtractor transformer.
 
-        :param n_intervals: str or int
-            - If "sqrt", sqrt of length of time-series is used.
-            - If "random", random number of intervals is generated.
-            - If int, n_intervals intervals are generated.
-
-            Default is "sqrt".
-        :param random_state:
-        :param check_input:
-        """
 
         self.input_indexes_ = []  # list of time-series indexes of each column
         self.random_state = random_state
@@ -51,6 +56,20 @@ class RandomIntervalSegmenter(BaseTransformer):
                              f'but found {type(n_intervals)}')
 
     def fit(self, X, y=None):
+        """Fit transformer, generating random interval indices.
+
+        Parameters
+        ----------
+        X : pandas DataFrame of shape [n_samples, n_features]
+            Input data
+        y : pandas Series, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : ColumnTransformer
+            This estimator
+        """
         if self.check_input:
             # TODO check input is series column, not column of primitives
             pass
@@ -82,8 +101,18 @@ class RandomIntervalSegmenter(BaseTransformer):
         return self
 
     def transform(self, X, y=None):
-        """
-        Segment series into random intervals. Series-to-series transformer.
+        """Transform X, segments time-series in each column into random intervals using interval indices generated
+        during `fit`.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
         # Check is fit had been called

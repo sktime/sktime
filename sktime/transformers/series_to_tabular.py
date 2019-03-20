@@ -9,29 +9,28 @@ __all__ = ['RandomIntervalFeatureExtractor']
 
 
 class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
-    """
-    RandomIntervalFeatureExtractor, a transformer that segments time-series into random intervals
-    and extracts features from each interval.
+    """Transformer that segments time-series into random intervals
+    and subsequently extracts series-to-primitives features from each interval.
 
-    :param n_intervals: str or int
+    param n_intervals: str or int
         - If "fixed", sqrt of length of time-series is used.
         - If "random", random number of intervals is generated.
         - If integer, integer gives (fixed) number of intervals to generate.
 
         Default is "sqrt".
-    :param features: None or list of functions
+    param features: None or list of functions
         - If list of function, applies each function to random intervals to extract features.
         - If None, only the mean is extracted.
         Default is None.
 
-    :param random_state: : int, RandomState instance or None, optional (default=None)
+    param random_state: : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    :param check_input: bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+    param check_input: boolean, optional (default=True)
+    e    When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
 
@@ -53,8 +52,18 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                              'applied to the data columns')
 
     def transform(self, X, y=None):
-        """
-        Segment series into random intervals. Series-to-series transformer.
+        """Transform X, segments time-series in each column into random intervals using interval indices generated
+        during `fit` and extracts features from each interval.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
         # Check is fit had been called
