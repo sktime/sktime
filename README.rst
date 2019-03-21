@@ -53,12 +53,13 @@ The sktime high-level interface aims to create a unified interface for these dif
 Low-level interface
 ~~~~~~~~~~~~~~~~~~~
 The low-level interface extends the standard scikit-learn API to handle time series and panel data.
-Currently, the package implements and interfaces various state-of-the-art approaches to supervised learning with time series features, including
+Currently, the package implements:
 
-* Random interval segmentation,
-* Time series feature extraction, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms (e.g. mean, variance) as well as shapelets,
-* Pipelining, allowing to chain multiple transformers with a final classifiers,
-* Ensembling, such as to create a fully customisable random forest for time-series classification, accepting pipelines as the base estimator, including pipelines with interval segmentation and feature extraction.
+* various state-of-the-art approaches to supervised learning with time series features
+* transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates
+* Pipelining, allowing to chain multiple transformers with a final estimator
+* meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator, 
+* off-shelf composites strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction.
 
 
 Documentation
