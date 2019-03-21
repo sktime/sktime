@@ -11,8 +11,8 @@ time series and panel data. Eventually, we would like to support:
 * Supervised/panel forecasting,
 * Time series segmentation,
 * Time-to-event and event risk modelling,
-* Unsupervised tasks and diagnostic visualization,
-* On-line and streaming tasks such as anomaly detection, motif discovery.
+* Unsupervised tasks such as motif discovery and anomaly detection, and diagnostic visualization,
+* On-line and streaming tasks, e.g., in variation of the above.
 
 The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`_ repository on Github.
 
