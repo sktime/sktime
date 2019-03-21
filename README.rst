@@ -10,7 +10,9 @@ time series and panel data. Eventually, we would like to support:
 * Classical forecasting,
 * Supervised/panel forecasting,
 * Time series segmentation,
-* Time-to-event and event risk modelling.
+* Time-to-event and event risk modelling,
+* Unsupervised tasks and diagnostic visualization,
+* On-line and streaming tasks such as anomaly detection, motif discovery.
 
 The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`_ repository on Github.
 
@@ -34,15 +36,14 @@ Overview
 
 High-level interface
 ~~~~~~~~~~~~~~~~~~~~
-There are numerous different time series data related learning tasks, including
+There are numerous different time series data related learning tasks, for example
 
 * Time series classification and regression,
 * Classical forecasting,
 * Supervised/panel forecasting,
-* Time series segmentation,
-* Time-to-event and event risk modelling.
+* Time series segmentation.
 
-The sktime high-level interface aims to create a unified interface for these different learning tasks through the following two objects:
+The sktime high-level interface aims to create a unified interface for these different learning tasks (partially inspired by the APIs of mlr and openML) through the following two objects:
 
 * :code:`Task` object that encapsulates meta-data from a dataset and the necessary information about the particular supervised learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
 * :code:`Strategy` objects that wrap low-level estimators and allows to use :code:`fit` and :code:`predict` methods using data and a task object.
