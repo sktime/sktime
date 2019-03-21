@@ -4,11 +4,11 @@ sktime
 ======
 
 A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`_ compatible Python toolbox for learning with
-time-series/panel data. Eventually, we would like to support:
+time series and panel data. Eventually, we would like to support:
 
-* Time-series classification and regression,
-* Classical forecasting,
-* Supervised/panel forecasting,
+* time series classification and regression,
+* classical forecasting,
+* supervised/panel forecasting,
 * time series segmentation
 * time-to-event and event risk modelling
 
@@ -37,9 +37,9 @@ High-level interface
 ~~~~~~~~~~~~~~~~~~~~
 There are numerous differenc time series data related learning tasks, including
 
-* Time-series classification and regression,
-* Classical forecasting,
-* Supervised/panel forecasting,
+* time series classification and regression,
+* classical forecasting,
+* supervised/panel forecasting,
 * time series segmentation
 * time-to-event and event risk modelling
 
@@ -55,9 +55,9 @@ Low-level interface
 The low-level interface extends the standard scikit-learn API to handle time series and panel data.
 Currently, the package implements:
 
-* various state-of-the-art approaches to supervised learning with time series features
-* transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates
-* Pipelining, allowing to chain multiple transformers with a final estimator
+* various state-of-the-art approaches to supervised learning with time series features,
+* transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
+* Pipelining, allowing to chain multiple transformers with a final estimator,
 * meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator, 
 * off-shelf composites strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction.
 
