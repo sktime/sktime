@@ -78,8 +78,11 @@ Development road map
 Contributors
 ------------
 Former and current active contributors are as follows.
+
 Project management: Jason Lines (@jasonlines), Franz J Kiraly (@fkiraly)
+
 Design: Anthony Bagnall, Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz J Kiraly (@fkiraly), Markus Löning (@mloning)
+
 Coding: Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
 
 We are actively looking for contributors. Please contact @fkiraly or @jasonlines for volunteering or information on paid opportunities, or simply raise an issue in the tracker.
