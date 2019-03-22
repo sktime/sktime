@@ -45,7 +45,6 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     abspath = path.join(module_path, dname, pname, fname)
 
     X, y = load_from_tsfile_to_dataframe(abspath)
-    X = pd.DataFrame(X)
     if return_X_y:
         return X, y
     else:
@@ -89,7 +88,6 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     abspath = path.join(module_path, dname, pname, fname)
 
     X, y = load_from_tsfile_to_dataframe(abspath)
-    X = pd.DataFrame(X)
     if return_X_y:
         return X, y
     else:
@@ -135,7 +133,6 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     abspath = path.join(module_path, dname, pname, fname)
 
     X, y = load_from_tsfile_to_dataframe(abspath)
-    X = pd.DataFrame(X)
     if return_X_y:
         return X, y
     else:
