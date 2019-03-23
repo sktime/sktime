@@ -20,17 +20,21 @@ class Losses(object):
         self._losses = collections.defaultdict(list)
         self._metric = metric
         self._losses_per_estimator = collections.defaultdict(list)
-
+        self._losses_per_dataset_per_estimator = collections.defaultdict(list)
     def evaluate(self, predictions, true_labels, dataset_name, strategy_name):
         """
         Calculates the loss metrics on the test sets.
 
         Parameters
         ----------
-            predictions(2d numpy array): Predictions of trained estimators in the form [estimator_name, [predictions]]
-            true_labels(numpy array): true labels of test dataset.
-            dataset_name(string): Name of the dataset.
-            
+        predictions: numpy array
+            Predictions of trained estimators in the form 
+        true_labels: numpy array
+            true labels of test dataset.
+        dataset_name: string
+            Name of the dataset
+        dataset_name: string
+            Name of the strategy
         """
 
         #evaluates error per estimator
@@ -40,9 +44,13 @@ class Losses(object):
         else:
             self._losses_per_estimator[strategy_name] = [loss]
 
-        
-    
+        #evaluate per dataset
+        avg_score, std_score = self._metric.calculate_per_dataset(y_true=true_labels, 
+                                                                  y_pred=predictions)
 
+        
+        self._losses_per_dataset_per_estimator[dataset_name].append([strategy_name, avg_score, std_score])
+        
     def get_losses(self):
         """
         When the Losses class is instantiated a dictionary that holds all losses is created and appended every time the evaluate() method is run. This method returns this dictionary with the losses.
@@ -51,7 +59,7 @@ class Losses(object):
         -------
             errors_per_estimator (dictionary), errors_per_dataset_per_estimator (dictionary), errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
         """ 
-        return self._losses_per_estimator
+        return self._losses_per_estimator, self._losses_to_dataframe(self._losses_per_dataset_per_estimator)
 
     def _losses_to_dataframe(self, losses):
         """
