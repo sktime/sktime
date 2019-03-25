@@ -15,6 +15,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.multiclass import class_distribution
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
@@ -501,7 +502,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
     return tree
 
-# TO-DO: predict, predict_proba, full testing
+
 class ElasticEnsemble():
     def __init__(
             self,
@@ -511,7 +512,8 @@ class ElasticEnsemble():
             proportion_train_for_test=1.0,
             data_dimension_to_use = 0,
             random_seed = 0,
-            dim_to_use = 0
+            dim_to_use = 0,
+            verbose=0
     ):
         if distance_measures_to_include == 'all':
             self.distance_measures = [dtw_distance, derivative_dtw_distance, weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance]
@@ -523,14 +525,18 @@ class ElasticEnsemble():
         self.data_dimension_to_use = data_dimension_to_use
         self.random_seed = random_seed
         self.dim_to_use = dim_to_use
-        self.classifiers = None
+        self.estimators_ = None
         self.train_accs_by_classifier = None
         self.train_preds_by_classifier = None
+        self.classes_ = None
+        self.verbose = verbose
 
     def fit(self, X, y, **kwargs):
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
-        self.classifiers = [None] * len(self.distance_measures)
+        self.estimators_ = [None] * len(self.distance_measures)
+
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         rand = np.random.RandomState(self.random_seed)
 
@@ -555,37 +561,58 @@ class ElasticEnsemble():
         # set up individual cross val objects
 
         for dm in range(0, len(self.distance_measures)):
-            print("doing "+str(self.distance_measures[dm]))
+            if self.verbose > 0:
+                print("Currently evaluating "+str(self.distance_measures[dm].__name__))
             if self.prop_of_param_options == 1:
                 grid = GridSearchCV(
                     estimator= KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
-                    param_grid=ElasticEnsemble.get_100_param_options(self.distance_measures[dm],train_x),
+                    param_grid=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
                     cv=LeaveOneOut(),
                     scoring='accuracy'
                 )
             else:
                 grid = RandomizedSearchCV(
                     estimator=KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
-                    param_distributions=ElasticEnsemble.get_100_param_options(self.distance_measures[dm],train_x),
+                    param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
                     cv=LeaveOneOut(),
                     scoring='accuracy',
                     n_iter=100 * self.prop_of_param_options,
                     random_state=rand
                 )
 
-            grid.fit(param_train_x,param_train_y)
+            grid.fit(param_train_x, param_train_y)
 
             best_model = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
             preds = cross_val_predict(best_model, train_x, y, cv=LeaveOneOut())
 
-            self.classifiers[dm] = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            self.estimators_[dm] = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            self.estimators_[dm].fit(train_x, y)
             self.train_accs_by_classifier[dm] = grid.best_score_
             self.train_preds_by_classifier[dm] = preds
 
+    def predict_proba(self, X):
 
+        test_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+        output_probas = []
+        for c in range(0, len(self.estimators_)):
+            this_train_acc = self.train_accs_by_classifier[c]
+            this_probas = np.multiply(self.estimators_[c].predict_proba(test_x), this_train_acc)
+            output_probas.append(this_probas)
+
+        output_probas = np.sum(output_probas,axis=0)
+        return output_probas
+
+    def predict(self, X, return_preds_and_probas=False):
+        probas = self.predict_proba(X)
+        idx = np.argmax(probas, axis=1)
+        preds = np.asarray([self.classes_[x] for x in idx])
+        if return_preds_and_probas is False:
+            return preds
+        else:
+            return preds, probas
 
     @staticmethod
-    def get_100_param_options(distance_measure, train_x=None):
+    def _get_100_param_options(distance_measure, train_x=None):
 
         def get_inclusive(min_val, max_val, num_vals):
             inc = (max_val - min_val) / (num_vals-1)
