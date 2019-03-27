@@ -59,7 +59,7 @@ def test_rand_intervals_fixed_n():
 
 
 def test_bad_input_args():
-    bad_n_intervals = [0, 'abc', 1.0]
+    bad_n_intervals = [0, 'abc', 1.0, -1]
     m = 10
     x = np.arange(m)
     for arg in bad_n_intervals:
