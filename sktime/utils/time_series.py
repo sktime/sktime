@@ -86,7 +86,7 @@ def rand_intervals_fixed_n(x, n='sqrt', min_length=1, random_state=None):
     starts = rng.randint(m - min_length + 1, size=n)
 
     if n == 1:
-        starts = [starts]  # make it an iterablegit
+        starts = [starts]  # make it an iterable
 
     ends = [start + rng.randint(min_length, m - start + 1) for start in starts]
     return np.column_stack([starts, ends])
