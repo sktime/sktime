@@ -396,8 +396,9 @@ class RandomShapeletTransform(TransformerMixin):
             all_shapelets = RandomShapeletTransform.remove_self_similar(all_shapelets)
             
         # we keep the best num_shapelets_to_trim_to shapelets, defined by the user.
-        if len(all_shapelets) > self.num_shapelets_to_trim_to:
+        if self.trim_shapelets is True and len(all_shapelets) > self.num_shapelets_to_trim_to:
             all_shapelets = all_shapelets[:self.num_shapelets_to_trim_to]
+
             
 #        pickle.dump(all_shapelets, open("./all_shapelets.p", "wb"))
 #        all_shapelets = pickle.load( open( "./all_shapelets.p", "rb" ))
