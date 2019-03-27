@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
-from load_data import load_from_tsfile_to_dataframe
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 import time
 from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -9,7 +9,6 @@ from operator import itemgetter
 from collections import Counter
 import warnings
 
-from distances.distance import DISTANCE_MEASURE
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -34,7 +33,7 @@ class RandomShapeletTransform(TransformerMixin):
     sampling of candidate shapelets, rather than a full enumeration of candidates as
     originally proposed in [1], as it has been shown that there is no significant
     decrease in accuracy but a significant reduction in runtime through this approach.
-
+d
     There are two versions of the transform: RandomShapeletTransform and
     ContractedRandomShapeletTransform. For each training series visited, both
     implementations assess a specified number of candidate shapelets per series. However,
@@ -677,7 +676,7 @@ class Shapelet:
 
 if __name__ == "__main__":
     tiempo_comienzo = time.time()
-    dataset = "WormsTwoClass"
+    dataset = "GunPoint"
     train_x, train_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 

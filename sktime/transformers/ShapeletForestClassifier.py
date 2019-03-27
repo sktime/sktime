@@ -7,8 +7,8 @@ Created on Mon Mar 25 15:01:59 2019
 """
 
 import time
-from transformers.ensemble import ShapeletForestClassifier
-from load_data import load_from_tsfile_to_dataframe
+from sktime.transformers.ensemble import ShapeletForestClassifier
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 if __name__ == "__main__":
     

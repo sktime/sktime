@@ -1,6 +1,6 @@
 import numpy as np
 
-from tree import ShapeletTreeClassifier
+from sktime.transformers.tree import ShapeletTreeClassifier
 
 from sklearn.ensemble import BaggingClassifier
 from sklearn.base import BaseEstimator

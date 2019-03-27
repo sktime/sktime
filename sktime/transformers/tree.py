@@ -17,14 +17,14 @@
 
 import numpy as np
 
-from distances._tree_builder import ShapeletTreeBuilder
-from distances._tree_builder import ShapeletTreePredictor
+from sktime.transformers.distances._tree_builder import ShapeletTreeBuilder
+from sktime.transformers.distances._tree_builder import ShapeletTreePredictor
 
 from sklearn.base import ClassifierMixin
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_random_state
 from sklearn.utils import check_array
-from distances.distance import DISTANCE_MEASURE
+from sktime.transformers.distances.distance import DISTANCE_MEASURE
 
 __all__ = ["ShapeletTreeClassifier"]
 
