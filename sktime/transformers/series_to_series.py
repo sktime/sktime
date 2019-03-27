@@ -14,21 +14,20 @@ class RandomIntervalSegmenter(BaseTransformer):
 
     Parameters
     ----------
-
-    param n_intervals: str or int
+    n_intervals : str or int
         Number of intervals to generate.
         - If "sqrt", sqrt of length of time-series is used.
         - If "random", random number of intervals is generated.
         - If int, n_intervals intervals are generated.
         Default is "sqrt".
 
-    param random_state: : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    param check_input: bool, optional (default=True)
+    check_input : bool, optional (default=True)
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
@@ -47,16 +46,6 @@ class RandomIntervalSegmenter(BaseTransformer):
             self.min_length = 1
         else:
             self.min_length = min_length
-
-        if n_intervals in ('sqrt', 'random'):
-            self.n_intervals = n_intervals
-        elif np.issubdtype(type(n_intervals), np.integer):
-            if n_intervals <= 0:
-                raise ValueError('Number of intervals must be positive')
-            self.n_intervals = n_intervals
-        else:
-            raise ValueError(f'Number of intervals must be either "random", "sqrt" or positive integer, '
-                             f'but found {type(n_intervals)}')
 
     def fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
