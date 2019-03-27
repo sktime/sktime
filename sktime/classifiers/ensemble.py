@@ -8,7 +8,7 @@ from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
 from sklearn.ensemble.forest import _generate_sample_indices
 from sklearn.ensemble.forest import _generate_unsampled_indices
-from sklearn.ensemble.base import _partition_estimators
+from sklearn.ensemble.base import _partition_estimators, _set_random_states, clone
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_random_state
@@ -206,26 +206,25 @@ class TimeSeriesForestClassifier(ForestClassifier):
         elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
             raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
 
-        # Rename estimator params according to name in pipeline.
-        estimator = base_estimator.steps[-1][0]
-        estimator_params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-        }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
+        self.check_input = check_input
 
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            estimator_params=tuple(estimator_params.keys()),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_decrease", "min_impurity_split"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -237,11 +236,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         # Assign random state to pipeline.
         base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
-
-        # Store renamed estimator params.
-        for pname, pval in estimator_params.items():
-            self.__setattr__(pname, pval)
-        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -463,6 +457,28 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         self.oob_score_ = oob_score / self.n_outputs_
 
+    def _make_estimator(self, append=True, random_state=None):
+        """Make and configure a copy of the `base_estimator_` attribute.
+
+        Adapted to handle pipelines as `base_estimators_`.
+
+        Warning: This method should be used to properly instantiate new
+        sub-estimators.
+        """
+        estimator = clone(self.base_estimator_)
+
+        # Name of final estimator in pipeline.
+        final_estimator = estimator.steps[-1][0]
+        estimator.set_params(**{f'{final_estimator}__{p}': getattr(self, p)
+                                for p in self.estimator_params})
+
+        if random_state is not None:
+            _set_random_states(estimator, random_state)
+
+        if append:
+            self.estimators_.append(estimator)
+
+        return estimator
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
