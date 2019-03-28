@@ -40,12 +40,22 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.check_input = check_input
         self.intervals_ = []
         self.input_shape_ = ()
-        self.n_intervals = n_intervals
         self.columns_ = []
         if min_length is None:
             self.min_length = 1
         else:
             self.min_length = min_length
+
+        if n_intervals in ('sqrt', 'random', 'log'):
+            self.n_intervals = n_intervals
+        elif np.issubdtype(type(n_intervals), np.integer):
+            if n_intervals <= 0:
+                raise ValueError('Number of intervals must be positive')
+            else:
+                self.n_intervals = n_intervals
+        else:
+            raise ValueError(f'Number of intervals must be either "random", "sqrt" or positive integer, '
+                             f'but found {n_intervals}')
 
     def fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
