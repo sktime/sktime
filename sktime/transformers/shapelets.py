@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.load_data import load_from_tsfile_to_dataframe, load_from_arff_to_tsfile
 import time
 from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -677,6 +677,8 @@ class Shapelet:
 if __name__ == "__main__":
     tiempo_comienzo = time.time()
     dataset = "GunPoint"
+    #load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff")
+    #load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff")
     train_x, train_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 

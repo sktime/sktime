@@ -101,3 +101,47 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, replace_missing_vals_
     #
     # # otherwise just return an XDataFrame
     return x_data
+
+
+def load_from_arff_to_tsfile(full_file_path_and_name):
+    #TODO: Implement timeStamps feature in case there are problems with these characteristics.
+    #TODO: Implement in case datasets without labels.
+    
+    problemName = full_file_path_and_name.split("/")[-1].split("_")[0]
+    
+    # At this moment there are not problems with timeStamps.
+    timeStamps = False
+    
+    patterns = []
+    labels = []
+    with open(full_file_path_and_name, 'r') as f:
+        for line in f:
+            if not line.startswith("@") and not line.startswith("%") and not line == '\n':
+                data = line.split(",")
+                cadena = ''
+                for i,j in enumerate(data):
+                    if i == len(data)-1: # If it is the label
+                        if j != '?\n': # Label
+                            cadena = cadena + ':' + str(int(j))
+                            labels.append(int(j))
+                        else: # Missing label
+                            cadena += ':?'
+                    else: #If it isn't the label
+                        if j != '?': # Value
+                            cadena += str(np.round(float(j), 5))
+                        else: # Missing data
+                            cadena += '?'
+                        if not ((i+2) == len(data)): # If not last value of the pattern, i.e. not the label.
+                            cadena += ','
+                patterns.append(cadena)
+    f.close()
+    classLabel = np.unique(labels)
+    
+    new_path_and_name = full_file_path_and_name.split(".")[0] + '.ts'
+    
+    with open(new_path_and_name, 'w+') as f:
+        f.write("@problemName " + problemName + "\n@timeStamps " + str.lower(str(timeStamps)) + "\n@classLabel true " + str(classLabel).replace("[", "").replace("]", "") + "\n@data\n")
+        for line in patterns:
+            f.write(line)
+            f.write('\n')
+    f.close()
