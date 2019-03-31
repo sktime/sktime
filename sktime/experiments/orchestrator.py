@@ -2,7 +2,9 @@ import logging
 import os
 import json
 import re
-from sktime.highlevel import Result
+from sktime.experiments.data import Result
+import numpy as np
+import pandas as pd
 
 class Orchestrator:
     """
@@ -14,7 +16,8 @@ class Orchestrator:
                 resampling,
                 data_dir='data',
                 experiments_trained_estimators_dir='trained_estimators',
-                experiments_results_dir='results'):
+                experiments_results_dir='results',
+                save_results=False):
         """
         Parameters
         ----------
@@ -29,7 +32,9 @@ class Orchestrator:
         experiments_trained_estimators_dir: string
             path on the disk for saving the trained estimators
         experiments_results_dir: string
-            path for saving json objects with results 
+            path for saving json objects with results
+        save_results: Boolean
+             If True saves results to HDD
         """
         self._data_dir = data_dir
         self._experiments_trained_estimators_dir = experiments_trained_estimators_dir
@@ -37,6 +42,7 @@ class Orchestrator:
         self._strategies = strategies
         self._data_holders = data_holders
         self._resampling = resampling
+        self._save_results = save_results
     def _save_results(self, results, save_path, overwrite_predictions):
         """
         Saves the results of the experiments to disk
@@ -95,9 +101,9 @@ class Orchestrator:
             dts_trained=0
             logging.warning(f'Training estimators on {dh.dataset_name}')
             data = dh.data
-            y = data[dh.task.target]
-            X = data.drop([dh.task.target],axis=1)
-            train_idx, test_idx = self._resampling.resample(X,y)
+            idx = np.arange(data.shape[0])
+
+            train_idx, test_idx = self._resampling.resample(idx)
             if save_resampling_splits is True:
                 dh_idx = self._data_holders.index(dh)
                 dh.set_resampling_splits(train_idx=train_idx, test_idx=test_idx)
@@ -126,20 +132,27 @@ class Orchestrator:
                         logging.warning(f'Making predictions for strategy: {strat.name} on dataset: {dh.dataset_name}')
                         predictions = strat.predict(data.iloc[test_idx])
                         #create a results object
+                        y = data[dh.task.target]
                         result = Result(dataset_name=dh.dataset_name,
                                         strategy_name=strat.name,
                                         true_labels=y.iloc[test_idx].tolist(),
                                         predictions=predictions.tolist()) 
                         
                         results_list.append(result)
-                        
-                        # TODO: save results to disk/hdd
-                        # save_path = os.path.join(self._data_dir,
-                        #                          self._experiments_results_dir,
-                        #                          dh.dataset_name,
-                        #                          strat.name) + '.json'
-                        
-                        # self._save_results(results, save_path,overwrite_predictions)
+                        if self._save_results:
+                            result_to_save = pd.DataFrame()
+                            result_to_save['TRUE_LABELS']=y.iloc[test_idx]
+                            result_to_save['PREDICTIONS']=predictions
+                            path_to_save = os.path.join(self._data_dir, 
+                                                        self._experiments_results_dir, 
+                                                        dh.dataset_name)
+                            try:
+                                os.makedirs(path_to_save)
+                                result_to_save.to_csv(f'{path_to_save}{os.sep}{strat.name}.csv')
+                            except:
+                                #directory already exists
+                                result_to_save.to_csv(f'{path_to_save}{os.sep}{strat.name}.csv')
+                       
         return results_list
         
 

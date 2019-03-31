@@ -82,22 +82,20 @@ class Single_Split(SKtime_resampling):
         self._shuffle=shuffle
         self._stratify=stratify
     
-    def resample(self, X,y):
+    def resample(self, idx):
         """
         Parameters
         ----------
-        X : pandas DataFrame
-            DataFrame with features
-        y : pandas Dataframe
-            DataFrame with target variables
+        idx : array
+            Indices of the dataset
+
         Returns
         -------
         train_idx, test_idx: tuple numpy arrays
             indexes of resampled dataset
         """
-        idx_dts_rows = X.shape[0]
-        idx_split = np.arange(idx_dts_rows)
-        train_idx, test_idx =  train_test_split(idx_split, 
+
+        train_idx, test_idx =  train_test_split(idx, 
                                                 test_size=self._test_size, 
                                                 train_size=self._train_size,
                                                 random_state=self._random_state,

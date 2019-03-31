@@ -6,7 +6,7 @@ from sktime.datasets import load_gunpoint
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 import pandas as pd
 
-from sktime.highlevel import DataHolder
+from sktime.experiments.data import DataHolder
 
 from sktime.analyze_results import AnalyseResults
 from sktime.analyze_results.scores import ScoreAccuracy
@@ -20,13 +20,16 @@ dh = DataHolder(data=data, task=task, dataset_name='GunPoint')
 clf = TimeSeriesForestClassifier()
 strategy = TSCStrategy(clf)
 
-orchestrator = Orchestrator(data_holders=[dh], strategies=[strategy], resampling=Single_Split())
+orchestrator = Orchestrator(data_holders=[dh], 
+                            strategies=[strategy], 
+                            resampling=Single_Split(), 
+                            save_results=True)
 
 
 results = orchestrator.run()
 
 analyze = AnalyseResults(results)
-losses = analyze.prediction_errors(metric=ScoreAccuracy())
+losses, losses_df = analyze.prediction_errors(metric=ScoreAccuracy())
 
 avg_and_std = analyze.average_and_std_error(losses)
 
