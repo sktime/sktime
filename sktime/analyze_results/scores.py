@@ -87,7 +87,7 @@ class ScoreAccuracy(MLAUTScore):
         tuple
             Tuple with average score and std error of the score
         """
-        errors = (y_true - y_pred) ** 2
+        errors = (np.array(y_true) - np.array(y_pred)) ** 2
         errors = np.where(errors > 0, 1, 0)
         n = len(errors)
         
