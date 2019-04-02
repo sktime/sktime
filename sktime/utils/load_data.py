@@ -106,6 +106,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, replace_missing_vals_
 def load_from_arff_to_tsfile(full_file_path_and_name):
     #TODO: Implement timeStamps feature in case there are problems with these characteristics.
     #TODO: Implement in case datasets without labels.
+    #TODO: Implement in case multivariate datasets.
     
     problemName = full_file_path_and_name.split("/")[-1].split("_")[0]
     
@@ -130,8 +131,9 @@ def load_from_arff_to_tsfile(full_file_path_and_name):
                         if j != '?': # Value
                             cadena += str(np.round(float(j), 5))
                         else: # Missing data
-                            cadena += '?'
-                        if not ((i+2) == len(data)): # If not last value of the pattern, i.e. not the label.
+                            if not (len(np.unique(data[i:-1])) == 1): # Working with unequal length time series
+                                cadena += '?'
+                        if not ((i+2) == len(data)) and not (len(np.unique(data[i:-1])) == 1) and not (len(np.unique(data[i+1:-1])) == 1): # If not last value of the pattern, i.e. not the label.
                             cadena += ','
                 patterns.append(cadena)
     f.close()

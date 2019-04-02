@@ -8,6 +8,7 @@ from sklearn.base import TransformerMixin
 from operator import itemgetter
 from collections import Counter
 import warnings
+import os
 
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -15,6 +16,14 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # TO-DO: thorough testing (some initial testing completed, but passing the code to David to develop
 #        before everything has been fully verified)
+
+# TO-DO: in case of unequal length time series, we have two options:
+# 1) fix the maximum length for the shapelets to the minimum length time series (of train dataset,
+#      which can also fails if there is a smaller time series in the test set).
+# 2) use another time series distance measure such as DTW to avoid this, since you can compare unequal 
+#      time series (we lose the early abandon in the distance measurement).
+
+# TO-DO: 
 
 # TO-DO: Currently extends TransformerMixin - class should extend the sktime transformer base class (not on dev at
 #        branch at time of writing however so this can be updated later)
@@ -33,7 +42,7 @@ class RandomShapeletTransform(TransformerMixin):
     sampling of candidate shapelets, rather than a full enumeration of candidates as
     originally proposed in [1], as it has been shown that there is no significant
     decrease in accuracy but a significant reduction in runtime through this approach.
-d
+
     There are two versions of the transform: RandomShapeletTransform and
     ContractedRandomShapeletTransform. For each training series visited, both
     implementations assess a specified number of candidate shapelets per series. However,
@@ -121,9 +130,6 @@ d
                  ):
         
         self.type_shapelet = type_shapelet
-        self.min_shapelet_length = min_shapelet_length
-        self.max_shapelet_length = max_shapelet_length
-        self.num_shapelets_to_sample_per_case = num_shapelets_to_sample_per_case
         self.seed = seed
         self.dim_to_use = dim_to_use
         self.remove_self_similar = remove_self_similar
@@ -135,13 +141,28 @@ d
         
         # Init in case of ContractedRandomShapeletTransform
         if self.type_shapelet == 'Contracted':
+            self.min_shapelet_length = min_shapelet_length
+            self.max_shapelet_length = max_shapelet_length
             self.num_cases_to_sample = -1
+            self.num_shapelets_to_sample_per_case = num_shapelets_to_sample_per_case
             self.time_limit_on = True
             self.time_limit = 60*time_limit_in_mins
             
         # Init in case of RandomShapeletTransform
         elif self.type_shapelet == 'Random':
+            self.min_shapelet_length = min_shapelet_length
+            self.max_shapelet_length = max_shapelet_length
             self.num_cases_to_sample = num_cases_to_sample
+            self.num_shapelets_to_sample_per_case = num_shapelets_to_sample_per_case
+            self.time_limit_on = False
+            self.time_limit = np.inf
+            
+        # Init in case of FullShapeletTransform
+        elif self.type_shapelet == 'Full':
+            self.min_shapelet_length = 3 
+            self.max_shapelet_length = -1 # To fix it to the len of the current time series
+            self.num_cases_to_sample = np.inf # Sampling all dataset
+            self.num_shapelets_to_sample_per_case = np.inf # Obtaining all possible time series
             self.time_limit_on = False
             self.time_limit = np.inf
 
@@ -180,7 +201,7 @@ d
         # the idea is that if we are using a time contract we may extract all y shapelets from each x candidate and still have time remaining.
         # Therefore, if we get a list of the indices of the series and shuffle them appropriately, we can go through the list again and extract
         # another y shapelets from each series (if we have time).
-        #
+        
         # We also want to ensure that we visit all classes so we will visit in round-robin order. Therefore, the code below extracts the indices
         # of all series by class, shuffles the indices for each class independently, and then combines them in alternating order. This results in
         # a shuffled list of indices that are in alternating class order (e.g. 1,2,3,1,2,3,1,2,3,1...)
@@ -218,7 +239,7 @@ d
         # of the same length then they will obviously have the same valid shapelet starting positions and lengths (especially in standard
         # datasets where all series are equal length) so it makes sense to store the possible candidates and reuse, rather than
         # recalculating each time
-        #
+
         # Initially the dictionary will be empty, and each time a new series length is seen the dict will be updated. Next time that length
         # is used the dict will have an entry so can simply reuse
         possible_candidates_per_series_length = {}
@@ -249,8 +270,20 @@ d
                 # The bound on possible shapelet lengths will differ series-to-series if using unequal length data.
                 # However, shapelets cannot be longer than the series, so set to the minimum of the series length
                 # and max shapelet length (which is inf by default, unless set)
-                this_shapelet_length_upper_bound = min(this_series_len,self.max_shapelet_length)
-
+                if (self.max_shapelet_length == -1):
+                    this_shapelet_length_upper_bound = this_series_len
+                else:
+                    this_shapelet_length_upper_bound = min(this_series_len, self.max_shapelet_length)
+                
+                # In case of obtaining the full set of shapelets
+                num_shapelets_to_sample_per_case = self.num_shapelets_to_sample_per_case
+                if self.time_limit_on is False and num_shapelets_to_sample_per_case == np.inf:
+                    max_num_shapelets_to_sample_per_case = 0
+                    for length in range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1):
+                        max_num_shapelets_to_sample_per_case += (this_series_len - length) + 1
+                        
+                    if self.num_shapelets_to_sample_per_case > max_num_shapelets_to_sample_per_case:
+                        num_shapelets_to_sample_per_case = max_num_shapelets_to_sample_per_case
                 series_shapelets = []
 
                 # enumerate all possible candidate starting positions and lengths.
@@ -264,7 +297,7 @@ d
                     possible_candidates_per_series_length[this_series_len] = candidate_starts_and_lens
 
                 # from the possible start and lengths, sample without replacement the specified number of shapelets and evaluate
-                cand_idx = list(rand.choice(list(range(0,len(candidate_starts_and_lens))), self.num_shapelets_to_sample_per_case, replace=False))
+                cand_idx = list(rand.choice(list(range(0,len(candidate_starts_and_lens))), num_shapelets_to_sample_per_case, replace=False))
                 cands = [candidate_starts_and_lens[x] for x in cand_idx]
                 
                 # best so far quality found for candidate_info
@@ -401,8 +434,8 @@ d
             
 #        pickle.dump(all_shapelets, open("./all_shapelets.p", "wb"))
 #        all_shapelets = pickle.load( open( "./all_shapelets.p", "rb" ))
-        
         self.shapelets = all_shapelets
+        return(all_shapelets)
 
     # two "self-similar" shapelets are subsequences from the same series that are overlapping. This method
     @staticmethod
@@ -472,14 +505,23 @@ d
             for s in range(0,len(self.shapelets)):
                 # find distance between this series and each shapelet
                 min_dist = np.inf
+                dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
-
+                
+                # No entra en el FOR, para algunas de las series, comprobar que X está leyendo correctamente las series
+                # tiene pinta de que no, porque me saca series de 2 elemento y no tiene sentido.
+                
+                
+                
+                
+                
                 for start_pos in range(0, len(this_series) - this_shapelet_length):
-                    comp = this_series[start_pos:start_pos + this_shapelet_length]
-                    comp = RandomShapeletTransform.zscore(comp)
+                    comp_2 = this_series[start_pos:start_pos + this_shapelet_length]
+                    comp = RandomShapeletTransform.zscore(comp_2)
                     
                     dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
-
+                    
+                        
                     if (dist < min_dist):
                         min_dist = dist
                         
@@ -488,6 +530,15 @@ d
                 except Exception:
                     output[i][s] = np.float32(min_dist)
                     
+                if output[i][s] == np.inf:
+#                    print("Infinito en la serie {0}, con la shapelet {1}, dist {2}, min_dist {3}".format(i, s, dist, min_dist))
+#                    print("\t Longitud shapelet {0} Longitud serie {1}".format(this_shapelet_length, len(this_series)))
+#                    print(len(this_series) - this_shapelet_length)
+#                    print(self.shapelets[s].data)
+#                    print(this_series)
+                    print(this_series)
+                    print(this_shapelet_length)
+                
         return output
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -511,6 +562,15 @@ d
             raise Exception("No class values specified - shapelet extraction is supervised")
 
         return self.transform(X)
+    
+    def get_shapelets(self):
+        """An accessor method to return the extracted shapelets
+
+        Returns
+        -------
+        shapelets: a list of Shapelet objects
+        """
+        return self.shapelets
 
     @staticmethod
     def calc_info_gain(orderline, class_counts, total):
@@ -672,33 +732,76 @@ class Shapelet:
     def __str__(self):
         return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}, data: {4}.".format(self.series_id, self.start_pos, self.length, self.info_gain, self.data)
 
-
+def transform_to_arff(transform, labels, file_name):
+    
+    # Create directory in case it doesn't exists
+    directory = '/'.join(file_name.split('/')[:-1])
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    
+    num_shapelets = transform.shape[1]
+    unique_labels = np.unique(labels).tolist()
+    
+    with open(file_name, 'w+') as f:
+        # Headers
+        f.write("@Relation " + file_name.split('/')[-1].split('_')[0] + '\n')
+        for i in range(0, num_shapelets):
+            f.write("@attribute att" + str(i) + " numeric\n")
+        f.write("@attribute target {" + ",".join(unique_labels) + "}\n")
+        f.write("\n@data\n")
+        # Patterns
+        for i,j in enumerate(transform):
+            pattern = j.tolist() + [int(labels[i])]
+            f.write(",".join(map(str, pattern)) + "\n")
+    f.close()
 
 if __name__ == "__main__":
-    tiempo_comienzo = time.time()
+    starting_time = time.time()
     dataset = "GunPoint"
-    #load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff")
-    #load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff")
+#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff")
+#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff")
     train_x, train_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 
-    pipeline = Pipeline([
-        ('st', RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=10, max_shapelet_length=12, num_cases_to_sample=5, num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)),
-        #('st', RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=0.2, min_shapelet_length=10, max_shapelet_length=12, num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=10, verbose=True)),
-        ('rf', RandomForestClassifier(random_state=0)),
-    ])
-    start = time.time()
-    pipeline.fit(train_x, train_y)
-    end_build = time.time()
-    preds = pipeline.predict(test_x)
-    end_test = time.time()
 
-    print("Results:\nPerformance:")
+#    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=10, max_shapelet_length=12, num_cases_to_sample=5, 
+#                                num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
+#    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=3, min_shapelet_length=10, max_shapelet_length=12, 
+#                                num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
+    a = RandomShapeletTransform(type_shapelet="Full", num_shapelets_to_trim_to=int(np.round(0.25*len(train_y))), verbose=True)
+    
+    a.fit(train_x, train_y)
+    sha_train = a.transform(train_x)
+    transform_to_arff(sha_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
+    sha_test = a.transform(test_x)
+    transform_to_arff(sha_test, test_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TEST.arff")
+
+    b = RandomForestClassifier(random_state=0)
+    b.fit(sha_train, train_y)
+    preds = b.predict(sha_test)
     correct = sum(preds == test_y)
     print("\t{0}/{1} -> {2:0.3f}%".format(correct, len(test_y), (correct/len(test_y))*100))
 
-    print("\nTiming:")
-    print("\tTo build: {0:02d}:{1:02}".format(int(round((end_build-start)/60,3)), int((round((end_build-start)/60,3) - int(round((end_build-start)/60,3)))*60)))
-    print("\tTo predict: {0:02d}:{1:02}".format(int(round((end_test-end_build)/60,3)), int((round((end_test-end_build)/60,3) - int(round((end_test-end_build)/60,3)))*60)))
-    
-    print("Tiempo usado: {0}".format(time.time()-tiempo_comienzo))
+
+
+#    pipeline = Pipeline([
+#        ('st', RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=10, max_shapelet_length=12, num_cases_to_sample=5, num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)),
+#        #('st', RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=0.2, min_shapelet_length=10, max_shapelet_length=12, num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=10, verbose=True)),
+#        ('rf', RandomForestClassifier(random_state=0)),
+#    ])
+#    start = time.time()
+#    pipeline.fit(train_x, train_y)
+#    end_build = time.time()
+#    preds = pipeline.predict(test_x)
+#    end_test = time.time()
+#
+#    print("Results:\nPerformance:")
+#    correct = sum(preds == test_y)
+#    print("\t{0}/{1} -> {2:0.3f}%".format(correct, len(test_y), (correct/len(test_y))*100))
+#
+#    print("\nTiming:")
+#    print("\tTo build: {0:02d}:{1:02}".format(int(round((end_build-start)/60,3)), int((round((end_build-start)/60,3) - int(round((end_build-start)/60,3)))*60)))
+#    print("\tTo predict: {0:02d}:{1:02}".format(int(round((end_test-end_build)/60,3)), int((round((end_test-end_build)/60,3) - int(round((end_test-end_build)/60,3)))*60)))
+#    
+#    print("Tiempo usado: {0}".format(time.time()-starting_time))
