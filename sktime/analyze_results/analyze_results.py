@@ -47,7 +47,9 @@ class AnalyseResults(object):
         for res in self._results_list:
 
             predictions = res.predictions
+            predictions = list(map(float, predictions))
             y_test = res.true_labels
+            y_test = list(map(float, y_test))
 
             losses.evaluate(predictions=predictions, 
                             true_labels=y_test,
