@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-
+import os
 
 def load_from_tsfile_to_dataframe(full_file_path_and_name, replace_missing_vals_with='NaN'):
     data_started = False
@@ -103,7 +103,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, replace_missing_vals_
     return x_data
 
 
-def load_from_arff_to_tsfile(full_file_path_and_name):
+def load_from_arff_to_tsfile(full_file_path_and_name, file_path_and_name_to_save):
     #TODO: Implement timeStamps feature in case there are problems with these characteristics.
     #TODO: Implement in case datasets without labels.
     #TODO: Implement in case multivariate datasets.
@@ -115,6 +115,7 @@ def load_from_arff_to_tsfile(full_file_path_and_name):
     
     patterns = []
     labels = []
+    unequal_length_time_series = False
     with open(full_file_path_and_name, 'r') as f:
         for line in f:
             if not line.startswith("@") and not line.startswith("%") and not line == '\n':
@@ -133,15 +134,19 @@ def load_from_arff_to_tsfile(full_file_path_and_name):
                         else: # Missing data
                             if not (len(np.unique(data[i:-1])) == 1): # Working with unequal length time series
                                 cadena += '?'
-                        if not ((i+2) == len(data)) and not (len(np.unique(data[i:-1])) == 1) and not (len(np.unique(data[i+1:-1])) == 1): # If not last value of the pattern, i.e. not the label.
+                        if not unequal_length_time_series and not ((i+2) == len(data)):
+                            cadena += ','
+                        elif unequal_length_time_series and not ((i+2) == len(data)) and not (len(np.unique(data[i:-1])) == 1) and not (len(np.unique(data[i+1:-1])) == 1): # If not last value of the pattern, i.e. not the label.
                             cadena += ','
                 patterns.append(cadena)
     f.close()
     classLabel = np.unique(labels)
     
-    new_path_and_name = full_file_path_and_name.split(".")[0] + '.ts'
+    directory = "/".join(file_path_and_name_to_save.split('/')[:-1])
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     
-    with open(new_path_and_name, 'w+') as f:
+    with open(file_path_and_name_to_save, 'w+') as f:
         f.write("@problemName " + problemName + "\n@timeStamps " + str.lower(str(timeStamps)) + "\n@classLabel true " + str(classLabel).replace("[", "").replace("]", "") + "\n@data\n")
         for line in patterns:
             f.write(line)

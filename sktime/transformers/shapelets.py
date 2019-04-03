@@ -136,35 +136,39 @@ class RandomShapeletTransform(TransformerMixin):
         self.shapelets = None
         self.verbose = verbose
         self.use_binary_info_gain = use_binary_info_gain
-        self.trim_shapelets = trim_shapelets
-        self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
+        
+        self.min_shapelet_length = min_shapelet_length
+        if min_shapelet_length < 3:
+            self.min_shapelet_length = 3
         
         # Init in case of ContractedRandomShapeletTransform
         if self.type_shapelet == 'Contracted':
-            self.min_shapelet_length = min_shapelet_length
             self.max_shapelet_length = max_shapelet_length
-            self.num_cases_to_sample = -1
+            self.num_cases_to_sample = np.inf
             self.num_shapelets_to_sample_per_case = num_shapelets_to_sample_per_case
             self.time_limit_on = True
             self.time_limit = 60*time_limit_in_mins
-            
+            self.trim_shapelets = trim_shapelets
+            self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
         # Init in case of RandomShapeletTransform
         elif self.type_shapelet == 'Random':
-            self.min_shapelet_length = min_shapelet_length
             self.max_shapelet_length = max_shapelet_length
             self.num_cases_to_sample = num_cases_to_sample
             self.num_shapelets_to_sample_per_case = num_shapelets_to_sample_per_case
             self.time_limit_on = False
             self.time_limit = np.inf
+            self.trim_shapelets = trim_shapelets
+            self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
             
         # Init in case of FullShapeletTransform
         elif self.type_shapelet == 'Full':
-            self.min_shapelet_length = 3 
             self.max_shapelet_length = -1 # To fix it to the len of the current time series
             self.num_cases_to_sample = np.inf # Sampling all dataset
             self.num_shapelets_to_sample_per_case = np.inf # Obtaining all possible time series
             self.time_limit_on = False
             self.time_limit = np.inf
+            self.trim_shapelets = False
+            self.num_shapelets_to_trim_to = -1
 
     def fit(self, X, y, **fit_params):
         """A method to fit the shapelet transform to a specified X and y
@@ -186,7 +190,7 @@ class RandomShapeletTransform(TransformerMixin):
         class_vals = np.sort(np.array([x for x in set(y)]))
 
         cases_to_sample = self.num_cases_to_sample
-        if self.time_limit_on is False and self.num_cases_to_sample > len(y):
+        if self.num_cases_to_sample > len(y):
             cases_to_sample = len(y)
 
         class_counts = {x:0 for x in class_vals}
@@ -277,13 +281,13 @@ class RandomShapeletTransform(TransformerMixin):
                 
                 # In case of obtaining the full set of shapelets
                 num_shapelets_to_sample_per_case = self.num_shapelets_to_sample_per_case
-                if self.time_limit_on is False and num_shapelets_to_sample_per_case == np.inf:
-                    max_num_shapelets_to_sample_per_case = 0
-                    for length in range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1):
-                        max_num_shapelets_to_sample_per_case += (this_series_len - length) + 1
+                max_num_shapelets_to_sample_per_case = 0
+                for length in range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1):
+                    max_num_shapelets_to_sample_per_case += (this_series_len - length) + 1
                         
-                    if self.num_shapelets_to_sample_per_case > max_num_shapelets_to_sample_per_case:
-                        num_shapelets_to_sample_per_case = max_num_shapelets_to_sample_per_case
+                if num_shapelets_to_sample_per_case > max_num_shapelets_to_sample_per_case:
+                    num_shapelets_to_sample_per_case = max_num_shapelets_to_sample_per_case
+
                 series_shapelets = []
 
                 # enumerate all possible candidate starting positions and lengths.
@@ -377,7 +381,8 @@ class RandomShapeletTransform(TransformerMixin):
                     
                     if self.use_binary_info_gain:
                         if not stop:
-                            quality = RandomShapeletTransform.calc_info_gain(loop_dists, binary_class_counts, num_ins)
+                            quality = self.calc_info_gain(loop_dists, binary_class_counts, num_ins)
+
                             if quality > bsf_quality:
                                 bsf_quality = quality
                         else:
@@ -385,8 +390,9 @@ class RandomShapeletTransform(TransformerMixin):
                     else:
                         # otherwise calculate information gain for all classes vs all
                         quality = self.calc_info_gain(loop_dists, class_counts, num_ins)
-
-                    series_shapelets.append(Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate))
+                    
+                    if(quality > 0):
+                        series_shapelets.append(Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate))
 
                     # Takes into account the use of the MAX shapelet calculation time to don't exceed the time_limit.
                     if self.time_limit_on:
@@ -407,15 +413,12 @@ class RandomShapeletTransform(TransformerMixin):
                 # add shapelets from this series to the collection for all
                 all_shapelets.extend(series_shapelets)
 
-                # stopping condition for contracted transform
-                if continue_extraction is False:
-                    break
-
-                # stopping condition for iterative transform (i.e. num_cases_to_sample have been visited)
-                if not self.time_limit_on and idx >= cases_to_sample:
+                # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
+                #                     in case of contracted transform (i.e. time limit has been reached)
+                if idx >= cases_to_sample or not continue_extraction:
                     continue_extraction = False
                     break
-
+                
         # sort all shapelets by quality
         all_shapelets.sort(key=lambda x: x.info_gain, reverse=True)
         
@@ -431,9 +434,6 @@ class RandomShapeletTransform(TransformerMixin):
         if self.trim_shapelets is True and len(all_shapelets) > self.num_shapelets_to_trim_to:
             all_shapelets = all_shapelets[:self.num_shapelets_to_trim_to]
 
-            
-#        pickle.dump(all_shapelets, open("./all_shapelets.p", "wb"))
-#        all_shapelets = pickle.load( open( "./all_shapelets.p", "rb" ))
         self.shapelets = all_shapelets
         return(all_shapelets)
 
@@ -508,14 +508,9 @@ class RandomShapeletTransform(TransformerMixin):
                 dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
                 
-                # No entra en el FOR, para algunas de las series, comprobar que X está leyendo correctamente las series
-                # tiene pinta de que no, porque me saca series de 2 elemento y no tiene sentido.
-                
-                
-                
-                
-                
-                for start_pos in range(0, len(this_series) - this_shapelet_length):
+                # TODO: Hay que ver como trabajamos cuando sacamos shapelets de 7 de longitud y tenemos en test una serie de menor tamaño.
+
+                for start_pos in range(0, len(this_series) - this_shapelet_length + 1):
                     comp_2 = this_series[start_pos:start_pos + this_shapelet_length]
                     comp = RandomShapeletTransform.zscore(comp_2)
                     
@@ -530,14 +525,17 @@ class RandomShapeletTransform(TransformerMixin):
                 except Exception:
                     output[i][s] = np.float32(min_dist)
                     
-                if output[i][s] == np.inf:
+#                if output[i][s] == np.inf:
 #                    print("Infinito en la serie {0}, con la shapelet {1}, dist {2}, min_dist {3}".format(i, s, dist, min_dist))
 #                    print("\t Longitud shapelet {0} Longitud serie {1}".format(this_shapelet_length, len(this_series)))
 #                    print(len(this_series) - this_shapelet_length)
 #                    print(self.shapelets[s].data)
 #                    print(this_series)
-                    print(this_series)
-                    print(this_shapelet_length)
+                    
+                    
+                    
+#                    print(this_series)
+#                    print(this_shapelet_length)
                 
         return output
 
@@ -758,20 +756,28 @@ def transform_to_arff(transform, labels, file_name):
 
 if __name__ == "__main__":
     starting_time = time.time()
-    dataset = "GunPoint"
-#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff")
-#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff")
+    dataset = "SyntheticControl"
+    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
+                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
+    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
+                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
+    
     train_x, train_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 
 
 #    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=10, max_shapelet_length=12, num_cases_to_sample=5, 
-#                                num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
-#    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=3, min_shapelet_length=10, max_shapelet_length=12, 
-#                                num_shapelets_to_sample_per_case=3, num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
-    a = RandomShapeletTransform(type_shapelet="Full", num_shapelets_to_trim_to=int(np.round(0.25*len(train_y))), verbose=True)
+#                                num_shapelets_to_sample_per_case=3, trim_shapelets = True, 
+#                                num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
+    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=3, min_shapelet_length=1, max_shapelet_length=12, 
+                                num_shapelets_to_sample_per_case=np.inf, trim_shapelets = True, 
+                                num_shapelets_to_trim_to=int(np.round(100)), verbose=True)
+#    a = RandomShapeletTransform(type_shapelet="Full", verbose=True)
     
-    a.fit(train_x, train_y)
+    shapelets = a.fit(train_x, train_y)
+    for i in shapelets:
+        print(i)
+    print(len(shapelets))
     sha_train = a.transform(train_x)
     transform_to_arff(sha_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
     sha_test = a.transform(test_x)
