@@ -6,6 +6,8 @@ from sktime.experiments.data import Result
 import numpy as np
 import pandas as pd
 from sktime.experiments.data import DataLoader
+from sktime.experiments.data import DataHolder
+
 class Orchestrator:
     """
     Orchestrates the sequencing of running the machine learning experiments.
@@ -104,7 +106,7 @@ class Orchestrator:
                                strategies=strategies, 
                                predict_on_runtime=predict_on_runtime)
 
-        if isinstance(data, list):
+        elif all(isinstance(d, DataHolder) for d in data):
             if resampling is None:
                 raise ValueError('Specify resampling strategy')
             return self.run_from_memory(data_holders=data,
@@ -115,6 +117,8 @@ class Orchestrator:
                                 predict_on_runtime=predict_on_runtime,
                                 overwrite_predictions=overwrite_predictions,
                                 save_resampling_splits=save_resampling_splits)
+        else:
+            raise ValueError('Invalid data argument')
         
     def run_from_memory(self,
             data_holders,
