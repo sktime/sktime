@@ -102,7 +102,7 @@ class Orchestrator:
         if isinstance(data, DataLoader):
             return self.run_from_disk(data_loader=data, 
                                strategies=strategies, 
-                               predict_on_runtime=True)
+                               predict_on_runtime=predict_on_runtime)
 
         if isinstance(data, list):
             if resampling is None:
