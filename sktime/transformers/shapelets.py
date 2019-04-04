@@ -159,7 +159,6 @@ class RandomShapeletTransform(TransformerMixin):
             self.time_limit = np.inf
             self.trim_shapelets = trim_shapelets
             self.num_shapelets_to_trim_to = num_shapelets_to_trim_to
-            
         # Init in case of FullShapeletTransform
         elif self.type_shapelet == 'Full':
             self.max_shapelet_length = -1 # To fix it to the len of the current time series
@@ -262,36 +261,38 @@ class RandomShapeletTransform(TransformerMixin):
         idx = 0
         while continue_extraction:
             for series_id_and_class in idxs_to_sample:
+                
                 series_id = series_id_and_class[0]
                 idx+=1
+                
                 if self.verbose:
                     if self.time_limit_on is False:
                         print("visiting series: "+str(series_id)+" (#"+str(idx)+"/"+str(cases_to_sample)+")")
                     else:
                         print("visiting series: "+str(series_id)+" (#"+str(idx)+")")
+                                
                 this_series_len = len(X[series_id])
 
                 # The bound on possible shapelet lengths will differ series-to-series if using unequal length data.
                 # However, shapelets cannot be longer than the series, so set to the minimum of the series length
                 # and max shapelet length (which is inf by default, unless set)
+                
                 if (self.max_shapelet_length == -1):
                     this_shapelet_length_upper_bound = this_series_len
                 else:
                     this_shapelet_length_upper_bound = min(this_series_len, self.max_shapelet_length)
                 
-                # In case of obtaining the full set of shapelets
+                # Defining the upper bound for num_shapelets_to_sample_per_case in case it exceed the maximum possible.
+                # num_shapelets_to_sample_per_case won't be higher than the maximum possible.
                 num_shapelets_to_sample_per_case = self.num_shapelets_to_sample_per_case
-                max_num_shapelets_to_sample_per_case = 0
-                for length in range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1):
-                    max_num_shapelets_to_sample_per_case += (this_series_len - length) + 1
-                        
+                max_num_shapelets_to_sample_per_case = sum(map(lambda length: (this_series_len - length) + 1, range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1)))
                 if num_shapelets_to_sample_per_case > max_num_shapelets_to_sample_per_case:
                     num_shapelets_to_sample_per_case = max_num_shapelets_to_sample_per_case
 
                 series_shapelets = []
 
                 # enumerate all possible candidate starting positions and lengths.
-                # First, try to reuse if they have been calculated for a series of the same length before
+                # First, try to reuse if they have been calculated for a series of the same length before.
                 candidate_starts_and_lens = possible_candidates_per_series_length.get(this_series_len)
                 # else calculate them for this series length and store for possible use again
                 if candidate_starts_and_lens is None:
@@ -306,76 +307,53 @@ class RandomShapeletTransform(TransformerMixin):
                 
                 # best so far quality found for candidate_info
                 bsf_quality = -1
+                if self.use_binary_info_gain:
+                    binary_class_counts = {
+                        series_id_and_class[1] :  class_counts[series_id_and_class[1]],
+                        'otherClassForBinary' : num_ins-class_counts[series_id_and_class[1]]
+                    }
 
-                
-                # evaluate each candidate
+                # evaluate each shapelet candidate of a time series
                 for candidate_index, candidate_info in enumerate(cands):
                     # for convenience, extract candidate data from series_id and znorm it
                     candidate = X[series_id][candidate_info[0]:candidate_info[0]+candidate_info[1]]
-
                     candidate = RandomShapeletTransform.zscore(candidate)
-                    
                     stop = False
+                    
                     # now go through all other series and get a distance from the candidate to each
                     loop_dists = []
-                    for i in range(0,len(X)):
-                        # don't calculate distance to self
-                        if i != series_id:
+                    
+                    # for each time series... (not calculating distance to self)
+                    for i in set(range(0,len(X))) - set([series_id]):
+                        
+                        # Min distance between shapelet and comp ever known.
+                        min_dist = np.inf
+                        comparison = X[i] # comparison series
+                        
+                        # Calculates the distance from a shapelet to a time series
+                        for start in range(0, len(comparison)-candidate_info[1]):
+                            comp = X[i][start:start+candidate_info[1]]
+                            comp = RandomShapeletTransform.zscore(comp)
+                            min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(candidate, comp, min_dist)
                             
-                            # Min distance between shapelet and comp ever known.
-                            min_dist = np.inf
-                            comparison = X[i] # comparison series
-
-                            # two implementations for comparing a candidate to all series - for loop and list comprehension (lc).
-                            # Timing results to follow but there seems to be very marginal difference from informal testing
-
-                            # for loop vs list comprehension
-                            # loop
-                            
-                            for start in range(0, len(comparison)-candidate_info[1]):
-                                comp = X[i][start:start+candidate_info[1]]
-
-                                comp = RandomShapeletTransform.zscore(comp)
-
-                                dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(candidate, comp, min_dist)
-
-                                if (dist < min_dist):
-                                    min_dist = dist
-                                    
-                            if self.use_binary_info_gain:
-                                binary_class_counts = {
-                                    series_id_and_class[1] :  class_counts[series_id_and_class[1]],
-                                    'otherClassForBinary' : num_ins-class_counts[series_id_and_class[1]]
-                                }
-                                # if doing binary info gain we need to make it a 1 vs all encoding
-                                # if this series is from the same class as the candidate, add to the orderline with the class value
-                                if y[i]==series_id_and_class[1]:
-                                    loop_dists.append((min_dist, y[i]))
-                                # else, the series came from another class so combine into an "other" class:
-                                else:
-                                    loop_dists.append((min_dist, 'otherClassForBinary'))
-                                    
-                                # could the best found so far IG be beated? If stop, no, so we stop here.
-                                if not candidate_index == 0:
-                                    stop = self.avoid_calc_info_gain(bsf_quality, loop_dists, binary_class_counts, num_ins)
-                                    if stop:
-                                        break
-
+                        
+                        if self.use_binary_info_gain:
+                            # if doing binary info gain we need to make it a 1 vs all encoding
+                            # if this series is from the same class as the candidate, add to the orderline with the class value
+                            if y[i]==series_id_and_class[1]:
+                                loop_dists.append((min_dist, y[i]))
+                            # else, the series came from another class so combine into an "other" class:
                             else:
-                                loop_dists.append((min_dist,y[i]))
-                            
-                            #lc - does the same as above without a for loop
-                            # a = np.min([sqeuclidean(candidate, zscore(X[i][start:start + candidate_info[1]])) for start in range(0, len(comparison) - candidate_info[1])])
-                            # loop_dists.append((a, y[i]))
+                                loop_dists.append((min_dist, 'otherClassForBinary'))
+                                
+                            # could the best found so far IG be beated? If stop, no, so we stop here.
+                            if not candidate_index == 0:
+                                stop = self.avoid_calc_info_gain(bsf_quality, loop_dists, binary_class_counts, num_ins)
+                                if stop:
+                                    break
 
-                            # timing (consistent fixed params for both timing results, didn't record what they were though!)
-                            # with loop:
-                            # time = 6.166342258453369
-                            # time = 7.506842136383057
-
-                            # with lc:
-                            # time = 5.624400854110718
-                            # time = 7.173776388168335
+                        else:
+                            loop_dists.append((min_dist,y[i]))
 
                     loop_dists.sort(key=lambda tup: tup[0])
                     
@@ -421,9 +399,6 @@ class RandomShapeletTransform(TransformerMixin):
                 
         # sort all shapelets by quality
         all_shapelets.sort(key=lambda x: x.info_gain, reverse=True)
-        
-        # we keep those shapelets with good quality.
-        all_shapelets =  list(filter(lambda x: x.info_gain != -1,  all_shapelets))
                 
         # moved to end as it is now possible to visit the same series multiple times, and a better series may be found in the second visit that removes
         # the best from the first (and then means previously similar shapelets with that may again be eligible)
@@ -505,7 +480,6 @@ class RandomShapeletTransform(TransformerMixin):
             for s in range(0,len(self.shapelets)):
                 # find distance between this series and each shapelet
                 min_dist = np.inf
-                dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
                 
                 # TODO: Hay que ver como trabajamos cuando sacamos shapelets de 7 de longitud y tenemos en test una serie de menor tamaño.
@@ -513,12 +487,7 @@ class RandomShapeletTransform(TransformerMixin):
                 for start_pos in range(0, len(this_series) - this_shapelet_length + 1):
                     comp_2 = this_series[start_pos:start_pos + this_shapelet_length]
                     comp = RandomShapeletTransform.zscore(comp_2)
-                    
-                    dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
-                    
-                        
-                    if (dist < min_dist):
-                        min_dist = dist
+                    min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
                         
                 try:
                     output[i][s] = min_dist.astype(np.float32)
@@ -695,13 +664,17 @@ class RandomShapeletTransform(TransformerMixin):
     @staticmethod
     def euclideanDistanceEarlyAbandon(u, v, min_dist):
         sum_dist = 0
+        stop = False
         for i in range(0, len(u)):
             u_v = u[i]-v[i]
             sum_dist += np.dot(u_v, u_v)
             if sum_dist >= min_dist:
                 # The distance is higher, so early abandon.
+                stop = True
                 break
-        return sum_dist
+        if not stop:
+            min_dist = sum_dist
+        return min_dist
 
 class Shapelet:
     """A simple class to model a Shapelet with associated information
@@ -730,7 +703,7 @@ class Shapelet:
     def __str__(self):
         return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}, data: {4}.".format(self.series_id, self.start_pos, self.length, self.info_gain, self.data)
 
-def transform_to_arff(transform, labels, file_name):
+def saveTransform(transform, labels, file_name):
     
     # Create directory in case it doesn't exists
     directory = '/'.join(file_name.split('/')[:-1])
@@ -743,9 +716,9 @@ def transform_to_arff(transform, labels, file_name):
     
     with open(file_name, 'w+') as f:
         # Headers
-        f.write("@Relation " + file_name.split('/')[-1].split('_')[0] + '\n')
+        f.write("@Relation Shapelets" + file_name.split('/')[-1].split('_')[0] + '\n\n')
         for i in range(0, num_shapelets):
-            f.write("@attribute att" + str(i) + " numeric\n")
+            f.write("@attribute Shapelet_" + str(i) + " numeric\n")
         f.write("@attribute target {" + ",".join(unique_labels) + "}\n")
         f.write("\n@data\n")
         # Patterns
@@ -753,14 +726,27 @@ def transform_to_arff(transform, labels, file_name):
             pattern = j.tolist() + [int(labels[i])]
             f.write(",".join(map(str, pattern)) + "\n")
     f.close()
+    
+def saveShapelets(shapelets, data, file_name):
+    
+    # Create directory in case it doesn't exists
+    directory = '/'.join(file_name.split('/')[:-1])
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    with open(file_name, 'w+') as f:
+        for i,j in enumerate(shapelets):
+            f.write(str(j.info_gain) + "," + str(j.series_id) + "," + str(j.start_pos) + "\n")
+            f.write(",".join(map(str, data[j.series_id, j.start_pos:j.start_pos+j.length])) + "\n")
+    f.close()
 
 if __name__ == "__main__":
     starting_time = time.time()
-    dataset = "SyntheticControl"
-    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
-                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
-    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
-                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
+    dataset = "GunPoint"
+#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
+#                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
+#    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
+#                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
     
     train_x, train_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
@@ -769,23 +755,23 @@ if __name__ == "__main__":
 #    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=10, max_shapelet_length=12, num_cases_to_sample=5, 
 #                                num_shapelets_to_sample_per_case=3, trim_shapelets = True, 
 #                                num_shapelets_to_trim_to=int(np.round(0.25*3*5)), verbose=True)
-    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=3, min_shapelet_length=1, max_shapelet_length=12, 
-                                num_shapelets_to_sample_per_case=np.inf, trim_shapelets = True, 
-                                num_shapelets_to_trim_to=int(np.round(100)), verbose=True)
+    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=0.3, min_shapelet_length=20, max_shapelet_length=100, 
+                                num_shapelets_to_sample_per_case=30, trim_shapelets = True, 
+                                num_shapelets_to_trim_to=int(np.round(300)), verbose=True)
 #    a = RandomShapeletTransform(type_shapelet="Full", verbose=True)
     
     shapelets = a.fit(train_x, train_y)
-    for i in shapelets:
-        print(i)
-    print(len(shapelets))
-    sha_train = a.transform(train_x)
-    transform_to_arff(sha_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
-    sha_test = a.transform(test_x)
-    transform_to_arff(sha_test, test_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TEST.arff")
+    data = np.array([np.asarray(x) for x in train_x.iloc[:, 0]]) # dim to use 0 - check in case of multivariate.
+    saveShapelets(shapelets, data, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_shapelets.csv")
+    
+    transform_train = a.transform(train_x)
+    saveTransform(transform_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
+    transform_test = a.transform(test_x)
+    saveTransform(transform_test, test_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TEST.arff")
 
     b = RandomForestClassifier(random_state=0)
-    b.fit(sha_train, train_y)
-    preds = b.predict(sha_test)
+    b.fit(transform_train, train_y)
+    preds = b.predict(transform_test)
     correct = sum(preds == test_y)
     print("\t{0}/{1} -> {2:0.3f}%".format(correct, len(test_y), (correct/len(test_y))*100))
 
