@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.metrics import precision_score, recall_score
 import numpy as np
-class MLAUTScore(ABC):
+class SKTimeScore(ABC):
     @abstractmethod
     def calculate(self, y_true, y_pred):
         """
@@ -35,7 +35,7 @@ class MLAUTScore(ABC):
             score(float): Returns the result of the metric.
         """
 
-class ScoreAccuracy(MLAUTScore):
+class ScoreAccuracy(SKTimeScore):
     """
     Calculates the accuracy between the true and predicted lables.
     """
@@ -97,7 +97,7 @@ class ScoreAccuracy(MLAUTScore):
 
         return avg_score, std_score
 
-class ScoreMSE(MLAUTScore):
+class ScoreMSE(SKTimeScore):
     """
     Calculates the mean squared error between the true and predicted lables.
     """
@@ -144,7 +144,7 @@ class ScoreMSE(MLAUTScore):
         return avg_score, std_score
 #TODO: implement def calculate_per_dataset for the methods below
 
-# class ScorePrecision(MLAUTScore):
+# class ScorePrecision(SKTimeScore):
 #     """
 #     Calculates precision score of classifier.
 
@@ -174,7 +174,7 @@ class ScoreMSE(MLAUTScore):
 #         """
 #         return precision_score(y_true, y_pred, average=self._average)
 
-# class ScoreRecall(MLAUTScore):
+# class ScoreRecall(SKTimeScore):
 #     """
 #     Calculates recall score of classifier.
 
