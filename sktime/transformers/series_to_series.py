@@ -110,10 +110,6 @@ class RandomIntervalSegmenter(BaseTransformer):
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
 
-        # Cast into 2d dataframe
-        if X.ndim == 1:
-            X = pd.DataFrame(X)
-
         # Check inputs.
         if self.check_input:
             # Check that the input is of the same shape as the one passed
@@ -138,7 +134,7 @@ class RandomIntervalSegmenter(BaseTransformer):
                 intervals.append(interval)
                 self.columns_.append(f'{colname}_{start}_{end}')
 
-        # Return nested pandas Series or DataFrame.
+        # Return nested pandas DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
         Xt.columns = self.columns_
         return Xt
@@ -201,7 +197,7 @@ class RandomIntervalSegmenter(BaseTransformer):
             n = int(np.sqrt(m))
         elif n == 'log':
             n = int(np.log(m))
-        elif np.issubdtype(type(n), np.float) and (n > 0) and (n <= 1):
+        elif np.issubdtype(type(n), np.floating) and (n > 0) and (n <= 1):
             n = int(m * n)
         else:
             raise ValueError(f'Number of intervals must be either "random", "sqrt", a positive integer, or a float '

@@ -111,8 +111,4 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                     self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
-
-        if Xt.shape[1] == 1:
-            return Xt.iloc[:, 0]
-
         return Xt

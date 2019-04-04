@@ -20,7 +20,7 @@ def test_output_format_dim():
                     Xt = trans.fit_transform(X)
 
                     # Check number of rows and output type.
-                    assert isinstance(Xt, (pd.DataFrame, pd.Series))
+                    assert isinstance(Xt, pd.DataFrame)
                     assert Xt.shape[0] == X.shape[0]
 
                     # Check number of generated intervals/columns.
