@@ -70,10 +70,6 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
 
-        # Cast into 2d dataframe
-        if X.ndim == 1:
-            X = pd.DataFrame(X)
-
         # check inputs
         if self.check_input:
             # Check that the input is of the same shape as the one passed
