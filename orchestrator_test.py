@@ -31,7 +31,11 @@ orchestrator = Orchestrator(save_results=True)
 
 #from disk example
 dl = DataLoader(dts_dir='data/datasets', task_types='TSC')
-results = orchestrator.run_from_disk(data_loader=dl,
+# results = orchestrator.run_from_disk(data_loader=dl,
+#                             strategies=[strategy])
+
+
+results = orchestrator.fit(data=dl,
                             strategies=[strategy])
 
 analyze = AnalyseResults(results)
