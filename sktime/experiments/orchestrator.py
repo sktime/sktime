@@ -5,7 +5,7 @@ import re
 from sktime.experiments.data import Result
 import numpy as np
 import pandas as pd
-
+from sktime.experiments.data import DataLoader
 class Orchestrator:
     """
     Orchestrates the sequencing of running the machine learning experiments.
@@ -66,6 +66,56 @@ class Orchestrator:
         else:
             logging.warning(f'Path {save_path} exists. Set overwrite_predictions=True if you wish to overwrite it.')
     
+    def fit(self, 
+            data, 
+            strategies, 
+            resampling=None,
+            overwrite_saved_estimators=False,
+            verbose=True,
+            predict_on_runtime=True,
+            overwrite_predictions=False,
+            save_resampling_splits=True):
+        """
+        Combines both fit from memory and from hdd
+
+        strategies: list
+            list of sktime strategies
+        resampling: sktime.resampling object
+            resampling strategy for the data.
+        overwrite_saved_estimators:Boolean
+            If True overwrites the esimators that were saved on the disk
+        verbose:Boolean
+            If True outputs messages during training
+        predict_on_runtime:Boolean
+            If True makes predictions after the estimator is trained
+        overwrite_preictions:Boolean
+            If True overwrites the predictions made at previous runs
+        save_resampling_splits: Boolean
+            If `True` saves resampling splits in database
+        
+        Returns
+        -------
+        list 
+            sktime.experiments.data.Results objects 
+        """
+
+        if isinstance(data, DataLoader):
+            return self.run_from_disk(data_loader=data, 
+                               strategies=strategies, 
+                               predict_on_runtime=True)
+
+        if isinstance(data, list):
+            if resampling is None:
+                raise ValueError('Specify resampling strategy')
+            return self.run_from_memory(data_holders=data,
+                                strategies=strategies,
+                                resampling=resampling,
+                                overwrite_saved_estimators=overwrite_saved_estimators,
+                                verbose=verbose,
+                                predict_on_runtime=predict_on_runtime,
+                                overwrite_predictions=overwrite_predictions,
+                                save_resampling_splits=save_resampling_splits)
+        
     def run_from_memory(self,
             data_holders,
             strategies,
