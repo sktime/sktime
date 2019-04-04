@@ -384,8 +384,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict_proba)(X) for e in self.estimators_)
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
 
         all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
@@ -404,10 +403,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         return X
 
     def apply(self, X):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def decision_path(self, X):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def feature_importances_(self):
