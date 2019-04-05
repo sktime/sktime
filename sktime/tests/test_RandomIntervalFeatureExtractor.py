@@ -22,7 +22,7 @@ def _test_output_format_dim(X):
         for features in feature_args:
             trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
             Xt = trans.fit_transform(X)
-            assert isinstance(Xt, (pd.DataFrame, pd.Series))
+            assert isinstance(Xt, pd.DataFrame)
             assert Xt.shape[0] == n_rows
             assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
@@ -37,11 +37,6 @@ def test_output_format_dim():
 
 # Check that exception is raised for bad input args.
 def test_bad_input_args():
-    bad_n_intervals = [0, 'abc', 1.0]
-    for arg in bad_n_intervals:
-        with pytest.raises(ValueError):
-            RandomIntervalFeatureExtractor(n_intervals=arg)
-
     bad_features = [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']]
     for arg in bad_features:
         with pytest.raises(ValueError):
@@ -91,12 +86,12 @@ def test_different_implementations():
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
     tran2 = RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))
-    A = tran2.fit_transform(tran1.fit_transform(X_train))
+    a = tran2.fit_transform(tran1.fit_transform(X_train))
 
     tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_seed)
-    B = tran.fit_transform(X_train)
+    b = tran.fit_transform(X_train)
 
-    np.testing.assert_array_equal(A, B)
+    np.testing.assert_array_equal(a, b)
 
     # Compare with transformer pipeline using TSFeatureUnion.
     steps = [
