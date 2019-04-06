@@ -196,6 +196,8 @@ class RandomShapeletTransform(TransformerMixin):
         
         
         max_num_shapelets_per_class = int(np.round(max(10*num_ins, 2000)/len(class_vals)))
+
+        
         
         shapelets_per_class = {i:[] for i in class_vals}
 
@@ -223,7 +225,7 @@ class RandomShapeletTransform(TransformerMixin):
         idxs_to_sample = [(i,y[i]) for i in lists_patterns_by_class]
 
         # once extracted we will add all shapelets to this list
-        all_shapelets = []
+#        all_shapelets = []
 
         # this dictionary will be used to store all possible starting positions and shapelet lengths for a give series length. This
         # is because we enumerate all possible candidates and sample without replacement when assessing a series. If we have two series
@@ -384,7 +386,7 @@ class RandomShapeletTransform(TransformerMixin):
                             print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit-time_now)/60,3)), int((round((self.time_limit-time_now)/60,3) - int(round((self.time_limit-time_now)/60,3)))*60)))
                     
             # add shapelets from this series to the collection for all
-            all_shapelets.extend(series_shapelets)
+#            all_shapelets.extend(series_shapelets)
 
             # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
             #                     in case of contracted transform (i.e. time limit has been reached)
@@ -392,19 +394,19 @@ class RandomShapeletTransform(TransformerMixin):
                 break
                 
         # sort all shapelets by quality
-        all_shapelets.sort(key=lambda x: x.info_gain, reverse=True)
+#        all_shapelets.sort(key=lambda x: x.info_gain, reverse=True)
         all_shapelets_classes = [item for k,v in shapelets_per_class.items() for item in v]
                 
         # moved to end as it is now possible to visit the same series multiple times, and a better series may be found in the second visit that removes
         # the best from the first (and then means previously similar shapelets with that may again be eligible)
         if self.remove_self_similar:
-            all_shapelets = RandomShapeletTransform.remove_self_similar(all_shapelets)
+#            all_shapelets = RandomShapeletTransform.remove_self_similar(all_shapelets)
             all_shapelets_classes = RandomShapeletTransform.remove_self_similar(all_shapelets_classes)
             
         # we keep the best num_shapelets_to_trim_to shapelets
         if self.trim_shapelets is True:
-            num_shapelets_to_trim_to = min(len(all_shapelets), self.num_shapelets_to_trim_to)
-            all_shapelets = all_shapelets[:num_shapelets_to_trim_to]
+            num_shapelets_to_trim_to = min(len(all_shapelets_classes), self.num_shapelets_to_trim_to)
+#            all_shapelets = all_shapelets[:num_shapelets_to_trim_to]
             all_shapelets_classes = all_shapelets_classes[:num_shapelets_to_trim_to]
             
         self.shapelets = all_shapelets_classes
@@ -743,7 +745,7 @@ def saveShapelets(shapelets, data, time, file_name):
     f.close()
 
 if __name__ == "__main__":
-    dataset = "GunPoint"
+    dataset = "ArrowHead"
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
 #                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
@@ -753,17 +755,17 @@ if __name__ == "__main__":
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 
 
-    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=3, max_shapelet_length=12, num_cases_to_sample=60, 
-                                num_shapelets_to_sample_per_case=8, trim_shapelets = True, verbose=True)
-#    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=0.3, min_shapelet_length=20, max_shapelet_length=100, 
-#                                num_shapelets_to_sample_per_case=30, trim_shapelets = True, verbose=True)
+#    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=3, max_shapelet_length=12, num_cases_to_sample=60, 
+#                                num_shapelets_to_sample_per_case=8, trim_shapelets = True, verbose=True)
+    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=60, min_shapelet_length=3, max_shapelet_length=200, 
+                                num_shapelets_to_sample_per_case=100, trim_shapelets = False, verbose=True)
 #    a = RandomShapeletTransform(type_shapelet="Full", verbose=True)
     
     starting_time = time.time()
     shapelets = a.fit(train_x, train_y)
     data = np.array([np.asarray(x) for x in train_x.iloc[:, 0]]) # dim to use 0 - check in case of multivariate.
     saveShapelets(shapelets, data, time.time() - starting_time, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_shapelets.csv")
-    
+#    print('Entrenamiento acabado con {0} shapelets en {1} s.'.format(len(shapelet667s), time.time()-starting_time))
     transform_train = a.transform(train_x)
     saveTransform(transform_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
     transform_test = a.transform(test_x)
