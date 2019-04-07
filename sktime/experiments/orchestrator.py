@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from sktime.experiments.data import DataLoader
 from sktime.experiments.data import DataHolder
+from sktime.utils.results_writing import write_results_to_uea_format
 
 class Orchestrator:
     """
@@ -276,17 +277,22 @@ class Orchestrator:
         
         
         if self._save_results:
-            result_to_save = pd.DataFrame()
-            result_to_save['TRUE_LABELS']=y.iloc[test_idx]
-            result_to_save['PREDICTIONS']=predictions
-            path_to_save = os.path.join(self._data_dir, 
-                                        self._experiments_results_dir, 
-                                        data_holder.dataset_name)
-            try:
-                os.makedirs(path_to_save)
-                result_to_save.to_csv(f'{path_to_save}{os.sep}{strategy.name}.csv', index=False)
-            except:
-                #directory already exists
-                result_to_save.to_csv(f'{path_to_save}{os.sep}{strategy.name}.csv', index=False)
-        
+            # result_to_save = pd.DataFrame()
+            # result_to_save['TRUE_LABELS']=y.iloc[test_idx]
+            # result_to_save['PREDICTIONS']=predictions
+            # path_to_save = os.path.join(self._data_dir, 
+            #                             self._experiments_results_dir, 
+            #                             data_holder.dataset_name)
+            # try:
+            #     os.makedirs(path_to_save)
+            #     result_to_save.to_csv(f'{path_to_save}{os.sep}{strategy.name}.csv', index=False)
+            # except:
+            #     #directory already exists
+            #     result_to_save.to_csv(f'{path_to_save}{os.sep}{strategy.name}.csv', index=False)
+            write_results_to_uea_format(output_path=os.path.join(self._data_dir, self._experiments_results_dir),
+                                        classifier_name=strategy.name,
+                                        dataset_name=data_holder.dataset_name,
+                                        actual_class_vals=y.iloc[test_idx],
+                                        predicted_class_vals=predictions)
+
         return result

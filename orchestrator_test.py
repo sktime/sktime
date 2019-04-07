@@ -30,14 +30,14 @@ orchestrator = Orchestrator(save_results=True)
 #                                         resampling=Single_Split())
 
 #from disk example
-# dl = DataLoader(dts_dir='data/datasets', task_types='TSC')
-# results = orchestrator.run_from_disk(data_loader=dl,
-#                             strategies=[strategy])
+dl = DataLoader(dts_dir='data/datasets', task_types='TSC')
+results = orchestrator.fit(data=dl,
+                            strategies=[strategy])
 
 
-results = orchestrator.fit(data=[dh],
-                            strategies=[strategy],
-                            resampling=Single_Split())
+# results = orchestrator.fit(data=[dh],
+#                             strategies=[strategy],
+#                             resampling=Single_Split())
 
 analyze = AnalyseResults(results)
 losses, losses_df = analyze.prediction_errors(metric=ScoreAccuracy())
