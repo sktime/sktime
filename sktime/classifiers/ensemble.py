@@ -15,13 +15,21 @@ from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.multiclass import class_distribution
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
+from sklearn.neighbors import KNeighborsClassifier as KNN
 from ..pipeline import TSPipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
+from ..distance_measures.elastic import dtw_distance, derivative_dtw_distance, \
+    weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance
+from itertools import product
 
-__all__ = ["TimeSeriesForestClassifier"]
+
+__all__ = ["TimeSeriesForestClassifier", "ElasticEnsemble"]
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
@@ -494,4 +502,146 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
     return tree
 
+
+class ElasticEnsemble():
+    def __init__(
+            self,
+            distance_measures_to_include='all',
+            proportion_of_param_options=1.0,
+            proportion_train_in_param_finding=1.0,
+            proportion_train_for_test=1.0,
+            data_dimension_to_use = 0,
+            random_seed = 0,
+            dim_to_use = 0,
+            verbose=0
+    ):
+        if distance_measures_to_include == 'all':
+            self.distance_measures = [dtw_distance, derivative_dtw_distance, weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance]
+        else:
+            self.distance_measures = distance_measures_to_include
+        self.prop_train_in_param_finding = proportion_train_in_param_finding
+        self.prop_of_param_options = proportion_of_param_options
+        self.prop_train_for_test = proportion_train_for_test
+        self.data_dimension_to_use = data_dimension_to_use
+        self.random_seed = random_seed
+        self.dim_to_use = dim_to_use
+        self.estimators_ = None
+        self.train_accs_by_classifier = None
+        self.train_preds_by_classifier = None
+        self.classes_ = None
+        self.verbose = verbose
+
+    def fit(self, X, y, **kwargs):
+        self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
+        self.train_preds_by_classifier = [None] * len(self.distance_measures)
+        self.estimators_ = [None] * len(self.distance_measures)
+
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        rand = np.random.RandomState(self.random_seed)
+
+        # convert X to numpy arrays for convenience
+        train_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+
+        # setup:
+        #   - downsample train for param options if necessay
+        #   - for each constiuent, either use a full grid search or setup random grid search
+        #   - when best param option is found for each, use that param with full train to
+
+        # sample cases for param finding if prop to use < 1
+        if self.prop_train_in_param_finding < 1:
+            sss = StratifiedShuffleSplit(n_splits=1, test_size=self.prop_train_in_param_finding, random_state=rand)
+            for train_index, test_index in sss.split(X, y):
+                param_train_x = train_x[train_index]
+                param_train_y = y[train_index]
+        else:
+            param_train_x = train_x
+            param_train_y = y
+
+        # set up individual cross val objects
+
+        for dm in range(0, len(self.distance_measures)):
+            if self.verbose > 0:
+                print("Currently evaluating "+str(self.distance_measures[dm].__name__))
+            if self.prop_of_param_options == 1:
+                grid = GridSearchCV(
+                    estimator= KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
+                    param_grid=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    cv=LeaveOneOut(),
+                    scoring='accuracy'
+                )
+            else:
+                grid = RandomizedSearchCV(
+                    estimator=KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
+                    param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    cv=LeaveOneOut(),
+                    scoring='accuracy',
+                    n_iter=100 * self.prop_of_param_options,
+                    random_state=rand
+                )
+
+            grid.fit(param_train_x, param_train_y)
+
+            best_model = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            preds = cross_val_predict(best_model, train_x, y, cv=LeaveOneOut())
+
+            self.estimators_[dm] = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            self.estimators_[dm].fit(train_x, y)
+            self.train_accs_by_classifier[dm] = grid.best_score_
+            self.train_preds_by_classifier[dm] = preds
+
+    def predict_proba(self, X):
+
+        test_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+        output_probas = []
+        for c in range(0, len(self.estimators_)):
+            this_train_acc = self.train_accs_by_classifier[c]
+            this_probas = np.multiply(self.estimators_[c].predict_proba(test_x), this_train_acc)
+            output_probas.append(this_probas)
+
+        output_probas = np.sum(output_probas,axis=0)
+        return output_probas
+
+    def predict(self, X, return_preds_and_probas=False):
+        probas = self.predict_proba(X)
+        idx = np.argmax(probas, axis=1)
+        preds = np.asarray([self.classes_[x] for x in idx])
+        if return_preds_and_probas is False:
+            return preds
+        else:
+            return preds, probas
+
+    @staticmethod
+    def _get_100_param_options(distance_measure, train_x=None):
+
+        def get_inclusive(min_val, max_val, num_vals):
+            inc = (max_val - min_val) / (num_vals-1)
+            return np.arange(min_val, max_val + inc, inc)
+
+        if distance_measure == dtw_distance or distance_measure == derivative_dtw_distance:
+            return {'metric_params': [{'window': x / 100} for x in range(0, 100)]}
+        elif distance_measure == weighted_dtw_distance or distance_measure == weighted_derivative_dtw_distance:
+            return {'metric_params': [{'g': x / 100} for x in range(0, 100)]}
+        elif distance_measure == lcss_distance:
+            train_std = np.std(train_x)
+            epsilons = get_inclusive(train_std*.2,train_std,10)
+            deltas = get_inclusive(int(len(train_x[0])/4),len(train_x[0]),10)
+            deltas = [int(d) for d in deltas]
+            a = list(product(epsilons, deltas))
+            return {'metric_params': [{'epsilon': a[x][0],'delta':a[x][1]} for x in range(0, len(a))]}
+        elif distance_measure == erp_distance():
+            train_std = np.std(train_x)
+            band_sizes = get_inclusive(0, 0.25, 10)
+            g_vals = get_inclusive(train_std * .2, train_std, 10)
+            a = list(product(band_sizes, g_vals))
+            return {'metric_params': [{'band_size': a[x][0], 'g': a[x][1]} for x in range(0, len(a))]}
+        elif distance_measure == msm_distance:
+            a = get_inclusive(0.01, 0.1, 25)
+            b = get_inclusive(0.1, 1, 26)
+            c = get_inclusive(1, 10, 26)
+            d = get_inclusive(10,100,26)
+            return {'metric_params': [{'c': x} for x in np.concatenate([a,b[1:],c[1:],d[1:]])]}
+        # elif distance_measure == twe_distance
+        else:
+            raise NotImplementedError("EE does not currently support: " + str(distance_measure))
 

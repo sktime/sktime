@@ -4,7 +4,7 @@ from scipy.spatial.distance import sqeuclidean
 import time
 from sklearn.ensemble.forest import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sktime.datasets import load_gunpoint_dataframe
+from sktime.datasets import load_gunpoint
 from sktime.transformers.base import BaseTransformer
 
 # TO-DO: thorough testing (some initial testing completed, but passing the code to David to develop
@@ -707,8 +707,8 @@ if __name__ == "__main__":
 
     dataset = "GunPoint"
 
-    train_x, train_y = load_gunpoint_dataframe(split='TRAIN')
-    test_x, test_y = load_gunpoint_dataframe(split='TEST')
+    train_x, train_y = load_gunpoint(split='TRAIN', return_X_y=True)
+    test_x, test_y = load_gunpoint(split='TEST', return_X_y=True)
 
 
     pipeline = Pipeline([
