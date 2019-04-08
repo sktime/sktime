@@ -194,11 +194,8 @@ class RandomShapeletTransform(TransformerMixin):
         if self.num_cases_to_sample > len(y):
             cases_to_sample = len(y)
         
-        
         max_num_shapelets_per_class = int(np.round(max(10*num_ins, 2000)/len(class_vals)))
 
-        
-        
         shapelets_per_class = {i:[] for i in class_vals}
 
         class_counts = dict(Counter(y))
@@ -321,7 +318,6 @@ class RandomShapeletTransform(TransformerMixin):
                         comp = RandomShapeletTransform.zscore(comp)
                         min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(candidate, comp, min_dist)
                         
-                    
                     if self.use_binary_info_gain:
                         # if doing binary info gain we need to make it a 1 vs all encoding
                         # if this series is from the same class as the candidate, add to the orderline with the class value
@@ -361,20 +357,17 @@ class RandomShapeletTransform(TransformerMixin):
                     if len(shapelets_per_class[series_id_and_class[1]]) < max_num_shapelets_per_class:
                         shapelets_per_class[series_id_and_class[1]].append(Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate))
                     
-                    elif (quality > shapelets_per_class[series_id_and_class[1]][-1]):
-                        print('hola')
+                    elif (quality > shapelets_per_class[series_id_and_class[1]][-1].info_gain):
                         shapelets_per_class[series_id_and_class[1]][-1] = Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate)
                     
                     shapelets_per_class[series_id_and_class[1]].sort(key=lambda x: x.info_gain, reverse=True)
                     
-                    
-#                break
                 # Takes into account the use of the MAX shapelet calculation time to don't exceed the time_limit.
                 if self.time_limit_on:
                     time_now = time_taken()
-                    time_actual_shapelet = (time_now - time_last_shapelet)
-                    if time_actual_shapelet > max_time_calc_shapelet:
-                        max_time_calc_shapelet = time_actual_shapelet
+                    time_this_shapelet = (time_now - time_last_shapelet)
+                    if time_this_shapelet > max_time_calc_shapelet:
+                        max_time_calc_shapelet = time_this_shapelet
                     time_last_shapelet = time_now
                     if (time_now + max_time_calc_shapelet) > self.time_limit:
                         if self.verbose:
@@ -430,9 +423,7 @@ class RandomShapeletTransform(TransformerMixin):
         """
 
         # IMPORTANT: shapelets must be in descending order of quality. This is preferable in the fit method as removing self-similar
-        # shapelets may be False. However, could be dangerous if something else uses this code later. TO-DO: decide the best place to sort
-        #
-        # shapelet_list.sort(key=lambda x: x.info_gain, reverse=True)
+        # shapelets may be False. However, could be dangerous if something else uses this code later.
 
         def is_self_similar(shapelet_one, shapelet_two):
             # not self similar if from different series
@@ -483,7 +474,8 @@ class RandomShapeletTransform(TransformerMixin):
                 min_dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
                 
-                # TODO: Hay que ver como trabajamos cuando sacamos shapelets de 7 de longitud y tenemos en test una serie de menor tamaño.
+
+                # TODO: We have to think about how to work when we have shapelets with length higher than min(lengths_test_set)
 
                 for start_pos in range(0, len(this_series) - this_shapelet_length + 1):
                     comp_2 = this_series[start_pos:start_pos + this_shapelet_length]
@@ -501,9 +493,6 @@ class RandomShapeletTransform(TransformerMixin):
 #                    print(len(this_series) - this_shapelet_length)
 #                    print(self.shapelets[s].data)
 #                    print(this_series)
-                    
-                    
-                    
 #                    print(this_series)
 #                    print(this_shapelet_length)
                 
@@ -651,7 +640,7 @@ class RandomShapeletTransform(TransformerMixin):
         a = np.asanyarray(a)
         sstd = a.std(axis=axis, ddof=ddof)
 
-        # special case - if shapelet is a straight line (i.e. no variance), zscore ver should be np.zeroes(len(a))
+        # special case - if shapelet is a straight line (i.e. no variance), zscore ver should be np.zeros(len(a))
         if sstd==0:
             return np.zeros(len(a))
 
@@ -705,7 +694,17 @@ class Shapelet:
         return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}, data: {4}.".format(self.series_id, self.start_pos, self.length, self.info_gain, self.data)
 
 def saveTransform(transform, labels, file_name):
+    """ A simple function to save the transform obtained in arff format
     
+    Parameters
+    ----------
+    transform: array-like
+        The transform obtained for a dataset
+    labels: array-like
+        The labels of the dataset
+    file_name: string
+        The directory to save the transform
+    """
     # Create directory in case it doesn't exists
     directory = '/'.join(file_name.split('/')[:-1])
     if not os.path.exists(directory):
@@ -729,7 +728,20 @@ def saveTransform(transform, labels, file_name):
     f.close()
     
 def saveShapelets(shapelets, data, time, file_name):
+    """ A simple function to save the shapelets obtained in csv format
     
+    Parameters
+    ----------
+    shapelets: array-like
+        The shapelets obtained for a dataset
+    data: array-like
+        The original data
+    time: fload
+        The time spent obtaining shapelets
+    file_name: string
+        The directory to save the set of shapelets
+    """
+
     # Create directory in case it doesn't exists
     directory = '/'.join(file_name.split('/')[:-1])
     if not os.path.exists(directory):
@@ -745,7 +757,7 @@ def saveShapelets(shapelets, data, time, file_name):
     f.close()
 
 if __name__ == "__main__":
-    dataset = "ArrowHead"
+    dataset = "GunPoint"
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
 #                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
@@ -757,15 +769,15 @@ if __name__ == "__main__":
 
 #    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=3, max_shapelet_length=12, num_cases_to_sample=60, 
 #                                num_shapelets_to_sample_per_case=8, trim_shapelets = True, verbose=True)
-    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=60, min_shapelet_length=3, max_shapelet_length=200, 
-                                num_shapelets_to_sample_per_case=100, trim_shapelets = False, verbose=True)
+    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=60, min_shapelet_length=3, max_shapelet_length=300,
+                                num_shapelets_to_sample_per_case=300, trim_shapelets = False, remove_self_similar = False, verbose=True)
 #    a = RandomShapeletTransform(type_shapelet="Full", verbose=True)
     
     starting_time = time.time()
     shapelets = a.fit(train_x, train_y)
     data = np.array([np.asarray(x) for x in train_x.iloc[:, 0]]) # dim to use 0 - check in case of multivariate.
     saveShapelets(shapelets, data, time.time() - starting_time, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_shapelets.csv")
-#    print('Entrenamiento acabado con {0} shapelets en {1} s.'.format(len(shapelet667s), time.time()-starting_time))
+#    print('Training finished with {0} shapelets in {1} s.'.format(len(shapelet667s), time.time()-starting_time))
     transform_train = a.transform(train_x)
     saveTransform(transform_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
     transform_test = a.transform(test_x)
@@ -798,4 +810,4 @@ if __name__ == "__main__":
 #    print("\tTo build: {0:02d}:{1:02}".format(int(round((end_build-start)/60,3)), int((round((end_build-start)/60,3) - int(round((end_build-start)/60,3)))*60)))
 #    print("\tTo predict: {0:02d}:{1:02}".format(int(round((end_test-end_build)/60,3)), int((round((end_test-end_build)/60,3) - int(round((end_test-end_build)/60,3)))*60)))
 #    
-#    print("Tiempo usado: {0}".format(time.time()-starting_time))
+#    print("Time used: {0}".format(time.time()-starting_time))
