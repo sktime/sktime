@@ -5,8 +5,9 @@ from ..utils.validation import check_equal_index
 from ..utils.transformations import tabularize, concat_nested_arrays
 from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
+from sklearn.preprocessing import FunctionTransformer
 
-__all__ = ['RandomIntervalSegmenter']
+__all__ = ['RandomIntervalSegmenter', 'DerivativeSlopeTransformer']
 
 
 class RandomIntervalSegmenter(BaseTransformer):
@@ -153,3 +154,27 @@ class RandomIntervalSegmenter(BaseTransformer):
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
         Xt.columns = self.columns_
         return Xt
+
+
+class DerivativeSlopeTransformer(BaseTransformer):
+
+    def transform(self, X, y=None):
+        num_cases, num_dim = X.shape
+        output_df = pd.DataFrame()
+        for dim in range(num_dim):
+            dim_data = X.iloc[:,dim]
+            out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
+            output_df['der_dim_'+str(dim)] = pd.Series(out)
+
+        return output_df
+
+    @staticmethod
+    def row_wise_get_der(X):
+
+        def get_der(x):
+            der = []
+            for i in range(1, len(x) - 1):
+                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+            return pd.Series([der[0]] + der + [der[-1]])
+
+        return [get_der(x) for x in X]
