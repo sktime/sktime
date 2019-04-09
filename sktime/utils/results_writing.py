@@ -22,6 +22,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
     file = open(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) +
                 "/"+str(train_or_test)+"Fold"+str(resample_seed)+".csv", "w")
+
     correct = acc(actual_class_vals, predicted_class_vals)
 
     # the first line of the output file is in the form of:
@@ -36,7 +37,8 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     # output file then it will be a training estimate of the classifier on the training data only (e.g.
     # 10-fold cv, leave-one-out cv, etc.). If this is a test output file, it should be the output
     # of the estimator on the test data (likely trained on the training data for a-priori parameter optimisation)
-    file.write(str(correct / len(actual_class_vals)) + "\n")
+
+    file.write(str(correct)+ "\n")
 
     # from line 4 onwards each line should include the actual and predicted class labels (comma-separated). If
     # present, for each case, the probabilities of predicting every class value for this case should also be

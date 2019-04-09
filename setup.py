@@ -5,6 +5,8 @@ import codecs
 import re
 from setuptools import find_packages, setup
 import os
+from Cython.Build import cythonize
+import numpy
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -63,6 +65,8 @@ EXTRAS_REQUIRE = {
     ]
 }
 
+
+
 setup(name=DISTNAME,
       maintainer=MAINTAINER,
       maintainer_email=MAINTAINER_EMAIL,
@@ -77,4 +81,8 @@ setup(name=DISTNAME,
       packages=find_packages(),
       include_package_data=True,
       install_requires=INSTALL_REQUIRES,
-      extras_require=EXTRAS_REQUIRE)
+      extras_require=EXTRAS_REQUIRE,
+      ext_modules=cythonize(
+          ["sktime/distances/elastic_cython.pyx"],
+          annotate=True),
+      include_dirs=[numpy.get_include()])
