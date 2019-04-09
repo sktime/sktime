@@ -37,6 +37,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     # output file then it will be a training estimate of the classifier on the training data only (e.g.
     # 10-fold cv, leave-one-out cv, etc.). If this is a test output file, it should be the output
     # of the estimator on the test data (likely trained on the training data for a-priori parameter optimisation)
+
     file.write(str(correct)+ "\n")
 
     # from line 4 onwards each line should include the actual and predicted class labels (comma-separated). If

@@ -5,7 +5,7 @@ import pandas as pd
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
-def load_gunpoint(split='TRAIN', return_X_y=False):
+def load_gunpoint(split='ALL', return_X_y=False):
     """Loads the GunPoint time series classification problem and returns X and y
 
     Dimensionality:     univariate
@@ -28,8 +28,9 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
 
     Parameters
     ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
+    split: string (either "ALL" or "TRAIN" or "TEST", default = "ALL")
+        Whether to load the train or test partition of the problem
+        By default it loads both
 
     Returns
     -------
@@ -41,10 +42,23 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     module_path = path.dirname(__file__)
     dname = 'data'
     pname = 'GunPoint'
-    fname = pname+'_'+split+'.ts'
-    abspath = path.join(module_path, dname, pname, fname)
+    if split in ["TRAIN", "TEST"]:
+        fname = pname+'_'+split+'.ts'
+        abspath = path.join(module_path, dname, pname, fname)
+        X, y = load_from_tsfile_to_dataframe(abspath)
+    elif split == "ALL":
+        X = pd.DataFrame()
+        y = pd.Series()
+        for split in ["TRAIN", "TEST"]:
+            fname = pname+'_'+split+'.ts'
+            abspath = path.join(module_path, dname, pname, fname)
+            result = load_from_tsfile_to_dataframe(abspath)
+            X = pd.concat([X, pd.DataFrame(result[0])])
+            y = pd.concat([y, pd.Series(result[1])])
+    else:
+        raise ValueError("Invalid split value")
 
-    X, y = load_from_tsfile_to_dataframe(abspath)
+    # Return appropriately
     if return_X_y:
         return X, y
     else:
@@ -84,10 +98,23 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     module_path = path.dirname(__file__)
     dname = 'data'
     pname = 'ItalyPowerDemand'
-    fname = pname+'_'+split+'.ts'
-    abspath = path.join(module_path, dname, pname, fname)
+    if split in ["TRAIN", "TEST"]:
+        fname = pname+'_'+split+'.ts'
+        abspath = path.join(module_path, dname, pname, fname)
+        X, y = load_from_tsfile_to_dataframe(abspath)
+    elif split == "ALL":
+        X = pd.DataFrame()
+        y = pd.Series()
+        for split in ["TRAIN", "TEST"]:
+            fname = pname+'_'+split+'.ts'
+            abspath = path.join(module_path, dname, pname, fname)
+            result = load_from_tsfile_to_dataframe(abspath)
+            X = pd.concat([X, result[0]])
+            y = pd.concat([y, result[1]])
+    else:
+        raise ValueError("Invalid split value")
 
-    X, y = load_from_tsfile_to_dataframe(abspath)
+    # Return appropriately
     if return_X_y:
         return X, y
     else:
@@ -129,10 +156,23 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     module_path = path.dirname(__file__)
     dname = 'data'
     pname = 'ArrowHead'
-    fname = pname+'_'+split+'.ts'
-    abspath = path.join(module_path, dname, pname, fname)
+    if split in ["TRAIN", "TEST"]:
+        fname = pname+'_'+split+'.ts'
+        abspath = path.join(module_path, dname, pname, fname)
+        X, y = load_from_tsfile_to_dataframe(abspath)
+    elif split == "ALL":
+        X = pd.DataFrame()
+        y = pd.Series()
+        for split in ["TRAIN", "TEST"]:
+            fname = pname+'_'+split+'.ts'
+            abspath = path.join(module_path, dname, pname, fname)
+            result = load_from_tsfile_to_dataframe(abspath)
+            X = pd.concat([X, result[0]])
+            y = pd.concat([y, result[1]])
+    else:
+        raise ValueError("Invalid split value")
 
-    X, y = load_from_tsfile_to_dataframe(abspath)
+    # Return appropriately
     if return_X_y:
         return X, y
     else:
