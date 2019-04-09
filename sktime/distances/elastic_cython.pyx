@@ -1,7 +1,6 @@
 # cython: language_level=3
 
 import numpy as np
-from scipy.spatial.distance import cdist
 cimport numpy as np
 cimport cython
 np.import_array()
@@ -13,6 +12,19 @@ cdef inline double min_c(double a, double b): return a if a <= b else b
 cdef inline int max_c_int(int a, int b): return a if a >= b else b
 cdef inline int min_c_int(int a, int b): return a if a <= b else b
 
+# TO-DO: convert DDTW and WDDTW to use slope-based derivatives rather than np.diff
+
+# Adapted version of the DTW algorithm taken from https://github.com/hfawaz/aaltd18/tree/master/distances/dtw
+#
+# @InProceedings{IsmailFawaz2018,
+#   Title                    = {Data augmentation using synthetic data for time series classification with deep residual networks},
+#   Author                   = {Ismail Fawaz, Hassan and Forestier, Germain and Weber, Jonathan and Idoumghar, Lhassane and Muller, Pierre-Alain},
+#   Booktitle                = {International Workshop on Advanced Analytics and Learning on Temporal Data, {ECML} {PKDD}},
+#   Year                     = {2018}
+# }
+#
+# Thanks in particular to GitHub @hfawaz!
+#
 # it takes as argument two time series with shape (l,m) where l is the length
 # of the time series and m is the number of dimensions
 # for multivariate time series
@@ -128,14 +140,12 @@ def wdtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , d
 
     return D[lx,ly]
 
-# note - this implementation is more convenient for use in ensembles, etc., but it is more efficient
+# note - this implementation is more convenient for general use but it is more efficient
 # for standalone use to transform the data once, then use DTW on the transformed data
 # @cython.boundscheck(False)  # Deactivate bounds checking
 # @cython.wraparound(False)   # Deactivate negative indexing.
 def ddtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     return dtw_distance(np.diff(x.T).T,np.diff(y.T).T,w)
-
-
 
 
 # note - this implementation is more convenient for use in ensembles, etc., but it is more efficient
