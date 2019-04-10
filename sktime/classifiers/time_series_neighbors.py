@@ -7,15 +7,28 @@ import warnings
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.metrics import pairwise_distances_chunked
-from sklearn.utils import check_X_y, check_array, gen_even_slices
+from sklearn.utils import gen_even_slices
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import Parallel, delayed, effective_n_jobs
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.exceptions import DataConversionWarning
-from sktime.distances.elastic_cython import dtw_distance
+from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance
 from sklearn.utils.validation import check_array
 from sklearn.neighbors.base import _check_weights, _get_weights
+import pandas as pd
+
+"""
+Please note that many aspects of this class are taken from scikit-learn's KNeighborsTimeSeriesClassifier 
+class with necessary changes to enable use with time series classification data and distance measures.
+
+TO-DO: add a utility method to set keyword args for distance measure parameters (e.g. handle the parameter 
+name(s) that are passed as metric_params automatically, depending on what distance measure is used in the 
+classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow long-format specification for 
+non-standard/user-defined measures 
+e.g. set_distance_params(measure_type=None, param_values_to_set=None, param_names=None)
+
+"""
 
 
 class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
@@ -35,8 +48,26 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             writing a new classifier from scratch or changing the scikit-learn implementation. TO-DO: find permanent
             resolution to this issue (raise as an issue on sklearn GitHub?)
     """
+    def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute', metric='dtw', metric_params=None, dim_to_use=0, **kwargs):
 
-    def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute', metric=dtw_distance, metric_params=None, **kwargs):
+        if metric == 'dtw':
+            metric = dtw_distance
+        elif metric == 'ddtw':
+            metric = ddtw_distance
+        elif metric == 'wdtw':
+            metric = wdtw_distance
+        elif metric == 'wddtw':
+            metric = wddtw_distance
+        elif metric == 'lcss':
+            metric = lcss_distance
+        elif metric == 'erp':
+            metric = erp_distance
+        elif metric == 'msm':
+            metric = msm_distance
+        else:
+            if type(metric) is str:
+                raise ValueError("Unrecognised distance measure: "+metric+". Allowed values are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                                                                          "please pass a callable distance measure into the constuctor directly.")
 
         super().__init__(
             n_neighbors=n_neighbors,
@@ -45,20 +76,21 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric_params=metric_params,
             **kwargs)
         self.weights = _check_weights(weights)
+        self.dim_to_use = dim_to_use
 
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Traininog data. If array r matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
+        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
+        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
 
         y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
+            Target values of shape = [n_samples]
 
         """
+        X = check_data_sktime_tsc(X, self.dim_to_use)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -89,17 +121,18 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         check_array.__code__ = temp
         return fx
 
-    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
+    def kneighbors(self, X, n_neighbors=None, return_distance=True):
+
         """Finds the K-neighbors of a point.
         Returns indices of and distances to the neighbors of each point.
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
-                or (n_query, n_indexed) if metric == 'precomputed'
-            The query point or points.
-            If not provided, neighbors of each indexed point are returned.
-            In this case, the query point is not considered its own neighbor.
+        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
+        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+
+        y : {array-like, sparse matrix}
+            Target values of shape = [n_samples]
 
         n_neighbors : int
             Number of neighbors to get (default is the value
@@ -141,6 +174,7 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
                [2]]...)
 
         """
+        check_data_sktime_tsc(X, dim_to_use=self.dim_to_use)
         check_is_fitted(self, "_fit_method")
 
         if n_neighbors is None:
@@ -249,15 +283,13 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
                 return dist, neigh_ind
             return neigh_ind
 
-
     def predict(self, X):
-        # print(type(X))
-        # print("predicting")
+
         """Predict the class labels for the provided data
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
+        X : sktime-format pandas dataframe or array-like, shape (n_query, n_features), \
                 or (n_query, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -266,14 +298,9 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
+        X = check_data_sktime_tsc(X, dim_to_use=self.dim_to_use)
         temp = check_array.__code__
         check_array.__code__ = _check_array_ts.__code__
-        # X = np.array([[np.asarray(x).T] for x in X.iloc[:, 0]])
-        # X = np.array([[np.asarray(x)] for x in X.iloc[:, 0]])
-        #
-        # X = np.array([np.asarray(x) for x in X.iloc[:, 0]])
-        # X = np.array([np.array([[x] for x in X[0]]) for i in X])
-
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
@@ -301,14 +328,12 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         check_array.__code__ = temp
         return y_pred
 
-
-
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
 
         Parameters
         ----------
-        X : array-like, shape (n_query, n_features), \
+        X : sktime-format pandas dataframe or array-like, shape (n_query, n_features), \
                 or (n_query, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -319,14 +344,9 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
+        X = check_data_sktime_tsc(X)
         temp = check_array.__code__
         check_array.__code__ = _check_array_ts.__code__
-        # X = np.array([[np.asarray(x).T] for x in X.iloc[:, 0]])
-        # X = np.array([[np.asarray(x)] for x in X.iloc[:, 0]])
-        #
-        # X = np.array([np.asarray(x) for x in X.iloc[:, 0]])
-        # X = np.array([np.array([[x] for x in X[i]]) for i in X])
-
 
         X = check_array(X, accept_sparse='csr')
 
@@ -367,8 +387,47 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         check_array.__code__ = temp
         return probabilities
 
+
+def check_data_sktime_tsc(X, dim_to_use=0):
+    """ A utility method to check the input of a TSC KNN classifier. The data must either be in
+
+            a)  the standard sktime format (pandas dataframe with n rows and d columns for n cases with d dimesions)
+
+            OR
+
+            b)  a numpy ndarray with shape([n_cases,n_readings,n_dimensions]) to match the expected format for cython
+                distance mesures.
+
+        If the data matches a it will be transformed into b) and returned. If it is already in b), the input X will be
+        returned without modification.
+
+        Parameters
+        -------
+        X : sktime-format pandas dataframe with shape([n_cases,n_dimensions]),
+        or numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+
+        y : {array-like, sparse matrix}
+            Target values of shape = [n_samples]
+
+        dim_to_use: indesx of the dimension to use (defaults to 0, i.e. first dimension)
+
+        Returns
+        -------
+        X : numpy ndarray with shape([n_cases,n_readings,n_dimensions])
+
+    """
+    if type(X) is pd.DataFrame:
+        X = np.array([np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, dim_to_use]])
+    elif type(X) == np.ndarray:
+        try:
+            num_cases, num_readings, n_dimensions = X.shape
+        except ValueError:
+            raise ValueError("X should be a numpy array with 3 dimensions "
+                             "([n_cases,n_readings,n_dimensions]). Instead, found: " + str(X.shape))
+    return X
+
 def _check_array_ts(array, accept_sparse=False, accept_large_sparse=True,
-                dtype="numeric", order=None, copy=False, force_all_finite=True,
-                ensure_2d=True, allow_nd=True, ensure_min_samples=1,
-                ensure_min_features=1, warn_on_dtype=False, estimator=None):
+                    dtype="numeric", order=None, copy=False, force_all_finite=True,
+                    ensure_2d=True, allow_nd=True, ensure_min_samples=1,
+                    ensure_min_features=1, warn_on_dtype=False, estimator=None):
     return array
