@@ -128,8 +128,7 @@ class RandomShapeletTransform(TransformerMixin):
                  verbose = False,
                  use_binary_info_gain = True,
                  trim_shapelets = True,
-                 num_shapelets_to_trim_to = np.inf,
-                 independent_dimension = False
+                 num_shapelets_to_trim_to = np.inf
                  ):
         
         self.type_shapelet = type_shapelet
@@ -139,7 +138,6 @@ class RandomShapeletTransform(TransformerMixin):
         self.shapelets = None
         self.verbose = verbose
         self.use_binary_info_gain = use_binary_info_gain
-        self.independent_dimension = independent_dimension
         
         self.min_shapelet_length = min_shapelet_length
         if min_shapelet_length < 3:
@@ -188,15 +186,7 @@ class RandomShapeletTransform(TransformerMixin):
         self : RandomShapeletTransform
             This estimator
         """
-#        X = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
-        
-        X = X.iloc[:, self.dim_to_use]
-        
-        X_aux = [[]] * len(X)
-        for i in range(0, len(X)):
-            X_aux[i] = np.array([np.asarray(x) for x in np.asarray(X.iloc[i, :])])
-        X = X_aux.copy()
-        
+        X = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
         num_ins = len(y)
         class_vals = np.unique(y)
 
@@ -231,6 +221,9 @@ class RandomShapeletTransform(TransformerMixin):
         lists_patterns_by_class = roundrobin(*[list(v) for k, v in patterns_each_class.items()])
         idxs_to_sample = [(i,y[i]) for i in lists_patterns_by_class]
 
+        # once extracted we will add all shapelets to this list
+#        all_shapelets = []
+
         # this dictionary will be used to store all possible starting positions and shapelet lengths for a give series length. This
         # is because we enumerate all possible candidates and sample without replacement when assessing a series. If we have two series
         # of the same length then they will obviously have the same valid shapelet starting positions and lengths (especially in standard
@@ -261,7 +254,7 @@ class RandomShapeletTransform(TransformerMixin):
                 else:
                     print("visiting series: "+str(series_id)+" (#"+str(idx+1)+")")
                             
-            this_series_len = len(X[series_id][0])
+            this_series_len = len(X[series_id])
 
             # The bound on possible shapelet lengths will differ series-to-series if using unequal length data.
             # However, shapelets cannot be longer than the series, so set to the minimum of the series length
@@ -277,6 +270,8 @@ class RandomShapeletTransform(TransformerMixin):
             max_num_shapelets_to_sample_per_case = sum(map(lambda length: (this_series_len - length) + 1, range(self.min_shapelet_length, this_shapelet_length_upper_bound + 1)))
             if num_shapelets_to_sample_per_case > max_num_shapelets_to_sample_per_case:
                 num_shapelets_to_sample_per_case = max_num_shapelets_to_sample_per_case
+
+            series_shapelets = []
 
             # enumerate all possible candidate starting positions and lengths.
             # First, try to reuse if they have been calculated for a series of the same length before.
@@ -302,9 +297,8 @@ class RandomShapeletTransform(TransformerMixin):
 
             # evaluate each shapelet candidate of a time series
             for candidate_index, candidate_info in enumerate(cands):
-
                 # for convenience, extract candidate data from series_id and znorm it
-                candidate = X[series_id][:, candidate_info[0]:candidate_info[0]+candidate_info[1]]
+                candidate = X[series_id][candidate_info[0]:candidate_info[0]+candidate_info[1]]
                 candidate = RandomShapeletTransform.zscore(candidate)
                 stop = False
                 
@@ -319,12 +313,11 @@ class RandomShapeletTransform(TransformerMixin):
                     comparison = X[i] # comparison series
                     
                     # Calculates the distance from a shapelet to a time series
-                    for start in range(0, len(comparison[0])-candidate_info[1]):
-                        comp = X[i][:, start:start+candidate_info[1]]
+                    for start in range(0, len(comparison)-candidate_info[1]):
+                        comp = X[i][start:start+candidate_info[1]]
                         comp = RandomShapeletTransform.zscore(comp)
-                        
                         min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(candidate, comp, min_dist)
-
+                        
                     if self.use_binary_info_gain:
                         # if doing binary info gain we need to make it a 1 vs all encoding
                         # if this series is from the same class as the candidate, add to the orderline with the class value
@@ -358,12 +351,14 @@ class RandomShapeletTransform(TransformerMixin):
                     quality = self.calc_info_gain(loop_dists, class_counts, num_ins)
                 
                 if(quality > 0):
+                    series_shapelets.append(Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate))
+                    
                     # Filling class heap Version 1 overleaf document
                     if len(shapelets_per_class[series_id_and_class[1]]) < max_num_shapelets_per_class:
-                        shapelets_per_class[series_id_and_class[1]].append(Shapelet(series_id, self.dim_to_use, candidate_info[0], candidate_info[1], quality, candidate))
+                        shapelets_per_class[series_id_and_class[1]].append(Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate))
                     
                     elif (quality > shapelets_per_class[series_id_and_class[1]][-1].info_gain):
-                        shapelets_per_class[series_id_and_class[1]][-1] = Shapelet(series_id, self.dim_to_use, candidate_info[0], candidate_info[1], quality, candidate)
+                        shapelets_per_class[series_id_and_class[1]][-1] = Shapelet(series_id, candidate_info[0], candidate_info[1], quality, candidate)
                     
                     shapelets_per_class[series_id_and_class[1]].sort(key=lambda x: x.info_gain, reverse=True)
                     
@@ -383,6 +378,8 @@ class RandomShapeletTransform(TransformerMixin):
                         if self.verbose:
                             print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit-time_now)/60,3)), int((round((self.time_limit-time_now)/60,3) - int(round((self.time_limit-time_now)/60,3)))*60)))
                     
+            # add shapelets from this series to the collection for all
+#            all_shapelets.extend(series_shapelets)
 
             # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
             #                     in case of contracted transform (i.e. time limit has been reached)
@@ -390,20 +387,24 @@ class RandomShapeletTransform(TransformerMixin):
                 break
                 
         # sort all shapelets by quality
+#        all_shapelets.sort(key=lambda x: x.info_gain, reverse=True)
         all_shapelets_classes = [item for k,v in shapelets_per_class.items() for item in v]
         all_shapelets_classes.sort(key=lambda x: x.info_gain, reverse=True)
         
         # moved to end as it is now possible to visit the same series multiple times, and a better series may be found in the second visit that removes
         # the best from the first (and then means previously similar shapelets with that may again be eligible)
         if self.remove_self_similar:
+#            all_shapelets = RandomShapeletTransform.remove_self_similar(all_shapelets)
             all_shapelets_classes = RandomShapeletTransform.remove_self_similar(all_shapelets_classes)
             
         # we keep the best num_shapelets_to_trim_to shapelets
         if self.trim_shapelets is True:
             num_shapelets_to_trim_to = min(len(all_shapelets_classes), self.num_shapelets_to_trim_to)
+#            all_shapelets = all_shapelets[:num_shapelets_to_trim_to]
             all_shapelets_classes = all_shapelets_classes[:num_shapelets_to_trim_to]
             
         self.shapelets = all_shapelets_classes
+#        self.shapelets = all_shapelets
         return(self.shapelets)
 
     # two "self-similar" shapelets are subsequences from the same series that are overlapping. This method
@@ -463,13 +464,7 @@ class RandomShapeletTransform(TransformerMixin):
         """
         if self.shapelets is None:
             raise Exception("Fit not called yet - no shapelets exist!")
-        
-        X = X.iloc[:, self.dim_to_use]
-        X_aux = [[]] * len(X)
-        for i in range(0, len(X)):
-            X_aux[i] = np.array([np.asarray(x) for x in np.asarray(X.iloc[i, :])])
-        X = X_aux.copy()
-        
+        X = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
         output = np.zeros([len(X),len(self.shapelets)],dtype=np.float32,)
 
         for i in range(0, len(X)):
@@ -480,21 +475,13 @@ class RandomShapeletTransform(TransformerMixin):
                 min_dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
                 
-                # TODO: We have to think about how to work when we have shapelets with length higher than min(lengths_test_set)
-                if (self.independent_dimension):
-                    # In this case, as we are measuring distances between shapelets and series at different points, the use of a nested list is 
-                    # needed to use the same code for zscore and euclideanDistanceEarlyAbandon
-                    for dim in range(0, len(self.dim_to_use)):
-                        for start_pos in range(0, len(this_series[dim]) - this_shapelet_length + 1):
-                            comp_2 = this_series[dim, start_pos:start_pos + this_shapelet_length]
-                            comp = RandomShapeletTransform.zscore([comp_2])
-                            min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon([self.shapelets[s].data[dim]], comp, min_dist)
 
-                else:
-                    for start_pos in range(0, len(this_series[0]) - this_shapelet_length + 1):
-                        comp_2 = this_series[:, start_pos:start_pos + this_shapelet_length]
-                        comp = RandomShapeletTransform.zscore(comp_2)
-                        min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
+                # TODO: We have to think about how to work when we have shapelets with length higher than min(lengths_test_set)
+
+                for start_pos in range(0, len(this_series) - this_shapelet_length + 1):
+                    comp_2 = this_series[start_pos:start_pos + this_shapelet_length]
+                    comp = RandomShapeletTransform.zscore(comp_2)
+                    min_dist = RandomShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
                         
                 try:
                     output[i][s] = min_dist.astype(np.float32)
@@ -651,34 +638,34 @@ class RandomShapeletTransform(TransformerMixin):
         zscore : array_like
             The z-scores, standardized by mean and standard deviation of input array a.
         """
-        a_zscored = [[]] * len(a)
-        for i, j in enumerate(a):
-            j = np.asanyarray(j)
-            sstd = j.std(axis=axis, ddof=ddof)
-    
-            # special case - if shapelet is a straight line (i.e. no variance), zscore ver should be np.zeros(len(a))
-            if sstd==0:
-                a_zscored[i] = np.zeros(len(j))
-            else:
-                mns = j.mean(axis=axis)
-                if axis and mns.ndim < j.ndim:
-                    a_zscored[i] = ((j - np.expand_dims(mns, axis=axis)) /
-                            np.expand_dims(sstd, axis=axis))
-                else:
-                    a_zscored[i] = (j - mns) / sstd
-        return a_zscored
+        a = np.asanyarray(a)
+        sstd = a.std(axis=axis, ddof=ddof)
+
+        # special case - if shapelet is a straight line (i.e. no variance), zscore ver should be np.zeros(len(a))
+        if sstd==0:
+            return np.zeros(len(a))
+
+        mns = a.mean(axis=axis)
+        if axis and mns.ndim < a.ndim:
+            return ((a - np.expand_dims(mns, axis=axis)) /
+                    np.expand_dims(sstd, axis=axis))
+        else:
+            return (a - mns) / sstd
         
     @staticmethod
     def euclideanDistanceEarlyAbandon(u, v, min_dist):
         sum_dist = 0
-        for i in range(0, len(u[0])):
-            for j in range(0, len(u)):
-                u_v = u[j][i] - v[j][i]
-                sum_dist += np.dot(u_v, u_v)
-                if sum_dist >= min_dist:
-                    # The distance is higher, so early abandon.
-                    return min_dist
-        return sum_dist
+        stop = False
+        for i in range(0, len(u)):
+            u_v = u[i]-v[i]
+            sum_dist += np.dot(u_v, u_v)
+            if sum_dist >= min_dist:
+                # The distance is higher, so early abandon.
+                stop = True
+                break
+        if not stop:
+            min_dist = sum_dist
+        return min_dist
 
 class Shapelet:
     """A simple class to model a Shapelet with associated information
@@ -697,16 +684,15 @@ class Shapelet:
         The (z-normalised) data of this shapelet
     """
 
-    def __init__(self, series_id, dims, start_pos, length, info_gain, data):
+    def __init__(self, series_id, start_pos, length, info_gain, data):
         self.series_id = series_id
-        self.dims = dims
         self.start_pos = start_pos
         self.length = length
         self.info_gain = info_gain
         self.data = data
 
     def __str__(self):
-        return "Series ID: {0}, num_dim: {1}, start_pos: {2}, length: {3}, info_gain: {4}, data: {5}.".format(self.series_id, self.num_dim, self.start_pos, self.length, self.info_gain, self.data)
+        return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}, data: {4}.".format(self.series_id, self.start_pos, self.length, self.info_gain, self.data)
 
 def saveTransform(transform, labels, file_name):
     """ A simple function to save the transform obtained in arff format
@@ -738,11 +724,11 @@ def saveTransform(transform, labels, file_name):
         f.write("\n@data\n")
         # Patterns
         for i,j in enumerate(transform):
-            pattern = j.tolist() + [int(float(labels[i]))]
+            pattern = j.tolist() + [int(labels[i])]
             f.write(",".join(map(str, pattern)) + "\n")
     f.close()
     
-def saveShapelets(shapelets, data, dim_to_use, time, file_name):
+def saveShapelets(shapelets, data, time, file_name):
     """ A simple function to save the shapelets obtained in csv format
     
     Parameters
@@ -756,13 +742,7 @@ def saveShapelets(shapelets, data, dim_to_use, time, file_name):
     file_name: string
         The directory to save the set of shapelets
     """
-    data = data.iloc[:, dim_to_use]
-    
-    data_aux = [[]] * len(data)
-    for i in range(0, len(data)):
-        data_aux[i] = np.array([np.asarray(x) for x in np.asarray(data.iloc[i, :])])
-    data = data_aux.copy()
-    
+
     # Create directory in case it doesn't exists
     directory = '/'.join(file_name.split('/')[:-1])
     if not os.path.exists(directory):
@@ -772,17 +752,13 @@ def saveShapelets(shapelets, data, dim_to_use, time, file_name):
         # Number of shapelets and time extracting
         f.write(str(len(shapelets)) + "," + str(time) + "\n")
         for i,j in enumerate(shapelets):
-            f.write(str(j.info_gain) + "," + str(j.series_id) + "," + ''.join(str(j.dims)).replace(', ', ':') + ","  + str(j.start_pos) + "," + str(j.length) + "\n")
-            for k in range(0, len(dim_to_use)):
-                f.write(",".join(map(str, data[j.series_id][k, j.start_pos:j.start_pos+j.length])) + "\n")
+            f.write(str(j.info_gain) + "," + str(j.series_id) + "," + str(j.start_pos) + "," + str(j.length) + "\n")
+            f.write(",".join(map(str, data[j.series_id, j.start_pos:j.start_pos+j.length])) + "\n")
+            f.write(",".join(map(str, j.data)) + "\n")
     f.close()
 
 if __name__ == "__main__":
-    dataset = "BasicMotions"
-    
-    #In case of univariate time series: dim_to_use = [0]
-    dim_to_use = [0,1]
-    
+    dataset = "GunPoint"
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TRAIN.arff",
 #                             "/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TRAIN.ts")
 #    load_from_arff_to_tsfile("/home/david/arff-datasets/" + dataset + "/" + dataset + "_TEST.arff",
@@ -792,18 +768,16 @@ if __name__ == "__main__":
     test_x, test_y = load_from_tsfile_to_dataframe("/home/david/sktime-datasets/" + dataset + "/" + dataset + "_TEST.ts")
 
 
-    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=3, max_shapelet_length=12, num_cases_to_sample=20,
-                                num_shapelets_to_sample_per_case=20, trim_shapelets = False, remove_self_similar = False, verbose=True,
-                                dim_to_use = dim_to_use, independent_dimension = False)
-    
+    a = RandomShapeletTransform(type_shapelet="Random", min_shapelet_length=3, max_shapelet_length=12, num_cases_to_sample=8, 
+                                num_shapelets_to_sample_per_case=10, trim_shapelets = False, remove_self_similar = False, verbose=True)
 #    a = RandomShapeletTransform(type_shapelet="Contracted", time_limit_in_mins=0.3, min_shapelet_length=3, max_shapelet_length=300,
-#                                num_shapelets_to_sample_per_case=5, trim_shapelets = False, remove_self_similar = False, verbose=True, 
-#                                dim_to_use = dim_to_use, independent_dimension = False)
+#                                num_shapelets_to_sample_per_case=5, trim_shapelets = False, remove_self_similar = False, verbose=True)
 #    a = RandomShapeletTransform(type_shapelet="Full", verbose=True)
     
     starting_time = time.time()
     shapelets = a.fit(train_x, train_y)
-    saveShapelets(shapelets, train_x, dim_to_use, time.time() - starting_time, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_shapelets.csv")
+    data = np.array([np.asarray(x) for x in train_x.iloc[:, 0]])
+    saveShapelets(shapelets, data, time.time() - starting_time, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_shapelets.csv")
 #    print('Training finished with {0} shapelets in {1} s.'.format(len(shapelet667s), time.time()-starting_time))
     transform_train = a.transform(train_x)
     saveTransform(transform_train, train_y, "/home/david/sktime-datasets/" + dataset + "/transformed/" + dataset + "_TRAIN.arff")
