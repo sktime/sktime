@@ -8,13 +8,12 @@ from sklearn.utils.validation import check_is_fitted, check_array
 
 from datasets import load_gunpoint
 
-
 class ProximityForest:
-    'Proximity Forest - a distance-based time-series classifier'
+    'Proximity Forest - a distance-based time-series classifier. https://arxiv.org/pdf/1808.10594.pdf'
 
     _seed_key = 'seed'
     _verbose_key = 'verbose'
-    _distance_measures_key = 'distance_measures'
+    _distance_measures_key = 'dms'
     _default_distance_measures = ('dtw', 'lcss', 'msm')
 
     def __init__(self, **parameters):
@@ -57,16 +56,17 @@ class ProximityForest:
         return 'ProximityForest'
 
 
+
 # from sklearn.utils.estimator_checks import check_estimator
 #
-pf = ProximityForest(seed=5, verbose=True, distance_measures=('dtw', 'lcss', 'msm'))
-x_train, y_train = load_gunpoint(return_X_y=True)
-x_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
-pf.fit(x_train, y_train)
-predictions = pf.predict_proba(x_test)
-
-score = accuracy_score(y_test, predictions)
-print(score)
+# pf = ProximityForest(seed=5, verbose=True, dms=('dtw', 'lcss', 'msm'))
+# x_train, y_train = load_gunpoint(return_X_y=True)
+# x_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
+# pf.fit(x_train, y_train)
+# predictions = pf.predict_proba(x_test)
+#
+# score = accuracy_score(y_test, predictions)
+# print(score)
 
 # nb = GaussianNB()
 # iris = datasets.load_iris()
