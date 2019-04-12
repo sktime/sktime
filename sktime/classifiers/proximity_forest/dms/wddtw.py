@@ -1,10 +1,9 @@
 from classifiers.proximity_forest.dms.distance_measure import DistanceMeasure
 from classifiers.proximity_forest.dms.dtw import Dtw
-from classifiers.proximity_forest.dms.wdtw import Wdtw
 
 from datasets import load_gunpoint
 
-class Wddtw(Wdtw):
+class Wddtw(Dtw):
 
     def __init__(self, **params):
         super(Wddtw, self).__init__(**params)
