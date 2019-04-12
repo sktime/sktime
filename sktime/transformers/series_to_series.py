@@ -6,7 +6,8 @@ from ..utils.validation import check_equal_index
 from ..utils.transformations import tabularize, concat_nested_arrays
 from .base import BaseTransformer
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter']
+
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -280,3 +281,27 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
         return np.column_stack([starts, ends])
+
+      
+class DerivativeSlopeTransformer(BaseTransformer):
+
+    def transform(self, X, y=None):
+        num_cases, num_dim = X.shape
+        output_df = pd.DataFrame()
+        for dim in range(num_dim):
+            dim_data = X.iloc[:,dim]
+            out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
+            output_df['der_dim_'+str(dim)] = pd.Series(out)
+
+        return output_df
+
+    @staticmethod
+    def row_wise_get_der(X):
+
+        def get_der(x):
+            der = []
+            for i in range(1, len(x) - 1):
+                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+            return pd.Series([der[0]] + der + [der[-1]])
+
+        return [get_der(x) for x in X]
