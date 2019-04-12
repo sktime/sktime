@@ -19,20 +19,3 @@ class Utilities:
         mean = sum / numValues
         stdp = np.math.sqrt(sumSq / numValues - mean ** 2)
         return stdp
-
-    @staticmethod
-    def arg_min(array, rand):
-        return rand.choice(Utilities.arg_min(array))
-
-    @staticmethod
-    def arg_min(array):
-        min_indices = [0]
-        min = array[0]
-        for index in range(1, len(array)):
-            value = array[index]
-            if value <= min:
-                if value < min:
-                    min_indices = []
-                    min = value
-                min_indices.append(index)
-        return min_indices
