@@ -7,7 +7,7 @@ from distance_measures.elastic import msm_distance
 
 class Msm(Dtw):
 
-    cost_key = 'epsilon'
+    cost_key = 'cost'
     default_cost = 1
 
     def __init__(self, **params):

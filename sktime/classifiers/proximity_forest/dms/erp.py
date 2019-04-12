@@ -7,7 +7,7 @@ from distance_measures.elastic import lcss_distance, erp_distance
 
 class Erp(Dtw):
 
-    g_key = 'epsilon'
+    g_key = 'g'
     default_g = 0.01
 
     def __init__(self, **params):

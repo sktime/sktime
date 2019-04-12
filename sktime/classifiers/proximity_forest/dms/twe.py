@@ -6,7 +6,7 @@ from datasets import load_gunpoint
 
 class Twe(DistanceMeasure):
 
-    nu_key = 'epsilon'
+    nu_key = 'nu'
     default_nu = 0.01
     lambda_key = 'lambda'
     default_lambda = 1
