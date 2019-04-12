@@ -20,8 +20,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'sktime'
-copyright = '2019, Alan Turing'
-author = 'Alan Turing'
+copyright = '2019, The Alan Turing Institute'
+author = ' '
 
 # The short X.Y version
 version = ''
