@@ -1,83 +1,105 @@
 """
-A Helper interface for high level operations
-
-Implements the Task and Strategy classes for
-high level operations
+Unified high-level interface for various time series related learning tasks.
 """
 import pandas as pd
 from sklearn.base import BaseEstimator
 
 
-class Task:
+class _BaseTask:
     """An object that encapsulates meta-data and instructions on how to derive the target/label for the time-series
-    prediction/supervised learning task.
+        prediction/supervised learning task.
 
-    Parameters
-    ----------
-    case : string
-        The string value could be either "TSC" for time series
-        classification of "TSR" for time series regression.
-    data : pd.DataFrame
-        Contains the data that the task is expected to work with.
-    target : string
-        The column header for the target variable to be predicted.
-    features : list of string
-        The column header for the target variable to be predicted.
-        If omitted, every column apart from target would be a feature.
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Contains the data that the task is expected to work with.
+        target : string
+            The column header for the target variable to be predicted.
+        features : list of string
+            The column header for the target variable to be predicted.
+            If omitted, every column apart from target would be a feature.
     """
-    def __init__(self, case=None, data=None, target=None, features=None):
-        # check if all necessary keyword arguments are present
-        if not(case and data and target):
-            raise ValueError("All three kerword arguments case, data and target should be supplied")
-        self._case = case
+    def __init__(self, metadata, target, features=None):
+        self._case = None
         self._target = target
         # by default every column apart from target is a feature
         if features is None:
-            self._features = data.columns.drop(self._target)
+            self._features = metadata.columns.drop(self._target)
         else:
             # set the user-supplied feature list as read-only
             self._features = pd.Index(features)
 
         # glean metadata from the dataset
-        self._meta = {"nrow": data.shape[0],
-                      "ncol": data.shape[1],
-                      "target_type": {target: type(i)
-                                      for i in data[self._target]},
-                      "feature_type": {col: {type(i) for i in data[col]}
-                                       for col in self._features}}
-
-    @property
-    def case(self):
-        """
-        exposes the private variable _case as read only
-        """
-        return self._case
+        self._metadata = {"nrow": metadata.shape[0],
+                          "ncol": metadata.shape[1],
+                          "target_type": {target: type(i) for i in metadata[self._target]},
+                          "feature_type": {col: {type(i) for i in metadata[col]} for col in self._features}}
 
     @property
     def target(self):
-        """
-        exposes the private variable _target in a controlled way
+        """exposes the private variable _target in a controlled way
         """
         return self._target
 
     @property
     def features(self):
-        """
-        exposes the private variable _features in a controlled way
+        """exposes the private variable _features in a controlled way
         """
         return self._features
 
     def __getitem__(self, key):
+        """provided read only access via keys to the private _meta data of the task
         """
-        provided read only access via keys
-        to the private _meta data of the task
-        """
-        if key not in self._meta.keys():
+        if key not in self._metadata.keys():
             raise KeyError
-        return self._meta[key]
+        return self._metadata[key]
 
 
-class BaseStrategy:
+class TSCTask(_BaseTask):
+    """Time series classification task.
+
+    Parameters
+    ----------
+    metadata : pandas DataFrame
+        Meta-data
+    target : str
+        Name of target variable.
+    features : list
+        Name of feature variables.
+    """
+    def __init__(self, metadata, target, features=None):
+        self._case = 'TSC'
+        super(TSCTask, self).__init__(metadata, target, features=features)
+
+
+class ForecastingTask(_BaseTask):
+    """Forecasting task.
+
+    Parameters
+    ----------
+    metadata : pandas DataFrame
+        Meta-data
+    target : str
+        Name of target variable.
+    pred_horizon : list
+        List of steps ahead to predict.
+    features : list
+        List of feature variables.
+    """
+    def __init__(self, metadata, target, pred_horizon, features=None):
+        self._pred_horizon = pred_horizon
+        super(ForecastingTask, self).__init__(metadata, target, features=features)
+        self._case = 'Forecasting'
+
+    @property
+    def pred_horizon(self):
+        """
+        exposes the private variable _pred_horizon in a controlled way
+        """
+        return self._pred_horizon
+
+
+class _BaseStrategy:
     """
     A meta-estimator that employs a low level estimator to
     perform a pescribed task
@@ -176,18 +198,16 @@ class BaseStrategy:
         self._estimator.set_params(**params)
 
 
-class TSCStrategy(BaseStrategy):
-    """
-    Strategies for Time Series Classification
+class TSCStrategy(_BaseStrategy):
+    """Strategies for Time Series Classification
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSC"
 
 
-class TSRStrategy(BaseStrategy):
-    """
-    Strategies for Time Series Regression
+class TSRStrategy(_BaseStrategy):
+    """Strategies for Time Series Regression
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
