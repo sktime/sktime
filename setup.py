@@ -8,7 +8,6 @@ import os
 from Cython.Build import cythonize
 import numpy
 
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 
@@ -21,25 +20,23 @@ def read(*parts):
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file,
-                              re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
 
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible toolbox for supervised learning with time-series/panel data'
+DESCRIPTION = 'scikit-learn compatible toolbox for learning with time series and panel data'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Kiraly'
 MAINTAINER_EMAIL = 'f.kiraly@ucl.ac.uk'
-URL = 'https://github.com/kiraly-group/sktime'
+URL = 'https://github.com/alan-turing-institute/sktime'
 LICENSE = 'undecided'
-DOWNLOAD_URL = 'https://github.com/kiraly-group/sktime'
+DOWNLOAD_URL = 'https://github.com/alan-turing-institute/sktime'
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-learn', 'statsmodels']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -66,12 +63,11 @@ EXTRAS_REQUIRE = {
 }
 
 
-
 setup(name=DISTNAME,
       maintainer=MAINTAINER,
       maintainer_email=MAINTAINER_EMAIL,
       description=DESCRIPTION,
-      # license=LICENSE,
+      license='BSD 3-Clause License',
       url=URL,
       version=VERSION,
       download_url=DOWNLOAD_URL,
@@ -82,7 +78,5 @@ setup(name=DISTNAME,
       include_package_data=True,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
-      ext_modules=cythonize(
-          ["sktime/distances/elastic_cython.pyx"],
-          annotate=True),
+      ext_modules=cythonize(["sktime/distances/elastic_cython.pyx"], annotate=True),
       include_dirs=[numpy.get_include()])
