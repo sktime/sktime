@@ -1,8 +1,5 @@
 .. image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
     :target: https://travis-ci.com/alan-turing-institute/sktime   
-.. image:: https://badge.fury.io/py/sktime.svg
-    :target: https://badge.fury.io/py/sktime
-
 sktime
 ======
 
@@ -77,7 +74,6 @@ Development road map
 3. Integration of algorithms for classical forecasting (e.g. ARIMA), deep learning strategies, and third-party feature extraction tools,
 4. Design and implementation of specialised data-container for efficient handling of time series/panel data in a supervised learning workflow and separation of time series meta-data, re-utilising existing data-containers whenever possible,
 5. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods, based on the `mlaut <https://github.com/alan-turing-institute/pysf/>`_ design.
-
 
 Contributors
 ------------
