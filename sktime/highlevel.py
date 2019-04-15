@@ -2,6 +2,7 @@
 Unified high-level interface for various time series related learning tasks.
 """
 import pandas as pd
+import numpy as np
 from sklearn.base import BaseEstimator
 
 
@@ -87,7 +88,7 @@ class ForecastingTask(_BaseTask):
         List of feature variables.
     """
     def __init__(self, metadata, target, pred_horizon, features=None):
-        self._pred_horizon = pred_horizon
+        self._pred_horizon = np.sort(pred_horizon)
         super(ForecastingTask, self).__init__(metadata, target, features=features)
         self._case = 'Forecasting'
 
