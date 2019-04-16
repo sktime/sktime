@@ -6,7 +6,7 @@ from ..highlevel import ForecastingTask
 
 
 class BaseForecaster(BaseEstimator):
-    """ Base class for forecasters, for identification.
+    """Base class for forecasters, for identification.
     """
     _estimator_type = "forecaster"
 
@@ -48,13 +48,6 @@ class BaseForecaster(BaseEstimator):
         return pd.Series(*data[self.task.target].tolist())
 
     @staticmethod
-    def _check_order(order, n):
-        if not (isinstance(order, tuple) and (len(order) == n)):
-            raise ValueError(f'Order must be a tuple of length f{n}')
-        if not all(np.issubdtype(type(k), np.integer) for k in order):
-            raise ValueError(f'All values in order must be integers')
-
-    @staticmethod
     def _check_fit_data(data):
         # TODO input checks for forecasting
         #  regularly spaced, date/time index or numeric
@@ -78,4 +71,27 @@ class BaseForecaster(BaseEstimator):
             raise ValueError(f'Task must be ForecastingTask, but found f{type(task)}')
 
 
+class ClassicalForecaster(BaseForecaster):
+    """Classical forecaster which implements predict method for fitted/updated classical forecasting techniques.
+    """
 
+    def _predict(self):
+        # Convert step-ahead prediction horizon into zero-based index
+        pred_horizon = self.task.pred_horizon
+        pred_horizon_idx = pred_horizon - np.min(pred_horizon)
+
+        if self._is_updated:
+            # Predict updated (pre-initialised) model with start and end values relative to end of train series
+            start = self.task.pred_horizon[0]
+            end = self.task.pred_horizon[-1]
+            pred = self.updated_model.predict(start=start, end=end)
+
+        else:
+            # Predict fitted model with start and end points relative to start of train series
+            pred_horizon = pred_horizon + len(self._target_idx) - 1
+            start = pred_horizon[0]
+            end = pred_horizon[-1]
+            pred = self.fitted_model.predict(start=start, end=end)
+
+        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
+        return pred[pred_horizon_idx]
