@@ -15,6 +15,12 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = False
         self._is_updated = False
 
+        self._target_idx = None
+        self.task = None
+        self.model = None
+        self.fitted_model = None
+        self.updated_model = None
+
     def fit(self, task, data):
         if self.check_input:
             self._check_fit_data(data)

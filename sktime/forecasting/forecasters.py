@@ -113,6 +113,45 @@ class ExponentialSmoothingForecaster(ClassicalForecaster):
         raise NotImplementedError()
 
 
+class DummyForecaster(ClassicalForecaster):
+    def __init__(self, strategy='mean', check_input=True):
+
+        allowed_strategies = ('mean', 'last', 'seasonal_last', 'linear')
+        if strategy not in allowed_strategies:
+            raise ValueError(f'Unknown strategy: {strategy}, expected one of {allowed_strategies}')
+
+        self.strategy = strategy
+        super(DummyForecaster, self).__init__(check_input=check_input)
+
+    def _fit(self, data):
+        if self.strategy == 'mean':
+            self.model = ExponentialSmoothing(data)
+            self.fitted_model = self.model.fit(smoothing_level=0)
+
+        if self.strategy == 'last':
+            self.model = ExponentialSmoothing(data)
+            self.fitted_model = self.model.fit(smoothing_level=1)
+
+        if self.strategy == 'seasonal_last':
+            # TODO how to pass seasonal frequency for ARIMA model
+            # if not hasattr(data, 'index'):
+            #     raise ValueError('Cannot determine seasonal frequency from index of passed data')
+            # s = data.index.freq
+            # self.model = SARIMAX(data, seasonal_order=(0, 1, 0, s), trend='n')
+            # self.fitted_model = self.model.fit()
+            raise NotImplementedError()
+
+        if self.strategy == 'linear':
+            self.model = SARIMAX(data, order=(0, 0, 0), trend='t')
+            self.fitted_model = self.model.fit()
+
+        return self
+
+    def _update(self, data):
+        # TODO
+        raise NotImplementedError()
+
+
 class ForecastingEnsemble(BaseForecaster):
     """Ensemble of forecasters.
 
@@ -121,15 +160,12 @@ class ForecastingEnsemble(BaseForecaster):
     estimators : list of (str, estimator) tuples
         List of (name, estimator) tuples.
     weights :
-    estimator_params
-    estimator_fit_params
-    check_input
+    check_input :
     """
 
     def __init__(self, estimators=None, weights=None, check_input=True):
         self.estimators = estimators
         self.weights = weights
-        self.estimators_ = []
         self.fitted_estimators_ = []
         super(ForecastingEnsemble, self).__init__(check_input=check_input)
 
@@ -143,7 +179,7 @@ class ForecastingEnsemble(BaseForecaster):
         self._target_idx = target.index if hasattr(target, 'index') else pd.RangeIndex(len(target))
 
         # Fit models
-        for _, estimator in self.estimators_:
+        for _, estimator in self.estimators:
             fitted_estimator = estimator.fit(self.task, data)
             self.fitted_estimators_.append(fitted_estimator)
 
@@ -157,28 +193,22 @@ class ForecastingEnsemble(BaseForecaster):
         pred_horizon = self.task.pred_horizon
         pred_horizon_idx = pred_horizon - np.min(pred_horizon)
 
-        # Predict fitted model with start and end points relative to start of train series
-        pred_horizon = pred_horizon + len(self._target_idx) - 1
-        start = pred_horizon[0]
-        end = pred_horizon[-1]
-
         # Iterate over estimators
-        n_estimators = len(self.estimators_)
-        len_pred_horizon = len(pred_horizon)
-        preds = np.zeros((n_estimators, len_pred_horizon))
+        preds = np.zeros((len(self.fitted_estimators_), len(pred_horizon)))
         indexes = []
         for i, estimator in enumerate(self.fitted_estimators_):
-            pred = estimator.predict(start=start, end=end)[pred_horizon_idx]
+            pred = estimator.predict()[pred_horizon_idx]
             preds[i, :] = pred.values
             indexes.append(pred.index)
+
+        # Check predicted horizons
+        if not all(index.equals(indexes[0]) for index in indexes):
+            raise ValueError('Predicted horizons from estimators do not match')
 
         # Average predictions
         avg_preds = np.average(preds, axis=0, weights=self.weights)
 
-        # Get index
-        if not all(index == indexes[0] for index in indexes):
-            raise ValueError()
-
         # Return average predictions with index
-        return pd.Series(avg_preds, index=indexes[0], name=self.task.target)
+        index = indexes[0]
+        return pd.Series(avg_preds, index=index, name=self.task.target)
 
