@@ -1,60 +1,62 @@
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
 from ..utils.transformations import tabularize, concat_nested_arrays
+from ..utils.time_series import rand_intervals_rand_n, rand_intervals_fixed_n
 from .base import BaseTransformer
-from sklearn.preprocessing import FunctionTransformer
 
-__all__ = ['RandomIntervalSegmenter', 'DerivativeSlopeTransformer']
+__all__ = ['RandomIntervalSegmenter']
 
 
 class RandomIntervalSegmenter(BaseTransformer):
-    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
-    intervals may overlap and may be duplicates.
+    """Transformer that segments time-series into random intervals.
 
     Parameters
     ----------
-    n_intervals : str, int or float
+
+    param n_intervals: str or int
         Number of intervals to generate.
-        - If "sqrt", sqrt of m is used where m is length of time series.
+        - If "sqrt", sqrt of length of time-series is used.
         - If "random", random number of intervals is generated.
         - If int, n_intervals intervals are generated.
-        - If float, n_intervals * m is used with n_intervals giving the fraction of intervals of the time series length.
         Default is "sqrt".
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    param random_state: : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    check_input : bool, optional (default=True)
+    param check_input: bool, optional (default=True)
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
 
     def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
 
+
         self.input_indexes_ = []  # list of time-series indexes of each column
+        self.random_state = random_state
         self.check_input = check_input
         self.intervals_ = []
         self.input_shape_ = ()
-        self.columns_ = []
-        self.min_length = 1 if min_length is None else min_length
         self.n_intervals = n_intervals
-        self.random_state = random_state
+        self.columns_ = []
+        if min_length is None:
+            self.min_length = 1
+        else:
+            self.min_length = min_length
 
-    @property
-    def random_state(self):
-        return self._random_state
-
-    @random_state.setter
-    def random_state(self, random_state):
-        """Set random state and update rng"""
-        self._random_state = random_state
-        self._rng = check_random_state(random_state)
+        if n_intervals in ('sqrt', 'random'):
+            self.n_intervals = n_intervals
+        elif np.issubdtype(type(n_intervals), np.integer):
+            if n_intervals <= 0:
+                raise ValueError('Number of intervals must be positive')
+            self.n_intervals = n_intervals
+        else:
+            raise ValueError(f'Number of intervals must be either "random", "sqrt" or positive integer, '
+                             f'but found {type(n_intervals)}')
 
     def fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
@@ -75,6 +77,10 @@ class RandomIntervalSegmenter(BaseTransformer):
             # TODO check input is series column, not column of primitives
             pass
 
+        # Cast into 2d dataframe
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
+
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
@@ -84,12 +90,16 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
-        #  or rely on ColumnTransformer?
+        #  or use ColumnTransformer?
         if self.n_intervals == 'random':
-            self.intervals_ = [self._rand_intervals_rand_n(self.input_indexes_[c])
+            self.intervals_ = [rand_intervals_rand_n(self.input_indexes_[c],
+                                                     random_state=self.random_state)
                                for c in range(self.input_shape_[1])]
         else:
-            self.intervals_ = [self._rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals)
+            self.intervals_ = [rand_intervals_fixed_n(self.input_indexes_[c],
+                                                      n=self.n_intervals,
+                                                      min_length=self.min_length,
+                                                      random_state=self.random_state)
                                for c in range(self.input_shape_[1])]
         return self
 
@@ -110,6 +120,10 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
+
+        # Cast into 2d dataframe
+        if X.ndim == 1:
+            X = pd.DataFrame(X)
 
         # Check inputs.
         if self.check_input:
@@ -135,105 +149,7 @@ class RandomIntervalSegmenter(BaseTransformer):
                 intervals.append(interval)
                 self.columns_.append(f'{colname}_{start}_{end}')
 
-        # Return nested pandas DataFrame.
+        # Return nested pandas Series or DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
         Xt.columns = self.columns_
         return Xt
-
-    def _rand_intervals_rand_n(self, x):
-        """Compute a random number of intervals from index (x) with
-        random starting points and lengths. Intervals are unique, but may overlap.
-
-        Parameters
-        ----------
-        x : array_like, shape = [n_observations]
-        random_state : int, RandomState instance or None, optional (default=None)
-
-        Returns
-        -------
-        intervals : array-like, shape = [n, 2]
-            2d array containing start and end points of intervals
-
-        References
-        ----------
-        [1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
-        Information Sciences 239 (2013): 142-153.
-        """
-
-        starts = []
-        ends = []
-        m = x.shape[0]  # series length
-        W = self._rng.randint(1, m, size=int(np.sqrt(m)))
-        for w in W:
-            size = m - w + 1
-            start = self._rng.randint(size, size=int(np.sqrt(size)))
-            starts.extend(start)
-            for s in start:
-                end = s + w
-                ends.append(end)
-        return np.column_stack([starts, ends])
-
-    def _rand_intervals_fixed_n(self, x, n):
-        """Compute a fixed number (n) of intervals from index (x) with
-        random starting points and lengths. Intervals may overlap and may not be unique.
-
-        Parameters
-        ----------
-        x : array_like, shape = [n_observations]
-            Array containing the time-series index.
-        n : 'sqrt', 'log', float or int
-        random_state : int, RandomState instance or None, optional (default=None)
-
-        Returns
-        -------
-        intervals : array-like, shape = [n, 2]
-            2d array containing start and end points of intervals
-        """
-
-        m = len(x)
-        # compute number of random intervals relative to series length (m)
-        if np.issubdtype(type(n), np.integer) and (n >= 1):
-            pass
-        elif n == 'sqrt':
-            n = int(np.sqrt(m))
-        elif n == 'log':
-            n = int(np.log(m))
-        elif np.issubdtype(type(n), np.floating) and (n > 0) and (n <= 1):
-            n = int(m * n)
-        else:
-            raise ValueError(f'Number of intervals must be either "random", "sqrt", a positive integer, or a float '
-                             f'value between 0 and 1, but found {n}.')
-
-        # make sure there is at least one interval
-        n = np.maximum(1, n)
-
-        starts = self._rng.randint(m - self.min_length + 1, size=n)
-        if n == 1:
-            starts = [starts]  # make it an iterable
-
-        ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
-        return np.column_stack([starts, ends])
-
-      
-class DerivativeSlopeTransformer(BaseTransformer):
-
-    def transform(self, X, y=None):
-        num_cases, num_dim = X.shape
-        output_df = pd.DataFrame()
-        for dim in range(num_dim):
-            dim_data = X.iloc[:,dim]
-            out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
-            output_df['der_dim_'+str(dim)] = pd.Series(out)
-
-        return output_df
-
-    @staticmethod
-    def row_wise_get_der(X):
-
-        def get_der(x):
-            der = []
-            for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
-            return pd.Series([der[0]] + der + [der[-1]])
-
-        return [get_der(x) for x in X]

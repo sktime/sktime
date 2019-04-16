@@ -25,10 +25,7 @@ class Task:
         The column header for the target variable to be predicted.
         If omitted, every column apart from target would be a feature.
     """
-    def __init__(self, case=None, data=None, target=None, features=None):
-        # check if all necessary keyword arguments are present
-        if not(case and data and target):
-            raise ValueError("All three kerword arguments case, data and target should be supplied")
+    def __init__(self, case, data, target, features=None):
         self._case = case
         self._target = target
         # by default every column apart from target is a feature
