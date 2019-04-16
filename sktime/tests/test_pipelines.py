@@ -11,7 +11,6 @@ from sktime.transformers.compose import Tabulariser
 from sktime.pipeline import TSFeatureUnion
 from sklearn.tree import DecisionTreeClassifier
 from sktime.transformers.series_to_series import RandomIntervalSegmenter
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 
 # load data
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
@@ -35,7 +34,7 @@ def test_TSColumnTransformer_pipeline():
     steps = [
         ('feature_extract', column_transformer),
         ('tabularise', Tabulariser()),
-        ('rfestimator', RandomForestClassifier(n_estimators=3))]
+        ('rfestimator', RandomForestClassifier(n_estimators=2))]
     model = TSPipeline(steps=steps)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -50,7 +49,7 @@ def test_RowwiseTransformer_pipeline():
     column_transformer = ColumnTransformer(
         [('mean', FunctionTransformer(func=mean_func, validate=False), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
-    estimator = RandomForestClassifier(random_state=1)
+    estimator = RandomForestClassifier(n_estimators=2, random_state=1)
     strategy = [
         ('feature_extract', column_transformer),
         ('rfestimator', estimator)]
@@ -63,7 +62,7 @@ def test_RowwiseTransformer_pipeline():
     column_transformer = TSColumnTransformer(
         [('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
-    estimator = RandomForestClassifier(random_state=1)
+    estimator = RandomForestClassifier(n_estimators=2, random_state=1)
     strategy = [
         ('feature_extract', column_transformer),
         ('rfestimator', estimator)]

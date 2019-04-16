@@ -25,7 +25,7 @@ def test_output_format_dim():
 
                     # Check number of generated intervals/columns.
                     if n_intervals != 'random':
-                        if np.issubdtype(type(n_intervals), np.float):
+                        if np.issubdtype(type(n_intervals), np.floating):
                             assert Xt.shape[1] == np.maximum(1, int(n_obs * n_intervals)) * n_cols
                         elif np.issubdtype(type(n_intervals), np.integer):
                             assert Xt.shape[1] == n_intervals * n_cols
