@@ -1,22 +1,19 @@
 """
-A Helper interface for high level operations
-
-Implements the Task and Strategy classes for
-high level operations
+Unified high-level interface for various time series related learning tasks.
 """
 import pandas as pd
+import numpy as np
 from sklearn.base import BaseEstimator
 
+__all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy', 'TSRStrategy']
 
-class Task:
+
+class BaseTask:
     """An object that encapsulates meta-data and instructions on how to derive the target/label for the time-series
     prediction/supervised learning task.
 
     Parameters
     ----------
-    case : string
-        The string value could be either "TSC" for time series
-        classification of "TSR" for time series regression.
     data : pd.DataFrame
         Contains the data that the task is expected to work with.
     target : string
@@ -25,61 +22,102 @@ class Task:
         The column header for the target variable to be predicted.
         If omitted, every column apart from target would be a feature.
     """
-    def __init__(self, case=None, data=None, target=None, features=None):
-        # check if all necessary keyword arguments are present
-        if not(case and data and target):
-            raise ValueError("All three kerword arguments case, data and target should be supplied")
-        self._case = case
+    def __init__(self, target, features=None, data=None):
+
+        # TODO input checks
         self._target = target
-        # by default every column apart from target is a feature
-        if features is None:
-            self._features = data.columns.drop(self._target)
-        else:
-            # set the user-supplied feature list as read-only
-            self._features = pd.Index(features)
+        self._features = features if features is None else pd.Index(features)
+        self._data = None
 
-        # glean metadata from the dataset
-        self._meta = {"nrow": data.shape[0],
-                      "ncol": data.shape[1],
-                      "target_type": {target: type(i)
-                                      for i in data[self._target]},
-                      "feature_type": {col: {type(i) for i in data[col]}
-                                       for col in self._features}}
-
-    @property
-    def case(self):
-        """
-        exposes the private variable _case as read only
-        """
-        return self._case
+        if data is not None:
+            self.set_metadata(data)
 
     @property
     def target(self):
-        """
-        exposes the private variable _target in a controlled way
+        """Expose the private variable _target in a controlled way
         """
         return self._target
 
     @property
     def features(self):
-        """
-        exposes the private variable _features in a controlled way
+        """Expose the private variable _features in a controlled way
         """
         return self._features
 
     def __getitem__(self, key):
+        """Provide read only access via keys to the data of the task
         """
-        provided read only access via keys
-        to the private _meta data of the task
-        """
-        if key not in self._meta.keys():
-            raise KeyError
-        return self._meta[key]
+        if key not in self._data.keys():
+            raise KeyError()
+        return self._data[key]
+
+    def set_metadata(self, data):
+
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
+
+        if self._data is None:
+            if self.features is None:
+                self._features = data.columns.drop(self.target)
+            else:
+                if not np.all(self.features.isin(data.columns)):
+                    raise ValueError(f'Features {self.features} cannot be found in data')
+
+            self._data = {
+                "nrow": data.shape[0],
+                "ncol": data.shape[1],
+                "target_type": {self.target: type(i) for i in data[self.target]},
+                "feature_type": {col: {type(i) for i in data[col]} for col in self.features}
+            }
+
+        else:
+            raise ValueError('Data already set and can only be set once')
 
 
-class BaseStrategy:
+class TSCTask(BaseTask):
+    """Time series classification task.
+
+    Parameters
+    ----------
+    data : pandas DataFrame
+        Meta-data
+    target : str
+        Name of target variable.
+    features : list
+        Name of feature variables.
     """
-    A meta-estimator that employs a low level estimator to
+    def __init__(self, target, features=None, data=None):
+        self._case = 'TSC'
+        super(TSCTask, self).__init__(target, features=features, data=data)
+
+
+class ForecastingTask(BaseTask):
+    """Forecasting task.
+
+    Parameters
+    ----------
+    data : pandas DataFrame
+        Meta-data
+    target : str
+        Name of target variable.
+    pred_horizon : list
+        List of steps ahead to predict.
+    features : list
+        List of feature variables.
+    """
+    def __init__(self, target, pred_horizon, features=None, data=None):
+        self._pred_horizon = np.sort(pred_horizon)
+        super(ForecastingTask, self).__init__(target, features=features, data=data)
+
+    @property
+    def pred_horizon(self):
+        """Exposes the private variable _pred_horizon in a controlled way
+        """
+        return self._pred_horizon
+
+
+class _BaseStrategy:
+    """A meta-estimator that employs a low level estimator to
     perform a pescribed task
 
     Parameters
@@ -97,14 +135,12 @@ class BaseStrategy:
 
     @property
     def case(self):
-        """
-        exposes the private variable _case as read only
+        """Expose the private variable _case as read only
         """
         return self._case
 
     def __getitem__(self, key):
-        """
-        provided read only access via keys
+        """Provide read only access via keys
         to the private _meta data
         """
         if key not in self._meta.keys():
@@ -112,7 +148,7 @@ class BaseStrategy:
         return self._meta[key]
 
     def fit(self, task, data):
-        """ Fit the estimator as per task details
+        """Fit the estimator according to task details
 
         Parameters
         ----------
@@ -166,28 +202,26 @@ class BaseStrategy:
         return predictions
 
     def get_params(self, deep=True):
-        """calls get_params of the estimator
+        """call get_params of the estimator
         """
         return self._estimator.get_params(deep=deep)
 
     def set_params(self, **params):
-        """calls set_params of the estimator
+        """Call set_params of the estimator
         """
         self._estimator.set_params(**params)
 
 
-class TSCStrategy(BaseStrategy):
-    """
-    Strategies for Time Series Classification
+class TSCStrategy(_BaseStrategy):
+    """Strategies for Time Series Classification
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSC"
 
 
-class TSRStrategy(BaseStrategy):
-    """
-    Strategies for Time Series Regression
+class TSRStrategy(_BaseStrategy):
+    """Strategies for Time Series Regression
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
