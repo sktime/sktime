@@ -1,5 +1,5 @@
-from .base import BaseForecaster
-from .base import ClassicalForecaster
+from ..highlevel import _BaseForecastingStrategy
+from ..highlevel import _ClassicalSingleSeriesForecastingStrategy
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 __all__ = ["ARIMAForecaster", "ExponentialSmoothingForecaster", "ForecastingEnsemble"]
 
 
-class ARIMAForecaster(ClassicalForecaster):
+class ARIMAForecaster(_ClassicalSingleSeriesForecastingStrategy):
     def __init__(self, order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
                  maxiter=1000):
         self._check_order(order, 3)
@@ -24,13 +24,14 @@ class ARIMAForecaster(ClassicalForecaster):
         self.maxiter = maxiter
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, data):
+    def _fit_estimator(self, data):
         self.model = SARIMAX(data,
                              order=self.order,
                              trend=self.trend,
                              enforce_stationarity=self.enforce_stationarity,
                              enforce_invertibility=self.enforce_invertibility)
-        self.fitted_model = self.model.fit(maxiter=self.maxiter)
+        self._fitted_model = self.model.fit(maxiter=self.maxiter)
+        return self
 
     def _update(self, data):
         # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788
@@ -41,11 +42,11 @@ class ARIMAForecaster(ClassicalForecaster):
                         trend=self.trend,
                         enforce_stationarity=self.enforce_stationarity,
                         enforce_invertibility=self.enforce_invertibility)
-        model.initialize_known(self.fitted_model.predicted_state[:, -2],
-                               self.fitted_model.predicted_state_cov[:, :, -2])
+        model.initialize_known(self._fitted_model.predicted_state[:, -2],
+                               self._fitted_model.predicted_state_cov[:, :, -2])
 
         # Filter given fitted parameters.
-        self.updated_model = model.smooth(self.fitted_model.params)
+        self._updated_model = model.smooth(self._fitted_model.params)
         self._is_updated = True
 
     @staticmethod
@@ -56,7 +57,7 @@ class ARIMAForecaster(ClassicalForecaster):
             raise ValueError(f'All values in order must be integers')
 
 
-class ExponentialSmoothingForecaster(ClassicalForecaster):
+class ExponentialSmoothingForecaster(_ClassicalSingleSeriesForecastingStrategy):
     """Holt-Winters exponential smoothing forecaster. Default setting use simple exponential smoothing
     without trend and seasonality components.
 
@@ -98,10 +99,10 @@ class ExponentialSmoothingForecaster(ClassicalForecaster):
         self.use_basinhopping = use_basinhopping
         super(ExponentialSmoothingForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, data):
+    def _fit_estimator(self, data):
         self.model = ExponentialSmoothing(data, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
                                           seasonal_periods=self.seasonal_periods)
-        self.fitted_model = self.model.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
+        self._fitted_model = self.model.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
                                            smoothing_slope=self.smoothing_slope,
                                            smoothing_seasonal=self.smooting_seasonal, damping_slope=self.damping_slope,
                                            use_boxcox=self.use_boxcox, remove_bias=self.remove_bias,
@@ -113,7 +114,7 @@ class ExponentialSmoothingForecaster(ClassicalForecaster):
         raise NotImplementedError()
 
 
-class DummyForecaster(ClassicalForecaster):
+class DummyForecaster(_ClassicalSingleSeriesForecastingStrategy):
     def __init__(self, strategy='mean', check_input=True):
 
         allowed_strategies = ('mean', 'last', 'seasonal_last', 'linear')
@@ -123,28 +124,24 @@ class DummyForecaster(ClassicalForecaster):
         self.strategy = strategy
         super(DummyForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, data):
+    def _fit_estimator(self, data):
         if self.strategy == 'mean':
             self.model = ExponentialSmoothing(data)
-            self.fitted_model = self.model.fit(smoothing_level=0)
-
+            self._fitted_model = self.model.fit(smoothing_level=0)
         if self.strategy == 'last':
             self.model = ExponentialSmoothing(data)
-            self.fitted_model = self.model.fit(smoothing_level=1)
-
+            self._fitted_model = self.model.fit(smoothing_level=1)
         if self.strategy == 'seasonal_last':
             # TODO how to pass seasonal frequency for ARIMA model
             # if not hasattr(data, 'index'):
             #     raise ValueError('Cannot determine seasonal frequency from index of passed data')
             # s = data.index.freq
             # self.model = SARIMAX(data, seasonal_order=(0, 1, 0, s), trend='n')
-            # self.fitted_model = self.model.fit()
+            # self._fitted_model = self.model.fit()
             raise NotImplementedError()
-
         if self.strategy == 'linear':
             self.model = SARIMAX(data, order=(0, 0, 0), trend='t')
-            self.fitted_model = self.model.fit()
-
+            self._fitted_model = self.model.fit()
         return self
 
     def _update(self, data):
@@ -152,7 +149,7 @@ class DummyForecaster(ClassicalForecaster):
         raise NotImplementedError()
 
 
-class ForecastingEnsemble(BaseForecaster):
+class ForecastingEnsemble(_BaseForecastingStrategy):
     """Ensemble of forecasters.
 
     Parameters
@@ -169,28 +166,18 @@ class ForecastingEnsemble(BaseForecaster):
         self.fitted_estimators_ = []
         super(ForecastingEnsemble, self).__init__(check_input=check_input)
 
-    def fit(self, task, data):
-        if self.check_input:
-            self._check_fit_data(data)
-            self._check_task(task)
-        self.task = task
-
-        target = data[self.task.target].iloc[0]
-        self._target_idx = target.index if hasattr(target, 'index') else pd.RangeIndex(len(target))
-
+    def _fit_strategy(self, data):
         # Fit models
         for _, estimator in self.estimators:
-            fitted_estimator = estimator.fit(self.task, data)
+            fitted_estimator = estimator.fit(self._task, data)
             self.fitted_estimators_.append(fitted_estimator)
-
-        self._is_fitted = True
         return self
 
-    def update(self, data):
+    def _update(self, data):
         raise NotImplementedError()
 
     def _predict(self):
-        pred_horizon = self.task.pred_horizon
+        pred_horizon = self._task.pred_horizon
         pred_horizon_idx = pred_horizon - np.min(pred_horizon)
 
         # Iterate over estimators
@@ -210,5 +197,4 @@ class ForecastingEnsemble(BaseForecaster):
 
         # Return average predictions with index
         index = indexes[0]
-        return pd.Series(avg_preds, index=index, name=self.task.target)
-
+        return pd.Series(avg_preds, index=index, name=self._task.target)
