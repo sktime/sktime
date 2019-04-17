@@ -4,6 +4,7 @@ Unified high-level interface for various time series related learning tasks.
 import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
+from sklearn.base import _pprint
 
 __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy', 'TSRStrategy']
 
@@ -14,23 +15,24 @@ class BaseTask:
 
     Parameters
     ----------
-    data : pd.DataFrame
-        Contains the data that the task is expected to work with.
+    metadata : pd.DataFrame
+        Contains the metadata that the task is expected to work with.
     target : string
         The column header for the target variable to be predicted.
     features : list of string
         The column header for the target variable to be predicted.
         If omitted, every column apart from target would be a feature.
     """
-    def __init__(self, target, features=None, data=None):
+    def __init__(self, target, features=None, metadata=None):
 
         # TODO input checks
+        # TODO use metadata object from extended data container
         self._target = target
         self._features = features if features is None else pd.Index(features)
-        self._data = None
+        self._metadata = None
 
-        if data is not None:
-            self.set_metadata(data)
+        if metadata is not None:
+            self.set_metadata(metadata)
 
     @property
     def target(self):
@@ -45,33 +47,38 @@ class BaseTask:
         return self._features
 
     def __getitem__(self, key):
-        """Provide read only access via keys to the data of the task
+        """Provide read only access via keys to the metadata of the task
         """
-        if key not in self._data.keys():
+        if key not in self._metadata.keys():
             raise KeyError()
-        return self._data[key]
+        return self._metadata[key]
 
-    def set_metadata(self, data):
+    def set_metadata(self, metadata):
 
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
+        if not isinstance(metadata, pd.DataFrame):
+            # TODO replace whole pandas datacontainer with separated metadata container
+            raise ValueError(f'Data must be pandas dataframe, but found {type(metadata)}')
 
-        if self._data is None:
+        # if metadata is not already set
+        if self._metadata is None:
+            # update features if not already set
             if self.features is None:
-                self._features = data.columns.drop(self.target)
+                self._features = metadata.columns.drop(self.target)
+            # otherwise check against metadata columns
             else:
-                if not np.all(self.features.isin(data.columns)):
-                    raise ValueError(f'Features {self.features} cannot be found in data')
+                if not np.all(self.features.isin(metadata.columns)):
+                    raise ValueError(f'Features: {self.features} cannot be found in metadata')
 
-            self._data = {
-                "nrow": data.shape[0],
-                "ncol": data.shape[1],
-                "target_type": {self.target: type(i) for i in data[self.target]},
-                "feature_type": {col: {type(i) for i in data[col]} for col in self.features}
+            self._metadata = {
+                "nrow": metadata.shape[0],
+                "ncol": metadata.shape[1],
+                "target_type": {self.target: type(i) for i in metadata[self.target]},
+                "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
             }
 
+        # if metadata is already set, raise error
         else:
-            raise ValueError('Data already set and can only be set once')
+            raise AttributeError('Metadata is already set and can only be set once')
 
 
 class TSCTask(BaseTask):
@@ -79,16 +86,16 @@ class TSCTask(BaseTask):
 
     Parameters
     ----------
-    data : pandas DataFrame
+    metadata : pandas DataFrame
         Meta-data
     target : str
         Name of target variable.
     features : list
         Name of feature variables.
     """
-    def __init__(self, target, features=None, data=None):
+    def __init__(self, target, features=None, metadata=None):
         self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features, data=data)
+        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
 
 
 class ForecastingTask(BaseTask):
@@ -96,8 +103,8 @@ class ForecastingTask(BaseTask):
 
     Parameters
     ----------
-    data : pandas DataFrame
-        Meta-data
+    metadata : pandas DataFrame
+        Meta-metadata
     target : str
         Name of target variable.
     pred_horizon : list
@@ -105,9 +112,10 @@ class ForecastingTask(BaseTask):
     features : list
         List of feature variables.
     """
-    def __init__(self, target, pred_horizon, features=None, data=None):
+    def __init__(self, target, pred_horizon, features=None, metadata=None):
+        self._case = 'forecasting'
         self._pred_horizon = np.sort(pred_horizon)
-        super(ForecastingTask, self).__init__(target, features=features, data=data)
+        super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property
     def pred_horizon(self):
@@ -116,7 +124,7 @@ class ForecastingTask(BaseTask):
         return self._pred_horizon
 
 
-class _BaseStrategy:
+class BaseStrategy:
     """A meta-estimator that employs a low level estimator to
     perform a pescribed task
 
@@ -131,7 +139,7 @@ class _BaseStrategy:
         self._estimator = estimator
         self._case = None
         self._task = None
-        self._meta = {"tags": None}
+        # self._traits = {"tags": None}  # traits for matching strategies with tasks
 
     @property
     def case(self):
@@ -141,11 +149,11 @@ class _BaseStrategy:
 
     def __getitem__(self, key):
         """Provide read only access via keys
-        to the private _meta data
+        to the private traits
         """
-        if key not in self._meta.keys():
+        if key not in self._traits.keys():
             raise KeyError
-        return self._meta[key]
+        return self._traits[key]
 
     def fit(self, task, data):
         """Fit the estimator according to task details
@@ -163,20 +171,25 @@ class _BaseStrategy:
             returns the predictions
         """
         # check task compatibility with Strategy
-        if self._case != task.case:
-            raise ValueError("Hash mismatch: the supplied data is\
-                             incompatible with the task")
-        # link task
+        # TODO replace by task-strategy compatibility lookup registry
+        if self._case != task._case:
+            raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
+
+        # update task if necessary
+        if task.features is None:
+            task.set_metadata(data)
         self._task = task
+
         # fit the estimator
         try:
             X = data[self._task.features]
             y = data[self._task.target]
         except KeyError:
-            raise ValueError("task <-> data mismatch. The necessary target/features\
-                              are not available in the supplied data")
+            raise ValueError("Task <-> data mismatch. The target/features are not in the data")
+
         # fit the estimator
         self._estimator.fit(X, y)
+        return self
 
     def predict(self, data):
         """Predict the targets for the test data
@@ -211,8 +224,14 @@ class _BaseStrategy:
         """
         self._estimator.set_params(**params)
 
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        estimator_name = self._estimator.__class__.__name__
+        return '%s(%s(%s))' % (class_name, estimator_name,
+                               _pprint(self.get_params(deep=False), offset=len(class_name), ),)
 
-class TSCStrategy(_BaseStrategy):
+
+class TSCStrategy(BaseStrategy):
     """Strategies for Time Series Classification
     """
     def __init__(self, *args, **kwargs):
@@ -220,7 +239,7 @@ class TSCStrategy(_BaseStrategy):
         self._case = "TSC"
 
 
-class TSRStrategy(_BaseStrategy):
+class TSRStrategy(BaseStrategy):
     """Strategies for Time Series Regression
     """
     def __init__(self, *args, **kwargs):
