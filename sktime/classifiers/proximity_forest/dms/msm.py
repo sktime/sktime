@@ -2,7 +2,7 @@ from classifiers.proximity_forest.dms.distance_measure import DistanceMeasure
 from classifiers.proximity_forest.dms.dtw import Dtw
 
 from datasets import load_gunpoint
-from distance_measures.elastic import msm_distance
+from distances.elastic_cython import msm_distance
 
 
 class Msm(Dtw):
@@ -11,15 +11,15 @@ class Msm(Dtw):
     default_cost = 1
 
     def __init__(self, **params):
-        self._cost = -1
+        self._cost = None
         super(Msm, self).__init__(**params)
 
-    def find_distance(self, time_series_a, time_series_b, cut_off):
-        return msm_distance(time_series_a, time_series_b, **self.get_params())
+    def find_distance(self, a, b, cut_off):
+        return msm_distance(a, b, **self.get_params())
 
     def set_params(self, **params):
         super(Msm, self).set_params(**params)
-        self._cost = params.get(self.cost_key, self.default_cost) # todo warn?
+        super(Msm, self)._set_param(self.cost_key, self.default_cost, params)
 
     def get_params(self):
         return {self.cost_key: self._cost, **super(Msm, self).get_params()}

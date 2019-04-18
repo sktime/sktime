@@ -16,10 +16,8 @@ from classifiers.proximity_forest.dms.wddtw import Wddtw
 from classifiers.proximity_forest.dms.wdtw import Wdtw
 from classifiers.proximity_forest.parameterised import Parameterised
 from classifiers.proximity_forest.randomised import Randomised
-from classifiers.proximity_forest.splitter import Splitter
 from classifiers.proximity_forest.utilities import Utilities
 from datasets import load_gunpoint
-from distance_measures.elastic import dtw_distance, lcss_distance, erp_distance, msm_distance
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 import numpy as np
@@ -149,11 +147,6 @@ class ProximityForest(Randomised, BaseEstimator, ClassifierMixin):
         self._distance_measure_pool = None  # distance measure pool of distance measures and their associated parameter pool
         super(ProximityForest, self).__init__(**params)
 
-
-
-    def _build_tree(self, instances):
-        abc
-
     def fit(self, X, y, **kwargs):
 
         for key, distance_measure in self._distance_measure_pool.items():
@@ -163,7 +156,7 @@ class ProximityForest(Randomised, BaseEstimator, ClassifierMixin):
 
         self._trees = []
         while len(self._trees) < self._num_trees:
-            self._trees.append(self._build_tree())
+            self._trees.append(self._build_tree(X))
 
         print(self._distance_measure_pool)
 
