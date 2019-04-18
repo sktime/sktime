@@ -3,16 +3,15 @@ from classifiers.proximity_forest.dms.dtw import Dtw
 from classifiers.proximity_forest.dms.wdtw import Wdtw
 
 from datasets import load_gunpoint
-from distances.elastic_cython import wddtw_distance
-
 
 class Wddtw(Wdtw):
 
     def __init__(self, **params):
         super(Wddtw, self).__init__(**params)
 
-    def find_distance(self, a, b, cut_off):
-        return wddtw_distance(a, b, **self.get_params())
+    def find_distance(self, time_series_a, time_series_b, cut_off):
+        raise Exception('wWddtw not implemented yet')
+        # return wddtw_distance(time_series_a, time_series_b, **self.get_params())
 
     def set_params(self, **params):
         super(Wddtw, self).set_params(**params)

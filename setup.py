@@ -39,7 +39,7 @@ URL = 'https://github.com/kiraly-group/sktime'
 LICENSE = 'undecided'
 DOWNLOAD_URL = 'https://github.com/kiraly-group/sktime'
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas'] # todo add cython?
+INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -86,5 +86,3 @@ setup(name=DISTNAME,
           ["sktime/distances/elastic_cython.pyx"],
           annotate=True),
       include_dirs=[numpy.get_include()])
-
-#todo add: python setup.py build_ext --inplace ? to build cython modules

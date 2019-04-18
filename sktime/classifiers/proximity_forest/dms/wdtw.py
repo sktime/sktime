@@ -2,7 +2,7 @@ from classifiers.proximity_forest.dms.distance_measure import DistanceMeasure
 from classifiers.proximity_forest.dms.dtw import Dtw
 
 from datasets import load_gunpoint
-from distances.elastic_cython import wdtw_distance
+from distance_measures.elastic import lcss_distance
 
 
 class Wdtw(Dtw):
@@ -11,15 +11,16 @@ class Wdtw(Dtw):
     default_g = 0.01
 
     def __init__(self, **params):
-        self._g = None
+        self._g = -1
         super(Wdtw, self).__init__(**params)
 
-    def find_distance(self, a, b, cut_off):
-        return wdtw_distance(a, b, **self.get_params())
+    def find_distance(self, time_series_a, time_series_b, cut_off):
+        raise Exception('not implemented')
+        # return wdtw_distance(time_series_a, time_series_b, **self.get_params())
 
     def set_params(self, **params):
         super(Wdtw, self).set_params(**params)
-        super(Wdtw, self)._set_param(self.g_key, self.default_g, params)
+        self._g = params.get(self.g_key, self.default_g) # todo warn?
 
     def get_params(self):
         return {self.g_key: self._g, **super(Wdtw, self).get_params()}

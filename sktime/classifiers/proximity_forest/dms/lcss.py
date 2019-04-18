@@ -2,7 +2,7 @@ from classifiers.proximity_forest.dms.distance_measure import DistanceMeasure
 from classifiers.proximity_forest.dms.dtw import Dtw
 
 from datasets import load_gunpoint
-from distances.elastic_cython import lcss_distance
+from distance_measures.elastic import lcss_distance
 
 
 class Lcss(Dtw):
@@ -11,15 +11,15 @@ class Lcss(Dtw):
     default_epsilon = 0.01
 
     def __init__(self, **params):
-        self._epsilon = None
+        self._epsilon = -1
         super(Lcss, self).__init__(**params)
 
-    def distance(self, a, b, cut_off):
-        return lcss_distance(a, b, **self.get_params())
+    def find_distance(self, time_series_a, time_series_b, cut_off):
+        return lcss_distance(time_series_a, time_series_b, **self.get_params())
 
     def set_params(self, **params):
         super(Lcss, self).set_params(**params)
-        super(Lcss, self)._set_param(self.epsilon_key, self.default_epsilon, params)
+        self._epsilon = params.get(self.epsilon_key, self.default_epsilon) # todo warn?
 
     def get_params(self):
         return {self.epsilon_key: self._epsilon, **super(Lcss, self).get_params()}
