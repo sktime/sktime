@@ -5,56 +5,29 @@ import pandas as pd
 from ..utils.validation import check_equal_index
 from ..utils.transformations import tabularize, concat_nested_arrays
 from .base import BaseTransformer
-from sklearn.preprocessing import FunctionTransformer
-
-__all__ = ['RandomIntervalSegmenter', 'DerivativeSlopeTransformer']
 
 
-class RandomIntervalSegmenter(BaseTransformer):
-    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
-    intervals may overlap and may be duplicates.
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
+
+
+class IntervalSegmenter(BaseTransformer):
+    """Interval segmentation transformer
 
     Parameters
     ----------
-    n_intervals : str, int or float
-        Number of intervals to generate.
-        - If "sqrt", sqrt of m is used where m is length of time series.
-        - If "random", random number of intervals is generated.
-        - If int, n_intervals intervals are generated.
-        - If float, n_intervals * m is used with n_intervals giving the fraction of intervals of the time series length.
-        Default is "sqrt".
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    check_input : bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
+    intervals : int, np.ndarray or list of np.ndarrays with one for each column of input data.
+        Intervals to generate.
+        - If int, intervals are generated.
+        - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving intervals, the first column giving start points,
+        and the second column giving end points of intervals
+        - If list of np.ndarrays, there is one array for each column.
     """
 
-    def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
-
-        self.input_indexes_ = []  # list of time-series indexes of each column
+    def __init__(self, intervals=None, check_input=True):
+        self.intervals = intervals
         self.check_input = check_input
-        self.intervals_ = []
+        self.input_indexes_ = []  # list of time-series indexes of each column
         self.input_shape_ = ()
-        self.columns_ = []
-        self.min_length = 1 if min_length is None else min_length
-        self.n_intervals = n_intervals
-        self.random_state = random_state
-
-    @property
-    def random_state(self):
-        return self._random_state
-
-    @random_state.setter
-    def random_state(self, random_state):
-        """Set random state and update rng"""
-        self._random_state = random_state
-        self._rng = check_random_state(random_state)
 
     def fit(self, X, y=None):
         """Fit transformer, generating random interval indices.
@@ -68,12 +41,13 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         Returns
         -------
-        self : RandomIntervalSegmenter
+        self : IntervalSegmenter
             This estimator
         """
+
         if self.check_input:
-            # TODO check input is series column, not column of primitives
             pass
+            # TODO check input is series column, not column of primitives
 
         self.input_shape_ = X.shape
 
@@ -82,15 +56,20 @@ class RandomIntervalSegmenter(BaseTransformer):
         self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
                                else np.arange(X.iloc[0, c].shape[0]) for c in range(self.input_shape_[1])]
 
-        # Compute random intervals for each column.
-        # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
-        #  or rely on ColumnTransformer?
-        if self.n_intervals == 'random':
-            self.intervals_ = [self._rand_intervals_rand_n(self.input_indexes_[c])
+        if isinstance(self.intervals, np.ndarray):
+            self.intervals_ = [self.intervals]
+
+        if (isinstance(self.intervals, list) and (len(self.intervals) == self.input_shape_[1])
+                and np.all([isinstance(intervals, np.ndarray) for intervals in self.intervals])):
+            self.intervals_ = self.intervals
+
+        elif np.issubdtype(self.intervals, np.integer):
+            self.intervals_ = [np.array_split(self.input_indexes_[c], self.intervals)
                                for c in range(self.input_shape_[1])]
+
         else:
-            self.intervals_ = [self._rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals)
-                               for c in range(self.input_shape_[1])]
+            raise ValueError()
+
         return self
 
     def transform(self, X, y=None):
@@ -125,20 +104,109 @@ class RandomIntervalSegmenter(BaseTransformer):
 
         # Segment into intervals.
         intervals = []
-        self.columns_ = []
+        self.colnames_ = []
         for c, (colname, col) in enumerate(X.items()):
+
             # Tabularize each column assuming series have equal indexes in any given column.
             # TODO generalise to non-equal-index cases
             arr = tabularize(col, return_array=True)
             for start, end in self.intervals_[c]:
                 interval = arr[:, start:end]
                 intervals.append(interval)
-                self.columns_.append(f'{colname}_{start}_{end}')
+                self.colnames_.append(f'{colname}_{start}_{end}')
 
         # Return nested pandas DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
-        Xt.columns = self.columns_
+        Xt.columns = self.colnames_
         return Xt
+
+
+class RandomIntervalSegmenter(IntervalSegmenter):
+    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
+    intervals may overlap and may be duplicates.
+
+    Parameters
+    ----------
+    n_intervals : str, int or float
+        Number of intervals to generate.
+        - If "log", log of m is used where m is length of time series.
+        - If "sqrt", sqrt of m is used.
+        - If "random", random number of intervals is generated.
+        - If int, n_intervals intervals are generated.
+        - If float, int(n_intervals * m) is used with n_intervals giving the fraction of intervals of the
+        time series length.
+
+        For all arguments relative to the length of the time series, the generated number of intervals is
+        always at least 1.
+
+        Default is "sqrt".
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    check_input : bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
+    """
+
+    def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
+
+        self.min_length = 1 if min_length is None else min_length
+        self.n_intervals = n_intervals
+        self.random_state = random_state
+
+        super(RandomIntervalSegmenter, self).__init__(check_input=check_input)
+
+    @property
+    def random_state(self):
+        return self._random_state
+
+    @random_state.setter
+    def random_state(self, random_state):
+        """Set random state and update rng"""
+        self._random_state = random_state
+        self._rng = check_random_state(random_state)
+
+    def fit(self, X, y=None):
+        """Fit transformer, generating random interval indices.
+
+        Parameters
+        ----------
+        X : pandas DataFrame of shape [n_samples, n_features]
+            Input data
+        y : pandas Series, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : RandomIntervalSegmenter
+            This estimator
+        """
+
+        if self.check_input:
+            # TODO check input is series column, not column of primitives
+            pass
+
+        self.input_shape_ = X.shape
+
+        # Retrieve time-series indexes from each column.
+        # TODO generalise to columns with series of unequal length
+        self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
+                               else np.arange(X.iloc[0, c].shape[0]) for c in range(self.input_shape_[1])]
+
+        # Compute random intervals for each column.
+        # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
+        #  or rely on ColumnTransformer?
+        if self.n_intervals == 'random':
+            self.intervals_ = [self._rand_intervals_rand_n(self.input_indexes_[c])
+                               for c in range(self.input_shape_[1])]
+        else:
+            self.intervals_ = [self._rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals)
+                               for c in range(self.input_shape_[1])]
+        return self
 
     def _rand_intervals_rand_n(self, x):
         """Compute a random number of intervals from index (x) with
