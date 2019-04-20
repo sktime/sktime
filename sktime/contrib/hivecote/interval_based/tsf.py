@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import math
-from hive_cote import experiments as ld
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from numpy import random
@@ -197,11 +196,7 @@ class TimeSeriesForest(ForestClassifier):
         slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / ((x * x).mean() - x.mean() ** 2)
         return slope
 
-
-
-
 if __name__ == "__main__":
-
     dataset = "Gunpoint"
     train_x, train_y =  ld.load_from_tsfile_to_dataframe(file_path="C:/temp/sktime_temp_data/" + dataset + "/", file_name=dataset + "_TRAIN.ts")
 

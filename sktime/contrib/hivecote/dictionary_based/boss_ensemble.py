@@ -67,7 +67,7 @@ class BOSSEnsemble(BaseEstimator):
                  random_state=None,
                  dim_to_use=0,
                  threshold=0.92,
-                 max_ensemble_size=500,
+                 max_ensemble_size=250,
                  wordLengths=[16, 14, 12, 10, 8],
                  alphabetSize=4
                  ):
@@ -121,8 +121,13 @@ class BOSSEnsemble(BaseEstimator):
         num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+#        self.classes_ = list(set(y))
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
+
+
+#        for index, classVal in enumerate(self.classes_):
+#            self.class_dictionary[classVal] = index
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length/4
@@ -204,8 +209,8 @@ class BOSSEnsemble(BaseEstimator):
 
         for i, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
-            for n, val in enumerate(preds):
-                sums[n,self.class_dictionary.get(val, -1)] += 1
+            for i in range(0,X.shape[0]):
+                sums[i,self.class_dictionary.get(str(preds[i]))] += 1
 
         dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
         return dists
