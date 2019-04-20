@@ -447,7 +447,7 @@ class _ClassicalSingleSeriesForecastingStrategy(_BaseForecastingStrategy):
             pred = self._fitted_model.predict(start=start, end=end)
 
         # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        return pred[pred_horizon_idx]
+        return pred.iloc[pred_horizon_idx]
 
     def _update(self, data):
         """Placeholder to be overwritten by specific strategies"""
