@@ -87,7 +87,7 @@ class Orchestrator:
         
         for task, data in zip(tasks, datasets):
             dts_loaded = data.load()
-            for train, test in cv.resample(data.dataset_name):
+            for train, test in cv.resample(dataset_name=data.dataset_name, data=dts_loaded):
                 for strategy in strategies:
                     strategy.fit(task, dts_loaded.iloc[train])
 
