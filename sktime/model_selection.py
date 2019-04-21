@@ -11,6 +11,9 @@ from abc import ABC, abstractmethod
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
+import os
+
 class GridSearchCV(skGSCV):
     """Exhaustive search over specified parameter values for an estimator.
     Important members are fit, predict.
@@ -229,6 +232,7 @@ class GridSearchCV(skGSCV):
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
 
+
 class SKtime_resampling:
     """
     Abstact class that all MLaut resampling strategies should inherint from
@@ -239,7 +243,52 @@ class SKtime_resampling:
         
         """
 
+class SKtime_PredefinedSingleSplit(SKtime_resampling):
+    """
+    Resampling strategy used for the purposes of when the splits were already saved on the disk
+    """
 
+    def __init__(self, dataset_loc, train_suffix, test_suffix):
+        """
+        Parameters
+        ----------
+        dataset_loc: string
+            Main directory where the datasets are saved
+        train_suffix: string
+            suffix added at the end of the file designating the train split. Must include file extention
+        test_suffix: string
+            suffix added at the end of the file designating the test split. Must include file extention
+
+        """
+        self._dataset_loc = dataset_loc
+        self._train_suffix = train_suffix
+        self._test_suffix = test_suffix
+
+        
+
+    
+    def resample(self, dataset_name=None, data=None):
+        """
+        Parameters
+        ----------
+        dataset_name: String
+            name of the dataset
+        data: None
+            Not used. For compatibility with sklearn.model_selection resampling strategies
+
+        Returns
+        -------
+        tuple:
+            train_idx, test_idx
+        """
+
+        loaded_dts_train = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, dataset_name, dataset_name + self._train_suffix))
+        loaded_dts_test = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, dataset_name, dataset_name + self._test_suffix))
+
+        idx_train = np.arange(len(loaded_dts_train[1]))
+        idx_test = np.arange(len(loaded_dts_test[1])) + len(loaded_dts_train[1])
+
+        return [[idx_train, idx_test]]
 
 
 class Single_Split(SKtime_resampling):

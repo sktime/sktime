@@ -4,6 +4,58 @@ import re
 import pandas as pd
 from sktime.highlevel import Task
 
+class DatasetHDD:
+    """
+    Another class for holding the data
+    """
+    def __init__(self, dataset_loc, dataset_name, train_test_exists=True, target='target'):
+        """
+        Parameters
+        ----------
+        dataset_loc: string
+            path on disk where the dataset is saved. Path to directory without the file name should be provided
+        dataset_name: string
+            Name of the dataset
+        train_test_exists: Boolean
+            flag whether the test train split already exists
+
+        Returns
+        -------
+        pandas DataFrame:
+            dataset in pandas DataFrame format
+        """
+        self._dataset_loc = dataset_loc
+        self._dataset_name = dataset_name
+        self._train_test_exists = train_test_exists
+        self._target = target
+
+    @property
+    def dataset_name(self):
+        return self._dataset_name
+
+    def load(self):
+        #TODO curently only the current use case with saved datasets on the disk in a certain format is supported. This should be made more general.
+        if self._train_test_exists:
+            re_train = '_TRAIN.ts'
+            re_test = '_TEST.ts'
+
+            loaded_dts_train = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, self._dataset_name + re_train))
+            loaded_dts_test = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, self._dataset_name + re_test))
+
+            data_train = loaded_dts_train[0]
+            y_train = loaded_dts_train[1]
+
+            data_test = loaded_dts_test[0]
+            y_test = loaded_dts_test[1]
+
+            #concatenate the two dataframes
+            data_train[self._target] = y_train
+            data_test[self._target] = y_test
+
+            data = pd.concat([data_train,data_test], axis=0)
+
+            return data
+
 class DataHolder:
     """
     Class for holdig the data, schema, resampling splits and metadata

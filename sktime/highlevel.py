@@ -33,6 +33,7 @@ class Task:
         self._target = target
         # by default every column apart from target is a feature
         if features is None:
+            data = data.load()
             self._features = data.columns.drop(self._target)
         else:
             # set the user-supplied feature list as read-only

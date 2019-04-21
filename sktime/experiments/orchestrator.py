@@ -69,7 +69,7 @@ class Orchestrator:
         else:
             logging.warning(f'Path {save_path} exists. Set overwrite_predictions=True if you wish to overwrite it.')
     
-    def run(self, tasks, datasets, strategies, cv):
+    def run(self, tasks, datasets, strategies, cv, predict_on_runtime=True):
         """
         Method for running the orchestrator
 
@@ -80,13 +80,27 @@ class Orchestrator:
         strategies: list of sktime strategy
             strategy as per sktime.highlevel
         cv: sklearn.model_selection cross validation
-            sklearn cross validation method. Must implement split() 
+            sklearn cross validation method. Must implement split()
+        predict_on_runtime:Boolean
+            If True makes predictions after the estimator is trained
         """
         
         for task, data in zip(tasks, datasets):
-            for train, test in cv.split(data):
+            dts_loaded = data.load()
+            for train, test in cv.resample(data.dataset_name):
                 for strategy in strategies:
-                    strategy.fit(task, data.iloc[train])
+                    strategy.fit(task, dts_loaded.iloc[train])
+
+                    if predict_on_runtime:
+                        y_pred = strategy.predict(dts_loaded.iloc[test])
+                        y_true = dts_loaded[task.target].iloc[test]
+                        output_path = os.path.join(self._data_dir, self._experiments_results_dir)
+                        write_results_to_uea_format(output_path=output_path,
+                                                    classifier_name=strategy.name,
+                                                    dataset_name=data.dataset_name,
+                                                    actual_class_vals=y_true,
+                                                    predicted_class_vals=y_pred)
+
         
 
     def fit(self, 
