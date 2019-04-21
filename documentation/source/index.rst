@@ -6,12 +6,13 @@
 Welcome to sktime's documentation!
 ==================================
 
+.. include:: ../../README.rst
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:
 
    autogen/sktime
-   quickstart
    examples
    extension
 

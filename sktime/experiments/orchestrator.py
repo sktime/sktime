@@ -69,6 +69,26 @@ class Orchestrator:
         else:
             logging.warning(f'Path {save_path} exists. Set overwrite_predictions=True if you wish to overwrite it.')
     
+    def run(self, tasks, datasets, strategies, cv):
+        """
+        Method for running the orchestrator
+
+        tasks: sktime.highlevel.Task
+            task object
+        datasets: pandas dataframe
+            datasets in pandas skitme format
+        strategies: list of sktime strategy
+            strategy as per sktime.highlevel
+        cv: sklearn.model_selection cross validation
+            sklearn cross validation method. Must implement split() 
+        """
+        
+        for task, data in zip(tasks, datasets):
+            for train, test in cv.split(data):
+                for strategy in strategies:
+                    strategy.fit(task, data.iloc[train])
+        
+
     def fit(self, 
             data, 
             strategies, 

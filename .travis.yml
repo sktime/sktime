@@ -30,8 +30,9 @@ install:
     # create the testing environment
     - conda create -n testenv --yes python=$PYTHON_VERSION pip
     - source activate testenv
-    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov sphinx
+    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION nose pytest pytest-cov sphinx jupyter
     - pip install sphinx_rtd_theme
+    - pip install nbsphinx
 
 script:
     - mkdir for_test
@@ -49,4 +50,4 @@ deploy:
     github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
     keep-history: false
     on:
-        branch: dev
+        branch: master

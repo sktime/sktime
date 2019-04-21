@@ -9,8 +9,6 @@ def dtw_distance(first, second, **kwargs):
             window = kwargs["window"]
         except:
             window = 1.0
-        # print("window: "+str(window))
-
         n = len(first)
         m = len(second)
 

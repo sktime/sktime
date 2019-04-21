@@ -49,9 +49,17 @@ def test_rand_intervals_fixed_n():
         intervals = rand_intervals_fixed_n(x, n=i)
         assert intervals.shape[0] == i
 
+    # test minimum length
+    x = np.arange(200)
+    for i in range(1, 20):
+        intervals = rand_intervals_fixed_n(x, n=100, min_length=i)
+        starts = intervals[:, 0]
+        ends = intervals[:, 1]
+        assert np.all(ends - starts >= i)  # minimum length
+
 
 def test_bad_input_args():
-    bad_n_intervals = [0, 'abc', 1.0]
+    bad_n_intervals = [0, 'abc', 1.0, -1]
     m = 10
     x = np.arange(m)
     for arg in bad_n_intervals:

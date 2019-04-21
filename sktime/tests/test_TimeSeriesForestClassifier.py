@@ -105,8 +105,8 @@ def test_different_implementations():
 
         np.testing.assert_array_equal(a, b)
 
-    X_train, y_train = load_gunpoint()
-    X_test, y_test = load_gunpoint("TEST")
+    X_train, y_train = load_gunpoint(return_X_y=True)
+    X_test, y_test = load_gunpoint("TEST", return_X_y=True)
     random_state = 1234
     for n_intervals in ['sqrt', 'random', 1, 3]:
         _test_pipeline_predictions(n_intervals=n_intervals, random_state=random_state)

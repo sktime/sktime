@@ -33,8 +33,8 @@ def test_random_state():
         assert step[1].get_params()['random_state'] == rs
 
     # Check specific results
-    X_train, y_train = load_gunpoint()
-    X_test, y_test = load_gunpoint("TEST")
+    X_train, y_train = load_gunpoint(return_X_y=True)
+    X_test, y_test = load_gunpoint("TEST", return_X_y=True)
 
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),

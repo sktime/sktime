@@ -1,25 +1,39 @@
-from warnings import warn, catch_warnings, simplefilter
+from warnings import warn
+from warnings import catch_warnings
+from warnings import simplefilter
 import numpy as np
 import pandas as pd
 from scipy.sparse import issparse
-from sklearn.ensemble.forest import ForestClassifier, MAX_INT, _generate_sample_indices, _generate_unsampled_indices
-from sklearn.ensemble.base import _partition_estimators
+from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble.forest import MAX_INT
+from sklearn.ensemble.forest import _generate_sample_indices
+from sklearn.ensemble.forest import _generate_unsampled_indices
+from sklearn.ensemble.base import _partition_estimators, _set_random_states, clone
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import check_random_state
+from sklearn.utils import check_array
+from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.multiclass import class_distribution
+from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
+from sklearn.neighbors import KNeighborsClassifier as KNN
 from ..pipeline import TSPipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
+from ..distance_measures.elastic import dtw_distance, derivative_dtw_distance, \
+    weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance
+from itertools import product
 
-__all__ = ["TimeSeriesForestClassifier"]
+
+__all__ = ["TimeSeriesForestClassifier", "ElasticEnsemble"]
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
-    """
-    Time-Series Forest Classifier.
+    """Time-Series Forest Classifier.
 
     A time series forest is a meta estimator and an adaptation of the random forest
     for time-series/panel data that fits a number of decision tree classifiers on
@@ -48,8 +62,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
         - If float, then `min_samples_split` is a fraction and
           `ceil(min_samples_split * n_samples)` are the minimum
           number of samples for each split.
-        .. versionchanged:: 0.18
-           Added float values for fractions.
     min_samples_leaf : int, float, optional (default=1)
         The minimum number of samples required to be at a leaf node.
         A split point at any depth will only be considered if it leaves at
@@ -60,8 +72,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
         - If float, then `min_samples_leaf` is a fraction and
           `ceil(min_samples_leaf * n_samples)` are the minimum
           number of samples for each node.
-        .. versionchanged:: 0.18
-           Added float values for fractions.
     min_weight_fraction_leaf : float, optional (default=0.)
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
@@ -94,15 +104,9 @@ class TimeSeriesForestClassifier(ForestClassifier):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-        .. versionadded:: 0.19
     min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
-        .. deprecated:: 0.19
-           ``min_impurity_split`` has been deprecated in favor of
-           ``min_impurity_decrease`` in 0.19. The default value of
-           ``min_impurity_split`` will change from 1e-7 to 0 in 0.23 and it
-           will be removed in 0.25. Use ``min_impurity_decrease`` instead.
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
@@ -202,26 +206,25 @@ class TimeSeriesForestClassifier(ForestClassifier):
         elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
             raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
 
-        # Rename estimator params according to name in pipeline.
-        estimator = base_estimator.steps[-1][0]
-        estimator_params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-        }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
+        self.check_input = check_input
 
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            estimator_params=tuple(estimator_params.keys()),
+            estimator_params=("criterion", "max_depth", "min_samples_split",
+                              "min_samples_leaf", "min_weight_fraction_leaf",
+                              "max_features", "max_leaf_nodes",
+                              "min_impurity_decrease", "min_impurity_split"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -233,11 +236,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         # Assign random state to pipeline.
         base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
-
-        # Store renamed estimator params.
-        for pname, pval in estimator_params.items():
-            self.__setattr__(pname, pval)
-        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -459,6 +457,28 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         self.oob_score_ = oob_score / self.n_outputs_
 
+    def _make_estimator(self, append=True, random_state=None):
+        """Make and configure a copy of the `base_estimator_` attribute.
+
+        Adapted to handle pipelines as `base_estimators_`.
+
+        Warning: This method should be used to properly instantiate new
+        sub-estimators.
+        """
+        estimator = clone(self.base_estimator_)
+
+        # Name of final estimator in pipeline.
+        final_estimator = estimator.steps[-1][0]
+        estimator.set_params(**{f'{final_estimator}__{p}': getattr(self, p)
+                                for p in self.estimator_params})
+
+        if random_state is not None:
+            _set_random_states(estimator, random_state)
+
+        if append:
+            self.estimators_.append(estimator)
+
+        return estimator
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -498,4 +518,146 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
 
     return tree
 
+
+class ElasticEnsemble():
+    def __init__(
+            self,
+            distance_measures_to_include='all',
+            proportion_of_param_options=1.0,
+            proportion_train_in_param_finding=1.0,
+            proportion_train_for_test=1.0,
+            data_dimension_to_use = 0,
+            random_seed = 0,
+            dim_to_use = 0,
+            verbose=0
+    ):
+        if distance_measures_to_include == 'all':
+            self.distance_measures = [dtw_distance, derivative_dtw_distance, weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance]
+        else:
+            self.distance_measures = distance_measures_to_include
+        self.prop_train_in_param_finding = proportion_train_in_param_finding
+        self.prop_of_param_options = proportion_of_param_options
+        self.prop_train_for_test = proportion_train_for_test
+        self.data_dimension_to_use = data_dimension_to_use
+        self.random_seed = random_seed
+        self.dim_to_use = dim_to_use
+        self.estimators_ = None
+        self.train_accs_by_classifier = None
+        self.train_preds_by_classifier = None
+        self.classes_ = None
+        self.verbose = verbose
+
+    def fit(self, X, y, **kwargs):
+        self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
+        self.train_preds_by_classifier = [None] * len(self.distance_measures)
+        self.estimators_ = [None] * len(self.distance_measures)
+
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        rand = np.random.RandomState(self.random_seed)
+
+        # convert X to numpy arrays for convenience
+        train_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+
+        # setup:
+        #   - downsample train for param options if necessay
+        #   - for each constiuent, either use a full grid search or setup random grid search
+        #   - when best param option is found for each, use that param with full train to
+
+        # sample cases for param finding if prop to use < 1
+        if self.prop_train_in_param_finding < 1:
+            sss = StratifiedShuffleSplit(n_splits=1, test_size=self.prop_train_in_param_finding, random_state=rand)
+            for train_index, test_index in sss.split(X, y):
+                param_train_x = train_x[train_index]
+                param_train_y = y[train_index]
+        else:
+            param_train_x = train_x
+            param_train_y = y
+
+        # set up individual cross val objects
+
+        for dm in range(0, len(self.distance_measures)):
+            if self.verbose > 0:
+                print("Currently evaluating "+str(self.distance_measures[dm].__name__))
+            if self.prop_of_param_options == 1:
+                grid = GridSearchCV(
+                    estimator= KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
+                    param_grid=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    cv=LeaveOneOut(),
+                    scoring='accuracy'
+                )
+            else:
+                grid = RandomizedSearchCV(
+                    estimator=KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
+                    param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    cv=LeaveOneOut(),
+                    scoring='accuracy',
+                    n_iter=100 * self.prop_of_param_options,
+                    random_state=rand
+                )
+
+            grid.fit(param_train_x, param_train_y)
+
+            best_model = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            preds = cross_val_predict(best_model, train_x, y, cv=LeaveOneOut())
+
+            self.estimators_[dm] = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
+            self.estimators_[dm].fit(train_x, y)
+            self.train_accs_by_classifier[dm] = grid.best_score_
+            self.train_preds_by_classifier[dm] = preds
+
+    def predict_proba(self, X):
+
+        test_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+        output_probas = []
+        for c in range(0, len(self.estimators_)):
+            this_train_acc = self.train_accs_by_classifier[c]
+            this_probas = np.multiply(self.estimators_[c].predict_proba(test_x), this_train_acc)
+            output_probas.append(this_probas)
+
+        output_probas = np.sum(output_probas,axis=0)
+        return output_probas
+
+    def predict(self, X, return_preds_and_probas=False):
+        probas = self.predict_proba(X)
+        idx = np.argmax(probas, axis=1)
+        preds = np.asarray([self.classes_[x] for x in idx])
+        if return_preds_and_probas is False:
+            return preds
+        else:
+            return preds, probas
+
+    @staticmethod
+    def _get_100_param_options(distance_measure, train_x=None):
+
+        def get_inclusive(min_val, max_val, num_vals):
+            inc = (max_val - min_val) / (num_vals-1)
+            return np.arange(min_val, max_val + inc, inc)
+
+        if distance_measure == dtw_distance or distance_measure == derivative_dtw_distance:
+            return {'metric_params': [{'window': x / 100} for x in range(0, 100)]}
+        elif distance_measure == weighted_dtw_distance or distance_measure == weighted_derivative_dtw_distance:
+            return {'metric_params': [{'g': x / 100} for x in range(0, 100)]}
+        elif distance_measure == lcss_distance:
+            train_std = np.std(train_x)
+            epsilons = get_inclusive(train_std*.2,train_std,10)
+            deltas = get_inclusive(int(len(train_x[0])/4),len(train_x[0]),10)
+            deltas = [int(d) for d in deltas]
+            a = list(product(epsilons, deltas))
+            return {'metric_params': [{'epsilon': a[x][0],'delta':a[x][1]} for x in range(0, len(a))]}
+        elif distance_measure == erp_distance():
+            train_std = np.std(train_x)
+            band_sizes = get_inclusive(0, 0.25, 10)
+            g_vals = get_inclusive(train_std * .2, train_std, 10)
+            a = list(product(band_sizes, g_vals))
+            return {'metric_params': [{'band_size': a[x][0], 'g': a[x][1]} for x in range(0, len(a))]}
+        elif distance_measure == msm_distance:
+            a = get_inclusive(0.01, 0.1, 25)
+            b = get_inclusive(0.1, 1, 26)
+            c = get_inclusive(1, 10, 26)
+            d = get_inclusive(10,100,26)
+            return {'metric_params': [{'c': x} for x in np.concatenate([a,b[1:],c[1:],d[1:]])]}
+        # elif distance_measure == twe_distance
+        else:
+            raise NotImplementedError("EE does not currently support: " + str(distance_measure))
 
