@@ -16,17 +16,21 @@ from sklearn.utils import check_array
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.multiclass import class_distribution
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
-from sklearn.neighbors import KNeighborsClassifier as KNN
+from sktime.transformers.series_to_series import DerivativeSlopeTransformer
 from ..pipeline import TSPipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
-from ..distance_measures.elastic import dtw_distance, derivative_dtw_distance, \
-    weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance
+import os
+from .time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
+from ..distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
+    wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
 from itertools import product
+import time
 
 
 __all__ = ["TimeSeriesForestClassifier", "ElasticEnsemble"]
@@ -384,8 +388,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict_proba)(X) for e in self.estimators_)
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
 
         all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
@@ -404,10 +407,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         return X
 
     def apply(self, X):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def decision_path(self, X):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def feature_importances_(self):
@@ -519,20 +522,25 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class ElasticEnsemble():
+class ElasticEnsemble:
+    """ The Elastic Ensemble
+
+    An ensemble of elastic nearest neighbor classifiers
+
+    """
     def __init__(
             self,
             distance_measures_to_include='all',
             proportion_of_param_options=1.0,
             proportion_train_in_param_finding=1.0,
             proportion_train_for_test=1.0,
-            data_dimension_to_use = 0,
-            random_seed = 0,
-            dim_to_use = 0,
+            data_dimension_to_use=0,
+            random_seed=0,
+            dim_to_use=0,
             verbose=0
     ):
         if distance_measures_to_include == 'all':
-            self.distance_measures = [dtw_distance, derivative_dtw_distance, weighted_derivative_dtw_distance, weighted_dtw_distance, lcss_distance, erp_distance, msm_distance]
+            self.distance_measures = [dtw_c, ddtw_c, wdtw_c, wddtw_c, lcss_c, erp_c, msm_c]
         else:
             self.distance_measures = distance_measures_to_include
         self.prop_train_in_param_finding = proportion_train_in_param_finding
@@ -546,80 +554,170 @@ class ElasticEnsemble():
         self.train_preds_by_classifier = None
         self.classes_ = None
         self.verbose = verbose
+        self.train = None
+        self.constituent_build_times = None
 
     def fit(self, X, y, **kwargs):
+
+        # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
+        # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
+        # standard DTW algorithm on it, rather than transforming each series every time a distance calculation
+        # is made. Please note that using DDTW elsewhere will not benefit from this speed enhancement
+        if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
+            der_X = DerivativeSlopeTransformer().transform(X)
+            # reshape X for use with the efficient cython distance measures
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+        else:
+            der_X = None
+
+        # reshape X for use with the efficient cython distance measures
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
         self.estimators_ = [None] * len(self.distance_measures)
-
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-
         rand = np.random.RandomState(self.random_seed)
 
-        # convert X to numpy arrays for convenience
-        train_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+        # The default EE uses all training instances for setting parameters, and 100 parameter options per
+        # elastic measure. The prop_train_in_param_finding and prop_of_param_options attributes of this class
+        # can be used to control this however, using less cases to optimise parameters on the training data
+        # and/or using less parameter options.
+        #
+        # For using less training instances the appropriate number of cases must be sampled from the data.
+        # This is achieved through the use of a deterministic StratifiedShuffleSplit
+        #
+        # For using less parameter options a RandomizedSearchCV is used in place of a GridSearchCV
 
-        # setup:
-        #   - downsample train for param options if necessay
-        #   - for each constiuent, either use a full grid search or setup random grid search
-        #   - when best param option is found for each, use that param with full train to
+        param_train_x = None
+        der_param_train_x = None
+        param_train_y = None
 
-        # sample cases for param finding if prop to use < 1
+        # If using less cases for parameter optimisation, use the StratifiedShuffleSplit:
         if self.prop_train_in_param_finding < 1:
-            sss = StratifiedShuffleSplit(n_splits=1, test_size=self.prop_train_in_param_finding, random_state=rand)
-            for train_index, test_index in sss.split(X, y):
-                param_train_x = train_x[train_index]
-                param_train_y = y[train_index]
-        else:
-            param_train_x = train_x
-            param_train_y = y
-
-        # set up individual cross val objects
-
-        for dm in range(0, len(self.distance_measures)):
             if self.verbose > 0:
-                print("Currently evaluating "+str(self.distance_measures[dm].__name__))
+                print("Restricting training cases for parameter optimisation: ",end="")
+            sss = StratifiedShuffleSplit(n_splits=1, test_size=1-self.prop_train_in_param_finding, random_state=rand)
+            for train_index, test_index in sss.split(X, y):
+                param_train_x = X[train_index,:]
+                param_train_y = y[train_index]
+                if der_X is not None:
+                    der_param_train_x = der_X[train_index,:]
+                if self.verbose > 0:
+                    print("using "+str(len(param_train_x))+" training cases instead of "+str(len(X))+" for parameter optimisation")
+        # else, use the full training data for optimising parameters
+        else:
+            if self.verbose > 0:
+                print("Using all training cases for parameter optimisation")
+            param_train_x = X
+            param_train_y = y
+            if der_X is not None:
+                der_param_train_x = der_X
+
+        self.constituent_build_times = []
+
+        if self.verbose > 0:
+            print("Using "+str(100*self.prop_of_param_options)+" parameter options per measure")
+        for dm in range(0, len(self.distance_measures)):
+            this_measure = self.distance_measures[dm]
+
+            # uses the appropriate training data as required (either full or smaller sample as per the StratifiedShuffleSplit)
+            param_train_to_use = param_train_x
+            full_train_to_use = X
+            if this_measure is ddtw_c or dm is wddtw_c:
+                param_train_to_use = der_param_train_x
+                full_train_to_use = der_X
+                if this_measure is ddtw_c:
+                    this_measure = dtw_c
+                elif this_measure is wddtw_c:
+                    this_measure = wdtw_c
+
+            start_build_time = time.time()
+            if self.verbose > 0:
+                if self.distance_measures[dm] is ddtw_c or self.distance_measures[dm] is wddtw_c:
+                    print("Currently evaluating "+str(self.distance_measures[dm].__name__)+" (implemented as "+str(this_measure.__name__)+" with pre-transformed derivative data)")
+                else:
+                    print("Currently evaluating "+str(self.distance_measures[dm].__name__))
+
+            # If 100 parameter options are being considered per measure, use a GridSearchCV
             if self.prop_of_param_options == 1:
+
                 grid = GridSearchCV(
-                    estimator= KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
-                    param_grid=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    estimator= KNNTSC(metric=this_measure, n_neighbors=1, algorithm="brute"),
+                    param_grid=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], X),
                     cv=LeaveOneOut(),
-                    scoring='accuracy'
+                    scoring='accuracy',
+                    verbose=self.verbose
                 )
+                grid.fit(param_train_to_use, param_train_y)
+
+            # Else, used RandomizedSearchCV to randomly sample parameter options for each measure
             else:
                 grid = RandomizedSearchCV(
-                    estimator=KNN(metric=self.distance_measures[dm], n_neighbors=1, algorithm="brute"),
-                    param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], train_x),
+                    estimator=KNNTSC(metric=this_measure, n_neighbors=1, algorithm="brute"),
+                    param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], X),
                     cv=LeaveOneOut(),
                     scoring='accuracy',
                     n_iter=100 * self.prop_of_param_options,
-                    random_state=rand
+                    random_state=rand,
+                    verbose=self.verbose
                 )
+                grid.fit(param_train_to_use, param_train_y)
 
-            grid.fit(param_train_x, param_train_y)
+            # once the best parameter option has been estimated on the training data, perform a final pass with this parameter option
+            # to get the individual predictions with cross_cal_predict (Note: optimisation potentially possible here if a GridSearchCV
+            # was used previously. TO-DO: determine how to extract predictions for the best param option from GridSearchCV)
+            best_model = KNNTSC(algorithm="brute", n_neighbors=1, metric=this_measure, metric_params=grid.best_params_['metric_params'])
+            preds = cross_val_predict(best_model, full_train_to_use, y, cv=LeaveOneOut())
+            acc = accuracy_score(y,preds)
 
-            best_model = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
-            preds = cross_val_predict(best_model, train_x, y, cv=LeaveOneOut())
+            if self.verbose > 0:
+                print("Training accuracy for "+str(self.distance_measures[dm].__name__)+": "+str(acc) + " (with parameter setting: "+str(grid.best_params_['metric_params'])+")")
 
-            self.estimators_[dm] = KNN(algorithm="brute", n_neighbors=1, metric=self.distance_measures[dm], metric_params=grid.best_params_['metric_params'])
-            self.estimators_[dm].fit(train_x, y)
-            self.train_accs_by_classifier[dm] = grid.best_score_
+            # Finally, reset the classifier for this measure and parameter option, ready to be called for test classification
+            best_model = KNNTSC(algorithm="brute", n_neighbors=1, metric=this_measure, metric_params=grid.best_params_['metric_params'])
+            best_model.fit(full_train_to_use,y)
+            end_build_time = time.time()
+
+            self.constituent_build_times.append(str(end_build_time-start_build_time))
+            self.estimators_[dm] = best_model
+            self.train_accs_by_classifier[dm] = acc
             self.train_preds_by_classifier[dm] = preds
 
     def predict_proba(self, X):
 
-        test_x = np.array([np.asarray(x) for x in X.iloc[:, self.dim_to_use]])
+        # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
+        # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
+        # standard DTW algorithm on it, rather than transforming each series every time a distance calculation
+        # is made. Please note that using DDTW elsewhere will not benefit from this speed enhancement
+        if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
+            der_X = DerivativeSlopeTransformer().transform(X)
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+        else:
+            der_X = None
+
+        # reshape X for use with the efficient cython distance measures
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+
         output_probas = []
+        train_sum = 0
+
         for c in range(0, len(self.estimators_)):
+            if self.distance_measures[c] == ddtw_c or self.distance_measures[c] == wddtw_c:
+                test_X_to_use = der_X
+            else:
+                test_X_to_use = X
             this_train_acc = self.train_accs_by_classifier[c]
-            this_probas = np.multiply(self.estimators_[c].predict_proba(test_x), this_train_acc)
+            this_probas = np.multiply(self.estimators_[c].predict_proba(test_X_to_use), this_train_acc)
             output_probas.append(this_probas)
+            train_sum += this_train_acc
 
         output_probas = np.sum(output_probas,axis=0)
+        output_probas = np.divide(output_probas, train_sum)
         return output_probas
 
     def predict(self, X, return_preds_and_probas=False):
-        probas = self.predict_proba(X)
+        probas = self.predict_proba(X) # does derivative transform within (if required)
         idx = np.argmax(probas, axis=1)
         preds = np.asarray([self.classes_[x] for x in idx])
         if return_preds_and_probas is False:
@@ -627,31 +725,64 @@ class ElasticEnsemble():
         else:
             return preds, probas
 
+    def write_constituent_train_files(self, output_file_path, dataset_name, actual_y):
+
+        for c in range(len(self.estimators_)):
+            measure_name = self.distance_measures[c].__name__
+
+            try:
+                os.makedirs(str(output_file_path) + "/" + str(measure_name) + "/Predictions/" + str(dataset_name) + "/")
+            except os.error:
+                pass  # raises os.error if path already exists
+
+            file = open(str(output_file_path)+"/"+str(measure_name)+"/Predictions/" + str(dataset_name) +
+                        "/trainFold"+str(self.random_seed)+".csv", "w")
+
+            # the first line of the output file is in the form of:
+            # <classifierName>,<datasetName>,<train/test>
+            file.write(str(measure_name)+"," + str(dataset_name) + ",train\n")
+
+            # the second line of the output is free form and classifier-specific; usually this will record info
+            # such as build time, paramater options used, any constituent model names for ensembles, etc.
+            # file.write(str(self.estimators_[c].best_params_['metric_params'])+"\n")
+            self.prop_train_in_param_finding
+            file.write(str(self.estimators_[c].metric_params)+",build_time,"+str(self.constituent_build_times[c])+",prop_of_param_options," + str(self.prop_of_param_options) +
+                       ",prop_train_in_param_finding," + str(self.prop_train_in_param_finding)+"\n")
+
+            # third line is training acc
+            file.write(str(self.train_accs_by_classifier[c])+"\n")
+
+            for i in range(len(actual_y)):
+                file.write(str(actual_y[i])+","+str(self.train_preds_by_classifier[c][i])+"\n")
+            # preds would go here once stored as part of fit
+
+            file.close()
+
     @staticmethod
-    def _get_100_param_options(distance_measure, train_x=None):
+    def _get_100_param_options(distance_measure, train_x=None, data_dim_to_use=0):
 
         def get_inclusive(min_val, max_val, num_vals):
             inc = (max_val - min_val) / (num_vals-1)
             return np.arange(min_val, max_val + inc, inc)
 
-        if distance_measure == dtw_distance or distance_measure == derivative_dtw_distance:
-            return {'metric_params': [{'window': x / 100} for x in range(0, 100)]}
-        elif distance_measure == weighted_dtw_distance or distance_measure == weighted_derivative_dtw_distance:
+        if distance_measure == dtw_c or distance_measure == ddtw_c:
+            return {'metric_params': [{'w': x / 100} for x in range(0, 100)]}
+        elif distance_measure == wdtw_c or distance_measure == wddtw_c:
             return {'metric_params': [{'g': x / 100} for x in range(0, 100)]}
-        elif distance_measure == lcss_distance:
+        elif distance_measure == lcss_c:
             train_std = np.std(train_x)
-            epsilons = get_inclusive(train_std*.2,train_std,10)
-            deltas = get_inclusive(int(len(train_x[0])/4),len(train_x[0]),10)
+            epsilons = get_inclusive(train_std*.2, train_std, 10)
+            deltas = get_inclusive(int(len(train_x[0])/4),len(train_x[0]), 10)
             deltas = [int(d) for d in deltas]
             a = list(product(epsilons, deltas))
             return {'metric_params': [{'epsilon': a[x][0],'delta':a[x][1]} for x in range(0, len(a))]}
-        elif distance_measure == erp_distance():
+        elif distance_measure == erp_c:
             train_std = np.std(train_x)
             band_sizes = get_inclusive(0, 0.25, 10)
             g_vals = get_inclusive(train_std * .2, train_std, 10)
             a = list(product(band_sizes, g_vals))
             return {'metric_params': [{'band_size': a[x][0], 'g': a[x][1]} for x in range(0, len(a))]}
-        elif distance_measure == msm_distance:
+        elif distance_measure == msm_c:
             a = get_inclusive(0.01, 0.1, 25)
             b = get_inclusive(0.1, 1, 26)
             c = get_inclusive(1, 10, 26)
@@ -660,4 +791,3 @@ class ElasticEnsemble():
         # elif distance_measure == twe_distance
         else:
             raise NotImplementedError("EE does not currently support: " + str(distance_measure))
-
