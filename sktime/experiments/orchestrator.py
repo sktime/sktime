@@ -5,8 +5,7 @@ import re
 from sktime.experiments.data import Result
 import numpy as np
 import pandas as pd
-from sktime.experiments.data import DataLoader
-from sktime.experiments.data import DataHolder
+
 from sktime.utils.results_writing import write_results_to_uea_format
 
 class Orchestrator:

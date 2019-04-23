@@ -1,5 +1,5 @@
 from sktime.experiments.orchestrator import Orchestrator
-from sktime.highlevel import Task, TSCStrategy
+from sktime.highlevel import TSCTask, TSCStrategy
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 from sktime.experiments.data import DatasetHDD
 from sktime.model_selection import SKtime_PredefinedSingleSplit
@@ -8,10 +8,10 @@ import pandas as pd
 
 
 dts_ArrowHead = DatasetHDD(dataset_loc='data/datasets/ArrowHead', dataset_name='ArrowHead', target='target')
-task_ArrowHead = Task(case='TSC', data=dts_ArrowHead, target='target')
+task_ArrowHead = TSCTask(target='target')
 
 dts_Beef = DatasetHDD(dataset_loc='data/datasets/Beef', dataset_name='Beef')
-task_Beef = Task(case='TSC', data=dts_Beef, target='target')
+task_Beef = TSCTask(target='target')
 
 clf = TimeSeriesForestClassifier()
 strategy = TSCStrategy(clf)

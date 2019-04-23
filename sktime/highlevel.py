@@ -23,23 +23,7 @@ class BaseTask:
         The column header for the target variable to be predicted.
         If omitted, every column apart from target would be a feature.
     """
-<<<<<<< HEAD
-    def __init__(self, case=None, data=None, target=None, features=None):
-        # check if all necessary keyword arguments are present
-        # if not(case and data and target):
-        #     raise ValueError("All three kerword arguments case, data and target should be supplied")
-        self._case = case
-        self._target = target
-        # by default every column apart from target is a feature
-        if features is None:
-            data = data.load()
-            self._features = data.columns.drop(self._target)
-        else:
-            # set the user-supplied feature list as read-only
-            self._features = pd.Index(features)
-=======
     def __init__(self, target, features=None, metadata=None):
->>>>>>> dev
 
         # TODO input checks
         # TODO use metadata object from extended data container
@@ -154,12 +138,8 @@ class BaseStrategy:
         self._estimator = estimator
         self._case = None
         self._task = None
-<<<<<<< HEAD
-        self._meta = {"tags": None}
-        self._name = estimator.__class__.__name__ #TODO: sets the name of the estimator. Not sure if this works for estimators other than scikit learn
-=======
+        self._name = 'BUG' #TODO fix!
         # self._traits = {"tags": None}  # traits for matching strategies with tasks
->>>>>>> dev
 
     @property
     def case(self):
