@@ -13,6 +13,7 @@ import numpy as np
 
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 import os
+import pandas as pd
 
 class GridSearchCV(skGSCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -233,131 +234,21 @@ class GridSearchCV(skGSCV):
                 self.scoring = make_scorer(mean_squared_error)
 
 
-class SKtime_resampling:
+class PredefinedSplit:
     """
-    Abstact class that all MLaut resampling strategies should inherint from
+    Helper class for iterating over predefined splits in orchestration.
     """
-    @abstractmethod
-    def resample(self):
-        """
-        
-        """
+    def __init__(self, check_input=True):
+        self.check_input = check_input
 
-class SKtime_PredefinedSingleSplit(SKtime_resampling):
-    """
-    Resampling strategy used for the purposes of when the splits were already saved on the disk
-    """
+    def split(self, data):
+        # Input checks.
+        if self.check_input:
+            if not isinstance(data, pd.DataFrame):
+                raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
+            if not np.all(data.index.unique().isin(['train', 'test'])):
+                raise ValueError('Train-test split not properly defined in index of passed pandas dataframe')
 
-    def __init__(self, dataset_loc, train_suffix, test_suffix):
-        """
-        Parameters
-        ----------
-        dataset_loc: string
-            Main directory where the datasets are saved
-        train_suffix: string
-            suffix added at the end of the file designating the train split. Must include file extention
-        test_suffix: string
-            suffix added at the end of the file designating the test split. Must include file extention
-
-        """
-        self._dataset_loc = dataset_loc
-        self._train_suffix = train_suffix
-        self._test_suffix = test_suffix
-
-        
-
-    
-    def resample(self, dataset_name=None, data=None):
-        """
-        Parameters
-        ----------
-        dataset_name: String
-            name of the dataset
-        data: None
-            Not used. For compatibility with sklearn.model_selection resampling strategies
-
-        Returns
-        -------
-        tuple:
-            train_idx, test_idx
-        """
-
-        loaded_dts_train = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, dataset_name, dataset_name + self._train_suffix))
-        loaded_dts_test = load_from_tsfile_to_dataframe(os.path.join(self._dataset_loc, dataset_name, dataset_name + self._test_suffix))
-
-        idx_train = np.arange(len(loaded_dts_train[1]))
-        idx_test = np.arange(len(loaded_dts_test[1])) + len(loaded_dts_train[1])
-
-        return [[idx_train, idx_test]]
-
-
-class Single_Split(SKtime_resampling):
-    """
-    Wrapper for sklearn.model_selection.train_test_split
-    
-    The constructor implements the same parameters as sklearn.model_selection.train_test_split
-    
-    Parameters
-    ----------
-    test_size : float, int or None, optional (default=0.25)
-        If float, should be between 0.0 and 1.0 and represent the proportion
-        of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default, the value is set to 0.25.
-        The default will change in version 0.21. It will remain 0.25 only
-        if ``train_size`` is unspecified, otherwise it will complement
-        the specified ``train_size``.
-    train_size : float, int, or None, (default=None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test size.
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-    shuffle : boolean, optional (default=True)
-        Whether or not to shuffle the data before splitting. If shuffle=False
-        then stratify must be None.
-    stratify : array-like or None (default=None)
-        If not None, data is split in a stratified fashion, using this as
-        the class labels.
-    Returns
-    -------
-    splitting : list, length=2 * len(arrays)
-        List containing train-test split of inputs.
-    
-    """
-    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
-        self._test_size=test_size
-        self._train_size=train_size
-        self._random_state=random_state
-        self._shuffle=shuffle
-        self._stratify=stratify
-    
-    def resample(self, idx):
-        """
-        Parameters
-        ----------
-        idx : array
-            Indices of the dataset
-
-        Returns
-        -------
-        train_idx, test_idx: tuple numpy arrays
-            indexes of resampled dataset
-        """
-
-        train_idx, test_idx =  train_test_split(idx, 
-                                                test_size=self._test_size, 
-                                                train_size=self._train_size,
-                                                random_state=self._random_state,
-                                                shuffle=self._shuffle,
-                                                stratify=self._stratify)
-        train_idx = np.array(train_idx)
-        test_idx = np.array(test_idx)
-
-        return train_idx, test_idx
-
-   
+        train = data.loc['train'].reset_index(drop=True)
+        test = data.loc['test'].reset_index(drop=True)
+        yield train, test

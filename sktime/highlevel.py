@@ -12,7 +12,6 @@ __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy', 'TSRStrategy']
 class BaseTask:
     """An object that encapsulates meta-data and instructions on how to derive the target/label for the time-series
     prediction/supervised learning task.
-
     Parameters
     ----------
     metadata : pd.DataFrame
@@ -83,7 +82,6 @@ class BaseTask:
 
 class TSCTask(BaseTask):
     """Time series classification task.
-
     Parameters
     ----------
     metadata : pandas DataFrame
@@ -100,7 +98,6 @@ class TSCTask(BaseTask):
 
 class ForecastingTask(BaseTask):
     """Forecasting task.
-
     Parameters
     ----------
     metadata : pandas DataFrame
@@ -123,32 +120,35 @@ class ForecastingTask(BaseTask):
         """
         return self._pred_horizon
 
+
 class BaseStrategy:
     """A meta-estimator that employs a low level estimator to
     perform a pescribed task
-
     Parameters
     ----------
     estimator : BaseEstimator
         An instance of an appropriately initialized
         low-level estimator
     """
-    def __init__(self, estimator):
+    def __init__(self, estimator, *args, **kwargs):
         # construct and initialize the estimator
         self._estimator = estimator
         self._case = None
         self._task = None
-        self._name = 'BUG' #TODO fix!
-        # self._traits = {"tags": None}  # traits for matching strategies with tasks
+        self._name = None
+        self._traits = {"tags": None}  # traits for matching strategies with tasks
 
+    @property
+    def name(self):
+        """Returns name of strategy
+        """
+        return self._name
     @property
     def case(self):
         """Expose the private variable _case as read only
         """
         return self._case
-    @property
-    def name(self):
-        return self._name
+
     def __getitem__(self, key):
         """Provide read only access via keys
         to the private traits
@@ -159,14 +159,12 @@ class BaseStrategy:
 
     def fit(self, task, data):
         """Fit the estimator according to task details
-
         Parameters
         ----------
         task : Task
             A task initialized with the same kind of data
         data : pd.DataFrame
             Training Data
-
         Returns
         -------
         self: the instance being fitted
@@ -195,12 +193,10 @@ class BaseStrategy:
 
     def predict(self, data):
         """Predict the targets for the test data
-
         Parameters
         ----------
         data : a pandas DataFrame
             Prediction Data
-
         Returns
         -------
         predictions: a pd.Dataframe or pd.Series
@@ -239,6 +235,10 @@ class TSCStrategy(BaseStrategy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSC"
+        if 'name' in kwargs:
+            self._name = kwargs['name']
+        else:
+            self._name = self._estimator.__class__.__name__
 
 
 class TSRStrategy(BaseStrategy):
@@ -247,5 +247,7 @@ class TSRStrategy(BaseStrategy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSR"
-
-
+        if 'name' in kwargs:
+            self._name = kwargs['name']
+        else:
+            self._name = self._estimator.__class__.__name__
