@@ -1,1 +1,1 @@
-from sktime.classifiers.ensemble import ElasticEnsemble
+from sktime.classifiers.elastic_ensemble import ElasticEnsemble
