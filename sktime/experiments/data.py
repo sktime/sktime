@@ -95,36 +95,7 @@ class DatasetLoadFromDir:
             dts = DatasetHDD(dataset_loc=os.path.join(self._root_dir, dts), dataset_name=dts, train_test_exists=train_test_exists)
             data.append(dts)
         return data
-    def create_tasks(self, task_type, target):
-        """
-        Creates automatically the tasks
-        
-        Parameters
-        -----------
-        task_type : string
-            Type of the task
-        target: string
-            Target variable
-
-        Returns
-        -------
-        sktime tasks:
-            list of tasks
-        """
-
-        if task_type not in ['TSC','ForecastingTask']:
-            raise ValueError('Invalid task type')
-        
-        num_dts = len(os.listdir(self._root_dir))
-
-        if task_type == 'TSC':
-            tasks = [TSCTask(target=target)] * num_dts
-        else:
-            #TODO implement for forecasting tasks
-            raise NotImplementedError()
-        return tasks
-
-
+    
 
 # class DataHolder:
 #     """
@@ -299,7 +270,10 @@ class SKTimeResult(ABC):
         """
         method for persisting the trained strategies
         """
-
+    def load(self):
+        """
+        method for loading the results
+        """
 
 class ResultHDD(SKTimeResult):
     """
@@ -318,16 +292,18 @@ class ResultHDD(SKTimeResult):
         self._results_save_dir = results_save_dir
         self._strategies_save_dir = strategies_save_dir
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred):
-        output_path = os.path.join('data', 'results')
+    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+        if not os.path.exists(self._results_save_dir):
+            os.makedirs(self._results_save_dir)
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
                                     actual_class_vals=y_true,
-                                    predicted_class_vals=y_pred)
+                                    predicted_class_vals=y_pred,
+                                    resample_seed=cv_fold)
 
 
-    def save_trained_strategy(self, strategy, dataset_name):
+    def save_trained_strategy(self, strategy, dataset_name, cv_fold):
         if self._strategies_save_dir is None:
             raise ValueError('Please provide a directory for saving the strategies')
         
@@ -338,4 +314,8 @@ class ResultHDD(SKTimeResult):
             os.makedirs(save_path)
 
         #TODO pickling will not work for all strategies
-        pickle.dump(strategy, open(os.path.join(save_path, strategy.name + '.p'),"wb"))
+        pickle.dump(strategy, open(os.path.join(save_path, strategy.name + 'cv_fold'+str(cv_fold)+ '.p'),"wb"))
+    
+    def load(self, path):
+        #TODO fix load from_uae_format function
+        pass

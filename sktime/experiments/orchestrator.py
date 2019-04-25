@@ -47,18 +47,20 @@ class Orchestrator:
         for task, data in zip(self._tasks, self._datasets):
             dts_loaded = data.load()
             for strategy in self._strategies:
-                for i, (train, test) in enumerate(self._cv.split(dts_loaded)):
+                for cv_fold, (train, test) in enumerate(self._cv.split(dts_loaded)):
                     
-                    strategy.fit(task, train)
+                    strategy.fit(task, dts_loaded.iloc[train])
 
                     if predict_on_runtime:
-                        y_pred = strategy.predict(test)
+                        y_pred = strategy.predict(dts_loaded.iloc[test])
+                        y_true = dts_loaded[task.target].iloc[test].values
                         self._result.save(dataset_name=data.dataset_name, 
                                           strategy_name=strategy.name, 
-                                          y_true=test[task.target], 
-                                          y_pred=y_pred)
+                                          y_true=y_true.tolist(), 
+                                          y_pred=y_pred.tolist(),
+                                          cv_fold=cv_fold)
                     if save_strategies:
-                        self._result.save_trained_strategy(strategy=strategy, dataset_name=data.dataset_name)
+                        self._result.save_trained_strategy(strategy=strategy, dataset_name=data.dataset_name, cv_fold=cv_fold)
     
     def predict(self):
         """

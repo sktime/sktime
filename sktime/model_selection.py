@@ -14,6 +14,7 @@ import numpy as np
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 import os
 import pandas as pd
+from abc import ABC
 
 class GridSearchCV(skGSCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -233,6 +234,11 @@ class GridSearchCV(skGSCV):
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
 
+class SKTimeCV(ABC):
+    def split(self, data):
+        """
+        Implements the splits to return the actual data instead of the 
+        """
 
 class PredefinedSplit:
     """
@@ -248,7 +254,14 @@ class PredefinedSplit:
                 raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
             if not np.all(data.index.unique().isin(['train', 'test'])):
                 raise ValueError('Train-test split not properly defined in index of passed pandas dataframe')
-
-        train = data.loc['train'].reset_index(drop=True)
-        test = data.loc['test'].reset_index(drop=True)
+        n = data.shape[0]
+        idx = np.arange(n)
+        train = idx[data.index == 'train']
+        test = idx[data.index == 'test']
+        # train = data.index[data.loc['train']]
+        # test  = data.index[data.loc['test']]
+        # train = data.loc['train'].reset_index(drop=True)
+        # test = data.loc['test'].reset_index(drop=True)
         yield train, test
+
+
