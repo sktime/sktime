@@ -245,6 +245,8 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     file.close()
 
 
+
+
 if __name__ == "__main__":
 #Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1: #cluster run, this is fragile
