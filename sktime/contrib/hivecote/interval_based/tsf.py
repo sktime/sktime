@@ -11,7 +11,7 @@ from sklearn.utils.multiclass import class_distribution
 class TimeSeriesForest(ForestClassifier):
     __author__ = "Tony Bagnall"
 
-    """Time-Series Forest Classifier.
+    """ Time-Series Forest Classifier.
 
 
     TimeSeriesForest: Implementation of Deng 's Time Series Forest, with minor changes
