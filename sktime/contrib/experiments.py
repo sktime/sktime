@@ -21,6 +21,16 @@ import time
 from sklearn.metrics import accuracy_score as acc
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
+__author__ = "Anthony Bagnall"
+
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java, 
+https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
+but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
+and automatically compared to the results generated in java
+
+"""
+
+
 datasets = [
     "Adiac",
     "ArrowHead",
@@ -111,6 +121,14 @@ datasets = [
 
 
 def set_classifier(cls):
+    """
+    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
+    you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
+    This may well get superceded, it is just how e have always done it
+    :param cls: String indicating which classifier you want
+    :return: A classifier.
+
+    """
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest()
     elif  cls == 'TSF' or cls == 'tsf':
@@ -121,50 +139,41 @@ def set_classifier(cls):
 #        return dist.ElasticEnsemble()
     elif cls == 'TSF_Markus':
         return ensemble.TimeSeriesForestClassifier()
-    elif cls == 'RISE_Markus':
-        return make_rise() #change
     else:
         return 'UNKNOWN CLASSIFIER'
-def ar_coefs(x, maxlag=100):
-    # necessary to remove trend in fit method, otherwise drops trend in some of the cases
-    nlags = np.minimum(len(x) - 1, maxlag)
-    model = AR(endog=x)
-    return model.fit(maxlag=nlags, trend='nc').params
 
-def acf_coefs(x, maxlag=100):
-    nlags = np.minimum(len(x) - 1, maxlag)
-    return acf(x, nlags=nlags)
 
-def powerspectrum(x, **kwargs):
-    fft = np.fft.fft(x)
-    ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[:ps.shape[0] // 2]
-
-def make_rise():
-    steps = [
-        ('segment', RandomIntervalSegmenter(min_length=16)),
-        ('transform', TSFeatureUnion([
-#            ('ar', RowwiseTransformer(FunctionTransformer(func=ar_coefs, validate=False))),
-            ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
-            ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
-        ])),
-        ('tabularise', Tabulariser()),
-        ('clf', DecisionTreeClassifier())
-    ]
-    base_estimator = TSPipeline(steps)
-    return TimeSeriesForestClassifier(base_estimator=base_estimator)
-
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False):
-
+def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_files=False):
+    """
+    Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
+    trainFold<resampleID>.csv.
+    :param problem_path: Location of problem files, full path.
+    :param results_path: Location of where to write results. Any required directories will be created
+    :param cls_name: determines which classifier to use, as defined in set_classifier. This assumes predict_proba is
+    implemented, to avoid predicting twice. May break some classifiers though
+    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format, same for "_TEST"
+    :param resampleID: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
+    :param overwrite: if set to False, this will only build results if there is not a result file already present. If
+    True, it will overwrite anything already there
+    :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
+    https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
+    :param train_files: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
+    :return:
+    """
     if not overwrite:
         full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
         if os.path.exists(full_path):
             print(full_path+" Already exists and overwrite set to false")
             return
-    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN.ts')
-    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST.ts')
+    # TO DO: Automatically differentiate between problem types, currently only works with .ts
+    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN'+format)
+    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST'+format)
     classifier = set_classifier(cls_name)
     print(cls_name+" on "+dataset+" resample number "+str(resampleID))
+    # TO DO : Use Viktors code here
+    if train_files:
+        print(" Generating train files not yet implemented")
+
     start = int(round(time.time() * 1000))
     classifier.fit(trainX,trainY)
     build_time = int(round(time.time() * 1000))-start
@@ -188,7 +197,24 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
 
 def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
                                 predicted_class_vals, split='TEST', resample_seed=0, actual_probas=None, second_line="No Parameter Info",third_line="N/A",class_labels=None):
-
+    """
+    This is very alpha and I will probably completely change the structure once train fold is sorted, as that internally
+    does all this I think!
+    Output mirrors that produced by this Java
+    https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/experiments/Experiments.java
+    :param output_path:
+    :param classifier_name:
+    :param dataset_name:
+    :param actual_class_vals:
+    :param predicted_class_vals:
+    :param split:
+    :param resample_seed:
+    :param actual_probas:
+    :param second_line:
+    :param third_line:
+    :param class_labels:
+    :return:
+    """
     if len(actual_class_vals) != len(predicted_class_vals):
         raise IndexError("The number of predicted class values is not the same as the number of actual class values")
 
@@ -248,6 +274,9 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
 
 if __name__ == "__main__":
+    """
+    Example simple usage, with arguments input via script or hard coded for testing
+    """
 #Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1: #cluster run, this is fragile
         data_dir = sys.argv[1]
