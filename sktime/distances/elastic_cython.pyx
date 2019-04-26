@@ -230,7 +230,7 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
     m = len(first)
     n = len(second)
 
-    cdef np.ndarray[int, ndim=2] lcss = np.zeros([m + 1, n + 1], dtype=int)
+    cdef np.ndarray[int, ndim=2] lcss = np.zeros([m + 1, n + 1], dtype=np.int32)
 
     for i in range(m):
         for j in range(i - delta, i + delta + 1):
