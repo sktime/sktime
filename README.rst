@@ -1,5 +1,8 @@
 .. image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
     :target: https://travis-ci.com/alan-turing-institute/sktime   
+.. image:: https://badge.fury.io/py/sktime.svg
+    :target: https://badge.fury.io/py/sktime
+
 sktime
 ======
 
@@ -11,23 +14,31 @@ time series and panel data. Eventually, we would like to support:
 * Supervised/panel forecasting,
 * Time series segmentation,
 * Time-to-event and event risk modelling,
-* Unsupervised tasks such as motif discovery and anomaly detection, and diagnostic visualization,
-* On-line and streaming tasks, e.g., in variation of the above.
+* Unsupervised tasks such as motif discovery, anomaly detection and diagnostic visualization,
+* On-line and streaming tasks, e.g. in variation of the above.
 
 The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`_ repository on Github.
 
 Currently, modular modelling workflows for supervised learning with time series have been implemented.
-As next steps, we will move to forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf/>`_ interface for forecasting and supervised forecasting.
+As next steps, we will move to forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf/>`_ interface for classical and supervised forecasting forecasting.
 
 
 Installation
 ------------
-The package is currently not feature stable, and thus not available directly via PyPI. In the interim, please follow these steps to install the development version:
+The package is available via PyPI using:
 
-1. Download the repository if you have not done so already: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
-2. Move into the root directory: :code:`cd sktime`
-3. Make sure your local version is up-to-date: :code:`git pull`
-4. Optionally, activate destination environment for package, e.g. with conda: :code:`conda activate <env>`
+:code:`pip install sktime`
+
+But note that the package is actively being developed and currently not feature stable.
+
+Development version
+~~~~~~~~~~~~~~~~~~~
+To install the development version, follow these steps:
+
+1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
+2. Move into the root directory of the repository: :code:`cd sktime`
+3. Switch to development branch: :code:`git checkout dev`
+4. Make sure your local version is up-to-date: :code:`git pull`
 5. Install package: :code:`pip install .`
 
 
@@ -43,7 +54,7 @@ There are numerous different time series data related learning tasks, for exampl
 * Supervised/panel forecasting,
 * Time series segmentation.
 
-The sktime high-level interface aims to create a unified interface for these different learning tasks (partially inspired by the APIs of mlr and openML) through the following two objects:
+The sktime high-level interface aims to create a unified interface for these different learning tasks (partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`_ and `openML <https://openml.org>`_) through the following two objects:
 
 * :code:`Task` object that encapsulates meta-data from a dataset and the necessary information about the particular supervised learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
 * :code:`Strategy` objects that wrap low-level estimators and allows to use :code:`fit` and :code:`predict` methods using data and a task object.
@@ -57,14 +68,14 @@ Currently, the package implements:
 * Various state-of-the-art approaches to supervised learning with time series features,
 * Transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
 * Pipelining, allowing to chain multiple transformers with a final estimator,
-* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator, 
-* Off-shelf composites strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction.
+* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator,
+* Off-shelf composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction.
 
 
 Documentation
 -------------
 The full API documentation and an introduction can be found `here <https://alan-turing-institute.github.io/sktime/>`_.
-Tutorial notebooks for currently stable functionality are `here <https://github.com/alan-turing-institute/sktime/tree/master/examples>`_.
+Tutorial notebooks for currently stable functionality are in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`_ folder.
 
 
 Development road map
@@ -74,6 +85,7 @@ Development road map
 3. Integration of algorithms for classical forecasting (e.g. ARIMA), deep learning strategies, and third-party feature extraction tools,
 4. Design and implementation of specialised data-container for efficient handling of time series/panel data in a supervised learning workflow and separation of time series meta-data, re-utilising existing data-containers whenever possible,
 5. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods, based on the `mlaut <https://github.com/alan-turing-institute/pysf/>`_ design.
+
 
 Contributors
 ------------
