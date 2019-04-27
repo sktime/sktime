@@ -289,7 +289,7 @@ if __name__ == "__main__":
     else : #Local run
         data_dir = "E:/Data/sktimeFormat/TSCProblems/"
         results_dir = "E:/Results/UCR Debug/Python/"
-        classifier = "TSF"
+        classifier = "TSF_Markus"
         resample = 0
  #       for i in range(3, len(datasets)):
  #           dataset = datasets[i]
