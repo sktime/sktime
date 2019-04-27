@@ -2,17 +2,17 @@
 Unified high-level interface for various time series related learning tasks.
 """
 
-__author__ = ['Markus Löning', 'Sajay Ganesh']
-
 from sklearn.base import _pprint
-from sklearn.base import BaseEstimator
-from inspect import signature
 from sklearn.utils.validation import check_is_fitted
+from inspect import signature
 import pandas as pd
 import numpy as np
 
+from .forecasting.base import _BaseForecaster
+
 
 __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy']
+__author__ = ['Markus Löning', 'Sajay Ganesh']
 
 
 class _BaseTask:
@@ -97,7 +97,7 @@ class _BaseTask:
         metadata : pandas DataFrame
 
         """
-        # TODO replace whole pandas data container with separated metadata container
+        # TODO replace whole pandas data container as input argument with separated metadata container
 
         if not isinstance(metadata, pd.DataFrame):
             raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found {type(metadata)}')
@@ -151,7 +151,7 @@ class _BaseTask:
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
-    def get_params(self):
+    def _get_params(self):
         """Get parameters of the task.
 
         Returns
@@ -164,7 +164,7 @@ class _BaseTask:
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self.get_params(), offset=len(class_name), ),)
+        return '%s(%s)' % (class_name, _pprint(self._get_params(), offset=len(class_name), ),)
 
 
 class TSCTask(_BaseTask):
@@ -193,14 +193,32 @@ class ForecastingTask(_BaseTask):
         Data container
     target : str
         Name of target variable to forecast.
-    pred_horizon : list
-        List of steps ahead to forecast.
+    pred_horizon : list or int
+        Single step ahead or list of steps ahead to forecast.
+
+
+    obs_horizon : str
+        - If `fixed`, one or more fixed cut-off points from which to make forecasts
+        - If `moving`, iteratively
     features : list
         List of feature variables.
     """
-    def __init__(self, target, pred_horizon, features=None, metadata=None):
+    def __init__(self, target, pred_horizon=None, forecast_type=None, features=None, metadata=None):
         self._case = 'forecasting'
-        self._pred_horizon = np.sort(pred_horizon)
+
+        if isinstance(pred_horizon, list):
+            if not np.all([np.issubdtype(type(h), np.integer) for h in pred_horizon]):
+                raise ValueError('if pred_horizon is passed as a list, it has to be a list of integers')
+        elif np.issubdtype(type(pred_horizon), np.integer) or (pred_horizon is None):
+            pass
+        else:
+            raise ValueError('pred_horizon has to be either a list of integers or single integer')
+        self._pred_horizon = 1 if pred_horizon is None else np.sort(pred_horizon)
+
+        if forecast_type not in ('fixed', 'moving'):
+            raise ValueError('obs_horizon has to be either `fixed` or `moving`')
+        self._obs_horizon = forecast_type
+
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property
@@ -208,6 +226,12 @@ class ForecastingTask(_BaseTask):
         """Exposes the private variable _pred_horizon in a controlled way
         """
         return self._pred_horizon
+
+    @property
+    def obs_horizon(self):
+        """Exposes the private variable _pred_horizon in a controlled way
+        """
+        return self._obs_horizon
 
 
 class _BaseStrategy:
@@ -242,16 +266,16 @@ class _BaseStrategy:
 
         # check task compatibility with Strategy
         self._check_task_compatibility(task)
-
-        # update task if necessary
-        if task.metadata is None:
-            task.set_metadata(data)
         self._task = task
 
-        # strategy-specific implementation
-        return self._fit(task, data)
+        # update task if necessary
+        if self._task.metadata is None:
+            self._task.set_metadata(data)
 
-    def _fit(self, task, data):
+        # strategy-specific implementation
+        return self._fit(data)
+
+    def _fit(self, data):
         """Placeholder to be overwritten by specific strategies"""
         raise NotImplementedError()
 
@@ -265,7 +289,7 @@ class _BaseStrategy:
             raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
 
 
-class _TSSupervisedStrategy(_BaseStrategy):
+class _BaseSupervisedLearningStrategy(_BaseStrategy):
     """Abstract strategy class for time series supervised learning that accepts a low-level estimator to
     perform a given task.
 
@@ -277,19 +301,18 @@ class _TSSupervisedStrategy(_BaseStrategy):
     def __init__(self, estimator, check_input=True):
         self._estimator = estimator
         # self._traits = {"tags": None}  # traits for matching strategies with tasks
-        super(_TSSupervisedStrategy, self).__init__(check_input=check_input)
+        super(_BaseSupervisedLearningStrategy, self).__init__(check_input=check_input)
 
-    def _fit(self, task, data):
+    def _fit(self, data):
         # fit the estimator
         try:
-            X = data[task.features]
-            y = data[task.target]
+            X = data[self._task.features]
+            y = data[self._task.target]
         except KeyError:
             raise ValueError("Task <-> data mismatch. The target/features are not in the data")
 
         # fit the estimator
-        self._estimator.fit(X, y)
-        return self
+        return self._estimator.fit(X, y)
 
     def predict(self, data):
         """Predict the targets for the test data
@@ -331,19 +354,12 @@ class _TSSupervisedStrategy(_BaseStrategy):
                                _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
 
 
-class TSCStrategy(_TSSupervisedStrategy):
+class TSCStrategy(_BaseSupervisedLearningStrategy):
     """Strategy for time series classification
     """
     def __init__(self, estimator):
         super(TSCStrategy, self).__init__(estimator)
         self._case = "TSC"
-
-
-class _BaseForecaster(BaseEstimator):
-    """Base class for forecasters, for identification.
-    """
-    _estimator_type = "forecaster"
-    pass
 
 
 class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
@@ -355,11 +371,11 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
 
         self._is_updated = False
         self._target_idx = None
-        self._model = None
-        self._fitted_model = None
-        self._updated_model = None
+        self._estimator = None
+        self._fitted_estimator = None
+        self._updated_estimator = None
 
-    def _fit(self, task, data):
+    def _fit(self, data):
         if self.check_input:
             self._check_fit_data(data)
 
@@ -377,7 +393,8 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
             self._check_update_data(data)
 
         data = self._transform_data(data)
-        self._update(data)  # forecaster specific implementation
+        self._update(data)  # strategy specific implementation
+        self._is_updated = True
         return self
 
     def predict(self):
@@ -409,10 +426,6 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
         if not (is_after and is_same_type):
             raise ValueError('Data passed to `update` does not match the data passed to `fit`')
 
-    def __repr__(self):
-        strategy_name = self.__class__.__name__
-        return '%s(%s)' % (strategy_name, _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
-
     def _predict(self):
         """Placeholder to be overwritten by specific strategies"""
         raise NotImplementedError()
@@ -422,32 +435,45 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
         """
         return pd.Series(*data[self._task.target].tolist())
 
+    def __repr__(self):
+        strategy_name = self.__class__.__name__
+        return '%s(%s)' % (strategy_name, _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
 
-class _ClassicalSingleSeriesForecastingStrategy(_BaseForecastingStrategy):
+
+class _SingleSeriesForecastingStrategy(_BaseForecastingStrategy):
     """Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
     forecasting techniques without exogenous variables.
     """
 
     def _predict(self):
-        # Convert step-ahead prediction horizon into zero-based index
-        pred_horizon = self._task.pred_horizon
-        pred_horizon_idx = pred_horizon - np.min(pred_horizon)
 
-        if self._is_updated:
-            # Predict updated (pre-initialised) model with start and end values relative to end of train series
-            start = self._task.pred_horizon[0]
-            end = self._task.pred_horizon[-1]
-            pred = self._updated_model.predict(start=start, end=end)
+        if self._task.pred_horizon == 'fixed':
+            # Convert step-ahead prediction horizon into zero-based index
+            pred_horizon = self._task.pred_horizon
+            pred_horizon_idx = pred_horizon - np.min(pred_horizon)
+
+            if self._is_updated:
+                # Predict updated (pre-initialised) model with start and end values relative to end of train series
+                start = self._task.pred_horizon[0]
+                end = self._task.pred_horizon[-1]
+                pred = self._updated_estimator.predict(start=start, end=end)
+
+            else:
+                # Predict fitted model with start and end points relative to start of train series
+                pred_horizon = pred_horizon + len(self._target_idx) - 1
+                start = pred_horizon[0]
+                end = pred_horizon[-1]
+                pred = self._fitted_estimator.predict(start=start, end=end)
+
+            # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
+            return pred.iloc[pred_horizon_idx]
+
+        elif self._task.obs_horizon == 'moving':
+            raise NotImplementedError()
 
         else:
-            # Predict fitted model with start and end points relative to start of train series
-            pred_horizon = pred_horizon + len(self._target_idx) - 1
-            start = pred_horizon[0]
-            end = pred_horizon[-1]
-            pred = self._fitted_model.predict(start=start, end=end)
-
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        return pred.iloc[pred_horizon_idx]
+            # TODO necessary to check this here or can we safely assume obs_horizon is always either fixed or moving
+            raise ValueError('obs_horizon of task ')
 
     def _update(self, data):
         """Placeholder to be overwritten by specific strategies"""

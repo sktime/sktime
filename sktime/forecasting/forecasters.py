@@ -1,5 +1,5 @@
 from ..highlevel import _BaseForecastingStrategy
-from ..highlevel import _ClassicalSingleSeriesForecastingStrategy
+from ..highlevel import _SingleSeriesForecastingStrategy
 
 import numpy as np
 import pandas as pd
@@ -10,14 +10,23 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
-__all__ = ["ARIMAForecaster", "ExponentialSmoothingForecaster", "ForecastingEnsemble"]
+__all__ = ["ARIMAForecaster", "ExponentialSmoothingForecaster", "EnsembleForecaster"]
+__author__ = ['Markus Löning']
 
 
-class ARIMAForecaster(_ClassicalSingleSeriesForecastingStrategy):
-    def __init__(self, order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
+class ARIMAForecaster(_SingleSeriesForecastingStrategy):
+    def __init__(self, order=None, seasonal_order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
                  maxiter=1000):
+
+        if order is None:
+            raise ValueError('Must provide order of model')
         self._check_order(order, 3)
+
+        if seasonal_order is not None:
+            self._check_order(seasonal_order, 4)
+
         self.order = order
+        self.seasonal_order = seasonal_order
         self.trend = trend
         self.enforce_stationarity = enforce_stationarity
         self.enforce_invertibility = enforce_invertibility
@@ -25,39 +34,43 @@ class ARIMAForecaster(_ClassicalSingleSeriesForecastingStrategy):
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
     def _fit_estimator(self, data):
-        self.model = SARIMAX(data,
-                             order=self.order,
-                             trend=self.trend,
-                             enforce_stationarity=self.enforce_stationarity,
-                             enforce_invertibility=self.enforce_invertibility)
-        self._fitted_model = self.model.fit(maxiter=self.maxiter)
+        self._estimator = SARIMAX(data,
+                                  order=self.order,
+                                  seasonal_order=self.seasonal_order,
+                                  trend=self.trend,
+                                  enforce_stationarity=self.enforce_stationarity,
+                                  enforce_invertibility=self.enforce_invertibility)
+        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter)
         return self
 
     def _update(self, data):
-        # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788
+        # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788 and
+        #  https://github.com/statsmodels/statsmodels/issues/3318
 
-        # Update model.
-        model = SARIMAX(data,
-                        order=self.order,
-                        trend=self.trend,
-                        enforce_stationarity=self.enforce_stationarity,
-                        enforce_invertibility=self.enforce_invertibility)
-        model.initialize_known(self._fitted_model.predicted_state[:, -2],
-                               self._fitted_model.predicted_state_cov[:, :, -2])
+        # Update estimator.
+        estimator = SARIMAX(data,
+                            order=self.order,
+                            seasonal_order=self.seasonal_order,
+                            trend=self.trend,
+                            enforce_stationarity=self.enforce_stationarity,
+                            enforce_invertibility=self.enforce_invertibility)
+        estimator.initialize_known(self._fitted_estimator.predicted_state[:, -1],
+                                   self._fitted_estimator.predicted_state_cov[:, :, -1])
 
         # Filter given fitted parameters.
-        self._updated_model = model.smooth(self._fitted_model.params)
-        self._is_updated = True
+        self._updated_estimator = estimator.smooth(self._fitted_estimator.params)
+        return self
 
     @staticmethod
     def _check_order(order, n):
         if not (isinstance(order, tuple) and (len(order) == n)):
             raise ValueError(f'Order must be a tuple of length f{n}')
+
         if not all(np.issubdtype(type(k), np.integer) for k in order):
             raise ValueError(f'All values in order must be integers')
 
 
-class ExponentialSmoothingForecaster(_ClassicalSingleSeriesForecastingStrategy):
+class ExponentialSmoothingForecaster(_SingleSeriesForecastingStrategy):
     """Holt-Winters exponential smoothing forecaster. Default setting use simple exponential smoothing
     without trend and seasonality components.
 
@@ -100,13 +113,13 @@ class ExponentialSmoothingForecaster(_ClassicalSingleSeriesForecastingStrategy):
         super(ExponentialSmoothingForecaster, self).__init__(check_input=check_input)
 
     def _fit_estimator(self, data):
-        self.model = ExponentialSmoothing(data, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
-                                          seasonal_periods=self.seasonal_periods)
-        self._fitted_model = self.model.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
-                                           smoothing_slope=self.smoothing_slope,
-                                           smoothing_seasonal=self.smooting_seasonal, damping_slope=self.damping_slope,
-                                           use_boxcox=self.use_boxcox, remove_bias=self.remove_bias,
-                                           use_basinhopping=self.use_basinhopping)
+        self.estimator = ExponentialSmoothing(data, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
+                                              seasonal_periods=self.seasonal_periods)
+        self._fitted_estimator = self.estimator.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
+                                                    smoothing_slope=self.smoothing_slope,
+                                                    smoothing_seasonal=self.smooting_seasonal, damping_slope=self.damping_slope,
+                                                    use_boxcox=self.use_boxcox, remove_bias=self.remove_bias,
+                                                    use_basinhopping=self.use_basinhopping)
         return self
 
     def _update(self, data):
@@ -114,7 +127,7 @@ class ExponentialSmoothingForecaster(_ClassicalSingleSeriesForecastingStrategy):
         raise NotImplementedError()
 
 
-class DummyForecaster(_ClassicalSingleSeriesForecastingStrategy):
+class DummyForecaster(_SingleSeriesForecastingStrategy):
     def __init__(self, strategy='mean', check_input=True):
 
         allowed_strategies = ('mean', 'last', 'seasonal_last', 'linear')
@@ -126,22 +139,26 @@ class DummyForecaster(_ClassicalSingleSeriesForecastingStrategy):
 
     def _fit_estimator(self, data):
         if self.strategy == 'mean':
-            self.model = ExponentialSmoothing(data)
-            self._fitted_model = self.model.fit(smoothing_level=0)
+            self.estimator = ExponentialSmoothing(data)
+            self._fitted_estimator = self.estimator.fit(smoothing_level=0)
+
         if self.strategy == 'last':
-            self.model = ExponentialSmoothing(data)
-            self._fitted_model = self.model.fit(smoothing_level=1)
+            self.estimator = ExponentialSmoothing(data)
+            self._fitted_estimator = self.estimator.fit(smoothing_level=1)
+
         if self.strategy == 'seasonal_last':
-            # TODO how to pass seasonal frequency for ARIMA model
+            # TODO how to pass seasonal frequency for ARIMA estimator
             # if not hasattr(data, 'index'):
             #     raise ValueError('Cannot determine seasonal frequency from index of passed data')
             # s = data.index.freq
-            # self.model = SARIMAX(data, seasonal_order=(0, 1, 0, s), trend='n')
-            # self._fitted_model = self.model.fit()
+            # self.estimator = SARIMAX(data, seasonal_order=(0, 1, 0, s), trend='n')
+            # self._fitted_estimator = self.estimator.fit()
             raise NotImplementedError()
+
         if self.strategy == 'linear':
-            self.model = SARIMAX(data, order=(0, 0, 0), trend='t')
-            self._fitted_model = self.model.fit()
+            self.estimator = SARIMAX(data, order=(0, 0, 0), trend='t')
+            self._fitted_estimator = self.estimator.fit()
+
         return self
 
     def _update(self, data):
@@ -149,7 +166,7 @@ class DummyForecaster(_ClassicalSingleSeriesForecastingStrategy):
         raise NotImplementedError()
 
 
-class ForecastingEnsemble(_BaseForecastingStrategy):
+class EnsembleForecaster(_BaseForecastingStrategy):
     """Ensemble of forecasters.
 
     Parameters
@@ -164,10 +181,10 @@ class ForecastingEnsemble(_BaseForecastingStrategy):
         self.estimators = estimators
         self.weights = weights
         self.fitted_estimators_ = []
-        super(ForecastingEnsemble, self).__init__(check_input=check_input)
+        super(EnsembleForecaster, self).__init__(check_input=check_input)
 
     def _fit_strategy(self, data):
-        # Fit models
+        # Fit estimators
         for _, estimator in self.estimators:
             fitted_estimator = estimator.fit(self._task, data)
             self.fitted_estimators_.append(fitted_estimator)
