@@ -6,6 +6,8 @@ import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
+#__all__ = ["BossEnsemble","BossIndividual","BOSSTransform"]
+
 
 class BOSSEnsemble(BaseEstimator):
     __author__ = "Matthew Middlehurst"
@@ -67,7 +69,7 @@ class BOSSEnsemble(BaseEstimator):
                  random_state=None,
                  dim_to_use=0,
                  threshold=0.92,
-                 max_ensemble_size=500,
+                 max_ensemble_size=250,
                  wordLengths=[16, 14, 12, 10, 8],
                  alphabetSize=4
                  ):
@@ -121,8 +123,13 @@ class BOSSEnsemble(BaseEstimator):
         num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+#        self.classes_ = list(set(y))
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
+
+
+#        for index, classVal in enumerate(self.classes_):
+#            self.class_dictionary[classVal] = index
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length/4
@@ -204,8 +211,8 @@ class BOSSEnsemble(BaseEstimator):
 
         for i, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
-            for n, val in enumerate(preds):
-                sums[n,self.class_dictionary.get(val, -1)] += 1
+            for i in range(0,X.shape[0]):
+                sums[i,self.class_dictionary.get(str(preds[i]))] += 1
 
         dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
         return dists
@@ -339,26 +346,37 @@ class BOSSIndividual:
 
     def setWordLen(self, wordLen):
         self.wordLength = wordLen
-        self.transform.wordLength = wordLen
+        self.transform.word_length = wordLen
 
 class BOSSTransform():
-    """ Boss Transform for whole series
-
+    """ Boss Transform for a fixed set of parameters
+    An internal class not to be used outside of the BOSS transform
     """
-    def __init__(self, windowSize, wordLength, alphabetSize, norm):
+    def __init__(self, window_size, word_length, alphabet_size, norm):
         self.words = []
         self.breakpoints = []
 
-        self.inverseSqrtWindowSize = 1 / math.sqrt(windowSize)
-        self.windowSize = windowSize
-        self.wordLength = wordLength
-        self.alphabetSize = alphabetSize
+        self.inverse_sqrt_win_size = 1 / math.sqrt(window_size)
+        self.window_size = window_size
+        self.word_length = word_length
+        self.alphabet_size = alphabet_size
         self.norm = norm
 
         self.num_insts = 0
         self.num_atts = 0
 
     def fit(self, X):
+        """Build a histogram
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+
+        Returns
+        -------
+        self : object
+         """
+
         self.num_insts, self.num_atts = X.shape
         self.breakpoints = self.MCB(X)
 
@@ -393,48 +411,68 @@ class BOSSTransform():
         return bag
 
     def MCB(self, X):
-        numWindowsPerInst = math.ceil(self.num_atts / self.windowSize)
-        dft = np.zeros((self.num_insts, numWindowsPerInst, int((self.wordLength / 2)*2)))
+        """
+
+
+        :param X: the training data
+        :return:
+        """
+        num_windows_per_inst = math.ceil(self.num_atts / self.window_size)
+        dft = np.zeros((self.num_insts, num_windows_per_inst, int((self.word_length / 2) * 2)))
 
         for i in range(X.shape[0]):
-            split = np.split(X[i, :], np.linspace(self.windowSize, self.windowSize*(numWindowsPerInst-1),
-                                              numWindowsPerInst-1, dtype=np.int_))
-            split[-1] = X[i, self.num_atts - self.windowSize:self.num_atts]
+            split = np.split(X[i, :], np.linspace(self.window_size, self.window_size * (num_windows_per_inst - 1),
+                                                  num_windows_per_inst - 1, dtype=np.int_))
+            split[-1] = X[i, self.num_atts - self.window_size:self.num_atts]
 
             for n, row in enumerate(split):
-                dft[i, n] = self.DFT(row)
+                dft[i, n] = self.discrete_fourier_transform(row)
 
-        totalNumWindows = self.num_insts * numWindowsPerInst
-        breakpoints = np.zeros((self.wordLength, self.alphabetSize))
+        total_num_windows = self.num_insts * num_windows_per_inst
+        breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
-        for letter in range(self.wordLength):
-            column = np.zeros(totalNumWindows)
+        for letter in range(self.word_length):
+            column = np.zeros(total_num_windows)
 
             for inst in range(self.num_insts):
-                for window in range(numWindowsPerInst):
-                    column[(inst * numWindowsPerInst) + window] = round(dft[inst][window][letter] * 100) / 100
+                for window in range(num_windows_per_inst):
+                    column[(inst * num_windows_per_inst) + window] = round(dft[inst][window][letter] * 100) / 100
 
             column = np.sort(column)
 
-            binIndex = 0
-            targetBinDepth = totalNumWindows / self.alphabetSize
+            bin_index = 0
+            target_bin_depth = total_num_windows / self.alphabet_size
 
-            for bp in range(self.alphabetSize - 1):
-                binIndex += targetBinDepth
-                breakpoints[letter][bp] = column[int(binIndex)]
+            for bp in range(self.alphabet_size - 1):
+                bin_index += target_bin_depth
+                breakpoints[letter][bp] = column[int(bin_index)]
 
-            breakpoints[letter][self.alphabetSize - 1] = sys.float_info.max
+            breakpoints[letter][self.alphabet_size - 1] = sys.float_info.max
 
         return breakpoints
 
-    def DFT(self, series):
+    def discrete_fourier_transform(self, series):
+        """ Performs a discrete fourier transform using standard O(n^2) transform
+        if self.norm is True, then the first term of the DFT is ignored
+
+        TO DO: Use a fast fourier transform
+        Input
+        -------
+        X : The training input samples.  array-like or sparse matrix of shape = [n_samps, num_atts]
+
+        Returns
+        -------
+        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length num_atts or
+        num_atts-2 if if self.norm is True
+        """
+
         length = len(series)
-        outputLength = int(self.wordLength / 2)
+        outputLength = int(self.word_length / 2)
         start = 1 if self.norm else 0
 
         std = np.std(series)
         if std == 0: std = 1
-        normalisingFactor = self.inverseSqrtWindowSize / std
+        normalising_factor = self.inverse_sqrt_win_size / std
 
         dft = np.zeros(outputLength * 2)
 
@@ -445,13 +483,13 @@ class BOSSTransform():
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
 
-        dft *= normalisingFactor
+        dft *= normalising_factor
 
         return dft
 
     def DFTunnormed(self, series):
         length = len(series)
-        outputLength = int(self.wordLength / 2)
+        outputLength = int(self.word_length / 2)
         start = 1 if self.norm else 0
 
         dft = np.zeros(outputLength * 2)
@@ -466,16 +504,21 @@ class BOSSTransform():
         return dft
 
     def MFT(self, series):
+        """
+
+        :param series:
+        :return:
+        """
         startOffset = 2 if self.norm else 0
-        l = self.wordLength + self.wordLength % 2
+        l = self.word_length + self.word_length % 2
         phis = np.zeros(l)
 
         for i in range(0, l, 2):
             half = -(i + startOffset)/2
-            phis[i] = math.cos(2 * math.pi * half / self.windowSize);
-            phis[i+1] = -math.sin(2 * math.pi * half / self.windowSize)
+            phis[i] = math.cos(2 * math.pi * half / self.window_size);
+            phis[i+1] = -math.sin(2 * math.pi * half / self.window_size)
 
-        end = max(1, len(series) - self.windowSize + 1)
+        end = max(1, len(series) - self.window_size + 1)
         stds = self.calcIncrementalMeanStd(series, end)
         transformed = np.zeros((end, l))
         mftData = None
@@ -483,16 +526,16 @@ class BOSSTransform():
         for i in range(end):
             if i > 0:
                 for n in range(0, l, 2):
-                    real1 = mftData[n] + series[i + self.windowSize - 1] - series[i - 1]
+                    real1 = mftData[n] + series[i + self.window_size - 1] - series[i - 1]
                     imag1 = mftData[n + 1]
                     real = real1 * phis[n] - imag1 * phis[n + 1]
                     imag = real1 * phis[n + 1] + phis[n] * imag1
                     mftData[n] = real
                     mftData[n + 1] = imag
             else:
-                mftData = self.DFTunnormed(series[0:self.windowSize])
+                mftData = self.DFTunnormed(series[0:self.window_size])
 
-            normalisingFactor = (1 / stds[i] if stds[i] > 0 else 1) * self.inverseSqrtWindowSize;
+            normalisingFactor = (1 / stds[i] if stds[i] > 0 else 1) * self.inverse_sqrt_win_size;
             transformed[i] = mftData * normalisingFactor;
 
         return transformed
@@ -504,19 +547,19 @@ class BOSSTransform():
         sum = 0
         squareSum = 0
 
-        for ww in range(self.windowSize):
+        for ww in range(self.window_size):
             sum += series[ww]
             squareSum += series[ww] * series[ww]
 
-        rWindowLength = 1 / self.windowSize
+        rWindowLength = 1 / self.window_size
         means[0] = sum * rWindowLength
         buf = squareSum * rWindowLength - means[0] * means[0]
         stds[0] = math.sqrt(buf) if buf > 0 else 0
 
         for w in range(1, end):
-            sum += series[w + self.windowSize - 1] - series[w - 1]
+            sum += series[w + self.window_size - 1] - series[w - 1]
             means[w] = sum * rWindowLength
-            squareSum += series[w + self.windowSize - 1] * series[w + self.windowSize - 1] - series[w - 1] * series[w - 1]
+            squareSum += series[w + self.window_size - 1] * series[w + self.window_size - 1] - series[w - 1] * series[w - 1]
             buf = squareSum * rWindowLength - means[w] * means[w]
             stds[w] = math.sqrt(buf) if buf > 0 else 0
 
@@ -525,8 +568,8 @@ class BOSSTransform():
     def createWord(self, dft):
         word = BitWord()
 
-        for i in range(self.wordLength):
-            for bp in range(self.alphabetSize):
+        for i in range(self.word_length):
+            for bp in range(self.alphabet_size):
                 if dft[i] <= self.breakpoints[i][bp]:
                     word.push(bp)
                     break
