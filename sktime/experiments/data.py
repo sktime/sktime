@@ -6,6 +6,8 @@ import re
 import pandas as pd
 from abc import ABC
 import pickle
+import numpy as np
+import csv
 class DatasetHDD:
     """
     Another class for holding the data
@@ -96,7 +98,44 @@ class DatasetLoadFromDir:
             data.append(dts)
         return data
     
+class Result:
+    """
+    Used for passing results to the analyse results class
+    """
 
+    def __init__(self,dataset_name, strategy_name, y_true, y_pred):
+        """
+        Parameters
+        ----------
+        dataset_name: string
+            Name of the dataset
+        strategy_name: string
+            name of the strategy
+        y_true: list
+            True labels
+        y_pred: list
+            predictions
+        """
+        self._dataset_name = dataset_name
+        self._strategy_name = strategy_name
+        self._y_true = y_true
+        self._y_pred = y_pred
+
+    @property
+    def dataset_name(self):
+        return self._dataset_name
+    
+    @property
+    def strategy_name(self):
+        return self._strategy_name
+    
+    @property
+    def y_true(self):
+        return self._y_true
+
+    @property
+    def y_pred(self):
+        return self._y_pred
 # class DataHolder:
 #     """
 #     Class for holdig the data, schema, resampling splits and metadata
@@ -295,11 +334,23 @@ class ResultHDD(SKTimeResult):
     def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
         if not os.path.exists(self._results_save_dir):
             os.makedirs(self._results_save_dir)
+        #TODO BUG: write write_results_to_uea_format does not write the results property unless the probas are provided as well.
+        #Dummy probas to make the write_results_to_uea_format function work
+        y_true = list(map(int, y_true))
+        y_pred = list(map(int, y_pred))
+        num_class_true = np.max(y_true)
+        num_class_pred = np.max(y_pred)
+        num_classes = max(num_class_pred, num_class_true)
+        num_predictions = len(y_pred)
+        probas = (num_predictions, num_classes)
+        probas = np.zeros(probas)
+
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
                                     actual_class_vals=y_true,
                                     predicted_class_vals=y_pred,
+                                    actual_probas = probas,
                                     resample_seed=cv_fold)
 
 
@@ -316,6 +367,39 @@ class ResultHDD(SKTimeResult):
         #TODO pickling will not work for all strategies
         pickle.dump(strategy, open(os.path.join(save_path, strategy.name + 'cv_fold'+str(cv_fold)+ '.p'),"wb"))
     
-    def load(self, path):
-        #TODO fix load from_uae_format function
-        pass
+    def load(self):
+        """
+        Returns
+        -------
+        list:
+            sktime results
+        """
+        results = []
+        for r,d,f in os.walk(self._results_save_dir):
+            for file_to_load in f:
+                if file_to_load.endswith(".csv"):
+                    #found .csv file. Load it and create results object
+                    path_to_load = os.path.join(r, file_to_load)
+                    current_row= 0
+                    strategy_name = ""
+                    dataset_name = ""
+                    y_true = []
+                    y_pred = []
+                    with open(path_to_load) as csvfile:
+                        readCSV = csv.reader(csvfile, delimiter=',')
+                        for row in readCSV:
+                            if current_row == 0:
+                                strategy_name = row[0]
+                                dataset_name = row[1]
+                                current_row +=1
+                            elif current_row >=4:
+                                y_true.append(row[0])
+                                y_pred.append(row[1])
+                                current_row +=1
+                            else:
+                                current_row +=1
+                    #create result object and append
+                    result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true, y_pred=y_pred)
+                    results.append(result)
+        
+        return results

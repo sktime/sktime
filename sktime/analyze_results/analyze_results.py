@@ -46,13 +46,13 @@ class AnalyseResults(object):
         losses = Losses(metric)
         for res in self._results_list:
 
-            predictions = res.predictions
-            predictions = list(map(float, predictions))
-            y_test = res.true_labels
-            y_test = list(map(float, y_test))
+            y_pred = res.y_pred
+            y_pred = list(map(float, y_pred))
+            y_true = res.y_true
+            y_true = list(map(float, y_true))
 
-            losses.evaluate(predictions=predictions, 
-                            true_labels=y_test,
+            losses.evaluate(predictions=y_pred, 
+                            true_labels=y_true,
                             dataset_name=res.dataset_name,
                             strategy_name=res.strategy_name)
         return losses.get_losses()
