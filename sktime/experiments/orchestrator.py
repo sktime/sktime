@@ -42,11 +42,6 @@ class Orchestrator:
             If True makes predictions after the estimator is trained
         save_strategies: Boolean
             If True saves the trained strategies on the disk
-        
-        Returns
-        -------
-        list:
-            list of sktime result objects used for analyse results class
         """
         
         for task, data in zip(self._tasks, self._datasets):
@@ -65,9 +60,10 @@ class Orchestrator:
                                           y_pred=y_pred.tolist(),
                                           cv_fold=cv_fold)
                     if save_strategies:
-                        self._result.save_trained_strategy(strategy=strategy, dataset_name=data.dataset_name, cv_fold=cv_fold)
+                        strategy.save(dataset_name=data.dataset_name, 
+                                      cv_fold=cv_fold,
+                                      strategies_save_dir=self._result.strategies_save_dir)
 
-        return self._result.load()
     def predict(self):
         """
         TODO load saved strategies and make predictions

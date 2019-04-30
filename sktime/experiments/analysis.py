@@ -10,7 +10,7 @@ from scipy.stats import ranksums
 from sklearn.metrics import accuracy_score, mean_squared_error
 import scikit_posthocs as sp
 
-from sktime.analyze_results.losses import Losses
+from sktime.experiments.losses import Losses
 
 import matplotlib.pyplot as plt
 
@@ -20,14 +20,14 @@ class AnalyseResults(object):
 
     Parameters
     ----------
-    results: list
-        list of sktime result objects
+    result: sktime result object
+        class for storing the results
     """
 
     def __init__(self, 
-                 results_list):
+                 results):
 
-        self._results_list = results_list
+        self._results_list = results.load()
     
     def prediction_errors(self, metric):
         """
