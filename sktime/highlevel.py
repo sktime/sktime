@@ -10,9 +10,11 @@ import numpy as np
 
 from .forecasting.base import _BaseForecaster
 
-
 __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy']
 __author__ = ['Markus Löning', 'Sajay Ganesh']
+
+# TODO implement compatibility checks between metadata and task: e.g. for tsc, if features are present
+# TODO implement task-strategy compatibility lookup registry using strategy traits
 
 
 class _BaseTask:
@@ -55,39 +57,6 @@ class _BaseTask:
         # TODO if metadata is a mutable object itself, its contents may still be mutable
         return self._metadata
 
-    # @metadata.setter
-    # def metadata(self, metadata):
-    #     if not isinstance(metadata, pd.DataFrame):
-    #         raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found {type(metadata)}')
-    #
-    #     # only set metadata if metadata is not already set, otherwise raise error
-    #     if self._metadata is None:
-    #
-    #         # complete feature information if not already given
-    #         if self.features is None:
-    #             self._features = metadata.columns.drop(self.target)
-    #
-    #             if isinstance(self, TSCTask):
-    #                 if self.features is None:
-    #                     raise ValueError(f'At least 1 feature column must be given for task of type {type(TSCTask)}')
-    #
-    #         # otherwise check for consistency against given columns names in metadata
-    #         else:
-    #             if not np.all(self.features.isin(metadata.columns)):
-    #                 raise ValueError(f'Features: {list(self.features)} cannot be found in metadata')
-    #
-    #         # set metadata
-    #         self._metadata = {
-    #             "nrow": metadata.shape[0],
-    #             "ncol": metadata.shape[1],
-    #             "target_type": {self.target: type(i) for i in metadata[self.target]},
-    #             "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
-    #         }
-    #
-    #     # if metadata is already set, raise error
-    #     else:
-    #         raise AttributeError('Metadata is already set and can only be set once')
-
     def set_metadata(self, metadata):
         """Provide metadata to task if not already done so in construction, especially useful in automatic orchestration
         and benchmarking where the metadata is not available in advance.
@@ -103,20 +72,17 @@ class _BaseTask:
             raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found {type(metadata)}')
 
         # only set metadata if metadata is not already set, otherwise raise error
-        if self._metadata is None:
+        if self._metadata is not None:
+            raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
+                                 'metadata')
 
-            # complete feature information if not already given
+        else:
+            # complete feature information from metadata if not already given
             if self.features is None:
                 self._features = metadata.columns.drop(self.target)
 
-                if isinstance(self, TSCTask):
-                    if self.features is None:
-                        raise ValueError(f'At least 1 feature column must be given for task of type {type(TSCTask)}')
-
-            # otherwise check for consistency against given columns names in metadata
-            else:
-                if not np.all(self.features.isin(metadata.columns)):
-                    raise ValueError(f'Features: {list(self.features)} cannot be found in metadata')
+            # check for consistency against given columns names in metadata
+            self._check_compatibility_with_data(metadata)
 
             # set metadata
             self._metadata = {
@@ -125,11 +91,6 @@ class _BaseTask:
                 "target_type": {self.target: type(i) for i in metadata[self.target]},
                 "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
             }
-
-        # if metadata is already set, raise error
-        else:
-            raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
-                                 'metadata')
 
     @classmethod
     def _get_param_names(cls):
@@ -165,6 +126,15 @@ class _BaseTask:
     def __repr__(self):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self._get_params(), offset=len(class_name), ),)
+
+    def _check_compatibility_with_data(self, metadata):
+        """Helper function to check compatibility of task with data"""
+        if isinstance(self, TSCTask):
+            if len(self.features) == 0:
+                raise ValueError(f'At least 1 feature column must be given for task of type {type(self)}')
+
+        if not np.all(self.features.isin(metadata.columns)):
+            raise ValueError(f'Features: {list(self.features)} cannot be found in metadata')
 
 
 class TSCTask(_BaseTask):
@@ -203,7 +173,7 @@ class ForecastingTask(_BaseTask):
     features : list
         List of feature variables.
     """
-    def __init__(self, target, pred_horizon=None, forecast_type=None, features=None, metadata=None):
+    def __init__(self, target, pred_horizon=None, features=None, metadata=None):
         self._case = 'forecasting'
 
         if isinstance(pred_horizon, list):
@@ -215,10 +185,6 @@ class ForecastingTask(_BaseTask):
             raise ValueError('pred_horizon has to be either a list of integers or single integer')
         self._pred_horizon = 1 if pred_horizon is None else np.sort(pred_horizon)
 
-        if forecast_type not in ('fixed', 'moving'):
-            raise ValueError('obs_horizon has to be either `fixed` or `moving`')
-        self._obs_horizon = forecast_type
-
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property
@@ -226,12 +192,6 @@ class ForecastingTask(_BaseTask):
         """Exposes the private variable _pred_horizon in a controlled way
         """
         return self._pred_horizon
-
-    @property
-    def obs_horizon(self):
-        """Exposes the private variable _pred_horizon in a controlled way
-        """
-        return self._obs_horizon
 
 
 class _BaseStrategy:
@@ -357,8 +317,8 @@ class _BaseSupervisedLearningStrategy(_BaseStrategy):
 class TSCStrategy(_BaseSupervisedLearningStrategy):
     """Strategy for time series classification
     """
-    def __init__(self, estimator):
-        super(TSCStrategy, self).__init__(estimator)
+    def __init__(self, estimator, check_input=True):
+        super(TSCStrategy, self).__init__(estimator, check_input=check_input)
         self._case = "TSC"
 
 
@@ -446,34 +406,25 @@ class _SingleSeriesForecastingStrategy(_BaseForecastingStrategy):
     """
 
     def _predict(self):
+        # Convert step-ahead prediction horizon into zero-based index
+        pred_horizon = self._task.pred_horizon
+        pred_horizon_idx = pred_horizon - np.min(pred_horizon)
 
-        if self._task.pred_horizon == 'fixed':
-            # Convert step-ahead prediction horizon into zero-based index
-            pred_horizon = self._task.pred_horizon
-            pred_horizon_idx = pred_horizon - np.min(pred_horizon)
-
-            if self._is_updated:
-                # Predict updated (pre-initialised) model with start and end values relative to end of train series
-                start = self._task.pred_horizon[0]
-                end = self._task.pred_horizon[-1]
-                pred = self._updated_estimator.predict(start=start, end=end)
-
-            else:
-                # Predict fitted model with start and end points relative to start of train series
-                pred_horizon = pred_horizon + len(self._target_idx) - 1
-                start = pred_horizon[0]
-                end = pred_horizon[-1]
-                pred = self._fitted_estimator.predict(start=start, end=end)
-
-            # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-            return pred.iloc[pred_horizon_idx]
-
-        elif self._task.obs_horizon == 'moving':
-            raise NotImplementedError()
+        if self._is_updated:
+            # Predict updated (pre-initialised) model with start and end values relative to end of train series
+            start = self._task.pred_horizon[0]
+            end = self._task.pred_horizon[-1]
+            pred = self._updated_estimator.predict(start=start, end=end)
 
         else:
-            # TODO necessary to check this here or can we safely assume obs_horizon is always either fixed or moving
-            raise ValueError('obs_horizon of task ')
+            # Predict fitted model with start and end points relative to start of train series
+            pred_horizon = len(self._target_idx) - 1 + pred_horizon
+            start = pred_horizon[0]
+            end = pred_horizon[-1]
+            pred = self._fitted_estimator.predict(start=start, end=end)
+
+        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
+        return pred.iloc[pred_horizon_idx]
 
     def _update(self, data):
         """Placeholder to be overwritten by specific strategies"""
@@ -487,3 +438,4 @@ class _SingleSeriesForecastingStrategy(_BaseForecastingStrategy):
     def _fit_estimator(self, data):
         """Placeholder to be overwritten by specific strategies"""
         raise NotImplementedError()
+

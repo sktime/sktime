@@ -15,18 +15,18 @@ __author__ = ['Markus Löning']
 
 
 class ARIMAForecaster(_SingleSeriesForecastingStrategy):
-    def __init__(self, order=None, seasonal_order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
+    def __init__(self, order, seasonal_order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
                  maxiter=1000):
 
-        if order is None:
-            raise ValueError('Must provide order of model')
         self._check_order(order, 3)
+        self.order = order
 
         if seasonal_order is not None:
             self._check_order(seasonal_order, 4)
+            self.seasonal_order = seasonal_order
+        else:
+            self.seasonal_order = (0, 0, 0, 0)
 
-        self.order = order
-        self.seasonal_order = seasonal_order
         self.trend = trend
         self.enforce_stationarity = enforce_stationarity
         self.enforce_invertibility = enforce_invertibility
@@ -44,6 +44,8 @@ class ARIMAForecaster(_SingleSeriesForecastingStrategy):
         return self
 
     def _update(self, data):
+        """Update forecasts using Kalman smoothing on passed updated data and forecasts based on previously fitted
+        parameters"""
         # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788 and
         #  https://github.com/statsmodels/statsmodels/issues/3318
 
@@ -215,3 +217,5 @@ class EnsembleForecaster(_BaseForecastingStrategy):
         # Return average predictions with index
         index = indexes[0]
         return pd.Series(avg_preds, index=index, name=self._task.target)
+
+
