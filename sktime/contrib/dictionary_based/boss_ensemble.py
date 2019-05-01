@@ -125,14 +125,7 @@ class BOSSEnsemble(BaseEstimator):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
-        print("IN FIT")
 
-        print("Classes = "+str(self.classes_))
-        print("Class dictionary = "+str(self.class_dictionary))
-        print(" Data type classes_[0] =" +str(type(self.classes_[0])))
-#        print(" Data type dictionary['1'] =" + str(type(self.class_dictionary['1'])))
-#        for index, classVal in enumerate(self.classes_):
-#            self.class_dictionary[classVal] = index
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length/4
@@ -209,21 +202,16 @@ class BOSSEnsemble(BaseEstimator):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
-        print("IN PREDICT_PROBA")
-
-        print("Classes = "+str(self.classes_))
-        print("Class dictionary = "+str(self.class_dictionary))
-        print(" Data type classes_[0] =" +str(type(self.classes_[0])))
-#        print(" Data type dictionary['1'] =" + str(type(self.class_dictionary['1'])))
 
         sums = np.zeros((X.shape[0], self.num_classes))
 
         for i, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
             for i in range(0,X.shape[0]):
-                sums[i,self.class_dictionary.get(str(preds[i]))] += 1
+                sums[i,self.class_dictionary.get(preds[i])] += 1
 
         dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
+
         return dists
 
     def include_in_ensemble(self, acc, maxAcc, minMaxAcc, size):
@@ -245,7 +233,22 @@ class BOSSEnsemble(BaseEstimator):
 
         return minAcc, minAccInd
 
-    def findEnsembleTrainAcc(self, X, y):
+    def get_train_probs(self, X):
+        num_inst = X.shape[0]
+        results = np.zeros((num_inst,self.num_classes))
+        divisor = (np.ones(self.num_classes) * self.num_classifiers)
+        for i in range(num_inst):
+            sums = np.zeros(self.num_classes)
+
+            for n in range(len(self.classifiers)):
+                sums[self.class_dictionary.get(self.classifiers[n].train_predict(i), -1)] += 1
+
+            dists = sums / divisor
+            for n in range(self.num_classes):
+                results[i][n] = dists[n]
+        return results
+
+    def find_ensemble_train_acc(self, X, y):
         num_inst = X.shape[0]
         results = np.zeros((2 + self.num_classes, num_inst + 1))
         correct = 0
