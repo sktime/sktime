@@ -234,13 +234,7 @@ class GridSearchCV(skGSCV):
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
 
-class SKTimeCV(ABC):
-    def split(self, data):
-        """
-        Implements the splits to return the actual data instead of the 
-        """
-
-class PresplitFilesCV(SKTimeCV):
+class PresplitFilesCV:
     """
     Helper class for iterating over predefined splits in orchestration.
     """
