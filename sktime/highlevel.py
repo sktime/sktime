@@ -137,7 +137,7 @@ class BaseStrategy:
         self._estimator = estimator
         self._case = None
         self._task = None
-        self._name = None
+        self._name = name if name is not None else self.__class__.__name__
         self._traits = {"tags": None}  # traits for matching strategies with tasks
 
     @property
