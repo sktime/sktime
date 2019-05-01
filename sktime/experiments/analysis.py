@@ -79,7 +79,7 @@ class AnalyseResults(object):
         res_df.columns=['avg_score','std_error']
         res_df = res_df.sort_values(['avg_score','std_error'], ascending=[1,1])
 
-        return res_df.round(3)
+        return res_df
     
 
     
@@ -127,7 +127,7 @@ class AnalyseResults(object):
         mean_r = pd.DataFrame(ranked.mean(axis=0))
         mean_r.columns=['avg_rank']
         mean_r = mean_r.sort_values('avg_rank', ascending=ascending)
-        return mean_r.round(1)
+        return mean_r
 
 
 
@@ -172,7 +172,7 @@ class AnalyseResults(object):
 
         values_df_multiindex = pd.DataFrame(values_reshaped, index=index, columns=col_idx)
 
-        return t_df.round(3), values_df_multiindex.round(3)
+        return t_df, values_df_multiindex
 
     def sign_test(self, strategy_dict):
         """
@@ -205,7 +205,7 @@ class AnalyseResults(object):
             sign_df_pivot = sign_df.pivot(index='estimator_1', columns='estimator_2', values='p_val')
 
 
-        return sign_df.round(3), sign_df_pivot.round(3)
+        return sign_df, sign_df_pivot
 
     def ranksum_test(self, strategy_dict):
         """
@@ -247,7 +247,7 @@ class AnalyseResults(object):
 
         values_df_multiindex = pd.DataFrame(values_reshaped, index=index, columns=col_idx)
 
-        return ranksum_df.round(3), values_df_multiindex.round(3)
+        return ranksum_df, values_df_multiindex
         
     def t_test_with_bonferroni_correction(self, strategy_dict, alpha=0.05):
         """
@@ -323,7 +323,7 @@ class AnalyseResults(object):
 
         values_df_multiindex = pd.DataFrame(values_reshaped, index=index, columns=col_idx)
 
-        return wilcoxon_df.round(3), values_df_multiindex.round(3)
+        return wilcoxon_df, values_df_multiindex
                         
     def friedman_test(self, strategy_dict):
         """
@@ -351,7 +351,7 @@ class AnalyseResults(object):
         values = [friedman_test[0], friedman_test[1]]
         values_df = pd.DataFrame([values], columns=['statistic','p_value'])
 
-        return friedman_test, values_df.round(3)
+        return friedman_test, values_df
     
     def nemenyi(self, strategy_dict):
         """
@@ -371,4 +371,4 @@ class AnalyseResults(object):
         strategy_dict = pd.DataFrame(strategy_dict)
         strategy_dict = strategy_dict.melt(var_name='groups', value_name='values')
         nemenyi =sp.posthoc_nemenyi(strategy_dict, val_col='values', group_col='groups')
-        return nemenyi.round(3)
+        return nemenyi

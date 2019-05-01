@@ -240,7 +240,7 @@ class SKTimeCV(ABC):
         Implements the splits to return the actual data instead of the 
         """
 
-class PredefinedSplit:
+class PresplitFilesCV(SKTimeCV):
     """
     Helper class for iterating over predefined splits in orchestration.
     """
