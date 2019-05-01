@@ -56,7 +56,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
     """
 
     def __init__(self,
-                 n_trees=500,
+                 num_trees=500,
                  random_state=None,
                  dim_to_use=0,
                  min_interval=16,
@@ -65,12 +65,12 @@ class RandomIntervalSpectralForest(ForestClassifier):
                  ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(),
-            n_estimators=n_trees)
-        self.num_trees=n_trees
+            n_estimators=num_trees)
+        self.num_trees=num_trees
         self.random_state = random_state
         random.seed(random_state)
         self.dim_to_use = dim_to_use
-        self._min_interval=min_interval
+        self.min_interval=min_interval
         self.acf_lag=acf_lag
         self.acf_min_values=acf_min_values
         # These are all set in fit
@@ -79,6 +79,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
         self.classifiers = []
         self.intervals=[]
         self.lags=[]
+        self.classes_ = []
 
         # For the multivariate case treating this as a univariate classifier
         self.dim_to_use = dim_to_use
@@ -110,8 +111,8 @@ class RandomIntervalSpectralForest(ForestClassifier):
         self.intervals[0][0] = 0
         self.intervals[0][1] = self.series_length
         for i in range(1, self.num_trees):
-            self.intervals[i][0]=random.randint(self.series_length - self._min_interval)
-            self.intervals[i][1]=random.randint(self.intervals[i][0] + self._min_interval, self.series_length)
+            self.intervals[i][0]=random.randint(self.series_length - self.min_interval)
+            self.intervals[i][1]=random.randint(self.intervals[i][0] + self.min_interval, self.series_length)
         # Check lag against global properties
         if self.acf_lag > self.series_length-self.acf_min_values:
             self.acf_lag = self.series_length - self.acf_min_values

@@ -1,25 +1,16 @@
 import os
 import sys
-import sktime.contrib.hivecote.frequency_based.rise as fb
-import sktime.contrib.hivecote.interval_based.tsf as ib
-import sktime.contrib.hivecote.dictionary_based.boss_ensemble as db
+import sktime.contrib.frequency_based.rise as fb
+import sktime.contrib.interval_based.tsf as ib
+import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.classifiers.ensemble as ensemble
-from sktime.transformers.compose import RowwiseTransformer
-from sktime.transformers.compose import Tabulariser
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
-from sktime.pipeline import TSPipeline
-from sktime.pipeline import TSFeatureUnion
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
-from statsmodels.tsa.stattools import acf
-from statsmodels.tsa.ar_model import AR
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.tree import DecisionTreeClassifier
-#from sklearn.ensemble import RandomForestClassifier
-#import sktime.contrib.hivecote.distance_based.elastic_ensemble as dist
 import numpy as np
 import time
-from sklearn.metrics import accuracy_score as acc
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sklearn.model_selection import cross_val_predict
+from sklearn.metrics import accuracy_score
+from sklearn import preprocessing
+
 
 __author__ = "Anthony Bagnall"
 
@@ -28,6 +19,7 @@ https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
 
+Will have both low level version and high level orchestration version soon.
 """
 
 
@@ -143,7 +135,7 @@ def set_classifier(cls):
         return 'UNKNOWN CLASSIFIER'
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_files=False):
+def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_file=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -157,41 +149,63 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     True, it will overwrite anything already there
     :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
     https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
-    :param train_files: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
+    :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
+    build_test = True
     if not overwrite:
         full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
         if os.path.exists(full_path):
-            print(full_path+" Already exists and overwrite set to false")
+            print(full_path+" Already exists and overwrite set to false, not building Test")
+            build_test=False
+        if train_file:
+            full_path = str(results_path) + "/" + str(cls_name) + "/Predictions/" + str(dataset) + "/trainFold" + str(
+                resampleID) + ".csv"
+            if os.path.exists(full_path):
+                print(full_path + " Already exists and overwrite set to false, not building Train")
+                train_file = False
+        if train_file == False and build_test ==False:
             return
+
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
-    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN'+format)
-    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST'+format)
+    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
+    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+
+    le = preprocessing.LabelEncoder()
+    le.fit(trainY)
+    trainY = le.transform(trainY)
+    testY = le.transform(testY)
+    print(trainY)
+    print(testY)
     classifier = set_classifier(cls_name)
-    print(cls_name+" on "+dataset+" resample number "+str(resampleID))
-    # TO DO : Use Viktors code here
-    if train_files:
-        print(" Generating train files not yet implemented")
+    print(cls_name + " on " + dataset + " resample number " + str(resampleID))
+    if build_test:
+        # TO DO : use sklearn CV
+        start = int(round(time.time() * 1000))
+        classifier.fit(trainX,trainY)
+        build_time = int(round(time.time() * 1000))-start
+        start =  int(round(time.time() * 1000))
+        probs = classifier.predict_proba(testX)
+        preds = classifier.classes_[np.argmax(probs, axis=1)]
+        test_time = int(round(time.time() * 1000))-start
+        ac = accuracy_score(testY, preds)
+#        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
+        second = str(classifier.get_params())
+        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
 
-    start = int(round(time.time() * 1000))
-    classifier.fit(trainX,trainY)
-    build_time = int(round(time.time() * 1000))-start
-    start =  int(round(time.time() * 1000))
-    probs = classifier.predict_proba(testX)
-    preds = classifier.classes_[np.argmax(probs, axis=1)]
-    test_time = int(round(time.time() * 1000))-start
-    second = str(classifier.get_params())
-    correct = 0
-    for i in range(0, testY.__len__()):
-        if testY[i] == preds[i]:
-            correct += 1
-        ac = correct / testY.__len__()
+        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
+                                    predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY)
 
-    third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
-
-    write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
-                                predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY)
+    if train_file:
+        start = int(round(time.time() * 1000))
+        train_probs = cross_val_predict(classifier, X=trainX, y=trainY, cv=10, method='predict_proba')
+        train_time = int(round(time.time() * 1000)) - start
+        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
+        train_acc = accuracy_score(trainY,train_preds)
+        second = str(classifier.get_params())
+        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
+        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
+                                predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
 
 #        results_path+classifier_name+'/Predictions/'+dataset_name+'/testFold'+resampleID+".csv")
 
@@ -284,15 +298,19 @@ if __name__ == "__main__":
         classifier =  sys.argv[3]
         dataset = sys.argv[4]
         resample = sys.argv[5]
+        tf=sys.argv[6]
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
-                       resampleID=resample)
+                       resampleID=resample,train_file=tf)
     else : #Local run
         data_dir = "E:/Data/sktimeFormat/TSCProblems/"
         results_dir = "E:/Results/UCR Debug/Python/"
-        classifier = "TSF_Markus"
+#        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+#        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        classifier = "BOSS"
         resample = 0
  #       for i in range(3, len(datasets)):
  #           dataset = datasets[i]
         dataset = "ItalyPowerDemand"
-        run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample)
+        tf=True
+        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
 

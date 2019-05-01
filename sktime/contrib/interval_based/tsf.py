@@ -7,7 +7,6 @@ from numpy import random
 from copy import deepcopy
 from sklearn.utils.multiclass import class_distribution
 
-
 class TimeSeriesForest(ForestClassifier):
     __author__ = "Tony Bagnall"
 
@@ -55,17 +54,18 @@ class TimeSeriesForest(ForestClassifier):
     """
 
     def __init__(self,
-                n_trees=200,
-                random_state=None,
+                random_state = None,
                 dim_to_use = 0,
-                min_interval=3
-                 ):
+                min_interval=3,
+                num_trees = 200
+
+    ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_trees)
-        self.num_trees=n_trees
+            n_estimators=num_trees)
+
         self.random_state = random_state
-        random.seed(random_state)
+        self.num_trees=num_trees
         self.min_interval=min_interval
         self.dim_to_use = dim_to_use
 # The following set in method fit
@@ -74,6 +74,8 @@ class TimeSeriesForest(ForestClassifier):
         self.num_intervals = 0
         self.classifiers = []
         self.intervals=[]
+        self.classes_ = []
+        random.seed(random_state)
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random intervals and summary measures.
@@ -96,16 +98,16 @@ class TimeSeriesForest(ForestClassifier):
         n_samps, self.series_length = X.shape
 
         self.num_classes = np.unique(y).shape[0]
+
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 #        self.classes_ = list(set(y))
 #        self.classes_.sort()
         self.num_intervals = int(math.sqrt(self.series_length))
         if self.num_intervals==0:
-            self.num_intervals=1
+            self.num_intervals = 1
         if self.series_length <self.min_interval:
             self.min_interval=self.series_length
         self.intervals=np.zeros((self.num_trees, 3 * self.num_intervals, 2), dtype=int)
-        print("Num trees =" + str(self.num_trees)+" Num intervals ="+str(self.num_intervals))
         for i in range(0, self.num_trees):
             transformed_x = np.empty(shape=(3 * self.num_intervals, n_samps))
             for j in range(0, self.num_intervals):
