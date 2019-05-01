@@ -8,7 +8,9 @@ from inspect import signature
 import pandas as pd
 import numpy as np
 
-from .forecasting.base import _BaseForecaster
+from .forecasting.base import BaseForecaster
+from .classifiers.base import BaseClassifier
+from .regressors.base import BaseRegressor
 
 __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy']
 __author__ = ['Markus Löning', 'Sajay Ganesh']
@@ -173,35 +175,41 @@ class ForecastingTask(_BaseTask):
     features : list
         List of feature variables.
     """
-    def __init__(self, target, pred_horizon=None, features=None, metadata=None):
+    def __init__(self, target, fh=None, features=None, metadata=None):
         self._case = 'forecasting'
 
-        if isinstance(pred_horizon, list):
-            if not np.all([np.issubdtype(type(h), np.integer) for h in pred_horizon]):
+        if isinstance(fh, list):
+            if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
                 raise ValueError('if pred_horizon is passed as a list, it has to be a list of integers')
-        elif np.issubdtype(type(pred_horizon), np.integer) or (pred_horizon is None):
+        elif np.issubdtype(type(fh), np.integer) or (fh is None):
             pass
         else:
             raise ValueError('pred_horizon has to be either a list of integers or single integer')
-        self._pred_horizon = 1 if pred_horizon is None else np.sort(pred_horizon)
+        self._fh = 1 if fh is None else np.sort(fh)
 
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property
-    def pred_horizon(self):
-        """Exposes the private variable _pred_horizon in a controlled way
+    def fh(self):
+        """Exposes the private variable forecast horizon (fh) in a controlled way
         """
-        return self._pred_horizon
+        return self._fh
 
 
 class _BaseStrategy:
     """Abstract base strategy class"""
-    def __init__(self, check_input=True):
+    def __init__(self, estimator, name=None, check_input=True):
+        self._name = estimator.__class__.__name__ if name is None else name
+        self._estimator = estimator
         self._task = None
         self._case = None
         self._traits = {}
         self._is_fitted = False
         self.check_input = check_input
+
+    @property
+    def name(self):
+        return self._name
 
     def __getitem__(self, key):
         """Provide read only access via keys
@@ -233,20 +241,36 @@ class _BaseStrategy:
             self._task.set_metadata(data)
 
         # strategy-specific implementation
-        return self._fit(data)
+        self._fit(data)
 
-    def _fit(self, data):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
+        # set is-fitted to True
+        self._is_fitted = True
+        return self
 
-    def predict(self, *args):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
+    def predict(self, data=None):
+        check_is_fitted(self, '_is_fitted')
+        return self._predict(data=data)
 
     def _check_task_compatibility(self, task):
         # TODO replace by task-strategy compatibility lookup registry
         if self._case != task._case:
             raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
+
+    def get_params(self, deep=True):
+        """call get_params of the estimator
+        """
+        return self._estimator.get_params(deep=deep)
+
+    def set_params(self, **params):
+        """Call set_params of the estimator
+        """
+        self._estimator.set_params(**params)
+
+    def __repr__(self):
+        strategy_name = self.__class__.__name__
+        estimator_name = self._estimator.__class__.__name__
+        return '%s(%s(%s))' % (strategy_name, estimator_name,
+                               _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
 
 
 class _BaseSupervisedLearningStrategy(_BaseStrategy):
@@ -258,11 +282,6 @@ class _BaseSupervisedLearningStrategy(_BaseStrategy):
     estimator : BaseEstimator
         An instance of an initialized low-level estimator
     """
-    def __init__(self, estimator, check_input=True):
-        self._estimator = estimator
-        # self._traits = {"tags": None}  # traits for matching strategies with tasks
-        super(_BaseSupervisedLearningStrategy, self).__init__(check_input=check_input)
-
     def _fit(self, data):
         # fit the estimator
         try:
@@ -274,7 +293,7 @@ class _BaseSupervisedLearningStrategy(_BaseStrategy):
         # fit the estimator
         return self._estimator.fit(X, y)
 
-    def predict(self, data):
+    def _predict(self, data=None):
         """Predict the targets for the test data
 
         Parameters
@@ -297,53 +316,46 @@ class _BaseSupervisedLearningStrategy(_BaseStrategy):
         predictions = self._estimator.predict(X)
         return predictions
 
-    def get_params(self, deep=True):
-        """call get_params of the estimator
-        """
-        return self._estimator.get_params(deep=deep)
-
-    def set_params(self, **params):
-        """Call set_params of the estimator
-        """
-        self._estimator.set_params(**params)
-
-    def __repr__(self):
-        strategy_name = self.__class__.__name__
-        estimator_name = self._estimator.__class__.__name__
-        return '%s(%s(%s))' % (strategy_name, estimator_name,
-                               _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
-
 
 class TSCStrategy(_BaseSupervisedLearningStrategy):
     """Strategy for time series classification
     """
-    def __init__(self, estimator, check_input=True):
-        super(TSCStrategy, self).__init__(estimator, check_input=check_input)
+    def __init__(self, estimator, name=None, check_input=True):
+        if not isinstance(estimator, BaseClassifier):
+            raise ValueError(f"Passed estimator must be a classifier, but found: {type(estimator)}")
+        super(TSCStrategy, self).__init__(estimator, name=name, check_input=check_input)
         self._case = "TSC"
 
 
-class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
+class TSRStrategy(_BaseSupervisedLearningStrategy):
+    """Strategy for time series regression
+    """
+    def __init__(self, estimator, name=None, check_input=True):
+        if not isinstance(estimator, BaseRegressor):
+            raise ValueError(f"Passed estimator must be a regressor, but found: {type(estimator)}")
+        super(TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
+        self._case = "TSR"
+
+
+class ForecastingStrategy(_BaseStrategy):
     """Abstract class for forecasting strategies
     """
-    def __init__(self, check_input=True):
-        super(_BaseForecastingStrategy, self).__init__(check_input=check_input)
+    def __init__(self, estimator, name=None, check_input=True):
+        if not isinstance(estimator, BaseRegressor):
+            raise ValueError(f"Passed estimator must be a forecaster, but found: {type(estimator)}")
+        super(ForecastingStrategy, self).__init__(estimator, name=name, check_input=check_input)
         self._case = 'forecasting'
 
-        self._is_updated = False
-        self._target_idx = None
-        self._estimator = None
-        self._fitted_estimator = None
-        self._updated_estimator = None
-
     def _fit(self, data):
-        if self.check_input:
-            self._check_fit_data(data)
+        try:
+            y = data[self._task.target]
+            if len(self._task.features) > 0:
+                X = data[self._task.features]
+        except KeyError:
+            raise ValueError("Task <-> data mismatch. The target/features are not in the data")
 
-        # store index of target variable to be predicted
-        target = data[self._task.target].iloc[0]
-        self._target_idx = target.index if hasattr(target, 'index') else pd.RangeIndex(len(target))
-
-        self._fit_strategy(data)  # strategy specific implementation
+        # fit the estimator
+        self._estimator.fit(y, X=X)
         self._is_fitted = True
         return self
 
@@ -352,22 +364,26 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
         if self.check_input:
             self._check_update_data(data)
 
-        data = self._transform_data(data)
-        self._update(data)  # strategy specific implementation
-        self._is_updated = True
+        if hasattr(self._estimator, 'update'):
+            self._estimator.update()
+        else:
+            raise NotImplementedError("Passed low-level estimator does not implement update method")
+
         return self
 
-    def predict(self):
-        check_is_fitted(self, '_is_fitted')
-        return self._predict()  # forecaster specific implementation
+    def _predict(self, data=None):
+        fh = self._task.fh
 
-    def _update(self, data):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
+        if len(self._task.features) > 0:
+            if data is not None:
+                X = data[self._task.features]
+                kwargs = {'X': X}
+            else:
+                raise ValueError('No data passed, but passed task requires feature data')
+        else:
+            kwargs = {}
 
-    def _fit_strategy(self, data):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
+        return self._predict(fh=fh, **kwargs)  # forecaster specific implementation
 
     @staticmethod
     def _check_fit_data(data):
@@ -385,57 +401,3 @@ class _BaseForecastingStrategy(_BaseStrategy, _BaseForecaster):
         is_same_type = isinstance(updated_target_idx, type(self._target_idx))
         if not (is_after and is_same_type):
             raise ValueError('Data passed to `update` does not match the data passed to `fit`')
-
-    def _predict(self):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
-
-    def _transform_data(self, data):
-        """Helper function to transform nested data with series/arrays in cells into pd.Series with primitives in cells
-        """
-        return pd.Series(*data[self._task.target].tolist())
-
-    def __repr__(self):
-        strategy_name = self.__class__.__name__
-        return '%s(%s)' % (strategy_name, _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
-
-
-class _SingleSeriesForecastingStrategy(_BaseForecastingStrategy):
-    """Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
-    forecasting techniques without exogenous variables.
-    """
-
-    def _predict(self):
-        # Convert step-ahead prediction horizon into zero-based index
-        pred_horizon = self._task.pred_horizon
-        pred_horizon_idx = pred_horizon - np.min(pred_horizon)
-
-        if self._is_updated:
-            # Predict updated (pre-initialised) model with start and end values relative to end of train series
-            start = self._task.pred_horizon[0]
-            end = self._task.pred_horizon[-1]
-            pred = self._updated_estimator.predict(start=start, end=end)
-
-        else:
-            # Predict fitted model with start and end points relative to start of train series
-            pred_horizon = len(self._target_idx) - 1 + pred_horizon
-            start = pred_horizon[0]
-            end = pred_horizon[-1]
-            pred = self._fitted_estimator.predict(start=start, end=end)
-
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        return pred.iloc[pred_horizon_idx]
-
-    def _update(self, data):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
-
-    def _fit_strategy(self, data):
-        # TODO only works on univariate/single series forecasting without exogenous variables
-        data = self._transform_data(data)
-        return self._fit_estimator(data)  # estimator specific implementations
-
-    def _fit_estimator(self, data):
-        """Placeholder to be overwritten by specific strategies"""
-        raise NotImplementedError()
-

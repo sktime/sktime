@@ -1,5 +1,10 @@
-from ..highlevel import _BaseForecastingStrategy
-from ..highlevel import _SingleSeriesForecastingStrategy
+from .base import _SingleSeriesForecaster
+from .base import BaseForecaster
+from ..utils.validation import check_forecasting_horizon
+from ..utils.validation import check_y_forecasting
+
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils import check_array
 
 import numpy as np
 import pandas as pd
@@ -10,13 +15,13 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
-__all__ = ["ARIMAForecaster", "ExponentialSmoothingForecaster", "EnsembleForecaster"]
+__all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster", "EnsembleForecaster"]
 __author__ = ['Markus Löning']
 
 
-class ARIMAForecaster(_SingleSeriesForecastingStrategy):
+class ARIMAForecaster(BaseForecaster):
     def __init__(self, order, seasonal_order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
-                 maxiter=1000):
+                 maxiter=1000, method='lbfgs', disp=5):
 
         self._check_order(order, 3)
         self.order = order
@@ -28,29 +33,82 @@ class ARIMAForecaster(_SingleSeriesForecastingStrategy):
             self.seasonal_order = (0, 0, 0, 0)
 
         self.trend = trend
+        self.method = method
+        self.disp = disp
         self.enforce_stationarity = enforce_stationarity
         self.enforce_invertibility = enforce_invertibility
         self.maxiter = maxiter
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
-    def _fit_estimator(self, data):
-        self._estimator = SARIMAX(data,
+    def fit(self, y, X=None):
+        """Fit forecaster"""
+        if self.check_input:
+            check_y_forecasting(y)
+            if X is not None:
+                X = check_array(X)
+
+        # unnest series
+        y = y.iloc[0]
+
+        # keep index for later forecasting where passed forecasting horizon will be relative to y's index
+        self._y_idx = self._get_index(y)
+
+        # fit estimator
+        self._estimator = SARIMAX(y,
+                                  exog=X,
                                   order=self.order,
                                   seasonal_order=self.seasonal_order,
                                   trend=self.trend,
                                   enforce_stationarity=self.enforce_stationarity,
                                   enforce_invertibility=self.enforce_invertibility)
-        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter)
+        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method, disp=self.disp)
         return self
 
-    def _update(self, data):
+    def predict(self, fh=None, X=None):
+        check_is_fitted(self, '_fitted_estimator')
+        fh = [1] if fh is None else fh
+
+        if self.check_input:
+            fh = check_forecasting_horizon(fh)
+            if X is not None:
+                X = check_array(X)
+
+        fh_idx = fh - np.min(fh)
+
+        if hasattr(self, '_updated_estimator'):
+            # Predict updated (pre-initialised) model with start and end values relative to end of train series
+            start = fh[0]
+            end = fh[-1]
+            y_pred = self._updated_estimator.predict(start=start, end=end, exog=X)
+
+        else:
+            # Predict fitted model with start and end points relative to start of train series
+            fh = len(self._y_idx) - 1 + fh
+            start = fh[0]
+            end = fh[-1]
+            y_pred = self._fitted_estimator.predict(start=start, end=end, exog=X)
+
+        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
+        return y_pred.iloc[fh_idx]
+
+    def update(self, y, X=None):
         """Update forecasts using Kalman smoothing on passed updated data and forecasts based on previously fitted
         parameters"""
         # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788 and
         #  https://github.com/statsmodels/statsmodels/issues/3318
 
+        check_is_fitted(self, '_fitted_estimator')
+        if self.check_input:
+            if X is not None:
+                X = check_array(X)
+            check_y_forecasting(y)
+
+        # unnest series
+        y = y.iloc[0]
+
         # Update estimator.
-        estimator = SARIMAX(data,
+        estimator = SARIMAX(y,
+                            exog=X,
                             order=self.order,
                             seasonal_order=self.seasonal_order,
                             trend=self.trend,
@@ -72,7 +130,7 @@ class ARIMAForecaster(_SingleSeriesForecastingStrategy):
             raise ValueError(f'All values in order must be integers')
 
 
-class ExponentialSmoothingForecaster(_SingleSeriesForecastingStrategy):
+class ExpSmoothingForecaster(_SingleSeriesForecaster):
     """Holt-Winters exponential smoothing forecaster. Default setting use simple exponential smoothing
     without trend and seasonality components.
 
@@ -112,10 +170,21 @@ class ExponentialSmoothingForecaster(_SingleSeriesForecastingStrategy):
         self.use_boxcox = use_boxcox
         self.remove_bias = remove_bias
         self.use_basinhopping = use_basinhopping
-        super(ExponentialSmoothingForecaster, self).__init__(check_input=check_input)
+        super(ExpSmoothingForecaster, self).__init__(check_input=check_input)
 
-    def _fit_estimator(self, data):
-        self.estimator = ExponentialSmoothing(data, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
+    def _fit(self, y):
+        """Fit forecaster
+
+        Parameters
+        ----------
+        y
+        X
+
+        Returns
+        -------
+
+        """
+        self.estimator = ExponentialSmoothing(y, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
                                               seasonal_periods=self.seasonal_periods)
         self._fitted_estimator = self.estimator.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
                                                     smoothing_slope=self.smoothing_slope,
@@ -124,12 +193,8 @@ class ExponentialSmoothingForecaster(_SingleSeriesForecastingStrategy):
                                                     use_basinhopping=self.use_basinhopping)
         return self
 
-    def _update(self, data):
-        # TODO
-        raise NotImplementedError()
 
-
-class DummyForecaster(_SingleSeriesForecastingStrategy):
+class DummyForecaster(_SingleSeriesForecaster):
     def __init__(self, strategy='mean', check_input=True):
 
         allowed_strategies = ('mean', 'last', 'seasonal_last', 'linear')
@@ -139,13 +204,29 @@ class DummyForecaster(_SingleSeriesForecastingStrategy):
         self.strategy = strategy
         super(DummyForecaster, self).__init__(check_input=check_input)
 
-    def _fit_estimator(self, data):
+    def _fit(self, y):
+        """Fit forecaster
+
+        Parameters
+        ----------
+        y
+        X
+
+        Returns
+        -------
+
+        """
+        if self.check_input:
+            # TODO check input, no X
+            pass
+
+        self._y_idx = self._get_index(y)
         if self.strategy == 'mean':
-            self.estimator = ExponentialSmoothing(data)
+            self.estimator = ExponentialSmoothing(y)
             self._fitted_estimator = self.estimator.fit(smoothing_level=0)
 
         if self.strategy == 'last':
-            self.estimator = ExponentialSmoothing(data)
+            self.estimator = ExponentialSmoothing(y)
             self._fitted_estimator = self.estimator.fit(smoothing_level=1)
 
         if self.strategy == 'seasonal_last':
@@ -158,17 +239,13 @@ class DummyForecaster(_SingleSeriesForecastingStrategy):
             raise NotImplementedError()
 
         if self.strategy == 'linear':
-            self.estimator = SARIMAX(data, order=(0, 0, 0), trend='t')
+            self.estimator = SARIMAX(y, order=(0, 0, 0), trend='t')
             self._fitted_estimator = self.estimator.fit()
 
         return self
 
-    def _update(self, data):
-        # TODO
-        raise NotImplementedError()
 
-
-class EnsembleForecaster(_BaseForecastingStrategy):
+class EnsembleForecaster(BaseForecaster):
     """Ensemble of forecasters.
 
     Parameters
@@ -185,37 +262,48 @@ class EnsembleForecaster(_BaseForecastingStrategy):
         self.fitted_estimators_ = []
         super(EnsembleForecaster, self).__init__(check_input=check_input)
 
-    def _fit_strategy(self, data):
-        # Fit estimators
+    def fit(self, y, X=None):
+        """Fit forecaster"""
+        if self.check_input:
+            check_y_forecasting(y)
+            if X is not None:
+                X = check_array(X)
+
         for _, estimator in self.estimators:
-            fitted_estimator = estimator.fit(self._task, data)
+            estimator.set_params(**{"check_input": False})
+            fitted_estimator = estimator.fit(y, X=X)
             self.fitted_estimators_.append(fitted_estimator)
         return self
 
-    def _update(self, data):
-        raise NotImplementedError()
+    def predict(self, fh=None, X=None):
+        check_is_fitted(self, 'fitted_estimators_')
+        fh = [1] if fh is None else fh
 
-    def _predict(self):
-        pred_horizon = self._task.pred_horizon
-        pred_horizon_idx = pred_horizon - np.min(pred_horizon)
+        if self.check_input:
+            fh = check_forecasting_horizon(fh)
+            if X is not None:
+                X = check_array(X)
+
+        fh_idx = fh - np.min(fh)
 
         # Iterate over estimators
-        preds = np.zeros((len(self.fitted_estimators_), len(pred_horizon)))
+        y_preds = np.zeros((len(self.fitted_estimators_), len(fh)))
         indexes = []
         for i, estimator in enumerate(self.fitted_estimators_):
-            pred = estimator.predict()[pred_horizon_idx]
-            preds[i, :] = pred.values
-            indexes.append(pred.index)
+            y_pred = estimator.predict(fh=fh)[fh_idx]
+            y_preds[i, :] = y_pred.values
+            indexes.append(y_pred.index)
 
         # Check predicted horizons
         if not all(index.equals(indexes[0]) for index in indexes):
             raise ValueError('Predicted horizons from estimators do not match')
 
         # Average predictions
-        avg_preds = np.average(preds, axis=0, weights=self.weights)
+        avg_preds = np.average(y_preds, axis=0, weights=self.weights)
 
         # Return average predictions with index
         index = indexes[0]
-        return pd.Series(avg_preds, index=index, name=self._task.target)
+        name = y_preds[0].name if hasattr(y_preds[0], 'name') else None
+        return pd.Series(avg_preds, index=index, name=name)
 
 

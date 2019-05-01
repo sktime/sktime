@@ -1,4 +1,6 @@
 import numpy as np
+import pandas as pd
+
 
 def check_ts_X_y(X, y):
     """Placeholder function for input validation.
@@ -57,3 +59,35 @@ def check_equal_index(X):
         indexes.append(first_index)
 
     return indexes
+
+
+def check_forecasting_horizon(fh):
+    if isinstance(fh, list):
+        if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
+            raise ValueError('If the forecasting horizon ``fh`` is passed as a list, it has to be a list of integers')
+    elif isinstance(fh, np.ndarray):
+        if not np.issubdtype(fh.dtype, np.integer):
+            raise ValueError(f'If the forecasting horizon ``fh`` is passed as an array, it has to be an array of '
+                             f'integers, but found an array of dtype: {fh.dtype}')
+    elif np.issubdtype(type(fh), np.integer):
+        fh = [fh]
+    else:
+        raise ValueError(f"The forecasting horizon ``fh`` has to be either a list or array of integers, or a single "
+                         f"integer, but found: {type(fh)}")
+    return np.sort(fh)
+
+
+def check_y_forecasting(y):
+    # check if pandas series
+    if not isinstance(y, pd.Series):
+        raise ValueError(f'y must be pandas series, but found: {type(y)}')
+
+    # check if single row
+    n_rows = y.shape[0]
+    if n_rows > 1:
+        raise ValueError(f'y must consist of a single row, but found: {n_rows} rows')
+
+    # check if contained time series is either pandas series or numpy array
+    s = y.iloc[0]
+    if not isinstance(s, (np.ndarray, pd.Series)):
+        raise ValueError(f'y must contain a pandas series or numpy array, but found: {type(s)}.')
