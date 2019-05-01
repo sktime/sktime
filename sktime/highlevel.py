@@ -132,7 +132,7 @@ class BaseStrategy:
         An instance of an appropriately initialized
         low-level estimator
     """
-    def __init__(self, estimator, *args, **kwargs):
+    def __init__(self, estimator, name=None):
         # construct and initialize the estimator
         self._estimator = estimator
         self._case = None
