@@ -1,25 +1,20 @@
-from .base import _SingleSeriesForecaster
+from .base import BaseSingleSeriesForecaster
 from .base import BaseForecaster
-from ..utils.validation import check_forecasting_horizon
-from ..utils.validation import check_y_forecasting
-
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils import check_array
+from .base import BaseUpdateableForecaster
 
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
-
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 # SARIMAX is better maintained and offers same functionality as ARIMA class
 # https://github.com/statsmodels/statsmodels/issues/3884
-from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
 __all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster", "EnsembleForecaster"]
 __author__ = ['Markus Löning']
 
 
-class ARIMAForecaster(BaseForecaster):
+class ARIMAForecaster(BaseUpdateableForecaster):
     def __init__(self, order, seasonal_order=None, trend='n', enforce_stationarity=True, enforce_invertibility=True, check_input=True,
                  maxiter=1000, method='lbfgs', disp=5):
 
@@ -40,18 +35,20 @@ class ARIMAForecaster(BaseForecaster):
         self.maxiter = maxiter
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
-    def fit(self, y, X=None):
-        """Fit forecaster"""
-        if self.check_input:
-            check_y_forecasting(y)
-            if X is not None:
-                X = check_array(X)
+    def _fit(self, y, X=None):
+        """Fit forecaster.
 
+        Parameters
+        ----------
+        y
+        X
+
+        Returns
+        -------
+
+        """
         # unnest series
         y = y.iloc[0]
-
-        # keep index for later forecasting where passed forecasting horizon will be relative to y's index
-        self._y_idx = self._get_index(y)
 
         # fit estimator
         self._estimator = SARIMAX(y,
@@ -64,44 +61,11 @@ class ARIMAForecaster(BaseForecaster):
         self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method, disp=self.disp)
         return self
 
-    def predict(self, fh=None, X=None):
-        check_is_fitted(self, '_fitted_estimator')
-        fh = [1] if fh is None else fh
-
-        if self.check_input:
-            fh = check_forecasting_horizon(fh)
-            if X is not None:
-                X = check_array(X)
-
-        fh_idx = fh - np.min(fh)
-
-        if hasattr(self, '_updated_estimator'):
-            # Predict updated (pre-initialised) model with start and end values relative to end of train series
-            start = fh[0]
-            end = fh[-1]
-            y_pred = self._updated_estimator.predict(start=start, end=end, exog=X)
-
-        else:
-            # Predict fitted model with start and end points relative to start of train series
-            fh = len(self._y_idx) - 1 + fh
-            start = fh[0]
-            end = fh[-1]
-            y_pred = self._fitted_estimator.predict(start=start, end=end, exog=X)
-
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        return y_pred.iloc[fh_idx]
-
-    def update(self, y, X=None):
+    def _update(self, y, X=None):
         """Update forecasts using Kalman smoothing on passed updated data and forecasts based on previously fitted
         parameters"""
         # TODO for updating see https://github.com/statsmodels/statsmodels/issues/2788 and
         #  https://github.com/statsmodels/statsmodels/issues/3318
-
-        check_is_fitted(self, '_fitted_estimator')
-        if self.check_input:
-            if X is not None:
-                X = check_array(X)
-            check_y_forecasting(y)
 
         # unnest series
         y = y.iloc[0]
@@ -121,6 +85,37 @@ class ARIMAForecaster(BaseForecaster):
         self._updated_estimator = estimator.smooth(self._fitted_estimator.params)
         return self
 
+    def _predict(self, fh=None, X=None):
+        """Make predictions
+
+        Parameters
+        ----------
+        fh
+        X
+
+        Returns
+        -------
+
+        """
+
+        fh_idx = fh - np.min(fh)
+
+        if self._is_updated:
+            # Predict updated (pre-initialised) model with start and end values relative to end of train series
+            start = fh[0]
+            end = fh[-1]
+            y_pred = self._updated_estimator.predict(start=start, end=end, exog=X)
+
+        else:
+            # Predict fitted model with start and end points relative to start of train series
+            fh = len(self._y_idx) - 1 + fh
+            start = fh[0]
+            end = fh[-1]
+            y_pred = self._fitted_estimator.predict(start=start, end=end, exog=X)
+
+        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
+        return y_pred.iloc[fh_idx]
+
     @staticmethod
     def _check_order(order, n):
         if not (isinstance(order, tuple) and (len(order) == n)):
@@ -130,7 +125,7 @@ class ARIMAForecaster(BaseForecaster):
             raise ValueError(f'All values in order must be integers')
 
 
-class ExpSmoothingForecaster(_SingleSeriesForecaster):
+class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
     """Holt-Winters exponential smoothing forecaster. Default setting use simple exponential smoothing
     without trend and seasonality components.
 
@@ -172,7 +167,7 @@ class ExpSmoothingForecaster(_SingleSeriesForecaster):
         self.use_basinhopping = use_basinhopping
         super(ExpSmoothingForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, y):
+    def _fit(self, y, X=None):
         """Fit forecaster
 
         Parameters
@@ -184,6 +179,9 @@ class ExpSmoothingForecaster(_SingleSeriesForecaster):
         -------
 
         """
+        # unnest series
+        y = y.iloc[0]
+
         self.estimator = ExponentialSmoothing(y, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
                                               seasonal_periods=self.seasonal_periods)
         self._fitted_estimator = self.estimator.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
@@ -194,7 +192,7 @@ class ExpSmoothingForecaster(_SingleSeriesForecaster):
         return self
 
 
-class DummyForecaster(_SingleSeriesForecaster):
+class DummyForecaster(BaseSingleSeriesForecaster):
     def __init__(self, strategy='mean', check_input=True):
 
         allowed_strategies = ('mean', 'last', 'seasonal_last', 'linear')
@@ -204,7 +202,7 @@ class DummyForecaster(_SingleSeriesForecaster):
         self.strategy = strategy
         super(DummyForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, y):
+    def _fit(self, y, X=None):
         """Fit forecaster
 
         Parameters
@@ -216,11 +214,9 @@ class DummyForecaster(_SingleSeriesForecaster):
         -------
 
         """
-        if self.check_input:
-            # TODO check input, no X
-            pass
+        # unnest series
+        y = y.iloc[0]
 
-        self._y_idx = self._get_index(y)
         if self.strategy == 'mean':
             self.estimator = ExponentialSmoothing(y)
             self._fitted_estimator = self.estimator.fit(smoothing_level=0)
@@ -262,34 +258,33 @@ class EnsembleForecaster(BaseForecaster):
         self.fitted_estimators_ = []
         super(EnsembleForecaster, self).__init__(check_input=check_input)
 
-    def fit(self, y, X=None):
+    def _fit(self, y, X=None):
         """Fit forecaster"""
-        if self.check_input:
-            check_y_forecasting(y)
-            if X is not None:
-                X = check_array(X)
-
         for _, estimator in self.estimators:
             estimator.set_params(**{"check_input": False})
             fitted_estimator = estimator.fit(y, X=X)
             self.fitted_estimators_.append(fitted_estimator)
         return self
 
-    def predict(self, fh=None, X=None):
-        check_is_fitted(self, 'fitted_estimators_')
-        fh = [1] if fh is None else fh
+    def _predict(self, fh=None, X=None):
+        """Make predictions
 
-        if self.check_input:
-            fh = check_forecasting_horizon(fh)
-            if X is not None:
-                X = check_array(X)
+        Parameters
+        ----------
+        fh
+        X
 
+        Returns
+        -------
+
+        """
         fh_idx = fh - np.min(fh)
 
         # Iterate over estimators
         y_preds = np.zeros((len(self.fitted_estimators_), len(fh)))
         indexes = []
         for i, estimator in enumerate(self.fitted_estimators_):
+            # TODO pass X to estimators where the predict method accepts X
             y_pred = estimator.predict(fh=fh)[fh_idx]
             y_preds[i, :] = y_pred.values
             indexes.append(y_pred.index)
