@@ -7,7 +7,6 @@ from scipy import stats
 from scipy.stats import ttest_ind
 from scipy.stats import ranksums
 
-from sklearn.metrics import accuracy_score, mean_squared_error
 import scikit_posthocs as sp
 
 from sktime.experiments.losses import Losses
