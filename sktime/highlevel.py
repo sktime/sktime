@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.base import _pprint
+import os
+import pickle
 
 __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy', 'TSRStrategy']
 
@@ -12,7 +14,6 @@ __all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy', 'TSRStrategy']
 class BaseTask:
     """An object that encapsulates meta-data and instructions on how to derive the target/label for the time-series
     prediction/supervised learning task.
-
     Parameters
     ----------
     metadata : pd.DataFrame
@@ -83,7 +84,6 @@ class BaseTask:
 
 class TSCTask(BaseTask):
     """Time series classification task.
-
     Parameters
     ----------
     metadata : pandas DataFrame
@@ -100,7 +100,6 @@ class TSCTask(BaseTask):
 
 class ForecastingTask(BaseTask):
     """Forecasting task.
-
     Parameters
     ----------
     metadata : pandas DataFrame
@@ -127,20 +126,25 @@ class ForecastingTask(BaseTask):
 class BaseStrategy:
     """A meta-estimator that employs a low level estimator to
     perform a pescribed task
-
     Parameters
     ----------
     estimator : BaseEstimator
         An instance of an appropriately initialized
         low-level estimator
     """
-    def __init__(self, estimator):
+    def __init__(self, estimator, name=None):
         # construct and initialize the estimator
         self._estimator = estimator
         self._case = None
         self._task = None
-        # self._traits = {"tags": None}  # traits for matching strategies with tasks
+        self._name = name if name is not None else self.__class__.__name__
+        self._traits = {"tags": None}  # traits for matching strategies with tasks
 
+    @property
+    def name(self):
+        """Returns name of strategy
+        """
+        return self._name
     @property
     def case(self):
         """Expose the private variable _case as read only
@@ -157,14 +161,12 @@ class BaseStrategy:
 
     def fit(self, task, data):
         """Fit the estimator according to task details
-
         Parameters
         ----------
         task : Task
             A task initialized with the same kind of data
         data : pd.DataFrame
             Training Data
-
         Returns
         -------
         self: the instance being fitted
@@ -193,12 +195,10 @@ class BaseStrategy:
 
     def predict(self, data):
         """Predict the targets for the test data
-
         Parameters
         ----------
         data : a pandas DataFrame
             Prediction Data
-
         Returns
         -------
         predictions: a pd.Dataframe or pd.Series
@@ -231,12 +231,57 @@ class BaseStrategy:
                                _pprint(self.get_params(deep=False), offset=len(class_name), ),)
 
 
+    def save(self, dataset_name, cv_fold, strategies_save_dir):
+        """
+        Saves the strategy on the hard drive
+
+        Parameters
+        ----------
+        dataset_name:string
+            Name of the dataset
+        cv_fold: int
+            Number of cross validation fold on which the strategy was trained
+        strategies_save_dir: string
+            Path were the strategies will be saved
+        """
+        if strategies_save_dir is None:
+            raise ValueError('Please provide a directory for saving the strategies')
+        
+        #TODO implement check for overwriting already saved files
+        save_path = os.path.join(strategies_save_dir, dataset_name)
+        
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        #TODO pickling will not work for all strategies
+        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold'+str(cv_fold)+ '.p'),"wb"))
+
+    def load(self, path):
+        """
+        Load saved strategy
+
+        Parameters
+        ----------
+        path: String
+            location on disk where the strategy was saved
+        
+        Returns
+        -------
+        strategy:
+            sktime strategy
+        """
+        return pickle.load(open(path,'rb'))
+
 class TSCStrategy(BaseStrategy):
     """Strategies for Time Series Classification
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSC"
+        if 'name' in kwargs:
+            self._name = kwargs['name']
+        else:
+            self._name = self._estimator.__class__.__name__
 
 
 class TSRStrategy(BaseStrategy):
@@ -245,3 +290,7 @@ class TSRStrategy(BaseStrategy):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._case = "TSR"
+        if 'name' in kwargs:
+            self._name = kwargs['name']
+        else:
+            self._name = self._estimator.__class__.__name__

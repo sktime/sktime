@@ -6,7 +6,15 @@ from sklearn.model_selection import GridSearchCV as skGSCV
 from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
 from sktime.regressors.base import BaseRegressor
 from sktime.classifiers.base import BaseClassifier
+from abc import ABC, abstractmethod
 
+from sklearn.model_selection import train_test_split
+import numpy as np
+
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
+import os
+import pandas as pd
+from abc import ABC
 
 class GridSearchCV(skGSCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -225,3 +233,29 @@ class GridSearchCV(skGSCV):
             # using mean squared error as default for regressors
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
+
+class PresplitFilesCV:
+    """
+    Helper class for iterating over predefined splits in orchestration.
+    """
+    def __init__(self, check_input=True):
+        self.check_input = check_input
+
+    def split(self, data):
+        # Input checks.
+        if self.check_input:
+            if not isinstance(data, pd.DataFrame):
+                raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
+            if not np.all(data.index.unique().isin(['train', 'test'])):
+                raise ValueError('Train-test split not properly defined in index of passed pandas dataframe')
+        n = data.shape[0]
+        idx = np.arange(n)
+        train = idx[data.index == 'train']
+        test = idx[data.index == 'test']
+        # train = data.index[data.loc['train']]
+        # test  = data.index[data.loc['test']]
+        # train = data.loc['train'].reset_index(drop=True)
+        # test = data.loc['test'].reset_index(drop=True)
+        yield train, test
+
+
