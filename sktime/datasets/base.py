@@ -1,28 +1,33 @@
 """Utilities for loading datasets
 """
-from os import path
+import os
 import pandas as pd
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
+__all__ = ["load_gunpoint",
+           "load_arrow_head",
+           "load_italy_power_demand",
+           "load_shampoo_sales"]
+__author__ = ['Markus Löning', 'Sajay Ganesh']
+
+DIRNAME = 'data'
+MODULE = os.path.dirname(__file__)
+
 
 def _load_dataset(name, split, return_X_y):
+    """Helper function to load datasets.
     """
-    Helper function to load datasets.
-    """
-
-    dname = 'data'
-    module_path = path.dirname(__file__)
 
     if split in ["TRAIN", "TEST"]:
-        fname = name+'_'+split+'.ts'
-        abspath = path.join(module_path, dname, name, fname)
+        fname = name + '_' + split + '.ts'
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
     elif split == "ALL":
         X = pd.DataFrame()
         y = pd.Series()
         for split in ["TRAIN", "TEST"]:
-            fname = name+'_'+split+'.ts'
-            abspath = path.join(module_path, dname, name, fname)
+            fname = name + '_' + split + '.ts'
+            abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
@@ -39,6 +44,22 @@ def _load_dataset(name, split, return_X_y):
 
 def load_gunpoint(split='ALL', return_X_y=False):
     """Loads the GunPoint time series classification problem and returns X and y
+
+    Parameters
+    ----------
+    split: string (either "ALL" or "TRAIN" or "TEST", default = "ALL")
+        Whether to load the train or test partition of the problem
+        By default it loads both
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
 
     Dimensionality:     univariate
     Series length:      150
@@ -57,19 +78,6 @@ def load_gunpoint(split='ALL', return_X_y=False):
     correlated. The data in the archive is just the X-axis.
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=GunPoint
-
-    Parameters
-    ----------
-    split: string (either "ALL" or "TRAIN" or "TEST", default = "ALL")
-        Whether to load the train or test partition of the problem
-        By default it loads both
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
     """
     name = 'GunPoint'
     return _load_dataset(name, split, return_X_y)
@@ -77,6 +85,21 @@ def load_gunpoint(split='ALL', return_X_y=False):
 
 def load_italy_power_demand(split='TRAIN', return_X_y=False):
     """Loads the ItalyPowerDemand time series classification problem and returns X and y
+
+    Parameters
+    ----------
+    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
+        Whether to load the default train or test partition of the problem
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
 
     Dimensionality:     univariate
     Series length:      24
@@ -90,6 +113,14 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     from Oct to March (inclusive) from April to September.
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
+    """
+
+    name = 'ItalyPowerDemand'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_arrow_head(split='TRAIN', return_X_y=False):
+    """Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -102,14 +133,9 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
-    """
 
-    name = 'ItalyPowerDemand'
-    return _load_dataset(name, split, return_X_y)
-
-
-def load_arrow_head(split='TRAIN', return_X_y=False):
-    """Loads the ArrowHead time series classification problem and returns X and y
+    Details
+    -------
 
     Dimensionality:     univariate
     Series length:      251
@@ -125,20 +151,49 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
-
-    Parameters
-    ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
     """
 
     name = 'ArrowHead'
     return _load_dataset(name, split, return_X_y)
 
+
+def load_shampoo_sales(return_dataframe=False):
+    """Load the shampoo sales univariate time series forecasting dataset.
+
+    Parameters
+    ----------
+    return_dataframe: bool
+        - If True, returns pandas DataFrame.
+        - If False, returns pandas Series.
+        Default is False.
+
+    Returns
+    -------
+    y : pandas Series/DataFrame
+        Shampoo sales dataset
+
+    Details
+    -------
+    This dataset describes the monthly number of sales of shampoo over a 3 year period. The units are a sales count.
+
+    Dimensionality:     univariate
+    Series length:      36
+    Frequency:          Monthly
+    Number of cases:    1
+
+    References
+    ----------
+    Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications, John Wiley & Sons: New York.
+    Chapter 3.
+    """
+
+    name = 'ShampooSales'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+    if return_dataframe:
+        # return nested pandas DataFrame with a single row and column
+        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
+    else:
+        # return nested pandas Series with a single row
+        return pd.Series([data.iloc[:, 0]], name=name)
