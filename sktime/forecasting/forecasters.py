@@ -112,7 +112,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
                                   trend=self.trend,
                                   enforce_stationarity=self.enforce_stationarity,
                                   enforce_invertibility=self.enforce_invertibility)
-        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method, disp=self.disp)
+        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method)
         return self
 
     def _update(self, y, X=None):
@@ -174,18 +174,17 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         Predictions : pandas.Series, shape=(len(fh),)
             Returns series of predicted values.
         """
+        # Adjust forecasting horizon to time index seen in fit, (assume sorted forecasting horizon)
+        fh = len(self._y_idx) - 1 + fh
+        start = fh[0]
+        end = fh[-1]
 
         # Predict updated (pre-initialised) model with start and end values relative to end of train series
         if self._is_updated:
-            start = fh[0]
-            end = fh[-1]
             y_pred = self._updated_estimator.predict(start=start, end=end, exog=X)
 
         # Predict fitted model with start and end points relative to start of train series
         else:
-            fh = len(self._y_idx) - 1 + fh
-            start = fh[0]
-            end = fh[-1]
             y_pred = self._fitted_estimator.predict(start=start, end=end, exog=X)
 
         # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon

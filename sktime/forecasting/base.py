@@ -54,7 +54,11 @@ class BaseForecaster(BaseEstimator):
         # keep index for later forecasting where passed forecasting horizon will be relative to y's index
         self._y_idx = self._get_y_index(y)
 
-        self._fit(y, X=X)
+        # make interface compatible with estimators that only take y
+        kwargs = {} if X is None else {'X': X}
+
+        # Fit estimator.
+        self._fit(y, **kwargs)
         self._is_fitted = True
         return self
 
@@ -87,7 +91,7 @@ class BaseForecaster(BaseEstimator):
             if X is not None:
                 X = check_array(X)
 
-        # make interface compatible with estimators that only take y and not X
+        # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
 
         # estimator specific implementation of fit method
