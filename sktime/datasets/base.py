@@ -2,7 +2,7 @@
 """
 import os
 import pandas as pd
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from ..utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = ["load_gunpoint",
            "load_arrow_head",
@@ -191,6 +191,7 @@ def load_shampoo_sales(return_dataframe=False):
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
+    data.index = pd.PeriodIndex(data.index, freq='M')
     if return_dataframe:
         # return nested pandas DataFrame with a single row and column
         return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
