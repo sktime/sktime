@@ -55,7 +55,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
             file.write(",")
             for j in actual_probas[i]:
                 file.write("," + str(j))
-            file.write("\n")
+            file.write("\n") #TODO BUG new line is written only if the probas are provided!!!!
 
     file.close()
 
