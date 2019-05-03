@@ -10,7 +10,7 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import accuracy_score
 from sklearn import preprocessing
-
+from sklearn.model_selection import train_test_split
 
 __author__ = "Anthony Bagnall"
 
@@ -170,6 +170,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+    if resample !=0:
+
+        trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=.5,
+                                                                       random_state=resample, shuffle=True,
+                                                                       stratify=allLabels)
+
 
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
@@ -309,9 +315,9 @@ if __name__ == "__main__":
 #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         classifier = "BOSS"
         resample = 0
- #       for i in range(3, len(datasets)):
- #           dataset = datasets[i]
-        dataset = "ItalyPowerDemand"
+        for i in range(0, len(datasets)):
+            dataset = datasets[i]
+#        dataset = "ItalyPowerDemand"
         tf=True
         run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
 
