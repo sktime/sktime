@@ -5,8 +5,8 @@ from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 
-from ..utils.validation import check_forecasting_horizon
-from ..utils.validation import check_y_forecasting
+from ..utils.validation import validate_forecasting_horizon
+from ..utils.validation import validate_y_forecasting
 
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
 __author__ = ['Markus Löning']
@@ -47,7 +47,7 @@ class BaseForecaster(BaseEstimator):
         self : returns an instance of self.
         """
         if self.check_input:
-            check_y_forecasting(y)
+            validate_y_forecasting(y)
             if X is not None:
                 X = check_array(X)
 
@@ -87,7 +87,7 @@ class BaseForecaster(BaseEstimator):
         fh = [1] if fh is None else fh
 
         if self.check_input:
-            fh = check_forecasting_horizon(fh)
+            fh = validate_forecasting_horizon(fh)
             if X is not None:
                 X = check_array(X)
 
@@ -122,7 +122,7 @@ class BaseForecaster(BaseEstimator):
         """
         # only check y here, X and fh will be checked in predict method
         if self.check_input:
-            check_y_forecasting(y)
+            validate_y_forecasting(y)
 
         # predict y_pred
         # pass exogenous variable to predict only if passed as some forecasters may not accept X in predict
@@ -186,7 +186,7 @@ class BaseUpdateableForecaster(BaseForecaster):
         if self.check_input:
             if X is not None:
                 X = check_array(X)
-            check_y_forecasting(y)
+            validate_y_forecasting(y)
             self._check_y_update(y)
 
         self._update(y, X=X)

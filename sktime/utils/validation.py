@@ -61,7 +61,19 @@ def check_equal_index(X):
     return indexes
 
 
-def check_forecasting_horizon(fh):
+def validate_forecasting_horizon(fh):
+    """Helper function to
+
+    Parameters
+    ----------
+    fh : list of int
+        Forecasting horizon with steps ahead to predict.
+
+    Returns
+    -------
+    fh : numpy array of int
+        Sorted forecasting horizon
+    """
     if isinstance(fh, list):
         if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
             raise ValueError('If the forecasting horizon ``fh`` is passed as a list, it has to be a list of integers')
@@ -77,7 +89,14 @@ def check_forecasting_horizon(fh):
     return np.sort(fh)
 
 
-def check_y_forecasting(y):
+def validate_y_forecasting(y):
+    """Helper function to check input time series
+
+    Parameters
+    ----------
+    y : pandas.Series
+        Time series to forecast.
+    """
     # check if pandas series
     if not isinstance(y, pd.Series):
         raise ValueError(f'y must be pandas series, but found: {type(y)}')

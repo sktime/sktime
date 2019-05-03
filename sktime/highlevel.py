@@ -1,38 +1,42 @@
-"""
-Unified high-level interface for various time series related learning tasks.
+"""Unified high-level interface for various time series related learning tasks.
 """
 
-from sklearn.base import _pprint
-from sklearn.utils.validation import check_is_fitted
-from inspect import signature
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.base import _pprint
+from inspect import signature
 
-from .forecasting.base import BaseForecaster
 from .classifiers.base import BaseClassifier
+from .forecasting.base import BaseForecaster
 from .regressors.base import BaseRegressor
 
-__all__ = ['TSCTask', 'ForecastingTask', 'TSCStrategy']
-__author__ = ['Markus Löning', 'Sajay Ganesh']
+__all__ = ['TSCTask',
+           'TSRTask',
+           'ForecastingTask',
+           'TSCStrategy',
+           'TSRStrategy',
+           'ForecastingStrategy']
 
-# TODO implement compatibility checks between metadata and task: e.g. for tsc, if features are present
+__author__ = ['Markus Löning', 'Sajay Ganesh', 'Viktor Kazakov']
+
+
 # TODO implement task-strategy compatibility lookup registry using strategy traits
 
 
 class BaseTask:
-    """An object that encapsulates meta-data and instructions on how to derive the target/label for the time-series
-    prediction/supervised learning task.
+    """A task encapsulates metadata information such as the feature and target variable which to fit the data to and
+    additional necessary instructions on how to fit and predict.
 
     Parameters
     ----------
-    metadata : pd.DataFrame
+    target : str
+        The column name for the target variable to be predicted.
+    features : list of str, optinal, (default=None)
+        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+    metadata : pandas.DataFrame
         Contains the metadata that the task is expected to work with.
-    target : string
-        The column header for the target variable to be predicted.
-    features : list of string
-        The column header for the target variable to be predicted.
-        If omitted, every column apart from target would be a feature.
     """
+
     def __init__(self, target, features=None, metadata=None):
         # TODO input checks on target and feature args
         self._target = target
@@ -60,13 +64,17 @@ class BaseTask:
         return self._metadata
 
     def set_metadata(self, metadata):
-        """Provide metadata to task if not already done so in construction, especially useful in automatic orchestration
-        and benchmarking where the metadata is not available in advance.
+        """Provide metadata to task if not already done so in construction, especially useful during automatic
+        orchestration and benchmarking where the metadata may not be available in advance.
 
         Parameters
         ----------
-        metadata : pandas DataFrame
+        metadata : pandas.DataFrame
+            Metadata container
 
+        Returns
+        -------
+        self : an instance of self
         """
         # TODO replace whole pandas data container as input argument with separated metadata container
 
@@ -84,7 +92,7 @@ class BaseTask:
                 self._features = metadata.columns.drop(self.target)
 
             # check for consistency of task with given metadata
-            self.check_compatibility_with_data(metadata)
+            self.check_data_compatibility(metadata)
 
             # set metadata
             self._metadata = {
@@ -93,9 +101,17 @@ class BaseTask:
                 "target_type": {self.target: type(i) for i in metadata[self.target]},
                 "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
             }
+        return self
 
-    def check_compatibility_with_data(self, metadata):
-        """Helper function to check compatibility of task with data"""
+    def check_data_compatibility(self, metadata):
+        """Function to check compatibility of task with passed metadata. Throws an error if data is not compatible
+        with task.
+
+        Parameters
+        ----------
+        metadata : pandas.DataFrame
+            Metadata container
+        """
         if not isinstance(metadata, pd.DataFrame):
             raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found: {type(metadata)}')
 
@@ -151,58 +167,60 @@ class BaseTask:
 
 
 class TSCTask(BaseTask):
-    """Time series classification task.
+    """Time series classification task. A task encapsulates metadata information such as the feature and target variable which to fit the data to and
+    additional necessary instructions on how to fit and predict.
 
     Parameters
     ----------
-    metadata : pandas DataFrame
-        Meta-data
     target : str
-        Name of target variable.
-    features : list
-        Name of feature variables.
+        The column name for the target variable to be predicted.
+    features : list of str, optinal, (default=None)
+        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+    metadata : pandas.DataFrame
+        Contains the metadata that the task is expected to work with.
     """
+
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSC'
         super(TSCTask, self).__init__(target, features=features, metadata=metadata)
 
 
 class TSRTask(BaseTask):
-    """Time series regression task.
+    """Time series regression task. A task encapsulates metadata information such as the feature and target variable which to fit the data to and
+    additional necessary instructions on how to fit and predict.
 
     Parameters
     ----------
-    metadata : pandas DataFrame
-        Meta-data
     target : str
-        Name of target variable.
-    features : list
-        Name of feature variables.
+        The column name for the target variable to be predicted.
+    features : list of str, optinal, (default=None)
+        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+    metadata : pandas.DataFrame
+        Contains the metadata that the task is expected to work with.
     """
+
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSR'
         super(TSRTask, self).__init__(target, features=features, metadata=metadata)
 
 
 class ForecastingTask(BaseTask):
-    """Forecasting task.
+    """Time series forecasting task. A task encapsulates metadata information such as the feature and target
+    variable which to fit the data to and additional necessary instructions on how to fit and predict.
 
     Parameters
     ----------
-    metadata : pandas DataFrame
-        Data container
     target : str
-        Name of target variable to forecast.
-    pred_horizon : list or int
+        The column name for the target variable to be predicted.
+    features : list of str, optional, (default=None)
+        The column name(s) for the exogenous feature variable. If None, every column apart from target will be used as
+        a feature.
+    metadata : pandas.DataFrame
+        Contains the metadata that the task is expected to work with.
+    fh : list or int, optional, (default=None)
         Single step ahead or list of steps ahead to forecast.
-
-
-    obs_horizon : str
-        - If `fixed`, one or more fixed cut-off points from which to make forecasts
-        - If `moving`, iteratively
-    features : list
-        List of feature variables.
     """
+
     def __init__(self, target, fh=None, features=None, metadata=None):
         self._case = 'forecasting'
 
@@ -226,6 +244,7 @@ class ForecastingTask(BaseTask):
 
 class BaseStrategy:
     """Abstract base strategy class"""
+
     def __init__(self, estimator, name=None, check_input=True):
         self._name = estimator.__class__.__name__ if name is None else name
         self._estimator = estimator
@@ -236,6 +255,8 @@ class BaseStrategy:
 
     @property
     def name(self):
+        """Exposes the private variable name in a controlled way
+        """
         return self._name
 
     def __getitem__(self, key):
@@ -247,16 +268,18 @@ class BaseStrategy:
         return self._traits[key]
 
     def fit(self, task, data):
-        """Generic fit method, calls strategy specific `_fit` methods
+        """Fit the strategy for the given task and data.
 
         Parameters
         ----------
-        task : Task
-        data : pd.DataFrame
+        task : Task object
+            Task encapsualting metadata information on feature and target variables to which to fit the data to.
+        data : pandas.DataFrame
+            Dataframe with feature and target variables as specified in task.
 
         Returns
         -------
-        The fitted strategy
+        self : an instance of the self
         """
 
         # check task compatibility with Strategy
@@ -271,17 +294,18 @@ class BaseStrategy:
         return self._fit(data)
 
     def _check_task_compatibility(self, task):
+        """Helper function to check compatibility of strategy with task"""
         # TODO replace by task-strategy compatibility lookup registry
         if self._case != task._case:
             raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
 
     def get_params(self, deep=True):
-        """call get_params of the estimator
+        """Call get_params of the estimator. Retrieves hyper-parameters.
         """
         return self._estimator.get_params(deep=deep)
 
     def set_params(self, **params):
-        """Call set_params of the estimator
+        """Call set_params of the estimator. Sets hyper-parameters.
         """
         self._estimator.set_params(**params)
 
@@ -301,7 +325,20 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
     estimator : BaseEstimator
         An instance of an initialized low-level estimator
     """
+
     def _fit(self, data):
+        """Internal fit
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Dataframe with feature and target variables as specified in task.
+
+
+        Returns
+        -------
+        self : an instance of self
+        """
         # fit the estimator
         try:
             X = data[self._task.features]
@@ -312,18 +349,22 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         # fit the estimator
         return self._estimator.fit(X, y)
 
-    def predict(self, data=None):
+    def predict(self, data):
         """Predict the targets for the test data
 
         Parameters
         ----------
-        data : a pandas DataFrame
-            Prediction Data
+        data : a pandas.DataFrame
+            Dataframe with feature and target variables as specified in task passed to ``fit``.
 
         Returns
         -------
-        predictions: a pd.Dataframe or pd.Series
-            returns the predictions
+        self : an instance of the self
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Returns the series of predicted values.
         """
         # predict
         try:
@@ -337,8 +378,19 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
-    """Strategy for time series classification
+    """Strategy for time series classification.
+
+        Parameters
+        ----------
+        estimator : an estimator
+            Low-level estimator
+        name : str, optional (default=None)
+            Name of strategy. If None, class name of estimator is used.
+        check_input : bool, optional (default=True)
+        - If True, input are checked.
+        - If False, input are not checked and assumed correct. Use with caution.
     """
+
     def __init__(self, estimator, name=None, check_input=True):
         if not isinstance(estimator, BaseClassifier):
             raise ValueError(f"Passed estimator must be a classifier, but found: {type(estimator)}")
@@ -347,8 +399,19 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
-    """Strategy for time series regression
+    """Strategy for time series regression.
+
+        Parameters
+        ----------
+        estimator : an estimator
+            Low-level estimator
+        name : str, optional (default=None)
+            Name of strategy. If None, class name of estimator is used.
+        check_input : bool, optional (default=True)
+        - If True, input are checked.
+        - If False, input are not checked and assumed correct. Use with caution.
     """
+
     def __init__(self, estimator, name=None, check_input=True):
         if not isinstance(estimator, BaseRegressor):
             raise ValueError(f"Passed estimator must be a regressor, but found: {type(estimator)}")
@@ -357,8 +420,19 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
 
 
 class ForecastingStrategy(BaseStrategy):
-    """Abstract class for forecasting strategies
+    """Strategy for time series forecasting.
+
+        Parameters
+        ----------
+        estimator : an estimator
+            Low-level estimator
+        name : str, optional (default=None)
+            Name of strategy. If None, class name of estimator is used.
+        check_input : bool, optional (default=True)
+        - If True, input are checked.
+        - If False, input are not checked and assumed correct. Use with caution.
     """
+
     def __init__(self, estimator, name=None, check_input=True):
         if not isinstance(estimator, BaseForecaster):
             raise ValueError(f"Passed estimator must be a forecaster, but found: {type(estimator)}")
@@ -366,6 +440,17 @@ class ForecastingStrategy(BaseStrategy):
         self._case = 'forecasting'
 
     def _fit(self, data):
+        """Internal fit.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Input data
+
+        Returns
+        -------
+        self : an instance of self
+        """
         try:
             y = data[self._task.target]
             if len(self._task.features) > 0:
@@ -386,14 +471,15 @@ class ForecastingStrategy(BaseStrategy):
 
         Parameters
         ----------
-        data
+        data : pandas.DataFrame
+            Dataframe with feature and target variables as specified in task.
 
         Returns
         -------
-
+        self : an instance of the self
         """
         if self.check_input:
-            self._task.check_compatibility_with_data(data)
+            self._task.check_data_compatibility(data)
             self._check_update_data(data)
 
         if hasattr(self._estimator, 'update'):
@@ -414,15 +500,21 @@ class ForecastingStrategy(BaseStrategy):
         return self
 
     def predict(self, data=None):
-        """Make predictions
+        """Predict using fitted strategy.
 
         Parameters
         ----------
-        data
+        data : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+            An optional 2-d dataframe of exogenous variables. If provided, these
+            variables are used as additional features in the regression
+            operation. This should not include a constant or trend. Note that if
+            provided, the forecaster must also have been fitted on the exogenous
+            features.
 
         Returns
         -------
-
+        y_pred : pandas.Series
+            Series of predicted values.
         """
         fh = self._task.fh
 

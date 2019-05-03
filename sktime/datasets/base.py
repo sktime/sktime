@@ -1,5 +1,6 @@
 """Utilities for loading datasets
 """
+
 import os
 import pandas as pd
 from ..utils.load_data import load_from_tsfile_to_dataframe
@@ -42,14 +43,13 @@ def _load_dataset(name, split, return_X_y):
         return X
 
 
-def load_gunpoint(split='ALL', return_X_y=False):
+def load_gunpoint(split='TRAIN', return_X_y=False):
     """Loads the GunPoint time series classification problem and returns X and y
 
     Parameters
     ----------
-    split: string (either "ALL" or "TRAIN" or "TEST", default = "ALL")
-        Whether to load the train or test partition of the problem
-        By default it loads both
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
 
     Returns
     -------
@@ -88,8 +88,8 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
 
     Parameters
     ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
 
     Returns
     -------
@@ -124,8 +124,9 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
 
     Parameters
     ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+
 
     Returns
     -------
