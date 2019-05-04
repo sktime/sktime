@@ -2,11 +2,10 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_squared_error
-from sklearn.utils import check_array
 from sklearn.utils.validation import check_is_fitted
 
-from ..utils.validation import validate_forecasting_horizon
-from ..utils.validation import validate_y_forecasting
+from ..utils.validation import validate_fh
+
 
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
 __author__ = ['Markus Löning']
@@ -47,17 +46,15 @@ class BaseForecaster(BaseEstimator):
         self : returns an instance of self.
         """
         if self.check_input:
-            validate_y_forecasting(y)
-            if X is not None:
-                X = check_array(X)
+            self._validate_forecasting_data(y, X)
 
-        # keep index for later forecasting where passed forecasting horizon will be relative to y's index
+        # Keep index for predicting where forecasting horizon will be relative to y seen in fit
         self._y_idx = self._get_y_index(y)
 
-        # make interface compatible with estimators that only take y
+        # Make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
 
-        # Fit estimator.
+        # Internal fit.
         self._fit(y, **kwargs)
         self._is_fitted = True
         return self
@@ -67,8 +64,9 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+        fh : array-like, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -83,13 +81,11 @@ class BaseForecaster(BaseEstimator):
         """
         check_is_fitted(self, '_is_fitted')
 
-        # set default 1-step ahead forecast horizon
-        fh = [1] if fh is None else fh
-
         if self.check_input:
-            fh = validate_forecasting_horizon(fh)
-            if X is not None:
-                X = check_array(X)
+            self._validate_forecasting_X(X)
+
+        # validate forecasting horizon
+        fh = validate_fh(fh)
 
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
@@ -120,19 +116,19 @@ class BaseForecaster(BaseEstimator):
         score : float
             Mean squared error of self.predict(fh=fh, X=X) with respect to y.
         """
-        # only check y here, X and fh will be checked in predict method
+        # only check y here, X and fh will be checked during predict
         if self.check_input:
-            validate_y_forecasting(y)
+            self._validate_forecasting_y(y)
 
-        # predict y_pred
-        # pass exogenous variable to predict only if passed as some forecasters may not accept X in predict
+        # Predict y_pred
+        # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
         kwargs = {} if X is None else {'X': X}
         y_pred = self.predict(fh=fh, **kwargs)
 
-        # unnest y_true
+        # Unnest y_true
         y_true = y.iloc[0]
 
-        # check if passed true time series coincides with forecast horizon of predicted values
+        # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
             raise ValueError(f"Index of passed time series ``y`` does not match index of predicted time series")
 
@@ -145,6 +141,56 @@ class BaseForecaster(BaseEstimator):
         y = y.iloc[0]
         index = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
         return index
+
+    def _validate_forecasting_data(self, y, X=None):
+        """Helper function to check input data for forecasting
+
+        Parameters
+        ----------
+        y : pandas.Series
+            Time series to forecast.
+        X : pandas.DataFrame
+            Dataframe with exogenous data
+        """
+        # TODO add more input checks for consistency of X and y
+        self._validate_forecasting_y(y)
+        self._validate_forecasting_X(X)
+
+    @staticmethod
+    def _validate_forecasting_y(y):
+        """Helper function to check input data for forecasting
+
+        Parameters
+        ----------
+        y : pandas.Series
+            Time series to forecast.
+        """
+        # Check if pandas series
+        if not isinstance(y, pd.Series):
+            raise ValueError(f'``y`` must be a pandas DataFrame, but found: {type(y)}')
+
+        # Check if single row
+        if not y.shape[0] == 1:
+            raise ValueError(f'``y`` must consist of a pandas DataFrame with a single row, '
+                             f'but found: {y.shape[0]} rows')
+
+        # Check if contained time series is either pandas series or numpy array
+        s = y.iloc[0]
+        if not isinstance(s, (np.ndarray, pd.Series)):
+            raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
+
+    @staticmethod
+    def _validate_forecasting_X(X):
+        """Helper function to check input data for forecasting
+
+        Parameters
+        ----------
+        X : pandas.DataFrame
+            Dataframe with exogenous data
+        """
+        if X is not None:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f'``X`` must a pandas DataFrame, but found: {type(X)}')
 
 
 class BaseUpdateableForecaster(BaseForecaster):
@@ -184,17 +230,16 @@ class BaseUpdateableForecaster(BaseForecaster):
         """
         check_is_fitted(self, '_is_fitted')
         if self.check_input:
-            if X is not None:
-                X = check_array(X)
-            validate_y_forecasting(y)
-            self._check_y_update(y)
+            self._validate_forecasting_data(y, X)
+            self._validate_y_update(y)
 
         self._update(y, X=X)
         self._is_updated = True
         return self
 
-    def _check_y_update(self, y):
+    def _validate_y_update(self, y):
         """Helper function to check the ``y`` passed to update the estimator"""
+        # TODO add additional input checks for update data, i.e. that update data is newer than data seen in fit
         y = y.iloc[0]
         y_idx = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
         if not isinstance(y_idx, type(self._y_idx)):
@@ -211,8 +256,9 @@ class BaseSingleSeriesForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+        fh : array-like, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            i.e. np.array([1])
 
         Returns
         -------

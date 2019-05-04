@@ -4,11 +4,18 @@
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
+from sklearn.base import BaseEstimator
+from sklearn.base import ClassifierMixin
+from sklearn.base import RegressorMixin
+from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 from inspect import signature
 
 from .classifiers.base import BaseClassifier
 from .forecasting.base import BaseForecaster
 from .regressors.base import BaseRegressor
+from .pipeline import TSPipeline
+from .model_selection import RollingWindowSplit
 
 __all__ = ['TSCTask',
            'TSRTask',
@@ -16,16 +23,26 @@ __all__ = ['TSCTask',
            'TSCStrategy',
            'TSRStrategy',
            'ForecastingStrategy']
+__author__ = ['Markus Löning', 'Sajay Ganesh']
 
-__author__ = ['Markus Löning', 'Sajay Ganesh', 'Viktor Kazakov']
 
+# TODO implement task-strategy-estimator compatibility lookup registry using strategy traits
+REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)
+CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
+FORECASTER_TYPES = (BaseForecaster, )
+ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 
-# TODO implement task-strategy compatibility lookup registry using strategy traits
+CASES = ("TSR", "TSC", "Forecasting")
 
 
 class BaseTask:
-    """A task encapsulates metadata information such as the feature and target variable which to fit the data to and
-    additional necessary instructions on how to fit and predict.
+    """A task encapsulates metadata information such as the feature and
+    target variable which to fit the data to and additional necessary
+    instructions on how to fit and predict.
+
+    Implements attributes and operations shared by all tasks,
+    including compatibility checks between the concrete task type and
+    passed metadata.
 
     Parameters
     ----------
@@ -222,7 +239,7 @@ class ForecastingTask(BaseTask):
     """
 
     def __init__(self, target, fh=None, features=None, metadata=None):
-        self._case = 'forecasting'
+        self._case = "Forecasting"
 
         if isinstance(fh, list):
             if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
@@ -243,15 +260,20 @@ class ForecastingTask(BaseTask):
 
 
 class BaseStrategy:
-    """Abstract base strategy class"""
+    """Abstract base strategy class
+
+    Implements attributes and operations shared by all strategies,
+    including input and compatibility checks between passed estimator,
+    data and task.
+    """
 
     def __init__(self, estimator, name=None, check_input=True):
-        self._name = estimator.__class__.__name__ if name is None else name
+        self._check_estimator_compatibility(estimator)
         self._estimator = estimator
-        self._task = None
-        self._case = None
-        self._traits = {}
+
+        self._name = estimator.__class__.__name__ if name is None else name
         self.check_input = check_input
+        self._task = None
 
     @property
     def name(self):
@@ -281,12 +303,14 @@ class BaseStrategy:
         -------
         self : an instance of the self
         """
+        if self.check_input:
+            self._validate_data(data)
 
-        # check task compatibility with Strategy
+        # Check task compatibility with strategy
         self._check_task_compatibility(task)
         self._task = task
 
-        # update task if necessary
+        # Set metadata if not already set
         if self._task.metadata is None:
             self._task.set_metadata(data)
 
@@ -296,8 +320,52 @@ class BaseStrategy:
     def _check_task_compatibility(self, task):
         """Helper function to check compatibility of strategy with task"""
         # TODO replace by task-strategy compatibility lookup registry
-        if self._case != task._case:
-            raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
+        if hasattr(task, '_case'):
+            if self._case != task._case:
+                raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
+        else:
+            raise AttributeError("The passed case of the task is unknown")
+
+    def _check_estimator_compatibility(self, estimator):
+        """Helper function to check compatibility of estimator with strategddy"""
+
+        # Determine required estimator type from strategy case
+        # TODO replace with strategy - estimator type registry lookup
+        if hasattr(self, '_traits'):
+            required = self._traits["required_estimator_type"]
+            if any(estimator_type not in ESTIMATOR_TYPES for estimator_type in required):
+                raise AttributeError(f"Required estimator type unknown")
+        else:
+            raise AttributeError(f"Required estimator type not found")
+
+        # Check estimator compatibility with required type
+        if not isinstance(estimator, BaseEstimator):
+            raise ValueError(f"Estimator must inherit from BaseEstimator")
+
+        # If pipeline, check compatibility of final estimator
+        if isinstance(estimator, (Pipeline, TSPipeline)):
+            final_estimator = estimator.steps[-1][1]
+            if not isinstance(final_estimator, required):
+                raise ValueError(f"Final estimator of passed pipeline estimator must be of type: {required}, "
+                                 f"but found: {type(final_estimator)}")
+
+        # Otherwise check estimator directly
+        else:
+            if not isinstance(estimator, required):
+                raise ValueError(f"Passed estimator has to be of type: {required}, but found: {type(estimator)}")
+
+    @staticmethod
+    def _validate_data(data):
+        """Helper function to validate input data.
+        """
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f"Data must be pandas DataFrame, but found: {type(data)}")
+
+        # TODO add input checks for contents, ie all cells be pandas Series, numpy arrays or primitives,
+        #  ultimately move checks to data container
+        # s = y.iloc[0]
+        # if not isinstance(s, (np.ndarray, pd.Series)):
+        #     raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
 
     def get_params(self, deep=True):
         """Call get_params of the estimator. Retrieves hyper-parameters.
@@ -320,10 +388,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
     """Abstract strategy class for time series supervised learning that accepts a low-level estimator to
     perform a given task.
 
-    Parameters
-    ----------
-    estimator : BaseEstimator
-        An instance of an initialized low-level estimator
+    Implements predict and internal fit methods for time series regression and classification.
     """
 
     def _fit(self, data):
@@ -339,12 +404,9 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         -------
         self : an instance of self
         """
-        # fit the estimator
-        try:
-            X = data[self._task.features]
-            y = data[self._task.target]
-        except KeyError:
-            raise ValueError("Task <-> data mismatch. The target/features are not in the data")
+        # select features and target
+        X = data[self._task.features]
+        y = data[self._task.target]
 
         # fit the estimator
         return self._estimator.fit(X, y)
@@ -366,15 +428,11 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         y_pred : pandas.Series
             Returns the series of predicted values.
         """
-        # predict
-        try:
-            X = data[self._task.features]
-        except KeyError:
-            raise ValueError("Task <-> data mismatch. The target/features are not in the data")
+        # select features
+        X = data[self._task.features]
 
-        # estimate predictions and return
-        y_pred = self._estimator.predict(X)
-        return y_pred
+        # predict
+        return self._estimator.predict(X)
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
@@ -392,10 +450,9 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
     """
 
     def __init__(self, estimator, name=None, check_input=True):
-        if not isinstance(estimator, BaseClassifier):
-            raise ValueError(f"Passed estimator must be a classifier, but found: {type(estimator)}")
-        super(TSCStrategy, self).__init__(estimator, name=name, check_input=check_input)
         self._case = "TSC"
+        self._traits = {"required_estimator_type": CLASSIFIER_TYPES}
+        super(TSCStrategy, self).__init__(estimator, name=name, check_input=check_input)
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
@@ -413,10 +470,9 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
     """
 
     def __init__(self, estimator, name=None, check_input=True):
-        if not isinstance(estimator, BaseRegressor):
-            raise ValueError(f"Passed estimator must be a regressor, but found: {type(estimator)}")
-        super(TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
         self._case = "TSR"
+        self._traits = {"required_estimator_type": REGRESSOR_TYPES}
+        super(TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
 
 
 class ForecastingStrategy(BaseStrategy):
@@ -434,10 +490,9 @@ class ForecastingStrategy(BaseStrategy):
     """
 
     def __init__(self, estimator, name=None, check_input=True):
-        if not isinstance(estimator, BaseForecaster):
-            raise ValueError(f"Passed estimator must be a forecaster, but found: {type(estimator)}")
+        self._case = "Forecasting"
+        self._traits = {"required_estimator_type": FORECASTER_TYPES}
         super(ForecastingStrategy, self).__init__(estimator, name=name, check_input=check_input)
-        self._case = 'forecasting'
 
     def _fit(self, data):
         """Internal fit.
@@ -451,20 +506,15 @@ class ForecastingStrategy(BaseStrategy):
         -------
         self : an instance of self
         """
-        try:
-            y = data[self._task.target]
-            if len(self._task.features) > 0:
-                X = data[self._task.features]
-                kwargs = {'X': X}
-            else:
-                kwargs = {}
-        except KeyError:
-            raise ValueError("Task <-> data mismatch. The target/features are not in the data")
+        y = data[self._task.target]
+        if len(self._task.features) > 0:
+            X = data[self._task.features]
+            kwargs = {'X': X}
+        else:
+            kwargs = {}
 
         # fit the estimator
-        self._estimator.fit(y, **kwargs)
-        self._is_fitted = True
-        return self
+        return self._estimator.fit(y, **kwargs)
 
     def update(self, data):
         """Update forecasts using new data.
@@ -480,7 +530,6 @@ class ForecastingStrategy(BaseStrategy):
         """
         if self.check_input:
             self._task.check_data_compatibility(data)
-            self._check_update_data(data)
 
         if hasattr(self._estimator, 'update'):
             try:
@@ -529,19 +578,111 @@ class ForecastingStrategy(BaseStrategy):
 
         return self._estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
 
-    @staticmethod
-    def _check_fit_data(data):
-        """Helper function to check input data for fit"""
-        if not isinstance(data, pd.DataFrame):
-            raise ValueError(f'Data must be supplied as a pandas DataFrame, but found {type(data)}')
-        if not data.shape[0] == 1:
-            raise ValueError(f'Data must be from a single instance (row), but found {data.shape[0]} rows')
 
-    def _check_update_data(self, data):
-        """Helper function to check input data for update"""
-        # TODO add additional input checks for update data
-        y = data[self._task.target].iloc[0]
-        y_updated_idx = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
-        is_same_type = isinstance(y_updated_idx, type(self._estimator._y_idx))
-        if not is_same_type:
-            raise ValueError('Data passed to `update` does not match the data passed to `fit`')
+class ReduceForecasting2TSRStrategy(BaseStrategy):
+    """Strategy to reduce a forecasting problem to time series regression problem using a rolling window approach"""
+    def __init__(self, estimator, window_length=None, name=None, check_input=True):
+        self._case = "Forecasting"
+        self._traits = {"required_estimator_type": REGRESSOR_TYPES}
+        super(ReduceForecasting2TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
+
+        # TODO what's a good default for window length? sqrt(len(data))?
+        self.window_length = window_length
+        self.estimators = []
+        self.estimators_ = []
+
+    def _fit(self, data):
+        """Internal fit.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            Input data
+
+        Returns
+        -------
+        self : an instance of self
+        """
+
+        # Select target and feature variables
+        y = data[self._task.target]
+        if len(self._task.features) > 0:
+            X = data[self._task.features]
+            # TODO how to handle exogenous variables
+            raise NotImplementedError()
+
+        # Set up window roller
+        fh = self._task.fh
+        rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
+        self.rw = rw
+
+        # Unnest target series
+        yt = y.iloc[0]
+        index = np.arange(len(yt))
+
+        # Transform target series into tabular format using rolling window splits
+        xs = []
+        ys = []
+        for feature_window, target_window in rw.split(index):
+            x = yt[feature_window]
+            y = yt[target_window]
+            xs.append(x)
+            ys.append(y)
+
+        # Construct nested pandas DataFrame for X
+        X = pd.DataFrame(pd.Series([x for x in np.array(xs)]))
+        Y = np.array(ys)
+
+        # Clone estimators, one for each step in the forecasting horizon
+        n_steps = len(fh)
+        self.estimators = [clone(self._estimator) for _ in range(n_steps)]
+
+        # Iterate over estimators/forecast horizon
+        for estimator, y in zip(self.estimators, Y.T):
+            y = pd.Series(y)
+            estimator.fit(X, y)
+            self.estimators_.append(estimator)
+
+        # Save the last window-length number of observations for predicting
+        self.window_length_ = rw.get_window_length()
+        self._last_window = yt.iloc[-self.window_length_:]
+
+        return self
+
+    def predict(self, data=None):
+        """Predict using fitted strategy.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+            An optional 2-d dataframe of exogenous variables. If provided, these
+            variables are used as additional features in the regression
+            operation. This should not include a constant or trend. Note that if
+            provided, the forecaster must also have been fitted on the exogenous
+            features.
+
+        Returns
+        -------
+        y_pred : pandas.Series
+            Series of predicted values.
+        """
+        fh = self._task.fh
+
+        if data is not None:
+            # TODO handle exog data
+            raise NotImplementedError()
+
+        # Predict using last window (single row) and fitted estimators
+        x = pd.DataFrame(pd.Series([self._last_window]))
+        y_pred = np.zeros(len(fh))
+
+        # Iterate over estimators/forecast horizon
+        for i, estimator in enumerate(self.estimators_):
+            y_pred[i] = estimator.predict(x)
+
+        # Add name and predicted index
+        index = self._last_window.index[-1] + fh
+        name = self._last_window.name
+        return pd.Series(y_pred, name=name, index=index)
+
+

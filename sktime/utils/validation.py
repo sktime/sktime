@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 
 def check_ts_X_y(X, y):
@@ -61,8 +60,8 @@ def check_equal_index(X):
     return indexes
 
 
-def validate_forecasting_horizon(fh):
-    """Helper function to
+def validate_fh(fh):
+    """Helper function to validate forecasting horizon
 
     Parameters
     ----------
@@ -74,39 +73,29 @@ def validate_forecasting_horizon(fh):
     fh : numpy array of int
         Sorted forecasting horizon
     """
-    if isinstance(fh, list):
-        if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
-            raise ValueError('If the forecasting horizon ``fh`` is passed as a list, it has to be a list of integers')
-    elif isinstance(fh, np.ndarray):
-        if not np.issubdtype(fh.dtype, np.integer):
-            raise ValueError(f'If the forecasting horizon ``fh`` is passed as an array, it has to be an array of '
-                             f'integers, but found an array of dtype: {fh.dtype}')
+
+    # Set default as one-step ahead
+    if fh is None:
+        return np.ones(1, dtype=np.int8)
+
+    # Check single integer
     elif np.issubdtype(type(fh), np.integer):
-        fh = [fh]
+        return np.ones(1, dtype=np.int8) * fh
+
+    # Check array-like input
     else:
-        raise ValueError(f"The forecasting horizon ``fh`` has to be either a list or array of integers, or a single "
-                         f"integer, but found: {type(fh)}")
-    return np.sort(fh)
+        if isinstance(fh, list):
+            if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
+                raise ValueError('If the forecasting horizon ``fh`` is passed as a list, '
+                                 'it has to be a list of integers')
+        elif isinstance(fh, np.ndarray):
+            if not np.issubdtype(fh.dtype, np.integer):
+                raise ValueError(
+                    f'If the forecasting horizon ``fh`` is passed as an array, it has to be an array of '
+                    f'integers, but found an array of dtype: {fh.dtype}')
+        else:
+            raise ValueError(
+                f"The forecasting horizon ``fh`` has to be either a list or array of integers, or a single "
+                f"integer, but found: {type(fh)}")
 
-
-def validate_y_forecasting(y):
-    """Helper function to check input time series
-
-    Parameters
-    ----------
-    y : pandas.Series
-        Time series to forecast.
-    """
-    # check if pandas series
-    if not isinstance(y, pd.Series):
-        raise ValueError(f'y must be pandas series, but found: {type(y)}')
-
-    # check if single row
-    n_rows = y.shape[0]
-    if n_rows > 1:
-        raise ValueError(f'y must consist of a single row, but found: {n_rows} rows')
-
-    # check if contained time series is either pandas series or numpy array
-    s = y.iloc[0]
-    if not isinstance(s, (np.ndarray, pd.Series)):
-        raise ValueError(f'y must contain a pandas series or numpy array, but found: {type(s)}.')
+        return np.asarray(np.sort(fh), dtype=np.int8)

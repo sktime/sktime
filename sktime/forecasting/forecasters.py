@@ -27,7 +27,9 @@ class ARIMAForecaster(BaseUpdateableForecaster):
     seasonal_order : tuple, optional
         The (P,D,Q,s) order of the seasonal component of the model for the AR parameters, differences, MA parameters,
         and periodicity. d must be an integer indicating the integration order of the process, while p and q may either
-        be an integers indicating the AR and MA orders (so that all lags up to those orders are included) or else iterables giving specific AR and / or MA lags to include. s is an integer giving the periodicity (number of periods in season), often it is 4 for quarterly data or 12 for monthly data. Default is no seasonal effect.
+        be an integers indicating the AR and MA orders (so that all lags up to those orders are included) or else
+        iterables giving specific AR and / or MA lags to include. s is an integer giving the periodicity (number of
+        periods in season), often it is 4 for quarterly data or 12 for monthly data. Default is no seasonal effect.
     trend : str{'n','c','t','ct'} or iterable, optional
         Parameter controlling the deterministic trend polynomial :math:`A(t)`.
         Can be specified as a string where 'c' indicates a constant (i.e. a
@@ -160,8 +162,9 @@ class ARIMAForecaster(BaseUpdateableForecaster):
 
         Parameters
         ----------
-        fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+        fh : array-like, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -368,6 +371,7 @@ class EnsembleForecaster(BaseForecaster):
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
+    # TODO: experimental, major functionality not implemented (input checks, params interface, exogenous variables)
 
     def __init__(self, estimators=None, weights=None, check_input=True):
         # TODO add input checks
@@ -405,8 +409,9 @@ class EnsembleForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+        fh : array-like, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -443,5 +448,12 @@ class EnsembleForecaster(BaseForecaster):
         index = indexes[0]
         name = y_preds[0].name if hasattr(y_preds[0], 'name') else None
         return pd.Series(avg_preds, index=index, name=name)
+
+    def get_params(self, deep=True):
+        # TODO fix get and set params interface following sklearn double underscore convention
+        raise NotImplementedError()
+
+    def set_params(self, **params):
+        raise NotImplementedError()
 
 

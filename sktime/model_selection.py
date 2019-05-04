@@ -2,10 +2,15 @@
 classes and functions for model validation
 """
 
+from sklearn.metrics import make_scorer
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV as skGSCV
-from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
-from sktime.regressors.base import BaseRegressor
-from sktime.classifiers.base import BaseClassifier
+import numpy as np
+
+from .classifiers.base import BaseClassifier
+from .regressors.base import BaseRegressor
+from .utils.validation import validate_fh
 
 
 class GridSearchCV(skGSCV):
@@ -208,6 +213,7 @@ class GridSearchCV(skGSCV):
         Seconds used for refitting the best model on the whole dataset.
         This is present only if ``refit`` is not False.
     """
+
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
@@ -225,3 +231,62 @@ class GridSearchCV(skGSCV):
             # using mean squared error as default for regressors
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
+
+
+class RollingWindowSplit:
+    """Rolling window iterator.
+
+    Parameters
+    ----------
+    window_length : int
+    fh : array-like
+    """
+    def __init__(self, window_length=None, fh=None):
+        # TODO input checks
+        if window_length is not None:
+            if not np.issubdtype(window_length, np.integer):
+                raise ValueError(f"Window length must be an integer, but found: {type(window_length)}")
+
+        self.window_length = window_length
+        self.fh = validate_fh(fh)
+
+        # Attributes updated in split
+        self.n_splits_ = None
+        self.window_length_ = None
+
+    def split(self, data):
+        """Split the data"""
+
+        # Input checks.
+        if not isinstance(data, np.ndarray) and (data.ndim == 1):
+            raise ValueError(f"Passed data has to be 1-d numpy array, but found data of type: {type(data)} with "
+                             f"{data.ndim} dimensions")
+
+        n_obs = data.shape[0]
+        max_fh = self.fh[-1]  # furthest step ahead, assume sorted
+
+        # Set default window length to sqrt of series length
+        if self.window_length is None:
+            self.window_length_ = int(np.sqrt(n_obs))
+
+        if (self.window_length_ + max_fh) > n_obs:
+            raise ValueError("Window length and forecast horizon cannot be longer than data")
+
+        # Iterate over windows
+        start = self.window_length_
+        stop = n_obs - max_fh + 1
+        self.n_splits_ = stop - start
+
+        for window in range(start, stop):
+            train = data[window - self.window_length_:window]
+            test = data[window + self.fh - 1]
+            yield train, test
+
+    def get_n_splits(self):
+        """Return number of splits."""
+        return self.n_splits_
+
+    def get_window_length(self):
+        """Return the window length"""
+        return self.window_length_
+
