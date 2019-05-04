@@ -41,6 +41,8 @@ To install the development version, follow these steps:
 4. Make sure your local version is up-to-date: :code:`git pull`
 5. Install package: :code:`pip install .`
 
+You currently may have to install :code:`numpy` and :code:`Cython` first using: :code:`pip install numpy`
+and :code:`pip install Cython`.
 
 Overview
 --------
