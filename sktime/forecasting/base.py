@@ -94,7 +94,7 @@ class BaseForecaster(BaseEstimator):
         return self._predict(fh=fh, **kwargs)
 
     def score(self, y, fh=None, X=None, sample_weight=None):
-        """Returns the mean squared error on the given forecast horizon.
+        """Returns the root mean squared error on the given forecast horizon.
 
         Parameters
         ----------
@@ -130,9 +130,10 @@ class BaseForecaster(BaseEstimator):
 
         # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
-            raise ValueError(f"Index of passed time series ``y`` does not match index of predicted time series")
+            raise ValueError(f"Index of passed time series `y` does not match index of predicted time series; "
+                             f"make sure the forecasting horizon `fh` matches the time index of `y`")
 
-        return mean_squared_error(y_true, y_pred, sample_weight=sample_weight)
+        return np.sqrt(mean_squared_error(y_true, y_pred, sample_weight=sample_weight))
 
     @staticmethod
     def _get_y_index(y):

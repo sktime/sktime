@@ -69,7 +69,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
     """
 
     def __init__(self, order=(1, 0, 0), seasonal_order=(0, 0, 0, 0), trend='n', enforce_stationarity=True,
-                 enforce_invertibility=True, maxiter=1000, method='lbfgs', check_input=True):
+                 enforce_invertibility=True, maxiter=1000, method='lbfgs', check_input=True, disp=0):
         # TODO add more constructor/fit options from statsmodels
 
         # Input checks.
@@ -83,6 +83,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         self.enforce_stationarity = enforce_stationarity
         self.enforce_invertibility = enforce_invertibility
         self.maxiter = maxiter
+        self.disp = disp
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
     def _fit(self, y, X=None):
@@ -114,7 +115,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
                                   trend=self.trend,
                                   enforce_stationarity=self.enforce_stationarity,
                                   enforce_invertibility=self.enforce_invertibility)
-        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method)
+        self._fitted_estimator = self._estimator.fit(maxiter=self.maxiter, method=self.method, disp=self.disp)
         return self
 
     def _update(self, y, X=None):
@@ -399,7 +400,8 @@ class EnsembleForecaster(BaseForecaster):
         self : returns an instance of self.
         """
         for _, estimator in self.estimators:
-            estimator.set_params(**{"check_input": False})
+            # TODO implement set/get params interface
+            # estimator.set_params(**{"check_input": False})
             fitted_estimator = estimator.fit(y, X=X)
             self.fitted_estimators_.append(fitted_estimator)
         return self
@@ -434,7 +436,7 @@ class EnsembleForecaster(BaseForecaster):
         indexes = []
         for i, estimator in enumerate(self.fitted_estimators_):
             y_pred = estimator.predict(fh=fh)
-            y_preds[i, :] = y_pred.iloc[fh_idx].values
+            y_preds[i, :] = y_pred
             indexes.append(y_pred.index)
 
         # Check if all predicted horizons are identical
