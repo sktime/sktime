@@ -85,17 +85,27 @@ def validate_fh(fh):
     # Check array-like input
     else:
         if isinstance(fh, list):
+            if len(fh) < 1:
+                raise ValueError(f"`fh` must specify at least one step, but found: "
+                                 f"{type(fh)} of length {len(fh)}")
             if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
-                raise ValueError('If the forecasting horizon ``fh`` is passed as a list, '
+                raise ValueError('If `fh` is passed as a list, '
                                  'it has to be a list of integers')
+
         elif isinstance(fh, np.ndarray):
+            if fh.ndim > 1:
+                raise ValueError(f"`fh` must be a 1d array, but found: "
+                                 f"{fh.ndim} dimensions")
+            if len(fh) < 1:
+                raise ValueError(f"`fh` must specify at least one step, but found: "
+                                 f"{type(fh)} of length {len(fh)}")
             if not np.issubdtype(fh.dtype, np.integer):
                 raise ValueError(
-                    f'If the forecasting horizon ``fh`` is passed as an array, it has to be an array of '
+                    f'If `fh` is passed as an array, it has to be an array of '
                     f'integers, but found an array of dtype: {fh.dtype}')
+
         else:
-            raise ValueError(
-                f"The forecasting horizon ``fh`` has to be either a list or array of integers, or a single "
-                f"integer, but found: {type(fh)}")
+            raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
+                             f"integer, but found: {type(fh)}")
 
         return np.asarray(np.sort(fh), dtype=np.int8)

@@ -9,6 +9,8 @@ from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 from inspect import signature
 
 from .classifiers.base import BaseClassifier
@@ -16,6 +18,7 @@ from .forecasting.base import BaseForecaster
 from .regressors.base import BaseRegressor
 from .pipeline import TSPipeline
 from .model_selection import RollingWindowSplit
+from .utils.validation import validate_fh
 
 __all__ = ['TSCTask',
            'TSRTask',
@@ -95,29 +98,25 @@ class BaseTask:
         """
         # TODO replace whole pandas data container as input argument with separated metadata container
 
-        if not isinstance(metadata, pd.DataFrame):
-            raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found {type(metadata)}')
-
         # only set metadata if metadata is not already set, otherwise raise error
         if self._metadata is not None:
             raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
                                  'metadata')
 
-        else:
-            # set default feature information (all columns but target) using metadata
-            if self.features is None:
-                self._features = metadata.columns.drop(self.target)
+        # check for consistency of information provided in task with given metadata
+        self.check_data_compatibility(metadata)
 
-            # check for consistency of task with given metadata
-            self.check_data_compatibility(metadata)
+        # set default feature information (all columns but target) using metadata
+        if self.features is None:
+            self._features = metadata.columns.drop(self.target)
 
-            # set metadata
-            self._metadata = {
-                "nrow": metadata.shape[0],
-                "ncol": metadata.shape[1],
-                "target_type": {self.target: type(i) for i in metadata[self.target]},
-                "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
-            }
+        # set metadata
+        self._metadata = {
+            "nrow": metadata.shape[0],
+            "ncol": metadata.shape[1],
+            "target_type": {self.target: type(i) for i in metadata[self.target]},
+            "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
+        }
         return self
 
     def check_data_compatibility(self, metadata):
@@ -132,20 +131,27 @@ class BaseTask:
         if not isinstance(metadata, pd.DataFrame):
             raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found: {type(metadata)}')
 
-        if not np.all(self.features.isin(metadata.columns)):
-            raise ValueError(f"Features: {list(self.features)} not found in metadata")
-
         if self.target not in metadata.columns:
             raise ValueError(f"Target: {self.target} not found in metadata")
+
+        if self.features is not None:
+            if not np.all(self.features.isin(metadata.columns)):
+                raise ValueError(f"Features: {list(self.features)} not found in metadata")
+
+        if isinstance(self, (TSCTask, TSRTask)):
+            if self.features is None:
+                if len(metadata.columns.drop(self.target)) == 0:
+                    raise ValueError(f"For task of type: {type(self)}, at least one feature must be given, "
+                                     f"but found none")
+
+            if metadata.shape[0] <= 1:
+                raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
+                                 f"found: {metadata.shape[0]} samples")
 
         if isinstance(self, ForecastingTask):
             if metadata.shape[0] > 1:
                 raise ValueError(f"For task of type: {type(self)}, only a single sample (row) can be given, but found: "
                                  f"{metadata.shape[0]} rows")
-
-        if isinstance(self, (TSCTask, TSRTask)):
-            if len(self.features) == 0:
-                raise ValueError(f"For task of type: {type(self)}, at least one feature must be given, but found none")
 
     @classmethod
     def _get_param_names(cls):
@@ -240,16 +246,7 @@ class ForecastingTask(BaseTask):
 
     def __init__(self, target, fh=None, features=None, metadata=None):
         self._case = "Forecasting"
-
-        if isinstance(fh, list):
-            if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
-                raise ValueError('if pred_horizon is passed as a list, it has to be a list of integers')
-        elif np.issubdtype(type(fh), np.integer) or (fh is None):
-            pass
-        else:
-            raise ValueError('pred_horizon has to be either a list of integers or single integer')
-        self._fh = 1 if fh is None else np.sort(fh)
-
+        self._fh = validate_fh(fh)
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property
@@ -348,6 +345,13 @@ class BaseStrategy:
             if not isinstance(final_estimator, required):
                 raise ValueError(f"Final estimator of passed pipeline estimator must be of type: {required}, "
                                  f"but found: {type(final_estimator)}")
+
+        # If tuning meta-estimator, check compatibility of inner estimator
+        elif isinstance(estimator, (GridSearchCV, RandomizedSearchCV)):
+            estimator = estimator.estimator
+            if not isinstance(estimator, required):
+                raise ValueError(f"Inner estimator of passed meta-estimator must be of type: {required}, "
+                                 f"but found: {type(estimator)}")
 
         # Otherwise check estimator directly
         else:

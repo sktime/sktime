@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
+import pandas as pd
 from numpy.testing import assert_array_equal
+from sklearn.metrics import mean_squared_error
 
 from sktime.forecasting.forecasters import DummyForecaster
 from sktime.forecasting.forecasters import ExpSmoothingForecaster
@@ -57,3 +59,17 @@ def test_set_params(forecaster, params):
     y_pred = m.predict()
 
     assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.parametrize("forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", FHS)
+def test_score(forecaster, fh):
+    m = forecaster()
+    train = pd.Series([y.iloc[0].iloc[:30]])
+    test = pd.Series([y.iloc[0].iloc[30:]])
+    fh = np.arange(len(test.iloc[0])) + 1
+    m.fit(train)
+    y_pred = m.predict(fh=fh)
+    expected = np.sqrt(mean_squared_error(y_pred.values, test.iloc[0].values))
+    assert m.score(test, fh=fh) == expected
