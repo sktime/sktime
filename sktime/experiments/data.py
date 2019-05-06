@@ -26,11 +26,6 @@ class DatasetHDD:
             train file suffix
         suffix_test: string
             test file suffix
-
-        Returns
-        -------
-        pandas DataFrame:
-            dataset in pandas DataFrame format
         """
         self._dataset_loc = dataset_loc
         self._dataset_name = dataset_name
@@ -44,6 +39,12 @@ class DatasetHDD:
         return self._dataset_name
 
     def load(self):
+        """
+        Returns
+        -------
+        pandas DataFrame:
+            dataset in pandas DataFrame format
+        """
         #TODO curently only the current use case with saved datasets on the disk in a certain format is supported. This should be made more general.
         if self._train_test_exists:
    
@@ -64,6 +65,35 @@ class DatasetHDD:
             data = pd.concat([data_train,data_test], axis=0, keys=['train','test']).reset_index(level=1, drop=True)
 
             return data
+
+class DatasetRAM:
+    def __init__(self, dataset, dataset_name):
+        """
+        Container for storing a dataset in memory
+
+        Paramteters
+        -----------
+        dataset : pandas DataFrame
+            The actual dataset
+        dataset_name : str
+            Name of the dataset
+        """
+
+        self._dataset = dataset
+        self._dataset_name = dataset_name
+
+    @property
+    def dataset_name(self):
+        return self._dataset_name
+    
+    def load(self):
+        """
+        Returns
+        -------
+        pandas DataFrame:
+            dataset in pandas DataFrame format
+        """
+        return self._dataset
 
 class DatasetLoadFromDir:
     """
@@ -148,7 +178,40 @@ class SKTimeResult(ABC):
         """
         method for loading the results
         """
+class ResultRAM(SKTimeResult):
+    """
+    Class for storing the results of the experiments in memory
+    """
+    def __init__(self):
+        self._results = []
+    
+    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+        """
+        Parameters
+        ----------
+        dataset_name: string
+            Name of the dataset
+        strategy_name: string
+            Name of the strategy
+        y_true: array
+            True lables array
+        y_pred: array
+            Predictions array
+        cv_fold: int
+            Cross validation fold
+        """
+        result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true, y_pred=y_pred)
+        self._results.append(result)
 
+    def load(self):
+        """
+        Returns
+        -------
+        list:
+            sktime results
+        """
+        return self._results
+        
 class ResultHDD(SKTimeResult):
     """
     Class for storing the results of the orchestrator
