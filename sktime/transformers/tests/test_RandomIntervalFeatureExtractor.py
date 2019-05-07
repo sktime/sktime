@@ -1,5 +1,5 @@
-from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from ..utils.testing import generate_df_from_array
+from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from sktime.utils.testing import generate_df_from_array
 import pytest
 import pandas as pd
 import numpy as np
@@ -8,7 +8,7 @@ from sktime.datasets import load_gunpoint
 from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
-from sktime.pipeline import TSPipeline, TSFeatureUnion
+from sktime.pipeline import Pipeline, FeatureUnion
 
 N_ITER = 10
 
@@ -96,12 +96,12 @@ def test_different_implementations():
     # Compare with transformer pipeline using TSFeatureUnion.
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),
-        ('transform', TSFeatureUnion([
+        ('transform', FeatureUnion([
             ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
             ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
         ])),
     ]
-    pipe = TSPipeline(steps, random_state=random_seed)
+    pipe = Pipeline(steps, random_state=random_seed)
     a = pipe.fit_transform(X_train)
     n_ints = a.shape[1] // 2  # Rename columns for comparing re-ordered arrays.
     a.columns = [*a.columns[:n_ints] + '_mean', *a.columns[n_ints:n_ints * 2] + '_std']

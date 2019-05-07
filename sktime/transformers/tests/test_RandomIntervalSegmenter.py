@@ -1,6 +1,6 @@
-from ..transformers.series_to_tabular import RandomIntervalSegmenter
-from ..utils.testing import generate_df_from_array
-from ..utils.transformations import tabularize
+from sktime.transformers.series_to_tabular import RandomIntervalSegmenter
+from sktime.utils.testing import generate_df_from_array
+from sktime.utils.transformations import tabularize
 import pytest
 import pandas as pd
 import numpy as np
