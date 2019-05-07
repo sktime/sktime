@@ -2,13 +2,17 @@
 Model selection classes and methods
 """
 
-from sklearn.metrics import make_scorer
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV as skGSCV
+from sklearn.model_selection import train_test_split
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
+from abc import ABC, abstractmethod
+import numpy as np
+import pandas as pd
+import os
 
-from .classifiers.base import BaseClassifier
 from .regressors.base import BaseRegressor
+from .classifiers.base import BaseClassifier
 
 
 class GridSearchCV(skGSCV):
@@ -229,3 +233,47 @@ class GridSearchCV(skGSCV):
             # using mean squared error as default for regressors
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
+
+
+class PresplitFilesCV:
+    """
+    Cross-validation iterator over split predefined in files.
+
+    This class is useful in orchestration where the train and test set
+    is provided in separate files.
+    """
+
+    def __init__(self, check_input=True):
+        self.check_input = check_input
+
+    def split(self, data):
+        """
+        Split the data according to the train/test index.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+
+        Yields
+        ------
+        train : ndarray
+            Train indicies
+        test : ndarray
+            Test indices
+        """
+
+        # Input checks.
+        if self.check_input:
+            if not isinstance(data, pd.DataFrame):
+                raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
+            if not np.all(data.index.unique().isin(['train', 'test'])):
+                raise ValueError('Train-test split not properly defined in '
+                                 'index of passed pandas DataFrame')
+
+        n = data.shape[0]
+        idx = np.arange(n)
+        train = idx[data.index == 'train']
+        test = idx[data.index == 'test']
+        yield train, test
+
+

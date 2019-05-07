@@ -1,0 +1,1 @@
+from sktime.classifiers.elastic_ensemble import ElasticEnsemble

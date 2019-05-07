@@ -230,7 +230,7 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
     m = len(first)
     n = len(second)
 
-    cdef np.ndarray[int, ndim=2] lcss = np.zeros([m + 1, n + 1], dtype=int)
+    cdef np.ndarray[int, ndim=2] lcss = np.zeros([m + 1, n + 1], dtype=np.int32)
 
     for i in range(m):
         for j in range(i - delta, i + delta + 1):
@@ -254,7 +254,7 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
 
 # @cython.boundscheck(False)  # Deactivate bounds checking
 # @cython.wraparound(False)   # Deactivate negative indexing.
-def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int band_size = 5, double g = 0.5, int dim_to_use = 0):
+def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, double band_size = 5, double g = 0.5, int dim_to_use = 0):
     """
     Adapted from:
         This file is part of ELKI:
@@ -283,7 +283,7 @@ def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int
     cdef np.ndarray[double, ndim=2] t
 
     cdef Py_ssize_t i, j
-    cdef int m, n, band, l, r
+    cdef int m, n, band, left, right
     cdef double val1, val2, diff, d1, d2, d12, dist1, dist2, dist12, cost
 
     if len(first) > len(second):
@@ -299,59 +299,45 @@ def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, int
     cdef np.ndarray[double, ndim=1] temp = np.zeros(m)
 
     band = np.ceil(band_size * m)
-
-
-    for i in range(0, m):
+    for i in range(m):
         temp = prev
         prev = curr
         curr = temp
-        l = i - (band + 1)
 
-        if l < 0:
-            l = 0
+        left = i-(band+1)
+        if left < 0:
+            left = 0
 
-        r = i + (band + 1);
-        if r > m - 1:
-            r = (m - 1)
-
-        for j in range(l, r + 1):
-            if fabs(i - j) <= band:
-
-                if i + j != 0:
-
-                    val1 = first[i,dim_to_use]
-                    val2 = g
-                    diff = (val1 - val2)
-                    d1 = sqrt(diff * diff)
-
-                    val1 = g
-                    val2 = second[j,dim_to_use]
-                    diff = (val1 - val2)
-                    d2 = sqrt(diff * diff)
-
-                    val1 = first[i,dim_to_use]
-                    val2 = second[j,dim_to_use]
-                    diff = (val1 - val2)
-                    d12 = sqrt(diff * diff)
-
-                    dist1 = d1 * d1
-                    dist2 = d2 * d2
-                    dist12 = d12 * d12
-
-                    if i == 0 or (j != 0 and (((prev[j - 1] + dist12) > (curr[j - 1] + dist2)) and ((curr[j - 1] + dist2) < (prev[j] + dist1)))):
-                        # del
-                        cost = curr[j - 1] + dist2
-                    elif (j == 0) or ((i != 0) and (((prev[j - 1] + dist12) > (prev[j] + dist1)) and ((prev[j] + dist1) < (curr[j - 1] + dist2)))):
-                        # ins
-                        cost = prev[j] + dist1;
+        right = i + band + 1
+        if right > m-1:
+            right = m-1
+        for j in range(left,right+1):
+            if fabs(i-j) <= band:
+                d1 = sqrt((first[i,dim_to_use]-g)*(first[i,dim_to_use]-g))
+                d2 = sqrt((second[j,dim_to_use]-g)*(second[j,dim_to_use]-g))
+                d3 = sqrt((first[i,dim_to_use]-second[j,dim_to_use])*(first[i,dim_to_use]-second[j,dim_to_use]))
+                d1*=d1
+                d2*=d2
+                d3*=d3
+                cost = 0
+                if i+j!=0:
+                    # print("here")
+                    if i == 0 or ((j != 0) and (((prev[j - 1] + d3) > (curr[j - 1] + d2)) and ((curr[j - 1] + d2) < (prev[j] + d1)))):
+                        # // del
+                        cost = curr[j - 1] + d2;
+                    elif (j == 0) or ((i != 0) and (((prev[j - 1] + d3) > (prev[j] + d1)) and ((prev[j] + d1) < (curr[j - 1] + d2)))):
+                        # // ins
+                        cost = prev[j] + d1;
                     else:
-                        # match
-                        cost = prev[j - 1] + dist12
-                else:
-                    cost = 0
-                curr[j] = cost
+                        # // match
+                        cost = prev[j - 1] + d3
+                    # print(cost)
+                curr[j] = cost;
+            else:
+                curr[j] = np.inf
 
-    return sqrt(curr[m - 1])
+    return sqrt(curr[m-1])
+
 
 # @cython.boundscheck(False)  # Deactivate bounds checking
 # @cython.wraparound(False)   # Deactivate negative indexing.

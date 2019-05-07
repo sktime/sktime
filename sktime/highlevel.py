@@ -17,7 +17,6 @@ from inspect import signature
 from .classifiers.base import BaseClassifier
 from .forecasting.base import BaseForecaster
 from .regressors.base import BaseRegressor
-from .pipeline import TSPipeline
 from sktime.utils.transformations import RollingWindowSplit
 from .utils.validation import validate_fh
 
@@ -254,6 +253,7 @@ class ForecastingTask(BaseTask):
     A task encapsulates metadata information such as the feature and target
     variable which to fit the data to and additional necessary instructions on how to fit and predict.
 
+
     Parameters
     ----------
     target : str
@@ -291,6 +291,7 @@ class BaseStrategy:
 
     def __init__(self, estimator, name=None, check_input=True):
         self._check_estimator_compatibility(estimator)
+
         self._estimator = estimator
 
         self._name = estimator.__class__.__name__ if name is None else name
@@ -343,7 +344,7 @@ class BaseStrategy:
 
     def _check_task_compatibility(self, task):
         """
-        Helper function to check compatibility of strategy with task
+        Check compatibility of task with strategy
         """
         # TODO replace by task-strategy compatibility lookup registry
         if hasattr(task, '_case'):
@@ -354,7 +355,7 @@ class BaseStrategy:
 
     def _check_estimator_compatibility(self, estimator):
         """
-        Helper function to check compatibility of estimator with strategy
+        Check compatibility of estimator with strategy
         """
 
         # Determine required estimator type from strategy case
@@ -371,7 +372,7 @@ class BaseStrategy:
             raise ValueError(f"Estimator must inherit from BaseEstimator")
 
         # If pipeline, check compatibility of final estimator
-        if isinstance(estimator, (Pipeline, TSPipeline)):
+        if isinstance(estimator, Pipeline):
             final_estimator = estimator.steps[-1][1]
             if not isinstance(final_estimator, required):
                 raise ValueError(f"Final estimator of passed pipeline estimator must be of type: {required}, "
@@ -755,5 +756,3 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         index = self._last_window.index[-1] + fh
         name = self._last_window.name
         return pd.Series(y_pred, name=name, index=index)
-
-
