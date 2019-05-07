@@ -1,4 +1,5 @@
-"""Unified high-level interface for various time series related learning tasks.
+"""
+Unified high-level interface for various time series related learning tasks.
 """
 
 import numpy as np
@@ -17,7 +18,7 @@ from .classifiers.base import BaseClassifier
 from .forecasting.base import BaseForecaster
 from .regressors.base import BaseRegressor
 from .pipeline import TSPipeline
-from .model_selection import RollingWindowSplit
+from sktime.utils.transformations import RollingWindowSplit
 from .utils.validation import validate_fh
 
 __all__ = ['TSCTask',
@@ -39,7 +40,10 @@ CASES = ("TSR", "TSC", "Forecasting")
 
 
 class BaseTask:
-    """A task encapsulates metadata information such as the feature and
+    """
+    Abstract base task class.
+
+    A task encapsulates metadata information such as the feature and
     target variable which to fit the data to and additional necessary
     instructions on how to fit and predict.
 
@@ -68,24 +72,32 @@ class BaseTask:
 
     @property
     def target(self):
-        """Expose the private variable _target in a controlled way
+        """
+        Make attributes read-only.
         """
         return self._target
 
     @property
     def features(self):
-        """Expose the private variable _features in a controlled way
+        """
+        Make attributes read-only.
         """
         return self._features
 
     @property
     def metadata(self):
+        """
+        Make attributes read-only.
+        """
         # TODO if metadata is a mutable object itself, its contents may still be mutable
         return self._metadata
 
     def set_metadata(self, metadata):
-        """Provide metadata to task if not already done so in construction, especially useful during automatic
-        orchestration and benchmarking where the metadata may not be available in advance.
+        """
+        Provide missing metadata information to task if not already set.
+
+        This method is especially useful in orchestration where metadata may not be
+        available when specifying the task.
 
         Parameters
         ----------
@@ -120,8 +132,8 @@ class BaseTask:
         return self
 
     def check_data_compatibility(self, metadata):
-        """Function to check compatibility of task with passed metadata. Throws an error if data is not compatible
-        with task.
+        """
+        Check compatibility of task with passed metadata.
 
         Parameters
         ----------
@@ -190,16 +202,20 @@ class BaseTask:
 
 
 class TSCTask(BaseTask):
-    """Time series classification task. A task encapsulates metadata information such as the feature and target variable which to fit the data to and
-    additional necessary instructions on how to fit and predict.
+    """
+    Time series classification task.
+
+    A task encapsulates metadata information such as the feature and target variable
+    to which to fit the data to and any additional necessary instructions on how
+    to fit and predict.
 
     Parameters
     ----------
     target : str
         The column name for the target variable to be predicted.
-    features : list of str, optinal, (default=None)
+    features : list of str, optinal (default=None)
         The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame
+    metadata : pandas.DataFrame, optional (default=None)
         Contains the metadata that the task is expected to work with.
     """
 
@@ -209,16 +225,20 @@ class TSCTask(BaseTask):
 
 
 class TSRTask(BaseTask):
-    """Time series regression task. A task encapsulates metadata information such as the feature and target variable which to fit the data to and
-    additional necessary instructions on how to fit and predict.
+    """
+    Time series regression task.
+
+    A task encapsulates metadata information such as the feature and target variable
+    to which to fit the data to and any additional necessary instructions on how
+    to fit and predict.
 
     Parameters
     ----------
     target : str
         The column name for the target variable to be predicted.
-    features : list of str, optinal, (default=None)
+    features : list of str, optinal (default=None)
         The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame
+    metadata : pandas.DataFrame, optional (default=None)
         Contains the metadata that the task is expected to work with.
     """
 
@@ -228,7 +248,10 @@ class TSRTask(BaseTask):
 
 
 class ForecastingTask(BaseTask):
-    """Time series forecasting task. A task encapsulates metadata information such as the feature and target
+    """
+    Time series forecasting task.
+
+    A task encapsulates metadata information such as the feature and target
     variable which to fit the data to and additional necessary instructions on how to fit and predict.
 
     Parameters
@@ -238,10 +261,10 @@ class ForecastingTask(BaseTask):
     features : list of str, optional, (default=None)
         The column name(s) for the exogenous feature variable. If None, every column apart from target will be used as
         a feature.
-    metadata : pandas.DataFrame
+    metadata : pandas.DataFrame, optional (default=None)
         Contains the metadata that the task is expected to work with.
-    fh : list or int, optional, (default=None)
-        Single step ahead or list of steps ahead to forecast.
+    fh : array-like  or int, optional, (default=None)
+        Single step ahead or array of steps ahead to forecast.
     """
 
     def __init__(self, target, fh=None, features=None, metadata=None):
@@ -251,13 +274,15 @@ class ForecastingTask(BaseTask):
 
     @property
     def fh(self):
-        """Exposes the private variable forecast horizon (fh) in a controlled way
+        """
+        Makes attribute read-only.
         """
         return self._fh
 
 
 class BaseStrategy:
-    """Abstract base strategy class
+    """
+    Abstract base strategy class.
 
     Implements attributes and operations shared by all strategies,
     including input and compatibility checks between passed estimator,
@@ -274,24 +299,26 @@ class BaseStrategy:
 
     @property
     def name(self):
-        """Exposes the private variable name in a controlled way
+        """
+        Makes attribute read-only.
         """
         return self._name
 
     def __getitem__(self, key):
-        """Provide read only access via keys
-        to the private traits
+        """
+        Provide read only access via keys to the private traits
         """
         if key not in self._traits.keys():
             raise KeyError
         return self._traits[key]
 
     def fit(self, task, data):
-        """Fit the strategy for the given task and data.
+        """
+        Fit the strategy to the given task and data.
 
         Parameters
         ----------
-        task : Task object
+        task : Task
             Task encapsualting metadata information on feature and target variables to which to fit the data to.
         data : pandas.DataFrame
             Dataframe with feature and target variables as specified in task.
@@ -315,7 +342,9 @@ class BaseStrategy:
         return self._fit(data)
 
     def _check_task_compatibility(self, task):
-        """Helper function to check compatibility of strategy with task"""
+        """
+        Helper function to check compatibility of strategy with task
+        """
         # TODO replace by task-strategy compatibility lookup registry
         if hasattr(task, '_case'):
             if self._case != task._case:
@@ -324,7 +353,9 @@ class BaseStrategy:
             raise AttributeError("The passed case of the task is unknown")
 
     def _check_estimator_compatibility(self, estimator):
-        """Helper function to check compatibility of estimator with strategddy"""
+        """
+        Helper function to check compatibility of estimator with strategy
+        """
 
         # Determine required estimator type from strategy case
         # TODO replace with strategy - estimator type registry lookup
@@ -360,7 +391,8 @@ class BaseStrategy:
 
     @staticmethod
     def _validate_data(data):
-        """Helper function to validate input data.
+        """
+        Helper function to validate input data.
         """
         if not isinstance(data, pd.DataFrame):
             raise ValueError(f"Data must be pandas DataFrame, but found: {type(data)}")
@@ -372,12 +404,19 @@ class BaseStrategy:
         #     raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
 
     def get_params(self, deep=True):
-        """Call get_params of the estimator. Retrieves hyper-parameters.
+        """
+        Call get_params of the estimator. Retrieves hyper-parameters.
+
+        Returns
+        -------
+        params : dict
+            Dictionary with parameter names and values of estimator.
         """
         return self._estimator.get_params(deep=deep)
 
     def set_params(self, **params):
-        """Call set_params of the estimator. Sets hyper-parameters.
+        """
+        Call set_params of the estimator. Sets hyper-parameters.
         """
         self._estimator.set_params(**params)
 
@@ -396,7 +435,8 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
     """
 
     def _fit(self, data):
-        """Internal fit
+        """
+        Internal fit
 
         Parameters
         ----------
@@ -416,22 +456,21 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         return self._estimator.fit(X, y)
 
     def predict(self, data):
-        """Predict the targets for the test data
+        """
+        Predict using the given test data.
 
         Parameters
         ----------
         data : a pandas.DataFrame
             Dataframe with feature and target variables as specified in task passed to ``fit``.
 
-        Returns
-        -------
-        self : an instance of the self
 
         Returns
         -------
         y_pred : pandas.Series
             Returns the series of predicted values.
         """
+
         # select features
         X = data[self._task.features]
 
@@ -440,15 +479,16 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
-    """Strategy for time series classification.
+    """
+    Strategy for time series classification.
 
-        Parameters
-        ----------
-        estimator : an estimator
-            Low-level estimator
-        name : str, optional (default=None)
-            Name of strategy. If None, class name of estimator is used.
-        check_input : bool, optional (default=True)
+    Parameters
+    ----------
+    estimator : an estimator
+        Low-level estimator used in strategy.
+    name : str, optional (default=None)
+        Name of strategy. If None, class name of estimator is used.
+    check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
@@ -460,15 +500,16 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
-    """Strategy for time series regression.
+    """
+    Strategy for time series regression.
 
-        Parameters
-        ----------
-        estimator : an estimator
-            Low-level estimator
-        name : str, optional (default=None)
-            Name of strategy. If None, class name of estimator is used.
-        check_input : bool, optional (default=True)
+    Parameters
+    ----------
+    estimator : an estimator
+        Low-level estimator used in strategy.
+    name : str, optional (default=None)
+        Name of strategy. If None, class name of estimator is used.
+    check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
@@ -480,15 +521,16 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
 
 
 class ForecastingStrategy(BaseStrategy):
-    """Strategy for time series forecasting.
+    """
+    Strategy for time series forecasting.
 
-        Parameters
-        ----------
-        estimator : an estimator
-            Low-level estimator
-        name : str, optional (default=None)
-            Name of strategy. If None, class name of estimator is used.
-        check_input : bool, optional (default=True)
+    Parameters
+    ----------
+    estimator : an estimator
+        Low-level estimator
+    name : str, optional (default=None)
+        Name of strategy. If None, class name of estimator is used.
+    check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
@@ -499,7 +541,8 @@ class ForecastingStrategy(BaseStrategy):
         super(ForecastingStrategy, self).__init__(estimator, name=name, check_input=check_input)
 
     def _fit(self, data):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -510,6 +553,7 @@ class ForecastingStrategy(BaseStrategy):
         -------
         self : an instance of self
         """
+
         y = data[self._task.target]
         if len(self._task.features) > 0:
             X = data[self._task.features]
@@ -521,7 +565,8 @@ class ForecastingStrategy(BaseStrategy):
         return self._estimator.fit(y, **kwargs)
 
     def update(self, data):
-        """Update forecasts using new data.
+        """
+        Update forecasts using new data.
 
         Parameters
         ----------
@@ -532,6 +577,7 @@ class ForecastingStrategy(BaseStrategy):
         -------
         self : an instance of the self
         """
+
         if self.check_input:
             self._task.check_data_compatibility(data)
 
@@ -553,7 +599,8 @@ class ForecastingStrategy(BaseStrategy):
         return self
 
     def predict(self, data=None):
-        """Predict using fitted strategy.
+        """
+        Predict.
 
         Parameters
         ----------
@@ -569,6 +616,7 @@ class ForecastingStrategy(BaseStrategy):
         y_pred : pandas.Series
             Series of predicted values.
         """
+
         fh = self._task.fh
 
         if len(self._task.features) > 0:
@@ -583,12 +631,28 @@ class ForecastingStrategy(BaseStrategy):
         return self._estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
 
 
-class ReduceForecasting2TSRStrategy(BaseStrategy):
-    """Strategy to reduce a forecasting problem to time series regression problem using a rolling window approach"""
+class Forecasting2TSRReductionStrategy(BaseStrategy):
+    """
+    Forecasting to time series regression reduction strategy.
+
+    Strategy to reduce a forecasting problem to a time series regression
+    problem using a rolling window approach
+
+    Parameters
+    ----------
+    estimator : an estimator
+        Time series regressor.
+    window_length : int, optional (default=None)
+        Window length of rolling window approach.
+    name : str, optional (default=None)
+    check_input : bool, optional (default=True)
+        - If True, input are checked.
+        - If False, input are not checked and assumed correct. Use with caution.
+    """
     def __init__(self, estimator, window_length=None, name=None, check_input=True):
         self._case = "Forecasting"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
-        super(ReduceForecasting2TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
+        super(Forecasting2TSRReductionStrategy, self).__init__(estimator, name=name, check_input=check_input)
 
         # TODO what's a good default for window length? sqrt(len(data))?
         self.window_length = window_length
@@ -596,7 +660,8 @@ class ReduceForecasting2TSRStrategy(BaseStrategy):
         self.estimators_ = []
 
     def _fit(self, data):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -654,7 +719,8 @@ class ReduceForecasting2TSRStrategy(BaseStrategy):
         return self
 
     def predict(self, data=None):
-        """Predict using fitted strategy.
+        """
+        Predict.
 
         Parameters
         ----------
@@ -670,6 +736,7 @@ class ReduceForecasting2TSRStrategy(BaseStrategy):
         y_pred : pandas.Series
             Series of predicted values.
         """
+
         fh = self._task.fh
 
         if data is not None:

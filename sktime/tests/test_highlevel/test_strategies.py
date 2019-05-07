@@ -4,7 +4,7 @@ import numpy as np
 
 from sktime.highlevel import TSCStrategy
 from sktime.highlevel import ForecastingStrategy
-from sktime.highlevel import ReduceForecasting2TSRStrategy
+from sktime.highlevel import Forecasting2TSRReductionStrategy
 from sktime.highlevel import TSCTask
 from sktime.highlevel import ForecastingTask
 
@@ -66,7 +66,7 @@ def test_Forecasting2TSRReductionStrategy():
     fh = np.arange(len(test[target].iloc[0])) + 1
     task = ForecastingTask(target=target, fh=fh, metadata=train)
 
-    s = ReduceForecasting2TSRStrategy(estimator=regressor)
+    s = Forecasting2TSRReductionStrategy(estimator=regressor)
     s.fit(task, train)
     y_pred = s.predict()
     assert y_pred.shape == test[task.target].iloc[0].shape

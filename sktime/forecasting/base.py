@@ -12,7 +12,8 @@ __author__ = ['Markus Löning']
 
 
 class BaseForecaster(BaseEstimator):
-    """Base class for forecasters.
+    """
+    Base class for forecasters.
 
     Parameters
     ----------
@@ -28,7 +29,8 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = False
 
     def fit(self, y, X=None):
-        """Fit forecaster.
+        """
+        Fit forecaster.
 
         Parameters
         ----------
@@ -60,7 +62,8 @@ class BaseForecaster(BaseEstimator):
         return self
 
     def predict(self, fh=None, X=None):
-        """Predict using fitted estimator.
+        """
+        Predict using fitted estimator.
 
         Parameters
         ----------
@@ -94,7 +97,8 @@ class BaseForecaster(BaseEstimator):
         return self._predict(fh=fh, **kwargs)
 
     def score(self, y, fh=None, X=None, sample_weight=None):
-        """Returns the root mean squared error on the given forecast horizon.
+        """
+        Returns the root mean squared error on the given forecast horizon.
 
         Parameters
         ----------
@@ -137,14 +141,17 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _get_y_index(y):
-        """Helper function to get (time) index of y used in fitting for later comparison
-        with forecast horizon"""
+        """
+        Helper function to get (time) index of y used in fitting for later comparison
+        with forecast horizon
+        """
         y = y.iloc[0]
         index = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
         return index
 
     def _validate_forecasting_data(self, y, X=None):
-        """Helper function to check input data for forecasting
+        """
+        Helper function to check input data for forecasting
 
         Parameters
         ----------
@@ -159,7 +166,8 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _validate_forecasting_y(y):
-        """Helper function to check input data for forecasting
+        """
+        Helper function to check input data for forecasting
 
         Parameters
         ----------
@@ -182,7 +190,8 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _validate_forecasting_X(X):
-        """Helper function to check input data for forecasting
+        """
+        Helper function to check input data for forecasting
 
         Parameters
         ----------
@@ -196,7 +205,8 @@ class BaseForecaster(BaseEstimator):
 
 class BaseUpdateableForecaster(BaseForecaster):
     # TODO should that be a mixin class instead?
-    """Base class for forecasters with update functionality.
+    """
+    Base class for forecasters with update functionality.
 
     Parameters
     ----------
@@ -211,7 +221,8 @@ class BaseUpdateableForecaster(BaseForecaster):
         self._is_updated = False
 
     def update(self, y, X=None):
-        """Update forecasts using new data via Kalman smoothing/filtering of
+        """
+        Update forecasts using new data via Kalman smoothing/filtering of
         forecasts obtained from previously fitted forecaster.
 
         Parameters
@@ -239,7 +250,9 @@ class BaseUpdateableForecaster(BaseForecaster):
         return self
 
     def _validate_y_update(self, y):
-        """Helper function to check the ``y`` passed to update the estimator"""
+        """
+        Helper function to check the ``y`` passed to update the estimator
+        """
         # TODO add additional input checks for update data, i.e. that update data is newer than data seen in fit
         y = y.iloc[0]
         y_idx = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
@@ -248,12 +261,14 @@ class BaseUpdateableForecaster(BaseForecaster):
 
 
 class BaseSingleSeriesForecaster(BaseForecaster):
-    """Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
+    """
+    Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
     forecasting techniques without exogenous variables (X).
     """
 
     def _predict(self, fh=None):
-        """Internal predict
+        """
+        Internal predict.
 
         Parameters
         ----------

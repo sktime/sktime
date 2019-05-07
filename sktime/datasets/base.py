@@ -16,7 +16,8 @@ MODULE = os.path.dirname(__file__)
 
 
 def _load_dataset(name, split, return_X_y):
-    """Helper function to load datasets.
+    """
+    Helper function to load datasets.
     """
 
     if split in ["TRAIN", "TEST"]:
@@ -44,7 +45,8 @@ def _load_dataset(name, split, return_X_y):
 
 
 def load_gunpoint(split='TRAIN', return_X_y=False):
-    """Loads the GunPoint time series classification problem and returns X and y
+    """
+    Loads the GunPoint time series classification problem and returns X and y
 
     Parameters
     ----------
@@ -60,7 +62,6 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
 
     Details
     -------
-
     Dimensionality:     univariate
     Series length:      150
     Train cases:        50
@@ -84,7 +85,8 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
 
 
 def load_italy_power_demand(split='TRAIN', return_X_y=False):
-    """Loads the ItalyPowerDemand time series classification problem and returns X and y
+    """
+    Loads the ItalyPowerDemand time series classification problem and returns X and y
 
     Parameters
     ----------
@@ -100,7 +102,6 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
 
     Details
     -------
-
     Dimensionality:     univariate
     Series length:      24
     Train cases:        67
@@ -120,7 +121,8 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
 
 
 def load_arrow_head(split='TRAIN', return_X_y=False):
-    """Loads the ArrowHead time series classification problem and returns X and y.
+    """
+    Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -137,7 +139,6 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
 
     Details
     -------
-
     Dimensionality:     univariate
     Series length:      251
     Train cases:        36
@@ -159,7 +160,8 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
 
 
 def load_shampoo_sales(return_dataframe=False):
-    """Load the shampoo sales univariate time series forecasting dataset.
+    """
+    Load the shampoo sales univariate time series forecasting dataset.
 
     Parameters
     ----------
@@ -182,10 +184,11 @@ def load_shampoo_sales(return_dataframe=False):
     Frequency:          Monthly
     Number of cases:    1
 
+
     References
     ----------
-    Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications, John Wiley & Sons: New York.
-    Chapter 3.
+    ..[1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications, John Wiley & Sons: New York.
+        Chapter 3.
     """
 
     name = 'ShampooSales'

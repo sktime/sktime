@@ -15,16 +15,17 @@ __author__ = ['Markus Löning']
 
 
 class ARIMAForecaster(BaseUpdateableForecaster):
-    """ARIMA (Auto-regressive Integrated Moving-average) forecaster.
+    """
+    ARIMA (Auto-regressive Integrated Moving-average) forecaster.
 
     Parameters
     ----------
-    order : tuple, optional
+    order : tuple, optional (default=(1, 0, 0))
         The (p,d,q) order of the model for the number of AR parameters, differences, and MA parameters. d must be an
         integer indicating the integration order of the process, while p and q may either be an integers indicating the
         AR and MA orders (so that all lags up to those orders are included) or else iterables giving specific AR and /
         or MA lags to include. Default is an AR(1) model: (1,0,0).
-    seasonal_order : tuple, optional
+    seasonal_order : tuple, optional (default=(0, 0, 0, 0))
         The (P,D,Q,s) order of the seasonal component of the model for the AR parameters, differences, MA parameters,
         and periodicity. d must be an integer indicating the integration order of the process, while p and q may either
         be an integers indicating the AR and MA orders (so that all lags up to those orders are included) or else
@@ -87,7 +88,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
     def _fit(self, y, X=None):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -119,7 +121,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         return self
 
     def _update(self, y, X=None):
-        """Internal update of forecasts using new data via Kalman smoothing/filtering of
+        """
+        Internal update of forecasts using new data via Kalman smoothing/filtering of
         forecasts obtained from previously fitted forecaster.
 
         Parameters
@@ -159,7 +162,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         return self
 
     def _predict(self, fh=None, X=None):
-        """Internal predict using fitted estimator.
+        """
+        Internal predict using fitted estimator.
 
         Parameters
         ----------
@@ -214,7 +218,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
 
 
 class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
-    """Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
+    """
+    Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
     without trend and seasonality components.
 
     Parameters
@@ -230,7 +235,7 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
     smoothing_level : float, optional
         The alpha value of the simple exponential smoothing, if the value
         is set then this value will be used as the value.
-    smoothing_slope :  float, optional
+    smoothing_slope : float, optional
         The beta value of the Holt's trend method, if the value is
         set then this value will be used as the value.
     smoothing_seasonal : float, optional
@@ -281,7 +286,8 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         super(ExpSmoothingForecaster, self).__init__(check_input=check_input)
 
     def _fit(self, y):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -308,7 +314,8 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
 
 
 class DummyForecaster(BaseSingleSeriesForecaster):
-    """Dummy forecaster for naive forecasting approaches.
+    """
+    Dummy forecaster for naive forecasting approaches.
 
     Parameters
     ----------
@@ -328,7 +335,8 @@ class DummyForecaster(BaseSingleSeriesForecaster):
         super(DummyForecaster, self).__init__(check_input=check_input)
 
     def _fit(self, y):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -359,7 +367,8 @@ class DummyForecaster(BaseSingleSeriesForecaster):
 
 
 class EnsembleForecaster(BaseForecaster):
-    """Ensemble of forecasters.
+    """
+    Ensemble of forecasters.
 
     Parameters
     ----------
@@ -382,7 +391,8 @@ class EnsembleForecaster(BaseForecaster):
         super(EnsembleForecaster, self).__init__(check_input=check_input)
 
     def _fit(self, y, X=None):
-        """Internal fit.
+        """
+        Internal fit.
 
         Parameters
         ----------
@@ -407,7 +417,8 @@ class EnsembleForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None):
-        """Internal predict using fitted estimator.
+        """
+        Internal predict using fitted estimator.
 
         Parameters
         ----------

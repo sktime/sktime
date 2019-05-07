@@ -2,7 +2,8 @@ import numpy as np
 
 
 def check_ts_X_y(X, y):
-    """Placeholder function for input validation.
+    """
+    Placeholder function for input validation.
     """
     # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
     # currently it checks neither the data nor the datatype
@@ -11,7 +12,8 @@ def check_ts_X_y(X, y):
 
 
 def check_ts_array(X):
-    """Placeholder function for input validation.
+    """
+    Placeholder function for input validation.
     """
     # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
     # currently it checks neither the data nor the datatype
@@ -21,11 +23,12 @@ def check_ts_array(X):
 
 def check_equal_index(X):
     """
-    Function to check if all time-series for a given column in a nested pandas DataFrame have the same index.
+    Check if all time-series for a given column in a
+    nested pandas DataFrame have the same index.
 
     Parameters
     ----------
-    param X : nested pandas DataFrame
+    X : nested pandas DataFrame
         Input dataframe with time-series in cells.
 
     Returns
@@ -61,7 +64,8 @@ def check_equal_index(X):
 
 
 def validate_fh(fh):
-    """Helper function to validate forecasting horizon
+    """
+    Validate forecasting horizon.
 
     Parameters
     ----------
@@ -71,7 +75,7 @@ def validate_fh(fh):
     Returns
     -------
     fh : numpy array of int
-        Sorted forecasting horizon
+        Sorted and validated forecasting horizon.
     """
 
     # Set default as one-step ahead

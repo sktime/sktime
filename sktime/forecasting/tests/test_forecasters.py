@@ -9,6 +9,8 @@ from sktime.forecasting.forecasters import ExpSmoothingForecaster
 from sktime.forecasting.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
 
+__author__ = "Markus Löning"
+
 
 # forecasters
 FORECASTERS = (DummyForecaster, ExpSmoothingForecaster, ARIMAForecaster)
