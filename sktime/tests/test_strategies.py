@@ -13,7 +13,7 @@ from sktime.datasets import load_italy_power_demand
 from sktime.datasets import load_shampoo_sales
 
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
-from sktime.pipeline import TSPipeline
+from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
 from sktime.forecasting.forecasters import DummyForecaster
 
@@ -21,7 +21,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 
 classifier = TimeSeriesForestClassifier(n_estimators=2)
-regressor = TSPipeline([('tabularise', Tabulariser()), ('clf', RandomForestRegressor(n_estimators=2))])
+regressor = Pipeline([('tabularise', Tabulariser()), ('clf', RandomForestRegressor(n_estimators=2))])
 forecaster = DummyForecaster()
 
 DATASET_LOADERS = (load_gunpoint, load_italy_power_demand)
