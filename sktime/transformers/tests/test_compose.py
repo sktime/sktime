@@ -6,7 +6,7 @@ from sklearn.preprocessing import FunctionTransformer
 
 from sktime.pipeline import Pipeline
 from sktime.tests.test_pipeline import X_train, y_train, X_test, y_test
-from sktime.transformers.compose import TSColumnTransformer, Tabulariser, RowwiseTransformer
+from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
 from sktime.datasets import load_gunpoint
 
 # load data
@@ -22,7 +22,7 @@ X_test.columns = ['ts', 'ts_copy']
 def test_ColumnTransformer_pipeline():
     # using Identity function transformers (transform series to series)
     id_func = lambda X: X
-    column_transformer = TSColumnTransformer(
+    column_transformer = ColumnTransformer(
         [('ts', FunctionTransformer(func=id_func, validate=False), 'ts'),
          ('ts_copy', FunctionTransformer(func=id_func, validate=False), 'ts_copy')])
     steps = [
@@ -53,7 +53,7 @@ def test_RowwiseTransformer_pipeline():
 
     # using sktime with sklearn pipeline
     first_func = lambda X: pd.DataFrame([row[0] for row in X])
-    column_transformer = TSColumnTransformer(
+    column_transformer = ColumnTransformer(
         [('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), 'ts'),
          ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
     estimator = RandomForestClassifier(n_estimators=2, random_state=1)

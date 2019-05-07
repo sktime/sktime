@@ -8,10 +8,12 @@ from .base import BaseTransformer
 
 
 __all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
+__author__ = ["Markus Löning", "Jason Lines"]
 
 
 class IntervalSegmenter(BaseTransformer):
-    """Interval segmentation transformer
+    """
+    Interval segmentation transformer.
 
     Parameters
     ----------
@@ -30,7 +32,8 @@ class IntervalSegmenter(BaseTransformer):
         self.input_shape_ = ()
 
     def fit(self, X, y=None):
-        """Fit transformer, generating random interval indices.
+        """
+        Fit transformer, generating random interval indices.
 
         Parameters
         ----------
@@ -41,8 +44,7 @@ class IntervalSegmenter(BaseTransformer):
 
         Returns
         -------
-        self : IntervalSegmenter
-            This estimator
+        self : an instance of self.
         """
 
         if self.check_input:
@@ -73,7 +75,8 @@ class IntervalSegmenter(BaseTransformer):
         return self
 
     def transform(self, X, y=None):
-        """Transform X, segments time-series in each column into random intervals using interval indices generated
+        """
+        Transform X, segments time-series in each column into random intervals using interval indices generated
         during `fit`.
 
         Parameters
@@ -122,7 +125,8 @@ class IntervalSegmenter(BaseTransformer):
 
 
 class RandomIntervalSegmenter(IntervalSegmenter):
-    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
+    """
+    Transformer that segments time-series into random intervals with random starting points and lengths. Some
     intervals may overlap and may be duplicates.
 
     Parameters
@@ -162,16 +166,22 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
     @property
     def random_state(self):
+        """
+        Makes private attribute read-only.
+        """
         return self._random_state
 
     @random_state.setter
     def random_state(self, random_state):
-        """Set random state and update rng"""
+        """
+        Set random state making sure rng is always updated as well.
+        """
         self._random_state = random_state
         self._rng = check_random_state(random_state)
 
     def fit(self, X, y=None):
-        """Fit transformer, generating random interval indices.
+        """
+        Fit transformer, generating random interval indices.
 
         Parameters
         ----------
@@ -209,7 +219,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         return self
 
     def _rand_intervals_rand_n(self, x):
-        """Compute a random number of intervals from index (x) with
+        """
+        Compute a random number of intervals from index (x) with
         random starting points and lengths. Intervals are unique, but may overlap.
 
         Parameters
@@ -224,8 +235,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         References
         ----------
-        [1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
-        Information Sciences 239 (2013): 142-153.
+        ..[1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
+            Information Sciences 239 (2013): 142-153.
         """
 
         starts = []
@@ -242,7 +253,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         return np.column_stack([starts, ends])
 
     def _rand_intervals_fixed_n(self, x, n):
-        """Compute a fixed number (n) of intervals from index (x) with
+        """
+        Compute a fixed number (n) of intervals from index (x) with
         random starting points and lengths. Intervals may overlap and may not be unique.
 
         Parameters
@@ -260,6 +272,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         m = len(x)
         # compute number of random intervals relative to series length (m)
+        # TODO use smarter dispatch at construction to avoid evaluating if-statements here each time function is called
         if np.issubdtype(type(n), np.integer) and (n >= 1):
             pass
         elif n == 'sqrt':
@@ -284,7 +297,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
       
 class DerivativeSlopeTransformer(BaseTransformer):
-
+    # TODO add docstrings
     def transform(self, X, y=None):
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
