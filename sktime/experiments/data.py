@@ -4,7 +4,7 @@ from sktime.utils.results_writing import write_results_to_uea_format
 from sktime.highlevel import TSCTask, ForecastingTask
 import re
 import pandas as pd
-from abc import ABC
+from abc import ABC, abstractmethod
 import numpy as np
 import csv
 
@@ -153,18 +153,23 @@ class ResultHDD(SKTimeResult):
     """
     Class for storing the results of the orchestrator
     """
-    def __init__(self, results_save_dir):
+    def __init__(self, results_save_dir, strategies_save_dir):
         """
         Parameters
         -----------
         results_save_dir: string
             path where the results will be saved
-
+        strategies_save_dir: string
+            path for saving the strategies
         """
 
         self._results_save_dir = results_save_dir
+        self._strategies_save_dir = strategies_save_dir
 
-
+    @property
+    def strategies_save_dir(self):
+        return self._strategies_save_dir
+        
     def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
         """
         Parameters
