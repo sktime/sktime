@@ -1,10 +1,10 @@
-from ..classifiers.ensemble import TimeSeriesForestClassifier
-from ..utils.testing import generate_df_from_array
+from sktime.classifiers.ensemble import TimeSeriesForestClassifier
+from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.datasets import load_gunpoint
-from sktime.pipeline import TSFeatureUnion, TSPipeline
+from sktime.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
@@ -56,13 +56,13 @@ def test_different_implementations():
     def _test_pipeline_predictions(n_intervals=None, random_state=None):
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=n_intervals, check_input=False)),
-            ('transform', TSFeatureUnion([
+            ('transform', FeatureUnion([
                 ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
                 ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
             ])),
             ('clf', DecisionTreeClassifier())
         ]
-        clf1 = TSPipeline(steps, random_state=random_state)
+        clf1 = Pipeline(steps, random_state=random_state)
         clf1.fit(X_train, y_train)
         a = clf1.predict(X_test)
 
@@ -70,7 +70,7 @@ def test_different_implementations():
             ('transform', RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=[np.mean, np.std])),
             ('clf', DecisionTreeClassifier())
         ]
-        clf2 = TSPipeline(steps, random_state=random_state)
+        clf2 = Pipeline(steps, random_state=random_state)
         clf2.fit(X_train, y_train)
         b = clf2.predict(X_test)
         np.array_equal(a, b)
@@ -81,7 +81,7 @@ def test_different_implementations():
         # fully modular implementation using pipeline with FeatureUnion
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=n_intervals, check_input=False)),
-            ('transform', TSFeatureUnion([
+            ('transform', FeatureUnion([
                 ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
                 ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
                 ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
@@ -89,7 +89,7 @@ def test_different_implementations():
             ('clf', DecisionTreeClassifier())
         ]
 
-        base_estimator = TSPipeline(steps)
+        base_estimator = Pipeline(steps)
         clf1 = TimeSeriesForestClassifier(base_estimator=base_estimator,
                                           random_state=random_state,
                                           n_estimators=n_estimators)

@@ -1,5 +1,5 @@
-from ..utils.time_series import time_series_slope
-from ..tests.test_RandomIntervalFeatureExtractor import generate_df_from_array
+from sktime.utils.time_series import time_series_slope
+from sktime.transformers.tests.test_RandomIntervalFeatureExtractor import generate_df_from_array
 import numpy as np
 from scipy.stats import linregress
 

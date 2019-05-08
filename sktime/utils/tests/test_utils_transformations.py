@@ -1,5 +1,5 @@
-from ..utils.transformations import tabularize
-from ..utils.testing import generate_df_from_array
+from sktime.utils.transformations import tabularize
+from sktime.utils.testing import generate_df_from_array
 import numpy as np
 import pandas as pd
 
