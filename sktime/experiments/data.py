@@ -16,15 +16,15 @@ class DatasetHDD:
         """
         Parameters
         ----------
-        dataset_loc: string
+        dataset_loc : str
             path on disk where the dataset is saved. Path to directory without the file name should be provided
-        dataset_name: string
+        dataset_name : str
             Name of the dataset
-        train_test_exists: Boolean
+        train_test_exists : bool
             flag whether the test train split already exists
-        sufix_train: string
+        sufix_train : str
             train file suffix
-        suffix_test: string
+        suffix_test : str
             test file suffix
         """
         self._dataset_loc = dataset_loc
@@ -36,6 +36,12 @@ class DatasetHDD:
 
     @property
     def dataset_name(self):
+        """
+        Returns
+        -------
+        str
+            Name of the dataset
+        """
         return self._dataset_name
 
     def load(self):
@@ -84,13 +90,19 @@ class DatasetRAM:
 
     @property
     def dataset_name(self):
+        """
+        Returns
+        -------
+        str
+            Name of the dataset
+        """
         return self._dataset_name
     
     def load(self):
         """
         Returns
         -------
-        pandas DataFrame:
+        pandas DataFrame
             dataset in pandas DataFrame format
         """
         return self._dataset
@@ -103,7 +115,7 @@ class DatasetLoadFromDir:
         """
         Parameters
         ----------
-        root_dir: string
+        root_dir : str
             Root directory where the datasets are located
         """
         self._root_dir = root_dir
@@ -112,12 +124,12 @@ class DatasetLoadFromDir:
         """
         Parameters
         ----------
-        train_test_exists: Boolean
+        train_test_exists : bool
             Flag whether the test/train split exists
 
         Returns
         -------
-        DatasetHDD:
+        list
             list of DatasetHDD objects
         """
         datasets = os.listdir(self._root_dir)
@@ -137,13 +149,13 @@ class Result:
         """
         Parameters
         ----------
-        dataset_name: string
+        dataset_name : str
             Name of the dataset
-        strategy_name: string
+        strategy_name : str
             name of the strategy
-        y_true: list
+        y_true : list
             True labels
-        y_pred: list
+        y_pred : list
             predictions
         """
         self._dataset_name = dataset_name
@@ -153,18 +165,42 @@ class Result:
 
     @property
     def dataset_name(self):
+        """
+        Returns
+        -------
+        str
+            Name of the dataset
+        """
         return self._dataset_name
     
     @property
     def strategy_name(self):
+        """
+        Returns
+        -------
+        str
+            Name of the strategy
+        """
         return self._strategy_name
     
     @property
     def y_true(self):
+        """
+        Returns
+        -------
+        list
+            True target variables
+        """
         return self._y_true
 
     @property
     def y_pred(self):
+        """
+        Returns
+        -------
+        list
+            Predicted target variables
+        """
         return self._y_pred
 
 class SKTimeResult(ABC):
@@ -189,15 +225,15 @@ class ResultRAM(SKTimeResult):
         """
         Parameters
         ----------
-        dataset_name: string
+        dataset_name : str
             Name of the dataset
-        strategy_name: string
+        strategy_name : str
             Name of the strategy
-        y_true: array
+        y_true : array
             True lables array
         y_pred: array
             Predictions array
-        cv_fold: int
+        cv_fold : int
             Cross validation fold
         """
         result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true, y_pred=y_pred)
@@ -207,7 +243,7 @@ class ResultRAM(SKTimeResult):
         """
         Returns
         -------
-        list:
+        list
             sktime results
         """
         return self._results
@@ -220,9 +256,9 @@ class ResultHDD(SKTimeResult):
         """
         Parameters
         -----------
-        results_save_dir: string
+        results_save_dir : str
             path where the results will be saved
-        strategies_save_dir: string
+        strategies_save_dir : str
             path for saving the strategies
         """
 
@@ -231,21 +267,27 @@ class ResultHDD(SKTimeResult):
 
     @property
     def strategies_save_dir(self):
+        """
+        Returns
+        -------
+        str
+            Path where the strategies will be saved
+        """
         return self._strategies_save_dir
         
     def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
         """
         Parameters
         ----------
-        dataset_name: string
+        dataset_name : str
             Name of the dataset
-        strategy_name: string
+        strategy_name : str
             Name of the strategy
-        y_true: array
+        y_true : array
             True lables array
-        y_pred: array
+        y_pred : array
             Predictions array
-        cv_fold: int
+        cv_fold : int
             Cross validation fold
         """
         if not os.path.exists(self._results_save_dir):
@@ -274,7 +316,7 @@ class ResultHDD(SKTimeResult):
         """
         Returns
         -------
-        list:
+        list
             sktime results
         """
         results = []
