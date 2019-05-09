@@ -30,7 +30,7 @@ install:
     # create the testing environment
     - conda create -n testenv --yes python=$PYTHON_VERSION pip
     - source activate testenv
-    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION cython nose pytest pytest-cov sphinx jupyter
+    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION scikit_posthocs cython nose pytest pytest-cov sphinx jupyter
     - pip install sphinx_rtd_theme
     - pip install nbsphinx
     - python setup.py build_ext -i
