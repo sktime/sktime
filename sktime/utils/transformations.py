@@ -96,7 +96,7 @@ class RollingWindowSplit:
     def __init__(self, window_length=None, fh=None):
         # TODO input checks
         if window_length is not None:
-            if not np.issubdtype(window_length, np.integer):
+            if not np.issubdtype(type(window_length), np.integer):
                 raise ValueError(f"Window length must be an integer, but found: {type(window_length)}")
 
         self.window_length = window_length
@@ -119,7 +119,7 @@ class RollingWindowSplit:
         ------
         features : ndarray
             The indices of the feature window
-        target : ndarray
+        targets : ndarray
             The indices of the target window
         """
 
@@ -132,8 +132,7 @@ class RollingWindowSplit:
         max_fh = self.fh[-1]  # furthest step ahead, assume sorted
 
         # Set default window length to sqrt of series length
-        if self.window_length is None:
-            self.window_length_ = int(np.sqrt(n_obs))
+        self.window_length_ = int(np.sqrt(n_obs)) if self.window_length is None else self.window_length
 
         if (self.window_length_ + max_fh) > n_obs:
             raise ValueError("Window length and forecast horizon cannot be longer than data")
