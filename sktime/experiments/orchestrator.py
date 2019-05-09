@@ -19,13 +19,14 @@ class Orchestrator:
     def __init__(self, tasks, datasets, strategies, cv, result):
         self._tasks = tasks
         self._datasets = datasets
+        self._validate_strategy_names(strategies)
         self._strategies = strategies
         self._cv = cv
         self._result = result
 
-    def _validate_strategies(self, strategies):
+    def _validate_strategy_names(self, strategies):
         """
-        Helper function to validate strategies
+        Validate strategy names
         """
 
         # Check uniqueness of strategy names
