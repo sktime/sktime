@@ -271,11 +271,9 @@ class PresplitFilesCV:
         yield train, test
 
 class SingleSplit:
-    """
-    Helper class for orchestration that uses a single split for training and testing. Wrapper for sklearn.model_selection.train_test_split
-    """
-    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
         """
+        Helper class for orchestration that uses a single split for training and testing. Wrapper for sklearn.model_selection.train_test_split
+
         Parameters
         ----------
         *arrays : sequence of indexables with same length / shape[0]
@@ -306,6 +304,8 @@ class SingleSplit:
             If not None, data is split in a stratified fashion, using this as
             the class labels.
         """
+    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
+
         self._test_size=test_size
         self._train_size=train_size
         self._random_state=random_state
@@ -321,7 +321,7 @@ class SingleSplit:
         
         Returns
         -------
-        tuple:
+        tuple
             (train, test) indexes
         """
         if not isinstance(data, pd.DataFrame):
