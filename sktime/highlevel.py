@@ -25,7 +25,8 @@ __all__ = ['TSCTask',
            'ForecastingTask',
            'TSCStrategy',
            'TSRStrategy',
-           'ForecastingStrategy']
+           'ForecastingStrategy',
+           'Forecasting2TSRReductionStrategy']
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 

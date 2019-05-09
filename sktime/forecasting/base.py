@@ -176,11 +176,11 @@ class BaseForecaster(BaseEstimator):
         """
         # Check if pandas series
         if not isinstance(y, pd.Series):
-            raise ValueError(f'``y`` must be a pandas DataFrame, but found: {type(y)}')
+            raise ValueError(f'``y`` must be a pandas Series, but found: {type(y)}')
 
         # Check if single row
         if not y.shape[0] == 1:
-            raise ValueError(f'``y`` must consist of a pandas DataFrame with a single row, '
+            raise ValueError(f'``y`` must consist of a pandas Series with a single row, '
                              f'but found: {y.shape[0]} rows')
 
         # Check if contained time series is either pandas series or numpy array
