@@ -22,7 +22,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
 from sktime.transformers.series_to_series import DerivativeSlopeTransformer
-from ..pipeline import TSPipeline
+from ..pipeline import Pipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
 import os
@@ -47,7 +47,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     Parameters
     ----------
-    base_estimator : TSPipeline
+    base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=100)
@@ -203,9 +203,9 @@ class TimeSeriesForestClassifier(ForestClassifier):
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
                      ('clf', DecisionTreeClassifier())]
-            base_estimator = TSPipeline(steps)
+            base_estimator = Pipeline(steps)
 
-        elif not isinstance(base_estimator, TSPipeline):
+        elif not isinstance(base_estimator, Pipeline):
             raise ValueError('Base estimator must be pipeline with transforms.')
         elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
             raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
