@@ -12,11 +12,13 @@ class SKTimeScore(ABC):
         ----------
         y_true: array
             True dataset labels.
-        y_pred: array: 
+        y_pred: array
             predicted labels.
 
-        Returns:
-            score(float): Returns the result of the metric.
+        Returns
+        -------
+        float
+            Returns the result of the metric.
         """
 
     @abstractmethod
@@ -31,8 +33,10 @@ class SKTimeScore(ABC):
         y_pred: array: 
             predicted labels.
        
-        Returns:
-            score(float): Returns the result of the metric.
+        Returns
+        -------
+        float
+            Returns the result of the metric.
         """
 
 class ScoreAccuracy(SKTimeScore):
@@ -108,13 +112,15 @@ class ScoreMSE(SKTimeScore):
 
         Parameters
         ----------
-        y_true: array
+        y_true : array
             True dataset labels.
-        y_pred: array
+        y_pred : array
             predicted labels.
 
-        Returns:
-            float: The mean squared error of the prediction.
+        Returns
+        -------
+        float
+            The mean squared error of the prediction.
         """
         return mean_squared_error(y_true, y_pred)
     
@@ -142,64 +148,3 @@ class ScoreMSE(SKTimeScore):
         avg_score = sum_score/n
 
         return avg_score, std_score
-#TODO: implement def calculate_per_dataset for the methods below
-
-# class ScorePrecision(SKTimeScore):
-#     """
-#     Calculates precision score of classifier.
-
-#     Args:
-#         average(string): Averaging to be performated on the data. Possible parameters as per `sklearn documentation <http://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html>`_.
-
-#     Returns:
-#         float: precision score
-#     """
-#     def __init__(self, average='micro'):
-#         """
-#         Args:
-#             average(string): Averaging to be performed on the data.
-#         """
-#         self._average = average
-    
-#     def calculate(self, y_true, y_pred):
-#         """
-#         Main method for performing the calculations.
-
-#         Args:
-#             y_true(array): True dataset labels.
-#             y_pred(array): predicted labels.
-
-#         Returns:
-#             float: The precision of the predictions.
-#         """
-#         return precision_score(y_true, y_pred, average=self._average)
-
-# class ScoreRecall(SKTimeScore):
-#     """
-#     Calculates recall score of classifier.
-
-#     Args:
-#         average(string): Averaging to be performated on the data. Possible parameters as per `sklearn documentation <http://scikit-learn.org/stable/modules/generated/sklearn.metrics.precision_score.html>`_.
-
-#     Returns:
-#         float: precision score
-#     """
-#     def __init__(self, average='micro'):
-#         """
-#         Args:
-#             average(string): Averaging to be performed on the data.
-#         """
-#         self._average = average
-    
-#     def calculate(self, y_true, y_pred):
-#         """
-#         Main method for performing the calculations.
-
-#         Args:
-#             y_true(array): True dataset labels.
-#             y_pred(array): predicted labels.
-
-#         Returns
-#             float: The precision of the predictions.
-#         """
-#         return recall_score(y_true, y_pred, average=self._average)

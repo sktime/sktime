@@ -14,15 +14,15 @@ class Orchestrator:
         """
         Parameters
         ----------
-        tasks: sktime.highlevel.Task
+        tasks : sktime.highlevel.Task
             task object
-        datasets: pandas dataframe
+        datasets : pandas dataframe
             datasets in pandas skitme format
-        strategies: list of sktime strategy
+        strategies : list of sktime strategy
             strategy as per sktime.highlevel
-        cv: sklearn.model_selection cross validation
+        cv : sklearn.model_selection cross validation
             sklearn cross validation method. Must implement split()
-        result: sktime result class
+        result : sktime result class
             Object for saving the results
         """
         self._tasks = tasks
@@ -38,9 +38,9 @@ class Orchestrator:
         
         Parameters
         ----------
-        predict_on_runtime:Boolean
+        predict_on_runtime : bool
             If True makes predictions after the estimator is trained
-        save_strategies: Boolean
+        save_strategies : bool
             If True saves the trained strategies on the disk
         """
         
