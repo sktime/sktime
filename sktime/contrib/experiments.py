@@ -5,6 +5,7 @@ import sktime.contrib.interval_based.tsf as ib
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.classifiers.ensemble as ensemble
 import numpy as np
+import pandas as pd
 import time
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sklearn.model_selection import cross_val_predict
@@ -121,6 +122,8 @@ def set_classifier(cls):
     :return: A classifier.
 
     """
+#    if cls.lower() == 'pf':
+#        return ProximityForest(rand=rand)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest()
     elif  cls == 'TSF' or cls == 'tsf':
@@ -170,8 +173,9 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+    allData=pd.concat([trainX,testX],ignore_index=True)
+    allLabels=np.concatenate((trainY,testY),ignore_index=True)
     if resample !=0:
-
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=.5,
                                                                        random_state=resample, shuffle=True,
                                                                        stratify=allLabels)
