@@ -19,7 +19,7 @@ class AnalyseResults(object):
 
     Parameters
     ----------
-    result: sktime result object
+    result : sktime result object
         class for storing the results
     """
 
@@ -34,10 +34,10 @@ class AnalyseResults(object):
 
         Parameters
         -----------
-        metric: `sktime.analyse_results.scores`
+        metric : `sktime.analyse_results.scores`
             Error function 
         Returns
-        --------
+        -------
         pickle of pandas DataFrame
             ``estimator_avg_error`` represents the average error and standard deviation achieved by each estimator. ``estimator_avg_error_per_dataset`` represents the average error and standard deviation achieved by each estimator on each dataset.
         """
@@ -61,11 +61,15 @@ class AnalyseResults(object):
         """
         Calculates simple average and standard error.
 
-        Args:
-            scores_dict(dictionary): Dictionary with estimators (keys) and corresponding prediction accuracies on different datasets.
+        Paramteters
+        -----------
+        scores_dict : dictionary
+            Dictionary with estimators (keys) and corresponding prediction accuracies on different datasets.
         
-        Returns:
-            pandas DataFrame
+        Returns
+        -------
+        pandas DataFrame
+            result with average score and standard error
         """
         result = {}
         for k in scores_dict.keys():
@@ -141,7 +145,7 @@ class AnalyseResults(object):
         strategy_dict: dictionary
             dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
         Returns
-        --------
+        -------
         tuple 
             pandas DataFrame (Database style and MultiIndex)
         """
@@ -333,7 +337,7 @@ class AnalyseResults(object):
         
         Parameters
         ----------
-        strategy_dict: dictionary
+        strategy_dict : dict
             Dictionary with errors on test sets achieved by estimators.
         Returns
         -------
@@ -360,11 +364,12 @@ class AnalyseResults(object):
         
         Parameters
         ----------
-        strategy_dict: dictionary
+        strategy_dict : dict
             Dictionary with errors on test sets achieved by estimators.
         Returns
         -------
         pandas DataFrame
+            Results of te Nemenyi test
         """
 
         strategy_dict = pd.DataFrame(strategy_dict)

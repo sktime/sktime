@@ -1,33 +1,38 @@
+import pandas as pd
+from sklearn.dummy import DummyClassifier
+
+from sktime.datasets import load_gunpoint
+from sktime.experiments.data import DatasetRAM
+from sktime.experiments.data import ResultRAM
 from sktime.experiments.orchestrator import Orchestrator
 from sktime.highlevel import TSCTask, TSCStrategy
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
-from sktime.model_selection import PresplitFilesCV
-from sktime.experiments.data import ResultHDD
-from sktime.experiments.data import DatasetLoadFromDir
-from sktime import datasets as data_module
-
-from tempfile import TemporaryDirectory
-import os
-
-TEMPDIR = "temp/"
-DATADIR = os.path.join(os.path.dirname(data_module.__file__), 'data')
+from sktime.model_selection import SingleSplit
 
 
 def test_orchestration():
-    data = DatasetLoadFromDir(root_dir=DATADIR)
-    datasets = data.load_datasets()
-    n_datasets = len(datasets)
-    tasks = [TSCTask(target='target') for _ in range(n_datasets)]
+    X_train, y_train = load_gunpoint(return_X_y=True)
+    data = pd.concat([X_train, y_train], axis=1)
+    data.columns = ['dim_0', 'target']
 
-    estimator = TimeSeriesForestClassifier(n_estimators=2)
-    strategies = [TSCStrategy(estimator) for _ in range(2)]
+    dataset = DatasetRAM(dataset=data, dataset_name='gunpoint')
+    task = TSCTask(target='target')
 
-    with TemporaryDirectory(TEMPDIR):
-        results = ResultHDD(results_save_dir=TEMPDIR)
+    # create strategies
+    clf = DummyClassifier(random_state=1)
+    strategy = TSCStrategy(clf)
 
-        orchestrator = Orchestrator(datasets=datasets,
-                                    tasks=tasks,
-                                    strategies=strategies,
-                                    cv=PresplitFilesCV(),
-                                    result=results)
-        orchestrator.run()
+    # result backend
+    resultRAM = ResultRAM()
+    orchestrator = Orchestrator(datasets=[dataset],
+                                tasks=[task],
+                                strategies=[strategy],
+                                cv=SingleSplit(random_state=1),
+                                result=resultRAM)
+
+    predictions = ['1', '2', '1', '1', '1', '1', '1', '1', '1', '2', '1', '2', '1', '2', '1', '2', '1', '2', '1', '1',
+                   '2', '2', '1', '2', '2', '2', '1', '1', '1', '2', '1', '1', '2', '2', '2', '1', '2', '2', '1', '2',
+                   '2', '2', '1', '2', '1', '1', '2', '1', '1', '1']
+
+    orchestrator.run(save_strategies=False)
+    result = resultRAM.load()
+    assert result[0].y_pred == predictions
