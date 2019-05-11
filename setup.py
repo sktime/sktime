@@ -61,7 +61,7 @@ PROJECT_URLS = {
     'Source Code': 'https://github.com/alan-turing-institute/sktime'
 }
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-learn', 'statsmodels']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'pandas', 'scikit-learn', 'statsmodels', 'scikit-posthocs']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',

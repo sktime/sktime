@@ -32,6 +32,7 @@ install:
     - source activate testenv
     - conda install -n testenv --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION statsmodels==$STATSMODELS_VERSION cython nose pytest pytest-cov sphinx jupyter
     - pip install sphinx_rtd_theme
+    - pip install scikit-posthocs
     - pip install nbsphinx
     - python setup.py build_ext -i
 
