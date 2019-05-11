@@ -80,11 +80,11 @@ def validate_fh(fh):
 
     # Set default as one-step ahead
     if fh is None:
-        return np.ones(1, dtype=np.int8)
+        return np.ones(1, dtype=np.int)
 
     # Check single integer
     elif np.issubdtype(type(fh), np.integer):
-        return np.ones(1, dtype=np.int8) * fh
+        return np.array([fh], dtype=np.int)
 
     # Check array-like input
     else:
@@ -112,4 +112,4 @@ def validate_fh(fh):
             raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
                              f"integer, but found: {type(fh)}")
 
-        return np.asarray(np.sort(fh), dtype=np.int8)
+        return np.asarray(np.sort(fh), dtype=np.int)
