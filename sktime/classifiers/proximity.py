@@ -38,7 +38,7 @@ from pandas import DataFrame, Series
 from scipy.stats import randint, uniform
 from sklearn.preprocessing import LabelEncoder, normalize
 
-from sktime.distances import (
+from sktime.distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
 from sktime.utils import utilities
