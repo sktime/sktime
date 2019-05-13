@@ -106,6 +106,7 @@ def get_default_pick_exemplars_method():
     '''
     return pick_one_exemplar_per_class
 
+
 def pure(class_labels):
     '''
     test whether a set of class labels are pure (i.e. all the same)
@@ -126,7 +127,6 @@ def pure(class_labels):
     return len(unique_class_labels) <= 1
 
 
-#
 def gini(parent_class_labels, children_class_labels):
     '''
     get gini score of a split, i.e. the gain from parent to children
@@ -163,6 +163,7 @@ def gini(parent_class_labels, children_class_labels):
     score = parent_score - children_score_sum
     return score
 
+
 def gini_node(class_labels):
     '''
     get gini score at a specific node
@@ -192,6 +193,7 @@ def gini_node(class_labels):
     # double score as gini is between 0 and 0.5, we need 0 and 1
     score *= 2
     return score
+
 
 # todo info gain
 def information_gain(parent_class_labels, children_class_labels):
@@ -252,6 +254,7 @@ def pick_one_exemplar_per_class(instances, class_labels, rand):
     # remove exemplar instances from dataset - note this returns a copy, not inplace!
     instances = instances.drop(instances.index[chosen_indices])
     return chosen_instances, chosen_class_labels, instances, class_labels
+
 
 def get_all_distance_measures_param_pool(instances):
     '''
@@ -327,8 +330,8 @@ def get_all_distance_measures_param_pool(instances):
             ]
     return param_pool
 
-class ProximityStump(Classifier):
 
+class ProximityStump(Classifier):
     '''
     proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood limited
     to x exemplar instances
@@ -449,7 +452,7 @@ class ProximityStump(Classifier):
             class_labels = self.label_encoder.transform(class_labels)
         # if distance measure not extracted from parameter permutation
         if self.distance_measure is None:
-            key = self.get_distance_measure_key() # get the key for the distance measure var in the param perm dict
+            key = self.get_distance_measure_key()  # get the key for the distance measure var in the param perm dict
             self.distance_measure = self.param_perm[key]
             # copy so not available to outside world
             self.distance_measure_param_perm = self.param_perm.copy()
@@ -1079,4 +1082,3 @@ class ProximityForest(Classifier):
         # normalise the overall predictions
         normalize(overall_predict_probas, copy = False, norm = 'l1')
         return overall_predict_probas
-
