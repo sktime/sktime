@@ -1,17 +1,6 @@
 import numpy as np
 from pandas import DataFrame
 
-# little accuracy helper function
-def accuracy(actual_class_values, predicted_class_values):
-    correct_count = 0
-    num_instances = len(actual_class_values)
-    for index in np.arange(num_instances):
-        if actual_class_values[index] == predicted_class_values[index]:
-            correct_count += 1
-    accuracy = correct_count / num_instances
-    return accuracy
-
-
 def predict_from_distribution(distributions, rand, label_encoder):
     predictions = np.empty((distributions.shape[0]), dtype = int)
     for instance_index in range(0, predictions.shape[0]):
