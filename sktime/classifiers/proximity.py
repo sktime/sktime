@@ -119,13 +119,13 @@ def get_default_pick_exemplars_method():
     return pick_one_exemplar_per_class
 
 
-def pure(class_labels):
+def pure(y):
     '''
     test whether a set of class labels are pure (i.e. all the same)
     ----
     Parameters
     ----
-    class_labels : 1d numpy array
+    y : 1d numpy array
         array of class labels
     ----
     Returns
@@ -134,7 +134,7 @@ def pure(class_labels):
         whether the set of class labels is pure
     '''
     # get unique class labels
-    unique_class_labels = np.unique(class_labels)
+    unique_class_labels = np.unique(y)
     # if more than 1 unique then not pure
     return len(unique_class_labels) <= 1
 
@@ -176,13 +176,13 @@ def gini(parent_class_labels, children_class_labels):
     return score
 
 
-def gini_node(class_labels):
+def gini_node(y):
     '''
     get gini score at a specific node
     ----
     Parameters
     ----
-    class_labels : 1d numpy array
+    y : 1d numpy array
         array of class labels
     ----
     Returns
@@ -191,11 +191,11 @@ def gini_node(class_labels):
         gini score for the set of class labels (i.e. how pure they are). 1 == pure, 0 == not pure
     '''
     # get number instances at node
-    num_instances = class_labels.shape[0]
+    num_instances = y.shape[0]
     score = 1
     if num_instances > 0:
         # count each class
-        unique_class_labels, class_counts = np.unique(class_labels, return_counts = True)
+        unique_class_labels, class_counts = np.unique(y, return_counts = True)
         # subtract class entropy from current score for each class
         for index in range(0, len(unique_class_labels)):
             class_count = class_counts[index]
@@ -217,15 +217,15 @@ def chi_squared(parent_class_labels, children_class_labels):
     raise Exception('not implemented yet')
 
 
-def pick_one_exemplar_per_class(instances, class_labels, rand):
+def pick_one_exemplar_per_class(X, y, rand):
     '''
     pick one random exemplar instance per class
     ----
     Parameters
     ----
-    instances : panda dataframe
+    X : panda dataframe
         instances representing a dataset
-    class_labels : 1d numpy array
+    y : 1d numpy array
         array of class labels, one for each instance in the instances panda dataframe parameter
     ----
     Returns
@@ -242,7 +242,7 @@ def pick_one_exemplar_per_class(instances, class_labels, rand):
         the remaining instances class labels after picking exemplars
     '''
     # find unique class labels
-    unique_class_labels = np.unique(class_labels)
+    unique_class_labels = np.unique(y)
     num_unique_class_labels = len(unique_class_labels)
     chosen_instances = []
     chosen_class_labels = np.empty(num_unique_class_labels, dtype = int)
@@ -251,31 +251,33 @@ def pick_one_exemplar_per_class(instances, class_labels, rand):
     for class_label_index in range(0, num_unique_class_labels):
         class_label = unique_class_labels[class_label_index]
         # filter class labels for desired class and get indices
-        indices = np.argwhere(class_labels == class_label)
+        indices = np.argwhere(y == class_label)
         # flatten numpy output
         indices = np.ravel(indices)
         # random choice
         index = rand.choice(indices)
         # record exemplar instance and class label
-        instance = instances.iloc[index, :]
+        instance = X.iloc[index, :]
         chosen_instances.append(instance)
         chosen_class_labels[class_label_index] = class_label
         chosen_indices[class_label_index] = index
     # remove exemplar class labels from dataset - note this returns a copy, not inplace!
-    class_labels = np.delete(class_labels, chosen_indices)
+    remaining_class_labels = np.delete(y, chosen_indices)
     # remove exemplar instances from dataset - note this returns a copy, not inplace!
-    instances = instances.drop(instances.index[chosen_indices])
-    return chosen_instances, chosen_class_labels, instances, class_labels
+    remaining_instances = X.drop(X.index[chosen_indices])
+    return chosen_instances, chosen_class_labels, remaining_instances, remaining_class_labels
 
 
-def get_all_distance_measures_param_pool(instances):
+def get_all_distance_measures_param_pool(X, dimension = 0):
     '''
     find parameter pool for all available distance measures
     ----
     Parameters
     ----
-    instances : panda dataframe
+    X : panda dataframe
         instances representing a dataset
+    dimension : int
+        index of dimension to use
     ----
     Returns
     ----
@@ -284,11 +286,10 @@ def get_all_distance_measures_param_pool(instances):
         format as sklearn's GridSearchCV parameters
     '''
     # find dataset properties
-    instance_length = utilities.max_instance_length(
-            instances)  # todo should this use the max instance length for unequal length dataset instances?
+    instance_length = utilities.max_instance_length(X, dimension)  # todo should this use the max instance length for unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
-    stdp = utilities.stdp(instances)
+    stdp = utilities.stdp(X)
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
     param_pool = [
             {
@@ -434,7 +435,7 @@ class ProximityStump(Classifier):
         '''
         return 'dm'
 
-    def fit(self, instances, class_labels, should_check_data = True):
+    def fit(self, X, y, should_check_data = True):
         '''
         model a dataset using this proximity stump
         ----------
@@ -449,9 +450,9 @@ class ProximityStump(Classifier):
         '''
         # checks
         if should_check_data:
-            check_data(instances, class_labels)
+            check_data(X, y)
         if callable(self.param_perm):
-            self.param_perm = self.param_perm(instances)
+            self.param_perm = self.param_perm(X)
         if not isinstance(self.param_perm, dict):
             raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         if not callable(self.gain_method):
@@ -464,8 +465,8 @@ class ProximityStump(Classifier):
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
         if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(class_labels)
-            class_labels = self.label_encoder.transform(class_labels)
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
         # if distance measure not extracted from parameter permutation
         if self.distance_measure is None:
             key = self.get_distance_measure_key()  # get the key for the distance measure var in the param perm dict
@@ -478,7 +479,7 @@ class ProximityStump(Classifier):
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
-            self.pick_exemplars_method(instances, class_labels, self.rand)
+            self.pick_exemplars_method(X, y, self.rand)
         # find distances of remaining instances to the exemplars
         distances = self.exemplar_distances(self.remaining_instances)
         num_exemplars = len(self.exemplar_instances)
@@ -506,16 +507,16 @@ class ProximityStump(Classifier):
             self.branch_class_labels[index] = np.array(self.branch_class_labels[index])
             self.branch_instances[index] = DataFrame(self.branch_instances[index])
         # work out the gain for this split / stump
-        self.gain = self.gain_method(class_labels, self.branch_class_labels)
+        self.gain = self.gain_method(y, self.branch_class_labels)
         return self
 
-    def exemplar_distances(self, instances, should_check_data = True):
+    def exemplar_distances(self, X, should_check_data = True):
         '''
         find the distance from the given instances to each exemplar instance
         ----
         Parameters
         ----
-        instances : panda dataframe
+        X : panda dataframe
             instances of the dataset
         should_check_data : boolean
             whether to verify the dataset (e.g. dimensions, etc)
@@ -527,13 +528,13 @@ class ProximityStump(Classifier):
         '''
         # check data
         if should_check_data:
-            check_data(instances)
-        num_instances = instances.shape[0]
+            check_data(X)
+        num_instances = X.shape[0]
         distances = []
         # for each instance
         for instance_index in range(0, num_instances):
             # find the distances to each exemplar
-            instance = instances.iloc[instance_index, :]
+            instance = X.iloc[instance_index, :]
             distances_inst = self.exemplar_distance_inst(instance, should_check_data = False)
             # add distances to the list (at the corresponding index to the instance being tested)
             distances.append(distances_inst)
@@ -570,13 +571,13 @@ class ProximityStump(Classifier):
             distances.append(distance)
         return distances
 
-    def predict_proba(self, instances, should_check_data = True):
+    def predict_proba(self, X, should_check_data = True):
         '''
         classify instances
         ----
         Parameters
         ----
-        instances : panda dataframe
+        X : panda dataframe
             instances of the dataset
         should_check_data : boolean
             whether to verify the dataset (e.g. dimensions, etc)
@@ -588,13 +589,13 @@ class ProximityStump(Classifier):
         '''
         # check data
         if should_check_data:
-            check_data(instances)
-        num_instances = instances.shape[0]
+            check_data(X)
+        num_instances = X.shape[0]
         num_exemplars = len(self.exemplar_instances)
         num_unique_class_labels = len(self.label_encoder.classes_)
         distributions = []
         # find distances to each exemplar for each test instance
-        distances = self.exemplar_distances(instances, should_check_data = False)
+        distances = self.exemplar_distances(X, should_check_data = False)
         # for each test instance
         for instance_index in range(0, num_instances):
             distribution = [0] * num_unique_class_labels
@@ -713,7 +714,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         self.stump = None
         self.classes_ = None
 
-    def predict_proba(self, instances, should_check_data = True):
+    def predict_proba(self, X, should_check_data = True):
         '''
         classify instances
         ----
@@ -732,12 +733,12 @@ class ProximityTree(Classifier):  # todd rename split to stump
         '''
         # check data
         if should_check_data:
-            check_data(instances)
-        num_instances = instances.shape[0]
+            check_data(X)
+        num_instances = X.shape[0]
         distributions = []
         # for each instance
         for instance_index in range(0, num_instances):
-            instance = instances.iloc[instance_index, :]
+            instance = X.iloc[instance_index, :]
             previous_tree = None
             tree = self
             closest_exemplar_index = -1
@@ -765,19 +766,19 @@ class ProximityTree(Classifier):  # todd rename split to stump
         normalize(distributions, copy = False, norm = 'l1')
         return distributions
 
-    def _branch(self, instances, class_labels):
+    def _branch(self, X, y):
         '''
         branch into further trees based upon proximity found in stump
         ----
         Parameters
         ----
-        instances : panda dataframe
+        X : panda dataframe
             instances of the dataset
-        class_labels : numpy 1d array
+        y : numpy 1d array
             class labels corresponding to each instance
         '''
         # find best stump (split of data)
-        self.stump = self._get_best_stump(instances, class_labels)
+        self.stump = self._get_best_stump(X, y)
         num_branches = len(self.stump.branch_instances)
         self.branches = []
         # providing max depth not exceeded
@@ -807,7 +808,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                     # add none to branches list indicating a leaf node
                     self.branches.append(None)
 
-    def fit(self, instances, class_labels, should_check_data = True):
+    def fit(self, X, y, should_check_data = True):
         '''
         model a dataset using this proximity tree
         ----------
@@ -822,7 +823,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         '''
         # check data
         if should_check_data:
-            check_data(instances, class_labels)
+            check_data(X, y)
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
@@ -837,15 +838,15 @@ class ProximityTree(Classifier):  # todd rename split to stump
         # if param_pool is obtained using train instances
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
-            self.param_pool = self.param_pool(instances)
+            self.param_pool = self.param_pool(X)
         if not isinstance(self.rand, np.random.RandomState):
             raise ValueError('rand not set to a random state')
         # train label encoder if not already
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
         if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(class_labels)
-            class_labels = self.label_encoder.transform(class_labels)
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
         self.classes_ = self.label_encoder.classes_
         # train the tree using a stacking top down decision tree induction algorithm. This constructs the tree in a
         # iterative breadth first manner
@@ -854,8 +855,8 @@ class ProximityTree(Classifier):  # todd rename split to stump
         # class_labels_queue[4]
         # add this tree to the queue with the full dataset and class labels
         tree_queue = [self]
-        instances_queue = [instances]
-        class_labels_queue = [class_labels]
+        instances_queue = [X]
+        class_labels_queue = [y]
         # while the queue is not empty
         while tree_queue:
             # get the next tree, instances and class labels in the queue
@@ -901,22 +902,22 @@ class ProximityTree(Classifier):  # todd rename split to stump
         permutation = self._pick_param_permutation(param_pool)
         return permutation
 
-    def _get_best_stump(self, instances, class_labels):
+    def _get_best_stump(self, X, y):
         stumps = np.empty(self.r, dtype = object)
         for index in range(0, self.r):
-            split = self._pick_rand_stump(instances, class_labels)
+            split = self._pick_rand_stump(X, y)
             stumps[index] = split
         best_stump = utilities.best(stumps, lambda a, b: a.gain - b.gain, self.rand)
         return best_stump
 
-    def _pick_rand_stump(self, instances, class_labels):
+    def _pick_rand_stump(self, X, y):
         param_perm = self._get_rand_param_perm()
         stump = ProximityStump(pick_exemplars_method = self.pick_exemplars_method,
                                rand = self.rand,
                                gain_method = self.gain_method,
                                label_encoder = self.label_encoder,
                                param_perm = param_perm)
-        stump.fit(instances, class_labels, should_check_data = False)
+        stump.fit(X, y, should_check_data = False)
         return stump
 
     def _pick_param_permutation(self, param_pool):
@@ -1028,7 +1029,7 @@ class ProximityForest(Classifier):
         self.trees = None
         self.classes_ = None
 
-    def fit(self, instances, class_labels, should_check_data = True):
+    def fit(self, X, y, should_check_data = True):
         '''
         model a dataset using this proximity forest
         ----------
@@ -1043,18 +1044,18 @@ class ProximityForest(Classifier):
         '''
         # check data
         if should_check_data:
-            check_data(instances, class_labels)
+            check_data(X, y)
         # check parameter values
         if self.num_trees < 1:
             raise ValueError('number of trees cannot be less than 1')
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
         if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(class_labels)
-            class_labels = self.label_encoder.transform(class_labels)
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
         if callable(self.param_pool):
             # if param pool obtained via train instances then call it
-            self.param_pool = self.param_pool(instances)
+            self.param_pool = self.param_pool(X)
         self.classes_ = self.label_encoder.classes_
         # init list of trees
         self.trees = []
@@ -1074,18 +1075,18 @@ class ProximityForest(Classifier):
                     dimension = self.dimension, # todo could randomise?
                     )
             # build tree on dataset
-            tree.fit(instances, class_labels, should_check_data = False)
+            tree.fit(X, y, should_check_data = False)
             # append tree to tree list
             self.trees.append(tree)
         return self
 
-    def predict_proba(self, instances, should_check_data = True):
+    def predict_proba(self, X, should_check_data = True):
         '''
         classify instances
         ----
         Parameters
         ----
-        instances : panda dataframe
+        X : panda dataframe
             instances of the dataset
         should_check_data : boolean
             whether to verify the dataset (e.g. dimensions, etc)
@@ -1098,13 +1099,13 @@ class ProximityForest(Classifier):
         '''
         # check data
         if should_check_data:
-            check_data(instances)
+            check_data(X)
         # store sum of overall predictions. (majority vote)
-        overall_predict_probas = np.zeros((instances.shape[0], len(self.label_encoder.classes_)))
+        overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
         for tree in self.trees:
             # add the tree's predictions to the overall
-            predict_probas = tree.predict_proba(instances, should_check_data = False)
+            predict_probas = tree.predict_proba(X, should_check_data = False)
             overall_predict_probas = np.add(overall_predict_probas, predict_probas)
         # normalise the overall predictions
         normalize(overall_predict_probas, copy = False, norm = 'l1')
