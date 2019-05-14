@@ -435,7 +435,7 @@ class ProximityStump(Classifier):
         '''
         return 'dm'
 
-    def fit(self, X, y, should_check_data = True):
+    def fit(self, X, y, input_checks = True):
         '''
         model a dataset using this proximity stump
         ----------
@@ -449,7 +449,7 @@ class ProximityStump(Classifier):
         self : object
         '''
         # checks
-        if should_check_data:
+        if input_checks:
             check_data(X, y)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X)
@@ -510,7 +510,7 @@ class ProximityStump(Classifier):
         self.gain = self.gain_method(y, self.branch_class_labels)
         return self
 
-    def exemplar_distances(self, X, should_check_data = True):
+    def exemplar_distances(self, X, input_checks = True):
         '''
         find the distance from the given instances to each exemplar instance
         ----
@@ -518,7 +518,7 @@ class ProximityStump(Classifier):
         ----
         X : panda dataframe
             instances of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -527,7 +527,7 @@ class ProximityStump(Classifier):
             list of distance corresponding to each exemplar instance (instances by distances)
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X)
         num_instances = X.shape[0]
         distances = []
@@ -535,12 +535,12 @@ class ProximityStump(Classifier):
         for instance_index in range(0, num_instances):
             # find the distances to each exemplar
             instance = X.iloc[instance_index, :]
-            distances_inst = self.exemplar_distance_inst(instance, should_check_data = False)
+            distances_inst = self.exemplar_distance_inst(instance, input_checks = False)
             # add distances to the list (at the corresponding index to the instance being tested)
             distances.append(distances_inst)
         return distances
 
-    def exemplar_distance_inst(self, instance, should_check_data = True):
+    def exemplar_distance_inst(self, instance, input_checks = True):
         '''
         find the distance from the given instance to each exemplar instance
         ----
@@ -548,7 +548,7 @@ class ProximityStump(Classifier):
         ----
         instance : panda dataframe
             instance of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -557,7 +557,7 @@ class ProximityStump(Classifier):
             list of distance corresponding to each exemplar instance
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             if not isinstance(instance, Series):
                 raise ValueError("instance not a panda series")
         num_exemplars = len(self.exemplar_instances)
@@ -571,7 +571,7 @@ class ProximityStump(Classifier):
             distances.append(distance)
         return distances
 
-    def predict_proba(self, X, should_check_data = True):
+    def predict_proba(self, X, input_checks = True):
         '''
         classify instances
         ----
@@ -579,7 +579,7 @@ class ProximityStump(Classifier):
         ----
         X : panda dataframe
             instances of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -588,14 +588,14 @@ class ProximityStump(Classifier):
             array of prediction arrays. Each array has <num classes> values reflecting probability of each class.
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X)
         num_instances = X.shape[0]
         num_exemplars = len(self.exemplar_instances)
         num_unique_class_labels = len(self.label_encoder.classes_)
         distributions = []
         # find distances to each exemplar for each test instance
-        distances = self.exemplar_distances(X, should_check_data = False)
+        distances = self.exemplar_distances(X, input_checks = False)
         # for each test instance
         for instance_index in range(0, num_instances):
             distribution = [0] * num_unique_class_labels
@@ -613,7 +613,7 @@ class ProximityStump(Classifier):
         normalize(distributions, copy = False, norm = 'l1')
         return distributions
 
-    def _find_distance(self, instance_a, instance_b, should_check_data = True):
+    def _find_distance(self, instance_a, instance_b, input_checks = True):
         '''
         find distance between two instances using distance measure + distance measure parameters
         ----
@@ -623,7 +623,7 @@ class ProximityStump(Classifier):
             instance of the dataset
         instance_a : panda dataframe
             another instance of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -631,7 +631,7 @@ class ProximityStump(Classifier):
         distance : float
             value indicating how similar the two instances are
         '''
-        if should_check_data:
+        if input_checks:
             if not isinstance(instance_a, Series):
                 raise ValueError("instance not a panda series")
             if not isinstance(instance_b, Series):
@@ -714,7 +714,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         self.stump = None
         self.classes_ = None
 
-    def predict_proba(self, X, should_check_data = True):
+    def predict_proba(self, X, input_checks = True):
         '''
         classify instances
         ----
@@ -722,7 +722,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         ----
         instances : panda dataframe
             instances of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -732,7 +732,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
             class.
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X)
         num_instances = X.shape[0]
         distributions = []
@@ -808,7 +808,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                     # add none to branches list indicating a leaf node
                     self.branches.append(None)
 
-    def fit(self, X, y, should_check_data = True):
+    def fit(self, X, y, input_checks = True):
         '''
         model a dataset using this proximity tree
         ----------
@@ -822,7 +822,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         self : object
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X, y)
         # check parameter values
         if self.max_depth < 0:
@@ -917,7 +917,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                                gain_method = self.gain_method,
                                label_encoder = self.label_encoder,
                                param_perm = param_perm)
-        stump.fit(X, y, should_check_data = False)
+        stump.fit(X, y, input_checks = False)
         return stump
 
     def _pick_param_permutation(self, param_pool):
@@ -1029,7 +1029,7 @@ class ProximityForest(Classifier):
         self.trees = None
         self.classes_ = None
 
-    def fit(self, X, y, should_check_data = True):
+    def fit(self, X, y, input_checks = True):
         '''
         model a dataset using this proximity forest
         ----------
@@ -1043,7 +1043,7 @@ class ProximityForest(Classifier):
         self : object
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X, y)
         # check parameter values
         if self.num_trees < 1:
@@ -1075,12 +1075,12 @@ class ProximityForest(Classifier):
                     dimension = self.dimension, # todo could randomise?
                     )
             # build tree on dataset
-            tree.fit(X, y, should_check_data = False)
+            tree.fit(X, y, input_checks = False)
             # append tree to tree list
             self.trees.append(tree)
         return self
 
-    def predict_proba(self, X, should_check_data = True):
+    def predict_proba(self, X, input_checks = True):
         '''
         classify instances
         ----
@@ -1088,7 +1088,7 @@ class ProximityForest(Classifier):
         ----
         X : panda dataframe
             instances of the dataset
-        should_check_data : boolean
+        input_checks : boolean
             whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
@@ -1098,14 +1098,14 @@ class ProximityForest(Classifier):
             class.
         '''
         # check data
-        if should_check_data:
+        if input_checks:
             check_data(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
         for tree in self.trees:
             # add the tree's predictions to the overall
-            predict_probas = tree.predict_proba(X, should_check_data = False)
+            predict_probas = tree.predict_proba(X, input_checks = False)
             overall_predict_probas = np.add(overall_predict_probas, predict_probas)
         # normalise the overall predictions
         normalize(overall_predict_probas, copy = False, norm = 'l1')
