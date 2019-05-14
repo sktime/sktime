@@ -29,6 +29,7 @@
 # todo unit tests
 # todo score
 # todo debug option to do helpful printing
+import sklearn.utils
 
 __author__ = "George Oastler"
 
@@ -37,6 +38,7 @@ from numpy.ma import floor
 from pandas import DataFrame, Series
 from scipy.stats import randint, uniform
 from sklearn.preprocessing import LabelEncoder, normalize
+from sklearn.utils import check_random_state
 
 from sktime.distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
@@ -403,8 +405,8 @@ class ProximityStump(Classifier):
                  gain_method = None,
                  label_encoder = None,
                  dimension = get_default_dimension(),
-                 rand = np.random.RandomState):
-        super().__init__(rand = rand)
+                 rand = None):
+        self.rand = rand
         self.param_perm = param_perm
         self.dimension = dimension
         self.gain_method = gain_method
@@ -459,8 +461,7 @@ class ProximityStump(Classifier):
             raise ValueError("gain method must be callable")
         if not callable(self.pick_exemplars_method):
             raise ValueError("gain method must be callable")
-        if not isinstance(self.rand, np.random.RandomState):
-            raise ValueError('rand not set to a random state')
+        check_random_state(self.rand)
         # if label encoder not setup, make a new one and train it
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -694,12 +695,12 @@ class ProximityTree(Classifier):  # todd rename split to stump
                  r = get_default_r(),
                  max_depth = np.math.inf,
                  dimension = get_default_dimension(),
-                 rand = np.random.RandomState(),
+                 rand = None,
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
                  param_pool = get_all_distance_measures_param_pool):
-        super().__init__(rand = rand)
+        self.rand = rand
         self.gain_method = gain_method
         self.r = r
         self.max_depth = max_depth
@@ -839,8 +840,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
             self.param_pool = self.param_pool(X)
-        if not isinstance(self.rand, np.random.RandomState):
-            raise ValueError('rand not set to a random state')
+        check_random_state(self.rand)
         # train label encoder if not already
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -1010,12 +1010,12 @@ class ProximityForest(Classifier):
                  r = get_default_r(),
                  dimension = get_default_dimension(),
                  num_trees = get_default_num_trees(),
-                 rand = np.random.RandomState(),
+                 rand = None,
                  is_leaf_method = get_default_is_leaf_method(),
                  max_depth = np.math.inf,
                  label_encoder = None,
                  param_pool = get_all_distance_measures_param_pool):
-        super().__init__(rand = rand)
+        self.rand = rand
         self.gain_method = gain_method
         self.r = r
         self.label_encoder = label_encoder
