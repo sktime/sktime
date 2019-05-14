@@ -1,5 +1,5 @@
 import numpy as np
-from pandas import DataFrame
+import pandas as pd
 
 def predict_from_distribution(distributions, rand, label_encoder):
     predictions = np.empty((distributions.shape[0]), dtype = int)
@@ -12,7 +12,7 @@ def predict_from_distribution(distributions, rand, label_encoder):
 
 
 def check_data(instances, class_labels = None):
-    if not isinstance(instances, DataFrame):
+    if not isinstance(instances, pd.DataFrame):
         raise ValueError("instances not in panda dataframe")
     if class_labels is not None:
         # todo these checks could probs be / is defined elsewhere
