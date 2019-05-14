@@ -47,6 +47,18 @@ from sktime.utils.transformations import tabularise
 from sktime.utils.utilities import check_data
 
 
+def get_default_dimension():
+    '''
+    returns default dimension to use in a dataset. Defaults to 0 for univariate datasets.
+    ----
+    Returns
+    ----
+    result : int
+        default dimension of a dataset to use
+    '''
+    return 0
+
+
 def get_default_num_trees():
     '''
     returns default number of trees to make in a proximity forest
@@ -348,6 +360,8 @@ class ProximityStump(Classifier):
         a label encoder, can be pre-populated
     rand : numpy RandomState
         a random state for sampling random numbers
+    dimension : int
+        dimension of the dataset to use. Defaults to zero for univariate datasets.
     ----
     Attributes
     ----
@@ -387,9 +401,11 @@ class ProximityStump(Classifier):
                  param_perm = None,
                  gain_method = None,
                  label_encoder = None,
+                 dimension = get_default_dimension(),
                  rand = np.random.RandomState):
         super().__init__(rand = rand)
         self.param_perm = param_perm
+        self.dimension = dimension
         self.gain_method = gain_method
         self.pick_exemplars_method = pick_exemplars_method
         # vars set in the fit method
@@ -458,6 +474,7 @@ class ProximityStump(Classifier):
             self.distance_measure_param_perm = self.param_perm.copy()
             # delete as we don't want to pass the distance measure as a parameter to itself!
             del self.distance_measure_param_perm[key]
+            self.distance_measure_param_perm['dim_to_use'] = self.dimension
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -645,6 +662,8 @@ class ProximityTree(Classifier):  # todd rename split to stump
         a label encoder, can be pre-populated
     rand : numpy RandomState
         a random state for sampling random numbers
+    dimension : int
+        dimension of the dataset to use. Defaults to zero for univariate datasets.
     r : int
         the number of proximity stumps to produce at each node. Each stump has a random distance measure and distance
         measure parameter set. The stump with the best gain is used to split the data.
@@ -673,6 +692,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                  gain_method = get_default_gain_method(),
                  r = get_default_r(),
                  max_depth = np.math.inf,
+                 dimension = get_default_dimension(),
                  rand = np.random.RandomState(),
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
@@ -686,6 +706,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         self.pick_exemplars_method = pick_exemplars_method
         self.is_leaf_method = is_leaf_method
         self.param_pool = param_pool
+        self.dimension = dimension
         self.level = 0
         # vars set in the fit method
         self.branches = None
@@ -776,6 +797,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                             max_depth = self.max_depth,
                             label_encoder = self.label_encoder,
                             param_pool = self.param_pool,
+                            dimension = self.dimension,
                             )
                     # increment the level
                     tree.level = self.level + 1
@@ -955,6 +977,8 @@ class ProximityForest(Classifier):
         a label encoder, can be pre-populated
     rand : numpy RandomState
         a random state for sampling random numbers
+    dimension : int
+        dimension of the dataset to use. Defaults to zero for univariate datasets.
     r : int
         a tree parameter dictating the number of proximity stumps to produce at each node. Each stump has a random
         distance
@@ -983,6 +1007,7 @@ class ProximityForest(Classifier):
                  pick_exemplars_method = get_default_pick_exemplars_method(),
                  gain_method = get_default_gain_method(),
                  r = get_default_r(),
+                 dimension = get_default_dimension(),
                  num_trees = get_default_num_trees(),
                  rand = np.random.RandomState(),
                  is_leaf_method = get_default_is_leaf_method(),
@@ -995,6 +1020,7 @@ class ProximityForest(Classifier):
         self.label_encoder = label_encoder
         self.max_depth = max_depth
         self.num_trees = num_trees
+        self.dimension = dimension
         self.is_leaf_method = is_leaf_method
         self.pick_exemplars_method = pick_exemplars_method
         self.param_pool = param_pool
@@ -1045,6 +1071,7 @@ class ProximityForest(Classifier):
                     label_encoder = self.label_encoder,
                     param_pool = self.param_pool,
                     pick_exemplars_method = self.pick_exemplars_method,
+                    dimension = self.dimension, # todo could randomise?
                     )
             # build tree on dataset
             tree.fit(instances, class_labels, should_check_data = False)
