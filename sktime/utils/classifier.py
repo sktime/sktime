@@ -27,7 +27,7 @@ class Classifier(BaseEstimator, ClassifierMixin):
         self.rand = rand
         self.label_encoder = None
 
-    def predict_proba(self, instances):
+    def predict_proba(self, instances, should_check_data = True):
         # should be overriden
         raise NotImplementedError('abstract method')
 
