@@ -86,7 +86,7 @@ def get_default_gain_method():
     return gini
 
 
-def get_default_r():
+def get_default_num_stump_evaluations():
     '''
     returns default r (number of splits) to try at a tree node
     ----
@@ -722,7 +722,7 @@ class ProximityTree(BaseClassifier):  # todd rename split to stump
 
     def __init__(self,
                  gain_method = get_default_gain_method(),
-                 r = get_default_r(),
+                 num_stump_evaluations = get_default_num_stump_evaluations(),
                  max_depth = np.math.inf,
                  dimension = get_default_dimension(),
                  rand = None,
@@ -733,7 +733,7 @@ class ProximityTree(BaseClassifier):  # todd rename split to stump
         super().__init__()
         self.rand = rand
         self.gain_method = gain_method
-        self.r = r
+        self.num_stump_evaluations = num_stump_evaluations
         self.max_depth = max_depth
         self.label_encoder = label_encoder
         self.pick_exemplars_method = pick_exemplars_method
@@ -824,7 +824,7 @@ class ProximityTree(BaseClassifier):  # todd rename split to stump
                     # construct a new tree (cloning parameters of this tree) to use on the branch's instances
                     tree = ProximityTree(
                             gain_method = self.gain_method,
-                            r = self.r,
+                            num_stump_evaluations = self.num_stump_evaluations,
                             rand = self.rand,
                             is_leaf_method = self.is_leaf_method,
                             max_depth = self.max_depth,
@@ -859,7 +859,7 @@ class ProximityTree(BaseClassifier):  # todd rename split to stump
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
-        if self.r < 1:
+        if self.num_stump_evaluations < 1:
             raise ValueError('r cannot be less than 1')
         if not callable(self.gain_method):
             raise RuntimeError('gain method not callable')
@@ -934,8 +934,8 @@ class ProximityTree(BaseClassifier):  # todd rename split to stump
         return permutation
 
     def _get_best_stump(self, X, y):
-        stumps = np.empty(self.r, dtype = object)
-        for index in range(0, self.r):
+        stumps = np.empty(self.num_stump_evaluations, dtype = object)
+        for index in range(0, self.num_stump_evaluations):
             split = self._pick_rand_stump(X, y)
             stumps[index] = split
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.rand)
@@ -1056,7 +1056,7 @@ class ProximityForest(BaseClassifier):
     def __init__(self,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
                  gain_method = get_default_gain_method(),
-                 r = get_default_r(),
+                 num_stump_evaluations = get_default_num_stump_evaluations(),
                  dimension = get_default_dimension(),
                  num_trees = get_default_num_trees(),
                  rand = None,
@@ -1067,7 +1067,7 @@ class ProximityForest(BaseClassifier):
         super().__init__()
         self.rand = rand
         self.gain_method = gain_method
-        self.r = r
+        self.num_stump_evaluations = num_stump_evaluations
         self.label_encoder = label_encoder
         self.max_depth = max_depth
         self.num_trees = num_trees
@@ -1115,7 +1115,7 @@ class ProximityForest(BaseClassifier):
             # build tree from forest parameters
             tree = ProximityTree(
                     gain_method = self.gain_method,
-                    r = self.r,
+                    num_stump_evaluations = self.num_stump_evaluations,
                     rand = self.rand,
                     is_leaf_method = self.is_leaf_method,
                     max_depth = self.max_depth,
