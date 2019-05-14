@@ -209,12 +209,12 @@ def gini_node(y):
 
 # todo info gain
 def information_gain(parent_class_labels, children_class_labels):
-    raise Exception('not implemented yet')
+    raise NotImplementedError()
 
 
 # todo chi sq
 def chi_squared(parent_class_labels, children_class_labels):
-    raise Exception('not implemented yet')
+    raise NotImplementedError()
 
 
 def pick_one_exemplar_per_class(X, y, rand):
