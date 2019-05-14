@@ -29,7 +29,6 @@
 # todo unit tests
 # todo score
 # todo debug option to do helpful printing
-import sklearn.utils
 
 __author__ = "George Oastler"
 
@@ -40,13 +39,15 @@ from scipy.stats import randint, uniform
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
+from sktime.classifiers.base import predict_from_predict_proba
+from sktime.classifiers.base import BaseClassifier
 from sktime.distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
-from sktime.utils import utilities
-from sktime.utils.classifier import Classifier
+import sktime.utils.dataset_properties as dataset_properties
+import sktime.utils.comparison as comparison
+from sktime.utils.validation import check_X_y
 from sktime.utils.transformations import tabularise
-from sktime.utils.utilities import check_data
 
 
 def get_default_dimension():
@@ -288,10 +289,13 @@ def get_all_distance_measures_param_pool(X, dimension = 0):
         format as sklearn's GridSearchCV parameters
     '''
     # find dataset properties
-    instance_length = utilities.max_instance_length(X, dimension)  # todo should this use the max instance length for unequal length dataset instances?
+    instance_length = dataset_properties.max_instance_length(X, dimension)  # todo should this use the 
+    # max instance length
+    # for
+    # unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
-    stdp = utilities.stdp(X)
+    stdp = dataset_properties.stdp(X)
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
     param_pool = [
             {
@@ -346,7 +350,7 @@ def get_all_distance_measures_param_pool(X, dimension = 0):
     return param_pool
 
 
-class ProximityStump(Classifier):
+class ProximityStump(BaseClassifier):
     '''
     proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood limited
     to x exemplar instances
@@ -406,6 +410,7 @@ class ProximityStump(Classifier):
                  label_encoder = None,
                  dimension = get_default_dimension(),
                  rand = None):
+        super().__init__()
         self.rand = rand
         self.param_perm = param_perm
         self.dimension = dimension
@@ -452,7 +457,7 @@ class ProximityStump(Classifier):
         '''
         # checks
         if input_checks:
-            check_data(X, y)
+            check_X_y(X, y)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X)
         if not isinstance(self.param_perm, dict):
@@ -476,7 +481,6 @@ class ProximityStump(Classifier):
             self.distance_measure_param_perm = self.param_perm.copy()
             # delete as we don't want to pass the distance measure as a parameter to itself!
             del self.distance_measure_param_perm[key]
-            self.distance_measure_param_perm['dim_to_use'] = self.dimension
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -498,7 +502,7 @@ class ProximityStump(Classifier):
             instance = self.remaining_instances.iloc[instance_index, :]
             class_label = self.remaining_class_labels[instance_index]
             # pick the closest exemplar (min distance)
-            closest_exemplar_index = utilities.arg_min(exemplar_distances, self.rand)
+            closest_exemplar_index = comparison.arg_min(exemplar_distances, self.rand)
             # add the instance to the corresponding list for the exemplar branch
             self.branch_instances[closest_exemplar_index].append(instance)
             self.branch_class_labels[closest_exemplar_index].append(class_label)
@@ -529,7 +533,7 @@ class ProximityStump(Classifier):
         '''
         # check data
         if input_checks:
-            check_data(X)
+            check_X_y(X)
         num_instances = X.shape[0]
         distances = []
         # for each instance
@@ -590,7 +594,7 @@ class ProximityStump(Classifier):
         '''
         # check data
         if input_checks:
-            check_data(X)
+            check_X_y(X)
         num_instances = X.shape[0]
         num_exemplars = len(self.exemplar_instances)
         num_unique_class_labels = len(self.label_encoder.classes_)
@@ -643,10 +647,36 @@ class ProximityStump(Classifier):
         instance_a = np.transpose(instance_a)
         instance_b = np.transpose(instance_b)
         # find distance
-        return self.distance_measure(instance_a, instance_b, **self.distance_measure_param_perm)
+        params = self.distance_measure_param_perm
+        # if distance measure uses dimension
+        if self.distance_measure == msm_distance or self.distance_measure == lcss_distance or self.distance_measure \
+                == erp_distance:
+            # copy the parameters
+            params = params.copy()
+            # add the dimension to use
+            params['dim_to_use'] = self.dimension # todo comment
+        return self.distance_measure(instance_a, instance_b, **params)
+
+    def predict(self, X, input_checks = True):
+        '''
+        classify instances
+        ----
+        Parameters
+        ----
+        X : panda dataframe
+            instances of the dataset
+        input_checks : boolean
+            whether to verify the dataset (e.g. dimensions, etc)
+        ----
+        Returns
+        ----
+        predictions : 1d numpy array
+            array of predictions of each instance (class value)
+        '''
+        return predict_from_predict_proba(self, X, input_checks)
 
 
-class ProximityTree(Classifier):  # todd rename split to stump
+class ProximityTree(BaseClassifier):  # todd rename split to stump
 
     '''
     proximity tree classifier using proximity stumps at each tree node to split data into branches.
@@ -700,6 +730,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
                  param_pool = get_all_distance_measures_param_pool):
+        super().__init__()
         self.rand = rand
         self.gain_method = gain_method
         self.r = r
@@ -734,7 +765,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         '''
         # check data
         if input_checks:
-            check_data(X)
+            check_X_y(X)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -748,7 +779,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
                 # find the distances to each exemplar
                 distances = tree.stump.exemplar_distance_inst(instance)
                 # find closest exemplar
-                closest_exemplar_index = utilities.arg_min(distances, tree.rand)
+                closest_exemplar_index = comparison.arg_min(distances, tree.rand)
                 # move to the tree corresponding to the closest exemplar
                 previous_tree = tree
                 tree = tree.branches[closest_exemplar_index]
@@ -824,7 +855,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         '''
         # check data
         if input_checks:
-            check_data(X, y)
+            check_X_y(X, y)
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
@@ -907,7 +938,7 @@ class ProximityTree(Classifier):  # todd rename split to stump
         for index in range(0, self.r):
             split = self._pick_rand_stump(X, y)
             stumps[index] = split
-        best_stump = utilities.best(stumps, lambda a, b: a.gain - b.gain, self.rand)
+        best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.rand)
         return best_stump
 
     def _pick_rand_stump(self, X, y):
@@ -960,8 +991,26 @@ class ProximityTree(Classifier):  # todd rename split to stump
             param_perm[param_name] = param_value
         return param_perm
 
+    def predict(self, X, input_checks = True):
+        '''
+        classify instances
+        ----
+        Parameters
+        ----
+        X : panda dataframe
+            instances of the dataset
+        input_checks : boolean
+            whether to verify the dataset (e.g. dimensions, etc)
+        ----
+        Returns
+        ----
+        predictions : 1d numpy array
+            array of predictions of each instance (class value)
+        '''
+        return predict_from_predict_proba(self, X, input_checks)
 
-class ProximityForest(Classifier):
+
+class ProximityForest(BaseClassifier):
     '''
     proximity forest classifier using an ensemble proximity trees.
     ----
@@ -1015,6 +1064,7 @@ class ProximityForest(Classifier):
                  max_depth = np.math.inf,
                  label_encoder = None,
                  param_pool = get_all_distance_measures_param_pool):
+        super().__init__()
         self.rand = rand
         self.gain_method = gain_method
         self.r = r
@@ -1044,7 +1094,7 @@ class ProximityForest(Classifier):
         '''
         # check data
         if input_checks:
-            check_data(X, y)
+            check_X_y(X, y)
         # check parameter values
         if self.num_trees < 1:
             raise ValueError('number of trees cannot be less than 1')
@@ -1099,7 +1149,7 @@ class ProximityForest(Classifier):
         '''
         # check data
         if input_checks:
-            check_data(X)
+            check_X_y(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
@@ -1110,3 +1160,21 @@ class ProximityForest(Classifier):
         # normalise the overall predictions
         normalize(overall_predict_probas, copy = False, norm = 'l1')
         return overall_predict_probas
+
+    def predict(self, X, input_checks = True):
+        '''
+        classify instances
+        ----
+        Parameters
+        ----
+        X : panda dataframe
+            instances of the dataset
+        input_checks : boolean
+            whether to verify the dataset (e.g. dimensions, etc)
+        ----
+        Returns
+        ----
+        predictions : 1d numpy array
+            array of predictions of each instance (class value)
+        '''
+        return predict_from_predict_proba(self, X, input_checks)
