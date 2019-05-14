@@ -1,11 +1,12 @@
-from .base import BaseSingleSeriesForecaster
-from .base import BaseForecaster
-from .base import BaseUpdateableForecaster
-
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+
+from .base import BaseForecaster
+from .base import BaseSingleSeriesForecaster
+from .base import BaseUpdateableForecaster
+
 # SARIMAX is better maintained and offers the same functionality as standard ARIMA class
 # https://github.com/statsmodels/statsmodels/issues/3884
 
@@ -107,7 +108,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         self : returns an instance of self.
         """
         # unnest series
-        y = y.iloc[0]
+        y = self._prepare_y(y)
+        X = self._prepare_X(X)
 
         # fit estimator
         self._estimator = SARIMAX(y,
@@ -144,7 +146,9 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         #  https://github.com/statsmodels/statsmodels/issues/3318
 
         # unnest series
-        y = y.iloc[0]
+        # unnest series
+        y = self._prepare_y(y)
+        X = self._prepare_X(X)
 
         # Update estimator.
         estimator = SARIMAX(y,
@@ -182,6 +186,10 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         Predictions : pandas.Series, shape=(len(fh),)
             Returns series of predicted values.
         """
+
+        # unnest series
+        X = self._prepare_X(X)
+
         # Adjust forecasting horizon to time index seen in fit, (assume sorted forecasting horizon)
         fh = len(self._y_idx) - 1 + fh
         start = fh[0]
@@ -267,7 +275,6 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
     def __init__(self, trend=None, damped=False, seasonal=None, seasonal_periods=None, smoothing_level=None,
                  smoothing_slope=None, smoothing_seasonal=None, damping_slope=None, optimized=True,
                  use_boxcox=False, remove_bias=False, use_basinhopping=False, check_input=True):
-
         # Model params
         self.trend = trend
         self.damped = damped
@@ -307,7 +314,8 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
                                               seasonal_periods=self.seasonal_periods)
         self._fitted_estimator = self.estimator.fit(smoothing_level=self.smoothing_level, optimized=self.optimized,
                                                     smoothing_slope=self.smoothing_slope,
-                                                    smoothing_seasonal=self.smooting_seasonal, damping_slope=self.damping_slope,
+                                                    smoothing_seasonal=self.smooting_seasonal,
+                                                    damping_slope=self.damping_slope,
                                                     use_boxcox=self.use_boxcox, remove_bias=self.remove_bias,
                                                     use_basinhopping=self.use_basinhopping)
         return self
@@ -325,9 +333,10 @@ class DummyForecaster(BaseSingleSeriesForecaster):
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
+
     def __init__(self, strategy='last', check_input=True):
 
-        allowed_strategies = ('mean', 'last', 'linear') #seasonal_last
+        allowed_strategies = ('mean', 'last', 'linear')  # seasonal_last
         if strategy not in allowed_strategies:
             raise ValueError(f'Unknown strategy: {strategy}, expected one of {allowed_strategies}')
 
@@ -381,6 +390,7 @@ class EnsembleForecaster(BaseForecaster):
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
+
     # TODO: experimental, major functionality not implemented (input checks, params interface, exogenous variables)
 
     def __init__(self, estimators=None, weights=None, check_input=True):
@@ -468,5 +478,3 @@ class EnsembleForecaster(BaseForecaster):
 
     def set_params(self, **params):
         raise NotImplementedError()
-
-

@@ -49,8 +49,8 @@ def check_equal_index(X):
 
         # Series must contain at least 2 observations, otherwise should be primitive.
         if len(first_index) < 2:
-            raise ValueError(f'Time series must contain at least 2 observations, '
-                             f'found time series in column {col} with less than 2 observations')
+            raise ValueError(f'Time series must contain at least 2 observations, but found: '
+                             f'{len(first_index)} observations in column: {col}')
 
         # Check index for all rows.
         for i in range(1, X.shape[0]):

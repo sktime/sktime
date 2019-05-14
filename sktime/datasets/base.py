@@ -3,18 +3,23 @@ Utilities for loading datasets
 """
 
 import os
+
 import pandas as pd
+
 from ..utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = ["load_gunpoint",
            "load_arrow_head",
            "load_italy_power_demand",
-           "load_shampoo_sales"]
+           "load_shampoo_sales",
+           "load_longley"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)
 
+
+# time series classification datasets
 
 def _load_dataset(name, split, return_X_y):
     """
@@ -39,7 +44,7 @@ def _load_dataset(name, split, return_X_y):
 
     # Return appropriately
     if return_X_y:
-        return X, y
+        return (X, y)
     else:
         X['class_val'] = pd.Series(y)
         return X
@@ -53,6 +58,9 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     ----------
     split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
         Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
 
     Returns
     -------
@@ -93,6 +101,9 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     ----------
     split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
         Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
 
     Returns
     -------
@@ -129,7 +140,9 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     ----------
     split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
         Whether to load the train or test partition of the problem. By default it loads the train split.
-
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
 
     Returns
     -------
@@ -160,16 +173,18 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_shampoo_sales(return_dataframe=False):
+# forecasting datasets
+
+def load_shampoo_sales(return_y_as_dataframe=False):
     """
     Load the shampoo sales univariate time series forecasting dataset.
 
     Parameters
     ----------
-    return_dataframe: bool
-        - If True, returns pandas DataFrame.
-        - If False, returns pandas Series.
-        Default is False.
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.s
+        - If False, returns target series as pandas.Series.
 
     Returns
     -------
@@ -178,7 +193,8 @@ def load_shampoo_sales(return_dataframe=False):
 
     Details
     -------
-    This dataset describes the monthly number of sales of shampoo over a 3 year period. The units are a sales count.
+    This dataset describes the monthly number of sales of shampoo over a 3 year period.
+    The units are a sales count.
 
     Dimensionality:     univariate
     Series length:      36
@@ -188,8 +204,8 @@ def load_shampoo_sales(return_dataframe=False):
 
     References
     ----------
-    ..[1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications, John Wiley & Sons: New York.
-        Chapter 3.
+    ..[1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
+        John Wiley & Sons: New York. Chapter 3.
     """
 
     name = 'ShampooSales'
@@ -197,9 +213,91 @@ def load_shampoo_sales(return_dataframe=False):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data.index = pd.PeriodIndex(data.index, freq='M')
-    if return_dataframe:
+    if return_y_as_dataframe:
         # return nested pandas DataFrame with a single row and column
         return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
     else:
         # return nested pandas Series with a single row
         return pd.Series([data.iloc[:, 0]], name=name)
+
+
+def load_longley(return_X_y=False, return_y_as_dataframe=False):
+    """
+    Load the Longley dataset for forecasting with exogenous variables.
+
+
+    Parameters
+    ----------
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.s
+        - If False, returns target series as pandas.Series.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas.DataFrame
+        The exogenous time series data for the problem.
+    y: pandas.Series
+        The target series to be predicted.
+
+    Details
+    -------
+    This dataset contains various US macroeconomic variables from 1947 to 1962 that are known to be highly
+    collinear.
+
+    Dimensionality:     multivariate, 6
+    Series length:      16
+    Frequency:          Yearly
+    Number of cases:    1
+
+    Variable description:
+
+    TOTEMP - Total employment (y)
+    GNPDEFL - Gross national product deflator
+    GNP - Gross national product
+    UNEMP - Number of unemployed
+    ARMED - Size of armed forces
+    POP - Population
+    YEAR - Calendar year (index)
+
+    References
+    ----------
+    ..[1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
+        Electronic Comptuer from the Point of View of the User."  Journal of
+        the American Statistical Association.  62.319, 819-41.
+        (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
+    """
+
+    if return_y_as_dataframe and not return_X_y:
+        raise ValueError("`return_y_as_dataframe` can only be set to True if `return_X_y` is True, "
+                         "otherwise y is given as a column in the returned dataframe and "
+                         "cannot be returned as a separate dataframe.")
+
+    name = 'Longley'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+    data = data.set_index('YEAR')
+    data.index = pd.PeriodIndex(data.index, freq='Y')
+
+    # Get target series
+    yname = 'TOTEMP'
+    y = data.pop(yname)
+    y = pd.Series([y], name=yname)
+
+    # Get feature series
+    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
+    X.columns = data.columns
+
+    if return_X_y:
+        if return_y_as_dataframe:
+            y = pd.DataFrame(pd.Series([pd.Series(y.squeeze())]), columns=[yname])
+            return X, y
+        else:
+            return X, y
+    else:
+        X[yname] = y
+        return X

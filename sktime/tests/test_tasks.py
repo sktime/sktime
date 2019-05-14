@@ -13,7 +13,7 @@ __author__ = "Markus Löning"
 TASKS = (TSCTask, TSRTask, ForecastingTask)
 
 gunpoint = load_gunpoint(return_X_y=False)
-shampoo_sales = load_shampoo_sales(return_dataframe=True)
+shampoo_sales = load_shampoo_sales(return_y_as_dataframe=True)
 
 BASE_READONLY_ATTRS = ("target", "features", "metadata")
 

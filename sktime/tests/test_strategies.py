@@ -11,11 +11,13 @@ from sktime.highlevel import ForecastingTask
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_italy_power_demand
 from sktime.datasets import load_shampoo_sales
+from sktime.datasets import load_longley
 
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
 from sktime.forecasting.forecasters import DummyForecaster
+from sktime.forecasting.forecasters import ARIMAForecaster
 
 from sklearn.ensemble import RandomForestRegressor
 
@@ -25,7 +27,6 @@ regressor = Pipeline([('tabularise', Tabulariser()), ('clf', RandomForestRegress
 forecaster = DummyForecaster()
 
 DATASET_LOADERS = (load_gunpoint, load_italy_power_demand)
-
 
 
 # Test output of time-series classification strategies
@@ -41,8 +42,8 @@ def test_TSCStrategy(dataset):
 
 
 # Test forecasting strategy
-def test_ForecastingStrategy():
-    shampoo = load_shampoo_sales(return_dataframe=True)
+def test_ForecastingStrategy_univariate():
+    shampoo = load_shampoo_sales(return_y_as_dataframe=True)
     train = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[:30]]), columns=shampoo.columns)
     test = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[30:]]), columns=shampoo.columns)
 
@@ -56,9 +57,27 @@ def test_ForecastingStrategy():
     assert y_pred.shape == test[task.target].iloc[0].shape
 
 
+def test_ForecastingStrategy_multivariate():
+    longley = load_longley(return_X_y=False)
+    train = pd.DataFrame([pd.Series([longley.iloc[0, i].iloc[:13]]) for i in range(longley.shape[1])]).T
+    train.columns = longley.columns
+
+    test = pd.DataFrame([pd.Series([longley.iloc[0, i].iloc[13:]]) for i in range(longley.shape[1])]).T
+    test.columns = longley.columns
+    target = "TOTEMP"
+    fh = np.arange(len(test[target].iloc[0])) + 1
+    task = ForecastingTask(target=target, fh=fh, metadata=train)
+
+    estimator = ARIMAForecaster()
+    s = ForecastingStrategy(estimator=estimator)
+    s.fit(task, train)
+    y_pred = s.predict(data=test)
+    assert y_pred.shape == test[task.target].iloc[0].shape
+
+
 # Test forecasting strategy
-def test_Forecasting2TSRReductionStrategy():
-    shampoo = load_shampoo_sales(return_dataframe=True)
+def test_Forecasting2TSRReductionStrategy_univariate():
+    shampoo = load_shampoo_sales(return_y_as_dataframe=True)
     train = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[:30]]), columns=shampoo.columns)
     test = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[30:]]), columns=shampoo.columns)
 
@@ -70,3 +89,4 @@ def test_Forecasting2TSRReductionStrategy():
     s.fit(task, train)
     y_pred = s.predict()
     assert y_pred.shape == test[task.target].iloc[0].shape
+
