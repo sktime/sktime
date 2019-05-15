@@ -1,11 +1,7 @@
 import numpy as np
-# from scipy.stats.mstats import zscore
 from scipy.spatial.distance import sqeuclidean
 import time
-from sklearn.ensemble.forest import RandomForestClassifier
-from sklearn.pipeline import Pipeline
-from sktime.datasets import load_gunpoint_dataframe
-from sktime.transformers.base import BaseTransformer
+from .base import BaseTransformer
 
 # TO-DO: thorough testing (some initial testing completed, but passing the code to David to develop
 #        before everything has been fully verified)
@@ -700,34 +696,3 @@ class Shapelet:
     def __str__(self):
         return "series id: " + str(self.series_id) + ", start_pos: " + str(self.start_pos) + ", length: " \
                + str(self.length) + ", info_gain: " + str(self.info_gain)
-
-
-if __name__ == "__main__":
-    """Example usage"""
-
-    dataset = "GunPoint"
-
-    train_x, train_y = load_gunpoint_dataframe(split='TRAIN')
-    test_x, test_y = load_gunpoint_dataframe(split='TEST')
-
-
-    pipeline = Pipeline([
-        ('st', ContractedRandomShapeletTransform(time_limit_in_mins=1, min_shapelet_length=10, max_shapelet_length=12,
-                                                 initial_num_shapelets_per_case=3, verbose=True)),
-        ('rf', RandomForestClassifier()),
-    ])
-
-    start = time.time()
-    pipeline.fit(train_x, train_y)
-    end_build = time.time()
-    preds = pipeline.predict(test_x)
-    end_test = time.time()
-
-    print("Results:")
-    print("Correct:")
-    correct = sum(preds == test_y)
-    print("\t"+str(correct)+"/"+str(len(test_y)))
-    print("\t"+str(correct/len(test_y)))
-    print("\nTiming:")
-    print("\tTo build:   "+str(end_build-start)+" secs")
-    print("\tTo predict: "+str(end_test-end_build)+" secs")
