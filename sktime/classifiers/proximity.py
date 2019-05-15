@@ -1027,14 +1027,14 @@ class ProximityForest(BaseClassifier):
                  num_stump_evaluations = get_default_num_stump_evaluations(),
                  dimension = get_default_dimension(),
                  num_trees = get_default_num_trees(),
-                 rand = None,
+                 random_state = None,
                  is_leaf_method = get_default_is_leaf_method(),
                  max_depth = np.math.inf,
                  label_encoder = None,
                  debug = False,
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
-        self.random_state = rand
+        self.random_state = random_state
         self.gain_method = gain_method
         self.num_stump_evaluations = num_stump_evaluations
         self.label_encoder = label_encoder
