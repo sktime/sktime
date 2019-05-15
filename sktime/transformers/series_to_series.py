@@ -3,8 +3,7 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize
-from ..utils.transformations import concat_nested_arrays
+from ..utils.transformations import tabularize, concat_nested_arrays
 from .base import BaseTransformer
 
 
@@ -52,10 +51,6 @@ class IntervalSegmenter(BaseTransformer):
             pass
             # TODO check input is series column, not column of primitives
 
-        # Cast into 2d dataframe
-        if X.ndim == 1:
-            X = pd.DataFrame(X)
-
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
@@ -76,6 +71,7 @@ class IntervalSegmenter(BaseTransformer):
 
         else:
             raise ValueError()
+
         return self
 
     def transform(self, X, y=None):
@@ -96,10 +92,6 @@ class IntervalSegmenter(BaseTransformer):
 
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
-
-        # Cast into 2d dataframe
-        if X.ndim == 1:
-            X = pd.DataFrame(X)
 
         # Check inputs.
         if self.check_input:
@@ -126,7 +118,7 @@ class IntervalSegmenter(BaseTransformer):
                 intervals.append(interval)
                 self.colnames_.append(f'{colname}_{start}_{end}')
 
-        # Return nested pandas Series or DataFrame.
+        # Return nested pandas DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
         Xt.columns = self.colnames_
         return Xt

@@ -129,34 +129,6 @@ class GridSearchCV(skGSCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    Examples
-    --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters, cv=5)
-    >>> clf.fit(iris.data, iris.target)
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
-           fit_params=None, iid=..., n_jobs=None,
-           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
-           scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys())
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
-     'mean_train_score', 'param_C', 'param_kernel', 'params',...
-     'rank_test_score', 'split0_test_score',...
-     'split0_train_score', 'split1_test_score', 'split1_train_score',...
-     'split2_test_score', 'split2_train_score',...
-     'std_fit_time', 'std_score_time', 'std_test_score', 'std_train_score'...]
-
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -245,10 +217,12 @@ class GridSearchCV(skGSCV):
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
-        super().__init__(estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score="warn")
+
+        super(GridSearchCV, self).__init__(estimator, param_grid, scoring=scoring, fit_params=fit_params,
+                                           n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+                                           pre_dispatch=pre_dispatch, error_score=error_score,
+                                           return_train_score=return_train_score)
+
         if self.scoring is None:
             # using accuracy score as default for classifiers
             if isinstance(self.estimator, BaseClassifier):
