@@ -130,6 +130,8 @@ def set_classifier(cls, rand=np.random.RandomState()):
     :return: A classifier.
 
     """
+    if cls.lower() == 'pf':
+        return ProximityForest(rand=rand)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest()
     elif  cls == 'TSF' or cls == 'tsf':
