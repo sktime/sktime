@@ -463,7 +463,7 @@ class ProximityStump(BaseClassifier):
             raise ValueError("gain method must be callable")
         if not callable(self.pick_exemplars_method):
             raise ValueError("gain method must be callable")
-        check_random_state(self.rand)
+        self.rand = check_random_state(self.rand)
         # if label encoder not setup, make a new one and train it
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -868,7 +868,7 @@ class ProximityTree(BaseClassifier):
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
             self.param_pool = self.param_pool(X)
-        check_random_state(self.rand)
+        self.rand = check_random_state(self.rand)
         # train label encoder if not already
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
