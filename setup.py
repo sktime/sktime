@@ -107,4 +107,3 @@ setup(name=DISTNAME,
           annotate=True),
       include_dirs=[np.get_include()]
       )
-

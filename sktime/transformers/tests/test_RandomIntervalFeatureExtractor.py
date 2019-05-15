@@ -22,7 +22,7 @@ def _test_output_format_dim(X):
         for features in feature_args:
             trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
             Xt = trans.fit_transform(X)
-            assert isinstance(Xt, (pd.DataFrame, pd.Series))
+            assert isinstance(Xt, pd.DataFrame)
             assert Xt.shape[0] == n_rows
             assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
