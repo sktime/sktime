@@ -27,8 +27,7 @@
 # }
 #
 # todo unit tests
-# todo score
-# todo debug option to do helpful printing
+# todo expand debug printing capability
 
 __author__ = "George Oastler"
 
@@ -39,15 +38,13 @@ from scipy.stats import randint, uniform
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
-from sktime.classifiers.base import predict_from_predict_proba
-from sktime.classifiers.base import BaseClassifier
-from sktime.distances.elastic_cython import (
+from .base import BaseClassifier
+from ..distances import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
-import sktime.utils.dataset_properties as dataset_properties
-import sktime.utils.comparison as comparison
-from sktime.utils.validation import check_X_y
-from sktime.utils.transformations import tabularise
+from ..utils import comparison, dataset_properties
+from ..utils.transformations import tabularise
+from ..utils.validation import check_X_y
 
 
 def get_default_dimension():
@@ -289,7 +286,9 @@ def get_all_distance_measures_param_pool(X, dimension = 0):
         format as sklearn's GridSearchCV parameters
     '''
     # find dataset properties
-    instance_length = dataset_properties.max_instance_length(X, dimension)  # todo should this use the max instance length for unequal length dataset instances?
+    instance_length = dataset_properties.max_instance_length(X,
+                                                             dimension)  # todo should this use the max instance
+    # length for unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
@@ -364,6 +363,8 @@ class ProximityStump(BaseClassifier):
         a label encoder, can be pre-populated
     random_state : numpy RandomState
         a random state for sampling random numbers
+    debug : boolean
+        whether to print debug info
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
     ----
@@ -406,7 +407,8 @@ class ProximityStump(BaseClassifier):
                  gain_method = None,
                  label_encoder = None,
                  dimension = get_default_dimension(),
-                 random_state = None):
+                 random_state = None,
+                 debug = False):
         super().__init__()
         self.random_state = random_state
         self.param_perm = param_perm
@@ -423,6 +425,7 @@ class ProximityStump(BaseClassifier):
         self.distance_measure_param_perm = None
         self.distance_measure = None
         self.gain = None
+        self.debug = debug
         self.label_encoder = label_encoder
         self.classes_ = None
 
@@ -654,27 +657,8 @@ class ProximityStump(BaseClassifier):
             params['dim_to_use'] = self.dimension
         return self.distance_measure(instance_a, instance_b, **params)
 
-    def predict(self, X, input_checks = True):
-        '''
-        classify instances
-        ----
-        Parameters
-        ----
-        X : panda dataframe
-            instances of the dataset
-        input_checks : boolean
-            whether to verify the dataset (e.g. dimensions, etc)
-        ----
-        Returns
-        ----
-        predictions : 1d numpy array
-            array of predictions of each instance (class value)
-        '''
-        return predict_from_predict_proba(self, X, input_checks)
-
 
 class ProximityTree(BaseClassifier):
-
     '''
     proximity tree classifier using proximity stumps at each tree node to split data into branches.
     ----
@@ -693,6 +677,8 @@ class ProximityTree(BaseClassifier):
         a random state for sampling random numbers
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
+    debug : boolean
+        whether to print debug info
     r : int
         the number of proximity stumps to produce at each node. Each stump has a random distance measure and distance
         measure parameter set. The stump with the best gain is used to split the data.
@@ -723,6 +709,7 @@ class ProximityTree(BaseClassifier):
                  max_depth = np.math.inf,
                  dimension = get_default_dimension(),
                  random_state = None,
+                 debug = False,
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
@@ -738,6 +725,7 @@ class ProximityTree(BaseClassifier):
         self.param_pool = param_pool
         self.dimension = dimension
         self.level = 0
+        self.debug = debug
         # vars set in the fit method
         self.branches = None
         self.stump = None
@@ -988,24 +976,6 @@ class ProximityTree(BaseClassifier):
             param_perm[param_name] = param_value
         return param_perm
 
-    def predict(self, X, input_checks = True):
-        '''
-        classify instances
-        ----
-        Parameters
-        ----
-        X : panda dataframe
-            instances of the dataset
-        input_checks : boolean
-            whether to verify the dataset (e.g. dimensions, etc)
-        ----
-        Returns
-        ----
-        predictions : 1d numpy array
-            array of predictions of each instance (class value)
-        '''
-        return predict_from_predict_proba(self, X, input_checks)
-
 
 class ProximityForest(BaseClassifier):
     '''
@@ -1018,6 +988,8 @@ class ProximityForest(BaseClassifier):
     param_pool : list of dicts
         a list of dictionaries containing a distance measure and corresponding parameter sources (distribution or
         predefined value)
+    debug : boolean
+        whether to print debug info
     gain_method : callable
         a method to calculate the gain of splits / stumps in trees
     label_encoder : LabelEncoder
@@ -1028,10 +1000,9 @@ class ProximityForest(BaseClassifier):
         dimension of the dataset to use. Defaults to zero for univariate datasets.
     num_stump_evaluations : int
         a tree parameter dictating the number of proximity stumps to produce at each node. Each stump has a random
-        distance
-        measure and
-        distance
-        measure parameter set. The stump with the best gain is used to split the data.
+        distance measure and distance measure parameter set. The stump with the best gain is used to split the data.
+    debug : boolean
+        whether to print debug info
     num_trees : int
         the number of trees to construct
     is_leaf_method : callable
@@ -1060,6 +1031,7 @@ class ProximityForest(BaseClassifier):
                  is_leaf_method = get_default_is_leaf_method(),
                  max_depth = np.math.inf,
                  label_encoder = None,
+                 debug = False,
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
         self.random_state = rand
@@ -1068,6 +1040,7 @@ class ProximityForest(BaseClassifier):
         self.label_encoder = label_encoder
         self.max_depth = max_depth
         self.num_trees = num_trees
+        self.debug = debug
         self.dimension = dimension
         self.is_leaf_method = is_leaf_method
         self.pick_exemplars_method = pick_exemplars_method
@@ -1108,7 +1081,8 @@ class ProximityForest(BaseClassifier):
         self.trees = []
         # for each tree
         for tree_index in range(0, self.num_trees):
-            # print("tree index: " + str(tree_index))
+            if self.debug:
+                print("constructing tree " + str(tree_index))
             # build tree from forest parameters
             tree = ProximityTree(
                     gain_method = self.gain_method,
@@ -1119,7 +1093,7 @@ class ProximityForest(BaseClassifier):
                     label_encoder = self.label_encoder,
                     param_pool = self.param_pool,
                     pick_exemplars_method = self.pick_exemplars_method,
-                    dimension = self.dimension, # todo could randomise?
+                    dimension = self.dimension,  # todo could randomise?
                     )
             # build tree on dataset
             tree.fit(X, y, input_checks = False)
@@ -1157,21 +1131,3 @@ class ProximityForest(BaseClassifier):
         # normalise the overall predictions
         normalize(overall_predict_probas, copy = False, norm = 'l1')
         return overall_predict_probas
-
-    def predict(self, X, input_checks = True):
-        '''
-        classify instances
-        ----
-        Parameters
-        ----
-        X : panda dataframe
-            instances of the dataset
-        input_checks : boolean
-            whether to verify the dataset (e.g. dimensions, etc)
-        ----
-        Returns
-        ----
-        predictions : 1d numpy array
-            array of predictions of each instance (class value)
-        '''
-        return predict_from_predict_proba(self, X, input_checks)
