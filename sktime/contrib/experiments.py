@@ -112,11 +112,11 @@ datasets = [
 ]
 
 
-def set_classifier(cls, rand=np.random.RandomState()):
+def set_classifier(cls, rand=np.random.RandomState(), rand_id=0):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
     you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
-    This may well get superceded, it is just how e have always done it
+    This may well get changed, it is just how we have always done it
     :param cls: String indicating which classifier you want
     :return: A classifier.
 
@@ -124,9 +124,9 @@ def set_classifier(cls, rand=np.random.RandomState()):
 #    if cls.lower() == 'pf':
 #        return ProximityForest(rand=rand)
     if cls == 'RISE' or cls == 'rise':
-        return fb.RandomIntervalSpectralForest()
+        return fb.RandomIntervalSpectralForest(random_state=rand_id)
     elif cls == 'TSF' or cls == 'tsf':
-        return ib.TimeSeriesForest()
+        return ib.TimeSeriesForest(random_state=rand_id)
     elif cls == 'BOSS' or cls == 'boss':
         return db.BOSSEnsemble()
     #    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
@@ -137,7 +137,7 @@ def set_classifier(cls, rand=np.random.RandomState()):
         return 'UNKNOWN CLASSIFIER'
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts",
+def run_experiment(problem_path, results_path, cls_name, dataset, resample_id=0, overwrite=False, format=".ts",
                    train_file=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
@@ -147,7 +147,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     :param cls_name: determines which classifier to use, as defined in set_classifier. This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
     :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format, same for "_TEST"
-    :param resampleID: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
+    :param resample_id: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
     :param overwrite: if set to False, this will only build results if there is not a result file already present. If
     True, it will overwrite anything already there
     :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
@@ -160,13 +160,13 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     build_test = True
     if not overwrite:
         full_path = str(results_path) + "/" + str(cls_name) + "/Predictions/" + str(dataset) + "/testFold" + str(
-            resampleID) + ".csv"
+            resample_id) + ".csv"
         if os.path.exists(full_path):
             print(full_path + " Already exists and overwrite set to false, not building Test")
             build_test = False
         if train_file is True:
             full_path = str(results_path) + "/" + str(cls_name) + "/Predictions/" + str(dataset) + "/trainFold" + str(
-                resampleID) + ".csv"
+                resample_id) + ".csv"
             if os.path.exists(full_path):
                 print(full_path + " Already exists and overwrite set to false, not building Train")
                 train_file = False
@@ -182,13 +182,15 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=trainX.shape[0],
                                                         random_state=resample, shuffle=True,
                                                         stratify=allLabels)
+    else:
+        print("Resample 0: original train test splits")
 
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(cls_name, rand=np.random.RandomState(resampleID))
-    print(cls_name + " on " + dataset + " resample number " + str(resampleID))
+    classifier = set_classifier(cls_name, rand=np.random.RandomState(resample_id), rand_id = resample_id)
+    print(cls_name + " on " + dataset + " resample number " + str(resample_id))
     if build_test is True:
         print("Building test file")
         start = int(round(time.time() * 1000))
@@ -199,13 +201,13 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         preds = classifier.classes_[np.argmax(probs, axis=1)]
         test_time = int(round(time.time() * 1000)) - start
         ac = accuracy_score(testY, preds)
-        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' test acc: ' + str(ac))
+        print(cls_name + " on " + dataset + " resample number " + str(resample_id) + ' test acc: ' + str(ac))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         second = str(classifier.get_params())
         third = str(ac) + "," + str(build_time) + "," + str(test_time) + ",-1,-1," + str(
             len(classifier.classes_)) + "," + str(classifier.classes_)
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path,
-                                    classifier_name=cls_name, resample_seed=resampleID,
+                                    classifier_name=cls_name, resample_seed=resample_id,
                                     predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset,
                                     actual_class_vals=testY, split='TEST')
     print(" IN EXPERIMENT SECOND train_file =" + str(train_file))
@@ -221,12 +223,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         train_time = int(round(time.time() * 1000)) - start
         train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
         train_acc = accuracy_score(trainY, train_preds)
-        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' train acc: ' + str(train_acc))
+        print(cls_name + " on " + dataset + " resample number " + str(resample_id) + ' train acc: ' + str(train_acc))
         second = str(classifier.get_params())
         third = str(train_acc) + "," + str(train_time) + ",-1,-1,-1," + str(len(classifier.classes_)) + "," + str(
             classifier.classes_)
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path,
-                                    classifier_name=cls_name, resample_seed=resampleID,
+                                    classifier_name=cls_name, resample_seed=resample_id,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset,
                                     actual_class_vals=trainY, split='TRAIN')
 
@@ -320,6 +322,7 @@ if __name__ == "__main__":
         classifier = sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5])
+        reasample = resample - 1
         tf = (str(sys.argv[6]) == 'True')
 
         print("Arg Length =" + str(sys.argv.__len__()))
@@ -333,26 +336,26 @@ if __name__ == "__main__":
             print("tf is true")
         else:
             print("tf is false")
-
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
-                       resampleID=resample, train_file=tf)
+                       resample_id=resample, train_file=tf)
     else:  # Local run
         data_dir = "E:/Data/sktimeFormat/TSCProblems/"
         results_dir = "E:/Results/UCR Debug/Python/"
         #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
         #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "BOSS"
-        resample = 0
+        classifier = "TSF"
+        resample = "8"
         #       for i in range(3, len(datasets)):
         #           dataset = datasets[i]
         dataset = "ItalyPowerDemand"
-        input="True"
+        input="False"
         tf = (str(input) == 'True')
         if tf is True:
             print("tf is true")
         else:
             print("tf is false")
+        resample = int(resample)-1
 
-        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
-                       dataset=dataset, resampleID=resample, train_file=tf)
+        run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
+                       dataset=dataset, resample_id=resample, train_file=tf)
 

@@ -65,6 +65,7 @@ class TimeSeriesForest(ForestClassifier):
             n_estimators=num_trees)
 
         self.random_state = random_state
+        random.seed(random_state)
         self.num_trees=num_trees
         self.min_interval=min_interval
         self.dim_to_use = dim_to_use
@@ -75,7 +76,6 @@ class TimeSeriesForest(ForestClassifier):
         self.classifiers = []
         self.intervals=[]
         self.classes_ = []
-        random.seed(random_state)
 
     def fit(self, X, y):
         """  Build a forest of trees from the training set (X, y) using random intervals and summary measures.
