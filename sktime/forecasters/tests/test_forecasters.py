@@ -4,9 +4,9 @@ import pandas as pd
 from numpy.testing import assert_array_equal
 from sklearn.metrics import mean_squared_error
 
-from sktime.forecasting.forecasters import DummyForecaster
-from sktime.forecasting.forecasters import ExpSmoothingForecaster
-from sktime.forecasting.forecasters import ARIMAForecaster
+from sktime.forecasters.forecasters import DummyForecaster
+from sktime.forecasters.forecasters import ExpSmoothingForecaster
+from sktime.forecasters.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
 
 __author__ = "Markus Löning"

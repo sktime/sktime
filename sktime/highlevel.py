@@ -15,7 +15,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from inspect import signature
 
 from .classifiers.base import BaseClassifier
-from .forecasting.base import BaseForecaster
+from .forecasters.base import BaseForecaster
 from .regressors.base import BaseRegressor
 from sktime.utils.transformations import RollingWindowSplit
 from .utils.validation import validate_fh

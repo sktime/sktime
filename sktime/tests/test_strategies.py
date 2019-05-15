@@ -16,8 +16,8 @@ from sktime.datasets import load_longley
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
-from sktime.forecasting.forecasters import DummyForecaster
-from sktime.forecasting.forecasters import ARIMAForecaster
+from sktime.forecasters.forecasters import DummyForecaster
+from sktime.forecasters.forecasters import ARIMAForecaster
 
 from sklearn.ensemble import RandomForestRegressor
 

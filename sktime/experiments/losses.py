@@ -1,9 +1,6 @@
-
-
 import collections
-import numpy as np
 import pandas as pd
-import logging
+
 
 class Losses(object):
     """
@@ -25,6 +22,7 @@ class Losses(object):
         self._metric = metric
         self._losses_per_estimator = collections.defaultdict(list)
         self._losses_per_dataset_per_estimator = collections.defaultdict(list)
+
     def evaluate(self, predictions, true_labels, dataset_name, strategy_name):
         """
         Calculates the loss metrics on the test sets.
@@ -41,20 +39,19 @@ class Losses(object):
             Name of the strategy
         """
 
-        #evaluates error per estimator
+        # evaluates error per estimator
         loss = self._metric.calculate(true_labels, predictions)
-        if strategy_name in self._losses_per_estimator:     
+        if strategy_name in self._losses_per_estimator:
             self._losses_per_estimator[strategy_name].append(loss)
         else:
             self._losses_per_estimator[strategy_name] = [loss]
 
-        #evaluate per dataset
-        avg_score, std_score = self._metric.calculate_per_dataset(y_true=true_labels, 
+        # evaluate per dataset
+        avg_score, std_score = self._metric.calculate_per_dataset(y_true=true_labels,
                                                                   y_pred=predictions)
 
-        
         self._losses_per_dataset_per_estimator[dataset_name].append([strategy_name, avg_score, std_score])
-        
+
     def get_losses(self):
         """
         When the Losses class is instantiated a dictionary that holds all losses is created and appended every time the evaluate() method is run. This method returns this dictionary with the losses.
@@ -63,7 +60,7 @@ class Losses(object):
         -------
         tuple
             errors_per_estimator (dictionary), errors_per_dataset_per_estimator (dictionary), errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
-        """ 
+        """
         return self._losses_per_estimator, self._losses_to_dataframe(self._losses_per_dataset_per_estimator)
 
     def _losses_to_dataframe(self, losses):
@@ -82,21 +79,21 @@ class Losses(object):
         """
 
         df = pd.DataFrame(losses)
-        #unpivot the data
+        # unpivot the data
         df = df.melt(var_name='dts', value_name='values')
         df['classifier'] = df.apply(lambda raw: raw.values[1][0], axis=1)
         df['loss'] = df.apply(lambda raw: raw.values[1][1], axis=1)
         df['std_error'] = df.apply(lambda raw: raw.values[1][2], axis=1)
         df = df.drop('values', axis=1)
-        #create multilevel index dataframe
+        # create multilevel index dataframe
         dts = df['dts'].unique()
         estimators_list = df['classifier'].unique()
         score = df['loss'].values
         std = df['std_error'].values
-        
+
         df = df.drop('dts', axis=1)
-        df=df.drop('classifier', axis=1)
-        
+        df = df.drop('classifier', axis=1)
+
         df.index = pd.MultiIndex.from_product([dts, estimators_list])
 
         return df
