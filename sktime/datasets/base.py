@@ -1,29 +1,41 @@
-'''Utilities for loading toy datasets for testing
-'''
-from os import path
-import numpy as np
-import pandas as pd
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+"""
+Utilities for loading datasets
+"""
 
+import os
+
+import pandas as pd
+
+from ..utils.load_data import load_from_tsfile_to_dataframe
+
+__all__ = ["load_gunpoint",
+           "load_arrow_head",
+           "load_italy_power_demand",
+           "load_shampoo_sales",
+           "load_longley"]
+__author__ = ['Markus Löning', 'Sajay Ganesh']
+
+DIRNAME = 'data'
+MODULE = os.path.dirname(__file__)
+
+
+# time series classification datasets
 
 def _load_dataset(name, split, return_X_y):
     """
     Helper function to load datasets.
     """
 
-    dname = 'data'
-    module_path = path.dirname(__file__)
-
     if split in ["TRAIN", "TEST"]:
-        fname = name+'_'+split+'.ts'
-        abspath = path.join(module_path, dname, name, fname)
+        fname = name + '_' + split + '.ts'
+        abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
     elif split == "ALL":
         X = pd.DataFrame()
         y = pd.Series()
         for split in ["TRAIN", "TEST"]:
-            fname = name+'_'+split+'.ts'
-            abspath = path.join(module_path, dname, name, fname)
+            fname = name + '_' + split + '.ts'
+            abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
@@ -32,15 +44,33 @@ def _load_dataset(name, split, return_X_y):
 
     # Return appropriately
     if return_X_y:
-        return X, y
+        return (X, y)
     else:
         X['class_val'] = pd.Series(y)
         return X
 
 
-def load_gunpoint(split='ALL', return_X_y=False):
-    """Loads the GunPoint time series classification problem and returns X and y
+def load_gunpoint(split='TRAIN', return_X_y=False):
+    """
+    Loads the GunPoint time series classification problem and returns X and y
 
+    Parameters
+    ----------
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
     Dimensionality:     univariate
     Series length:      150
     Train cases:        50
@@ -58,11 +88,22 @@ def load_gunpoint(split='ALL', return_X_y=False):
     correlated. The data in the archive is just the X-axis.
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=GunPoint
+    """
+    name = 'GunPoint'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_italy_power_demand(split='TRAIN', return_X_y=False):
+    """
+    Loads the ItalyPowerDemand time series classification problem and returns X and y
 
     Parameters
     ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
 
     Returns
     -------
@@ -70,14 +111,9 @@ def load_gunpoint(split='ALL', return_X_y=False):
         The time series data for the problem with m cases and c dimensions
     y: numpy array
         The class labels for each case in X
-    """
-    name = 'GunPoint'
-    return _load_dataset(name, split, return_X_y)
 
-
-def load_italy_power_demand(split='TRAIN', return_X_y=False):
-    """Loads the ItalyPowerDemand time series classification problem and returns X and y
-
+    Details
+    -------
     Dimensionality:     univariate
     Series length:      24
     Train cases:        67
@@ -90,18 +126,6 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     from Oct to March (inclusive) from April to September.
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
-
-    Parameters
-    ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
     """
 
     name = 'ItalyPowerDemand'
@@ -109,8 +133,26 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
 
 
 def load_arrow_head(split='TRAIN', return_X_y=False):
-    """Loads the ArrowHead time series classification problem and returns X and y
+    """
+    Loads the ArrowHead time series classification problem and returns X and y.
 
+    Parameters
+    ----------
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
     Dimensionality:     univariate
     Series length:      251
     Train cases:        36
@@ -125,20 +167,137 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
 
     Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
-
-    Parameters
-    ----------
-    split: string (either "TRAIN" or "TEST", default = 'TRAIN')
-        Whether to load the default train or test partition of the problem
-
-    Returns
-    -------
-    X: pandas DataFrame with m rows and c columns
-        The time series data for the problem with m cases and c dimensions
-    y: numpy array
-        The class labels for each case in X
     """
 
     name = 'ArrowHead'
     return _load_dataset(name, split, return_X_y)
 
+
+# forecasting datasets
+
+def load_shampoo_sales(return_y_as_dataframe=False):
+    """
+    Load the shampoo sales univariate time series forecasting dataset.
+
+    Parameters
+    ----------
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.s
+        - If False, returns target series as pandas.Series.
+
+    Returns
+    -------
+    y : pandas Series/DataFrame
+        Shampoo sales dataset
+
+    Details
+    -------
+    This dataset describes the monthly number of sales of shampoo over a 3 year period.
+    The units are a sales count.
+
+    Dimensionality:     univariate
+    Series length:      36
+    Frequency:          Monthly
+    Number of cases:    1
+
+
+    References
+    ----------
+    ..[1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
+        John Wiley & Sons: New York. Chapter 3.
+    """
+
+    name = 'ShampooSales'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+    data.index = pd.PeriodIndex(data.index, freq='M')
+    if return_y_as_dataframe:
+        # return nested pandas DataFrame with a single row and column
+        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
+    else:
+        # return nested pandas Series with a single row
+        return pd.Series([data.iloc[:, 0]], name=name)
+
+
+def load_longley(return_X_y=False, return_y_as_dataframe=False):
+    """
+    Load the Longley dataset for forecasting with exogenous variables.
+
+
+    Parameters
+    ----------
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.s
+        - If False, returns target series as pandas.Series.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas.DataFrame
+        The exogenous time series data for the problem.
+    y: pandas.Series
+        The target series to be predicted.
+
+    Details
+    -------
+    This dataset contains various US macroeconomic variables from 1947 to 1962 that are known to be highly
+    collinear.
+
+    Dimensionality:     multivariate, 6
+    Series length:      16
+    Frequency:          Yearly
+    Number of cases:    1
+
+    Variable description:
+
+    TOTEMP - Total employment (y)
+    GNPDEFL - Gross national product deflator
+    GNP - Gross national product
+    UNEMP - Number of unemployed
+    ARMED - Size of armed forces
+    POP - Population
+    YEAR - Calendar year (index)
+
+    References
+    ----------
+    ..[1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
+        Electronic Comptuer from the Point of View of the User."  Journal of
+        the American Statistical Association.  62.319, 819-41.
+        (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
+    """
+
+    if return_y_as_dataframe and not return_X_y:
+        raise ValueError("`return_y_as_dataframe` can only be set to True if `return_X_y` is True, "
+                         "otherwise y is given as a column in the returned dataframe and "
+                         "cannot be returned as a separate dataframe.")
+
+    name = 'Longley'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+    data = data.set_index('YEAR')
+    data.index = pd.PeriodIndex(data.index, freq='Y')
+
+    # Get target series
+    yname = 'TOTEMP'
+    y = data.pop(yname)
+    y = pd.Series([y], name=yname)
+
+    # Get feature series
+    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
+    X.columns = data.columns
+
+    if return_X_y:
+        if return_y_as_dataframe:
+            y = pd.DataFrame(pd.Series([pd.Series(y.squeeze())]), columns=[yname])
+            return X, y
+        else:
+            return X, y
+    else:
+        X[yname] = y
+        return X
