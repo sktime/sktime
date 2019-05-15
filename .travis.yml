@@ -34,6 +34,7 @@ install:
     - pip install sphinx_rtd_theme
     - pip install scikit-posthocs
     - pip install nbsphinx
+    - python setup.py build_ext -i
 
 script:
     - mkdir for_test
