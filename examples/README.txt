@@ -3,4 +3,4 @@
 General examples
 ================
 
-Introductory examples. Can also be used for informal testing
+Jupyter notebooks with tutorials. 
