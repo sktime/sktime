@@ -321,7 +321,7 @@ if __name__ == "__main__":
         results_dir = sys.argv[2]
         classifier =  sys.argv[3]
         dataset = sys.argv[4]
-        resample = int(sys.argv[5])
+        resample = int(sys.argv[5])-1
         tf=(str(sys.argv[6]) == 'True')
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
