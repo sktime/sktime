@@ -4,6 +4,8 @@ Unified high-level interface for various time series related learning tasks.
 
 import numpy as np
 import pandas as pd
+import os
+import pickle
 from sklearn.base import _pprint
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
@@ -421,6 +423,45 @@ class BaseStrategy:
         Call set_params of the estimator. Sets hyper-parameters.
         """
         self._estimator.set_params(**params)
+
+    def save(self, dataset_name, cv_fold, strategies_save_dir):
+        """
+        Saves the strategy on the hard drive
+        Parameters
+        ----------
+        dataset_name:string
+            Name of the dataset
+        cv_fold: int
+            Number of cross validation fold on which the strategy was trained
+        strategies_save_dir: string
+            Path were the strategies will be saved
+        """
+        if strategies_save_dir is None:
+            raise ValueError('Please provide a directory for saving the strategies')
+
+        # TODO implement check for overwriting already saved files
+        save_path = os.path.join(strategies_save_dir, dataset_name)
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        # TODO pickling will not work for all strategies
+        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
+
+    def load(self, path):
+        """
+        Load saved strategy
+        Parameters
+        ----------
+        path: String
+            location on disk where the strategy was saved
+
+        Returns
+        -------
+        strategy:
+            sktime strategy
+        """
+        return pickle.load(open(path, 'rb'))
 
     def __repr__(self):
         strategy_name = self.__class__.__name__
