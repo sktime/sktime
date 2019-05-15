@@ -1,4 +1,7 @@
 import os
+os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
+os.environ["NUMEXPR_NUM_THREADS"] = "1" # must be done before numpy import!!
+os.environ["OMP_NUM_THREADS"] = "1" # must be done before numpy import!!
 import sys
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
