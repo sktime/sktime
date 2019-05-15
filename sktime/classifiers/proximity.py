@@ -289,10 +289,7 @@ def get_all_distance_measures_param_pool(X, dimension = 0):
         format as sklearn's GridSearchCV parameters
     '''
     # find dataset properties
-    instance_length = dataset_properties.max_instance_length(X, dimension)  # todo should this use the 
-    # max instance length
-    # for
-    # unequal length dataset instances?
+    instance_length = dataset_properties.max_instance_length(X, dimension)  # todo should this use the max instance length for unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
@@ -654,7 +651,7 @@ class ProximityStump(BaseClassifier):
             # copy the parameters
             params = params.copy()
             # add the dimension to use
-            params['dim_to_use'] = self.dimension # todo comment
+            params['dim_to_use'] = self.dimension
         return self.distance_measure(instance_a, instance_b, **params)
 
     def predict(self, X, input_checks = True):
@@ -676,7 +673,7 @@ class ProximityStump(BaseClassifier):
         return predict_from_predict_proba(self, X, input_checks)
 
 
-class ProximityTree(BaseClassifier):  # todd rename split to stump
+class ProximityTree(BaseClassifier):
 
     '''
     proximity tree classifier using proximity stumps at each tree node to split data into branches.
