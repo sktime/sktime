@@ -2,10 +2,10 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from sktime.forecasting.forecasters import DummyForecaster
-from sktime.forecasting.forecasters import ExpSmoothingForecaster
-from sktime.forecasting.forecasters import ARIMAForecaster
-from sktime.forecasting.forecasters import EnsembleForecaster
+from sktime.forecasters import DummyForecaster
+from sktime.forecasters import ExpSmoothingForecaster
+from sktime.forecasters import ARIMAForecaster
+from sktime.forecasters import EnsembleForecaster
 from sktime.datasets import load_shampoo_sales
 
 __author__ = "Markus Löning"
@@ -21,7 +21,7 @@ FHS = (None, [1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
 y = load_shampoo_sales()
 
 
-# test default forecasters output for different forecasting horizons
+# test default forecasters output for different forecasters horizons
 @pytest.mark.parametrize("fh", FHS)
 def test_EnsembleForecaster_fhs(fh):
     estimators = [

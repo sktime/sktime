@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.forecasters import ARIMAForecaster
+from sktime.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
 from sktime.datasets import load_longley
 

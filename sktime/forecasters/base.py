@@ -50,7 +50,7 @@ class BaseForecaster(BaseEstimator):
         if self.check_input:
             self._validate_X_y(y, X)
 
-        # Keep index for predicting where forecasting horizon will be relative to y seen in fit
+        # Keep index for predicting where forecasters horizon will be relative to y seen in fit
         self._y_idx = self._get_y_index(y)
 
         # Make interface compatible with estimators that only take y
@@ -68,7 +68,7 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
@@ -87,7 +87,7 @@ class BaseForecaster(BaseEstimator):
         if self.check_input:
             self._validate_X(X)
 
-        # validate forecasting horizon
+        # validate forecasters horizon
         fh = validate_fh(fh)
 
         # make interface compatible with estimators that only take y
@@ -105,7 +105,7 @@ class BaseForecaster(BaseEstimator):
         y : pandas.Series
             Target time series to which to fit the forecaster.
         fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -135,7 +135,7 @@ class BaseForecaster(BaseEstimator):
         # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
             raise ValueError(f"Index of passed time series `y` does not match index of predicted time series; "
-                             f"make sure the forecasting horizon `fh` matches the time index of `y`")
+                             f"make sure the forecasters horizon `fh` matches the time index of `y`")
 
         return np.sqrt(mean_squared_error(y_true, y_pred, sample_weight=sample_weight))
 
@@ -151,7 +151,7 @@ class BaseForecaster(BaseEstimator):
 
     def _validate_X_y(self, y, X=None):
         """
-        Helper function to check input data for forecasting
+        Helper function to check input data for forecasters
 
         Parameters
         ----------
@@ -167,7 +167,7 @@ class BaseForecaster(BaseEstimator):
     @staticmethod
     def _validate_y(y):
         """
-        Helper function to check input data for forecasting
+        Helper function to check input data for forecasters
 
         Parameters
         ----------
@@ -191,7 +191,7 @@ class BaseForecaster(BaseEstimator):
     @staticmethod
     def _validate_X(X):
         """
-        Helper function to check input data for forecasting
+        Helper function to check input data for forecasters
 
         Parameters
         ----------
@@ -325,7 +325,7 @@ class BaseUpdateableForecaster(BaseForecaster):
 class BaseSingleSeriesForecaster(BaseForecaster):
     """
     Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
-    forecasting techniques without exogenous variables (X).
+    forecasters techniques without exogenous variables (X).
     """
 
     def _predict(self, fh=None):
@@ -335,7 +335,7 @@ class BaseSingleSeriesForecaster(BaseForecaster):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
 
         Returns

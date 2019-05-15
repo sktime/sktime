@@ -172,7 +172,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
@@ -190,7 +190,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         # unnest series
         X = self._prepare_X(X)
 
-        # Adjust forecasting horizon to time index seen in fit, (assume sorted forecasting horizon)
+        # Adjust forecasters horizon to time index seen in fit, (assume sorted forecasters horizon)
         fh = len(self._y_idx) - 1 + fh
         start = fh[0]
         end = fh[-1]
@@ -323,12 +323,12 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
 
 class DummyForecaster(BaseSingleSeriesForecaster):
     """
-    Dummy forecaster for naive forecasting approaches.
+    Dummy forecaster for naive forecasters approaches.
 
     Parameters
     ----------
     strategy : str{'mean', 'last', 'linear'}, optional (default='last')
-        Naive forecasting strategy
+        Naive forecasters strategy
     check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
@@ -433,7 +433,7 @@ class EnsembleForecaster(BaseForecaster):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these

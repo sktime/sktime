@@ -1,32 +1,25 @@
 """
-Unified high-level interface for various time series related learning tasks.
+Unified high-level interface for various time series related learning strategies.
 """
 
 import numpy as np
 import pandas as pd
-from sklearn.base import _pprint
+import pickle
+import os
+from sklearn.base import clone
 from sklearn.base import BaseEstimator
+from sklearn.base import _pprint
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
-from sklearn.base import clone
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from inspect import signature
 
-from .classifiers.base import BaseClassifier
-from .forecasting.base import BaseForecaster
-from .regressors.base import BaseRegressor
-from sktime.utils.transformations import RollingWindowSplit
-from .utils.validation import validate_fh
+from ..utils.transformations import RollingWindowSplit
+from ..classifiers.base import BaseClassifier
+from ..forecasters.base import BaseForecaster
+from ..regressors.base import BaseRegressor
 
-__all__ = ['TSCTask',
-           'TSRTask',
-           'ForecastingTask',
-           'TSCStrategy',
-           'TSRStrategy',
-           'ForecastingStrategy',
-           'Forecasting2TSRReductionStrategy']
+__all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy", "Forecasting2TSRReductionStrategy"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 
@@ -37,248 +30,6 @@ FORECASTER_TYPES = (BaseForecaster, )
 ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 
 CASES = ("TSR", "TSC", "Forecasting")
-
-
-class BaseTask:
-    """
-    Abstract base task class.
-
-    A task encapsulates metadata information such as the feature and
-    target variable which to fit the data to and additional necessary
-    instructions on how to fit and predict.
-
-    Implements attributes and operations shared by all tasks,
-    including compatibility checks between the concrete task type and
-    passed metadata.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal, (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        # TODO input checks on target and feature args
-        self._target = target
-        self._features = features if features is None else pd.Index(features)
-
-        self._metadata = None  # initialised as None, properly updated through setter method below
-        if metadata is not None:
-            self.set_metadata(metadata)  # using the modified setter method below
-
-    @property
-    def target(self):
-        """
-        Make attributes read-only.
-        """
-        return self._target
-
-    @property
-    def features(self):
-        """
-        Make attributes read-only.
-        """
-        return self._features
-
-    @property
-    def metadata(self):
-        """
-        Make attributes read-only.
-        """
-        # TODO if metadata is a mutable object itself, its contents may still be mutable
-        return self._metadata
-
-    def set_metadata(self, metadata):
-        """
-        Provide missing metadata information to task if not already set.
-
-        This method is especially useful in orchestration where metadata may not be
-        available when specifying the task.
-
-        Parameters
-        ----------
-        metadata : pandas.DataFrame
-            Metadata container
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        # TODO replace whole pandas data container as input argument with separated metadata container
-
-        # only set metadata if metadata is not already set, otherwise raise error
-        if self._metadata is not None:
-            raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
-                                 'metadata')
-
-        # check for consistency of information provided in task with given metadata
-        self.check_data_compatibility(metadata)
-
-        # set default feature information (all columns but target) using metadata
-        if self.features is None:
-            self._features = metadata.columns.drop(self.target)
-
-        # set metadata
-        self._metadata = {
-            "nrow": metadata.shape[0],
-            "ncol": metadata.shape[1],
-            "target_type": {self.target: type(i) for i in metadata[self.target]},
-            "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
-        }
-        return self
-
-    def check_data_compatibility(self, metadata):
-        """
-        Check compatibility of task with passed metadata.
-
-        Parameters
-        ----------
-        metadata : pandas.DataFrame
-            Metadata container
-        """
-        if not isinstance(metadata, pd.DataFrame):
-            raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found: {type(metadata)}')
-
-        if self.target not in metadata.columns:
-            raise ValueError(f"Target: {self.target} not found in metadata")
-
-        if self.features is not None:
-            if not np.all(self.features.isin(metadata.columns)):
-                raise ValueError(f"Features: {list(self.features)} not found in metadata")
-
-        if isinstance(self, (TSCTask, TSRTask)):
-            if self.features is None:
-                if len(metadata.columns.drop(self.target)) == 0:
-                    raise ValueError(f"For task of type: {type(self)}, at least one feature must be given, "
-                                     f"but found none")
-
-            if metadata.shape[0] <= 1:
-                raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
-                                 f"found: {metadata.shape[0]} samples")
-
-        if isinstance(self, ForecastingTask):
-            if metadata.shape[0] > 1:
-                raise ValueError(f"For task of type: {type(self)}, only a single sample (row) can be given, but found: "
-                                 f"{metadata.shape[0]} rows")
-
-    @classmethod
-    def _get_param_names(cls):
-        """Get parameter names for the task"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        if init is object.__init__:
-            # No explicit constructor to introspect
-            return []
-
-        # introspect the constructor arguments to find the model parameters
-        # to represent
-        init_signature = signature(init)
-        # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-
-        # Extract and sort argument names excluding 'self'
-        return sorted([p.name for p in parameters])
-
-    def _get_params(self):
-        """Get parameters of the task.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        out = {key: getattr(self, key, None) for key in self._get_param_names()}
-        return out
-
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self._get_params(), offset=len(class_name), ),)
-
-
-class TSCTask(BaseTask):
-    """
-    Time series classification task.
-
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
-    to fit and predict.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
-
-
-class TSRTask(BaseTask):
-    """
-    Time series regression task.
-
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
-    to fit and predict.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSR'
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
-
-
-class ForecastingTask(BaseTask):
-    """
-    Time series forecasting task.
-
-    A task encapsulates metadata information such as the feature and target
-    variable which to fit the data to and additional necessary instructions on how to fit and predict.
-
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optional, (default=None)
-        The column name(s) for the exogenous feature variable. If None, every column apart from target will be used as
-        a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
-    """
-
-    def __init__(self, target, fh=None, features=None, metadata=None):
-        self._case = "Forecasting"
-        self._fh = validate_fh(fh)
-        super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
-
-    @property
-    def fh(self):
-        """
-        Makes attribute read-only.
-        """
-        return self._fh
 
 
 class BaseStrategy:
@@ -428,6 +179,47 @@ class BaseStrategy:
         return '%s(%s(%s))' % (strategy_name, estimator_name,
                                _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
 
+    def save(self, dataset_name, cv_fold, strategies_save_dir):
+        """
+        Saves the strategy on the hard drive
+
+        Parameters
+        ----------
+        dataset_name:string
+            Name of the dataset
+        cv_fold: int
+            Number of cross validation fold on which the strategy was trained
+        strategies_save_dir: string
+            Path were the strategies will be saved
+        """
+        if strategies_save_dir is None:
+            raise ValueError('Please provide a directory for saving the strategies')
+
+        # TODO implement check for overwriting already saved files
+        save_path = os.path.join(strategies_save_dir, dataset_name)
+
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
+
+        # TODO pickling will not work for all strategies
+        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
+
+    def load(self, path):
+        """
+        Load saved strategy
+
+        Parameters
+        ----------
+        path: String
+            location on disk where the strategy was saved
+
+        Returns
+        -------
+        strategy:
+            sktime strategy
+        """
+        return pickle.load(open(path, 'rb'))
+
 
 class BaseSupervisedLearningStrategy(BaseStrategy):
     """Abstract strategy class for time series supervised learning that accepts a low-level estimator to
@@ -524,7 +316,7 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
 
 class ForecastingStrategy(BaseStrategy):
     """
-    Strategy for time series forecasting.
+    Strategy for time series forecasters.
 
     Parameters
     ----------
@@ -637,7 +429,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
     """
     Forecasting to time series regression reduction strategy.
 
-    Strategy to reduce a forecasting problem to a time series regression
+    Strategy to reduce a forecasters problem to a time series regression
     problem using a rolling window approach
 
     Parameters
@@ -704,7 +496,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         X = pd.DataFrame(pd.Series([x for x in np.array(xs)]))
         Y = np.array(ys)
 
-        # Clone estimators, one for each step in the forecasting horizon
+        # Clone estimators, one for each step in the forecasters horizon
         n_steps = len(fh)
         self.estimators = [clone(self._estimator) for _ in range(n_steps)]
 

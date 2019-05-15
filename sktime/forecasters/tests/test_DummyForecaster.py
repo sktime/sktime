@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 
-from sktime.forecasting.forecasters import DummyForecaster
+from sktime.forecasters import DummyForecaster
 from sktime.datasets import load_shampoo_sales
 
 __author__ = "Markus Löning"

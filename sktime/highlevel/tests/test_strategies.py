@@ -2,11 +2,11 @@ import pytest
 import pandas as pd
 import numpy as np
 
-from sktime.highlevel import TSCStrategy
-from sktime.highlevel import ForecastingStrategy
-from sktime.highlevel import Forecasting2TSRReductionStrategy
-from sktime.highlevel import TSCTask
-from sktime.highlevel import ForecastingTask
+from sktime.highlevel.strategies import TSCStrategy
+from sktime.highlevel.strategies import ForecastingStrategy
+from sktime.highlevel.strategies import Forecasting2TSRReductionStrategy
+from sktime.highlevel.tasks import TSCTask
+from sktime.highlevel.tasks import ForecastingTask
 
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_italy_power_demand
@@ -16,8 +16,8 @@ from sktime.datasets import load_longley
 from sktime.classifiers.ensemble import TimeSeriesForestClassifier
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
-from sktime.forecasting.forecasters import DummyForecaster
-from sktime.forecasting.forecasters import ARIMAForecaster
+from sktime.forecasters import DummyForecaster
+from sktime.forecasters import ARIMAForecaster
 
 from sklearn.ensemble import RandomForestRegressor
 
