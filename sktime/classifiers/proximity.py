@@ -220,7 +220,7 @@ def chi_squared(parent_class_labels, children_class_labels):
     raise NotImplementedError()
 
 
-def pick_one_exemplar_per_class(X, y, rand):
+def pick_one_exemplar_per_class(X, y, random_state):
     '''
     pick one random exemplar instance per class
     ----
@@ -258,7 +258,7 @@ def pick_one_exemplar_per_class(X, y, rand):
         # flatten numpy output
         indices = np.ravel(indices)
         # random choice
-        index = rand.choice(indices)
+        index = random_state.choice(indices)
         # record exemplar instance and class label
         instance = X.iloc[index, :]
         chosen_instances.append(instance)
@@ -362,7 +362,7 @@ class ProximityStump(BaseClassifier):
         a method to calculate the gain of this split / stump
     label_encoder : LabelEncoder
         a label encoder, can be pre-populated
-    rand : numpy RandomState
+    random_state : numpy RandomState
         a random state for sampling random numbers
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
@@ -406,9 +406,9 @@ class ProximityStump(BaseClassifier):
                  gain_method = None,
                  label_encoder = None,
                  dimension = get_default_dimension(),
-                 rand = None):
+                 random_state = None):
         super().__init__()
-        self.rand = rand
+        self.random_state = random_state
         self.param_perm = param_perm
         self.dimension = dimension
         self.gain_method = gain_method
@@ -463,7 +463,7 @@ class ProximityStump(BaseClassifier):
             raise ValueError("gain method must be callable")
         if not callable(self.pick_exemplars_method):
             raise ValueError("gain method must be callable")
-        self.rand = check_random_state(self.rand)
+        self.random_state = check_random_state(self.random_state)
         # if label encoder not setup, make a new one and train it
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -481,7 +481,7 @@ class ProximityStump(BaseClassifier):
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
-            self.pick_exemplars_method(X, y, self.rand)
+            self.pick_exemplars_method(X, y, self.random_state)
         # find distances of remaining instances to the exemplars
         distances = self.exemplar_distances(self.remaining_instances)
         num_exemplars = len(self.exemplar_instances)
@@ -499,7 +499,7 @@ class ProximityStump(BaseClassifier):
             instance = self.remaining_instances.iloc[instance_index, :]
             class_label = self.remaining_class_labels[instance_index]
             # pick the closest exemplar (min distance)
-            closest_exemplar_index = comparison.arg_min(exemplar_distances, self.rand)
+            closest_exemplar_index = comparison.arg_min(exemplar_distances, self.random_state)
             # add the instance to the corresponding list for the exemplar branch
             self.branch_instances[closest_exemplar_index].append(instance)
             self.branch_class_labels[closest_exemplar_index].append(class_label)
@@ -689,7 +689,7 @@ class ProximityTree(BaseClassifier):
         a method to calculate the gain of this split / stump
     label_encoder : LabelEncoder
         a label encoder, can be pre-populated
-    rand : numpy RandomState
+    random_state : numpy RandomState
         a random state for sampling random numbers
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
@@ -722,13 +722,13 @@ class ProximityTree(BaseClassifier):
                  num_stump_evaluations = get_default_num_stump_evaluations(),
                  max_depth = np.math.inf,
                  dimension = get_default_dimension(),
-                 rand = None,
+                 random_state = None,
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
-        self.rand = rand
+        self.random_state = random_state
         self.gain_method = gain_method
         self.num_stump_evaluations = num_stump_evaluations
         self.max_depth = max_depth
@@ -776,7 +776,7 @@ class ProximityTree(BaseClassifier):
                 # find the distances to each exemplar
                 distances = tree.stump.exemplar_distance_inst(instance)
                 # find closest exemplar
-                closest_exemplar_index = comparison.arg_min(distances, tree.rand)
+                closest_exemplar_index = comparison.arg_min(distances, tree.random_state)
                 # move to the tree corresponding to the closest exemplar
                 previous_tree = tree
                 tree = tree.branches[closest_exemplar_index]
@@ -822,7 +822,7 @@ class ProximityTree(BaseClassifier):
                     tree = ProximityTree(
                             gain_method = self.gain_method,
                             num_stump_evaluations = self.num_stump_evaluations,
-                            rand = self.rand,
+                            random_state = self.random_state,
                             is_leaf_method = self.is_leaf_method,
                             max_depth = self.max_depth,
                             label_encoder = self.label_encoder,
@@ -868,7 +868,7 @@ class ProximityTree(BaseClassifier):
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
             self.param_pool = self.param_pool(X)
-        self.rand = check_random_state(self.rand)
+        self.random_state = check_random_state(self.random_state)
         # train label encoder if not already
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -926,7 +926,7 @@ class ProximityTree(BaseClassifier):
         #
         if params is None:
             params = self.param_pool
-        param_pool = self.rand.choice(params)
+        param_pool = self.random_state.choice(params)
         permutation = self._pick_param_permutation(param_pool)
         return permutation
 
@@ -935,13 +935,13 @@ class ProximityTree(BaseClassifier):
         for index in range(0, self.num_stump_evaluations):
             split = self._pick_rand_stump(X, y)
             stumps[index] = split
-        best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.rand)
+        best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
         return best_stump
 
     def _pick_rand_stump(self, X, y):
         param_perm = self._get_rand_param_perm()
         stump = ProximityStump(pick_exemplars_method = self.pick_exemplars_method,
-                               rand = self.rand,
+                               random_state = self.random_state,
                                gain_method = self.gain_method,
                                label_encoder = self.label_encoder,
                                param_perm = param_perm)
@@ -972,7 +972,7 @@ class ProximityTree(BaseClassifier):
             # if it is a list
             if isinstance(param_values, list):
                 # randomly pick a value
-                param_value = self.rand.choice(param_values)
+                param_value = self.random_state.choice(param_values)
                 # if the value is another dict then get a random parameter permutation from that dict (recursive over
                 # 2 funcs)
                 if isinstance(param_value, dict):
@@ -980,7 +980,7 @@ class ProximityTree(BaseClassifier):
             # else if parameter is a distribution
             elif hasattr(param_values, 'rvs'):
                 # sample from the distribution
-                param_value = param_values.rvs(random_state = self.rand)
+                param_value = param_values.rvs(random_state = self.random_state)
             else:
                 # otherwise we don't know how to obtain a value from the parameter
                 raise Exception('unknown type of parameter pool')
@@ -1022,11 +1022,11 @@ class ProximityForest(BaseClassifier):
         a method to calculate the gain of splits / stumps in trees
     label_encoder : LabelEncoder
         a label encoder, can be pre-populated
-    rand : numpy RandomState
+    random_state : numpy RandomState
         a random state for sampling random numbers
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
-    r : int
+    num_stump_evaluations : int
         a tree parameter dictating the number of proximity stumps to produce at each node. Each stump has a random
         distance
         measure and
@@ -1062,7 +1062,7 @@ class ProximityForest(BaseClassifier):
                  label_encoder = None,
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
-        self.rand = rand
+        self.random_state = rand
         self.gain_method = gain_method
         self.num_stump_evaluations = num_stump_evaluations
         self.label_encoder = label_encoder
@@ -1113,7 +1113,7 @@ class ProximityForest(BaseClassifier):
             tree = ProximityTree(
                     gain_method = self.gain_method,
                     num_stump_evaluations = self.num_stump_evaluations,
-                    rand = self.rand,
+                    random_state = self.random_state,
                     is_leaf_method = self.is_leaf_method,
                     max_depth = self.max_depth,
                     label_encoder = self.label_encoder,

@@ -8,12 +8,6 @@ class BaseClassifier(BaseEstimator):
     Base class for classifiers, for identification.
     """
     _estimator_type = "classifier"
-    label_encoder = None
-    rand = None
-
-    def predict_proba(self, instances, should_check_data = True):
-        # should be overriden
-        raise NotImplementedError('abstract method')
 
 # predict class labels from predict_proba / label encoder
 def predict_from_predict_proba(self, X, input_checks = True):
