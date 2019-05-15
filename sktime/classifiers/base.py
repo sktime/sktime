@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator
 from sktime.utils.validation import check_X_y
+from sktime.utils import comparison
 
 class BaseClassifier(BaseEstimator):
     """
@@ -36,11 +37,11 @@ class BaseClassifier(BaseEstimator):
         if input_checks:
             check_X_y(X)
         distributions = self.predict_proba(X, input_checks = False)
-        predictions = np.empty((distributions.shape[0]))
-        for instance_index in range(0, predictions.shape[0]):
+        predictions = []
+        for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]
-            prediction = max(distribution, self.random_state)
-            predictions[instance_index] = prediction
+            prediction = comparison.arg_max(distribution, self.random_state)
+            predictions.append(prediction)
         predictions = self.label_encoder.inverse_transform(predictions)
         return predictions
 

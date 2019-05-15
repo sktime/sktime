@@ -1076,6 +1076,7 @@ class ProximityForest(BaseClassifier):
         if callable(self.param_pool):
             # if param pool obtained via train instances then call it
             self.param_pool = self.param_pool(X)
+        self.random_state = check_random_state(self.random_state)
         self.classes_ = self.label_encoder.classes_
         # init list of trees
         self.trees = []
