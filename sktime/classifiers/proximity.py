@@ -268,7 +268,7 @@ def pick_one_exemplar_per_class(X, y, random_state):
     return chosen_instances, chosen_class_labels, remaining_instances, remaining_class_labels
 
 
-def get_all_distance_measures_param_pool(X, dimension = 0):
+def get_all_distance_measures_param_pool(X, dimension):
     '''
     find parameter pool for all available distance measures
     ----
@@ -345,6 +345,32 @@ def get_all_distance_measures_param_pool(X, dimension = 0):
             ]
     return param_pool
 
+def get_default_param_perm(X, dimension):
+    '''
+    get default parameter permutation, i.e. euclidean distance
+    ----
+    Parameters
+    ----
+    X : panda dataframe
+        instances representing a dataset
+    dimension : int
+        index of dimension to use
+    ----
+    Returns
+    ----
+    param_perm : dict
+        a dictionary of a distance measure (dtw) and corresponding parameters (window size)
+    '''
+    # find dataset properties
+    instance_length = dataset_properties.max_instance_length(X,
+                                                             dimension)  # todo should this use the max instance
+    # length for unequal length dataset instances?
+    max_raw_warping_window = floor((instance_length + 1) / 4)
+    return {
+            ProximityStump.get_distance_measure_key(): dtw_distance,
+            'w'                                      : max_raw_warping_window
+            }
+
 
 class ProximityStump(BaseClassifier):
     '''
@@ -402,9 +428,9 @@ class ProximityStump(BaseClassifier):
     __author__ = 'George Oastler (linkedin.com/goastler)'
 
     def __init__(self,
-                 pick_exemplars_method = None,
-                 param_perm = None,
-                 gain_method = None,
+                 pick_exemplars_method = get_default_pick_exemplars_method(),
+                 param_perm = get_default_param_perm,
+                 gain_method = get_default_gain_method(),
                  label_encoder = None,
                  dimension = get_default_dimension(),
                  random_state = None,
@@ -459,7 +485,7 @@ class ProximityStump(BaseClassifier):
         if input_checks:
             check_X_y(X, y)
         if callable(self.param_perm):
-            self.param_perm = self.param_perm(X)
+            self.param_perm = self.param_perm(X, self.dimension)
         if not isinstance(self.param_perm, dict):
             raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         if not callable(self.gain_method):
@@ -547,7 +573,8 @@ class ProximityStump(BaseClassifier):
 
     def exemplar_distance_inst(self, instance, input_checks = True):
         '''
-        find the distance from the given instance to each exemplar instance
+        find the distance from the given instance to each exemplar instance. Note this returns distance + 1 for
+        efficiency in other methods.
         ----
         Parameters
         ----
@@ -572,6 +599,8 @@ class ProximityStump(BaseClassifier):
             # find the distance to the given instance
             exemplar = self.exemplar_instances[exemplar_index]
             distance = self._find_distance(exemplar, instance)
+            # increment distance so at least 1
+            distance += 1
             # add it to the list (at same index as exemplar instance index)
             distances.append(distance)
         return distances
@@ -601,20 +630,20 @@ class ProximityStump(BaseClassifier):
         distributions = []
         # find distances to each exemplar for each test instance
         distances = self.exemplar_distances(X, input_checks = False)
+        distances = np.array(distances)
+        ones = np.ones(distances.shape)
+        distributions = np.divide(ones, distances)
         # for each test instance
-        for instance_index in range(0, num_instances):
-            distribution = [0] * num_unique_class_labels
-            distributions.append(distribution)
-            # invert distances (as larger distance should be less likely predicted)
-            for exemplar_index in range(0, num_exemplars):
-                distance = distances[instance_index][exemplar_index]
-                exemplar_class_label = self.exemplar_class_labels[exemplar_index]
-                distribution[exemplar_class_label] -= distance
-            max_distance = -np.min(distribution)
-            for exemplar_index in range(0, num_exemplars - 1):
-                distribution[exemplar_index] += max_distance
+        # for instance_index in range(0, num_instances):
+        #     distribution = [0] * num_unique_class_labels
+        #     distributions.append(distribution)
+        #     # invert distances (as larger distance should be less likely predicted)
+        #     for exemplar_index in range(0, num_exemplars):
+        #         distance = distances[instance_index][exemplar_index]
+        #         exemplar_class_label = self.exemplar_class_labels[exemplar_index]
+        #         distribution[exemplar_class_label] = 1 / (1 + distance)
         # normalise inverted distances to a probability
-        distributions = np.array(distributions)
+        # distributions = np.array(distributions)
         normalize(distributions, copy = False, norm = 'l1')
         return distributions
 
@@ -855,7 +884,7 @@ class ProximityTree(BaseClassifier):
         # if param_pool is obtained using train instances
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
-            self.param_pool = self.param_pool(X)
+            self.param_pool = self.param_pool(X, self.dimension)
         self.random_state = check_random_state(self.random_state)
         # train label encoder if not already
         if self.label_encoder is None:
@@ -1075,7 +1104,7 @@ class ProximityForest(BaseClassifier):
             y = self.label_encoder.transform(y)
         if callable(self.param_pool):
             # if param pool obtained via train instances then call it
-            self.param_pool = self.param_pool(X)
+            self.param_pool = self.param_pool(X, self.dimension)
         self.random_state = check_random_state(self.random_state)
         self.classes_ = self.label_encoder.classes_
         # init list of trees
