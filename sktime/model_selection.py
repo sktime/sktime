@@ -1,21 +1,16 @@
 """
-classes and functions for model validation
+Model selection classes and methods
 """
 
-from sklearn.model_selection import GridSearchCV as skGSCV
-from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
-from sktime.regressors.base import BaseRegressor
-from sktime.classifiers.base import BaseClassifier
-from abc import ABC, abstractmethod
-
-from sklearn.model_selection import train_test_split
 import numpy as np
-
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
-import os
 import pandas as pd
-from abc import ABC
+from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
+from sklearn.model_selection import GridSearchCV as skGSCV
 from sklearn.model_selection import train_test_split
+
+from .classifiers.base import BaseClassifier
+from .regressors.base import BaseRegressor
+
 
 class GridSearchCV(skGSCV):
     """Exhaustive search over specified parameter values for an estimator.
@@ -217,6 +212,7 @@ class GridSearchCV(skGSCV):
         Seconds used for refitting the best model on the whole dataset.
         This is present only if ``refit`` is not False.
     """
+
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
@@ -235,40 +231,47 @@ class GridSearchCV(skGSCV):
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
 
+
 class PresplitFilesCV:
     """
-    Helper class for iterating over predefined splits in orchestration.
+    Cross-validation iterator over split predefined in files.
+
+    This class is useful in orchestration where the train and test set
+    is provided in separate files.
     """
+
     def __init__(self, check_input=True):
         self.check_input = check_input
 
     def split(self, data):
         """
-        Paramters
-        ---------
-        data : pandas dataframe
-            data used for cross validation
-        
-        Returns
-        -------
-        tuple:
-            (train, test) indexes
+        Split the data according to the train/test index.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+
+        Yields
+        ------
+        train : ndarray
+            Train indicies
+        test : ndarray
+            Test indices
         """
         # Input checks.
         if self.check_input:
             if not isinstance(data, pd.DataFrame):
-                raise ValueError(f'Data must be pandas dataframe, but found {type(data)}')
+                raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
             if not np.all(data.index.unique().isin(['train', 'test'])):
-                raise ValueError('Train-test split not properly defined in index of passed pandas dataframe')
+                raise ValueError('Train-test split not properly defined in '
+                                 'index of passed pandas DataFrame')
+
         n = data.shape[0]
         idx = np.arange(n)
         train = idx[data.index == 'train']
         test = idx[data.index == 'test']
-        # train = data.index[data.loc['train']]
-        # test  = data.index[data.loc['test']]
-        # train = data.loc['train'].reset_index(drop=True)
-        # test = data.loc['test'].reset_index(drop=True)
         yield train, test
+
 
 class SingleSplit:
     """
@@ -304,13 +307,13 @@ class SingleSplit:
         If not None, data is split in a stratified fashion, using this as
         the class labels.
     """
-    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
 
-        self._test_size=test_size
-        self._train_size=train_size
-        self._random_state=random_state
-        self._shuffle=shuffle
-        self._stratify=stratify
+    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
+        self._test_size = test_size
+        self._train_size = train_size
+        self._random_state = random_state
+        self._shuffle = shuffle
+        self._stratify = stratify
 
     def split(self, data):
         """
@@ -329,7 +332,7 @@ class SingleSplit:
         num_samples = data.shape[0]
         idx = np.arange(num_samples)
 
-        yield train_test_split(idx, 
+        yield train_test_split(idx,
                                test_size=self._test_size,
                                train_size=self._train_size,
                                random_state=self._random_state,

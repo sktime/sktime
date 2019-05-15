@@ -17,7 +17,7 @@ matrix:
     include:
         # add more combinations here as per requirement
         - env: PYTHON_VERSION="3.7" NUMPY_VERSION="1.15" SCIPY_VERSION="1.1"
-               SKLEARN_VERSION="0.20" PANDAS_VERSION="0.24"
+               SKLEARN_VERSION="0.20" PANDAS_VERSION="0.24" STATSMODELS_VERSION="0.9"
 
 install:
     # install miniconda
@@ -30,7 +30,7 @@ install:
     # create the testing environment
     - conda create -n testenv --yes python=$PYTHON_VERSION pip
     - source activate testenv
-    - conda install --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION cython nose pytest pytest-cov sphinx jupyter
+    - conda install -n testenv --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION statsmodels==$STATSMODELS_VERSION cython nose pytest pytest-cov sphinx jupyter
     - pip install sphinx_rtd_theme
     - pip install scikit-posthocs
     - pip install nbsphinx
