@@ -121,7 +121,7 @@ datasets = [
 
 
 
-def set_classifier(cls, rand=np.random.RandomState()):
+def set_classifier(cls, resampleId):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
     you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
@@ -131,11 +131,11 @@ def set_classifier(cls, rand=np.random.RandomState()):
 
     """
     if cls.lower() == 'pf':
-        return ProximityForest(rand=rand)
+        return ProximityForest(rand = resampleId)
     if cls == 'RISE' or cls == 'rise':
-        return fb.RandomIntervalSpectralForest()
+        return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'TSF' or cls == 'tsf':
-        return ib.TimeSeriesForest()
+        return ib.TimeSeriesForest(random_state = resampleId)
     elif  cls == 'BOSS' or cls == 'boss':
         return db.BOSSEnsemble()
 #    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
@@ -195,7 +195,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(cls_name, rand=np.random.RandomState(resampleID))
+    classifier = set_classifier(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
@@ -321,8 +321,8 @@ if __name__ == "__main__":
         results_dir = sys.argv[2]
         classifier =  sys.argv[3]
         dataset = sys.argv[4]
-        resample = int(sys.argv[5]) - 1
-        tf=sys.argv[6]
+        resample = int(sys.argv[5])
+        tf=(str(sys.argv[6]) == 'True')
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
@@ -331,7 +331,7 @@ if __name__ == "__main__":
 #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
 #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         classifier = "PF"
-        resample = 1
+        resample = 0
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
         dataset = "GunPoint"
