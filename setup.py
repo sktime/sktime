@@ -8,8 +8,12 @@ import os
 import re
 import sys
 import platform
-import numpy as np
 
+try:
+    import numpy as np
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError("No module named 'Numpy'. Please install "
+                              "Numpy first using `pip install Numpy`.")
 try:
     from Cython.Build import cythonize
 except ModuleNotFoundError as e:
@@ -28,9 +32,7 @@ def read(*parts):
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file,
-                              re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     else:
@@ -45,7 +47,7 @@ if sys.version_info < (3, 6):
 
 
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible toolbox for learning with time-series/panel data'
+DESCRIPTION = 'scikit-learn compatible toolbox for learning with time series/panel data'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Király'
@@ -59,7 +61,7 @@ PROJECT_URLS = {
     'Source Code': 'https://github.com/alan-turing-institute/sktime'
 }
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas', 'scikit-posthocs', 'cython', 'statsmodels']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
