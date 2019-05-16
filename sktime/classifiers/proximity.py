@@ -39,88 +39,89 @@ from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
 from .base import BaseClassifier
-from ..distances import (
+from ..distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
-from ..utils import comparison, dataset_properties
+from ..utils import comparison
+from ..utils import dataset_properties
 from ..utils.transformations import tabularise
 from ..utils.validation import check_X_y
 
 
 def get_default_dimension():
-    '''
+    """
     returns default dimension to use in a dataset. Defaults to 0 for univariate datasets.
     ----
     Returns
     ----
     result : int
         default dimension of a dataset to use
-    '''
+    """
     return 0
 
 
 def get_default_num_trees():
-    '''
+    """
     returns default number of trees to make in a proximity forest
     ----
     Returns
     ----
     result : int
         default number of trees
-    '''
+    """
     return 100
 
 
 def get_default_gain_method():
-    '''
+    """
     returns default gain method for a split at a tree node
     ----
     Returns
     ----
     result : callable
         default gain method
-    '''
+    """
     return gini
 
 
 def get_default_num_stump_evaluations():
-    '''
+    """
     returns default r (number of splits) to try at a tree node
     ----
     Returns
     ----
     result : int
         default number of splits to examine
-    '''
+    """
     return 5
 
 
 def get_default_is_leaf_method():
-    '''
+    """
     returns default method for checking whether a tree should branch further or not
     ----
     Returns
     ----
     result : callable
         default method to check whether a tree node is a leaf or not
-    '''
+    """
     return pure
 
 
 def get_default_pick_exemplars_method():
-    '''
+    """
     returns default method for picking exemplar instances from a dataset
     ----
     Returns
     ----
     result : callable
         default method to pick exemplars from a dataset (set of instances and class labels)
-    '''
+    """
     return pick_one_exemplar_per_class
 
 
 def pure(y):
-    '''
+    """
     test whether a set of class labels are pure (i.e. all the same)
     ----
     Parameters
@@ -132,7 +133,7 @@ def pure(y):
     ----
     result : boolean
         whether the set of class labels is pure
-    '''
+    """
     # get unique class labels
     unique_class_labels = np.unique(y)
     # if more than 1 unique then not pure
@@ -140,7 +141,7 @@ def pure(y):
 
 
 def gini(parent_class_labels, children_class_labels):
-    '''
+    """
     get gini score of a split, i.e. the gain from parent to children
     ----
     Parameters
@@ -155,7 +156,7 @@ def gini(parent_class_labels, children_class_labels):
     score : float
         gini score of the split from parent class labels to children. Note the gini score is scaled to be between 0
         and 1. 1 == pure, 0 == not pure
-    '''
+    """
     # find gini for parent node
     parent_score = gini_node(parent_class_labels)
     # find number of instances overall
@@ -177,7 +178,7 @@ def gini(parent_class_labels, children_class_labels):
 
 
 def gini_node(y):
-    '''
+    """
     get gini score at a specific node
     ----
     Parameters
@@ -189,7 +190,7 @@ def gini_node(y):
     ----
     score : float
         gini score for the set of class labels (i.e. how pure they are). 1 == pure, 0 == not pure
-    '''
+    """
     # get number instances at node
     num_instances = y.shape[0]
     score = 1
@@ -218,7 +219,7 @@ def chi_squared(parent_class_labels, children_class_labels):
 
 
 def pick_one_exemplar_per_class(X, y, random_state):
-    '''
+    """
     pick one random exemplar instance per class
     ----
     Parameters
@@ -240,7 +241,7 @@ def pick_one_exemplar_per_class(X, y, random_state):
     remaining_class_labels : numpy 1d array
         array of class labels corresponding to the exemplar instances
         the remaining instances class labels after picking exemplars
-    '''
+    """
     # find unique class labels
     unique_class_labels = np.unique(y)
     num_unique_class_labels = len(unique_class_labels)
@@ -269,7 +270,7 @@ def pick_one_exemplar_per_class(X, y, random_state):
 
 
 def get_all_distance_measures_param_pool(X, dimension):
-    '''
+    """
     find parameter pool for all available distance measures
     ----
     Parameters
@@ -284,7 +285,7 @@ def get_all_distance_measures_param_pool(X, dimension):
     param_pool : list of dicts
         list of dictionaries to pick distance measures and corresponding parameters from. This should be in the same
         format as sklearn's GridSearchCV parameters
-    '''
+    """
     # find dataset properties
     instance_length = dataset_properties.max_instance_length(X,
                                                              dimension)  # todo should this use the max instance
@@ -346,7 +347,7 @@ def get_all_distance_measures_param_pool(X, dimension):
     return param_pool
 
 def get_default_param_perm(X, dimension):
-    '''
+    """
     get default parameter permutation, i.e. euclidean distance
     ----
     Parameters
@@ -360,7 +361,7 @@ def get_default_param_perm(X, dimension):
     ----
     param_perm : dict
         a dictionary of a distance measure (dtw) and corresponding parameters (window size)
-    '''
+    """
     # find dataset properties
     instance_length = dataset_properties.max_instance_length(X,
                                                              dimension)  # todo should this use the max instance
@@ -373,7 +374,7 @@ def get_default_param_perm(X, dimension):
 
 
 class ProximityStump(BaseClassifier):
-    '''
+    """
     proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood limited
     to x exemplar instances
     ----
@@ -423,7 +424,7 @@ class ProximityStump(BaseClassifier):
         a label encoder, can be pre-populated
     classes_ :
         pointer to the label_encoder classes_
-    '''
+    """
 
     __author__ = 'George Oastler (linkedin.com/goastler)'
 
@@ -457,7 +458,7 @@ class ProximityStump(BaseClassifier):
 
     @staticmethod
     def get_distance_measure_key():
-        '''
+        """
         get the key for the distance measure. This key is required for picking the distance measure out of the
         param_perm constructor parameter.
         ----
@@ -465,11 +466,11 @@ class ProximityStump(BaseClassifier):
         ----
         key : string
             key for the distance measure for the param_perm dict
-        '''
+        """
         return 'dm'
 
     def fit(self, X, y, input_checks = True):
-        '''
+        """
         model a dataset using this proximity stump
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
@@ -480,7 +481,7 @@ class ProximityStump(BaseClassifier):
         Returns
         -------
         self : object
-        '''
+        """
         # checks
         if input_checks:
             check_X_y(X, y)
@@ -542,7 +543,7 @@ class ProximityStump(BaseClassifier):
         return self
 
     def exemplar_distances(self, X, input_checks = True):
-        '''
+        """
         find the distance from the given instances to each exemplar instance
         ----
         Parameters
@@ -556,7 +557,7 @@ class ProximityStump(BaseClassifier):
         ----
         distances : 2d list
             list of distance corresponding to each exemplar instance (instances by distances)
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X)
@@ -572,7 +573,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def exemplar_distance_inst(self, instance, input_checks = True):
-        '''
+        """
         find the distance from the given instance to each exemplar instance. Note this returns distance + 1 for
         efficiency in other methods.
         ----
@@ -587,7 +588,7 @@ class ProximityStump(BaseClassifier):
         ----
         distances : list
             list of distance corresponding to each exemplar instance
-        '''
+        """
         # check data
         if input_checks:
             if not isinstance(instance, Series):
@@ -606,7 +607,7 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def predict_proba(self, X, input_checks = True):
-        '''
+        """
         classify instances
         ----
         Parameters
@@ -620,7 +621,7 @@ class ProximityStump(BaseClassifier):
         ----
         predictions : 2d numpy array (instance by class)
             array of prediction arrays. Each array has <num classes> values reflecting probability of each class.
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X)
@@ -633,7 +634,7 @@ class ProximityStump(BaseClassifier):
         return distributions
 
     def _find_distance(self, instance_a, instance_b, input_checks = True):
-        '''
+        """
         find distance between two instances using distance measure + distance measure parameters
         ----
         Parameters
@@ -649,7 +650,7 @@ class ProximityStump(BaseClassifier):
         ----
         distance : float
             value indicating how similar the two instances are
-        '''
+        """
         if input_checks:
             if not isinstance(instance_a, Series):
                 raise ValueError("instance not a panda series")
@@ -673,7 +674,7 @@ class ProximityStump(BaseClassifier):
 
 
 class ProximityTree(BaseClassifier):
-    '''
+    """
     proximity tree classifier using proximity stumps at each tree node to split data into branches.
     ----
     Parameters
@@ -713,7 +714,7 @@ class ProximityTree(BaseClassifier):
         a label encoder, can be pre-populated
     classes_ :
         pointer to the label_encoder classes_
-    '''
+    """
 
     __author__ = 'George Oastler (linkedin.com/goastler)'
 
@@ -746,7 +747,7 @@ class ProximityTree(BaseClassifier):
         self.classes_ = None
 
     def predict_proba(self, X, input_checks = True):
-        '''
+        """
         classify instances
         ----
         Parameters
@@ -761,7 +762,7 @@ class ProximityTree(BaseClassifier):
         predictions : 2d numpy array (instance by class)
             array of prediction arrays. Each array has <num classes> values reflecting probability of each
             class.
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X)
@@ -798,7 +799,7 @@ class ProximityTree(BaseClassifier):
         return distributions
 
     def _branch(self, X, y):
-        '''
+        """
         branch into further trees based upon proximity found in stump
         ----
         Parameters
@@ -807,7 +808,7 @@ class ProximityTree(BaseClassifier):
             instances of the dataset
         y : numpy 1d array
             class labels corresponding to each instance
-        '''
+        """
         # find best stump (split of data)
         self.stump = self._get_best_stump(X, y)
         num_branches = len(self.stump.branch_instances)
@@ -840,7 +841,7 @@ class ProximityTree(BaseClassifier):
                     self.branches.append(None)
 
     def fit(self, X, y, input_checks = True):
-        '''
+        """
         model a dataset using this proximity tree
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
@@ -851,7 +852,7 @@ class ProximityTree(BaseClassifier):
         Returns
         -------
         self : object
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X, y)
@@ -911,7 +912,7 @@ class ProximityTree(BaseClassifier):
         return self
 
     def _get_rand_param_perm(self, params = None):
-        '''
+        """
         get a random parameter permutation providing a distance measure and corresponding parameters
         ----------
         params : list of dicts
@@ -924,7 +925,7 @@ class ProximityTree(BaseClassifier):
         -------
         permutation : dict
             distance measure and corresponding parameters in dictionary format
-        '''
+        """
         #
         if params is None:
             params = self.param_pool
@@ -951,7 +952,7 @@ class ProximityTree(BaseClassifier):
         return stump
 
     def _pick_param_permutation(self, param_pool):
-        '''
+        """
         pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
         distribution of values (a distribution must have the .rvs() function to sample values)
         ----------
@@ -966,7 +967,7 @@ class ProximityTree(BaseClassifier):
         -------
         param_perm : dict
             distance measure and corresponding parameters in dictionary format
-        '''
+        """
         # construct empty permutation
         param_perm = {}
         # for each parameter
@@ -992,7 +993,7 @@ class ProximityTree(BaseClassifier):
 
 
 class ProximityForest(BaseClassifier):
-    '''
+    """
     proximity forest classifier using an ensemble proximity trees.
     ----
     Parameters
@@ -1031,7 +1032,7 @@ class ProximityForest(BaseClassifier):
         a label encoder, can be pre-populated
     classes_ :
         pointer to the label_encoder classes_
-    '''
+    """
 
     __author__ = 'George Oastler (linkedin.com/goastler)'
 
@@ -1064,7 +1065,7 @@ class ProximityForest(BaseClassifier):
         self.classes_ = None
 
     def fit(self, X, y, input_checks = True):
-        '''
+        """
         model a dataset using this proximity forest
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
@@ -1075,7 +1076,7 @@ class ProximityForest(BaseClassifier):
         Returns
         -------
         self : object
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X, y)
@@ -1117,7 +1118,7 @@ class ProximityForest(BaseClassifier):
         return self
 
     def predict_proba(self, X, input_checks = True):
-        '''
+        """
         classify instances
         ----
         Parameters
@@ -1132,7 +1133,7 @@ class ProximityForest(BaseClassifier):
         predictions : 2d numpy array (instance by class)
             array of prediction arrays. Each array has <num classes> values reflecting probability of each
             class.
-        '''
+        """
         # check data
         if input_checks:
             check_X_y(X)

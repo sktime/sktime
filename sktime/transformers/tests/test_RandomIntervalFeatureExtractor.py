@@ -36,11 +36,18 @@ def test_output_format_dim():
 
 
 # Check that exception is raised for bad input args.
-def test_bad_input_args():
-    bad_features = [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']]
-    for arg in bad_features:
-        with pytest.raises(ValueError):
-            RandomIntervalFeatureExtractor(features=arg)
+@pytest.mark.parametrize("bad_n_intervals", [0, 'abc', 1.1])
+def test_bad_n_intervals(bad_n_intervals):
+    X, y = load_gunpoint(return_X_y=True)
+    with pytest.raises(ValueError):
+        RandomIntervalFeatureExtractor(n_intervals=bad_n_intervals).fit(X)
+
+@pytest.mark.parametrize("bad_features",
+                         [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']])
+def test_bad_features(bad_features):
+    X, y = load_gunpoint(return_X_y=True)
+    with pytest.raises(ValueError):
+        RandomIntervalFeatureExtractor(n_intervals=bad_features).fit(X)
 
 
 # Check if random state always gives same results
@@ -86,12 +93,12 @@ def test_different_implementations():
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
     tran2 = RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))
-    a = tran2.fit_transform(tran1.fit_transform(X_train))
+    A = tran2.fit_transform(tran1.fit_transform(X_train))
 
     tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_seed)
-    b = tran.fit_transform(X_train)
+    B = tran.fit_transform(X_train)
 
-    np.testing.assert_array_equal(a, b)
+    np.testing.assert_array_equal(A, B)
 
     # Compare with transformer pipeline using TSFeatureUnion.
     steps = [
