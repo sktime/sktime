@@ -22,7 +22,7 @@ def _test_output_format_dim(X):
         for features in feature_args:
             trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
             Xt = trans.fit_transform(X)
-            assert isinstance(Xt, (pd.DataFrame, pd.Series))
+            assert isinstance(Xt, pd.DataFrame)
             assert Xt.shape[0] == n_rows
             assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
@@ -36,16 +36,18 @@ def test_output_format_dim():
 
 
 # Check that exception is raised for bad input args.
-def test_bad_input_args():
-    bad_n_intervals = [0, 'abc', 1.0]
-    for arg in bad_n_intervals:
-        with pytest.raises(ValueError):
-            RandomIntervalFeatureExtractor(n_intervals=arg)
+@pytest.mark.parametrize("bad_n_intervals", [0, 'abc', 1.1])
+def test_bad_n_intervals(bad_n_intervals):
+    X, y = load_gunpoint(return_X_y=True)
+    with pytest.raises(ValueError):
+        RandomIntervalFeatureExtractor(n_intervals=bad_n_intervals).fit(X)
 
-    bad_features = [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']]
-    for arg in bad_features:
-        with pytest.raises(ValueError):
-            RandomIntervalFeatureExtractor(features=arg)
+@pytest.mark.parametrize("bad_features",
+                         [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']])
+def test_bad_features(bad_features):
+    X, y = load_gunpoint(return_X_y=True)
+    with pytest.raises(ValueError):
+        RandomIntervalFeatureExtractor(n_intervals=bad_features).fit(X)
 
 
 # Check if random state always gives same results

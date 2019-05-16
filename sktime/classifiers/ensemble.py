@@ -17,17 +17,10 @@ from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
-from sktime.transformers.series_to_series import DerivativeSlopeTransformer
+
 from ..pipeline import Pipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
-import os
-#from .time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
-#from ..distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
-#    wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
-#from itertools import product
-import time
 
 __all__ = ["TimeSeriesForestClassifier"]
 
@@ -500,4 +493,3 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         tree.fit(X, y, **fit_params)
 
     return tree
-
