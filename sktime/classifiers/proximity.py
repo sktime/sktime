@@ -624,26 +624,11 @@ class ProximityStump(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        num_instances = X.shape[0]
-        num_exemplars = len(self.exemplar_instances)
-        num_unique_class_labels = len(self.label_encoder.classes_)
-        distributions = []
         # find distances to each exemplar for each test instance
         distances = self.exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
         ones = np.ones(distances.shape)
         distributions = np.divide(ones, distances)
-        # for each test instance
-        # for instance_index in range(0, num_instances):
-        #     distribution = [0] * num_unique_class_labels
-        #     distributions.append(distribution)
-        #     # invert distances (as larger distance should be less likely predicted)
-        #     for exemplar_index in range(0, num_exemplars):
-        #         distance = distances[instance_index][exemplar_index]
-        #         exemplar_class_label = self.exemplar_class_labels[exemplar_index]
-        #         distribution[exemplar_class_label] = 1 / (1 + distance)
-        # normalise inverted distances to a probability
-        # distributions = np.array(distributions)
         normalize(distributions, copy = False, norm = 'l1')
         return distributions
 
@@ -708,7 +693,7 @@ class ProximityTree(BaseClassifier):
         dimension of the dataset to use. Defaults to zero for univariate datasets.
     debug : boolean
         whether to print debug info
-    r : int
+    num_stump_evaluations : int
         the number of proximity stumps to produce at each node. Each stump has a random distance measure and distance
         measure parameter set. The stump with the best gain is used to split the data.
     is_leaf_method : callable
