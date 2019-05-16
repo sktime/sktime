@@ -46,10 +46,18 @@ after_success:
     - make html
 
 deploy:
-    provider: pages
-    skip-cleanup: true
-    local_dir: "./documentation/build_doc_site/html"
-    github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-    keep-history: false
-    on:
-        branch: master
+    - provider: pages
+      skip-cleanup: true
+      local_dir: "./documentation/build_doc_site/html"
+      github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+      keep-history: false
+      on:
+          branch: master
+    - provider: releases
+      api_key: $GITHUB_TOKEN
+      skip_cleanup: true
+      on:
+          branch: master
+
+
+
