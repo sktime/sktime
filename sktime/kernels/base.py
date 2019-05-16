@@ -1,8 +1,9 @@
-from elastic_cython import dtw_distance
 import numpy as np
 from tslearn.utils import to_time_series
 from  scipy.spatial.distance import cdist
-
+from ..distances.elastic_cython import (
+    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
+    )
 
 def GDS_pairs(s1,s2):
     s1 = to_time_series(s1)
