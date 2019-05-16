@@ -20,7 +20,7 @@ time series and panel data. Eventually, we would like to support:
 The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`__ repository on Github.
 
 Currently, modular modelling workflows for forecasting and supervised learning with time series have been implemented.
-As next steps, we will move to supervised forecasting and integration of a modified ` <https://github.com/alan-turing-institute//>`__ interface and extensions to the existing frameworks.
+As next steps, we will move to supervised forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf>`__ interface and extensions to the existing frameworks.
 
 
 Installation
@@ -53,7 +53,6 @@ There are numerous different time series data related learning tasks, for exampl
 
 * Time series classification and regression,
 * Classical forecasting,
-* Reduction strategies, e.g. solving a forecasting task with time series regression algorithms,
 * Supervised/panel forecasting,
 * Time series segmentation.
 
@@ -73,7 +72,7 @@ Currently, the package implements:
 * Pipelining, allowing to chain multiple transformers with a final estimator,
 * Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator,
 * Off-shelf composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
-* Standard forecasting methods.
+* Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
 
 Documentation
 -------------
@@ -94,10 +93,10 @@ Contributors
 ------------
 Former and current active contributors are as follows.
 
-Project management: Jason Lines (@jasonlines), Franz J Kiraly (@fkiraly)
+Project management: Jason Lines (@jasonlines), Franz Király (@fkiraly)
 
-Design: Anthony Bagnall, Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz J Kiraly (@fkiraly), Markus Löning (@mloning)
+Design: Anthony Bagnall(@TonyBagnall), Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz Király (@fkiraly), Markus Löning (@mloning)
 
-Coding: Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), George Oastler (@goastler), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
+Coding: Sajaysurya Ganesh (@sajaysurya), Bagnall(@TonyBagnall), Jason Lines (@jasonlines), George Oastler (@goastler), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
 
 We are actively looking for contributors. Please contact @fkiraly or @jasonlines for volunteering or information on paid opportunities, or simply raise an issue in the tracker.
