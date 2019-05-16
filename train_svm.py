@@ -3,7 +3,7 @@ from sklearn import svm
 from sktime.kernels.base import GDS_matrix, distance_matrix
 from tslearn.datasets import UCR_UEA_datasets
 from sklearn.metrics import accuracy_score
-from sktime.distances.elastic_cython import (
+from elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
 
