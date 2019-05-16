@@ -28,6 +28,7 @@
 #
 # todo unit tests
 # todo expand debug printing capability
+# todo parallelise (specifically tree building, each branch is an independent unit of work)
 
 __author__ = "George Oastler"
 
