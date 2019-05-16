@@ -1,12 +1,12 @@
-from sklearn.pipeline import Pipeline
-from sklearn.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline as skPipeline
+from sklearn.pipeline import FeatureUnion as skFeatureUnion
 from sklearn.utils._joblib import Parallel, delayed
 import pandas as pd
 import numpy as np
 from scipy import sparse
 
 
-class TSPipeline(Pipeline):
+class Pipeline(skPipeline):
     """Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
@@ -55,7 +55,7 @@ class TSPipeline(Pipeline):
     """
 
     def __init__(self, steps, memory=None, random_state=None, check_input=True):
-        super(TSPipeline, self).__init__(steps, memory=memory)
+        super(Pipeline, self).__init__(steps, memory=memory)
         self.random_state = random_state
         self.check_input = check_input
 
@@ -111,7 +111,7 @@ def _fit_transform_one(transformer, X, y, weight, **fit_params):
     return res * weight, transformer
 
 
-class TSFeatureUnion(FeatureUnion):
+class FeatureUnion(skFeatureUnion):
     """Concatenates results of multiple transformer objects.
         This estimator applies a list of transformer objects in parallel to the
         input data, then concatenates the results. This is useful to combine
@@ -143,7 +143,7 @@ class TSFeatureUnion(FeatureUnion):
             preserve_dataframe=True
     ):
         self.preserve_dataframe = preserve_dataframe
-        super(TSFeatureUnion, self).__init__(
+        super(FeatureUnion, self).__init__(
             transformer_list,
             n_jobs=n_jobs,
             transformer_weights=transformer_weights

@@ -1,10 +1,15 @@
-'''
-classes and functions for model validation
-'''
-from sklearn.model_selection import GridSearchCV as skGSCV
+"""
+Model selection classes and methods
+"""
+
+import numpy as np
+import pandas as pd
 from sklearn.metrics import make_scorer, mean_squared_error, accuracy_score
-from sktime.regressors.base import BaseRegressor
-from sktime.classifiers.base import BaseClassifier
+from sklearn.model_selection import GridSearchCV as skGSCV
+from sklearn.model_selection import train_test_split
+
+from .classifiers.base import BaseClassifier
+from .regressors.base import BaseRegressor
 
 
 class GridSearchCV(skGSCV):
@@ -124,34 +129,6 @@ class GridSearchCV(skGSCV):
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
-    Examples
-    --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC(gamma="scale")
-    >>> clf = GridSearchCV(svc, parameters, cv=5)
-    >>> clf.fit(iris.data, iris.target)
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=5, error_score=...,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
-                         decision_function_shape='ovr', degree=..., gamma=...,
-                         kernel='rbf', max_iter=-1, probability=False,
-                         random_state=None, shrinking=True, tol=...,
-                         verbose=False),
-           fit_params=None, iid=..., n_jobs=None,
-           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
-           scoring=..., verbose=...)
-    >>> sorted(clf.cv_results_.keys())
-    ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
-     'mean_train_score', 'param_C', 'param_kernel', 'params',...
-     'rank_test_score', 'split0_test_score',...
-     'split0_train_score', 'split1_test_score', 'split1_train_score',...
-     'split2_test_score', 'split2_train_score',...
-     'std_fit_time', 'std_score_time', 'std_test_score', 'std_train_score'...]
-
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -235,14 +212,17 @@ class GridSearchCV(skGSCV):
         Seconds used for refitting the best model on the whole dataset.
         This is present only if ``refit`` is not False.
     """
+
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise-deprecating',
                  return_train_score="warn"):
-        super().__init__(estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=None, iid='warn', refit=True, cv='warn', verbose=0,
-                 pre_dispatch='2*n_jobs', error_score='raise-deprecating',
-                 return_train_score="warn")
+
+        super(GridSearchCV, self).__init__(estimator, param_grid, scoring=scoring, fit_params=fit_params,
+                                           n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+                                           pre_dispatch=pre_dispatch, error_score=error_score,
+                                           return_train_score=return_train_score)
+
         if self.scoring is None:
             # using accuracy score as default for classifiers
             if isinstance(self.estimator, BaseClassifier):
@@ -250,3 +230,111 @@ class GridSearchCV(skGSCV):
             # using mean squared error as default for regressors
             elif isinstance(self.estimator, BaseRegressor):
                 self.scoring = make_scorer(mean_squared_error)
+
+
+class PresplitFilesCV:
+    """
+    Cross-validation iterator over split predefined in files.
+
+    This class is useful in orchestration where the train and test set
+    is provided in separate files.
+    """
+
+    def __init__(self, check_input=True):
+        self.check_input = check_input
+
+    def split(self, data):
+        """
+        Split the data according to the train/test index.
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+
+        Yields
+        ------
+        train : ndarray
+            Train indicies
+        test : ndarray
+            Test indices
+        """
+        # Input checks.
+        if self.check_input:
+            if not isinstance(data, pd.DataFrame):
+                raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
+            if not np.all(data.index.unique().isin(['train', 'test'])):
+                raise ValueError('Train-test split not properly defined in '
+                                 'index of passed pandas DataFrame')
+
+        n = data.shape[0]
+        idx = np.arange(n)
+        train = idx[data.index == 'train']
+        test = idx[data.index == 'test']
+        yield train, test
+
+
+class SingleSplit:
+    """
+    Helper class for orchestration that uses a single split for training and testing. Wrapper for sklearn.model_selection.train_test_split
+
+    Parameters
+    ----------
+    *arrays : sequence of indexables with same length / shape[0]
+        Allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+    test_size : float, int or None, optional (default=0.25)
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.25.
+        The default will change in version 0.21. It will remain 0.25 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
+    train_size : float, int, or None, (default=None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+    shuffle : boolean, optional (default=True)
+        Whether or not to shuffle the data before splitting. If shuffle=False
+        then stratify must be None.
+    stratify : array-like or None (default=None)
+        If not None, data is split in a stratified fashion, using this as
+        the class labels.
+    """
+
+    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
+        self._test_size = test_size
+        self._train_size = train_size
+        self._random_state = random_state
+        self._shuffle = shuffle
+        self._stratify = stratify
+
+    def split(self, data):
+        """
+        Paramters
+        ---------
+        data : pandas dataframe
+            data used for cross validation
+        
+        Returns
+        -------
+        tuple
+            (train, test) indexes
+        """
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError('Data must be provided as a pandas DataFrame')
+        num_samples = data.shape[0]
+        idx = np.arange(num_samples)
+
+        yield train_test_split(idx,
+                               test_size=self._test_size,
+                               train_size=self._train_size,
+                               random_state=self._random_state,
+                               shuffle=self._shuffle,
+                               stratify=self._stratify)
