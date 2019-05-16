@@ -8,10 +8,23 @@ from ..distances.elastic_cython import (
 def GDS_pairs(s1,s2):
     s1 = to_time_series(s1)
     s2 = to_time_series(s2)
-    dist = dtw_distance(s1, s2, 20)
+    dist = dtw_distance(s1, s2, 0)
     return np.exp(-dist)
 
 def GDS_matrix(X,Y):
     M=cdist(X,Y,metric=GDS_pairs)
     return M
+
+def distance_matrix(distance_measure, **kwargs):
+
+    def distance(a, b):
+        a = to_time_series(a)
+        b = to_time_series(b)
+        return distance_measure(a, b, **kwargs)
+
+    def build_matrix(X, Y):
+        matrix = cdist(X, Y, metric=distance)
+        return matrix
+
+    return build_matrix
 
