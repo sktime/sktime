@@ -18,10 +18,11 @@ def GDS_matrix(X,Y):
 def distance_matrix(distance_measure, **kwargs):
 
     def distance(a, b):
+        sigma = kwargs['sigma']
         a = to_time_series(a)
         b = to_time_series(b)
         dist = distance_measure(a, b, **kwargs)
-        return np.exp(-dist)
+        return np.exp(-(dist ^ 2) / sigma ^ 2)
 
     def build_matrix(X, Y):
         matrix = cdist(X, Y, metric=distance)
