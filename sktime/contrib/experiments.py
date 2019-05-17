@@ -18,6 +18,7 @@ import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
 from sktime.classifiers.proximity import ProximityForest
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+import argparse
 
 __author__ = "Anthony Bagnall"
 
@@ -119,8 +120,6 @@ datasets = [
 ]
 
 
-
-
 def set_classifier(cls, resampleId):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
@@ -130,59 +129,64 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-    if cls.lower() == 'pf':
-        return ProximityForest(rand = resampleId)
-    if cls == 'RISE' or cls == 'rise':
+    cls = cls.lower()
+    if cls == 'pf':
+        return ProximityForest(random_state = resampleId, debug=True)
+    if cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls == 'TSF' or cls == 'tsf':
+    elif  cls == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
-    elif  cls == 'BOSS' or cls == 'boss':
+    elif  cls == 'boss':
         return db.BOSSEnsemble()
-#    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
-#        return dist.ElasticEnsemble()
-    elif cls == 'TSF_Markus':
+   # elif classifier == 'elasticensemble':
+   #     return dist.ElasticEnsemble()
+    elif cls == 'tsf_markus':
         return ensemble.TimeSeriesForestClassifier()
     else:
-        return 'UNKNOWN CLASSIFIER'
+        raise Exception('Unknown classifier: ' + str(cls))
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_file=False):
+def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed, overwrite=False, format= ".ts", estimate_train=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
-    :param problem_path: Location of problem files, full path.
-    :param results_path: Location of where to write results. Any required directories will be created
-    :param cls_name: determines which classifier to use, as defined in set_classifier. This assumes predict_proba is
+    :param datasets_dir_path: Location of problem files, full path.
+    :param results_dir_path: Location of where to write results. Any required directories will be created
+    :param classifier_name: determines which classifier to use, as defined in set_classifier. This assumes
+    predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
-    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format, same for "_TEST"
-    :param resampleID: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
+    :param dataset_name: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format,
+    same for "_TEST"
+    :param resample_seed: Seed for resampling. If set to 0, the default train/test split from file is used. Also used
+    in
+    output file name.
     :param overwrite: if set to False, this will only build results if there is not a result file already present. If
     True, it will overwrite anything already there
     :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
     https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
-    :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
+    :param estimate_train: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
-    cls_name = cls_name.upper()
+    classifier_name = classifier_name.upper()
     build_test = True
     if not overwrite:
-        full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
+        full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/testFold" + str(resample_seed) + ".csv"
         if os.path.exists(full_path):
             print(full_path+" Already exists and overwrite set to false, not building Test")
             build_test=False
-        if train_file:
-            full_path = str(results_path) + "/" + str(cls_name) + "/Predictions/" + str(dataset) + "/trainFold" + str(
-                resampleID) + ".csv"
+        if estimate_train:
+            full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/trainFold" + str(
+                resample_seed) + ".csv"
             if os.path.exists(full_path):
                 print(full_path + " Already exists and overwrite set to false, not building Train")
-                train_file = False
-        if train_file == False and build_test ==False:
+                estimate_train = False
+        if estimate_train == False and build_test ==False:
             return
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
-    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
-    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    if resample !=0:
+    trainX, trainY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
+    testX, testY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TEST' + format)
+    if resample_seed !=0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
@@ -195,8 +199,8 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(cls_name, resampleID)
-    print(cls_name + " on " + dataset + " resample number " + str(resampleID))
+    classifier = set_classifier(classifier_name, resample_seed)
+    print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed))
     if build_test:
         # TO DO : use sklearn CV
         start = int(round(time.time() * 1000))
@@ -207,14 +211,14 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         preds = classifier.classes_[np.argmax(probs, axis=1)]
         test_time = int(round(time.time() * 1000))-start
         ac = accuracy_score(testY, preds)
-        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' test acc: ' + str(ac)
+        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' test acc: ' + str(ac)
               + ' time: ' + str(test_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         second = str(classifier.get_params())
         third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
-        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
-                                predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
-    if train_file:
+        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path, classifier_name=classifier_name, resample_seed= resample_seed,
+                                    predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset_name, actual_class_vals=testY, split= 'TEST')
+    if estimate_train:
         start = int(round(time.time() * 1000))
         if build_test and hasattr(classifier,"get_train_probs"):    #Normally Can only do this if test has been built ... well not necessarily true, but will do for now
             train_probs = classifier.get_train_probs(trainX)
@@ -223,12 +227,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         train_time = int(round(time.time() * 1000)) - start
         train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
         train_acc = accuracy_score(trainY,train_preds)
-        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' train acc: ' + str(train_acc)
+        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' train acc: ' + str(train_acc)
               + ' time: ' + str(train_time))
         second = str(classifier.get_params())
         third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
-        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
-                                    predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
+        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path, classifier_name=classifier_name, resample_seed= resample_seed,
+                                    predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset_name, actual_class_vals=trainY, split= 'TRAIN')
 
 
 def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
@@ -307,34 +311,34 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     file.close()
 
 
-
-
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
     print('experimenting...')
-#Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1: #cluster run, this is fragile
-        print(sys.argv)
-        data_dir = sys.argv[1]
-        results_dir = sys.argv[2]
-        classifier =  sys.argv[3]
-        dataset = sys.argv[4]
-        resample = int(sys.argv[5])
-        tf=(str(sys.argv[6]) == 'True')
-        run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
-                       resampleID=resample,train_file=tf)
+        parser = argparse.ArgumentParser(description = 'Run experiments locally or on the cluster')
+        parser.add_argument('datasets_dir_path', help = "path to dir containing datasets / problems")
+        parser.add_argument('dataset_name', help = "name of the dataset")
+        parser.add_argument('classifier_name', help = "name of the classifier")
+        parser.add_argument('results_dir_path', help = "path to results dir")
+        parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
+        parser.add_argument('-o', '--overwrite', help = "overwrite existing results", action = 'store_true')
+        parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
+                            action = 'store_true')
+        args = vars(parser.parse_args())
+        print(args)
+        run_experiment(**args)
     else : #Local run
         data_dir = "/scratch/datasets/"
         results_dir = "/scratch/results"
 #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
 #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         classifier = "PF"
-        resample = 0
+        resample = 3
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
-        dataset = "GunPoint"
-        tf=True
-        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
+        dataset = "Beef"
+        tf=False
+        run_experiment(overwrite=True, datasets_dir_path =data_dir, results_dir_path =results_dir, classifier_name =classifier, dataset_name =dataset, resample_seed =resample, estimate_train =tf)
 
