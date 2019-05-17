@@ -29,6 +29,7 @@
 # todo unit tests
 # todo expand debug printing capability
 # todo parallelise (specifically tree building, each branch is an independent unit of work)
+import warnings
 
 __author__ = "George Oastler"
 
@@ -430,7 +431,7 @@ class ProximityStump(BaseClassifier):
 
     def __init__(self,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
-                 param_perm = get_default_param_perm,
+                 param_perm = None,
                  gain_method = get_default_gain_method(),
                  label_encoder = None,
                  dimension = get_default_dimension(),
@@ -487,13 +488,17 @@ class ProximityStump(BaseClassifier):
             check_X_y(X, y)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X, self.dimension)
-        if not isinstance(self.param_perm, dict):
-            raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         if not callable(self.gain_method):
             raise ValueError("gain method must be callable")
         if not callable(self.pick_exemplars_method):
             raise ValueError("gain method must be callable")
         self.random_state = check_random_state(self.random_state)
+        if self.param_perm is None:
+            self.param_perm = _get_rand_param_perm(get_all_distance_measures_param_pool(X, self.dimension),
+                                                   self.random_state)
+            warnings.warn('using random parameter permutation picked in proximity stump')
+        if not isinstance(self.param_perm, dict):
+            raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         # if label encoder not setup, make a new one and train it
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
@@ -911,28 +916,6 @@ class ProximityTree(BaseClassifier):
         # queue empty so tree has branched into sub tree until contain only leaf nodes
         return self
 
-    def _get_rand_param_perm(self, params = None):
-        '''
-        get a random parameter permutation providing a distance measure and corresponding parameters
-        ----------
-        params : list of dicts
-            parameters in the same format as GridSearchCV from scikit-learn. example:
-            param_grid = [
-              {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-              {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}], 'kernel': ['rbf']},
-             ]
-        Returns
-        -------
-        permutation : dict
-            distance measure and corresponding parameters in dictionary format
-        '''
-        #
-        if params is None:
-            params = self.param_pool
-        param_pool = self.random_state.choice(params)
-        permutation = self._pick_param_permutation(param_pool)
-        return permutation
-
     def _get_best_stump(self, X, y):
         stumps = np.empty(self.num_stump_evaluations, dtype = object)
         for index in range(0, self.num_stump_evaluations):
@@ -942,7 +925,7 @@ class ProximityTree(BaseClassifier):
         return best_stump
 
     def _pick_rand_stump(self, X, y):
-        param_perm = self._get_rand_param_perm()
+        param_perm = _get_rand_param_perm(self.param_pool, self.random_state)
         stump = ProximityStump(pick_exemplars_method = self.pick_exemplars_method,
                                random_state = self.random_state,
                                gain_method = self.gain_method,
@@ -951,46 +934,65 @@ class ProximityTree(BaseClassifier):
         stump.fit(X, y, input_checks = False)
         return stump
 
-    def _pick_param_permutation(self, param_pool):
-        '''
-        pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
-        distribution of values (a distribution must have the .rvs() function to sample values)
-        ----------
-        param_pool : list of dicts OR list OR distribution
-            parameters in the same format as GridSearchCV from scikit-learn. example:
-            param_grid = [
-              {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-              {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
-              'kernel': ['rbf']},
-             ]
-        Returns
-        -------
-        param_perm : dict
-            distance measure and corresponding parameters in dictionary format
-        '''
-        # construct empty permutation
-        param_perm = {}
-        # for each parameter
-        for param_name, param_values in param_pool.items():
-            # if it is a list
-            if isinstance(param_values, list):
-                # randomly pick a value
-                param_value = self.random_state.choice(param_values)
-                # if the value is another dict then get a random parameter permutation from that dict (recursive over
-                # 2 funcs)
-                if isinstance(param_value, dict):
-                    param_value = self._get_rand_param_perm(param_value)
-            # else if parameter is a distribution
-            elif hasattr(param_values, 'rvs'):
-                # sample from the distribution
-                param_value = param_values.rvs(random_state = self.random_state)
-            else:
-                # otherwise we don't know how to obtain a value from the parameter
-                raise Exception('unknown type of parameter pool')
-            # add parameter name and value to permutation
-            param_perm[param_name] = param_value
-        return param_perm
+def _pick_param_permutation(param_pool, random_state):
+    '''
+    pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
+    distribution of values (a distribution must have the .rvs() function to sample values)
+    ----------
+    param_pool : list of dicts OR list OR distribution
+        parameters in the same format as GridSearchCV from scikit-learn. example:
+        param_grid = [
+          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
+          'kernel': ['rbf']},
+         ]
+    Returns
+    -------
+    param_perm : dict
+        distance measure and corresponding parameters in dictionary format
+    '''
+    # construct empty permutation
+    param_perm = {}
+    # for each parameter
+    for param_name, param_values in param_pool.items():
+        # if it is a list
+        if isinstance(param_values, list):
+            # randomly pick a value
+            param_value = random_state.choice(param_values)
+            # if the value is another dict then get a random parameter permutation from that dict (recursive over
+            # 2 funcs)
+            if isinstance(param_value, dict):
+                param_value = _get_rand_param_perm(param_value)
+        # else if parameter is a distribution
+        elif hasattr(param_values, 'rvs'):
+            # sample from the distribution
+            param_value = param_values.rvs(random_state = random_state)
+        else:
+            # otherwise we don't know how to obtain a value from the parameter
+            raise Exception('unknown type of parameter pool')
+        # add parameter name and value to permutation
+        param_perm[param_name] = param_value
+    return param_perm
 
+def _get_rand_param_perm(params, random_state):
+    '''
+    get a random parameter permutation providing a distance measure and corresponding parameters
+    ----------
+    params : list of dicts
+        parameters in the same format as GridSearchCV from scikit-learn. example:
+        param_grid = [
+          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}], 'kernel': ['rbf']},
+         ]
+    Returns
+    -------
+    permutation : dict
+        distance measure and corresponding parameters in dictionary format
+    '''
+    #
+    param_pool = random_state.choice(params)
+    permutation = _pick_param_permutation(param_pool, random_state)
+    return permutation
 
 class ProximityForest(BaseClassifier):
     '''

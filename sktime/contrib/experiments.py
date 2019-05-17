@@ -130,11 +130,11 @@ def set_classifier(cls, resampleId):
 
     """
     cls = cls.lower()
-    if cls == 'pf':
+    if cls == 'pf' or cls == 'proximityforest':
         return ProximityForest(random_state = resampleId, debug=True)
-    if cls == 'pt':
+    if cls == 'pt' or cls == 'proximitytree':
         return ProximityTree(random_state = resampleId, debug=True)
-    if cls == 'ps':
+    if cls == 'ps' or cls == 'proximitystump':
         return ProximityStump(random_state = resampleId, debug=True)
     if cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
@@ -186,7 +186,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
                 print(full_path + " Already exists and overwrite set to false, not building Train")
                 estimate_train = False
         if estimate_train == False and build_test ==False:
-            raise Exception('train and test results already exist')
+            return
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
@@ -196,7 +196,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resample, shuffle=True,
+                                                                       random_state=resample_seed, shuffle=True,
                                                                        stratify=allLabels)
 
 
@@ -347,7 +347,7 @@ if __name__ == "__main__":
         results_dir = "/scratch/results"
 #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
 #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "PF"
+        classifier = "PS"
         resample = 3
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
