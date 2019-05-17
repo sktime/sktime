@@ -16,7 +16,7 @@ import sktime.classifiers.ensemble as ensemble
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest
+from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 import argparse
 
@@ -132,6 +132,10 @@ def set_classifier(cls, resampleId):
     cls = cls.lower()
     if cls == 'pf':
         return ProximityForest(random_state = resampleId, debug=True)
+    if cls == 'pt':
+        return ProximityTree(random_state = resampleId, debug=True)
+    if cls == 'ps':
+        return ProximityStump(random_state = resampleId, debug=True)
     if cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'tsf':
@@ -146,7 +150,7 @@ def set_classifier(cls, resampleId):
         raise Exception('Unknown classifier: ' + str(cls))
 
 
-def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed, overwrite=False, format= ".ts", estimate_train=False):
+def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed, overwrite_results=False, format= ".ts", estimate_train=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -160,7 +164,8 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
     :param resample_seed: Seed for resampling. If set to 0, the default train/test split from file is used. Also used
     in
     output file name.
-    :param overwrite: if set to False, this will only build results if there is not a result file already present. If
+    :param overwrite_results: if set to False, this will only build results if there is not a result file already
+    present. If
     True, it will overwrite anything already there
     :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
     https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
@@ -169,7 +174,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
     """
     classifier_name = classifier_name.upper()
     build_test = True
-    if not overwrite:
+    if not overwrite_results:
         full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/testFold" + str(resample_seed) + ".csv"
         if os.path.exists(full_path):
             print(full_path+" Already exists and overwrite set to false, not building Test")
@@ -181,7 +186,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
                 print(full_path + " Already exists and overwrite set to false, not building Train")
                 estimate_train = False
         if estimate_train == False and build_test ==False:
-            return
+            raise Exception('train and test results already exist')
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
@@ -231,8 +236,10 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
               + ' time: ' + str(train_time))
         second = str(classifier.get_params())
         third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
-        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path, classifier_name=classifier_name, resample_seed= resample_seed,
-                                    predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset_name, actual_class_vals=trainY, split= 'TRAIN')
+        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path,
+                                    classifier_name=classifier_name, resample_seed= resample_seed,
+                                    predicted_class_vals=train_preds, actual_probas=train_probs,
+                                    dataset_name=dataset_name, actual_class_vals=trainY, split= 'TRAIN')
 
 
 def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
@@ -260,6 +267,10 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
     try:
         os.makedirs(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/")
+        os.chmod(str(output_path), 0o777)
+        os.chmod(str(output_path)+"/"+str(classifier_name), 0o777)
+        os.chmod(str(output_path)+"/"+str(classifier_name)+"/Predictions", 0o777)
+        os.chmod(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name), 0o777)
     except os.error:
         pass  # raises os.error if path already exists
 
@@ -270,8 +281,9 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    file = open(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) +
-                "/"+str(train_or_test)+"Fold"+str(resample_seed)+".csv", "w")
+    filepath = str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/"+str(
+            train_or_test)+"Fold"+str(resample_seed)+".csv"
+    file = open(filepath, "w")
 
     # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has line three "+third_line)
     # the first line of the output file is in the form of:
@@ -310,6 +322,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
     file.close()
 
+    os.chmod(filepath, 0o777)
 
 if __name__ == "__main__":
     """
@@ -323,7 +336,7 @@ if __name__ == "__main__":
         parser.add_argument('classifier_name', help = "name of the classifier")
         parser.add_argument('results_dir_path', help = "path to results dir")
         parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
-        parser.add_argument('-o', '--overwrite', help = "overwrite existing results", action = 'store_true')
+        parser.add_argument('-o', '--overwrite_results', help = "overwrite existing results", action = 'store_true')
         parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
                             action = 'store_true')
         args = vars(parser.parse_args())
@@ -340,5 +353,5 @@ if __name__ == "__main__":
         #     dataset = datasets[i]
         dataset = "Beef"
         tf=False
-        run_experiment(overwrite=True, datasets_dir_path =data_dir, results_dir_path =results_dir, classifier_name =classifier, dataset_name =dataset, resample_seed =resample, estimate_train =tf)
+        run_experiment(overwrite_results =True, datasets_dir_path =data_dir, results_dir_path =results_dir, classifier_name =classifier, dataset_name =dataset, resample_seed =resample, estimate_train =tf)
 
