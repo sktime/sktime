@@ -5,17 +5,17 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
 from sktime.transformers.series_to_series import DerivativeSlopeTransformer
 import os
-from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
-from sktime.distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
+from .time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
+from ..distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
     wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
 from itertools import product
 import time
-from sklearn.preprocessing import LabelEncoder
-from sktime.classifiers.base import BaseClassifier
+
+
 __all__ = ["ElasticEnsemble"]
 
 
-class ElasticEnsemble(BaseClassifier):
+class ElasticEnsemble:
     """ The Elastic Ensemble
 
     An ensemble of elastic nearest neighbor classifiers
@@ -23,21 +23,23 @@ class ElasticEnsemble(BaseClassifier):
     """
     def __init__(
             self,
-            distance_measures='all',
+            distance_measures_to_include='all',
             proportion_of_param_options=1.0,
             proportion_train_in_param_finding=1.0,
             proportion_train_for_test=1.0,
+            data_dimension_to_use=0,
             random_seed=0,
             dim_to_use=0,
             verbose=0
     ):
-        if distance_measures == 'all':
+        if distance_measures_to_include == 'all':
             self.distance_measures = [dtw_c, ddtw_c, wdtw_c, wddtw_c, lcss_c, erp_c, msm_c]
         else:
-            self.distance_measures = distance_measures
-        self.proportion_train_in_param_finding = proportion_train_in_param_finding
-        self.proportion_of_param_options = proportion_of_param_options
-        self.proportion_train_for_test = proportion_train_for_test
+            self.distance_measures = distance_measures_to_include
+        self.prop_train_in_param_finding = proportion_train_in_param_finding
+        self.prop_of_param_options = proportion_of_param_options
+        self.prop_train_for_test = proportion_train_for_test
+        self.data_dimension_to_use = data_dimension_to_use
         self.random_seed = random_seed
         self.dim_to_use = dim_to_use
         self.estimators_ = None
@@ -85,10 +87,10 @@ class ElasticEnsemble(BaseClassifier):
         param_train_y = None
 
         # If using less cases for parameter optimisation, use the StratifiedShuffleSplit:
-        if self.proportion_train_in_param_finding < 1:
+        if self.prop_train_in_param_finding < 1:
             if self.verbose > 0:
                 print("Restricting training cases for parameter optimisation: ",end="")
-            sss = StratifiedShuffleSplit(n_splits=1, test_size=1-self.proportion_train_in_param_finding, random_state=rand)
+            sss = StratifiedShuffleSplit(n_splits=1, test_size=1-self.prop_train_in_param_finding, random_state=rand)
             for train_index, test_index in sss.split(X, y):
                 param_train_x = X[train_index,:]
                 param_train_y = y[train_index]
@@ -108,7 +110,7 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = []
 
         if self.verbose > 0:
-            print("Using " + str(100 * self.proportion_of_param_options) + " parameter options per measure")
+            print("Using "+str(100*self.prop_of_param_options)+" parameter options per measure")
         for dm in range(0, len(self.distance_measures)):
             this_measure = self.distance_measures[dm]
 
@@ -131,7 +133,7 @@ class ElasticEnsemble(BaseClassifier):
                     print("Currently evaluating "+str(self.distance_measures[dm].__name__))
 
             # If 100 parameter options are being considered per measure, use a GridSearchCV
-            if self.proportion_of_param_options == 1:
+            if self.prop_of_param_options == 1:
 
                 grid = GridSearchCV(
                     estimator= KNNTSC(metric=this_measure, n_neighbors=1, algorithm="brute"),
@@ -149,7 +151,7 @@ class ElasticEnsemble(BaseClassifier):
                     param_distributions=ElasticEnsemble._get_100_param_options(self.distance_measures[dm], X),
                     cv=LeaveOneOut(),
                     scoring='accuracy',
-                    n_iter=100 * self.proportion_of_param_options,
+                    n_iter=100 * self.prop_of_param_options,
                     random_state=rand,
                     verbose=self.verbose
                 )
@@ -216,25 +218,6 @@ class ElasticEnsemble(BaseClassifier):
         else:
             return preds, probas
 
-    def get_train_probs(self, X=None):
-        num_cases = len(self.train_preds_by_classifier[0])
-        num_classes = len(self.classes_)
-        num_estimators = len(self.estimators_)
-
-        probs = np.zeros((num_cases,num_classes))
-
-        map = LabelEncoder().fit(self.classes_)
-        weight_sum = np.sum(self.train_accs_by_classifier)
-
-        for i in range(num_cases):
-            for e in range(num_estimators):
-                pred_class = map.transform([self.train_preds_by_classifier[e][i]])[0]
-                probs[i][pred_class] += self.train_accs_by_classifier[e]/weight_sum
-        return probs
-
-    def get_metric_params(self):
-        return {self.distance_measures[dm].__name__ : str(self.estimators_[dm].metric_params) for dm in range(len(self.estimators_))}
-
     def write_constituent_train_files(self, output_file_path, dataset_name, actual_y):
 
         for c in range(len(self.estimators_)):
@@ -255,9 +238,9 @@ class ElasticEnsemble(BaseClassifier):
             # the second line of the output is free form and classifier-specific; usually this will record info
             # such as build time, paramater options used, any constituent model names for ensembles, etc.
             # file.write(str(self.estimators_[c].best_params_['metric_params'])+"\n")
-            self.proportion_train_in_param_finding
-            file.write(str(self.estimators_[c].metric_params) +",build_time," + str(self.constituent_build_times[c]) +",prop_of_param_options," + str(self.proportion_of_param_options) +
-                       ",prop_train_in_param_finding," + str(self.proportion_train_in_param_finding) + "\n")
+            self.prop_train_in_param_finding
+            file.write(str(self.estimators_[c].metric_params)+",build_time,"+str(self.constituent_build_times[c])+",prop_of_param_options," + str(self.prop_of_param_options) +
+                       ",prop_train_in_param_finding," + str(self.prop_train_in_param_finding)+"\n")
 
             # third line is training acc
             file.write(str(self.train_accs_by_classifier[c])+"\n")
@@ -302,18 +285,4 @@ class ElasticEnsemble(BaseClassifier):
         else:
             raise NotImplementedError("EE does not currently support: " + str(distance_measure))
 
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 
-if __name__ == "__main__":
-    from sktime.utils.load_data import load_from_tsfile_to_dataframe
-    dataset_name = "GunPoint"
-    train_x, train_y = load_from_tsfile_to_dataframe("C:/gpfs/home/sjx07ngu/TS_TSCProblems/"+dataset_name+"/"+dataset_name+"_TRAIN.ts")
-    ee = ElasticEnsemble(distance_measures=[dtw_c, lcss_c], proportion_of_param_options=0.01, verbose=1)
-    ee.fit(train_x.iloc[0:10], train_y[0:10])
-    print(ee.get_params())
-    print(ee.get_metric_params())
-    exit()
-    ee.get_train_probs()
