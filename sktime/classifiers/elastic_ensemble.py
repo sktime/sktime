@@ -301,19 +301,3 @@ class ElasticEnsemble(BaseClassifier):
         # elif distance_measure == twe_distance
         else:
             raise NotImplementedError("EE does not currently support: " + str(distance_measure))
-
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
-
-if __name__ == "__main__":
-    from sktime.utils.load_data import load_from_tsfile_to_dataframe
-    dataset_name = "GunPoint"
-    train_x, train_y = load_from_tsfile_to_dataframe("C:/gpfs/home/sjx07ngu/TS_TSCProblems/"+dataset_name+"/"+dataset_name+"_TRAIN.ts")
-    ee = ElasticEnsemble(distance_measures=[dtw_c, lcss_c], proportion_of_param_options=0.01, verbose=1)
-    ee.fit(train_x.iloc[0:10], train_y[0:10])
-    print(ee.get_params())
-    print(ee.get_metric_params())
-    exit()
-    ee.get_train_probs()
