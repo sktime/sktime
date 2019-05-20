@@ -1120,9 +1120,11 @@ class ProximityForest(BaseClassifier):
                     max_depth = self.max_depth,
                     label_encoder = self.label_encoder,
                     param_pool = self.param_pool,
+                    debug = self.debug,
                     pick_exemplars_method = self.pick_exemplars_method,
                     dimension = self.dimension,  # todo could randomise?
                     )
+
             # build tree on dataset
             tree.fit(X, y, input_checks = False)
             # append tree to tree list
