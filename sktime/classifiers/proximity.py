@@ -82,7 +82,7 @@ def get_default_gain_method():
     result : callable
         default gain method
     '''
-    return gini
+    return gini_gain
 
 
 def get_default_num_stump_evaluations():
@@ -141,7 +141,7 @@ def pure(y):
     return len(unique_class_labels) <= 1
 
 
-def gini(parent_class_labels, children_class_labels):
+def gini_gain(parent_class_labels, children_class_labels):
     '''
     get gini score of a split, i.e. the gain from parent to children
     ----
@@ -159,7 +159,7 @@ def gini(parent_class_labels, children_class_labels):
         and 1. 1 == pure, 0 == not pure
     '''
     # find gini for parent node
-    parent_score = gini_node(parent_class_labels)
+    parent_score = gini_purity(parent_class_labels)
     # find number of instances overall
     parent_num_instances = parent_class_labels.shape[0]
     # sum the children's gini scores
@@ -167,7 +167,7 @@ def gini(parent_class_labels, children_class_labels):
     for index in range(0, len(children_class_labels)):
         child_class_labels = children_class_labels[index]
         # find gini score for this child
-        child_score = gini_node(child_class_labels)
+        child_score = gini_purity(child_class_labels)
         # weight score by proportion of instances at child compared to parent
         child_size = len(child_class_labels)
         child_score *= (child_size / parent_num_instances)
@@ -178,7 +178,7 @@ def gini(parent_class_labels, children_class_labels):
     return score
 
 
-def gini_node(y):
+def gini_purity(y):
     '''
     get gini score at a specific node
     ----
@@ -548,7 +548,7 @@ class ProximityStump(BaseClassifier):
             self.branch_class_labels[index] = np.array(self.branch_class_labels[index])
             self.branch_instances[index] = DataFrame(self.branch_instances[index])
         # work out the gain for this split / stump
-        self.gain = self.gain_method(y, self.branch_class_labels)
+        self.gain = self.gain_method(self.remaining_class_labels, self.branch_class_labels)
         return self
 
     def exemplar_distances(self, X, input_checks = True): # todo is redundant?
@@ -840,6 +840,8 @@ class ProximityTree(BaseClassifier):
                             label_encoder = self.label_encoder,
                             param_pool = self.param_pool,
                             dimension = self.dimension,
+                            debug = self.debug,
+                            pick_exemplars_method = self.pick_exemplars_method,
                             )
                     # increment the level
                     tree.level = self.level + 1
