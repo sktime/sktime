@@ -158,10 +158,13 @@ def gini_gain(parent_class_labels, children_class_labels):
         gini score of the split from parent class labels to children. Note the gini score is scaled to be between 0
         and 1. 1 == pure, 0 == not pure
     '''
-    # find gini for parent node
-    parent_score = gini_purity(parent_class_labels)
     # find number of instances overall
     parent_num_instances = parent_class_labels.shape[0]
+    # if parent has no instances then is pure
+    if parent_num_instances == 0:
+        return 1
+    # find gini for parent node
+    parent_score = gini_purity(parent_class_labels)
     # sum the children's gini scores
     children_score_sum = 0
     for index in range(0, len(children_class_labels)):
@@ -204,8 +207,7 @@ def gini_purity(y):
             proportion = class_count / num_instances
             sq_proportion = np.math.pow(proportion, 2)
             score -= sq_proportion
-    # double score as gini is between 0 and 0.5, we need 0 and 1
-    score *= 2
+        score *= 2
     return score
 
 
@@ -925,8 +927,8 @@ class ProximityTree(BaseClassifier):
     def _get_best_stump(self, X, y):
         stumps = []
         for index in range(0, self.num_stump_evaluations):
-            split = self._pick_rand_stump(X, y)
-            stumps.append(split)
+            stump = self._pick_rand_stump(X, y)
+            stumps.append(stump)
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
         return best_stump
 
