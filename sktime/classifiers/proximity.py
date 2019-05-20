@@ -36,7 +36,7 @@ __author__ = "George Oastler"
 import numpy as np
 from numpy.ma import floor
 from pandas import DataFrame, Series
-from scipy.stats import randint, uniform
+from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
@@ -298,29 +298,32 @@ def get_all_distance_measures_param_pool(X, dimension):
     param_pool = [
             {
                     ProximityStump.get_distance_measure_key(): [dtw_distance],
-                    'w'                                      : uniform(0, max_warping_window_percentage)
+                    'w'                                      : stats.uniform(0, max_warping_window_percentage)
                     },
             {
                     ProximityStump.get_distance_measure_key(): [ddtw_distance],
-                    'w'                                      : uniform(0, max_warping_window_percentage)
+                    'w'                                      : stats.uniform(0, max_warping_window_percentage)
                     },
             {
                     ProximityStump.get_distance_measure_key(): [wdtw_distance],
-                    'g'                                      : uniform(0, 1)
+                    'g'                                      : stats.uniform(0, 1)
                     },
             {
                     ProximityStump.get_distance_measure_key(): [wddtw_distance],
-                    'g'                                      : uniform(0, 1)
+                    'g'                                      : stats.uniform(0, 1)
                     },
             {
                     ProximityStump.get_distance_measure_key(): [lcss_distance],
-                    'epsilon'                                : uniform(0.2 * stdp, stdp),
-                    'delta'                                  : randint(low = 0, high = max_raw_warping_window)
+                    'epsilon'                                : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+                    'delta'                                  : stats.randint(low = 0, high = max_raw_warping_window +
+                                                                                             1) # scipy stats randint
+                    # is exclusive on the max value, hence + 1
                     },
             {
                     ProximityStump.get_distance_measure_key(): [erp_distance],
-                    'g'                                      : uniform(0.2 * stdp, 0.8 * stdp),
-                    'band_size'                              : randint(low = 0, high = max_raw_warping_window)
+                    'g'                                      : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+                    'band_size'                              : stats.randint(low = 0, high = max_raw_warping_window + 1)
+                    # scipy stats randint is exclusive on the max value, hence + 1
                     },
             # {Split.get_distance_measure_key(): [twe_distance],
             #  'g': uniform(0.2 * stdp, 0.8 * stdp),
