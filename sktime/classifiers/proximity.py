@@ -247,8 +247,8 @@ def pick_one_exemplar_per_class(X, y, random_state):
     unique_class_labels = np.unique(y)
     num_unique_class_labels = len(unique_class_labels)
     chosen_instances = []
-    chosen_class_labels = np.empty(num_unique_class_labels, dtype = int)
-    chosen_indices = np.empty(num_unique_class_labels, dtype = int)
+    chosen_class_labels = []
+    chosen_indices = []
     # for each class randomly choose and instance
     for class_label_index in range(0, num_unique_class_labels):
         class_label = unique_class_labels[class_label_index]
@@ -261,8 +261,11 @@ def pick_one_exemplar_per_class(X, y, random_state):
         # record exemplar instance and class label
         instance = X.iloc[index, :]
         chosen_instances.append(instance)
-        chosen_class_labels[class_label_index] = class_label
-        chosen_indices[class_label_index] = index
+        chosen_class_labels.append(class_label)
+        chosen_indices.append(index)
+    # convert lists to numpy arrays
+    chosen_class_labels = np.array(chosen_class_labels, dtype=int)
+    chosen_indices = np.array(chosen_indices, dtype=int)
     # remove exemplar class labels from dataset - note this returns a copy, not inplace!
     remaining_class_labels = np.delete(y, chosen_indices)
     # remove exemplar instances from dataset - note this returns a copy, not inplace!
@@ -520,8 +523,6 @@ class ProximityStump(BaseClassifier):
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
             self.pick_exemplars_method(X, y, self.random_state)
-        # find distances of remaining instances to the exemplars
-        distances = self.exemplar_distances(self.remaining_instances)
         num_exemplars = len(self.exemplar_instances)
         self.branch_class_labels = []
         self.branch_instances = []
@@ -532,9 +533,9 @@ class ProximityStump(BaseClassifier):
         num_instances = self.remaining_instances.shape[0]
         # for each instance
         for instance_index in range(0, num_instances):
-            # find the distance to each exemplar
-            exemplar_distances = distances[instance_index]
             instance = self.remaining_instances.iloc[instance_index, :]
+            # find the distance to each exemplar
+            exemplar_distances = self.exemplar_distance_inst(instance, input_checks = False)
             class_label = self.remaining_class_labels[instance_index]
             # pick the closest exemplar (min distance)
             closest_exemplar_index = comparison.arg_min(exemplar_distances, self.random_state)
@@ -550,7 +551,7 @@ class ProximityStump(BaseClassifier):
         self.gain = self.gain_method(y, self.branch_class_labels)
         return self
 
-    def exemplar_distances(self, X, input_checks = True):
+    def exemplar_distances(self, X, input_checks = True): # todo is redundant?
         '''
         find the distance from the given instances to each exemplar instance
         ----
@@ -920,10 +921,10 @@ class ProximityTree(BaseClassifier):
         return self
 
     def _get_best_stump(self, X, y):
-        stumps = np.empty(self.num_stump_evaluations, dtype = object)
+        stumps = []
         for index in range(0, self.num_stump_evaluations):
             split = self._pick_rand_stump(X, y)
-            stumps[index] = split
+            stumps.append(split)
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
         return best_stump
 
@@ -933,6 +934,8 @@ class ProximityTree(BaseClassifier):
                                random_state = self.random_state,
                                gain_method = self.gain_method,
                                label_encoder = self.label_encoder,
+                               debug = self.debug,
+                               dimension = self.dimension,
                                param_perm = param_perm)
         stump.fit(X, y, input_checks = False)
         return stump
