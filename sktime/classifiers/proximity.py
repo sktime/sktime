@@ -44,6 +44,7 @@ from .base import BaseClassifier
 from ..distances import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
+from ..transformers.series_to_series import DerivativeSlopeTransformer
 from ..utils import comparison, dataset_properties
 from ..utils.transformations import tabularise
 from ..utils.validation import check_X_y
@@ -162,6 +163,9 @@ def gini_gain(parent_class_labels, children_class_labels):
     parent_num_instances = parent_class_labels.shape[0]
     # if parent has no instances then is pure
     if parent_num_instances == 0:
+        for child in children_class_labels:
+            if len(child) > 0:
+                raise ValueError('children populated but parent empty')
         return 1
     # find gini for parent node
     parent_score = gini_purity(parent_class_labels)
@@ -178,6 +182,8 @@ def gini_gain(parent_class_labels, children_class_labels):
         children_score_sum += child_score
     # gini outputs relative improvement
     score = parent_score - children_score_sum
+    # scale between 0 and 1
+    score *= 2
     return score
 
 
@@ -202,24 +208,14 @@ def gini_purity(y):
         # count each class
         unique_class_labels, class_counts = np.unique(y, return_counts = True)
         # subtract class entropy from current score for each class
-        for index in range(0, len(unique_class_labels)):
-            class_count = class_counts[index]
-            proportion = class_count / num_instances
-            sq_proportion = np.math.pow(proportion, 2)
-            score -= sq_proportion
-        score *= 2
-    return score
-
-
-# todo info gain
-def information_gain(parent_class_labels, children_class_labels):
-    raise NotImplementedError()
-
-
-# todo chi sq
-def chi_squared(parent_class_labels, children_class_labels):
-    raise NotImplementedError()
-
+        class_counts = np.divide(class_counts, num_instances)
+        class_counts = np.power(class_counts, 2)
+        sum = np.sum(class_counts)
+        score -= sum
+        return score
+    else:
+        # y is empty, therefore considered pure
+        return 0
 
 def pick_one_exemplar_per_class(X, y, random_state):
     '''
@@ -234,7 +230,7 @@ def pick_one_exemplar_per_class(X, y, random_state):
     ----
     Returns
     ----
-    chosen_instances : panda dataframe
+    chosen_instances : list of panda series
         the chosen exemplar instances
     chosen_class_labels : numpy 1d array
         array of class labels corresponding to the exemplar instances
@@ -299,6 +295,10 @@ def get_all_distance_measures_param_pool(X, dimension):
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
+    derivative_transformer = DerivativeSlopeTransformer()
+    num_dimensions = 1 # todo
+
+
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
     param_pool = [
             {
@@ -306,7 +306,8 @@ def get_all_distance_measures_param_pool(X, dimension):
                     'w'                                      : stats.uniform(0, max_warping_window_percentage)
                     },
             {
-                    ProximityStump.get_distance_measure_key(): [ddtw_distance],
+                    ProximityStump.get_distance_measure_key(): [dtw_distance],
+                    # ProximityStump.get_transformer_key():   ,
                     'w'                                      : stats.uniform(0, max_warping_window_percentage)
                     },
             {
@@ -314,11 +315,13 @@ def get_all_distance_measures_param_pool(X, dimension):
                     'g'                                      : stats.uniform(0, 1)
                     },
             {
-                    ProximityStump.get_distance_measure_key(): [wddtw_distance],
+                    ProximityStump.get_distance_measure_key(): [wdtw_distance],
+                    # ProximityStump.get_transformer_key():   DerivativeSlopeTransformer(),
                     'g'                                      : stats.uniform(0, 1)
                     },
             {
                     ProximityStump.get_distance_measure_key(): [lcss_distance],
+                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
                     'epsilon'                                : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
                     'delta'                                  : stats.randint(low = 0, high = max_raw_warping_window +
                                                                                              1) # scipy stats randint
@@ -326,6 +329,7 @@ def get_all_distance_measures_param_pool(X, dimension):
                     },
             {
                     ProximityStump.get_distance_measure_key(): [erp_distance],
+                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
                     'g'                                      : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
                     'band_size'                              : stats.randint(low = 0, high = max_raw_warping_window + 1)
                     # scipy stats randint is exclusive on the max value, hence + 1
@@ -335,6 +339,7 @@ def get_all_distance_measures_param_pool(X, dimension):
             #  'band_size': randint(low=0, high=max_raw_warping_window)},
             {
                     ProximityStump.get_distance_measure_key(): [msm_distance],
+                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
                     'c'                                      : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
                                                                 0.03625, 0.04, 0.04375, 0.0475, 0.05125,
                                                                 0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
@@ -477,6 +482,19 @@ class ProximityStump(BaseClassifier):
             key for the distance measure for the param_perm dict
         '''
         return 'dm'
+
+    # @staticmethod
+    # def get_transformer_key():
+    #     '''
+    #     get the key for the transformer. This key is required for picking the transformer out of the
+    #     param_perm constructor parameter.
+    #     ----
+    #     Returns
+    #     ----
+    #     key : string
+    #         key for the transformer for the param_perm dict
+    #     '''
+    #     return 'transformer'
 
     def fit(self, X, y, input_checks = True):
         '''
@@ -1124,7 +1142,6 @@ class ProximityForest(BaseClassifier):
                     pick_exemplars_method = self.pick_exemplars_method,
                     dimension = self.dimension,  # todo could randomise?
                     )
-
             # build tree on dataset
             tree.fit(X, y, input_checks = False)
             # append tree to tree list
