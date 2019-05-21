@@ -1,8 +1,71 @@
 import numpy as np
+import pandas as pd
 from numpy import testing
 
-from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree
+from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree, pure, gini_purity, gini_gain, pick_one_exemplar_per_class
 from sktime.datasets import load_gunpoint
+
+
+def test_pure_pure():
+    arr = np.array([1,1,1,1,1])
+    is_pure = pure(arr)
+    testing.assert_equal(is_pure, True)
+
+def test_pure_impure():
+    arr = np.array([1, 2, 3, 4, 5])
+    is_pure = pure(arr)
+    testing.assert_equal(is_pure, False)
+
+def test_pure_empty():
+    arr = np.array([])
+    is_pure = pure(arr)
+    testing.assert_equal(is_pure, True)
+
+def test_gini_purity_impure():
+    arr = np.array([1,1,1,2,2,2])
+    gini_score = gini_purity(arr)
+    testing.assert_equal(gini_score, 0.5)
+
+def test_gini_purity_pure():
+    arr = np.array([1,1,1,1,1,1])
+    gini_score = gini_purity(arr)
+    testing.assert_equal(gini_score, 0)
+
+def test_gini_purity_empty():
+    arr = np.array([])
+    gini_score = gini_purity(arr)
+    testing.assert_equal(gini_score, 0)
+
+def test_gini_gain_max():
+    parent = np.array([1,1,1,2,2,2])
+    children = [np.array([1,1,1]), np.array([2,2,2])]
+    result = gini_gain(parent, children)
+    testing.assert_equal(result, 1)
+
+def test_gini_gain_min():
+    parent = np.array([1,1,1,1,2,2,2,2])
+    children = [np.array([1,1,2,2]), np.array([1,1,2,2])]
+    result = gini_gain(parent, children)
+    testing.assert_equal(result, 0)
+
+def test_gini_gain_empty():
+    parent = np.array([])
+    children = [np.array([]), np.array([])]
+    result = gini_gain(parent, children)
+    testing.assert_equal(result, 1)
+
+def test_pick_one_exemplar_per_class():
+    X = pd.DataFrame([1, 2, 3, 4, 5])
+    random_state = np.random.RandomState(0)
+    y = [1,1,2,3,2]
+    chosen_instances, chosen_class_labels, remaining_instances, remaining_class_labels = pick_one_exemplar_per_class(
+            X, y, random_state)
+    testing.assert_array_equal(chosen_class_labels, [1, 2, 3])
+    testing.assert_array_equal(remaining_class_labels, [1, 2])
+    expected_chosen_instances = [X.iloc[0,:], X.iloc[4,:], X.iloc[3,:]]
+    testing.assert_array_equal(chosen_instances, expected_chosen_instances)
+    expected_remaining_instances = X.drop([0, 4, 3])
+    assert remaining_instances.equals(expected_remaining_instances)
 
 
 def run_classifier_on_dataset(classifier, dataset_loader,
@@ -16,18 +79,17 @@ def run_classifier_on_dataset(classifier, dataset_loader,
     predictions = classifier.predict(X_test)
     testing.assert_array_equal(predictions, expected_predictions)
 
-
-def test_proximity_forest_on_gunpoint():
+def big_test_proximity_forest_on_gunpoint():
     classifier = ProximityForest(debug = True, random_state = 0, num_trees = 10, num_stump_evaluations = 5)
     run_classifier_on_dataset(classifier, load_gunpoint, forest_gunpoint_predict_probas, forest_gunpoint_predictions)
 
 
-def test_proximity_tree_on_gunpoint():
+def big_test_proximity_tree_on_gunpoint():
     classifier = ProximityTree(debug = True, random_state = 0, num_stump_evaluations = 5)
     run_classifier_on_dataset(classifier, load_gunpoint, tree_gunpoint_predict_probas, tree_gunpoint_predictions)
 
 
-def test_proximity_stump_on_gunpoint():
+def big_test_proximity_stump_on_gunpoint():
     classifier = ProximityStump(debug = True, random_state = 0)
     run_classifier_on_dataset(classifier, load_gunpoint, stump_gunpoint_predict_probas, stump_gunpoint_predictions)
 
