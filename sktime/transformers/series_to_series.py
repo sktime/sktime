@@ -3,7 +3,7 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, concat_nested_arrays
+from ..utils.transformations import tabularize, concat_nested_arrays, tabularise
 from .base import BaseTransformer
 
 
@@ -318,3 +318,100 @@ class DerivativeSlopeTransformer(BaseTransformer):
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
+
+class CachedCythonDistanceMeasureTransformer(BaseTransformer):
+
+    def __init__(self):
+        self.cache = {} # todo clear caches
+
+    def clear(self):
+        self.cache = {}
+
+    def transform_inst(self, X):
+        hash = id(X)
+        try:
+            X = self.cache[hash]
+        except:
+            # flatten both instances and transpose for cython distance measure format
+            X = tabularise(X, return_array = True) # todo use specific dimension rather than whole thing?
+            X = np.transpose(X)
+            self.cache[hash] = X
+        return X
+
+    def transform(self, X, y=None) : # todo base class, redundant code reuse
+        if isinstance(X, pd.Series):
+            X = self.transform_inst(X)
+        elif isinstance(X, pd.DataFrame):
+            transformed = []
+            num_instances = X.shape[0]
+            for instance_index in range(0, num_instances):
+                instance = X.iloc[instance_index, :]
+                instance = self.transform_inst(instance)
+                transformed.append(instance)
+            transformed = pd.DataFrame(transformed)
+            X = transformed
+        return X
+
+class CachedDerivativeSlopeTransformer(BaseTransformer):
+
+    def __init__(self):
+        self.cache = {}
+
+    def clear(self):
+        self.cache = {}
+
+    def transform_inst(self, X):
+        hash = id(X)
+        try:
+            X = self.cache[hash]
+        except:
+            X = X.copy()
+            num_dimensions = X.shape[0]
+            for dimension_index in range(0, num_dimensions):
+                der = []
+                x = X.iloc[dimension_index]
+                for i in range(1, len(x) - 1):
+                    der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+                x = pd.Series([der[0]] + der + [der[-1]])
+                X[dimension_index] = x
+            self.cache[hash] = X
+        return X
+
+    def transform(self, X, y=None):
+        if isinstance(X, pd.Series):
+            X = self.transform_inst(X)
+        elif isinstance(X, pd.DataFrame):
+            transformed = []
+            num_instances = X.shape[0]
+            for instance_index in range(0, num_instances):
+                instance = X.iloc[instance_index, :]
+                instance = self.transform_inst(instance)
+                transformed.append(instance)
+            transformed = pd.DataFrame(transformed)
+            X = transformed
+        return X
+
+    # def cached_transform(distance_measure):
+    #     cache = {}
+    #
+    #     def transform(instance):
+    #
+    #
+    #     def distance(instance_a, instance_b, params, input_checks = True):
+    #         if input_checks:
+    #             if not isinstance(instance_a, Series):
+    #                 raise ValueError("instance not a panda series")
+    #             if not isinstance(instance_b, Series):
+    #                 raise ValueError("instance not a panda series")
+    #         # transform instance if needed
+    #         instance_a = transform(instance_a)
+    #         instance_b = transform(instance_b)
+    #         # flatten both instances and transpose for cython parameter format
+    #         instance_a = tabularise(instance_a, return_array = True)
+    #         instance_b = tabularise(instance_b, return_array = True)
+    #         instance_a = np.transpose(instance_a)
+    #         instance_b = np.transpose(instance_b)
+    #         # find distance
+    #         distance = distance_measure(instance_a, instance_b, **params)
+    #         return distance
+    #     return distance

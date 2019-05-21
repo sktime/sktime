@@ -42,11 +42,10 @@ from sklearn.utils import check_random_state
 
 from .base import BaseClassifier
 from ..distances import (
-    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
+    dtw_distance, erp_distance, lcss_distance, msm_distance, wdtw_distance,
     )
-from ..transformers.series_to_series import DerivativeSlopeTransformer
+from ..transformers.series_to_series import CachedDerivativeSlopeTransformer, CachedCythonDistanceMeasureTransformer
 from ..utils import comparison, dataset_properties
-from ..utils.transformations import tabularise
 from ..utils.validation import check_X_y
 
 
@@ -217,6 +216,7 @@ def gini_purity(y):
         # y is empty, therefore considered pure
         return 0
 
+
 def pick_one_exemplar_per_class(X, y, random_state):
     '''
     pick one random exemplar instance per class
@@ -262,8 +262,8 @@ def pick_one_exemplar_per_class(X, y, random_state):
         chosen_class_labels.append(class_label)
         chosen_indices.append(index)
     # convert lists to numpy arrays
-    chosen_class_labels = np.array(chosen_class_labels, dtype=int)
-    chosen_indices = np.array(chosen_indices, dtype=int)
+    chosen_class_labels = np.array(chosen_class_labels, dtype = int)
+    chosen_indices = np.array(chosen_indices, dtype = int)
     # remove exemplar class labels from dataset - note this returns a copy, not inplace!
     remaining_class_labels = np.delete(y, chosen_indices)
     # remove exemplar instances from dataset - note this returns a copy, not inplace!
@@ -295,70 +295,70 @@ def get_all_distance_measures_param_pool(X, dimension):
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
-    derivative_transformer = DerivativeSlopeTransformer()
-    num_dimensions = 1 # todo
-
-
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
+    derivative_transformer = CachedDerivativeSlopeTransformer()
+    cython_transformer = CachedCythonDistanceMeasureTransformer()
+    dm_key = ProximityStump.get_distance_measure_key()
+    tf_key = ProximityStump.get_transformers_key()
+    num_dimensions = 0 # todo use other dimensions
     param_pool = [
             {
-                    ProximityStump.get_distance_measure_key(): [dtw_distance],
-                    'w'                                      : stats.uniform(0, max_warping_window_percentage)
+                    dm_key: [dtw_distance],
+                    tf_key: [
+                            # cython_transformer,
+                            [derivative_transformer, cython_transformer]],
+                    'w'   : stats.uniform(0, max_warping_window_percentage)
                     },
-            {
-                    ProximityStump.get_distance_measure_key(): [dtw_distance],
-                    # ProximityStump.get_transformer_key():   ,
-                    'w'                                      : stats.uniform(0, max_warping_window_percentage)
-                    },
-            {
-                    ProximityStump.get_distance_measure_key(): [wdtw_distance],
-                    'g'                                      : stats.uniform(0, 1)
-                    },
-            {
-                    ProximityStump.get_distance_measure_key(): [wdtw_distance],
-                    # ProximityStump.get_transformer_key():   DerivativeSlopeTransformer(),
-                    'g'                                      : stats.uniform(0, 1)
-                    },
-            {
-                    ProximityStump.get_distance_measure_key(): [lcss_distance],
-                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
-                    'epsilon'                                : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-                    'delta'                                  : stats.randint(low = 0, high = max_raw_warping_window +
-                                                                                             1) # scipy stats randint
-                    # is exclusive on the max value, hence + 1
-                    },
-            {
-                    ProximityStump.get_distance_measure_key(): [erp_distance],
-                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
-                    'g'                                      : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-                    'band_size'                              : stats.randint(low = 0, high = max_raw_warping_window + 1)
-                    # scipy stats randint is exclusive on the max value, hence + 1
-                    },
-            # {Split.get_distance_measure_key(): [twe_distance],
-            #  'g': uniform(0.2 * stdp, 0.8 * stdp),
-            #  'band_size': randint(low=0, high=max_raw_warping_window)},
-            {
-                    ProximityStump.get_distance_measure_key(): [msm_distance],
-                    # 'dim_to_use': stats.randint(low=0, high = num_dimensions),
-                    'c'                                      : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
-                                                                0.03625, 0.04, 0.04375, 0.0475, 0.05125,
-                                                                0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
-                                                                0.08125, 0.085, 0.08875, 0.0925, 0.09625,
-                                                                0.1, 0.136, 0.172, 0.208,
-                                                                0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
-                                                                0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
-                                                                0.784, 0.82, 0.856,
-                                                                0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
-                                                                3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
-                                                                6.04, 6.4, 6.76, 7.12,
-                                                                7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
-                                                                20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
-                                                                49.6, 53.2, 56.8, 60.4,
-                                                                64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
-                                                                100]
-                    },
+            # {
+            #         dm_key: [wdtw_distance],
+            #         tf_key: [cython_transformer, [derivative_transformer, cython_transformer]],
+            #         'g'   : stats.uniform(0,
+            #                               1)
+            #         },
+            # {
+            #         dm_key      : [lcss_distance],
+            #         tf_key: [cython_transformer],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+            #         'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
+            #                                                     1)  # scipy stats randint
+            #         # is exclusive on the max value, hence + 1
+            #         },
+            # {
+            #         dm_key      : [erp_distance],
+            #         tf_key: [cython_transformer],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+            #         'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
+            #         # scipy stats randint is exclusive on the max value, hence + 1
+            #         },
+            # # {dm_key: [{dm_key:twe_distance}], # todo twe
+            # #  'g': uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+            # #  'band_size': randint(low=0, high=max_raw_warping_window)},
+            # {
+            #         dm_key: [msm_distance],
+            #         tf_key: [cython_transformer],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
+            #                        0.03625, 0.04, 0.04375, 0.0475, 0.05125,
+            #                        0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
+            #                        0.08125, 0.085, 0.08875, 0.0925, 0.09625,
+            #                        0.1, 0.136, 0.172, 0.208,
+            #                        0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
+            #                        0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
+            #                        0.784, 0.82, 0.856,
+            #                        0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
+            #                        3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
+            #                        6.04, 6.4, 6.76, 7.12,
+            #                        7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
+            #                        20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
+            #                        49.6, 53.2, 56.8, 60.4,
+            #                        64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
+            #                        100]
+            #         },
             ]
     return param_pool
+
 
 def get_default_param_perm(X, dimension):
     '''
@@ -469,6 +469,7 @@ class ProximityStump(BaseClassifier):
         self.debug = debug
         self.label_encoder = label_encoder
         self.classes_ = None
+        self.transformers = None
 
     @staticmethod
     def get_distance_measure_key():
@@ -483,18 +484,18 @@ class ProximityStump(BaseClassifier):
         '''
         return 'dm'
 
-    # @staticmethod
-    # def get_transformer_key():
-    #     '''
-    #     get the key for the transformer. This key is required for picking the transformer out of the
-    #     param_perm constructor parameter.
-    #     ----
-    #     Returns
-    #     ----
-    #     key : string
-    #         key for the transformer for the param_perm dict
-    #     '''
-    #     return 'transformer'
+    @staticmethod
+    def get_transformers_key():
+        '''
+        get the key for the transformer. This key is required for picking the transformer out of the
+        param_perm constructor parameter.
+        ----
+        Returns
+        ----
+        key : string
+            key for the transformer for the param_perm dict
+        '''
+        return 'transformers'
 
     def fit(self, X, y, input_checks = True):
         '''
@@ -533,12 +534,19 @@ class ProximityStump(BaseClassifier):
             y = self.label_encoder.transform(y)
         # if distance measure not extracted from parameter permutation
         if self.distance_measure is None:
-            key = self.get_distance_measure_key()  # get the key for the distance measure var in the param perm dict
-            self.distance_measure = self.param_perm[key]
+            distance_measure_key = self.get_distance_measure_key()  # get the key for the distance measure var in the
+            # param perm dict
+            transformer_key = self.get_transformers_key()  # get the key for the distance measure var in the param
+            # perm dict
+            self.distance_measure = self.param_perm[distance_measure_key]
+            self.transformers = self.param_perm[transformer_key]
+            if not isinstance(self.transformers, list):
+                self.transformers = [self.transformers]
             # copy so not available to outside world
             self.distance_measure_param_perm = self.param_perm.copy()
-            # delete as we don't want to pass the distance measure as a parameter to itself!
-            del self.distance_measure_param_perm[key]
+            # delete as we don't want to pass the distance measure or transformer as a parameter to itself!
+            del self.distance_measure_param_perm[distance_measure_key]
+            del self.distance_measure_param_perm[transformer_key]
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -571,7 +579,7 @@ class ProximityStump(BaseClassifier):
         self.gain = self.gain_method(self.remaining_class_labels, self.branch_class_labels)
         return self
 
-    def exemplar_distances(self, X, input_checks = True): # todo is redundant?
+    def exemplar_distances(self, X, input_checks = True):  # todo is redundant?
         '''
         find the distance from the given instances to each exemplar instance
         ----
@@ -685,21 +693,11 @@ class ProximityStump(BaseClassifier):
                 raise ValueError("instance not a panda series")
             if not isinstance(instance_b, Series):
                 raise ValueError("instance not a panda series")
-        # flatten both instances and transpose for cython parameter format
-        instance_a = tabularise(instance_a, return_array = True)
-        instance_b = tabularise(instance_b, return_array = True)
-        instance_a = np.transpose(instance_a)
-        instance_b = np.transpose(instance_b)
+        for transformer in self.transformers:
+            instance_a = transformer.transform(instance_a)
+            instance_b = transformer.transform(instance_b)
         # find distance
-        params = self.distance_measure_param_perm
-        # if distance measure uses dimension
-        if self.distance_measure == msm_distance or self.distance_measure == lcss_distance or self.distance_measure \
-                == erp_distance:
-            # copy the parameters
-            params = params.copy()
-            # add the dimension to use
-            params['dim_to_use'] = self.dimension
-        return self.distance_measure(instance_a, instance_b, **params)
+        return self.distance_measure(instance_a, instance_b, **self.distance_measure_param_perm)
 
 
 class ProximityTree(BaseClassifier):
@@ -962,6 +960,7 @@ class ProximityTree(BaseClassifier):
         stump.fit(X, y, input_checks = False)
         return stump
 
+
 def _pick_param_permutation(param_pool, random_state):
     '''
     pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
@@ -986,11 +985,11 @@ def _pick_param_permutation(param_pool, random_state):
         # if it is a list
         if isinstance(param_values, list):
             # randomly pick a value
-            param_value = random_state.choice(param_values)
+            param_value = param_values[random_state.randint(len(param_values))]
             # if the value is another dict then get a random parameter permutation from that dict (recursive over
             # 2 funcs)
-            if isinstance(param_value, dict):
-                param_value = _get_rand_param_perm(param_value)
+            # if isinstance(param_value, dict): # no longer require recursive param perms
+            #     param_value = _pick_param_permutation(param_value, random_state)
         # else if parameter is a distribution
         elif hasattr(param_values, 'rvs'):
             # sample from the distribution
@@ -1001,6 +1000,7 @@ def _pick_param_permutation(param_pool, random_state):
         # add parameter name and value to permutation
         param_perm[param_name] = param_value
     return param_perm
+
 
 def _get_rand_param_perm(params, random_state):
     '''
@@ -1021,6 +1021,7 @@ def _get_rand_param_perm(params, random_state):
     param_pool = random_state.choice(params)
     permutation = _pick_param_permutation(param_pool, random_state)
     return permutation
+
 
 class ProximityForest(BaseClassifier):
     '''
