@@ -42,9 +42,9 @@ from sklearn.utils import check_random_state
 
 from .base import BaseClassifier
 from ..distances import (
-    dtw_distance, erp_distance, lcss_distance, msm_distance, wdtw_distance,
+    dtw_distance, erp_distance, lcss_distance, msm_distance, wdtw_distance, twe_distance,
     )
-from ..transformers.series_to_series import DerivativeTransformer, DerivativeSlopeTransformer, CachedTransformer
+from ..transformers.series_to_series import DerivativeSlopeTransformer, CachedTransformer
 from ..utils import comparison, dataset_properties
 from ..utils.validation import check_X_y
 from ..utils.transformations import tabularise
@@ -297,63 +297,69 @@ def get_all_distance_measures_param_pool(X, dimension):
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
-    cached_derivative_transformer = CachedTransformer(DerivativeSlopeTransformer())
+    derivative_transformer = DerivativeSlopeTransformer()
     dm_key = ProximityStump.get_distance_measure_key()
     tf_key = ProximityStump.get_transformer_key()
-    num_dimensions = 1 # todo use other dimensions
+    num_dimensions = 1  # todo use other dimensions
     param_pool = [
             {
                     dm_key: [dtw_distance],
                     tf_key: [
-                            # None,
-                            cached_derivative_transformer
+                            None,
+                            derivative_transformer
                             ],
                     'w'   : stats.uniform(0, max_warping_window_percentage)
                     },
-            # {
-            #         dm_key: [wdtw_distance],
-            #         tf_key: [None, cached_derivative_transformer],
-            #         'g'   : stats.uniform(0,
-            #                               1)
-            #         },
-            # {
-            #         dm_key      : [lcss_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-            #         'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
-            #                                                     1)  # scipy stats randint
-            #         # is exclusive on the max value, hence + 1
-            #         },
-            # {
-            #         dm_key      : [erp_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-            #         'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
-            #         # scipy stats randint is exclusive on the max value, hence + 1
-            #         },
-            # # {dm_key: [{dm_key:twe_distance}], # todo twe
-            # #  'g': uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-            # #  'band_size': randint(low=0, high=max_raw_warping_window)},
-            # {
-            #         dm_key: [msm_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
-            #                        0.03625, 0.04, 0.04375, 0.0475, 0.05125,
-            #                        0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
-            #                        0.08125, 0.085, 0.08875, 0.0925, 0.09625,
-            #                        0.1, 0.136, 0.172, 0.208,
-            #                        0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
-            #                        0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
-            #                        0.784, 0.82, 0.856,
-            #                        0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
-            #                        3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
-            #                        6.04, 6.4, 6.76, 7.12,
-            #                        7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
-            #                        20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
-            #                        49.6, 53.2, 56.8, 60.4,
-            #                        64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
-            #                        100]
-            #         },
+            {
+                    dm_key: [wdtw_distance],
+                    tf_key: [
+                            None,
+                            derivative_transformer
+                            ],
+                    'g'   : stats.uniform(0,
+                                          1)
+                    },
+            {
+                    dm_key      : [lcss_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+                    'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
+                                                                1)  # scipy stats randint
+                    # is exclusive on the max value, hence + 1
+                    },
+            {
+                    dm_key      : [erp_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+                    'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
+                    # scipy stats randint is exclusive on the max value, hence + 1
+                    },
+            {
+                    dm_key     : [twe_distance],
+                    'penalty'  : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
+                                  0.077777778, 0.088888889, 0.1],
+                    'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+                    },
+            {
+                    dm_key      : [msm_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
+                                   0.03625, 0.04, 0.04375, 0.0475, 0.05125,
+                                   0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
+                                   0.08125, 0.085, 0.08875, 0.0925, 0.09625,
+                                   0.1, 0.136, 0.172, 0.208,
+                                   0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
+                                   0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
+                                   0.784, 0.82, 0.856,
+                                   0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
+                                   3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
+                                   6.04, 6.4, 6.76, 7.12,
+                                   7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
+                                   20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
+                                   49.6, 53.2, 56.8, 60.4,
+                                   64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
+                                   100]
+                    },
             ]
     return param_pool
 
@@ -537,7 +543,12 @@ class ProximityStump(BaseClassifier):
             transformer_key = self.get_transformer_key()  # get the key for the distance measure var in the param
             # perm dict
             self.distance_measure = self.param_perm[distance_measure_key]
-            self.transformer = self.param_perm.get(transformer_key, None)
+            try:
+                self.transformer = self.param_perm[transformer_key]
+            except:
+                self.transformer = None
+            if not isinstance(self.transformer, CachedTransformer) and self.transformer != None:
+                self.transformer = CachedTransformer(self.transformer)
             # copy so not available to outside world
             self.distance_measure_param_perm = self.param_perm.copy()
             # delete as we don't want to pass the distance measure or transformer as a parameter to itself!
@@ -550,7 +561,8 @@ class ProximityStump(BaseClassifier):
                             self.distance_measure_param_perm))
             except:
                 if self.debug:
-                    print('building stump using' + self.distance_measure.__name__ + str(self.distance_measure_param_perm))
+                    print('building stump using ' + self.distance_measure.__name__ + str(
+                            self.distance_measure_param_perm))
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -567,7 +579,7 @@ class ProximityStump(BaseClassifier):
         for instance_index in range(0, num_instances):
             instance = self.remaining_instances.iloc[instance_index, :]
             # find the distance to each exemplar
-            exemplar_distances = self.exemplar_distance_inst(instance, input_checks = False)
+            exemplar_distances = self._exemplar_distance_inst(instance, input_checks = False)
             class_label = self.remaining_class_labels[instance_index]
             # pick the closest exemplar (min distance)
             closest_exemplar_index = comparison.arg_min(exemplar_distances, self.random_state)
@@ -583,7 +595,7 @@ class ProximityStump(BaseClassifier):
         self.gain = self.gain_method(self.remaining_class_labels, self.branch_class_labels)
         return self
 
-    def exemplar_distances(self, X, input_checks = True):  # todo is redundant?
+    def _exemplar_distances(self, X, input_checks = True):  # todo is redundant?
         '''
         find the distance from the given instances to each exemplar instance
         ----
@@ -608,12 +620,12 @@ class ProximityStump(BaseClassifier):
         for instance_index in range(0, num_instances):
             # find the distances to each exemplar
             instance = X.iloc[instance_index, :]
-            distances_inst = self.exemplar_distance_inst(instance, input_checks = False)
+            distances_inst = self._exemplar_distance_inst(instance, input_checks = False)
             # add distances to the list (at the corresponding index to the instance being tested)
             distances.append(distances_inst)
         return distances
 
-    def exemplar_distance_inst(self, instance, input_checks = True):
+    def _exemplar_distance_inst(self, instance, input_checks = True):
         '''
         find the distance from the given instance to each exemplar instance. Note this returns distance + 1 for
         efficiency in other methods.
@@ -666,8 +678,11 @@ class ProximityStump(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
+        indices = np.negative(X.index)
+        indices -= 1
+        X.index = indices
         # find distances to each exemplar for each test instance
-        distances = self.exemplar_distances(X, input_checks = False)
+        distances = self._exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
         ones = np.ones(distances.shape)
         distributions = np.divide(ones, distances)
@@ -804,6 +819,7 @@ class ProximityTree(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
+        X.index = np.negative(X.index)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -815,7 +831,7 @@ class ProximityTree(BaseClassifier):
             # traverse the tree
             while tree:
                 # find the distances to each exemplar
-                distances = tree.stump.exemplar_distance_inst(instance)
+                distances = tree.stump._exemplar_distance_inst(instance)
                 # find closest exemplar
                 closest_exemplar_index = comparison.arg_min(distances, tree.random_state)
                 # move to the tree corresponding to the closest exemplar
@@ -1185,6 +1201,7 @@ class ProximityForest(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
+        X.index = np.negative(X.index)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
