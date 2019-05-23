@@ -540,14 +540,17 @@ class ProximityStump(BaseClassifier):
             self.transformer = self.param_perm.get(transformer_key, None)
             # copy so not available to outside world
             self.distance_measure_param_perm = self.param_perm.copy()
-            print(self.distance_measure.__name__)
             # delete as we don't want to pass the distance measure or transformer as a parameter to itself!
             del self.distance_measure_param_perm[distance_measure_key]
             # remove the transformer
             try:
                 del self.distance_measure_param_perm[transformer_key]
+                if self.debug:
+                    print('building stump using d' + self.distance_measure.__name__ + str(
+                            self.distance_measure_param_perm))
             except:
-                pass
+                if self.debug:
+                    print('building stump using' + self.distance_measure.__name__ + str(self.distance_measure_param_perm))
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -954,6 +957,11 @@ class ProximityTree(BaseClassifier):
             stump = self._pick_rand_stump(X, y)
             stumps.append(stump)
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
+        if self.debug:
+            print('best stump: ', end = '')
+            if best_stump.transformer:
+                print('d', end = '')
+            print(best_stump.distance_measure.__name__ + str(best_stump.distance_measure_param_perm))
         return best_stump
 
     def _pick_rand_stump(self, X, y):
