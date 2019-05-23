@@ -290,17 +290,17 @@ def get_all_distance_measures_param_pool(X, dimension):
         format as sklearn's GridSearchCV parameters
     '''
     # find dataset properties
-    instance_length = dataset_properties.max_instance_length(X,
-                                                             dimension)  # todo should this use the max instance
+    num_dimensions = 1  # todo use other dimensions
+    instance_length = dataset_properties.max_instance_length(X, 0)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
     derivative_transformer = DerivativeSlopeTransformer()
+    # get keys for dict
     dm_key = ProximityStump.get_distance_measure_key()
     tf_key = ProximityStump.get_transformer_key()
-    num_dimensions = 1  # todo use other dimensions
     param_pool = [
             {
                     dm_key: [dtw_distance],
@@ -408,8 +408,8 @@ class ProximityStump(BaseClassifier):
         a label encoder, can be pre-populated
     random_state : numpy RandomState
         a random state for sampling random numbers
-    debug : boolean
-        whether to print debug info
+    verbosity : int
+        level of verbosity in output
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
     ----
@@ -453,13 +453,15 @@ class ProximityStump(BaseClassifier):
                  label_encoder = None,
                  dimension = get_default_dimension(),
                  random_state = None,
-                 debug = False):
+                 verbosity = 0):
         super().__init__()
         self.random_state = random_state
         self.param_perm = param_perm
         self.dimension = dimension
         self.gain_method = gain_method
         self.pick_exemplars_method = pick_exemplars_method
+        self.verbosity = verbosity
+        self.label_encoder = label_encoder
         # vars set in the fit method
         self.exemplar_instances = None
         self.exemplar_class_labels = None
@@ -470,8 +472,6 @@ class ProximityStump(BaseClassifier):
         self.distance_measure_param_perm = None
         self.distance_measure = None
         self.gain = None
-        self.debug = debug
-        self.label_encoder = label_encoder
         self.classes_ = None
         self.transformer = None
 
@@ -556,11 +556,11 @@ class ProximityStump(BaseClassifier):
             # remove the transformer
             try:
                 del self.distance_measure_param_perm[transformer_key]
-                if self.debug:
+                if self.verbosity > 0:
                     print('building stump using d' + self.distance_measure.__name__ + str(
                             self.distance_measure_param_perm))
             except:
-                if self.debug:
+                if self.verbosity > 0:
                     print('building stump using ' + self.distance_measure.__name__ + str(
                             self.distance_measure_param_perm))
         self.classes_ = self.label_encoder.classes_
@@ -745,8 +745,8 @@ class ProximityTree(BaseClassifier):
         a random state for sampling random numbers
     dimension : int
         dimension of the dataset to use. Defaults to zero for univariate datasets.
-    debug : boolean
-        whether to print debug info
+    verbosity : int
+        level of verbosity in output
     num_stump_evaluations : int
         the number of proximity stumps to produce at each node. Each stump has a random distance measure and distance
         measure parameter set. The stump with the best gain is used to split the data.
@@ -777,7 +777,7 @@ class ProximityTree(BaseClassifier):
                  max_depth = np.math.inf,
                  dimension = get_default_dimension(),
                  random_state = None,
-                 debug = False,
+                 verbosity = 0,
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
@@ -793,7 +793,7 @@ class ProximityTree(BaseClassifier):
         self.param_pool = param_pool
         self.dimension = dimension
         self.level = 0
-        self.debug = debug
+        self.verbosity = verbosity
         # vars set in the fit method
         self.branches = None
         self.stump = None
@@ -885,7 +885,7 @@ class ProximityTree(BaseClassifier):
                             label_encoder = self.label_encoder,
                             param_pool = self.param_pool,
                             dimension = self.dimension,
-                            debug = self.debug,
+                            verbosity = self.verbosity,
                             pick_exemplars_method = self.pick_exemplars_method,
                             )
                     # increment the level
@@ -971,13 +971,14 @@ class ProximityTree(BaseClassifier):
         stumps = []
         for index in range(0, self.num_stump_evaluations):
             stump = self._pick_rand_stump(X, y)
+            print('stump score: ' + str(stump.gain))
             stumps.append(stump)
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
-        if self.debug:
+        if self.verbosity > 0:
             print('best stump: ', end = '')
             if best_stump.transformer:
                 print('d', end = '')
-            print(best_stump.distance_measure.__name__ + str(best_stump.distance_measure_param_perm))
+            print(best_stump.distance_measure.__name__ + str(best_stump.distance_measure_param_perm) + ' with score ' + str(best_stump.gain))
         return best_stump
 
     def _pick_rand_stump(self, X, y):
@@ -986,7 +987,7 @@ class ProximityTree(BaseClassifier):
                                random_state = self.random_state,
                                gain_method = self.gain_method,
                                label_encoder = self.label_encoder,
-                               debug = self.debug,
+                               verbosity = self.verbosity,
                                dimension = self.dimension,
                                param_perm = param_perm)
         stump.fit(X, y, input_checks = False)
@@ -1066,8 +1067,8 @@ class ProximityForest(BaseClassifier):
     param_pool : list of dicts
         a list of dictionaries containing a distance measure and corresponding parameter sources (distribution or
         predefined value)
-    debug : boolean
-        whether to print debug info
+    verbosity : int
+        level of verbosity in output
     gain_method : callable
         a method to calculate the gain of splits / stumps in trees
     label_encoder : LabelEncoder
@@ -1079,8 +1080,6 @@ class ProximityForest(BaseClassifier):
     num_stump_evaluations : int
         a tree parameter dictating the number of proximity stumps to produce at each node. Each stump has a random
         distance measure and distance measure parameter set. The stump with the best gain is used to split the data.
-    debug : boolean
-        whether to print debug info
     num_trees : int
         the number of trees to construct
     is_leaf_method : callable
@@ -1109,7 +1108,7 @@ class ProximityForest(BaseClassifier):
                  is_leaf_method = get_default_is_leaf_method(),
                  max_depth = np.math.inf,
                  label_encoder = None,
-                 debug = False,
+                 verbosity = 0,
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
         self.random_state = random_state
@@ -1118,7 +1117,7 @@ class ProximityForest(BaseClassifier):
         self.label_encoder = label_encoder
         self.max_depth = max_depth
         self.num_trees = num_trees
-        self.debug = debug
+        self.verbosity = verbosity
         self.dimension = dimension
         self.is_leaf_method = is_leaf_method
         self.pick_exemplars_method = pick_exemplars_method
@@ -1160,7 +1159,7 @@ class ProximityForest(BaseClassifier):
         self.trees = []
         # for each tree
         for tree_index in range(0, self.num_trees):
-            if self.debug:
+            if self.verbosity > 0:
                 print("constructing tree " + str(tree_index))
             # build tree from forest parameters
             tree = ProximityTree(
@@ -1171,7 +1170,7 @@ class ProximityForest(BaseClassifier):
                     max_depth = self.max_depth,
                     label_encoder = self.label_encoder,
                     param_pool = self.param_pool,
-                    debug = self.debug,
+                    verbosity = self.verbosity,
                     pick_exemplars_method = self.pick_exemplars_method,
                     dimension = self.dimension,  # todo could randomise?
                     )
