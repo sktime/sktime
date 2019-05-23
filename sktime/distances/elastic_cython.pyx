@@ -198,7 +198,7 @@ def msm_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, dou
             d3 = cost[i, j - 1] + _msm_calc_cost(second[j,dim_to_use], first[i,dim_to_use], second[j - 1,dim_to_use], c)
             cost[i, j] = min_c(min_c(d1,d2),d3)
 
-    return cost[m - 1, n - 1];
+    return cost[m - 1, n - 1]
 
 #
 # @cython.boundscheck(False)  # Deactivate bounds checking
@@ -245,12 +245,105 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
             else:
                 lcss[i + 1,j + 1] = lcss[i + 1, j]
 
-    max_val = -1;
+    max_val = -1
     for i in range(1, len(lcss[len(lcss) - 1])):
         if lcss[len(lcss) - 1, i] > max_val:
-            max_val = lcss[len(lcss) - 1, i];
+            max_val = lcss[len(lcss) - 1, i]
 
     return 1 - (max_val / m)
+
+# @cython.boundscheck(False)  # Deactivate bounds checking
+# @cython.wraparound(False)   # Deactivate negative indexing.
+def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, double penalty, double stiffness):
+
+    cdef int dim = ta.shape[1] - 1
+    cdef double dist, disti1, distj1
+    cdef np.ndarray[double, ndim=1] tsa = np.zeros([len(ta) + 1], dtype = np.double)
+    cdef np.ndarray[double, ndim=1] tsb = np.zeros([len(tb) + 1], dtype = np.double)
+
+    cdef int r = len(ta)
+    cdef int c = len(tb)
+    cdef int i, j, k
+
+    cdef np.ndarray[double, ndim=2] D = np.zeros([r + 1, c + 1], dtype=np.double)
+    cdef np.ndarray[double, ndim=1] Di1 = np.zeros([r + 1], dtype=np.double)
+    cdef np.ndarray[double, ndim=1] Dj1 = np.zeros([c + 1], dtype=np.double)
+
+    for i in range(0, len(tsa)):
+        tsa[i]=(i+1)
+    for i in range(0, len(tsb)):
+        tsb[i]=(i+1)
+
+# local costs initializations
+    for j in range(1, c + 1):
+        distj1=0
+        for k in range(0, dim + 1):
+            if j>1:
+#CHANGE AJB 8/1/16: Only use power of 2 for speed up,
+                distj1+=(tb[j-2][k]-tb[j-1][k])*(tb[j-2][k]-tb[j-1][k])
+# OLD VERSION                    distj1+=Math.pow(Math.abs(tb[j-2][k]-tb[j-1][k]),degree)
+# in c:               distj1+=pow(fabs(tb[j-2][k]-tb[j-1][k]),degree)
+            else:
+                distj1+=tb[j-1][k]*tb[j-1][k]
+# OLD              		distj1+=Math.pow(Math.abs(tb[j-1][k]),degree)
+        Dj1[j]=(distj1)
+
+    for i in range(1, r + 1):
+        disti1=0
+        for k in range(0, dim + 1):
+            if i>1:
+                disti1+=(ta[i-2][k]-ta[i-1][k])*(ta[i-2][k]-ta[i-1][k])
+# OLD                 disti1+=Math.pow(Math.abs(ta[i-2][k]-ta[i-1][k]),degree)
+            else:
+                disti1+=(ta[i-1][k])*(ta[i-1][k])
+# OLD                  disti1+=Math.pow(Math.abs(ta[i-1][k]),degree)
+        Di1[i]=(disti1)
+
+        for j in range(1, c + 1):
+            dist=0
+            for k in range(0, dim + 1):
+                dist+=(ta[i-1][k]-tb[j-1][k])*(ta[i-1][k]-tb[j-1][k])
+#                  dist+=Math.pow(Math.abs(ta[i-1][k]-tb[j-1][k]),degree)
+                if i>1 and j>1:
+                    dist+=(ta[i-2][k]-tb[j-2][k])*(ta[i-2][k]-tb[j-2][k])
+#                    dist+=Math.pow(Math.abs(ta[i-2][k]-tb[j-2][k]),degree)
+            D[i][j]=dist
+
+    # border of the cost matrix initialization
+    D[0][0]=0
+    for i in range(1, r + 1):
+        D[i][0]=D[i-1][0]+Di1[i]
+    for j in range(1, c + 1):
+        D[0][j]=D[0][j-1]+Dj1[j]
+
+    cdef double dmin, htrans, dist0
+    cdef int iback
+
+    for i in range(1, r + 1):
+        for j in range(1, c + 1):
+            htrans=np.abs((tsa[i-1]-tsb[j-1]))
+            if j>1 and i>1:
+                htrans+=np.abs((tsa[i-2]-tsb[j-2]))
+            dist0=D[i-1][j-1]+ stiffness *htrans+D[i][j]
+            dmin=dist0
+            if i>1:
+                htrans=((tsa[i-1]-tsa[i-2]))
+            else:
+                htrans=tsa[i-1]
+            dist=Di1[i]+D[i-1][j]+ penalty + stiffness *htrans
+            if dmin>dist:
+                dmin=dist
+            if j>1:
+                htrans=(tsb[j-1]-tsb[j-2])
+            else:
+                htrans=tsb[j-1]
+            dist=Dj1[j]+D[i][j-1]+ penalty + stiffness *htrans
+            if dmin>dist:
+                dmin=dist
+            D[i][j] = dmin
+
+    dist = D[r][c]
+    return dist
 
 # @cython.boundscheck(False)  # Deactivate bounds checking
 # @cython.wraparound(False)   # Deactivate negative indexing.
@@ -323,16 +416,16 @@ def erp_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, dou
                 if i+j!=0:
                     # print("here")
                     if i == 0 or ((j != 0) and (((prev[j - 1] + d3) > (curr[j - 1] + d2)) and ((curr[j - 1] + d2) < (prev[j] + d1)))):
-                        # // del
-                        cost = curr[j - 1] + d2;
+                        # # del
+                        cost = curr[j - 1] + d2
                     elif (j == 0) or ((i != 0) and (((prev[j - 1] + d3) > (prev[j] + d1)) and ((prev[j] + d1) < (curr[j - 1] + d2)))):
-                        # // ins
-                        cost = prev[j] + d1;
+                        # # ins
+                        cost = prev[j] + d1
                     else:
-                        # // match
+                        # # match
                         cost = prev[j - 1] + d3
                     # print(cost)
-                curr[j] = cost;
+                curr[j] = cost
             else:
                 curr[j] = np.inf
 
