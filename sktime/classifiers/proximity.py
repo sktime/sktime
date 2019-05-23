@@ -373,33 +373,68 @@ def get_all_distance_measures_param_pool(X, dimension):
     return param_pool
 
 
-def get_default_param_perm(X, dimension):
+def pick_rand_param_perm_from_dict(param_pool, random_state):
     '''
-    get default parameter permutation, i.e. euclidean distance
-    ----
-    Parameters
-    ----
-    X : panda dataframe
-        instances representing a dataset
-    dimension : int
-        index of dimension to use
-    ----
+    pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
+    distribution of values (a distribution must have the .rvs() function to sample values)
+    ----------
+    param_pool : list of dicts OR list OR distribution
+        parameters in the same format as GridSearchCV from scikit-learn. example:
+        param_grid = [
+          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
+          'kernel': ['rbf']},
+         ]
     Returns
-    ----
+    -------
     param_perm : dict
-        a dictionary of a distance measure (dtw) and corresponding parameters (window size)
+        distance measure and corresponding parameters in dictionary format
     '''
-    # find dataset properties
-    instance_length = dataset_properties.max_instance_length(X,
-                                                             dimension)  # todo should this use the max instance
-    # length for unequal length dataset instances?
-    max_raw_warping_window = floor((instance_length + 1) / 4)
-    return {
-            ProximityStump.get_distance_measure_key(): dtw_distance,
-            'w'                                      : max_raw_warping_window
-            }
+    # construct empty permutation
+    param_perm = {}
+    # for each parameter
+    for param_name, param_values in param_pool.items():
+        # if it is a list
+        if isinstance(param_values, list):
+            # randomly pick a value
+            param_value = param_values[random_state.randint(len(param_values))]
+            # if the value is another dict then get a random parameter permutation from that dict (recursive over
+            # 2 funcs)
+            # if isinstance(param_value, dict): # no longer require recursive param perms
+            #     param_value = _pick_param_permutation(param_value, random_state)
+        # else if parameter is a distribution
+        elif hasattr(param_values, 'rvs'):
+            # sample from the distribution
+            param_value = param_values.rvs(random_state = random_state)
+        else:
+            # otherwise we don't know how to obtain a value from the parameter
+            raise Exception('unknown type of parameter pool')
+        # add parameter name and value to permutation
+        param_perm[param_name] = param_value
+    return param_perm
 
-def get_default_pick_random_param_perm():
+
+def pick_rand_param_perm_from_list(params, random_state):
+    '''
+    get a random parameter permutation providing a distance measure and corresponding parameters
+    ----------
+    params : list of dicts
+        parameters in the same format as GridSearchCV from scikit-learn. example:
+        param_grid = [
+          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
+          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}], 'kernel': ['rbf']},
+         ]
+    Returns
+    -------
+    permutation : dict
+        distance measure and corresponding parameters in dictionary format
+    '''
+    #
+    param_pool = random_state.choice(params)
+    permutation = pick_rand_param_perm_from_dict(param_pool, random_state)
+    return permutation
+
+def get_default_pick_param_perm_method():
     return pick_rand_param_perm_from_list
 
 
@@ -554,8 +589,9 @@ class ProximityStump(BaseClassifier):
         self.random_state = check_random_state(self.random_state)
         if self.param_perm is None:
             warnings.warn('using random parameter permutation picked in proximity stump')
-            self.param_perm = pick_rand_param_perm_from_list(get_all_distance_measures_param_pool(X, self.dimension),
-                                                             self.random_state)
+            self.param_perm = get_default_pick_param_perm_method()(get_all_distance_measures_param_pool(X,
+                                                                                                        self.dimension),
+                                                                   self.random_state)
         if not isinstance(self.param_perm, dict):
             raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         # if label encoder not setup, make a new one and train it
@@ -582,15 +618,16 @@ class ProximityStump(BaseClassifier):
             # delete as we don't want to pass the distance measure or transformer as a parameter to itself!
             del self.distance_measure_param_perm[distance_measure_key]
             # remove the transformer
+            if self.verbosity > 0:
+                print('building stump using ', end = '')
             try:
                 del self.distance_measure_param_perm[transformer_key]
                 if self.verbosity > 0:
-                    print('building stump using d' + self.distance_measure.__name__ + str(
-                            self.distance_measure_param_perm))
+                    print(str(self.transformer), end = '')
             except:
-                if self.verbosity > 0:
-                    print('building stump using ' + self.distance_measure.__name__ + str(
-                            self.distance_measure_param_perm))
+                pass
+            if self.verbosity > 0:
+                print(self.distance_measure.__name__ + str(self.distance_measure_param_perm))
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -810,7 +847,7 @@ class ProximityTree(BaseClassifier):
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
-                 pick_param_perm_method = get_default_pick_random_param_perm(),
+                 pick_param_perm_method = get_default_pick_param_perm_method(),
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
         self.random_state = random_state
@@ -1014,7 +1051,7 @@ class ProximityTree(BaseClassifier):
             if best_stump.transformer:
                 print('d', end = '')
             print(best_stump.distance_measure.__name__ + str(
-                best_stump.distance_measure_param_perm) + ' with score ' + str(best_stump.gain))
+                    best_stump.distance_measure_param_perm) + ' with score ' + str(best_stump.gain))
         return best_stump
 
     def _grow_rand_stump(self, X, y):
@@ -1029,68 +1066,6 @@ class ProximityTree(BaseClassifier):
         stump.fit(X, y, input_checks = False)
         stump.grow()
         return stump
-
-
-def pick_rand_param_perm_from_dict(param_pool, random_state):
-    '''
-    pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
-    distribution of values (a distribution must have the .rvs() function to sample values)
-    ----------
-    param_pool : list of dicts OR list OR distribution
-        parameters in the same format as GridSearchCV from scikit-learn. example:
-        param_grid = [
-          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}],
-          'kernel': ['rbf']},
-         ]
-    Returns
-    -------
-    param_perm : dict
-        distance measure and corresponding parameters in dictionary format
-    '''
-    # construct empty permutation
-    param_perm = {}
-    # for each parameter
-    for param_name, param_values in param_pool.items():
-        # if it is a list
-        if isinstance(param_values, list):
-            # randomly pick a value
-            param_value = param_values[random_state.randint(len(param_values))]
-            # if the value is another dict then get a random parameter permutation from that dict (recursive over
-            # 2 funcs)
-            # if isinstance(param_value, dict): # no longer require recursive param perms
-            #     param_value = _pick_param_permutation(param_value, random_state)
-        # else if parameter is a distribution
-        elif hasattr(param_values, 'rvs'):
-            # sample from the distribution
-            param_value = param_values.rvs(random_state = random_state)
-        else:
-            # otherwise we don't know how to obtain a value from the parameter
-            raise Exception('unknown type of parameter pool')
-        # add parameter name and value to permutation
-        param_perm[param_name] = param_value
-    return param_perm
-
-
-def pick_rand_param_perm_from_list(params, random_state):
-    '''
-    get a random parameter permutation providing a distance measure and corresponding parameters
-    ----------
-    params : list of dicts
-        parameters in the same format as GridSearchCV from scikit-learn. example:
-        param_grid = [
-          {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
-          {'C': [1, 10, 100, 1000], 'gamma': [{'C': [1, 10, 100, 1000], 'kernel': ['linear']}], 'kernel': ['rbf']},
-         ]
-    Returns
-    -------
-    permutation : dict
-        distance measure and corresponding parameters in dictionary format
-    '''
-    #
-    param_pool = random_state.choice(params)
-    permutation = pick_rand_param_perm_from_dict(param_pool, random_state)
-    return permutation
 
 
 class ProximityForest(BaseClassifier):
