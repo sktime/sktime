@@ -30,12 +30,21 @@ def bin_instances_by_class(instances, class_labels):
         instances_bin.append(instance)
     return bins
 
-# find the maximum length of an instance from a set of instances
-def max_instance_length(instances, dimension = 0):
+# find the maximum length of an instance from a set of instances for a given dimension
+def max_instance_dimension_length(instances, dimension):
     num_instances = instances.shape[0]
     max = -1
     for instance_index in range(0, num_instances):
         instance = instances.iloc[instance_index, dimension]
         if len(instance) > max:
             max = len(instance)
+    return max
+
+# find the maximum length of an instance from a set of instances for all dimensions
+def max_instance_length(instances):
+    max = -1
+    for dimension in range(0, instances.shape[1]):
+        length = max_instance_dimension_length(instances, dimension)
+        if length > max:
+            max = length
     return max
