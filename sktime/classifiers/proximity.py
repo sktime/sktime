@@ -27,8 +27,9 @@
 # }
 #
 # todo unit tests
-# todo expand debug printing capability
+# todo logging package rather than print to screen
 # todo parallelise (specifically tree building, each branch is an independent unit of work)
+
 import warnings
 
 __author__ = "George Oastler"
