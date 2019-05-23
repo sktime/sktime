@@ -318,38 +318,14 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
         return [get_der(x) for x in X]
 
-class DerivativeTransformer(BaseTransformer):
-
-    def transform(self, X, y=None) : # todo base class, redundant code reuse
-        transformed_X = pd.DataFrame(index = X.index)
-        for instance_index in range(0, X.shape[0]):
-            for dimension_index in range(0, X.shape[1]):
-                x = X.iloc[instance_index, dimension_index]
-                der = []
-                for i in range(1, x.shape[0] - 1):
-                    der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
-                der = [der[0]] + der + [der[-1]]
-                # der = pd.Series(der)
-                transformed_X[instance_index, :] = [der]
-        return transformed_X
-
-
 class CachedTransformer(BaseTransformer):
 
     def __init__(self, transformer):
         self.cache = {}
-        # self.cache = pd.DataFrame()
         self.transformer = transformer
 
     def clear(self):
         self.cache = {}
-
-    # def transform_inst(self, X):
-    #     if self.cache == None:
-    #         self.cache = pd.DataFrame()
-    #     else:
-    #         if self.transformer.
-
 
     def transform(self, X, y=None):
         cached_instances = {}
@@ -369,69 +345,3 @@ class CachedTransformer(BaseTransformer):
             cached_instances.update(transformed_uncached_instances)
         cached_instances = pd.DataFrame.from_dict(cached_instances, orient = 'index')
         return cached_instances
-
-    #
-    # def transform(self, X, y=None):
-    #     cached_indices = []
-    #     uncached_indices = []
-    #     for index in X.index.values:
-    #         if index in self.cache.index.values:
-    #             cached_indices.append(index)
-    #         else:
-    #             uncached_indices.append(index)
-    #     cached_instances = pd.DataFrame()
-    #     uncached_instances = None
-    #     if len(cached_indices) > 0:
-    #         cached_instances = X.loc[cached_indices, :]
-    #         if len(uncached_indices) == 0:
-    #             return cached_instances
-    #     if len(uncached_indices) > 0:
-    #         uncached_instances = X.loc[uncached_indices, :]
-    #         transformed_instances = self.transformer.transform(uncached_instances)
-    #         transformed_instances.index = uncached_instances.index
-    #         cached_instances = pd.concat([cached_instances,
-    #                                       transformed_instances], ignore_index = False)
-    #         self.cache = pd.concat([self.cache, transformed_instances], ignore_index = False)
-    #         # for index in uncached_indices:
-    #         #     instance = transformed_instances.loc[index, :]
-    #         #     self.cache[str(index)] = instance
-    #         #     cached_instances[str(index)] = instance
-    #     return cached_instances
-
-        # if isinstance(X, pd.Series):
-        #     X = self.transform_inst(X)
-        # elif isinstance(X, pd.DataFrame):
-        #     transformed = []
-        #     num_instances = X.shape[0]
-        #     for instance_index in range(0, num_instances):
-        #         instance = X.iloc[instance_index, :]
-        #         instance = self.transform_inst(instance)
-        #         transformed.append(instance)
-        #     transformed = pd.DataFrame(transformed)
-        #     X = transformed
-        # return X
-
-    # def cached_transform(distance_measure):
-    #     cache = {}
-    #
-    #     def transform(instance):
-    #
-    #
-    #     def distance(instance_a, instance_b, params, input_checks = True):
-    #         if input_checks:
-    #             if not isinstance(instance_a, Series):
-    #                 raise ValueError("instance not a panda series")
-    #             if not isinstance(instance_b, Series):
-    #                 raise ValueError("instance not a panda series")
-    #         # transform instance if needed
-    #         instance_a = transform(instance_a)
-    #         instance_b = transform(instance_b)
-    #         # flatten both instances and transpose for cython parameter format
-    #         instance_a = tabularise(instance_a, return_array = True)
-    #         instance_b = tabularise(instance_b, return_array = True)
-    #         instance_a = np.transpose(instance_a)
-    #         instance_b = np.transpose(instance_b)
-    #         # find distance
-    #         distance = distance_measure(instance_a, instance_b, **params)
-    #         return distance
-    #     return distance
