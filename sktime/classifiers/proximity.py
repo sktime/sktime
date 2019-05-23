@@ -716,8 +716,11 @@ class ProximityStump(BaseClassifier):
         df = pd.DataFrame([instance_a, instance_b])
         if self.transformer:
             df = self.transformer.transform(df)
-            instance_a = df.iloc[0, :]
-            instance_b = df.iloc[1, :]
+            try:
+                instance_a = df.iloc[0, :]
+                instance_b = df.iloc[1, :]
+            except:
+                ohdear = True
         # find distance
         instance_a = tabularise(instance_a, return_array = True)  # todo use specific dimension rather than whole
         # thing?
