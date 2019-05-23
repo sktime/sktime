@@ -291,7 +291,7 @@ def get_all_distance_measures_param_pool(X, dimension):
     '''
     # find dataset properties
     num_dimensions = 1  # todo use other dimensions
-    instance_length = dataset_properties.max_instance_length(X, 0)  # todo should this use the max instance
+    instance_length = dataset_properties.max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = floor((instance_length + 1) / 4)
     max_warping_window_percentage = max_raw_warping_window / instance_length
