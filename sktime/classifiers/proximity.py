@@ -35,7 +35,7 @@ __author__ = "George Oastler"
 
 import numpy as np
 from numpy.ma import floor
-from pandas import DataFrame, Series
+import pandas as pd
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
@@ -44,9 +44,10 @@ from .base import BaseClassifier
 from ..distances import (
     dtw_distance, erp_distance, lcss_distance, msm_distance, wdtw_distance,
     )
-from ..transformers.series_to_series import CachedDerivativeSlopeTransformer, CachedCythonDistanceMeasureTransformer
+from ..transformers.series_to_series import DerivativeTransformer, DerivativeSlopeTransformer, CachedTransformer
 from ..utils import comparison, dataset_properties
 from ..utils.validation import check_X_y
+from ..utils.transformations import tabularise
 
 
 def get_default_dimension():
@@ -296,29 +297,28 @@ def get_all_distance_measures_param_pool(X, dimension):
     max_warping_window_percentage = max_raw_warping_window / instance_length
     stdp = dataset_properties.stdp(X)
     # setup param pool dictionary array (same structure as sklearn's GridSearchCV params!)
-    derivative_transformer = CachedDerivativeSlopeTransformer()
-    cython_transformer = CachedCythonDistanceMeasureTransformer()
+    cached_derivative_transformer = CachedTransformer(DerivativeSlopeTransformer())
     dm_key = ProximityStump.get_distance_measure_key()
-    tf_key = ProximityStump.get_transformers_key()
-    num_dimensions = 0 # todo use other dimensions
+    tf_key = ProximityStump.get_transformer_key()
+    num_dimensions = 1 # todo use other dimensions
     param_pool = [
             {
                     dm_key: [dtw_distance],
                     tf_key: [
-                            # cython_transformer,
-                            [derivative_transformer, cython_transformer]],
+                            # None,
+                            cached_derivative_transformer
+                            ],
                     'w'   : stats.uniform(0, max_warping_window_percentage)
                     },
             # {
             #         dm_key: [wdtw_distance],
-            #         tf_key: [cython_transformer, [derivative_transformer, cython_transformer]],
+            #         tf_key: [None, cached_derivative_transformer],
             #         'g'   : stats.uniform(0,
             #                               1)
             #         },
             # {
             #         dm_key      : [lcss_distance],
-            #         tf_key: [cython_transformer],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
             #         'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
             #         'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
             #                                                     1)  # scipy stats randint
@@ -326,8 +326,7 @@ def get_all_distance_measures_param_pool(X, dimension):
             #         },
             # {
             #         dm_key      : [erp_distance],
-            #         tf_key: [cython_transformer],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
             #         'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
             #         'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
             #         # scipy stats randint is exclusive on the max value, hence + 1
@@ -337,8 +336,7 @@ def get_all_distance_measures_param_pool(X, dimension):
             # #  'band_size': randint(low=0, high=max_raw_warping_window)},
             # {
             #         dm_key: [msm_distance],
-            #         tf_key: [cython_transformer],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions + 1),
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
             #         'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
             #                        0.03625, 0.04, 0.04375, 0.0475, 0.05125,
             #                        0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
@@ -469,7 +467,7 @@ class ProximityStump(BaseClassifier):
         self.debug = debug
         self.label_encoder = label_encoder
         self.classes_ = None
-        self.transformers = None
+        self.transformer = None
 
     @staticmethod
     def get_distance_measure_key():
@@ -485,7 +483,7 @@ class ProximityStump(BaseClassifier):
         return 'dm'
 
     @staticmethod
-    def get_transformers_key():
+    def get_transformer_key():
         '''
         get the key for the transformer. This key is required for picking the transformer out of the
         param_perm constructor parameter.
@@ -495,7 +493,7 @@ class ProximityStump(BaseClassifier):
         key : string
             key for the transformer for the param_perm dict
         '''
-        return 'transformers'
+        return 'transformer'
 
     def fit(self, X, y, input_checks = True):
         '''
@@ -536,17 +534,20 @@ class ProximityStump(BaseClassifier):
         if self.distance_measure is None:
             distance_measure_key = self.get_distance_measure_key()  # get the key for the distance measure var in the
             # param perm dict
-            transformer_key = self.get_transformers_key()  # get the key for the distance measure var in the param
+            transformer_key = self.get_transformer_key()  # get the key for the distance measure var in the param
             # perm dict
             self.distance_measure = self.param_perm[distance_measure_key]
-            self.transformers = self.param_perm[transformer_key]
-            if not isinstance(self.transformers, list):
-                self.transformers = [self.transformers]
+            self.transformer = self.param_perm.get(transformer_key, None)
             # copy so not available to outside world
             self.distance_measure_param_perm = self.param_perm.copy()
+            print(self.distance_measure.__name__)
             # delete as we don't want to pass the distance measure or transformer as a parameter to itself!
             del self.distance_measure_param_perm[distance_measure_key]
-            del self.distance_measure_param_perm[transformer_key]
+            # remove the transformer
+            try:
+                del self.distance_measure_param_perm[transformer_key]
+            except:
+                pass
         self.classes_ = self.label_encoder.classes_
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
@@ -574,7 +575,7 @@ class ProximityStump(BaseClassifier):
         # branched instances / class labels are used in the next level
         for index in range(0, num_exemplars):
             self.branch_class_labels[index] = np.array(self.branch_class_labels[index])
-            self.branch_instances[index] = DataFrame(self.branch_instances[index])
+            self.branch_instances[index] = pd.DataFrame(self.branch_instances[index])
         # work out the gain for this split / stump
         self.gain = self.gain_method(self.remaining_class_labels, self.branch_class_labels)
         return self
@@ -628,7 +629,7 @@ class ProximityStump(BaseClassifier):
         '''
         # check data
         if input_checks:
-            if not isinstance(instance, Series):
+            if not isinstance(instance, pd.Series):
                 raise ValueError("instance not a panda series")
         num_exemplars = len(self.exemplar_instances)
         distances = []
@@ -689,14 +690,21 @@ class ProximityStump(BaseClassifier):
             value indicating how similar the two instances are
         '''
         if input_checks:
-            if not isinstance(instance_a, Series):
+            if not isinstance(instance_a, pd.Series):
                 raise ValueError("instance not a panda series")
-            if not isinstance(instance_b, Series):
+            if not isinstance(instance_b, pd.Series):
                 raise ValueError("instance not a panda series")
-        for transformer in self.transformers:
-            instance_a = transformer.transform(instance_a)
-            instance_b = transformer.transform(instance_b)
+        df = pd.DataFrame([instance_a, instance_b])
+        if self.transformer:
+            df = self.transformer.transform(df)
+            instance_a = df.iloc[0, :]
+            instance_b = df.iloc[1, :]
         # find distance
+        instance_a = tabularise(instance_a, return_array = True)  # todo use specific dimension rather than whole
+        # thing?
+        instance_b = tabularise(instance_b, return_array = True)  # todo use specific dimension rather than whole thing?
+        instance_a = np.transpose(instance_a)
+        instance_b = np.transpose(instance_b)
         return self.distance_measure(instance_a, instance_b, **self.distance_measure_param_perm)
 
 
