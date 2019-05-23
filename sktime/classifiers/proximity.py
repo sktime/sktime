@@ -29,6 +29,7 @@
 # todo unit tests
 # todo logging package rather than print to screen
 # todo parallelise (specifically tree building, each branch is an independent unit of work)
+# todo transformer dist meas str
 
 import warnings
 
@@ -305,62 +306,69 @@ def get_all_distance_measures_param_pool(X, dimension):
     param_pool = [
             {
                     dm_key: [dtw_distance],
+                    'w'   : stats.uniform(0, max_warping_window_percentage)
+                    },
+            {
+                    dm_key: [dtw_distance],
                     tf_key: [
-                            # None,
                             derivative_transformer
                             ],
                     'w'   : stats.uniform(0, max_warping_window_percentage)
                     },
-            # {
-            #         dm_key: [wdtw_distance],
-            #         tf_key: [
-            #                 None,
-            #                 derivative_transformer
-            #                 ],
-            #         'g'   : stats.uniform(0,
-            #                               1)
-            #         },
-            # {
-            #         dm_key      : [lcss_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-            #         'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
-            #                                                     1)  # scipy stats randint
-            #         # is exclusive on the max value, hence + 1
-            #         },
-            # {
-            #         dm_key      : [erp_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-            #         'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
-            #         # scipy stats randint is exclusive on the max value, hence + 1
-            #         },
-            # {
-            #         dm_key     : [twe_distance],
-            #         'penalty'  : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
-            #                       0.077777778, 0.088888889, 0.1],
-            #         'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-            #         },
-            # {
-            #         dm_key      : [msm_distance],
-            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-            #         'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
-            #                        0.03625, 0.04, 0.04375, 0.0475, 0.05125,
-            #                        0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
-            #                        0.08125, 0.085, 0.08875, 0.0925, 0.09625,
-            #                        0.1, 0.136, 0.172, 0.208,
-            #                        0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
-            #                        0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
-            #                        0.784, 0.82, 0.856,
-            #                        0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
-            #                        3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
-            #                        6.04, 6.4, 6.76, 7.12,
-            #                        7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
-            #                        20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
-            #                        49.6, 53.2, 56.8, 60.4,
-            #                        64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
-            #                        100]
-            #         },
+            {
+                    dm_key: [wdtw_distance],
+                    'g'   : stats.uniform(0,
+                                          1)
+                    },
+            {
+                    dm_key: [wdtw_distance],
+                    tf_key: [
+                            derivative_transformer
+                            ],
+                    'g'   : stats.uniform(0,
+                                          1)
+                    },
+            {
+                    dm_key      : [lcss_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+                    'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
+                                                                1)  # scipy stats randint
+                    # is exclusive on the max value, hence + 1
+                    },
+            {
+                    dm_key      : [erp_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+                    'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
+                    # scipy stats randint is exclusive on the max value, hence + 1
+                    },
+            {
+                    dm_key     : [twe_distance],
+                    'penalty'  : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
+                                  0.077777778, 0.088888889, 0.1],
+                    'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+                    },
+            {
+                    dm_key      : [msm_distance],
+                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+                    'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
+                                   0.03625, 0.04, 0.04375, 0.0475, 0.05125,
+                                   0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
+                                   0.08125, 0.085, 0.08875, 0.0925, 0.09625,
+                                   0.1, 0.136, 0.172, 0.208,
+                                   0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
+                                   0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
+                                   0.784, 0.82, 0.856,
+                                   0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
+                                   3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
+                                   6.04, 6.4, 6.76, 7.12,
+                                   7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
+                                   20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
+                                   49.6, 53.2, 56.8, 60.4,
+                                   64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
+                                   100]
+                    },
             ]
     return param_pool
 
@@ -391,18 +399,24 @@ def get_default_param_perm(X, dimension):
             'w'                                      : max_raw_warping_window
             }
 
-def negate_indices(X):
+def get_default_pick_random_param_perm():
+    return pick_rand_param_perm_from_list
+
+
+def negate_dataframe_indices(X):
     if X.index[0] >= 0:
         X = X.copy(deep = True)
         X.index = np.negative(X.index)
         X.index -= 1
     return X
 
-def abs_indices(X):
+
+def abs_dataframe_indices(X):
     if X.index[0] < 0:
         X = X.copy(deep = True)
         X.index = np.abs(X.index)
     return X
+
 
 class ProximityStump(BaseClassifier):
     '''
@@ -530,7 +544,7 @@ class ProximityStump(BaseClassifier):
         # checks
         if input_checks:
             check_X_y(X, y)
-        X = abs_indices(X)
+        X = abs_dataframe_indices(X)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X, self.dimension)
         if not callable(self.gain_method):
@@ -539,9 +553,9 @@ class ProximityStump(BaseClassifier):
             raise ValueError("gain method must be callable")
         self.random_state = check_random_state(self.random_state)
         if self.param_perm is None:
-            self.param_perm = _get_rand_param_perm(get_all_distance_measures_param_pool(X, self.dimension),
-                                                   self.random_state)
             warnings.warn('using random parameter permutation picked in proximity stump')
+            self.param_perm = pick_rand_param_perm_from_list(get_all_distance_measures_param_pool(X, self.dimension),
+                                                             self.random_state)
         if not isinstance(self.param_perm, dict):
             raise ValueError("parameter permutation must be a dict or callable to obtain dict")
         # if label encoder not setup, make a new one and train it
@@ -581,6 +595,9 @@ class ProximityStump(BaseClassifier):
         # get exemplars from dataset
         self.exemplar_instances, self.exemplar_class_labels, self.remaining_instances, self.remaining_class_labels = \
             self.pick_exemplars_method(X, y, self.random_state)
+        return self
+
+    def grow(self):
         num_exemplars = len(self.exemplar_instances)
         self.branch_class_labels = []
         self.branch_instances = []
@@ -607,7 +624,6 @@ class ProximityStump(BaseClassifier):
             self.branch_instances[index] = pd.DataFrame(self.branch_instances[index])
         # work out the gain for this split / stump
         self.gain = self.gain_method(self.remaining_class_labels, self.branch_class_labels)
-        return self
 
     def _exemplar_distances(self, X, input_checks = True):  # todo is redundant?
         '''
@@ -692,7 +708,7 @@ class ProximityStump(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        X = negate_indices(X)
+        X = negate_dataframe_indices(X)
         # find distances to each exemplar for each test instance
         distances = self._exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
@@ -794,9 +810,11 @@ class ProximityTree(BaseClassifier):
                  is_leaf_method = get_default_is_leaf_method(),
                  label_encoder = None,
                  pick_exemplars_method = get_default_pick_exemplars_method(),
+                 pick_param_perm_method = get_default_pick_random_param_perm(),
                  param_pool = get_all_distance_measures_param_pool):
         super().__init__()
         self.random_state = random_state
+        self.pick_param_perm_method = pick_param_perm_method
         self.gain_method = gain_method
         self.num_stump_evaluations = num_stump_evaluations
         self.max_depth = max_depth
@@ -832,7 +850,7 @@ class ProximityTree(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        X = negate_indices(X)
+        X = negate_dataframe_indices(X)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -877,7 +895,7 @@ class ProximityTree(BaseClassifier):
             class labels corresponding to each instance
         '''
         # find best stump (split of data)
-        self.stump = self._get_best_stump(X, y)
+        self.stump = self._find_best_stump(X, y)
         num_branches = len(self.stump.branch_instances)
         self.branches = []
         # providing max depth not exceeded
@@ -896,6 +914,7 @@ class ProximityTree(BaseClassifier):
                             is_leaf_method = self.is_leaf_method,
                             max_depth = self.max_depth,
                             label_encoder = self.label_encoder,
+                            pick_param_perm_method = self.pick_param_perm_method,
                             param_pool = self.param_pool,
                             dimension = self.dimension,
                             verbosity = self.verbosity,
@@ -925,7 +944,7 @@ class ProximityTree(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X, y)
-        X = abs_indices(X)
+        X = abs_dataframe_indices(X)
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
@@ -937,6 +956,8 @@ class ProximityTree(BaseClassifier):
             raise RuntimeError('pick exemplars method not callable')
         if not callable(self.is_leaf_method):
             raise RuntimeError('is leaf method not callable')
+        if not callable(self.pick_param_perm_method):
+            raise RuntimeError('pick param perm method not callable')
         # if param_pool is obtained using train instances
         if callable(self.param_pool):
             # call param_pool function giving train instances as parameter
@@ -981,10 +1002,10 @@ class ProximityTree(BaseClassifier):
         # queue empty so tree has branched into sub tree until contain only leaf nodes
         return self
 
-    def _get_best_stump(self, X, y):
+    def _find_best_stump(self, X, y):
         stumps = []
         for index in range(0, self.num_stump_evaluations):
-            stump = self._pick_rand_stump(X, y)
+            stump = self._grow_rand_stump(X, y)
             print('stump score: ' + str(stump.gain))
             stumps.append(stump)
         best_stump = comparison.best(stumps, lambda a, b: a.gain - b.gain, self.random_state)
@@ -992,11 +1013,12 @@ class ProximityTree(BaseClassifier):
             print('best stump: ', end = '')
             if best_stump.transformer:
                 print('d', end = '')
-            print(best_stump.distance_measure.__name__ + str(best_stump.distance_measure_param_perm) + ' with score ' + str(best_stump.gain))
+            print(best_stump.distance_measure.__name__ + str(
+                best_stump.distance_measure_param_perm) + ' with score ' + str(best_stump.gain))
         return best_stump
 
-    def _pick_rand_stump(self, X, y):
-        param_perm = _get_rand_param_perm(self.param_pool, self.random_state)
+    def _grow_rand_stump(self, X, y):
+        param_perm = self.pick_param_perm_method(self.param_pool, self.random_state)
         stump = ProximityStump(pick_exemplars_method = self.pick_exemplars_method,
                                random_state = self.random_state,
                                gain_method = self.gain_method,
@@ -1005,10 +1027,11 @@ class ProximityTree(BaseClassifier):
                                dimension = self.dimension,
                                param_perm = param_perm)
         stump.fit(X, y, input_checks = False)
+        stump.grow()
         return stump
 
 
-def _pick_param_permutation(param_pool, random_state):
+def pick_rand_param_perm_from_dict(param_pool, random_state):
     '''
     pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
     distribution of values (a distribution must have the .rvs() function to sample values)
@@ -1049,7 +1072,7 @@ def _pick_param_permutation(param_pool, random_state):
     return param_perm
 
 
-def _get_rand_param_perm(params, random_state):
+def pick_rand_param_perm_from_list(params, random_state):
     '''
     get a random parameter permutation providing a distance measure and corresponding parameters
     ----------
@@ -1066,7 +1089,7 @@ def _get_rand_param_perm(params, random_state):
     '''
     #
     param_pool = random_state.choice(params)
-    permutation = _pick_param_permutation(param_pool, random_state)
+    permutation = pick_rand_param_perm_from_dict(param_pool, random_state)
     return permutation
 
 
@@ -1156,7 +1179,7 @@ class ProximityForest(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X, y)
-        X = abs_indices(X)
+        X = abs_dataframe_indices(X)
         # check parameter values
         if self.num_trees < 1:
             raise ValueError('number of trees cannot be less than 1')
@@ -1215,7 +1238,7 @@ class ProximityForest(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        X = negate_indices(X)
+        X = negate_dataframe_indices(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
