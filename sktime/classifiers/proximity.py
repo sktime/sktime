@@ -306,61 +306,61 @@ def get_all_distance_measures_param_pool(X, dimension):
             {
                     dm_key: [dtw_distance],
                     tf_key: [
-                            None,
+                            # None,
                             derivative_transformer
                             ],
                     'w'   : stats.uniform(0, max_warping_window_percentage)
                     },
-            {
-                    dm_key: [wdtw_distance],
-                    tf_key: [
-                            None,
-                            derivative_transformer
-                            ],
-                    'g'   : stats.uniform(0,
-                                          1)
-                    },
-            {
-                    dm_key      : [lcss_distance],
-                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-                    'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-                    'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
-                                                                1)  # scipy stats randint
-                    # is exclusive on the max value, hence + 1
-                    },
-            {
-                    dm_key      : [erp_distance],
-                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-                    'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-                    'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
-                    # scipy stats randint is exclusive on the max value, hence + 1
-                    },
-            {
-                    dm_key     : [twe_distance],
-                    'penalty'  : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
-                                  0.077777778, 0.088888889, 0.1],
-                    'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-                    },
-            {
-                    dm_key      : [msm_distance],
-                    'dim_to_use': stats.randint(low = 0, high = num_dimensions),
-                    'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
-                                   0.03625, 0.04, 0.04375, 0.0475, 0.05125,
-                                   0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
-                                   0.08125, 0.085, 0.08875, 0.0925, 0.09625,
-                                   0.1, 0.136, 0.172, 0.208,
-                                   0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
-                                   0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
-                                   0.784, 0.82, 0.856,
-                                   0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
-                                   3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
-                                   6.04, 6.4, 6.76, 7.12,
-                                   7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
-                                   20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
-                                   49.6, 53.2, 56.8, 60.4,
-                                   64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
-                                   100]
-                    },
+            # {
+            #         dm_key: [wdtw_distance],
+            #         tf_key: [
+            #                 None,
+            #                 derivative_transformer
+            #                 ],
+            #         'g'   : stats.uniform(0,
+            #                               1)
+            #         },
+            # {
+            #         dm_key      : [lcss_distance],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+            #         'epsilon'   : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+            #         'delta'     : stats.randint(low = 0, high = max_raw_warping_window +
+            #                                                     1)  # scipy stats randint
+            #         # is exclusive on the max value, hence + 1
+            #         },
+            # {
+            #         dm_key      : [erp_distance],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+            #         'g'         : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+            #         'band_size' : stats.randint(low = 0, high = max_raw_warping_window + 1)
+            #         # scipy stats randint is exclusive on the max value, hence + 1
+            #         },
+            # {
+            #         dm_key     : [twe_distance],
+            #         'penalty'  : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
+            #                       0.077777778, 0.088888889, 0.1],
+            #         'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+            #         },
+            # {
+            #         dm_key      : [msm_distance],
+            #         'dim_to_use': stats.randint(low = 0, high = num_dimensions),
+            #         'c'         : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
+            #                        0.03625, 0.04, 0.04375, 0.0475, 0.05125,
+            #                        0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
+            #                        0.08125, 0.085, 0.08875, 0.0925, 0.09625,
+            #                        0.1, 0.136, 0.172, 0.208,
+            #                        0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
+            #                        0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
+            #                        0.784, 0.82, 0.856,
+            #                        0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
+            #                        3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
+            #                        6.04, 6.4, 6.76, 7.12,
+            #                        7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
+            #                        20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
+            #                        49.6, 53.2, 56.8, 60.4,
+            #                        64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
+            #                        100]
+            #         },
             ]
     return param_pool
 
@@ -391,6 +391,18 @@ def get_default_param_perm(X, dimension):
             'w'                                      : max_raw_warping_window
             }
 
+def negate_indices(X):
+    if X.index[0] >= 0:
+        X = X.copy(deep = True)
+        X.index = np.negative(X.index)
+        X.index -= 1
+    return X
+
+def abs_indices(X):
+    if X.index[0] < 0:
+        X = X.copy(deep = True)
+        X.index = np.abs(X.index)
+    return X
 
 class ProximityStump(BaseClassifier):
     '''
@@ -518,6 +530,7 @@ class ProximityStump(BaseClassifier):
         # checks
         if input_checks:
             check_X_y(X, y)
+        X = abs_indices(X)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X, self.dimension)
         if not callable(self.gain_method):
@@ -679,9 +692,7 @@ class ProximityStump(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        indices = np.negative(X.index)
-        indices -= 1
-        X.index = indices
+        X = negate_indices(X)
         # find distances to each exemplar for each test instance
         distances = self._exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
@@ -713,14 +724,12 @@ class ProximityStump(BaseClassifier):
                 raise ValueError("instance not a panda series")
             if not isinstance(instance_b, pd.Series):
                 raise ValueError("instance not a panda series")
+
         df = pd.DataFrame([instance_a, instance_b])
         if self.transformer:
             df = self.transformer.transform(df)
-            try:
-                instance_a = df.iloc[0, :]
-                instance_b = df.iloc[1, :]
-            except:
-                ohdear = True
+            instance_a = df.iloc[0, :]
+            instance_b = df.iloc[1, :]
         # find distance
         instance_a = tabularise(instance_a, return_array = True)  # todo use specific dimension rather than whole
         # thing?
@@ -823,7 +832,7 @@ class ProximityTree(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        X.index = np.negative(X.index)
+        X = negate_indices(X)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -916,6 +925,7 @@ class ProximityTree(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X, y)
+        X = abs_indices(X)
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
@@ -1146,6 +1156,7 @@ class ProximityForest(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X, y)
+        X = abs_indices(X)
         # check parameter values
         if self.num_trees < 1:
             raise ValueError('number of trees cannot be less than 1')
@@ -1204,7 +1215,7 @@ class ProximityForest(BaseClassifier):
         # check data
         if input_checks:
             check_X_y(X)
-        X.index = np.negative(X.index)
+        X = negate_indices(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
