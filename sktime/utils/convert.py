@@ -1,8 +1,25 @@
 import os
 
+import joblib
+
 import sktime.utils.load_data
 
-def convert(src_dir, datasets_dir_name, dataset_names = None, dest_dir = None):
+def convert_dataset(datasets_dir_path, dataset_name, dest_dir_path):
+    dataset_dir_path = datasets_dir_path + '/' + dataset_name
+    file_names = os.listdir(dataset_dir_path)
+    for file_name in file_names:
+        if file_name.endswith('.arff'):
+            file_name = file_name[:-5]  # trim extension
+            src_path = dataset_dir_path + '/' + file_name
+            dest_path = dest_dir_path + '/' + dataset_name + '/' + file_name
+            try:
+                os.makedirs(dest_dir_path + '/' + dataset_name)
+            except:
+                pass
+            sktime.utils.load_data.arff_to_ts(src_path, dest_path)
+            loaded_data = sktime.utils.load_data.load_from_tsfile_to_dataframe(dest_path + '.ts')
+
+def convert(src_dir, datasets_dir_name, dataset_names = None, dest_dir_path = None):
     if dataset_names == None:
         dataset_names = src_dir + '/' + datasets_dir_name
     if not isinstance(dataset_names, list):
@@ -11,20 +28,11 @@ def convert(src_dir, datasets_dir_name, dataset_names = None, dest_dir = None):
         else:
             # todo read names from file here
             raise NotImplementedError()
-    if dest_dir == None:
-        dest_dir = src_dir
-    datasets_dir = src_dir + '/' + datasets_dir_name
-    for dataset_name in dataset_names:
-        try:
-            os.makedirs(dest_dir + '/' + dataset_name)
-        except:
-            pass
-        train_file_path_src = datasets_dir + '/' + dataset_name + '/' + dataset_name + '_TRAIN'
-        test_file_path_src = datasets_dir + '/' + dataset_name + '/' + dataset_name + '_TEST'
-        train_file_path_dest = dest_dir + '/' + dataset_name + '/' + dataset_name + '_TRAIN'
-        test_file_path_dest = dest_dir + '/' + dataset_name + '/' + dataset_name + '_TEST'
-        sktime.utils.load_data.arff_to_ts(train_file_path_src, train_file_path_dest)
-        sktime.utils.load_data.arff_to_ts(test_file_path_src, test_file_path_dest)
+    if dest_dir_path == None:
+        dest_dir_path = src_dir
+    datasets_dir_path = src_dir + '/' + datasets_dir_name
+    par = joblib.Parallel(n_jobs = -1)
+    par(joblib.delayed(convert_dataset)(datasets_dir_path, dataset_name, dest_dir_path) for dataset_name in dataset_names)
 
 if __name__ == '__main__':
     dataset_names = [
@@ -114,5 +122,8 @@ if __name__ == '__main__':
             # "WormsTwoClass",
             # "Yoga",
             ]
-    convert('/scratch', 'mv_datasets', dest_dir = '/scratch/mv_datasets_ts')
+    convert('/scratch', 'mv_datasets', dest_dir_path = '/scratch/mv_datasets_ts'
+            # , dataset_names = ['BasicMotions']
+            # , dataset_names = ['InsectWingbeat']
+            )
 

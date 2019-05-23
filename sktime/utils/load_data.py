@@ -14,26 +14,33 @@ def arff_to_ts(file_path_src, file_path_dest):
     data_begun = False
     for line in source:
         if data_begun:
-            line = line.replace('\n', '')
-            parts = line.split(',')
-            next = parts[0]
-            for part in parts[1:-1]:
-                temp = next
-                next = part
-                part = temp
-                if part == "'":
-                    pass
-                elif next == "'":
-                    destination.write(part)
-                    destination.write(':')
-                else:
-                    destination.write(part)
-                    destination.write(',')
-            if next != "'":
-                destination.write(next)
-                destination.write(':')
-            destination.write(parts[-1])
+            line = line.strip()
+            line = line.replace('\\n', ':')
+            line = line.replace("'", ':')
+            line = line[1:]
+            last_colon = line.rfind(':')
+            line = line[0:last_colon + 1] + line[(last_colon + 2):]
+            destination.write(line)
             destination.write('\n')
+            # parts = line.split("','")
+            # next = parts[0]
+            # for part in parts[1:-1]:
+            #     temp = next
+            #     next = part
+            #     part = temp
+            #     if part == "'":
+            #         pass
+            #     elif next == "'":
+            #         destination.write(part)
+            #         destination.write(':')
+            #     else:
+            #         destination.write(part)
+            #         destination.write(',')
+            # if next != "'":
+            #     destination.write(next)
+            #     destination.write(':')
+            # destination.write(parts[-1])
+            # destination.write('\n')
         else:
             line_lower = line.lower()
             if line_lower.startswith(relation_tag):
