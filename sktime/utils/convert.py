@@ -122,8 +122,8 @@ if __name__ == '__main__':
             # "WormsTwoClass",
             # "Yoga",
             ]
-    convert('/scratch', 'mv_datasets', dest_dir_path = '/scratch/mv_datasets_ts'
-            # , dataset_names = ['BasicMotions']
+    convert('/scratch', 'datasets', dest_dir_path = '/scratch/datasets_ts'
+            # , dataset_names = ['GunPoint']
             # , dataset_names = ['InsectWingbeat']
             )
 
