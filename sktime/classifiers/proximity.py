@@ -171,17 +171,22 @@ def gini_gain(parent_class_labels, children_class_labels):
         return 1
     # find gini for parent node
     parent_score = gini_purity(parent_class_labels)
+    # if parent is pure then children will also be pure
+    if parent_score == 0:
+        return 1
     # sum the children's gini scores
     children_score_sum = 0
     for index in range(0, len(children_class_labels)):
         child_class_labels = children_class_labels[index]
-        # find gini score for this child
-        child_score = gini_purity(child_class_labels)
-        # weight score by proportion of instances at child compared to parent
-        child_size = len(child_class_labels)
-        child_score *= (child_size / parent_num_instances)
-        # add to cumulative sum
-        children_score_sum += child_score
+        # ignore empty children
+        if len(children_class_labels) > 0:
+            # find gini score for this child
+            child_score = gini_purity(child_class_labels)
+            # weight score by proportion of instances at child compared to parent
+            child_size = len(child_class_labels)
+            child_score *= (child_size / parent_num_instances)
+            # add to cumulative sum
+            children_score_sum += child_score
     # gini outputs relative improvement
     score = parent_score - children_score_sum
     # scale between 0 and 1
@@ -694,8 +699,7 @@ class ProximityStump(BaseClassifier):
 
     def _exemplar_distance_inst(self, instance, input_checks = True):
         '''
-        find the distance from the given instance to each exemplar instance. Note this returns distance + 1 for
-        efficiency in other methods.
+        find the distance from the given instance to each exemplar instance.
         ----
         Parameters
         ----
@@ -719,9 +723,7 @@ class ProximityStump(BaseClassifier):
         for exemplar_index in range(0, num_exemplars):
             # find the distance to the given instance
             exemplar = self.exemplar_instances[exemplar_index]
-            distance = self._find_distance(exemplar, instance)
-            # increment distance so at least 1
-            distance += 1
+            distance = self._find_distance(exemplar, instance, input_checks = False)
             # add it to the list (at same index as exemplar instance index)
             distances.append(distance)
         return distances
@@ -778,8 +780,8 @@ class ProximityStump(BaseClassifier):
             if not isinstance(instance_b, pd.Series):
                 raise ValueError("instance not a panda series")
 
-        df = pd.DataFrame([instance_a, instance_b])
         if self.transformer:
+            df = pd.DataFrame([instance_a, instance_b])
             df = self.transformer.transform(df)
             instance_a = df.iloc[0, :]
             instance_b = df.iloc[1, :]
@@ -1221,6 +1223,7 @@ class ProximityForest(BaseClassifier):
         for tree in self.trees:
             if self.verbosity > 0:
                 print('producing tree ' + str(tree_index) + ' prediction')
+                tree_index += 1
             # add the tree's predictions to the overall
             predict_probas = tree.predict_proba(X, input_checks = False)
             overall_predict_probas = np.add(overall_predict_probas, predict_probas)

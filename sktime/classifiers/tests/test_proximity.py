@@ -54,6 +54,12 @@ def test_gini_gain_empty():
     result = gini_gain(parent, children)
     testing.assert_equal(result, 1)
 
+def test_gini_gain_pure_parent():
+    parent = np.array([1,1,1])
+    children = [np.array([1]), np.array([1,1])]
+    result = gini_gain(parent, children)
+    testing.assert_equal(result, 1)
+
 def test_pick_one_exemplar_per_class():
     X = pd.DataFrame([1, 2, 3, 4, 5])
     random_state = np.random.RandomState(0)
