@@ -1217,7 +1217,10 @@ class ProximityForest(BaseClassifier):
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree
+        tree_index = 0
         for tree in self.trees:
+            if self.verbosity > 0:
+                print('producing tree ' + str(tree_index) + ' prediction')
             # add the tree's predictions to the overall
             predict_probas = tree.predict_proba(X, input_checks = False)
             overall_predict_probas = np.add(overall_predict_probas, predict_probas)
