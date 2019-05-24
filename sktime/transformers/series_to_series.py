@@ -318,6 +318,9 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
         return [get_der(x) for x in X]
 
+    def __str__(self):
+        return 'd'
+
 class CachedTransformer(BaseTransformer):
 
     def __init__(self, transformer):
@@ -345,3 +348,6 @@ class CachedTransformer(BaseTransformer):
             cached_instances.update(transformed_uncached_instances)
         cached_instances = pd.DataFrame.from_dict(cached_instances, orient = 'index')
         return cached_instances
+
+    def __str__(self):
+        return self.transformer.__str__()
