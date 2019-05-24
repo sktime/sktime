@@ -15,11 +15,15 @@ def arff_to_ts(file_path_src, file_path_dest):
     for line in source:
         if data_begun:
             line = line.strip()
-            line = line.replace('\\n', ':')
-            line = line.replace("'", ':')
-            line = line[1:]
-            last_colon = line.rfind(':')
-            line = line[0:last_colon + 1] + line[(last_colon + 2):]
+            if univariate == 'false':
+                line = line.replace('\\n', ':')
+                line = line.replace("'", ':')
+                line = line[1:]
+                last_colon = line.rfind(':')
+                line = line[0:last_colon + 1] + line[(last_colon + 2):]
+            else:
+                last_comma = line.rfind(',')
+                line = line[0:last_comma] + ':' + line[(last_comma + 1):]
             destination.write(line)
             destination.write('\n')
             # parts = line.split("','")
@@ -79,6 +83,40 @@ def arff_to_ts(file_path_src, file_path_dest):
     source.close()
     destination.close()
 
+def load_ts(path):
+    # todo timestamps
+    # todo ensure all instances have same number of dimensions? (is it needed?)
+    class_labels = None
+    data_begun = False
+    data = []
+    with open(path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if data_begun:
+                dimensions = line.split(':')
+                class_label = dimensions[-1]
+                class_labels.append(class_label)
+                dimensions = dimensions[:-1]
+                for index in range(0, len(dimensions)):
+                    dimension = dimensions[index]
+                    dimension.replace('?', 'NaN')
+                    dimension = dimension.split(',')
+                    dimension = [float(value) for value in dimension]
+                    dimension = pd.Series(dimension)
+                    dimensions[index] = dimension
+                data.append(dimensions)
+            else:
+                line = line.lower()
+                if line.startswith('@classlabel'):
+                    parts = line.split(' ')
+                    if parts[1] == 'true':
+                        class_labels = parts[2:]
+                elif line.startswith('@data'):
+                    data_begun = True
+    data = pd.DataFrame(data)
+    class_labels = np.array(class_labels)
+    data.columns = [('dim_' + str(index)) for index in range(0, len(data.columns))]
+    return data, class_labels
 
 def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and_y=True, replace_missing_vals_with='NaN'):
     data_started = False
@@ -93,8 +131,8 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
     is_first_case = True
     with open(full_file_path_and_name, 'r') as f:
         for line in f:
-
-            if line.strip():
+            line = line.strip()
+            if len(line) > 0:
                 if "@timestamps" in line.lower():
                     if "true" in line.lower():
                         has_time_stamps = True
