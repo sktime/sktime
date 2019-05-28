@@ -6,7 +6,7 @@
 
 .. image:: ./examples/img/sktime_workshop.PNG 
 
-We’d like to invite all interested parties to apply for a tutorial and development sprint for sktime at the Alan Turing Institute in London. It will take place in the week commencing 17th of June and/or 24th of June (final date to be decided based on the availibility of applicants) and **travel and accomodation costs will be covered for accepted applicants**. 
+We’d like to invite all interested parties to apply for a tutorial and development sprint for sktime at the Alan Turing Institute in London. It will take place in the week commencing 17th of June and/or 24th of June (final date to be decided based on the availability of applicants) and **travel and accommodation costs will be covered for accepted applicants**. 
 
 The aim of this gathering is to:
 1. Conduct first-line user testing of our latest stable version (beginners)
