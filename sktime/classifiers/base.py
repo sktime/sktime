@@ -12,13 +12,13 @@ class BaseClassifier(BaseEstimator):
     label_encoder = None
     random_state = None
 
-    def fit(self, X, y, input_checks = True):
+    def fit(self, X, y):
         raise NotImplementedError()
 
-    def predict_proba(self, X, input_checks = True):
+    def predict_proba(self, X):
         raise NotImplementedError('this is an abstract method')
 
-    def predict(self, X, input_checks = True):
+    def predict(self, X):
         '''
         classify instances
         ----
