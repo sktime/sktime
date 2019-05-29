@@ -34,9 +34,7 @@ class BaseClassifier(BaseEstimator):
         predictions : 1d numpy array
             array of predictions of each instance (class value)
         '''
-        if input_checks:
-            check_X_y(X)
-        distributions = self.predict_proba(X, input_checks = False)
+        distributions = self.predict_proba(X)
         predictions = []
         for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]

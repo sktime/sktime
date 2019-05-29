@@ -81,18 +81,14 @@ def gini_gain(y, y_subs):
         for child in y_subs:
             if len(child) > 0:
                 raise ValueError('children populated but parent empty')
-        return 1
+        return 0.5
     # find gini for parent node
     score = gini(y)
-    # if parent is pure then children will also be pure
-    if score == 1:
-        warnings.warn('parent gini 0')
-        return 1
     # sum the children's gini scores
     for index in range(0, len(y_subs)):
         child_class_labels = y_subs[index]
         # ignore empty children
-        if len(y_subs) > 0:
+        if len(child_class_labels) > 0:
             # find gini score for this child
             child_score = gini(child_class_labels)
             # weight score by proportion of instances at child compared to parent
@@ -126,8 +122,7 @@ def gini(y):
         class_counts = np.divide(class_counts, num_instances)
         class_counts = np.power(class_counts, 2)
         sum = np.sum(class_counts)
-        sum = 1 - sum
-        return sum
+        return 1 - sum
     else:
         # y is empty, therefore considered pure
         raise ValueError(' y empty')
@@ -457,6 +452,7 @@ class PT(BaseClassifier):
         self.classes_ = None
 
     def fit(self, X, y):
+        # print('building tree on ' + str(y))
         if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
         if not hasattr(self.label_encoder, 'classes_'):
@@ -476,6 +472,7 @@ class PT(BaseClassifier):
             stumps.append(stump)
         self.stump = comparison.max(stumps, self.random_state, lambda stump: stump.entropy)
         self.branches = []
+        # print('branches: ' + str(self.stump.y_branches))
         for index in range(0, len(self.stump.y_exemplar)):
             y = self.stump.y_branches[index]
             sub_tree = None
@@ -496,7 +493,7 @@ class PT(BaseClassifier):
         return self
 
     def predict_proba(self, X):
-        closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X) # todo use numpy argwhere
+        closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         num_classes = len(self.label_encoder.classes_)
         predict_probas = np.zeros((X.shape[0], num_classes))
         for index in range(0, len(self.branches)):
@@ -506,11 +503,13 @@ class PT(BaseClassifier):
                 sub_tree = self.branches[index]
                 if sub_tree is None:
                     sub_predict_probas = np.zeros(num_classes)
-                    sub_predict_probas[index] = 1
+                    class_label = self.stump.y_exemplar[index]
+                    sub_predict_probas[class_label] = 1
                 else:
                     sub_X = X.iloc[indices, :]
                     sub_predict_probas = sub_tree.predict_proba(sub_X)
                 np.add.at(predict_probas, indices, sub_predict_probas)
+        normalize(predict_probas, copy = False, norm = 'l1')
         return predict_probas
 
     # todo get params avoid func pointer - use name
