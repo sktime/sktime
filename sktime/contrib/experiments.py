@@ -1,5 +1,7 @@
 import os
 
+import sktime.classifiers.prox
+
 os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1" # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1" # must be done before numpy import!!
@@ -17,7 +19,7 @@ import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
 from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.utils.load_data import load_from_tsfile_to_dataframe, load_ts
 import argparse
 
 __author__ = "Anthony Bagnall"
@@ -120,7 +122,7 @@ datasets = [
 ]
 
 
-def set_classifier(cls, resampleId):
+def set_classifier(cls, resampleId, verbosity):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
     you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
@@ -130,12 +132,17 @@ def set_classifier(cls, resampleId):
 
     """
     cls = cls.lower()
+    if cls == 'pt2':
+        return sktime.classifiers.prox.PT(random_state = resampleId,
+                                          verbosity = verbosity,
+                                          num_stump_evaluations = 5)
     if cls == 'pf' or cls == 'proximityforest':
-        return ProximityForest(random_state = resampleId, debug=True)
+        return ProximityForest(random_state = resampleId,
+                               verbosity = verbosity)
     if cls == 'pt' or cls == 'proximitytree':
-        return ProximityTree(random_state = resampleId, debug=True)
+        return ProximityTree(random_state = resampleId, verbosity = verbosity)
     if cls == 'ps' or cls == 'proximitystump':
-        return ProximityStump(random_state = resampleId, debug=True)
+        return ProximityStump(random_state = resampleId, verbosity = verbosity)
     if cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'tsf':
@@ -150,7 +157,8 @@ def set_classifier(cls, resampleId):
         raise Exception('Unknown classifier: ' + str(cls))
 
 
-def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed, overwrite_results=False, format= ".ts", estimate_train=False):
+def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed,
+                   overwrite_results=False, verbosity=0, format= ".ts", estimate_train=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -204,7 +212,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(classifier_name, resample_seed)
+    classifier = set_classifier(classifier_name, resample_seed, verbosity)
     print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed))
     if build_test:
         # TO DO : use sklearn CV
@@ -217,7 +225,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
         test_time = int(round(time.time() * 1000))-start
         ac = accuracy_score(testY, preds)
         print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' test acc: ' + str(ac)
-              + ' time: ' + str(test_time))
+              + ' test time: ' + str(test_time) + ' build time: ' + str(build_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         second = str(classifier.get_params())
         third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
@@ -336,6 +344,7 @@ if __name__ == "__main__":
         parser.add_argument('classifier_name', help = "name of the classifier")
         parser.add_argument('results_dir_path', help = "path to results dir")
         parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
+        parser.add_argument('-v', '--verbosity', help = "verbosity of output", type = int, nargs='?', default = 0)
         parser.add_argument('-o', '--overwrite_results', help = "overwrite existing results", action = 'store_true')
         parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
                             action = 'store_true')
