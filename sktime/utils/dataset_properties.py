@@ -42,9 +42,11 @@ def max_instance_dimension_length(instances, dimension):
 
 # find the maximum length of an instance from a set of instances for all dimensions
 def max_instance_length(instances):
-    max = -1
-    for dimension in range(0, instances.shape[1]):
-        length = max_instance_dimension_length(instances, dimension)
-        if length > max:
-            max = length
+    # todo use all dimensions / uneven length dataset
+    max = len(instances.iloc[0, 0])
+    # max = -1
+    # for dimension in range(0, instances.shape[1]):
+    #     length = max_instance_dimension_length(instances, dimension)
+    #     if length > max:
+    #         max = length
     return max
