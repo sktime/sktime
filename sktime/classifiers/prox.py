@@ -30,12 +30,12 @@
 # todo logging package rather than print to screen
 # todo parallelise (specifically tree building, each branch is an independent unit of work)
 # todo transformer dist meas str
-
+from joblib import Parallel, delayed
 import numpy as np
 import pandas as pd
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, Parallel
 
 from .base import BaseClassifier
 from ..distances import (dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, wdtw_distance)
@@ -418,6 +418,8 @@ def positive_dataframe_indices(X):
     return X
 
 
+_parallel = Parallel(n_jobs = -1)
+
 class PS(BaseClassifier):
     '''
         proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood
@@ -502,8 +504,7 @@ class PS(BaseClassifier):
         self.classes_ = None
         self.entropy = None
 
-    def distance_to_exemplars(self, X):
-        # todo checks
+    def _distance_to_exemplars_inst(self, X):
         num_instances = X.shape[0]
         num_exemplars = len(self.y_exemplar)
         distances = np.empty((num_instances, num_exemplars))
@@ -519,6 +520,50 @@ class PS(BaseClassifier):
                 if distance < min_distance:
                     min_distance = distance
                 distances[instance_index, exemplar_index] = distance
+        return distances
+
+    # def _distance_to_exemplars_inst(self, X, instance_index):
+    #     num_exemplars = len(self.y_exemplar)
+    #     instance = X.iloc[instance_index, :]
+    #     min_distance = np.math.inf
+    #     distances = np.empty(num_exemplars)
+    #     for exemplar_index in range(0, num_exemplars):
+    #         exemplar = self.X_exemplar[exemplar_index]
+    #         if exemplar.name == instance.name:
+    #             distance = 0
+    #         else:
+    #             distance = self.distance_measure(instance, exemplar)  # , min_distance)
+    #         if distance < min_distance:
+    #             min_distance = distance
+    #         distances[exemplar_index] = distance
+    #     return distances
+
+    def _batch(self, X):
+        num_instances = X.shape[0]
+        n_jobs = _parallel.n_jobs
+        if n_jobs < 0:
+            n_jobs = _parallel._effective_n_jobs()
+        start = 0
+        batch_size = num_instances / n_jobs
+        end = start + batch_size - 1
+        start = int(start)
+        end = int(end)
+        for i in range(0, n_jobs - 1):
+            yield X.iloc[range(start, end + 1), :]
+            start += batch_size
+            end += batch_size
+            start = int(start)
+            end = int(end)
+        end = num_instances - 1
+        start = int(start)
+        end = int(end)
+        yield X.iloc[range(start, end + 1), :]
+
+    def distance_to_exemplars(self, X):
+        # todo checks
+
+        distances = _parallel(delayed(self._distance_to_exemplars_inst)(Z) for Z in self._batch(X))
+        distances = np.vstack(distances)
         return distances
 
     def fit(self, X, y):
