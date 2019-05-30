@@ -134,8 +134,13 @@ def set_classifier(cls, resampleId, verbosity):
     cls = cls.lower()
     if cls == 'pt2':
         return sktime.classifiers.prox.PT(random_state = resampleId,
-                                          verbosity = verbosity,
-                                          num_stump_evaluations = 5)
+                                          verbosity = verbosity)
+    if cls == 'pf2':
+        return sktime.classifiers.prox.PF(random_state = resampleId,
+                                          verbosity = verbosity)
+    if cls == 'ps2':
+        return sktime.classifiers.prox.PS(random_state = resampleId,
+                                          verbosity = verbosity)
     if cls == 'pf' or cls == 'proximityforest':
         return ProximityForest(random_state = resampleId,
                                verbosity = verbosity)
