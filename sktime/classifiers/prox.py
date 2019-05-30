@@ -902,7 +902,7 @@ class PF(BaseClassifier):
             if self.verbosity > 0:
                 print('tree ' + str(count) + ' predicting')
                 count += 1
-            tree_predict_probas = tree.predict_probas(X)
+            tree_predict_probas = tree.predict_proba(X)
             predict_probas = np.add(predict_probas, tree_predict_probas)
         normalize(predict_probas, copy = False, norm = 'l1')
         return predict_probas
