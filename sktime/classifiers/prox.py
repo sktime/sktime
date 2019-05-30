@@ -504,7 +504,8 @@ class PS(BaseClassifier):
         self.classes_ = None
         self.entropy = None
 
-    def _distance_to_exemplars_inst(self, X):
+    def _distance_to_exemplars_inst(self, X, start, end):
+        X = X.iloc[range(start, end + 1)]
         num_instances = X.shape[0]
         num_exemplars = len(self.y_exemplar)
         distances = np.empty((num_instances, num_exemplars))
@@ -549,7 +550,7 @@ class PS(BaseClassifier):
         start = int(start)
         end = int(end)
         for i in range(0, n_jobs - 1):
-            yield X.iloc[range(start, end + 1), :]
+            yield start, end
             start += batch_size
             end += batch_size
             start = int(start)
@@ -557,12 +558,12 @@ class PS(BaseClassifier):
         end = num_instances - 1
         start = int(start)
         end = int(end)
-        yield X.iloc[range(start, end + 1), :]
+        yield start, end
 
     def distance_to_exemplars(self, X):
         # todo checks
 
-        distances = _parallel(delayed(self._distance_to_exemplars_inst)(Z) for Z in self._batch(X))
+        distances = _parallel(delayed(self._distance_to_exemplars_inst)(X, start, end) for start, end in self._batch(X))
         distances = np.vstack(distances)
         return distances
 
