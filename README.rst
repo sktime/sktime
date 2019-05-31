@@ -4,21 +4,6 @@
     :target: https://badge.fury.io/py/sktime
 
 
-.. image:: ./examples/img/sktime_workshop.PNG 
-
-We’d like to invite all interested parties to apply for a tutorial and development sprint for sktime at the Alan Turing Institute in London. It will take place in the week commencing 17th of June and/or 24th of June (final date to be decided based on the availability of applicants) and **travel and accommodation costs will be covered for accepted applicants**. 
-
-The aim of this gathering is to:
-1. Conduct first-line user testing of our latest stable version (beginners)
-2. Creation of tutorials, improvement of documentation (intermediate)
-3. Interface, implement or integrate models from other packages (intermediate)
-4. Implement new features in a coding sprint (advanced users)
-
-Application deadline is **the end of Wednesday 29th May**. Please apply at the following link:
-
-https://forms.gle/Lmr6yxpM4JaPP27Y8
-
-
 sktime
 ======
 
