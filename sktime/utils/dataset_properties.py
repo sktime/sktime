@@ -1,7 +1,22 @@
 import numpy as np
 
+# set dataframe indices to a negative range (-1 to below -1)
+def negative_dataframe_indices(X):
+    if X.index[0] >= 0:
+        X = X.copy(deep = True)
+        X.index = np.negative(X.index)
+        X.index -= 1
+    return X
+
+# set dataframe indices to a positive range (0 to above 0)
+def positive_dataframe_indices(X):
+    if X.index[0] < 0:
+        X = X.copy(deep = True)
+        X.index = np.abs(X.index)
+    return X
+
 # find the standard deviation of the dataset
-def stdp(instances):
+def stdp(X):
     sum = 0
     sum_sq = 0
     num_instances = instances.shape[0]
