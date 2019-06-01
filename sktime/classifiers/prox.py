@@ -30,7 +30,7 @@
 # todo logging package rather than print to screen
 # todo parallelise (specifically tree building, each branch is an independent unit of work)
 # todo transformer dist meas str
-from joblib import delayed
+from joblib import delayed, Parallel
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -43,7 +43,7 @@ from ..distances import (dtw_distance, erp_distance, lcss_distance, msm_distance
 from ..transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
 from ..utils import comparison, dataset_properties
 from ..utils.transformations import tabularise
-from ..utils.parallel import generate_dataset_batches
+from ..utils.parallel import generate_dataset_batches, generate_index_batches
 
 
 def _derivative_distance(distance_measure, transformer):
@@ -404,7 +404,6 @@ def best_of_n_splits(n):
 
     return split
 
-
 class PS(BaseClassifier):
     '''
         proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood
@@ -470,7 +469,7 @@ class PS(BaseClassifier):
                  get_entropy=gini_gain,
                  verbosity=0,
                  label_encoder=None,
-                 parallel=None,
+                 num_jobs=1,
                  ):
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
@@ -480,7 +479,7 @@ class PS(BaseClassifier):
         self.get_entropy = get_entropy
         self.verbosity = verbosity
         self.label_encoder = label_encoder
-        self.parallel = parallel
+        self.num_jobs = num_jobs
         # set in fit
         self.y_exemplar = None
         self.X_exemplar = None
@@ -492,7 +491,7 @@ class PS(BaseClassifier):
         self.entropy = None
 
     def _distance_to_exemplars_inst(self, X, start, end):
-        X = X.iloc[range(start, end + 1)]
+        X = X.iloc[range(start, end + 1), :]
         num_instances = X.shape[0]
         num_exemplars = len(self.y_exemplar)
         distances = np.empty((num_instances, num_exemplars))
@@ -512,9 +511,10 @@ class PS(BaseClassifier):
 
     def distance_to_exemplars(self, X):
         check_X(X)
-        if self.parallel is not None:
-            distances = self.parallel(delayed(self._distance_to_exemplars_inst)(X, start, end) for start, end in
-                                      generate_dataset_batches(X, self.parallel))
+        if self.num_jobs > 1 or self.num_jobs < 0:
+            parallel = Parallel(self.num_jobs)
+            distances = parallel(delayed(self._distance_to_exemplars_inst)(X, start, end) for start, end in
+                                 generate_dataset_batches(X, parallel))
             distances = np.vstack(distances)
         else:
             distances = self._distance_to_exemplars_inst(X, 0, X.shape[0] - 1)
@@ -633,7 +633,8 @@ class PT(BaseClassifier):
                  max_depth=np.math.inf,
                  is_leaf=pure,
                  verbosity=0,
-                 label_encoder=None
+                 label_encoder=None,
+                 num_jobs = 1,
                  ):
         self.verbosity = verbosity
         self.max_depth = max_depth
@@ -645,6 +646,7 @@ class PT(BaseClassifier):
         self.get_exemplars = get_exemplars
         self.label_encoder = label_encoder
         self.get_entropy = get_entropy
+        self.num_jobs = num_jobs
         self.num_stump_evaluations = num_stump_evaluations
         # below set in fit method
         self.depth = 0
@@ -655,16 +657,7 @@ class PT(BaseClassifier):
         self.y = None
         self.classes_ = None
 
-    def fit(self, X, y):
-        check_X_y(X, y)
-        self.X = dataset_properties.positive_dataframe_indices(X)
-        self.y = y
-        self.random_state = check_random_state(self.random_state)
-        # setup label encoding if not already
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
+    def _find_branches(self, X, y):
         self.classes_ = self.label_encoder.classes_
         if self.distance_measure is None:
             if self.get_distance_measure is None:
@@ -681,18 +674,16 @@ class PT(BaseClassifier):
                 get_entropy=self.get_entropy,
                 verbosity=self.verbosity,
                 label_encoder=self.label_encoder,
+                num_jobs=self.num_jobs
             )
             stump.fit(X, y)
             stump.grow()
             stumps.append(stump)
         self.stump = comparison.max(stumps, self.random_state, lambda stump: stump.entropy)
-        self.branches = []
-        # print('branches: ' + str(self.stump.y_branches))
-        for index in range(0, len(self.stump.y_exemplar)):
-            y = self.stump.y_branches[index]
-            sub_tree = None
-            if self.depth < self.max_depth and not self.is_leaf(y):
-                X = self.stump.X_branches[index]
+        if self.depth < self.max_depth and not self.is_leaf(y):
+            num_branches = len(self.stump.y_exemplar)
+            subs = np.empty(num_branches, dtype=object)
+            for index in range(0, num_branches):
                 sub_tree = PT(
                     random_state=self.random_state,
                     get_exemplars=self.get_exemplars,
@@ -704,13 +695,39 @@ class PT(BaseClassifier):
                     is_leaf=self.is_leaf,
                     verbosity=self.verbosity,
                     max_depth=self.max_depth,
-                    label_encoder=self.label_encoder
+                    label_encoder=self.label_encoder,
+                    num_jobs=1
                 )
                 sub_tree.depth = self.depth + 1
-            self.branches.append(sub_tree)
-            if sub_tree is not None:
-                sub_tree.fit(X, y)
+                sub_X = self.stump.X_branches[index]
+                sub_y = self.stump.y_branches[index]
+                subs[index] = (sub_tree, sub_X, sub_y)
+            return subs
+        else:
+            return np.array([])
+
+    def fit(self, X, y):
+        check_X_y(X, y)
+        self.X = dataset_properties.positive_dataframe_indices(X)
+        self.y = y
+        self.random_state = check_random_state(self.random_state)
+        # setup label encoding if not already
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self._branch(X, y)
         return self
+
+    def _branch(self, X, y):
+        queue = [[(self, X, y)]]
+        parallel = Parallel(self.num_jobs)
+        while len(queue) > 0:
+            queue = parallel(delayed(tree._find_branches)(X, y)
+                             for branch in queue
+                             for tree, X, y in branch
+                             if tree is not None)
+
 
     def predict_proba(self, X):
         check_X(X)
@@ -783,7 +800,7 @@ class PF(BaseClassifier):
 
     def __init__(self,
                  random_state=None,
-
+                 parallel=None,
                  num_trees=100,
                  label_encoder=None,
                  distance_measure=None,
@@ -794,6 +811,7 @@ class PF(BaseClassifier):
                  num_stump_evaluations=5,
                  max_depth=np.math.inf,
                  is_leaf=pure,
+                 num_jobs = 1,
                  setup_distance_measure_getter=setup_all_distance_measure_getter,
                  ):
         self.is_leaf = is_leaf
@@ -804,6 +822,7 @@ class PF(BaseClassifier):
         self.get_entropy = get_entropy
         self.random_state = random_state
         self.num_trees = num_trees
+        self.num_jobs = num_jobs
         self.label_encoder = label_encoder
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure_getter = setup_distance_measure_getter
@@ -813,6 +832,26 @@ class PF(BaseClassifier):
         self.X = None
         self.y = None
         self.classes_ = None
+
+    def fit_tree(self, X, y, index):
+        if self.verbosity > 0:
+            print('tree ' + str(index) + ' building')
+        tree = PT(
+            random_state=self.random_state,
+            verbosity=self.verbosity,
+            get_exemplars=self.get_exemplars,
+            get_entropy=self.get_entropy,
+            label_encoder=self.label_encoder,
+            distance_measure=self.distance_measure,
+            setup_distance_measure=self.setup_distance_measure_getter,
+            get_distance_measure=self.get_distance_measure,
+            num_stump_evaluations=self.num_stump_evaluations,
+            max_depth=self.max_depth,
+            is_leaf=self.is_leaf,
+            num_jobs=1
+        )
+        tree.fit(X, y)
+        return tree
 
     def fit(self, X, y):
         check_X_y(X, y)
@@ -829,25 +868,8 @@ class PF(BaseClassifier):
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
             self.distance_measure = self.get_distance_measure(self)
-        self.trees = []
-        for index in range(0, self.num_trees):
-            if self.verbosity > 0:
-                print('tree ' + str(index) + ' building')
-            tree = PT(
-                random_state=self.random_state,
-                verbosity=self.verbosity,
-                get_exemplars=self.get_exemplars,
-                get_entropy=self.get_entropy,
-                label_encoder=self.label_encoder,
-                distance_measure=self.distance_measure,
-                setup_distance_measure=self.setup_distance_measure_getter,
-                get_distance_measure=self.get_distance_measure,
-                num_stump_evaluations=self.num_stump_evaluations,
-                max_depth=self.max_depth,
-                is_leaf=self.is_leaf,
-            )
-            self.trees.append(tree)
-            tree.fit(X, y)
+        parallel = Parallel(self.num_jobs)
+        self.trees = parallel(delayed(self.fit_tree)(X, y, index) for index in range(0, self.num_trees))
 
     def predict_proba(self, X):
         check_X_y(X, y)
