@@ -5,6 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.c
 
 # Distribution / packaging
 .Python
@@ -142,3 +143,5 @@ dask-worker-space
 
 # documentation build files
 build_doc_site/
+
+envs/

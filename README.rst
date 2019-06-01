@@ -1,9 +1,13 @@
 .. image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
     :target: https://travis-ci.com/alan-turing-institute/sktime   
+.. image:: https://badge.fury.io/py/sktime.svg
+    :target: https://badge.fury.io/py/sktime
+
+
 sktime
 ======
 
-A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`_ compatible Python toolbox for learning with
+A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for learning with
 time series and panel data. Eventually, we would like to support:
 
 * Time series classification and regression,
@@ -11,25 +15,35 @@ time series and panel data. Eventually, we would like to support:
 * Supervised/panel forecasting,
 * Time series segmentation,
 * Time-to-event and event risk modelling,
-* Unsupervised tasks such as motif discovery and anomaly detection, and diagnostic visualization,
-* On-line and streaming tasks, e.g., in variation of the above.
+* Unsupervised tasks such as motif discovery, anomaly detection and diagnostic visualization,
+* On-line and streaming tasks, e.g. in variation of the above.
 
-The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`_ repository on Github.
+The package is under active development. Development takes place in the `sktime <https://github.com/alan-turing-institute/sktime>`__ repository on Github.
 
-Currently, modular modelling workflows for supervised learning with time series have been implemented.
-As next steps, we will move to forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf/>`_ interface for forecasting and supervised forecasting.
+Currently, modular modelling workflows for forecasting and supervised learning with time series have been implemented.
+As next steps, we will move to supervised forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf>`__ interface and extensions to the existing frameworks.
 
 
 Installation
 ------------
-The package is currently not feature stable, and thus not available directly via PyPI. In the interim, please follow these steps to install the development version:
+The package is available via PyPI using:
 
-1. Download the repository if you have not done so already: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
-2. Move into the root directory: :code:`cd sktime`
-3. Make sure your local version is up-to-date: :code:`git pull`
-4. Optionally, activate destination environment for package, e.g. with conda: :code:`conda activate <env>`
+:code:`pip install sktime`
+
+But note that the package is actively being developed and currently not feature stable.
+
+Development version
+~~~~~~~~~~~~~~~~~~~
+To install the development version, follow these steps:
+
+1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
+2. Move into the root directory of the repository: :code:`cd sktime`
+3. Switch to development branch: :code:`git checkout dev`
+4. Make sure your local version is up-to-date: :code:`git pull`
 5. Install package: :code:`pip install .`
 
+You currently may have to install :code:`numpy` and :code:`Cython` first using: :code:`pip install numpy`
+and :code:`pip install Cython`.
 
 Overview
 --------
@@ -43,7 +57,7 @@ There are numerous different time series data related learning tasks, for exampl
 * Supervised/panel forecasting,
 * Time series segmentation.
 
-The sktime high-level interface aims to create a unified interface for these different learning tasks (partially inspired by the APIs of mlr and openML) through the following two objects:
+The sktime high-level interface aims to create a unified interface for these different learning tasks (partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://openml.org>`__) through the following two objects:
 
 * :code:`Task` object that encapsulates meta-data from a dataset and the necessary information about the particular supervised learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
 * :code:`Strategy` objects that wrap low-level estimators and allows to use :code:`fit` and :code:`predict` methods using data and a task object.
@@ -57,32 +71,33 @@ Currently, the package implements:
 * Various state-of-the-art approaches to supervised learning with time series features,
 * Transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
 * Pipelining, allowing to chain multiple transformers with a final estimator,
-* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator, 
-* Off-shelf composites strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction.
-
+* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator,
+* Off-shelf composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
+* Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
 
 Documentation
 -------------
-The full API documentation and an introduction can be found `here <https://alan-turing-institute.github.io/sktime/>`_.
-Tutorial notebooks for currently stable functionality are `here <https://github.com/alan-turing-institute/sktime/tree/master/examples>`_.
+The full API documentation and an introduction can be found `here <https://alan-turing-institute.github.io/sktime/>`__.
+Tutorial notebooks for currently stable functionality are in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder.
 
 
 Development road map
 --------------------
-1. Functionality for the advanced time series tasks. For (supervised) forecasting, integration of a modified `pysf <https://github.com/alan-turing-institute/pysf/>`_ interface. For time-to-event and event risk modell, integration of an adapted `pysf <https://github.com/alan-turing-institute/skpro/>`_ interface.
+1. Functionality for the advanced time series tasks. For (supervised) forecasting, integration of a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ interface. For time-to-event and event risk modell, integration of an adapted `pysf <https://github.com/alan-turing-institute/pysf/>`__ interface.
 2. Extension of high-level interface to classical and supervised/panel forecasting, to include reduction strategies in which forecasting or supervised forecasting tasks are reduced to tasks that can be solved with classical supervised learning algorithms or time series classification/regression,
 3. Integration of algorithms for classical forecasting (e.g. ARIMA), deep learning strategies, and third-party feature extraction tools,
 4. Design and implementation of specialised data-container for efficient handling of time series/panel data in a supervised learning workflow and separation of time series meta-data, re-utilising existing data-containers whenever possible,
-5. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods, based on the `mlaut <https://github.com/alan-turing-institute/pysf/>`_ design.
+5. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods, based on the `mlaut <https://github.com/alan-turing-institute/mlaut/>`__ design.
+
 
 Contributors
 ------------
 Former and current active contributors are as follows.
 
-Project management: Jason Lines (@jasonlines), Franz J Kiraly (@fkiraly)
+Project management: Jason Lines (@jasonlines), Franz Király (@fkiraly)
 
-Design: Anthony Bagnall, Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz J Kiraly (@fkiraly), Markus Löning (@mloning)
+Design: Anthony Bagnall(@TonyBagnall), Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz Király (@fkiraly), Markus Löning (@mloning)
 
-Coding: Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
+Coding: Sajaysurya Ganesh (@sajaysurya), Bagnall(@TonyBagnall), Jason Lines (@jasonlines), George Oastler (@goastler), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
 
 We are actively looking for contributors. Please contact @fkiraly or @jasonlines for volunteering or information on paid opportunities, or simply raise an issue in the tracker.

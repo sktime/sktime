@@ -13,11 +13,12 @@ import numpy as np
 import pandas as pd
 
 
-__all__ = ['TSColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
+__all__ = ['ColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
 
 
-class TSColumnTransformer(ColumnTransformer):
-    """Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
+class ColumnTransformer(ColumnTransformer):
+    """
+    Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
 
     This estimator allows different columns or column subsets of the input
@@ -40,8 +41,7 @@ class TSColumnTransformer(ColumnTransformer):
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
-        column(s) : string or int, array-like of string or int, slice, \
-boolean mask array or callable
+        column(s) : str or int, array-like of string or int, slice, boolean mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -97,11 +97,12 @@ boolean mask array or callable
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
-    sparse_output_ : boolean
+    sparse_output_ : bool
         Boolean flag indicating wether the output of ``transform`` is a
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
     """
+
     def __init__(
         self,
         transformers,
@@ -113,7 +114,7 @@ boolean mask array or callable
     ):
 
         self.preserve_dataframe = preserve_dataframe
-        super(TSColumnTransformer, self).__init__(
+        super(ColumnTransformer, self).__init__(
             transformers=transformers,
             remainder=remainder,
             sparse_threshold=sparse_threshold,
@@ -122,7 +123,8 @@ boolean mask array or callable
         )
 
     def _hstack(self, Xs):
-        """Stacks X horizontally.
+        """
+        Stacks X horizontally.
 
         Supports input types (X): list of numpy arrays, sparse arrays and DataFrames
         """
@@ -165,7 +167,8 @@ class RowwiseTransformer(BaseTransformer):
         self.transformer = transformer
 
     def fit(self, X, y=None):
-        """Empty fit function that does nothing.
+        """
+        Empty fit function that does nothing.
 
         Parameters
         ----------
@@ -183,15 +186,12 @@ class RowwiseTransformer(BaseTransformer):
         X = check_ts_array(X)
 
         # fitting - this transformer needs no fitting
-        pass
-
-        # let the model know that it is fitted
         self.is_fitted_ = True
-        # `fit` should always return `self`
         return self
 
     def transform(self, X):
-        """Calls the fit_transfor() of the per-row transformer repeatedly
+        """
+        Apply the `fit_transform()` method of the per-row transformer repeatedly
         on each row.
 
         Parameters
@@ -223,7 +223,8 @@ class RowwiseTransformer(BaseTransformer):
 
 
 class Tabularizer(BaseTransformer):
-    """A transformer that turns time-series/panel data into tabular data.
+    """
+    A transformer that turns time series/panel data into tabular data.
 
     This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
     dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
@@ -231,7 +232,7 @@ class Tabularizer(BaseTransformer):
 
     Parameters
     ----------
-    param check_input: bool, optional (default=True)
+    check_input: bool, optional (default=True)
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
@@ -239,7 +240,8 @@ class Tabularizer(BaseTransformer):
         self.check_input = check_input
 
     def fit(self, X, y=None):
-        """Empty fit function that does nothing. Kept here for consistency.
+        """
+        Empty fit function that does nothing. Kept here for consistency.
 
         Parameters
         ----------
@@ -265,11 +267,12 @@ class Tabularizer(BaseTransformer):
 
     def transform(self, X):
         """
-        Transform nested pandas dataframe into tabular pandas dataframe.
-        param X : pandas dataframe
+        Transform nested pandas dataframe into tabular dataframe.
+
+        param X : pandas.DataFrame
             Nested dataframe with pandas series or numpy arrays in cells.
 
-        return : pandas dataframe
+        return : pandas.DataFrame
             Tabular dataframe with only primitives in cells.
         """
 
