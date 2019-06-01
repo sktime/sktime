@@ -16,7 +16,7 @@ def positive_dataframe_indices(X):
     return X
 
 # find the standard deviation of the dataset
-def stdp(X):
+def stdp(instances):
     sum = 0
     sum_sq = 0
     num_instances = instances.shape[0]
