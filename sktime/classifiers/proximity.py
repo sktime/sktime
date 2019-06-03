@@ -33,6 +33,7 @@
 # todo constructor accept str name func / pointer
 # todo duck-type functions
 # todo comment-up transformers / util classes
+# todo fix docstrings
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -131,7 +132,7 @@ def gini_gain(y, y_subs):
     # find gini for parent node
     score = gini(y)
     # sum the children's gini scores
-    for index in range(0, len(y_subs)):
+    for index in range(len(y_subs)):
         child_class_labels = y_subs[index]
         # ignore empty children
         if len(child_class_labels) > 0:
@@ -222,7 +223,7 @@ def get_one_exemplar_per_class(X, y, random_state):
     n_unique_class_labels = len(unique_class_labels)
     chosen_instances = [None] * n_unique_class_labels
     # for each class randomly choose and instance
-    for class_label_index in range(0, n_unique_class_labels):
+    for class_label_index in range(n_unique_class_labels):
         class_label = unique_class_labels[class_label_index]
         # filter class labels for desired class and get indices
         indices = np.argwhere(y == class_label)
@@ -467,7 +468,7 @@ def best_of_n_stumps(n):
         '''
         stumps = []
         # for n stumps
-        for index in range(0, n):
+        for index in range(n):
             # duplicate tree configuration
             stump = ProximityStump(
                     random_state = proximity.random_state,
@@ -582,7 +583,7 @@ class ProximityStump(BaseClassifier):
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
         min_distance = np.math.inf
-        for exemplar_index in range(0, n_exemplars):
+        for exemplar_index in range(n_exemplars):
             exemplar = exemplars[exemplar_index]
             if exemplar.name == instance.name:
                 distance = 0
@@ -601,12 +602,12 @@ class ProximityStump(BaseClassifier):
                                  (self.X_exemplar,
                                   X.iloc[index, :],
                                   self.distance_measure)
-                                 for index in range(0, X.shape[0]))
+                                 for index in range(X.shape[0]))
         else:
             distances = [self._distance_to_exemplars_inst(self.X_exemplar,
                                                           X.iloc[index, :],
                                                           self.distance_measure)
-                         for index in range(0, X.shape[0])]
+                         for index in range(X.shape[0])]
         distances = np.vstack(np.array(distances))
         return distances
 
@@ -633,7 +634,7 @@ class ProximityStump(BaseClassifier):
         n_instances = X.shape[0]
         distances = self.distance_to_exemplars(X)
         indices = np.empty(X.shape[0], dtype = int)
-        for index in range(0, n_instances):
+        for index in range(n_instances):
             exemplar_distances = distances[index]
             closest_exemplar_index = comparison.arg_min(exemplar_distances, self.random_state)
             indices[index] = closest_exemplar_index
@@ -644,7 +645,7 @@ class ProximityStump(BaseClassifier):
         indices = self.find_closest_exemplar_indices(self.X)
         self.X_branches = [None] * n_exemplars
         self.y_branches = [None] * n_exemplars
-        for index in range(0, n_exemplars):
+        for index in range(n_exemplars):
             instance_indices = np.argwhere(indices == index)
             instance_indices = np.ravel(instance_indices)
             self.X_branches[index] = self.X.iloc[instance_indices, :]
@@ -655,7 +656,7 @@ class ProximityStump(BaseClassifier):
 
     def predict_proba(self, X):
         check_X(X)
-        self.X = dataset_properties.negative_dataframe_indices(X)
+        X = dataset_properties.negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
         distances = np.add(distances, ones)
@@ -738,8 +739,8 @@ class ProximityTree(BaseClassifier):
         self.label_encoder = label_encoder
         self.get_gain = get_gain
         self.n_jobs = n_jobs
-        # below set in fit method
         self.depth = 0
+        # below set in fit method
         self.distance_measure = None
         self.stump = None
         self.branches = None
@@ -766,7 +767,7 @@ class ProximityTree(BaseClassifier):
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
         if self.depth < self.max_depth and not self.is_leaf(y):
-            for index in range(0, n_branches):
+            for index in range(n_branches):
                 sub_tree = ProximityTree(
                         random_state = self.random_state,
                         get_exemplars = self.get_exemplars,
@@ -793,7 +794,7 @@ class ProximityTree(BaseClassifier):
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
         distribution = np.zeros((X.shape[0], n_classes))
-        for index in range(0, len(self.branches)):
+        for index in range(len(self.branches)):
             indices = np.argwhere(closest_exemplar_indices == index)
             if indices.shape[0] > 0:
                 indices = np.ravel(indices)
@@ -921,9 +922,10 @@ class ProximityForest(BaseClassifier):
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
             self.trees = parallel(delayed(self._fit_tree)(X, y, index, self.random_state.randint(0, self.n_trees))
-                                  for index in range(0, self.n_trees))
+                                  for index in range(self.n_trees))
         else:
-            self.trees = [self._fit_tree(X, y, index) for index in range(0, self.n_trees)]
+            self.trees = [self._fit_tree(X, y, index, self.random_state.randint(0, self.n_trees))
+                          for index in range(self.n_trees)]
         return self
 
     @staticmethod
@@ -932,7 +934,7 @@ class ProximityForest(BaseClassifier):
 
     def predict_proba(self, X):
         check_X(X)
-        self.X = dataset_properties.negative_dataframe_indices(X)
+        X = dataset_properties.negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
             distributions = parallel(delayed(self._predict_proba_tree)(X, tree) for tree in self.trees)
