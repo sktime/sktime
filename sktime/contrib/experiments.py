@@ -2,9 +2,9 @@ import os
 
 import sktime.classifiers.prox
 
-os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
-os.environ["NUMEXPR_NUM_THREADS"] = "1" # must be done before numpy import!!
-os.environ["OMP_NUM_THREADS"] = "1" # must be done before numpy import!!
+os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
 import sys
 import time
@@ -18,8 +18,7 @@ import sktime.classifiers.ensemble as ensemble
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree
-from sktime.utils.load_data import load_from_tsfile_to_dataframe, load_ts
+from sktime.utils.load_data import load_ts
 import argparse
 
 __author__ = "Anthony Bagnall"
@@ -32,99 +31,99 @@ and automatically compared to the results generated in java
 Will have both low level version and high level orchestration version soon.
 """
 
-
 datasets = [
-    "GunPoint",
-    "ItalyPowerDemand",
-    "ArrowHead",
-    "Coffee",
-    "Adiac",
-    "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "Car",
-    "CBF",
-    "ChlorineConcentration",
-    "CinCECGTorso",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxTW",
-    "Earthquakes",
-    "ECG200",
-    "ECG5000",
-    "ECGFiveDays",
-#    "ElectricDevices",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-#    "FordA",
-#    "FordB",
-    "Ham",
-#    "HandOutlines",
-    "Haptics",
-    "Herring",
-    "InlineSkate",
-    "InsectWingbeatSound",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MedicalImages",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxTW",
-    "MoteStrain",
-    "NonInvasiveFetalECGThorax1",
-    "NonInvasiveFetalECGThorax2",
-    "OliveOil",
-    "OSULeaf",
-    "PhalangesOutlinesCorrect",
-    "Phoneme",
-    "Plane",
-    "ProximalPhalanxOutlineCorrect",
-    "ProximalPhalanxOutlineAgeGroup",
-    "ProximalPhalanxTW",
-    "RefrigerationDevices",
-    "ScreenType",
-    "ShapeletSim",
-    "ShapesAll",
-    "SmallKitchenAppliances",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-#    "StarlightCurves",
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UWaveGestureLibraryX",
-    "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",
-    "UWaveGestureLibraryAll",
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
-]
+        "GunPoint",
+        "ItalyPowerDemand",
+        "ArrowHead",
+        "Coffee",
+        "Adiac",
+        "Beef",
+        "BeetleFly",
+        "BirdChicken",
+        "Car",
+        "CBF",
+        "ChlorineConcentration",
+        "CinCECGTorso",
+        "Computers",
+        "CricketX",
+        "CricketY",
+        "CricketZ",
+        "DiatomSizeReduction",
+        "DistalPhalanxOutlineCorrect",
+        "DistalPhalanxOutlineAgeGroup",
+        "DistalPhalanxTW",
+        "Earthquakes",
+        "ECG200",
+        "ECG5000",
+        "ECGFiveDays",
+        #    "ElectricDevices",
+        "FaceAll",
+        "FaceFour",
+        "FacesUCR",
+        "FiftyWords",
+        "Fish",
+        #    "FordA",
+        #    "FordB",
+        "Ham",
+        #    "HandOutlines",
+        "Haptics",
+        "Herring",
+        "InlineSkate",
+        "InsectWingbeatSound",
+        "LargeKitchenAppliances",
+        "Lightning2",
+        "Lightning7",
+        "Mallat",
+        "Meat",
+        "MedicalImages",
+        "MiddlePhalanxOutlineCorrect",
+        "MiddlePhalanxOutlineAgeGroup",
+        "MiddlePhalanxTW",
+        "MoteStrain",
+        "NonInvasiveFetalECGThorax1",
+        "NonInvasiveFetalECGThorax2",
+        "OliveOil",
+        "OSULeaf",
+        "PhalangesOutlinesCorrect",
+        "Phoneme",
+        "Plane",
+        "ProximalPhalanxOutlineCorrect",
+        "ProximalPhalanxOutlineAgeGroup",
+        "ProximalPhalanxTW",
+        "RefrigerationDevices",
+        "ScreenType",
+        "ShapeletSim",
+        "ShapesAll",
+        "SmallKitchenAppliances",
+        "SonyAIBORobotSurface1",
+        "SonyAIBORobotSurface2",
+        #    "StarlightCurves",
+        "Strawberry",
+        "SwedishLeaf",
+        "Symbols",
+        "SyntheticControl",
+        "ToeSegmentation1",
+        "ToeSegmentation2",
+        "Trace",
+        "TwoLeadECG",
+        "TwoPatterns",
+        "UWaveGestureLibraryX",
+        "UWaveGestureLibraryY",
+        "UWaveGestureLibraryZ",
+        "UWaveGestureLibraryAll",
+        "Wafer",
+        "Wine",
+        "WordSynonyms",
+        "Worms",
+        "WormsTwoClass",
+        "Yoga",
+        ]
 
 
 def set_classifier(cls, resampleId, verbosity):
     """
-    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
+    Basic way of determining the classifier to build. To differentiate settings just and another elif. So,
+    for example, if
     you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
     This may well get superceded, it is just how e have always done it
     :param cls: String indicating which classifier you want
@@ -132,34 +131,30 @@ def set_classifier(cls, resampleId, verbosity):
 
     """
     cls = cls.lower()
-    if cls == 'pt2':
-        return sktime.classifiers.prox.PT(random_state = resampleId,
-                                          verbosity = verbosity,
-                                          num_jobs=-1)
-    if cls == 'pf2':
-        return sktime.classifiers.prox.PF(random_state = resampleId,
-                                          verbosity = verbosity,
-                                          num_jobs=-1,
-                                          )
-    if cls == 'ps2':
-        return sktime.classifiers.prox.PS(random_state = resampleId,
-                                          verbosity = verbosity,
-                                          num_jobs=-1)
-    if cls == 'pf' or cls == 'proximityforest':
-        return ProximityForest(random_state = resampleId,
-                               verbosity = verbosity)
-    if cls == 'pt' or cls == 'proximitytree':
-        return ProximityTree(random_state = resampleId, verbosity = verbosity)
-    if cls == 'ps' or cls == 'proximitystump':
-        return ProximityStump(random_state = resampleId, verbosity = verbosity)
+    if cls == 'pt' or cls == 'proximity_tree':
+        return sktime.classifiers.prox.ProximityTree(
+                random_state = resampleId,
+                verbosity = verbosity,
+                )
+    if cls == 'pf' or cls == 'proximity_forest':
+        return sktime.classifiers.prox.ProximityForest(
+                random_state = resampleId,
+                verbosity = verbosity,
+                )
+    if cls == 'ps' or cls == 'proximity_stump':
+        return sktime.classifiers.prox.ProximityStump(
+                random_state = resampleId,
+                verbosity = verbosity,
+                n_jobs = -1
+                )
     if cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls == 'tsf':
+    elif cls == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
-    elif  cls == 'boss':
+    elif cls == 'boss':
         return db.BOSSEnsemble()
-   # elif classifier == 'elasticensemble':
-   #     return dist.ElasticEnsemble()
+    # elif classifier == 'elasticensemble':
+    #     return dist.ElasticEnsemble()
     elif cls == 'tsf_markus':
         return ensemble.TimeSeriesForestClassifier()
     else:
@@ -167,7 +162,7 @@ def set_classifier(cls, resampleId, verbosity):
 
 
 def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed,
-                   overwrite_results=False, verbosity=0, format= ".ts", estimate_train=False):
+                   overwrite_results = False, verbosity = 0, format = ".ts", estimate_train = False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -192,30 +187,31 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
     classifier_name = classifier_name.upper()
     build_test = True
     if not overwrite_results:
-        full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/testFold" + str(resample_seed) + ".csv"
+        full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(
+            dataset_name) + "/testFold" + str(resample_seed) + ".csv"
         if os.path.exists(full_path):
-            print(full_path+" Already exists and overwrite set to false, not building Test")
-            build_test=False
+            print(full_path + " Already exists and overwrite set to false, not building Test")
+            build_test = False
         if estimate_train:
-            full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/trainFold" + str(
-                resample_seed) + ".csv"
+            full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(
+                dataset_name) + "/trainFold" + str(
+                    resample_seed) + ".csv"
             if os.path.exists(full_path):
                 print(full_path + " Already exists and overwrite set to false, not building Train")
                 estimate_train = False
-        if estimate_train == False and build_test ==False:
+        if estimate_train == False and build_test == False:
             return
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
     testX, testY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TEST' + format)
-    if resample_seed !=0:
+    if resample_seed != 0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
-        trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resample_seed, shuffle=True,
-                                                                       stratify=allLabels)
-
+        trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size = train_size,
+                                                        random_state = resample_seed, shuffle = True,
+                                                        stratify = allLabels)
 
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
@@ -226,41 +222,49 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
     if build_test:
         # TO DO : use sklearn CV
         start = int(round(time.time() * 1000))
-        classifier.fit(trainX,trainY)
-        build_time = int(round(time.time() * 1000))-start
-        start =  int(round(time.time() * 1000))
+        classifier.fit(trainX, trainY)
+        build_time = int(round(time.time() * 1000)) - start
+        start = int(round(time.time() * 1000))
         probs = classifier.predict_proba(testX)
-        preds = classifier.classes_[np.argmax(probs, axis=1)]
-        test_time = int(round(time.time() * 1000))-start
+        preds = classifier.classes_[np.argmax(probs, axis = 1)]
+        test_time = int(round(time.time() * 1000)) - start
         ac = accuracy_score(testY, preds)
-        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' test acc: ' + str(ac)
-              + ' test time: ' + str(test_time) + ' build time: ' + str(build_time))
+        print(
+            classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' test acc: ' + str(ac)
+            + ' test time: ' + str(test_time) + ' build time: ' + str(build_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         second = str(classifier.get_params())
-        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
-        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path, classifier_name=classifier_name, resample_seed= resample_seed,
-                                    predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset_name, actual_class_vals=testY, split= 'TEST')
+        third = str(ac) + "," + str(build_time) + "," + str(test_time) + ",-1,-1," + str(
+            len(classifier.classes_)) + "," + str(classifier.classes_)
+        write_results_to_uea_format(second_line = second, third_line = third, output_path = results_dir_path,
+                                    classifier_name = classifier_name, resample_seed = resample_seed,
+                                    predicted_class_vals = preds, actual_probas = probs, dataset_name = dataset_name,
+                                    actual_class_vals = testY, split = 'TEST')
     if estimate_train:
         start = int(round(time.time() * 1000))
-        if build_test and hasattr(classifier,"get_train_probs"):    #Normally Can only do this if test has been built ... well not necessarily true, but will do for now
+        if build_test and hasattr(classifier, "get_train_probs"):  # Normally Can only do this if test has been built
+            # ... well not necessarily true, but will do for now
             train_probs = classifier.get_train_probs(trainX)
         else:
-            train_probs = cross_val_predict(classifier, X=trainX, y=trainY, cv=10, method='predict_proba')
+            train_probs = cross_val_predict(classifier, X = trainX, y = trainY, cv = 10, method = 'predict_proba')
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
-        train_acc = accuracy_score(trainY,train_preds)
-        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' train acc: ' + str(train_acc)
+        train_preds = classifier.classes_[np.argmax(train_probs, axis = 1)]
+        train_acc = accuracy_score(trainY, train_preds)
+        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' train acc: ' + str(
+            train_acc)
               + ' time: ' + str(train_time))
         second = str(classifier.get_params())
-        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
-        write_results_to_uea_format(second_line=second, third_line=third, output_path=results_dir_path,
-                                    classifier_name=classifier_name, resample_seed= resample_seed,
-                                    predicted_class_vals=train_preds, actual_probas=train_probs,
-                                    dataset_name=dataset_name, actual_class_vals=trainY, split= 'TRAIN')
+        third = str(train_acc) + "," + str(train_time) + ",-1,-1,-1," + str(len(classifier.classes_)) + "," + str(
+            classifier.classes_)
+        write_results_to_uea_format(second_line = second, third_line = third, output_path = results_dir_path,
+                                    classifier_name = classifier_name, resample_seed = resample_seed,
+                                    predicted_class_vals = train_preds, actual_probas = train_probs,
+                                    dataset_name = dataset_name, actual_class_vals = trainY, split = 'TRAIN')
 
 
 def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
-                                predicted_class_vals, split='TEST', resample_seed=0, actual_probas=None, second_line="No Parameter Info",third_line="N/A",class_labels=None):
+                                predicted_class_vals, split = 'TEST', resample_seed = 0, actual_probas = None,
+                                second_line = "No Parameter Info", third_line = "N/A", class_labels = None):
     """
     This is very alpha and I will probably completely change the structure once train fold is sorted, as that internally
     does all this I think!
@@ -283,11 +287,11 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
         raise IndexError("The number of predicted class values is not the same as the number of actual class values")
 
     try:
-        os.makedirs(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/")
+        os.makedirs(str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/")
         os.chmod(str(output_path), 0o777)
-        os.chmod(str(output_path)+"/"+str(classifier_name), 0o777)
-        os.chmod(str(output_path)+"/"+str(classifier_name)+"/Predictions", 0o777)
-        os.chmod(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name), 0o777)
+        os.chmod(str(output_path) + "/" + str(classifier_name), 0o777)
+        os.chmod(str(output_path) + "/" + str(classifier_name) + "/Predictions", 0o777)
+        os.chmod(str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name), 0o777)
     except os.error:
         pass  # raises os.error if path already exists
 
@@ -298,19 +302,21 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    filepath = str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/"+str(
-            train_or_test)+"Fold"+str(resample_seed)+".csv"
+    filepath = str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/" + str(
+            train_or_test) + "Fold" + str(resample_seed) + ".csv"
     file = open(filepath, "w")
 
-    # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has line three "+third_line)
+    # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has
+    # line three "+third_line)
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>,<Class Labels>
-    file.write(str(dataset_name) + ","+str(classifier_name)+"," + str(train_or_test)+","+str(resample_seed)+",MILLISECONDS,PREDICTIONS, Generated by experiments.py")
+    file.write(str(dataset_name) + "," + str(classifier_name) + "," + str(train_or_test) + "," + str(
+        resample_seed) + ",MILLISECONDS,PREDICTIONS, Generated by experiments.py")
     file.write("\n")
 
     # the second line of the output is free form and classifier-specific; usually this will record info
     # such as build time, parameter options used, any constituent model names for ensembles, etc.
-    file.write(str(second_line)+"\n")
+    file.write(str(second_line) + "\n")
 
     # the third line of the file is the accuracy (should be between 0 and 1 inclusive). If this is a train
     # output file then it will be a training estimate of the classifier on the training data only (e.g.
@@ -318,7 +324,6 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     # of the estimator on the test data (likely trained on the training data for a-priori parameter optimisation)
     file.write(str(third_line))
     file.write("\n")
-
 
     # from line 4 onwards each line should include the actual and predicted class labels (comma-separated). If
     # present, for each case, the probabilities of predicting every class value for this case should also be
@@ -341,35 +346,40 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
     os.chmod(filepath, 0o777)
 
+
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
     print('experimenting...')
-    if sys.argv.__len__() > 1: #cluster run, this is fragile
+    if sys.argv.__len__() > 1:  # cluster run, this is fragile
         parser = argparse.ArgumentParser(description = 'Run experiments locally or on the cluster')
         parser.add_argument('datasets_dir_path', help = "path to dir containing datasets / problems")
         parser.add_argument('dataset_name', help = "name of the dataset")
         parser.add_argument('classifier_name', help = "name of the classifier")
         parser.add_argument('results_dir_path', help = "path to results dir")
         parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
-        parser.add_argument('-v', '--verbosity', help = "verbosity of output", type = int, nargs='?', default = 0)
+        parser.add_argument('-v', '--verbosity', help = "verbosity of output", type = int, nargs = '?', default = 0)
         parser.add_argument('-o', '--overwrite_results', help = "overwrite existing results", action = 'store_true')
         parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
                             action = 'store_true')
         args = vars(parser.parse_args())
         print(args)
+        # for i in range(0, 30):
+        #     args['resample_seed'] = i
+        #     run_experiment(**args)
         run_experiment(**args)
-    else : #Local run
+    else:  # Local run
         data_dir = "/scratch/datasets/"
         results_dir = "/scratch/results"
-#        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
-#        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+        #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         classifier = "PS"
         resample = 3
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
         dataset = "Beef"
-        tf=False
-        run_experiment(overwrite_results =True, datasets_dir_path =data_dir, results_dir_path =results_dir, classifier_name =classifier, dataset_name =dataset, resample_seed =resample, estimate_train =tf)
-
+        tf = False
+        run_experiment(overwrite_results = True, datasets_dir_path = data_dir, results_dir_path = results_dir,
+                       classifier_name = classifier, dataset_name = dataset, resample_seed = resample,
+                       estimate_train = tf)
