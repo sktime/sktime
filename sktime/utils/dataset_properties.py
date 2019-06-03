@@ -2,17 +2,16 @@ import numpy as np
 
 # set dataframe indices to a negative range (-1 to below -1)
 def negative_dataframe_indices(X):
-    if X.index[0] >= 0:
+    if np.any(X.index >= 0) or len(np.unique(X.index)) > 1:
         X = X.copy(deep = True)
-        X.index = np.negative(X.index)
-        X.index -= 1
+        X.index = np.arange(-1, -len(X.index) - 1, step = -1)
     return X
 
 # set dataframe indices to a positive range (0 to above 0)
 def positive_dataframe_indices(X):
-    if X.index[0] < 0:
+    if np.any(X.index < 0) or len(np.unique(X.index)) > 1:
         X = X.copy(deep = True)
-        X.index = np.abs(X.index)
+        X.index = np.arange(0, len(X.index))
     return X
 
 # find the standard deviation of the dataset

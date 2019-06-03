@@ -766,26 +766,27 @@ class ProximityTree(BaseClassifier):
         self.stump = self.find_stump(self)
         n_branches = len(self.stump.y_exemplar)
         self.branches = [None] * n_branches
-        if self.depth < self.max_depth and not self.is_leaf(y):
+        if self.depth < self.max_depth:
             for index in range(n_branches):
-                sub_tree = ProximityTree(
-                        random_state = self.random_state,
-                        get_exemplars = self.get_exemplars,
-                        distance_measure = self.distance_measure,
-                        setup_distance_measure = self.setup_distance_measure,
-                        get_distance_measure = self.get_distance_measure,
-                        get_gain = self.get_gain,
-                        is_leaf = self.is_leaf,
-                        verbosity = self.verbosity,
-                        max_depth = self.max_depth,
-                        label_encoder = self.label_encoder,
-                        n_jobs = self.n_jobs
-                        )
-                sub_tree.depth = self.depth + 1
-                self.branches[index] = sub_tree
-                sub_X = self.stump.X_branches[index]
                 sub_y = self.stump.y_branches[index]
-                sub_tree.fit(sub_X, sub_y)
+                if not self.is_leaf(sub_y):
+                    sub_tree = ProximityTree(
+                            random_state = self.random_state,
+                            get_exemplars = self.get_exemplars,
+                            distance_measure = self.distance_measure,
+                            setup_distance_measure = self.setup_distance_measure,
+                            get_distance_measure = self.get_distance_measure,
+                            get_gain = self.get_gain,
+                            is_leaf = self.is_leaf,
+                            verbosity = self.verbosity,
+                            max_depth = self.max_depth,
+                            label_encoder = self.label_encoder,
+                            n_jobs = self.n_jobs
+                            )
+                    sub_tree.depth = self.depth + 1
+                    self.branches[index] = sub_tree
+                    sub_X = self.stump.X_branches[index]
+                    sub_tree.fit(sub_X, sub_y)
         return self
 
     def predict_proba(self, X):
