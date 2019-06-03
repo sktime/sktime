@@ -32,6 +32,7 @@
 # todo set params use func name or func pointer
 # todo constructor accept str name func / pointer
 # todo duck-type functions
+# todo comment-up transformers / util classes
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
