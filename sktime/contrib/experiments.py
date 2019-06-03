@@ -1,6 +1,6 @@
 import os
 
-import sktime.classifiers.prox
+import sktime.classifiers.proximity
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -132,17 +132,17 @@ def set_classifier(cls, resampleId, verbosity):
     """
     cls = cls.lower()
     if cls == 'pt' or cls == 'proximity_tree':
-        return sktime.classifiers.prox.ProximityTree(
+        return sktime.classifiers.proximity.ProximityTree(
                 random_state = resampleId,
                 verbosity = verbosity,
                 )
     if cls == 'pf' or cls == 'proximity_forest':
-        return sktime.classifiers.prox.ProximityForest(
+        return sktime.classifiers.proximity.ProximityForest(
                 random_state = resampleId,
                 verbosity = verbosity,
                 )
     if cls == 'ps' or cls == 'proximity_stump':
-        return sktime.classifiers.prox.ProximityStump(
+        return sktime.classifiers.proximity.ProximityStump(
                 random_state = resampleId,
                 verbosity = verbosity,
                 n_jobs = -1

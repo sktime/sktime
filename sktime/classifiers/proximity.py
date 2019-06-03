@@ -26,12 +26,14 @@
 #   bibsource = {dblp computer science bibliography, https://dblp.org}
 # }
 #
-# todo unit tests
+# todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
 # todo get params avoid func pointer - use name
 # todo set params use func name or func pointer
 # todo constructor accept str name func / pointer
 # todo duck-type functions
+
+__author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
 import numpy as np
 import pandas as pd
@@ -173,14 +175,14 @@ def gini(y):
         raise ValueError(' y empty')
 
 
-def get_one_exemplar_per_class_proximity_tree(proximity_tree):
+def get_one_exemplar_per_class_proximity(proximity):
     '''
-    unpack proximity tree into X, y and random_state for picking exemplars.
+    unpack proximity object into X, y and random_state for picking exemplars.
     ----
     Parameters
     ----
-    proximity_tree : ProximityTree
-        Proximity Tree containing the X, y and random_state variables required for picking exemplars.
+    proximity : Proximity object
+        Proximity like object containing the X, y and random_state variables required for picking exemplars.
     ----
     Returns
     ----
@@ -189,9 +191,9 @@ def get_one_exemplar_per_class_proximity_tree(proximity_tree):
     chosen_class_labels : array
         list of corresponding class labels for each of the chosen exemplar instances.
     '''
-    return get_one_exemplar_per_class(proximity_tree.X,
-                                      proximity_tree.y,
-                                      proximity_tree.random_state)
+    return get_one_exemplar_per_class(proximity.X,
+                                      proximity.y,
+                                      proximity.random_state)
 
 
 def get_one_exemplar_per_class(X, y, random_state):
@@ -542,11 +544,11 @@ class ProximityStump(BaseClassifier):
             pointer to the label_encoder classes_
         '''
 
-    __author__ = 'George Oastler ( linkedin.com/goastler ; github.com/goastler )'
+    __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
     def __init__(self,
                  random_state = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity_tree,
+                 get_exemplars = get_one_exemplar_per_class_proximity,
                  setup_distance_measure = setup_all_distance_measure_getter,
                  get_distance_measure = None,
                  distance_measure = None,
@@ -706,12 +708,12 @@ class ProximityTree(BaseClassifier):
             pointer to the label_encoder classes_
         '''
 
-    __author__ = 'George Oastler (linkedin.com/goastler)'
+    __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
     def __init__(self,
                  # note: any changes of these params must be reflected in the fit method for building trees / clones
                  random_state = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity_tree,
+                 get_exemplars = get_one_exemplar_per_class_proximity,
                  distance_measure = None,
                  get_distance_measure = None,
                  setup_distance_measure = setup_all_distance_measure_getter,
@@ -847,7 +849,7 @@ class ProximityForest(BaseClassifier):
         pointer to the label_encoder classes_
     """
 
-    __author__ = 'George Oastler (linkedin.com/goastler)'
+    __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
     def __init__(self,
                  random_state = None,
@@ -855,7 +857,7 @@ class ProximityForest(BaseClassifier):
                  label_encoder = None,
                  distance_measure = None,
                  get_distance_measure = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity_tree,
+                 get_exemplars = get_one_exemplar_per_class_proximity,
                  get_gain = gini_gain,
                  verbosity = 0,
                  max_depth = np.math.inf,

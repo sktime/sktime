@@ -7,8 +7,8 @@ from ..utils.transformations import tabularize, concat_nested_arrays, tabularise
 from .base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
-__author__ = ["Markus Löning", "Jason Lines"]
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'CachedTransformer']
+__author__ = ["Markus Löning", "Jason Lines", 'George Oastler']
 
 
 class IntervalSegmenter(BaseTransformer):
