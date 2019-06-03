@@ -43,7 +43,6 @@ from ..distances import (dtw_distance, erp_distance, lcss_distance, msm_distance
 from ..transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
 from ..utils import comparison, dataset_properties
 from ..utils.transformations import tabularise
-from ..utils.parallel import generate_dataset_batches, generate_index_batches
 
 
 def _derivative_distance(distance_measure, transformer):
@@ -490,34 +489,37 @@ class PS(BaseClassifier):
         self.classes_ = None
         self.entropy = None
 
-    def _distance_to_exemplars_inst(self, X, start, end):
-        X = X.iloc[range(start, end + 1), :]
-        num_instances = X.shape[0]
-        num_exemplars = len(self.y_exemplar)
-        distances = np.empty((num_instances, num_exemplars))
-        for instance_index in range(0, num_instances):
-            instance = X.iloc[instance_index, :]
-            min_distance = np.math.inf
-            for exemplar_index in range(0, num_exemplars):
-                exemplar = self.X_exemplar[exemplar_index]
-                if exemplar.name == instance.name:
-                    distance = 0
-                else:
-                    distance = self.distance_measure(instance, exemplar)  # , min_distance)
-                if distance < min_distance:
-                    min_distance = distance
-                distances[instance_index, exemplar_index] = distance
+    @staticmethod
+    def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
+        num_exemplars = len(exemplars)
+        distances = np.empty(num_exemplars)
+        min_distance = np.math.inf
+        for exemplar_index in range(0, num_exemplars):
+            exemplar = exemplars[exemplar_index]
+            if exemplar.name == instance.name:
+                distance = 0
+            else:
+                distance = distance_measure(instance, exemplar)  # , min_distance)
+            if distance < min_distance:
+                min_distance = distance
+            distances[exemplar_index] = distance
         return distances
 
     def distance_to_exemplars(self, X):
         check_X(X)
         if self.num_jobs > 1 or self.num_jobs < 0:
             parallel = Parallel(self.num_jobs)
-            distances = parallel(delayed(self._distance_to_exemplars_inst)(X, start, end) for start, end in
-                                 generate_dataset_batches(X, parallel))
-            distances = np.vstack(distances)
+            distances = parallel(delayed(self._distance_to_exemplars_inst)
+                                 (self.X_exemplar,
+                                  X.iloc[index,:],
+                                  self.distance_measure)
+                                 for index in range(0, X.shape[0]))
         else:
-            distances = self._distance_to_exemplars_inst(X, 0, X.shape[0] - 1)
+            distances = [self._distance_to_exemplars_inst(self.X_exemplar,
+                                                          X.iloc[index,:],
+                                                          self.distance_measure)
+                         for index in range(0, X.shape[0])]
+        distances = np.vstack(np.array(distances))
         return distances
 
     def fit(self, X, y):
@@ -657,7 +659,16 @@ class PT(BaseClassifier):
         self.y = None
         self.classes_ = None
 
-    def _find_branches(self, X, y):
+    def fit(self, X, y):
+        check_X_y(X, y)
+        self.X = dataset_properties.positive_dataframe_indices(X)
+        self.y = y
+        self.random_state = check_random_state(self.random_state)
+        # setup label encoding if not already
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
         if self.distance_measure is None:
             if self.get_distance_measure is None:
@@ -680,9 +691,9 @@ class PT(BaseClassifier):
             stump.grow()
             stumps.append(stump)
         self.stump = comparison.max(stumps, self.random_state, lambda stump: stump.entropy)
+        num_branches = len(self.stump.y_exemplar)
+        self.branches = [None] * num_branches
         if self.depth < self.max_depth and not self.is_leaf(y):
-            num_branches = len(self.stump.y_exemplar)
-            subs = np.empty(num_branches, dtype=object)
             for index in range(0, num_branches):
                 sub_tree = PT(
                     random_state=self.random_state,
@@ -696,37 +707,14 @@ class PT(BaseClassifier):
                     verbosity=self.verbosity,
                     max_depth=self.max_depth,
                     label_encoder=self.label_encoder,
-                    num_jobs=1
+                    num_jobs=self.num_jobs
                 )
                 sub_tree.depth = self.depth + 1
+                self.branches[index] = sub_tree
                 sub_X = self.stump.X_branches[index]
                 sub_y = self.stump.y_branches[index]
-                subs[index] = (sub_tree, sub_X, sub_y)
-            return subs
-        else:
-            return np.array([])
-
-    def fit(self, X, y):
-        check_X_y(X, y)
-        self.X = dataset_properties.positive_dataframe_indices(X)
-        self.y = y
-        self.random_state = check_random_state(self.random_state)
-        # setup label encoding if not already
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
-        self._branch(X, y)
+                sub_tree.fit(sub_X, sub_y)
         return self
-
-    def _branch(self, X, y):
-        queue = [[(self, X, y)]]
-        parallel = Parallel(self.num_jobs)
-        while len(queue) > 0:
-            queue = parallel(delayed(tree._find_branches)(X, y)
-                             for branch in queue
-                             for tree, X, y in branch
-                             if tree is not None)
 
 
     def predict_proba(self, X):
@@ -833,7 +821,7 @@ class PF(BaseClassifier):
         self.y = None
         self.classes_ = None
 
-    def fit_tree(self, X, y, index):
+    def _fit_tree(self, X, y, index):
         if self.verbosity > 0:
             print('tree ' + str(index) + ' building')
         tree = PT(
@@ -848,7 +836,7 @@ class PF(BaseClassifier):
             num_stump_evaluations=self.num_stump_evaluations,
             max_depth=self.max_depth,
             is_leaf=self.is_leaf,
-            num_jobs=1
+            num_jobs=self.num_jobs
         )
         tree.fit(X, y)
         return tree
@@ -868,19 +856,25 @@ class PF(BaseClassifier):
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
             self.distance_measure = self.get_distance_measure(self)
-        parallel = Parallel(self.num_jobs)
-        self.trees = parallel(delayed(self.fit_tree)(X, y, index) for index in range(0, self.num_trees))
+        if self.num_jobs > 1 or self.num_jobs < 0:
+            parallel = Parallel(self.num_jobs)
+            self.trees = parallel(delayed(self._fit_tree)(X, y, index) for index in range(0, self.num_trees))
+        else:
+            self.trees = [self._fit_tree(X, y, index) for index in range(0, self.num_trees)]
+
+    @staticmethod
+    def _predict_proba_tree(X, tree):
+        return tree.predict_proba(X)
 
     def predict_proba(self, X):
-        check_X_y(X, y)
+        check_X(X)
         self.X = dataset_properties.negative_dataframe_indices(X)
-        distribution = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
-        count = 0
-        for tree in self.trees:
-            if self.verbosity > 0:
-                print('tree ' + str(count) + ' predicting')
-                count += 1
-            tree_distribution = tree.predict_proba(X)
-            distribution = np.add(distribution, tree_distribution)
-        normalize(distribution, copy=False, norm='l1')
-        return distribution
+        if self.num_jobs > 1 or self.num_jobs < 0:
+            parallel = Parallel(self.num_jobs)
+            distributions = parallel(delayed(self._predict_proba_tree)(X, tree) for tree in self.trees)
+        else:
+            distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
+        distributions = np.array(distributions)
+        distributions = np.sum(distributions, axis=0)
+        normalize(distributions, copy=False, norm='l1')
+        return distributions
