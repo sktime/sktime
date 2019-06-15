@@ -18,9 +18,10 @@ disk:
    $ cd sktime
    ```
 
-3. Create a ``feature`` branch to hold your development changes:
+3. Create a new ``feature`` branch from the ``dev`` branch to hold your changes:
 
    ```bash
+   $ git checkout dev
    $ git checkout -b my-feature-branch
    ```
 
