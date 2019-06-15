@@ -88,6 +88,7 @@ In addition, we add the following guidelines:
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
 
+
 Filing bugs
 -----------
 We use GitHub issues to track all bugs and feature requests; feel free to
@@ -109,3 +110,12 @@ following rules before submitting:
    [reproducible](https://stackoverflow.com/help/mcve) code snippet
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
+
+
+Coding tips:
+------------
+
+-  When writing new classes, inherit from appropriate base classes (`BaseTransformer`, `BaseClassifier`, `BaseRegressor`),
+
+-  Use relative imports when importing functions or classes from within sktime, except for unit tests where you should use absolute imports.
+
