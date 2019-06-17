@@ -3,12 +3,12 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, concat_nested_arrays
+from ..utils.transformations import tabularize, concat_nested_arrays, tabularise
 from .base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
-__author__ = ["Markus Löning", "Jason Lines"]
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'CachedTransformer']
+__author__ = ["Markus Löning", "Jason Lines", 'George Oastler']
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -305,7 +305,6 @@ class DerivativeSlopeTransformer(BaseTransformer):
             dim_data = X.iloc[:,dim]
             out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
             output_df['der_dim_'+str(dim)] = pd.Series(out)
-
         return output_df
 
     @staticmethod
@@ -318,3 +317,37 @@ class DerivativeSlopeTransformer(BaseTransformer):
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
+
+    def __str__(self):
+        return 'd'
+
+class CachedTransformer(BaseTransformer):
+
+    def __init__(self, transformer):
+        self.cache = {}
+        self.transformer = transformer
+
+    def clear(self):
+        self.cache = {}
+
+    def transform(self, X, y=None):
+        cached_instances = {}
+        uncached_indices = []
+        for index in X.index.values:
+            try:
+                cached_instances[index] = self.cache[index]
+            except:
+                uncached_indices.append(index)
+        if len(uncached_indices) > 0:
+            uncached_instances = X.loc[uncached_indices, :]
+            transformed_uncached_instances = \
+                self.transformer.transform(uncached_instances)
+            transformed_uncached_instances.index = uncached_instances.index
+            transformed_uncached_instances = transformed_uncached_instances.to_dict('index')
+            self.cache.update(transformed_uncached_instances)
+            cached_instances.update(transformed_uncached_instances)
+        cached_instances = pd.DataFrame.from_dict(cached_instances, orient = 'index')
+        return cached_instances
+
+    def __str__(self):
+        return self.transformer.__str__()

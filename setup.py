@@ -1,6 +1,11 @@
 #! /usr/bin/env python
 """Install script for sktime"""
+import distutils.extension
 
+import numpy as np
+import setuptools as setuptools
+from setuptools import find_packages
+from setuptools import setup
 import codecs
 import re
 from setuptools import find_packages, setup
@@ -39,7 +44,7 @@ URL = 'https://github.com/kiraly-group/sktime'
 LICENSE = 'undecided'
 DOWNLOAD_URL = 'https://github.com/kiraly-group/sktime'
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas']
+INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas', 'scikit-posthocs', 'cython', 'statsmodels', 'joblib']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',
@@ -65,7 +70,11 @@ EXTRAS_REQUIRE = {
     ]
 }
 
-
+extensions = [
+    setuptools.Extension("sktime.distances.elastic_cython", ["sktime/distances/elastic_cython.pyx"],
+                         include_dirs=[np.get_include()],
+                         libraries=['m'],
+                         extra_compile_args = ["-ffast-math"])]
 
 setup(name=DISTNAME,
       maintainer=MAINTAINER,
@@ -83,6 +92,6 @@ setup(name=DISTNAME,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       ext_modules=cythonize(
-          ["sktime/distances/elastic_cython.pyx"],
+          extensions,
           annotate=True),
-      include_dirs=[numpy.get_include()])
+      )
