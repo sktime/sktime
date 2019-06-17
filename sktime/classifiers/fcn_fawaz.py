@@ -231,39 +231,35 @@ def test_basic():
 
     print(clf.score(X_test, y_test))
 
-def test_sklearnPipeline():
-    '''
-    some sort of dependancy/versioning problem presumably, missing import deep within TSCTask, will sort during week if needed, else use above
-    '''
+
+def test_pipeline():
+
+    print("Start test_pipeline()")
+
+    from sktime.pipeline import Pipeline
+    from sktime.transformers.series_to_series import RandomIntervalSegmenter
+
+    # just a simple (not even necessarily good) pipeline for the purposes of testing
+    # that the keras network is compatible with that system
+    steps = [
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
+        ('clf', FCN())
+    ]
+    clf = Pipeline(steps)
 
     X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
     X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
 
-    # to be cleared up obviously, task/strategy want x/y combined, rest doesnt. correct way to handle?
-    # need to just learn dataframes presumably
-    train = load_gunpoint(split='TRAIN')
-    test = load_gunpoint(split='TEST')
+    hist = clf.fit(X_train, y_train)
+    clf.model.summary()
 
-    nb_classes = np.unique(y_train).shape[0]
-    batch_size = min(X_train.shape[0] // 10, 16)
+    print(clf.score(X_test, y_test))
+    print("end test_pipeline()\n\n")
 
-    if len(X_train.iloc[0, 0].shape) == 1:
-        input_shape = [X_train.iloc[0, 0].shape[0], 1]
-    else:
-        input_shape = X_train.iloc[0, 0].shape[0:]
-
-    task = TSCTask(target='class_val', metadata=train)
-
-    clf = FCN(nb_classes=nb_classes, batch_size=batch_size, input_shape=input_shape)
-    strategy = TSCStrategy(clf)
-
-    strategy.fit(task, train)
-
-    y_pred = strategy.predict(test)
-    #y_test = test[task.target]
-    accuracy_score(y_test, y_pred)
 
 if __name__ == "__main__":
 
-    test_basic()            #working
-    #test_sklearnPipeline() #broken, missing imports
+    #check_estimator(FCN)
+
+    #test_basic()            #working
+    test_pipeline()

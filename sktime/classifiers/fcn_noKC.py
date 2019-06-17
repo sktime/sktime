@@ -164,6 +164,8 @@ def test_basic():
     test_x, test_y = load_from_tsfile_to_dataframe(path_to_test_data)
     '''
 
+    print("Start test_basic()")
+
     X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
     X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
 
@@ -174,10 +176,36 @@ def test_basic():
     clf.model.summary()
 
     print(clf.score(X_test, y_test))
+    print("end test_basic()\n\n")
+
+def test_pipeline():
+
+    print("Start test_pipeline()")
+
+    from sktime.pipeline import Pipeline
+    from sktime.transformers.series_to_series import RandomIntervalSegmenter
+
+    # just a simple (not even necessarily good) pipeline for the purposes of testing
+    # that the keras network is compatible with that system
+    steps = [
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
+        ('clf', FCN())
+    ]
+    clf = Pipeline(steps)
+
+    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
+    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
+
+    hist = clf.fit(X_train, y_train)
+    clf.model.summary()
+
+    print(clf.score(X_test, y_test))
+    print("end test_pipeline()\n\n")
+
 
 if __name__ == "__main__":
 
     #check_estimator(FCN)
 
-    test_basic()            #working
-    #test_sklearnPipeline() #broken, missing imports
+    #test_basic()            #working
+    test_pipeline()
