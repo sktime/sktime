@@ -2,7 +2,6 @@
 import keras
 import numpy as np
 import pandas as pd
-import time
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
