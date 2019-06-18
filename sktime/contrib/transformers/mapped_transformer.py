@@ -26,17 +26,15 @@ class MappedTransformer(BaseTransformer):
         parameters = self.get_transform_params(X, y)
         return self.mappingContainer_[self.type](parameters)
 
-    pass
-
 
 class DiscreteFourierTransformer(MappedTransformer):
 
     def __init__(self, fourier_type='discreteFT', axis=None, norm=None, check_input=True):
+        self.check_valid_key(fourier_type)
         self.check_input = check_input
         self.type = fourier_type
         self.norm = norm
         self.axis = axis
-        self.check_valid_key(self.type)
 
     def get_transform_params(self, X, y=None):
         return {'x': X, 'y': y, 'axis': self.axis, 'norm': self.norm}
