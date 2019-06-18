@@ -6,7 +6,7 @@ import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
-#__all__ = ["BossEnsemble","BossIndividual","BOSSTransform"]
+all__ = ["BOSSEnsemble", "BOSSIndividual", "BOSSTransform"]
 
 
 class BOSSEnsemble(BaseEstimator):
@@ -35,11 +35,10 @@ class BOSSEnsemble(BaseEstimator):
     coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each 
     series is formed and stored. fit involves finding n histograms. 
     
-    predict used 1 nearest neighbour with a bespoke distance function.  
+    predict uses 1 nearest neighbour with a bespoke distance function.  
     
     For the Java version, see
     https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
-
 
 
     Parameters
@@ -70,11 +69,16 @@ class BOSSEnsemble(BaseEstimator):
                  dim_to_use=0,
                  threshold=0.92,
                  max_ensemble_size=250,
-                 word_lengths=[16, 14, 12, 10, 8],
+                 word_lengths=None,
                  alphabet_size=4,
                  min_window =10,
-                 norm_options=[True, False]
+                 norm_options=None
                  ):
+        if word_lengths is None:
+            word_lengths = [16, 14, 12, 10, 8]
+        if norm_options is None:
+            norm_options = [True, False]
+
         self.randomised_ensemble = randomised_ensemble
         self.ensemble_size = ensemble_size
         self.random_state = random_state
@@ -89,14 +93,15 @@ class BOSSEnsemble(BaseEstimator):
         self.classes_ = []
         self.class_dictionary = {}
         self.num_classifiers = 0
-        self.series_length=0
+        self.series_length = 0
+
         # For the multivariate case treating this as a univariate classifier
+
         # Parameter search values
         self.word_lengths = word_lengths
         self.norm_options = norm_options
         self.alphabet_size = alphabet_size
         self.min_window = min_window
-
 
     def fit(self, X, y):
         """Build an ensemble of BOSS classifiers from the training set (X, y), either through randomising over the para
@@ -115,10 +120,11 @@ class BOSSEnsemble(BaseEstimator):
          """
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use],pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
+            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
+                                "Series objects")
 
         num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
@@ -129,8 +135,9 @@ class BOSSEnsemble(BaseEstimator):
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length/4
-        win_inc = (int)((self.series_length - self.min_window) / max_window_searches)
-        if win_inc < 1: win_inc = 1
+        win_inc = int((self.series_length - self.min_window) / max_window_searches)
+        if win_inc < 1:
+            win_inc = 1
 
         if self.randomised_ensemble:
             random.seed(self.seed)
@@ -138,7 +145,8 @@ class BOSSEnsemble(BaseEstimator):
             while len(self.classifiers) < self.ensemble_size:
                 word_len = self.word_lengths[random.randint(0, len(self.word_lengths) - 1)]
                 win_size = self.min_window + win_inc * random.randint(0, max_window_searches)
-                if win_size > max_window_searches: win_size = max_window_searches
+                if win_size > max_window_searches:
+                    win_size = max_window_searches
                 normalise = random.random() > 0.5
 
                 boss = BOSSIndividual(win_size, self.word_lengths[word_len], self.alphabet_size, normalise)
@@ -154,7 +162,9 @@ class BOSSEnsemble(BaseEstimator):
                     boss = BOSSIndividual(win_size, self.word_lengths[0], self.alphabet_size, normalise)
                     boss.fit(X, y)
 
-                    bestAccForWinSize = -1
+                    best_classifier_for_win_size = boss
+                    best_acc_for_win_size = -1
+                    best_word_len = self.word_lengths[0]
 
                     for n, word_len in enumerate(self.word_lengths):
                         if n > 0:
@@ -163,75 +173,76 @@ class BOSSEnsemble(BaseEstimator):
                         correct = 0
                         for g in range(num_insts):
                             c = boss.train_predict(g)
-                            if (c == y[g]):
+                            if c == y[g]:
                                 correct += 1
 
                         accuracy = correct/num_insts
-                        if (accuracy >= bestAccForWinSize):
-                            bestAccForWinSize = accuracy
-                            bestClassifierForWinSize = boss
-                            bestWordLen = word_len
+                        if accuracy >= best_acc_for_win_size:
+                            best_acc_for_win_size = accuracy
+                            best_classifier_for_win_size = boss
+                            best_word_len = word_len
 
-                    if self.include_in_ensemble(bestAccForWinSize, max_acc, min_max_acc, len(self.classifiers)):
-                        bestClassifierForWinSize.clean()
-                        bestClassifierForWinSize.setWordLen(bestWordLen)
-                        bestClassifierForWinSize.accuracy = bestAccForWinSize
-                        self.classifiers.append(bestClassifierForWinSize)
+                    if self.include_in_ensemble(best_acc_for_win_size, max_acc, min_max_acc, len(self.classifiers)):
+                        best_classifier_for_win_size.clean()
+                        best_classifier_for_win_size.setWordLen(best_word_len)
+                        best_classifier_for_win_size.accuracy = best_acc_for_win_size
+                        self.classifiers.append(best_classifier_for_win_size)
 
-                        if bestAccForWinSize > max_acc:
-                            max_acc = bestAccForWinSize
+                        if best_acc_for_win_size > max_acc:
+                            max_acc = best_acc_for_win_size
 
                             for c, classifier in enumerate(self.classifiers):
                                 if classifier.accuracy < max_acc * self.threshold:
                                     self.classifiers.remove(classifier)
 
-                        min_max_acc, minAccInd = self.worst_of_best()
+                        min_max_acc, min_acc_ind = self.worst_of_best()
 
                         if len(self.classifiers) > self.max_ensemble_size:
-                            del self.classifiers[minAccInd]
-                            min_max_acc, minAccInd = self.worst_of_best()
+                            del self.classifiers[min_acc_ind]
+                            min_max_acc, min_acc_ind = self.worst_of_best()
 
         self.num_classifiers = len(self.classifiers)
 
     def predict(self, X):
-        return [self.classes_[np.argmax(prob)] for prob in self.predict_proba(X)]
+        return [self.classes_[int(np.argmax(prob))] for prob in self.predict_proba(X)]
 
     def predict_proba(self, X):
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use],pd.Series):
+            if isinstance(X.iloc[0, self.dim_to_use],pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
+                                "Series objects")
 
         sums = np.zeros((X.shape[0], self.num_classes))
 
         for i, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
-            for i in range(0,X.shape[0]):
-                sums[i,self.class_dictionary.get(preds[i])] += 1
+            for n in range(0, X.shape[0]):
+                sums[n, self.class_dictionary.get(preds[i])] += 1
 
         dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
 
         return dists
 
-    def include_in_ensemble(self, acc, maxAcc, minMaxAcc, size):
-        if acc >= maxAcc * self.threshold:
+    def include_in_ensemble(self, acc, max_acc, min_max_acc, size):
+        if acc >= max_acc * self.threshold:
             if size >= self.max_ensemble_size:
-                return acc > minMaxAcc
+                return acc > min_max_acc
             else:
                 return True
         return False
 
     def worst_of_best(self):
-        minAcc = -1;
-        minAccInd = 0
+        min_acc = -1
+        min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
-            if classifier.accuracy < minAcc:
-                minAcc = classifier.accuracy
-                minAccInd = c
+            if classifier.accuracy < min_acc:
+                min_acc = classifier.accuracy
+                min_acc_idx = c
 
-        return minAcc, minAccInd
+        return min_acc, min_acc_idx
 
     def get_train_probs(self, X):
         num_inst = X.shape[0]
@@ -483,8 +494,13 @@ class BOSSTransform():
         start = 1 if self.norm else 0
 
         std = np.std(series)
-        if std == 0: std = 1
+        if std == 0:
+            std = 1
         normalising_factor = self.inverse_sqrt_win_size / std
+
+        dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
+                         range(start, start + outputLength)])
+        print(dft2)
 
         dft = np.zeros(outputLength * 2)
 
@@ -494,6 +510,8 @@ class BOSSTransform():
             for n in range(length):
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
+
+        print(dft)
 
         dft *= normalising_factor
 
@@ -614,6 +632,7 @@ class BOSSTransform():
             bag[word.word] = 1
 
         return word.word
+
 
 class BitWord:
 
