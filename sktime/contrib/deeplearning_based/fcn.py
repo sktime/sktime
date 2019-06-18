@@ -1,4 +1,4 @@
-# Time-CNN
+#FCN
 import keras
 import numpy as np
 import pandas as pd
@@ -7,53 +7,60 @@ from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
 from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
-class CNN(BaseDeepLearner):
+
+class FCN():
 
     def __init__(self, dim_to_use=0, rand_seed=0, verbose=False):
         self.verbose = verbose
         self.dim_to_use = dim_to_use
 
-        #calced in fit
+        # calced in fit
         self.classes = None
         self.nb_classes = -1
         self.input_shape = None
         self.model = None
         self.history = None
 
-        #predefined
+        # predefined
         self.nb_epochs = 2000
         self.batch_size = 16
+        self.callbacks = None
 
         self.rand_seed = rand_seed
         self.random_state = np.random.RandomState(self.rand_seed)
 
     def build_model(self, input_shape, nb_classes, **kwargs):
-        padding = 'valid'
         input_layer = keras.layers.Input(input_shape)
 
-        if input_shape[0] < 60: # for italypowerondemand dataset
-            padding = 'same'
+        conv1 = keras.layers.Conv1D(filters=128, kernel_size=8, padding='same')(input_layer)
+        conv1 = keras.layers.normalization.BatchNormalization()(conv1)
+        conv1 = keras.layers.Activation(activation='relu')(conv1)
 
-        conv1 = keras.layers.Conv1D(filters=6,kernel_size=7,padding=padding,activation='sigmoid')(input_layer)
-        conv1 = keras.layers.AveragePooling1D(pool_size=3)(conv1)
+        conv2 = keras.layers.Conv1D(filters=256, kernel_size=5, padding='same')(conv1)
+        conv2 = keras.layers.normalization.BatchNormalization()(conv2)
+        conv2 = keras.layers.Activation('relu')(conv2)
 
-        conv2 = keras.layers.Conv1D(filters=12,kernel_size=7,padding=padding,activation='sigmoid')(conv1)
-        conv2 = keras.layers.AveragePooling1D(pool_size=3)(conv2)
+        conv3 = keras.layers.Conv1D(128, kernel_size=3, padding='same')(conv2)
+        conv3 = keras.layers.normalization.BatchNormalization()(conv3)
+        conv3 = keras.layers.Activation('relu')(conv3)
 
-        flatten_layer = keras.layers.Flatten()(conv2)
+        gap_layer = keras.layers.pooling.GlobalAveragePooling1D()(conv3)
 
-        output_layer = keras.layers.Dense(units=nb_classes,activation='sigmoid')(flatten_layer)
+        output_layer = keras.layers.Dense(nb_classes, activation='softmax')(gap_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
 
-        model.compile(loss='mean_squared_error', optimizer=keras.optimizers.Adam(),
+        model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.Adam(),
                       metrics=['accuracy'])
+
+        reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
+                                                      min_lr=0.0001)
 
         #file_path = self.output_directory + 'best_model.hdf5'
         #model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
         #                                                   save_best_only=True)
-        #self.callbacks = [model_checkpoint]
-        self.callbacks = []
+        #self.callbacks = [reduce_lr, model_checkpoint]
+        self.callbacks = [reduce_lr]
 
         return model
 
@@ -75,6 +82,8 @@ class CNN(BaseDeepLearner):
         y_onehot = self.convert_y(y)
         self.input_shape = X.shape[1:]
 
+        self.batch_size = int(min(X.shape[0] / 10, self.batch_size))
+
         self.model = self.build_model(self.input_shape, self.nb_classes)
 
         if self.verbose:
@@ -83,6 +92,5 @@ class CNN(BaseDeepLearner):
         self.history = self.model.fit(X, y_onehot, batch_size=self.batch_size, epochs=self.nb_epochs,
                               verbose=self.verbose, callbacks=self.callbacks)
 
-
 if __name__ == '__main__':
-    networkTests(CNN())
+    networkTests(FCN())
