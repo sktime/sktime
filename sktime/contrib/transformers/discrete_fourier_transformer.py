@@ -33,14 +33,3 @@ class DiscreteFourierTransformer(BaseTransformer):
         elif self.type == 3:
             return np.fft.hfft(X, axis=self.axis, norm=self.norm)
         pass
-
-
-if __name__ == '__main__':
-    location = r'C:\Users\Jeremy\Desktop\Beef\Beef_TRAIN.txt'
-    X = pd.read_csv(location, header=None)
-
-    print(X)
-    transformer = DiscreteFourierTransformer()
-    Xt = transformer.transform(X)
-
-    print(Xt)
