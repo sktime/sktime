@@ -53,6 +53,7 @@ class BaseDeepLearner(BaseClassifier):
         return keras.utils.to_categorical(y, self.nb_classes)
 
     def score(self, X, y, **kwargs):
+        ####TODO: This should be wrapped into a function to check input.
         if isinstance(X, pd.DataFrame):
             if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
@@ -64,6 +65,8 @@ class BaseDeepLearner(BaseClassifier):
             # add a dimension to make it multivariate with one dimension
             X = X.reshape((X.shape[0], X.shape[1], 1))
 
+
+        #One hot encoding.
         y_onehot = self.convert_y(y)
 
         outputs = self.model.evaluate(X, y_onehot, **kwargs)
@@ -91,7 +94,7 @@ def test_basic(network):
     clf = network
 
     hist = clf.fit(X_train, y_train)
-    clf.model.summary()
+    #clf.model.summary()
 
     print(clf.score(X_test, y_test))
     print("end test_basic()\n\n")

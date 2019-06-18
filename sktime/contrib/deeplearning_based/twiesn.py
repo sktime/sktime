@@ -9,19 +9,13 @@ from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-import gc
+import pandas as pd
 
-
-from utils.utils import calculate_metrics
-from utils.utils import create_directory
-
-
-# data loading
-from sktime.datasets import load_gunpoint, load_italy_power_demand
-
+from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
+from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
 #class Classifier_TWIESN:
-class TWIESN(BaseClassifier):
+class TWIESN(BaseDeepLearner):
 	def __init__(self, 
 					output_directory=None,
 					verbose=False,
@@ -42,12 +36,9 @@ class TWIESN(BaseClassifier):
 		self.configs = [first_config,second_config,third_config,fourth_config]
 		self.rho_s = [0.55,0.9,2.0,5.0]
 		self.alpha = 0.1 # leaky rate
-		self.ridge_classifier = None
-		
-		
-		
-	
-	def build_model(self, input_shape, nb_classes):
+
+
+	def build_model(self, input_shape, nb_classes, **kwargs):
 		self.init_matrices()
 	
 		# construct the riger classifier model
@@ -55,55 +46,64 @@ class TWIESN(BaseClassifier):
 		
 		
 		
-	def evaluate_paramset_train(self, X, y, val_X, val_y, rho, config):
+	def evaluate_paramset(self, X, y, val_X, val_y, rho, config):
+
+		#param setting is correct.
 		self.rho = rho
-		self.rho = rho 
 		self.N_x = config['N_x']
 		self.connect = config['connect']
 		self.scaleW_in = config['scaleW_in']
 		self.lamda = config['lamda']
-		
+
 		#init transformer based on paras.
 		self.init_matrices()
 		
 		#transformed X
-		x_transformed = transform_to_feature_space(X)
+		x_transformed = self.transform_to_feature_space(X)
+
 		new_train_labels = np.repeat(y,self.T,axis=0)
-		
+
 		ridge_classifier = Ridge(alpha=self.lamda)
 		ridge_classifier.fit(x_transformed, new_train_labels)
-		
-		
+
+
 		#transform Validation and labels
-		x_val_transformed = transformed_to_feature_space(val_X)
+		x_val_transformed = self.transform_to_feature_space(val_X)
 		new_val_labels = np.repeat(val_y,self.T,axis=0)
 
 		val_preds = ridge_classifier.predict(x_val_transformed)
 		
+		y_pred_val = self.reshape_prediction(val_preds,val_X.shape[0],self.T)
+
 		#calculate validation accuracy
-		return accuracy_score(val_y,val_preds)
-		
-		
-		
+		#argmax the val_y because it is in onehot encoding.
+		return accuracy_score(np.argmax(val_y, axis=1),y_pred_val)
 	
-	def fit(self, X, y, input_checks = True):
-		
-		self.num_dim = x_train.shape[2]
-		self.T = x_train.shape[1]
-		
-		self.x_train = X
-		self.y_true = y
+	def fit(self, X, y, input_checks = True, **kwargs):
+		#check and convert input to a univariate Numpy array
+		if isinstance(X, pd.DataFrame):
+			if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+				X = np.asarray([a.values for a in X.iloc[:, 0]])
+			else:
+				raise TypeError(
+					"Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+		if len(X.shape) == 2:
+			# add a dimension to make it multivariate with one dimension
+			X = X.reshape((X.shape[0], X.shape[1], 1))
+
+		onehot_y = self.convert_y(y)
+
+
+		self.num_dim = X.shape[2]
+		self.T = X.shape[1]
 		
 		#FINE TUNE MODEL PARAMS
-		
-		#subsample train into train and validation from 80/20 split.
-				# split train to validation set to choose best hyper parameters 
-		self.x_train, self.x_val, self.y_train,self.y_val = \
-			train_test_split(x_train,y_train, test_size=0.2)
-		self.N = self.x_train.shape[0]
+		# split train to validation set to choose best hyper parameters 
+		x_train, x_val, y_train, y_val = train_test_split(X,onehot_y, test_size=0.2)
+		self.N = x_train.shape[0]
 
 		# limit the hyperparameter search if dataset is too big 
-		if self.x_train.shape[0] > 1000 or self.x_test.shape[0] > 1000 : 
+		if x_train.shape[0] > 1000:
 			for config in self.configs: 
 				config['N_x'] = 100
 			self.configs = [self.configs[0],self.configs[1],self.configs[2]]
@@ -114,13 +114,14 @@ class TWIESN(BaseClassifier):
 		best_config = None
 		for idx_config in range(len(self.configs)): 
 			for rho in self.rho_s:
-				train_acc = evaluate_paramset(self.x_train, 
-										self.y_train, 
-										self.x_val, 
-										self.y_val, 
+				train_acc = self.evaluate_paramset(x_train,
+										y_train,
+										x_val,
+										y_val,
 										rho, 
 										self.configs[idx_config])
-				
+
+				print(train_acc)
 				if best_train_acc < train_acc:
 					best_train_acc = train_acc
 					best_rho = rho
@@ -136,22 +137,40 @@ class TWIESN(BaseClassifier):
 		self.init_matrices()
 		
 		#transformed X
-		x_transformed = transform_to_feature_space(X)
-	
+		x_transformed = self.transform_to_feature_space(X)
+
 		# transform the corresponding labels
 		new_labels = np.repeat(y,X.shape[1],axis=0)
 
 		#create and fit the tuned ridge classifier.
-		self.tuned_ridge_classifier = Ridge(alpha=self.lamda)	
-		self.tuned_ridge_classifier.fit(x_transformed,new_labels)
+		self.model = Ridge(alpha=self.lamda)
+		self.model.fit(x_transformed,new_labels)
 		
 		
-    def predict_proba(self, X, input_checks = True):
-		#transform and predict prodba on the ridge classifier.
-		new_x_test = transform_to_feature_space(X)
-		return self.tuned_ridge_classifier.predict_proba(new_x_test)
+	def predict_proba(self, X, input_checks = True, **kwargs):
+		#check input is univariate etc.
+		if isinstance(X, pd.DataFrame):
+			if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+				X = np.asarray([a.values for a in X.iloc[:, 0]])
+			else:
+				raise TypeError(
+					"Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
 
-		
+		if len(X.shape) == 2:
+			# add a dimension to make it multivariate with one dimension
+			X = X.reshape((X.shape[0], X.shape[1], 1))
+
+
+		#transform and predict prodba on the ridge classifier.
+		new_x_test = self.transform_to_feature_space(X)
+
+		#TODO: need to get the probabilities. this is not correct #need to convert but not argmax.
+		probas = self.model.predict_proba(new_x_test)
+
+		# reshape so the first axis has the number of instances
+		new_y_pred = y_pred.reshape(X.shape[0], X.shape[1], -1)
+		# average the predictions of instances
+		return np.average(new_y_pred, axis=1)
 
 
 	def init_matrices(self):
@@ -206,32 +225,23 @@ class TWIESN(BaseClassifier):
 		
 		
 	def transform_to_feature_space(self, X):
-		# init the matrices 
-		self.init_matrices()
 		# compute the state matrices which is the new feature space  
 		state_matrix = self.compute_state_matrix(X)
 		# add the input to form the new feature space and transform to 
 		# the new feature space to be feeded to the classifier 
 		return np.concatenate((X,state_matrix), axis=2).reshape(
 			X.shape[0] * self.T , self.num_dim+self.N_x)
-
-
-
-	def test_model():
-		print("Start test_basic()")
-
-		X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
-		X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
-
-		clf = TWIESN()
-
-		hist = clf.fit(X_train, y_train)
-
-		print(clf.score(X_test, y_test))
-		print("end test_basic()\n\n")
-
+			
+			
+	
+	def reshape_prediction(self,y_pred, num_instances,length_series): 
+		# reshape so the first axis has the number of instances
+		new_y_pred = y_pred.reshape(num_instances,length_series,y_pred.shape[-1])
+		# average the predictions of instances 
+		new_y_pred = np.average(new_y_pred, axis=1)
+		# get the label with maximum prediction over the last label axis 
+		new_y_pred = np.argmax(new_y_pred,axis=1)
+		return new_y_pred
 
 if __name__ == "__main__":
-
-
-	test_model()
+	networkTests(TWIESN())
