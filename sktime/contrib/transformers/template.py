@@ -1,4 +1,4 @@
-# dummy transform
+#dummy transform
 import numpy as np
 import pandas as pd
 from sktime.transformers.base import BaseTransformer
