@@ -8,7 +8,7 @@ from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
 from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
 
-class FCN():
+class FCN(BaseDeepLearner):
 
     def __init__(self, dim_to_use=0, rand_seed=0, verbose=False):
         self.verbose = verbose

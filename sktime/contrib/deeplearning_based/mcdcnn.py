@@ -68,12 +68,11 @@ class MCDCNN(BaseDeepLearner):
         model.compile(loss='categorical_crossentropy', optimizer=keras.optimizers.SGD(lr=0.01,momentum=0.9,decay=0.0005),
                       metrics=['accuracy'])
 
-        file_path = self.output_directory + 'best_model.hdf5'
-
-        model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_loss',
-                                                           save_best_only=True)
-
-        self.callbacks = [model_checkpoint]
+        #file_path = self.output_directory + 'best_model.hdf5'
+        #model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='val_loss',
+        #                                                   save_best_only=True)
+        #self.callbacks = [model_checkpoint]
+        self.callbacks = []
 
         return model
 
@@ -107,7 +106,7 @@ class MCDCNN(BaseDeepLearner):
             train_test_split(X, y, test_size=0.33)
 
         y_train_onehot = self.convert_y(y_train)
-        y_val_onehot = self.convert_y(y_train)
+        y_val_onehot = self.convert_y(y_val)
 
         x_train = self.prepare_input(x_train)
         x_val = self.prepare_input(x_val)
@@ -119,8 +118,8 @@ class MCDCNN(BaseDeepLearner):
         if self.verbose:
             self.model.summary()
 
-        self.history = self.model.fit(x_train, y_train, batch_size=self.batch_size, epochs=self.nb_epochs,
-                              verbose=self.verbose, validation_data=(x_val, y_val), callbacks=self.callbacks)
+        self.history = self.model.fit(x_train, y_train_onehot, batch_size=self.batch_size, epochs=self.nb_epochs,
+                              verbose=self.verbose, validation_data=(x_val, y_val_onehot), callbacks=self.callbacks)
 
     def predict_proba(self, X, input_checks=True, **kwargs):
 
