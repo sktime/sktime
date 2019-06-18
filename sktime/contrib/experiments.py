@@ -326,8 +326,8 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-        data_dir = "D:/CMP Machine Learning/sktime/sktime/datasets/data/"
-        results_dir = "D:/CMP Machine Learning/sktime/sktime/datasets/data/"
+        data_dir = "D:/UEAMachineLearning/sktime-workshop-boss/sktime/datasets/data/"
+        results_dir = "D:/UEAMachineLearning/sktime-workshop-boss/sktime/datasets/data/"
 #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
 #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         classifier = "BOSS"

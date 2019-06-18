@@ -498,9 +498,9 @@ class BOSSTransform():
             std = 1
         normalising_factor = self.inverse_sqrt_win_size / std
 
-        dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
-                         range(start, start + outputLength)])
-        print(dft2)
+        #dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
+                         #range(start, start + outputLength)])
+        #print(dft2)
 
         dft = np.zeros(outputLength * 2)
 
@@ -511,7 +511,7 @@ class BOSSTransform():
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
 
-        print(dft)
+        #print(dft)
 
         dft *= normalising_factor
 
