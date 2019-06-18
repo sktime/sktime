@@ -2,7 +2,7 @@ import numpy as np
 from tslearn.utils import to_time_series
 from  scipy.spatial.distance import cdist
 from elastic_cython import (
-    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
+    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance, twe_distance
     )
 
 
@@ -110,6 +110,22 @@ def GDS_erp_matrix(X,Y,sigma, band_size, g):
     M=cdist(X,Y,metric=GDS_erp_pairs,sigma=sigma,band_size=band_size, g=g)
     return M
 
+
+
+
+
+
+#Kernels for twe distance
+def GDS_twe_pairs(s1,s2,sigma, penalty, stiffness):
+    s1 = to_time_series(s1)
+    s2 = to_time_series(s2)
+    dist = twe_distance(s1, s2,penalty, stiffness)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def GDS_twe_matrix(X,Y,sigma, penalty, stiffness):
+    M=cdist(X,Y,metric=GDS_twe_pairs,sigma=sigma,penalty=penalty, stiffness=stiffness)
+    return M
 
 
 
