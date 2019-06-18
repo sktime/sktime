@@ -4,6 +4,8 @@
 #                       Important to make sure info gain calcs are correct with binary info gain (this has been rewritten from v2 to avoid
 #                       multiple sorts and some calls that were not necessary. I believe it is correct, but good to test further)
 #
+#                       Note: known issue is that transform does not currently return shapelets - run main to see where it's up to :)
+#
 #   - distance measure: it has been rewired with the latest early abandon for evaluating a candidate (i.e. start in the same location of
 #                       a comparison series as the candidate, then move left and right). However, full distance of the subsequence is
 #                       currently calculated using np.linalg.norm(candidate-comparison)^2 as it's faster than doing a Euclidean distance
@@ -306,7 +308,7 @@ class ShapeletTransform(TransformerMixin):
                 # print("start:  "+str(accepted_candidate.start_pos))
                 # print("length: "+str(accepted_candidate.length))
                 # print("info:   "+str(accepted_candidate.info_gain))
-                print()
+                # print()
 
                 # add to min heap to store shapelets for this class
                 shapelet_heaps_by_class[this_class_val].push(accepted_candidate)
@@ -795,9 +797,9 @@ if __name__ == "__main__":
     dataset = "GunPoint"
     # dataset = "BasicMotions"
 
-    train_x, train_y = load_from_tsfile_to_dataframe("../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
-    test_x, test_y = load_from_tsfile_to_dataframe("../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
-    X, y = load_from_arff_to_dataframe("../datasets/data/BasicMotions/BasicMotions_TRAIN.arff")
+    train_x, train_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
+    test_x, test_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
+    # X, y = load_from_arff_to_dataframe("../datasets/data/BasicMotions/BasicMotions_TRAIN.arff")
 
     a = ShapeletTransform(random_state=0, dims_to_use=0, verbose=3, min_shapelet_length=150, max_shapelet_length=150)
     start_time = time.time()
