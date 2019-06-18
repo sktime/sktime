@@ -6,10 +6,26 @@ from sktime.transformers.base import BaseTransformer
 class MappedTransformer(BaseTransformer):
 
     mappingContainer_ = {
-        'discreteFT': lambda X, axis, norm: np.fft.fftn(X, axis=axis, norm=norm),
-        'discreteRealFT': lambda X, axis, norm: np.fft.rfftn(X, axis=axis, norm=norm),
-        'discreteHermitFT': lambda X, axis, norm: np.fft.hfft(X, axis=axis, norm=norm),
+        'discreteFT': lambda a: np.fft.fftn(a),
+        'discreteRealFT': lambda a: np.fft.rfftn(a),
+        'discreteHermitFT': lambda a: np.fft.hfft(a),
     }
+
+    def check_valid_key(self, key_entry=''):
+        if key_entry not in self.mappingContainer_:
+            raise TypeError("type should be part of the predefined mapped name")
+        pass
+
+    def get_transform_params(self, X, y=None):
+        pass
+
+    def transform(self, X, y=None):
+        if not isinstance(X, pd.DataFrame):
+            raise TypeError("Input should be a pandas dataframe containing Series objects")
+
+        parameters = self.get_transform_params(X, y)
+        return self.mappingContainer_[self.type](parameters)
+
     pass
 
 
@@ -20,13 +36,7 @@ class DiscreteFourierTransformer(MappedTransformer):
         self.type = fourier_type
         self.norm = norm
         self.axis = axis
+        self.check_valid_key(self.type)
 
-        if self.type not in self.mappingContainer_:
-            raise TypeError("type should be part of the predefined mapped name")
-
-    def transform(self, X, y=None):
-        if not isinstance(X, pd.DataFrame):
-            raise TypeError("Input should be a pandas dataframe containing Series objects")
-
-        return self.mappingContainer_[self.type](X, self.axis, self.norm)
-
+    def get_transform_params(self, X, y=None):
+        return {'x': X, 'y': y, 'axis': self.axis, 'norm': self.norm}
