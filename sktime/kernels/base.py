@@ -1,7 +1,7 @@
 import numpy as np
 from  scipy.spatial.distance import cdist
 from elastic_cython import (
-    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
+    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance, twe_distance
     )
 
 
@@ -155,9 +155,18 @@ def distance_kernel(distance_measure, **kwargs):
     def build_kernel(X, Y):
         kernel = cdist(X, Y, metric=distance)
         return kernel
+#Kernels for twe distance
+def GDS_twe_pairs(s1,s2,sigma, penalty, stiffness):
+    s1 = to_time_series(s1)
+    s2 = to_time_series(s2)
+    dist = twe_distance(s1, s2,penalty, stiffness)
+    return np.exp(-(dist**2) / (sigma**2))
 
     return build_kernel
 
+def GDS_twe_matrix(X,Y,sigma, penalty, stiffness):
+    M=cdist(X,Y,metric=GDS_twe_pairs,sigma=sigma,penalty=penalty, stiffness=stiffness)
+    return M
 
 def dtw_svm(**gs_params):
     model = PandaUnpacker(
@@ -220,6 +229,15 @@ class DtwSvm(BaseClassifier):
     def predict_proba(self, X):
         return self.cls_.predict_proba(X)
 
+
+
+
+
+
+
+
+def distance_matrix(distance_measure, **kwargs):
+    sigma = kwargs['sigma']
 
 
 if __name__ == '__main__':
