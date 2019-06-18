@@ -1,14 +1,14 @@
 import numpy as np
 from  scipy.spatial.distance import cdist
-from elastic_cython import (
-    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance, twe_distance
-    )
+
 
 
 #Kernels for dtw distance
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
+from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
+    erp_distance, dtw_distance
 
 from sktime.transformers.base import BaseTransformer
 
@@ -55,9 +55,10 @@ class DtwKernel(BaseTransformer):
         self.w = w
         self.dim = dim
 
-    def transform(self, X, y=None):
+    def transform(self, X, Z): #y=None):
         if isinstance(X, pd.DataFrame): X = X.to_numpy()
-        M = cdist(X, X, metric=self.dtw_pairs)
+        if isinstance(Z, pd.DataFrame): Z = Z.to_numpy()
+        M = cdist(X, Z, metric=self.dtw_pairs)
         return M
 
     def fit(self, X, y=None
@@ -251,13 +252,13 @@ if __name__ == '__main__':
     #     PandaUnpacker(
     #         SVC(probability=True, kernel=DtwKernel(dim=0, sigma = 0.1, w = -1).transform)
     #         , train=True, test=True)
-    # trainX = tabularise(trainX, return_array=True)
-    # testX = tabularise(testX, return_array=True)
-    cls = PandaUnpacker(SVC(
+    trainX = tabularise(trainX, return_array=True)
+    testX = tabularise(testX, return_array=True)
+    cls = SVC(
         kernel=DtwKernel().transform,
         probability=True,
         random_state=1,
-    ))
+    )
     # cls = DtwSvm(
     #     # probability=True,
     #     random_state=1,
@@ -268,7 +269,7 @@ if __name__ == '__main__':
         # 'dim': [0],
         'C': [0.1, 0.5, 1]
     }]
-    # cls = PandaUnpacker(GridSearchCV(cls, params, cv=4, verbose=1, n_jobs=1))
+    cls = PandaUnpacker(GridSearchCV(cls, params, cv=3, verbose=1, n_jobs=1))
     cls.fit(trainX, trainY)
     class_labels = np.unique(np.concatenate([np.array(testY), np.array(trainY)]))
     # cls = dtw_svm(cv=2, verbose=1, n_jobs=1)
