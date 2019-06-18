@@ -42,7 +42,8 @@ class BaseClassifier(BaseEstimator):
             distribution = distributions[instance_index]
             prediction = comparison.arg_max(distribution, self.random_state)
             predictions.append(prediction)
-        predictions = self.label_encoder.inverse_transform(predictions)
+        if self.label_encoder is not None:
+            predictions = self.label_encoder.inverse_transform(predictions)
         return predictions
 
     def score(self, X, y):

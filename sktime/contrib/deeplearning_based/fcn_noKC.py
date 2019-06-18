@@ -2,15 +2,9 @@ import keras
 import numpy as np
 import pandas as pd
 
-########   sklearn
-from sklearn.utils.estimator_checks import check_estimator
-
-#########  sktime
 from sktime.classifiers.base import BaseClassifier
 from sktime.utils.validation import check_X_y
 
-# data loading
-from sktime.datasets import load_gunpoint
 
 
 class FCN(BaseClassifier):
@@ -36,6 +30,7 @@ class FCN(BaseClassifier):
         self.batch_size = -1
         self.input_shape = None
         self.model = None
+        self.history = None
 
     def build_model(self):
         model = keras.models.Sequential()
@@ -102,7 +97,7 @@ class FCN(BaseClassifier):
                                                                save_best_only=True)
             callbacks = [reduce_lr, model_checkpoint]
 
-        self.model.fit(X, y_onehot, epochs=self.nb_epochs, batch_size=self.batch_size, callbacks=callbacks, verbose=self.verbose)
+        self.history = self.model.fit(X, y_onehot, epochs=self.nb_epochs, batch_size=self.batch_size, callbacks=callbacks, verbose=self.verbose)
 
     def predict_proba(self, X, **kwargs):
         if isinstance(X, pd.DataFrame):
@@ -146,66 +141,3 @@ class FCN(BaseClassifier):
         for name, output in zip(self.model.metrics_names, outputs):
             if name == 'acc':
                 return output
-
-def test_basic():
-    '''
-    just a super basic test with gunpoint, ~1min execution
-    '''
-
-    '''
-    dataset = 'GunPoint'
-    path_to_train_data = 'C:/Univariate2018_ts/' + \
-                         dataset + '/' + dataset + '_TRAIN.ts'
-    train_x, train_y = load_from_tsfile_to_dataframe(path_to_train_data)
-
-    # load the test data
-    path_to_test_data = 'C:/Univariate2018_ts/' + \
-                        dataset + '/' + dataset + '_TEST.ts'
-    test_x, test_y = load_from_tsfile_to_dataframe(path_to_test_data)
-    '''
-
-    print("Start test_basic()")
-
-    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
-
-
-    clf = FCN()
-
-    hist = clf.fit(X_train, y_train)
-    clf.model.summary()
-
-    print(clf.score(X_test, y_test))
-    print("end test_basic()\n\n")
-
-def test_pipeline():
-
-    print("Start test_pipeline()")
-
-    from sktime.pipeline import Pipeline
-    from sktime.transformers.series_to_series import RandomIntervalSegmenter
-
-    # just a simple (not even necessarily good) pipeline for the purposes of testing
-    # that the keras network is compatible with that system
-    steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
-        ('clf', FCN())
-    ]
-    clf = Pipeline(steps)
-
-    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
-
-    hist = clf.fit(X_train, y_train)
-    clf.model.summary()
-
-    print(clf.score(X_test, y_test))
-    print("end test_pipeline()\n\n")
-
-
-if __name__ == "__main__":
-
-    #check_estimator(FCN)
-
-    #test_basic()            #working
-    test_pipeline()
