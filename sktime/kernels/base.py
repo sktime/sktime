@@ -44,40 +44,6 @@ class PandaUnpacker(BaseClassifier):
         return self.cls.predict(X)
 
 
-class DtwKernel(BaseTransformer):
-
-    def __init__(self,
-                 sigma = 0.01,
-                 w = -1,
-                 dim = 0,
-                 ):
-        self.sigma = sigma
-        self.w = w
-        self.dim = dim
-
-    def transform(self, X, Z): #y=None):
-        if isinstance(X, pd.DataFrame): X = X.to_numpy()
-        if isinstance(Z, pd.DataFrame): Z = Z.to_numpy()
-        M = cdist(X, Z, metric=self.dtw_pairs)
-        return M
-
-    def fit(self, X, y=None
-            , **fit_params
-            ):
-        self.sigma = fit_params.get('sigma', self.sigma)
-        self.w = fit_params.get('w', self.w)
-        self.dim = fit_params.get('dim', self.dim)
-        return self
-
-    def dtw_pairs(self, s1,s2):
-        if isinstance(s1, pd.Series): s1 = s1.values[self.dim]
-        if isinstance(s2, pd.Series): s2 = s2.values[self.dim]
-        s1 = np.reshape(s1, (s1.shape[0], 1))
-        s2 = np.reshape(s2, (s2.shape[0], 1))
-        dist = dtw_distance(s1, s2, self.w)
-        return np.exp(-(dist**2) / (self.sigma**2))
-
-
 #Kernels for wdtw distance
 def wdtw_pairs(s1,s2,sigma,g):
     dist = wdtw_distance(s1, s2, g)
@@ -169,37 +135,6 @@ def GDS_twe_matrix(X,Y,sigma, penalty, stiffness):
     M=cdist(X,Y,metric=GDS_twe_pairs,sigma=sigma,penalty=penalty, stiffness=stiffness)
     return M
 
-def dtw_svm(**gs_params):
-    model = PandaUnpacker(
-            SVC(probability=True, kernel=DtwKernel(dim=0, sigma = 0.1, w = -1).transform)
-            , unpack_train=True, unpack_test=True)
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params = [{
-        'kernel': [DtwKernel().transform,
-        {
-            'sigma': [0.01],
-            'w': [-1],
-            'dim': [0],
-        }],
-        'cls__kernel': ['precomputed'],
-        'cls__C': [0.01],
-        'cls__probability': [True],
-    }]
-
-    cv_params= [{'kernel': [DtwKernel().transform], 'gamma': [1e-3, 1e-4],
-                     'C': [1, 10, 100, 1000]},
-                    {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
-
-    gs = GridSearchCV(model, cv_params, **gs_params)
-    return gs
-
 class DtwSvm(BaseClassifier):
 
     def __init__(self,
@@ -219,7 +154,7 @@ class DtwSvm(BaseClassifier):
         self.cls_ = PandaUnpacker(SVC(
             kernel = DtwKernel(w=self.w,
                               dim=self.dim,
-                              sigma=self.sigma).transform,
+                              sigma=self.sigma).transform_other,
                        probability=True))
         self.cls_.fit(X, y)
         return self
@@ -247,27 +182,26 @@ if __name__ == '__main__':
     format = '.ts'
     trainX, trainY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
     testX, testY = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TEST' + format)
-    kernel_transformer = DtwKernel()
     # cls = \
     #     PandaUnpacker(
     #         SVC(probability=True, kernel=DtwKernel(dim=0, sigma = 0.1, w = -1).transform)
     #         , train=True, test=True)
     trainX = tabularise(trainX, return_array=True)
     testX = tabularise(testX, return_array=True)
-    cls = SVC(
-        kernel=DtwKernel().transform,
-        probability=True,
-        random_state=1,
-    )
-    # cls = DtwSvm(
-    #     # probability=True,
+    # cls = SVC(
+    #     kernel=DtwKernel().transform,
+    #     probability=True,
     #     random_state=1,
     # )
+    cls = DtwSvm(
+        # probability=True,
+        random_state=1,
+    )
     params = [{
-        # 'sigma': [0.01],
-        # 'w': [-1],
-        # 'dim': [0],
-        'C': [0.1, 0.5, 1]
+        'sigma': [0.01],
+        'w': [-1],
+        'dim': [0],
+        # 'C': [0.1, 0.5, 1]
     }]
     cls = PandaUnpacker(GridSearchCV(cls, params, cv=3, verbose=1, n_jobs=1))
     cls.fit(trainX, trainY)
