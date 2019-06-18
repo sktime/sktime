@@ -1,22 +1,153 @@
-from sktime.kernels.base import GDS_dtw_matrix, GDS_wdtw_matrix,GDS_ddtw_matrix,GDS_wddtw_matrix,GDS_msm_matrix,GDS_lcss_matrix,GDS_erp_matrix,GDS_twe_matrix
-from tslearn.datasets import UCR_UEA_datasets
+import numpy as np
+from  scipy.spatial.distance import cdist
+
+
+
+#Kernels for dtw distance
+from sklearn.metrics import accuracy_score
+from sklearn.svm import SVC
+from sklearn.utils import check_random_state
+from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
+    erp_distance, dtw_distance
+
+from sktime.transformers.base import BaseTransformer
+
+from sktime.model_selection import GridSearchCV
+from sktime.pipeline import Pipeline
+
+from sktime.classifiers.base import BaseClassifier
+from sktime.utils.load_data import load_ts
+from sktime.utils.transformations import tabularise
+import pandas as pd
+
+
+
+#Kernels for dtw distance
+def dtw_pairs(s1,s2,sigma,w):
+    if isinstance(s1, pd.Series): s1 = s1.values
+    if isinstance(s2, pd.Series): s2 = s2.values
+    s1 = np.reshape(s1, (s1.shape[0], 1))
+    s2 = np.reshape(s2, (s2.shape[0], 1))
+    dist = dtw_distance(s1, s2, w)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def dtw_kernel(X,Y,sigma,w):
+    M=cdist(X,Y,metric=dtw_pairs,sigma=sigma,w=w)
+    return M
+
+#Kernels for wdtw distance
+def wdtw_pairs(s1,s2,sigma,g):
+    dist = wdtw_distance(s1, s2, g)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def wdtw_kernel(X,Y,sigma,g):
+    M=cdist(X,Y,metric=wdtw_pairs,sigma=sigma,g=g)
+    return M
+
+
+#Kernels for ddtw distance
+def ddtw_pairs(s1,s2,sigma,w):
+    dist = ddtw_distance(s1, s2, w)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def ddtw_kernel(X,Y,sigma,w):
+    M=cdist(X,Y,metric=ddtw_pairs,sigma=sigma,w=w)
+    return M
+
+
+#Kernels for wddtw distance
+def wddtw_pairs(s1,s2,sigma,g):
+    dist = wddtw_distance(s1, s2, g)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def wddtw_kernel(X,Y,sigma,g):
+    M=cdist(X,Y,metric=wddtw_pairs,sigma=sigma,g=g)
+    return M
+
+
+#Kernels for msm distance
+def msm_pairs(s1,s2,sigma,c):
+    dist = msm_distance(s1, s2,c)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def msm_kernel(X,Y,sigma,c):
+    M=cdist(X,Y,metric=msm_pairs,sigma=sigma,c=c)
+    return M
+
+
+#Kernels for lcss distance
+def lcss_pairs(s1,s2,sigma, delta, epsilon):
+    dist = lcss_distance(s1, s2,delta, epsilon)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def lcss_kernel(X,Y,sigma,delta, epsilon):
+    M=cdist(X,Y,metric=lcss_pairs,sigma=sigma, delta=delta, epsilon=epsilon)
+    return M
+
+
+#Kernels for erp distance
+def erp_pairs(s1,s2,sigma, band_size, g):
+    dist = erp_distance(s1, s2,band_size, g)
+    return np.exp(-(dist**2) / (sigma**2))
+
+
+def erp_kernel(X,Y,sigma, band_size, g):
+    M=cdist(X,Y,metric=erp_pairs,sigma=sigma,band_size=band_size, g=g)
+    return M
+
+
+def distance_kernel(distance_measure, **kwargs):
+    sigma = kwargs['sigma']
+
+
+    def distance(a, b, **kwargs):
+        dist = distance_measure(a, b, **kwargs)
+        return np.exp(-(dist**2) / sigma**2)
+
+
+    def build_kernel(X, Y):
+        kernel = cdist(X, Y, metric=distance)
+        return kernel
+#Kernels for twe distance
+def twe_pairs(s1, s2, sigma, penalty, stiffness):
+    s1 = to_time_series(s1)
+    s2 = to_time_series(s2)
+    dist = twe_distance(s1, s2,penalty, stiffness)
+    return np.exp(-(dist**2) / (sigma**2))
+
+    return build_kernel
+
+def twe_kernel(X, Y, sigma, penalty, stiffness):
+    M=cdist(X, Y, metric=twe_pairs, sigma=sigma, penalty=penalty, stiffness=stiffness)
+    return M
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 import numpy as np
-from astropy.io import ascii
 
 #Class for dtw distance kernel
-class distancekernel_dtw(BaseEstimator,TransformerMixin):
+from sktime.kernels.base import dtw_kernel
+from sktime.transformers.pandas_to_numpy import PandasToNumpy
+from sktime.utils.load_data import load_ts
+
+
+class DtwKernel(BaseEstimator, TransformerMixin):
     def __init__(self, sigma=1.0, w=0):
-        super(distancekernel_dtw,self).__init__()
+        super(DtwKernel, self).__init__()
         self.sigma = sigma
         self.w = w
 
-    def transform(self, X):
-        return GDS_dtw_matrix(X, self.X_train_, sigma=self.sigma, w=self.w)
+    def transform(self, X, y=None):
+        return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
@@ -142,7 +273,7 @@ class distancekernel_twe(BaseEstimator,TransformerMixin):
         self.stiffness = stiffness
 
     def transform(self, X):
-        return GDS_twe_matrix(X, self.X_train_, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
+        return twe_kernel(X, self.X_train_, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
@@ -152,41 +283,36 @@ class distancekernel_twe(BaseEstimator,TransformerMixin):
 
 
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = UCR_UEA_datasets().load_dataset("GunPoint")
-    X_train = X_train.reshape(X_train.shape[0], X_train.shape[1])
-    X_test = X_test.reshape(X_test.shape[0], X_test.shape[1])
-    y_train = np.ravel(y_train)
+    datasets_dir_path = '/scratch/data/Univariate2018'
+    dataset_name = 'GunPoint'
+    format = '.ts'
+    X_train, y_train = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
+    X_test, y_test = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TEST' + format)
 
 
 
 #dtw kernel parameter estimation
     pipe = Pipeline([
-        ('dk', distancekernel_dtw()),
+        ('conv', PandasToNumpy()),
+        ('dk', DtwKernel()),
         ('svm', SVC()),
     ])
 
-    cv_params = dict([
-        ('dk__sigma', [0.01,0.1,1,10,100]),
-        ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01,0.1,1,10,100])
-    ])
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
 
     # # To test if it works
-    # cv_params = dict([
-    #     ('dk__sigma', [0.1]),
-    #     ('dk__w', [1]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [1])
-    # ])
+    cv_params = dict([
+        ('dk__sigma', [0.1]),
+        ('dk__w', [1]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [1])
+    ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
     model.fit(X_train, y_train)
