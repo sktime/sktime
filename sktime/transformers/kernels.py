@@ -6,7 +6,6 @@ from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
-
 from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
 from sktime.classifiers.proximity import dtw_distance_measure_getter
@@ -14,7 +13,6 @@ from sklearn.metrics import accuracy_score
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
 from sktime.model_selection import GridSearchCV
-from sktime.model_selection import RandomizedSearchCV
 from sktime.pipeline import Pipeline
 from sktime.transformers.pandas_to_numpy import PandasToNumpy
 import pandas as pd
@@ -270,6 +268,18 @@ class DtwSvm(BaseClassifier):
     def predict_proba(self, X):
         return self.model.predict_proba(X)
 
+
+
+
+
+def DtwSvm():
+    # wdtw kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', DtwKernel()),
+        ('svm', SVC()),
+    ])
+
     # cv_params = dict([
     #     ('dk__sigma', [0.01,0.1,1,10,100]),
     #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
@@ -293,39 +303,12 @@ class DtwSvm(BaseClassifier):
     ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid= False, n_jobs=-1)
+    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
 
     return model
 
 
-# #wdtw kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_wdtw()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__g', [0.01,0.1,0,10,100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__g', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_wdtw = accuracy_score(y_test, y_pred)
-#     print("Test accuracy wdtw: {}".format(acc_test_wdtw))
-#     print("Best params:")
-#     print(model.best_params_)
+
 
 
 def WdtwSvm():
@@ -358,9 +341,8 @@ def WdtwSvm():
         ('svm__C', [0.01])
     ])
 
-    model = GridSearchCV(pipe, cv_params, cv=5,
-    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid= False, n_jobs=-1)
-
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
     return model
 
 
@@ -397,7 +379,7 @@ def DdtwSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
 
     return model
 
@@ -435,7 +417,7 @@ def WddtwSmv():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
 
     return model
 
@@ -475,7 +457,7 @@ def MsmSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1,  n_jobs=-1)
     return model
 
 
@@ -515,7 +497,7 @@ def LcssSvm():
     ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
     return model
 
 
@@ -556,7 +538,7 @@ def ErpSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
     return model
 
 
