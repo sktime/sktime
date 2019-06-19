@@ -269,21 +269,6 @@ class DtwSvm(BaseClassifier):
     def predict_proba(self, X):
         return self.model.predict_proba(X)
 
-def DtwSvm():
-
-    # dtw kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', DtwKernel()),
-        ('svm', SVC()),
-    ])
-
-    def predict(self, X):
-        return self.model.predict(X)
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    return model
 
 # #wdtw kernel parameter estimation
 #     pipe = Pipeline([
