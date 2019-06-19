@@ -135,7 +135,7 @@ from sklearn.pipeline import Pipeline
 import numpy as np
 
 #Class for dtw distance kernel
-from sktime.kernels.base import dtw_kernel
+
 from sktime.transformers.pandas_to_numpy import PandasToNumpy
 from sktime.utils.load_data import load_ts
 
@@ -150,23 +150,21 @@ class DtwKernel(BaseEstimator, TransformerMixin):
         return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
 
-#Class for wdtw distance kernel
-class distancekernel_wdtw(BaseEstimator,TransformerMixin):
+
+class WdtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, g=0):
-        super(distancekernel_wdtw,self).__init__()
+        super(WdtwKernel,self).__init__()
         self.sigma = sigma
         self.g = g
 
     def transform(self, X):
-        return GDS_wdtw_matrix(X, self.X_train_, sigma=self.sigma, g=self.g)
+        return wdtw_kernel(X, self.X_train_, sigma=self.sigma, g=self.g)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
@@ -174,17 +172,16 @@ class distancekernel_wdtw(BaseEstimator,TransformerMixin):
 
 
 #Class for ddtw distance kernel
-class distancekernel_ddtw(BaseEstimator,TransformerMixin):
+class DdtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, w=0):
-        super(distancekernel_ddtw,self).__init__()
+        super(DdtwKernel,self).__init__()
         self.sigma = sigma
         self.w = w
 
     def transform(self, X):
-        return GDS_ddtw_matrix(X, self.X_train_, sigma=self.sigma, w=self.w)
+        return ddtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
@@ -192,82 +189,74 @@ class distancekernel_ddtw(BaseEstimator,TransformerMixin):
 
 
 
-
-
 #Class for wddtw distance kernel
-class distancekernel_wddtw(BaseEstimator,TransformerMixin):
+class WddtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, g=0):
-        super(distancekernel_wddtw,self).__init__()
+        super(WddtwKernel,self).__init__()
         self.sigma = sigma
         self.g = g
 
     def transform(self, X):
-        return GDS_wddtw_matrix(X, self.X_train_, sigma=self.sigma, g=self.g)
+        return wddtw_kernel(X, self.X_train_, sigma=self.sigma, g=self.g)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
 
-#Class for wddtw distance kernel
-class distancekernel_msm(BaseEstimator,TransformerMixin):
+#Class for msm distance kernel
+class MsmKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, c=0):
-        super(distancekernel_msm,self).__init__()
+        super(MsmKernel,self).__init__()
         self.sigma = sigma
         self.c = c
 
     def transform(self, X):
-        return GDS_msm_matrix(X, self.X_train_, sigma=self.sigma, c=self.c)
+        return msm_kernel(X, self.X_train_, sigma=self.sigma, c=self.c)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
 
 
 #Class for lcss distance kernel
-class distancekernel_lcss(BaseEstimator,TransformerMixin):
+class LcssKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, delta= 1, epsilon=0):
-        super(distancekernel_lcss,self).__init__()
+        super(LcssKernel,self).__init__()
         self.sigma = sigma
         self.epsilon = epsilon
         self.delta = delta
 
     def transform(self, X):
-        return GDS_lcss_matrix(X, self.X_train_, sigma=self.sigma, delta= self.delta, epsilon=self.epsilon)
+        return lcss_kernel(X, self.X_train_, sigma=self.sigma, delta= self.delta, epsilon=self.epsilon)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
 
 #Class for erp distance kernel
-class distancekernel_erp(BaseEstimator,TransformerMixin):
+class ErpKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, band_size=5,g=0.5):
-        super(distancekernel_erp,self).__init__()
+        super(ErpKernel,self).__init__()
         self.sigma = sigma
         self.band_size = band_size
         self.g = g
 
     def transform(self, X):
-        return GDS_erp_matrix(X, self.X_train_, sigma=self.sigma, band_size= self.band_size, g=self.g)
+        return erp_kernel(X, self.X_train_, sigma=self.sigma, band_size= self.band_size, g=self.g)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
 
 
-
-
 #Class for twe distance kernel
-class distancekernel_twe(BaseEstimator,TransformerMixin):
+class TweKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, penalty=0,stiffness=1):
-        super(distancekernel_twe,self).__init__()
+        super(TweKernel,self).__init__()
         self.sigma = sigma
         self.penalty = penalty
         self.stiffness = stiffness
@@ -276,7 +265,6 @@ class distancekernel_twe(BaseEstimator,TransformerMixin):
         return twe_kernel(X, self.X_train_, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
         return self
 
 
