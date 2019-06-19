@@ -8,5 +8,5 @@ if __name__ == "__main__":
     loc = r'C:\Users\Jeremy\PycharmProjects\transformers\sktime\datasets\data\GunPoint\GunPoint_TEST.ts'
     df = toDF(loc, starting_line=5)
 
-    ts = tr.CosinTransformer()
+    ts = tr.PiecewiseAggregateApproximation()
     xt = ts.transform(df)

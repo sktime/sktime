@@ -38,18 +38,19 @@ class BaseMappedTransformer(BaseTransformer):
         pass
 
     def transform(self, x, y=None):
-        if not isinstance(x, pd.DataFrame):
-            raise TypeError("Input should be a pandas dataframe containing Series objects")
+
+        if self.check_input_:
+            self.check_input(x, y)
 
         if not self.is_fitted_:
             raise TypeError("transformer must be fitted before performing the transform")
 
         parameters = self.__get_transform_params()
 
-        if self.type not in self.__constraint1D or self.__constraint1D[self.type] is False:
+        if self.type_ not in self.__constraint1D or self.__constraint1D[self.type_] is False:
             parameters['x'] = x
             print('parameters')
-            out = self.__mappingContainer[self.type](parameters)
+            out = self.__mappingContainer[self.type_](parameters)
             out = self.__get_output_from(out)
 
             return out
@@ -58,7 +59,7 @@ class BaseMappedTransformer(BaseTransformer):
             arr = []
             for index, row in x.iterrows():
                 parameters['x'] = row
-                out = self.__mappingContainer[self.type](parameters)
+                out = self.__mappingContainer[self.type_](parameters)
                 out = self.__get_output_from(np.array(out))
                 arr.append(out)
 
@@ -66,9 +67,16 @@ class BaseMappedTransformer(BaseTransformer):
             return arr
 
     def __get_output_from(self, x):
-        if self.type not in self.__indexReturn:
+        if self.type_ not in self.__indexReturn:
             return x
         else:
-            index = self.__indexReturn[self.type]
+            index = self.__indexReturn[self.type_]
             return x[index]
+
+    @staticmethod
+    def __check_inputs(x, y=None):
+        if not isinstance(x, pd.DataFrame):
+            raise TypeError("Input should be a pandas dataframe containing Series objects")
+
+
 
