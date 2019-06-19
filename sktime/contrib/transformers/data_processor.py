@@ -3,14 +3,12 @@ import pandas as pd
 
 __author__ = ["Jeremy Sellier"]
 
-
 """ Prototype method to convert a text file into timeSerie dataFrame object
 - must improve the robustness and extend the functionalities
 """
 
 
 def toDF(file, dtype=float, starting_line=1):
-
     x = []
     n_row = 1
     with open(file) as f:

@@ -3,7 +3,7 @@ import pandas as pd
 
 from scipy.signal import periodogram
 from statsmodels.tsa.stattools import acf
-
+from statsmodels.tsa.stattools import pacf
 from sktime.transformers.base import BaseTransformer
 
 __author__ = ["Jeremy Sellier"]
@@ -16,28 +16,25 @@ __author__ = ["Jeremy Sellier"]
 
 class BaseMappedTransformer(BaseTransformer):
     __mappingContainer = {
-        'discreteFT': lambda a: np.fft.fftn(**a),
-        'discreteRealFT': lambda a: np.fft.rfftn(**a),
-        'discreteHermitFT': lambda a: np.fft.hfft(**a),
-        'powerSpectrum': lambda a: periodogram(**a),
-        'ACF': lambda a: acf(**a)
+        'discreteFT': lambda p: np.fft.fftn(**p),
+        'discreteRealFT': lambda p: np.fft.rfftn(**p),
+        'discreteHermitFT': lambda p: np.fft.hfft(**p),
+        'powerSpectrum': lambda p: periodogram(**p),
+        'stdACF': lambda p: acf(**p),
+        'pACF': lambda p: pacf(**p)
     }
 
     __constraint1D = {
         'powerSpectrum': True,
-        'ACF': True
+        'stdACF': True,
+        'pACF': True
     }
 
     __indexReturn = {
         'powerSpectrum': 0
     }
 
-    def check_valid_key(self, key_entry=''):
-        if key_entry not in self.__mappingContainer:
-            raise TypeError("type should be part of the predefined mapped name")
-        pass
-
-    def get_transform_params(self, x, y=None):
+    def __get_transform_params(self, x, y=None):
         pass
 
     def transform(self, x, y=None):
@@ -47,10 +44,11 @@ class BaseMappedTransformer(BaseTransformer):
         if not self.is_fitted_:
             raise TypeError("transformer must be fitted before performing the transform")
 
-        parameters = self.get_transform_params()
+        parameters = self.__get_transform_params()
 
         if self.type not in self.__constraint1D or self.__constraint1D[self.type] is False:
             parameters['x'] = x
+            print('parameters')
             out = self.__mappingContainer[self.type](parameters)
             out = self.__get_output_from(out)
 
@@ -71,8 +69,6 @@ class BaseMappedTransformer(BaseTransformer):
         if self.type not in self.__indexReturn:
             return x
         else:
-            print('try to mod')
             index = self.__indexReturn[self.type]
-            print(index)
             return x[index]
 
