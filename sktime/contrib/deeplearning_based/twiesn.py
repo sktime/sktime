@@ -26,7 +26,7 @@ class TWIESN(BaseDeepLearner):
 		
 		self.verbose = verbose
 		
-		self.dim_to_use = 0
+		self.dim_to_use = dim_to_use
 
 		# hyperparameters 
 		first_config = {'N_x':250,'connect':0.5,'scaleW_in':1.0,'lamda':0.0}
