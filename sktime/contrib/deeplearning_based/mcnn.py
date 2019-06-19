@@ -14,7 +14,8 @@ class MCNN(BaseDeepLearner):
     def __init__(self,
                  output_directory=None,
                  verbose=False,
-                 dim_to_use=0):
+                 dim_to_use=0,
+                 rand_seed=0):
         self.output_directory = output_directory
         self.verbose = verbose
         self.pool_factors = [2,3,5] # used for hyperparameters grid search
@@ -34,6 +35,16 @@ class MCNN(BaseDeepLearner):
         self.ds_base= 2
         self.ds_step= 1
         self.ds_num = 4
+
+        # calced in fit
+        self.classes_ = None
+        self.nb_classes = -1
+        self.input_shape = None
+        self.model = None
+        self.history = None
+
+        self.rand_seed = rand_seed
+        self.random_state = np.random.RandomState(self.rand_seed)
 
 
 
@@ -474,16 +485,6 @@ class MCNN(BaseDeepLearner):
             y_predicted.append(predicted_label)
 
         y_pred = np.array(y_predicted)
-
-
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

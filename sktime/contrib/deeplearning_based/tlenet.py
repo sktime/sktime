@@ -9,7 +9,7 @@ from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
 class TLENET(BaseDeepLearner):
 
-    def __init__(self, output_directory=None, verbose=False, dim_to_use=0):
+    def __init__(self, output_directory=None, verbose=False, dim_to_use=0, rand_seed=0):
         self.output_directory = output_directory
         self.verbose = verbose
         self.warping_ratios = [0.5, 1, 2]
@@ -18,6 +18,16 @@ class TLENET(BaseDeepLearner):
 
         self.nb_epochs = 1000
         self.batch_size = 256
+
+        # calced in fit
+        self.classes_ = None
+        self.nb_classes = -1
+        self.input_shape = None
+        self.model = None
+        self.history = None
+
+        self.rand_seed = rand_seed
+        self.random_state = np.random.RandomState(self.rand_seed)
 
     def slice_data(self, X, y=None, length_sliced=1):
         n = X.shape[0]
@@ -115,7 +125,7 @@ class TLENET(BaseDeepLearner):
         # data augmentation using WS
         for i in range(0, len(x_augmented)):
             x_augmented[i], y_train_augmented_i, increase_num = self.slice_data(x_augmented[i], y, length_ratio)
-            print("inc num",increase_num)
+            #print("inc num",increase_num)
             if y is not None:
                 y_augmented[i] = y_train_augmented_i
 
@@ -175,14 +185,14 @@ class TLENET(BaseDeepLearner):
             self.slice_ratio = 8 / m
 
         X, y, tot_increase_num = self.pre_processing(X, y)
-        print(y.shape)
+        #print(y.shape)
 
-        print('Total increased number for each MTS: ', tot_increase_num)
+        #print('Total increased number for each MTS: ', tot_increase_num)
 
         input_shape = X.shape[1:]
-        model = self.build_model(input_shape, self.nb_classes)
+        self.model = self.build_model(input_shape, self.nb_classes)
 
-        self.hist = model.fit(X, y, batch_size=self.batch_size, epochs=self.nb_epochs,
+        self.hist = self.model.fit(X, y, batch_size=self.batch_size, epochs=self.nb_epochs,
                          verbose=self.verbose, callbacks=self.callbacks)
 
 
@@ -200,10 +210,10 @@ class TLENET(BaseDeepLearner):
             X = X.reshape((X.shape[0], X.shape[1], 1))
 
         X, _, tot_increase_num = self.pre_processing(X)
-        print(X.shape)
+        #print(X.shape)
 
         # predict some stuff based on the keras.
-        preds = self.hist.predict(X, batch_size=self.batch_size)
+        preds = self.model.predict(X, batch_size=self.batch_size)
 
         y_predicted = []
         test_num_batch = int(X.shape[0]/tot_increase_num)

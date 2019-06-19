@@ -18,15 +18,23 @@ from sktime.contrib.deeplearning_based.basenetwork import networkTests
 class TWIESN(BaseDeepLearner):
 	def __init__(self, 
 					output_directory=None,
+					rand_seed=0,
 					verbose=False,
 					dim_to_use=0): 
-					
-					
+
 		self.output_directory = output_directory
-		
 		self.verbose = verbose
-		
 		self.dim_to_use = dim_to_use
+
+		# calced in fit
+		self.classes_ = None
+		self.nb_classes = -1
+		self.input_shape = None
+		self.model = None
+		self.history = None
+
+		self.rand_seed = rand_seed
+		self.random_state = np.random.RandomState(self.rand_seed)
 
 		# hyperparameters 
 		first_config = {'N_x':250,'connect':0.5,'scaleW_in':1.0,'lamda':0.0}
@@ -121,7 +129,7 @@ class TWIESN(BaseDeepLearner):
 										rho, 
 										self.configs[idx_config])
 
-				print(train_acc)
+				#print(train_acc)
 				if best_train_acc < train_acc:
 					best_train_acc = train_acc
 					best_rho = rho
@@ -165,7 +173,7 @@ class TWIESN(BaseDeepLearner):
 		new_x_test = self.transform_to_feature_space(X)
 
 		#TODO: need to get the probabilities. this is not correct #need to convert but not argmax.
-		probas = self.model.predict_proba(new_x_test)
+		y_pred = self.model.predict(new_x_test)
 
 		# reshape so the first axis has the number of instances
 		new_y_pred = y_pred.reshape(X.shape[0], X.shape[1], -1)
