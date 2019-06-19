@@ -1,56 +1,63 @@
 import numpy as np
 import pandas as pd
 
-from scipy.signal import periodogram
-from statsmodels.tsa.stattools import acf
-from statsmodels.tsa.stattools import pacf
 from sktime.transformers.base import BaseTransformer
+from sktime.contrib.transformers.mapped_function_config import FunctionConfigs
 
 __author__ = ["Jeremy Sellier"]
 
+
 """ Prototype mechanism for the 'mapped' transformer classes
--- works as a base abstract class and store a dict of lambda as static member
--- just need to override a 'get_transform_params on the sub-classes (that return a dict of parameters to be passed within the corresponding lambda-f)
-"""
+(comment to be added)
+
+-- works as a base abstract class
+-- store a static ref to the function config class
+-- contain a generic 'transform' method
+-- just need to override a 'get_transform_params' on the sub-classes (i.e. that return a dict of parameters to be passed within the corresponding lambda-f)
+
+    Class Attributes
+    ----------
+   
+    configRef_ : FunctionConfigs object
+        reference to the function configs
+       
+    Instance Attributes
+    ----------
+    
+    type_ = enum of type FunctionConfigs.FuncType
+        Specify the type of the function to be mapped
+    input_key_ = string
+        specify the 'X' string key to be used in the corresponding lambda (can be 'a', 'x')
+    check_input_ = False
+        specify whether some input_check method should be trigger
+    """
 
 
 class BaseMappedTransformer(BaseTransformer):
-    __mappingContainer = {
-        'discreteFT': lambda p: np.fft.fftn(**p),
-        'discreteRealFT': lambda p: np.fft.rfftn(**p),
-        'discreteHermitFT': lambda p: np.fft.hfft(**p),
-        'powerSpectrum': lambda p: periodogram(**p),
-        'stdACF': lambda p: acf(**p),
-        'pACF': lambda p: pacf(**p)
-    }
 
-    __constraint1D = {
-        'powerSpectrum': True,
-        'stdACF': True,
-        'pACF': True
-    }
+    configRef = FunctionConfigs()
 
-    __indexReturn = {
-        'powerSpectrum': 0
-    }
+    def __init__(self):
+        self.type_ = None
+        self.input_key_ = None
+        self.check_input_ = False
 
-    def __get_transform_params(self, x, y=None):
+    def get_transform_params(self):
         pass
 
     def transform(self, x, y=None):
 
         if self.check_input_:
-            self.check_input(x, y)
+            self.__check_input(x, y)
 
         if not self.is_fitted_:
             raise TypeError("transformer must be fitted before performing the transform")
 
-        parameters = self.__get_transform_params()
+        parameters = self.get_transform_params()
 
-        if self.type_ not in self.__constraint1D or self.__constraint1D[self.type_] is False:
-            parameters['x'] = x
-            print('parameters')
-            out = self.__mappingContainer[self.type_](parameters)
+        if self.type_ not in self.configRef.constraintTo1D or self.configRef.constraintTo1D[self.type_] is False:
+            parameters[self.input_key_] = x
+            out = self.configRef.lambdaContainer[self.type_](parameters)
             out = self.__get_output_from(out)
 
             return out
@@ -58,8 +65,8 @@ class BaseMappedTransformer(BaseTransformer):
         else:
             arr = []
             for index, row in x.iterrows():
-                parameters['x'] = row
-                out = self.__mappingContainer[self.type_](parameters)
+                parameters[self.input_key_] = row
+                out = self.configRef.lambdaContainer[self.type_](parameters)
                 out = self.__get_output_from(np.array(out))
                 arr.append(out)
 
@@ -67,16 +74,13 @@ class BaseMappedTransformer(BaseTransformer):
             return arr
 
     def __get_output_from(self, x):
-        if self.type_ not in self.__indexReturn:
+        if self.type_ not in self.configRef.indexReturn:
             return x
         else:
-            index = self.__indexReturn[self.type_]
+            index = self.configRef.indexReturn[self.type_]
             return x[index]
 
     @staticmethod
-    def __check_inputs(x, y=None):
+    def __check_input(x, y=None):
         if not isinstance(x, pd.DataFrame):
             raise TypeError("Input should be a pandas dataframe containing Series objects")
-
-
-
