@@ -1,6 +1,3 @@
-import numpy as np
-import pandas as pd
-
 import sktime.contrib.transformers.mats_transformer as tr
 from sktime.contrib.transformers.data_processor import DataProcessor
 
@@ -12,12 +9,16 @@ if __name__ == "__main__":
 
     dts = tr.DiscreteFourierTransformer()
     xt1 = dts.transform(df)
+    print(xt1.shape)
 
     ats = tr.AutoCorrelationFunctionTransformer()
     xt2 = ats.transform(df)
+    print(xt2.shape)
 
     pts = tr.PowerSpectrumTransformer()
     xt3 = pts.transform(df)
+    print(xt3.shape)
 
     cts = tr.CosineTransformer()
     xt4 = cts.transform(df)
+    print(xt4.shape)

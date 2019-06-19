@@ -8,6 +8,9 @@ __author__ = ["Jeremy Sellier"]
 
 """ Sub method for the mapped transform class
 (comment to be added)
+
+Sub concrete class method for the mapped transformer instantiation. 
+Act as a simple input mapping/collector. I kept different sub-classes to enforce a control of the input per category
 """
 
 

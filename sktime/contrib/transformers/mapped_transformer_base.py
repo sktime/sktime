@@ -10,10 +10,10 @@ __author__ = ["Jeremy Sellier"]
 """ Prototype mechanism for the 'mapped' transformer classes
 (comment to be added)
 
--- works as a base abstract class
--- store a static ref to the function config class
--- contain a generic 'transform' method
--- just need to override a 'get_transform_params' on the sub-classes (i.e. that return a dict of parameters to be passed within the corresponding lambda-f)
+- works as a main base abstract class (even though I am not sure how to force an class to be abstract in Python)
+- store a static ref to the function config class
+- contain a generic 'transform' method
+- just need to override a 'get_transform_params' on the sub-classes (i.e. that return a dict of parameters to be passed within the corresponding lambda-f)
 
     Class Attributes
     ----------
