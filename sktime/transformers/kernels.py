@@ -1,14 +1,14 @@
 import numpy as np
-from  scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist
+from scipy import stats
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
 from sktime.model_selection import GridSearchCV
+from sktime.model_selection import RandomizedSearchCV
 from sktime.pipeline import Pipeline
 from sktime.transformers.pandas_to_numpy import PandasToNumpy
-from sktime.utils.load_data import load_ts
 import pandas as pd
 
 def unpack_series(ts):
@@ -220,6 +220,13 @@ def DtwSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__w', [-1,0.01,0.1,0.2,0.4]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.1]),
@@ -229,6 +236,8 @@ def DtwSvm():
     ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid= False, n_jobs=-1)
+
     return model
 
 
@@ -248,6 +257,13 @@ def WdtwSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__g', [0.01,0.1,0,10,100]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
@@ -256,7 +272,9 @@ def WdtwSvm():
         ('svm__C', [0.01])
     ])
 
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model = GridSearchCV(pipe, cv_params, cv=5,
+    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid= False, n_jobs=-1)
+
     return model
 
 
@@ -276,6 +294,13 @@ def DdtwSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__w', [-1,0.01,0.1,0.2,0.4]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
@@ -286,6 +311,8 @@ def DdtwSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+
     return model
 
 
@@ -304,6 +331,13 @@ def WddtwSmv():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__g', [0.01,0.1,0,10,100]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
@@ -315,6 +349,8 @@ def WddtwSmv():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
+
     return model
 
 
@@ -335,6 +371,13 @@ def MsmSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__c', [0.01, 0.1, 1, 10, 100]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
@@ -346,6 +389,7 @@ def MsmSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
     return model
 
 
@@ -367,6 +411,14 @@ def LcssSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__delta', [0.1,1,10,100,500]),
+        ('dk__epsilon', [0.01,0.1,0.2,0.4]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
     # To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
@@ -377,6 +429,7 @@ def LcssSvm():
     ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
     return model
 
 
@@ -398,8 +451,15 @@ def ErpSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__band_size', [0.001,0.01,0.1,0.2,0.4]),
+        ('dk__g', [0.01,0.1,0,10,100]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
 
-    # To test if it works
+# To test if it works
     cv_params = dict([
         ('dk__sigma', [0.01]),
         ('dk__band_size', [0.01]),
@@ -410,6 +470,7 @@ def ErpSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, iid=False, n_jobs=-1)
     return model
 
 
@@ -432,6 +493,14 @@ def TweSvm():
     #     ('svm__C', [0.01,0.1,1,10,100])
     # ])
 
+    cv_params_random = dict([
+        ('dk__sigma', stats.expon(scale=.1)),
+        ('dk__penalty', [0.001,0.01,0.1,0.2,0.4]),
+        ('dk__stiffness', [0.01,0.1,0,10,100]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', stats.expon(scale=100))
+    ])
+
 
     # To test if it works
     cv_params = dict([
@@ -444,6 +513,7 @@ def TweSvm():
 
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
     return model
 
 
