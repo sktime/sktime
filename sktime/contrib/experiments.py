@@ -16,7 +16,15 @@ import sktime.classifiers.ensemble as ensemble
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest
+import sktime.contrib.deeplearning_based.cnn as cnn
+import sktime.contrib.deeplearning_based.encoder as encoder
+import sktime.contrib.deeplearning_based.fcn as fcn
+import sktime.contrib.deeplearning_based.mcdcnn as mcdcnn
+import sktime.contrib.deeplearning_based.mlp as mlp
+import sktime.contrib.deeplearning_based.resnet as resnet
+
+
+#from sktime.classifiers.proximity import ProximityForest
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -130,14 +138,32 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-    if cls.lower() == 'pf':
-        return ProximityForest(rand = resampleId)
+    #if cls.lower() == 'pf':
+    #    return ProximityForest(rand = resampleId)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls == 'TSF' or cls == 'tsf':
+    elif cls == 'TSF' or cls == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
-    elif  cls == 'BOSS' or cls == 'boss':
+    elif cls == 'BOSS' or cls == 'boss':
         return db.BOSSEnsemble()
+    elif cls == 'dl4tsc_cnn':
+        return cnn.CNN()
+    elif cls == 'dl4tsc_encoder':
+        return encoder.Encoder()
+    elif cls == 'dl4tsc_fcn':
+        return fcn.FCN()
+    elif cls == 'dl4tsc_mcdcnn':
+        return mcdcnn.MCDCNN()
+    #elif cls == 'dl4tsc_mcnn':
+    #    return dl.cnn.MCNN()
+    elif cls == 'dl4tsc_mlp':
+        return mlp.MLP()
+    elif cls == 'dl4tsc_resnet':
+        return resnet.ResNet()
+    #elif cls == 'dl4tsc_tlenet':
+    #    return dl.cnn.TLENET()
+    #elif cls == 'dl4tsc_twiesn':
+    #    return dl.twiesn.TWIESN()
 #    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
 #        return dist.ElasticEnsemble()
     elif cls == 'TSF_Markus':
@@ -163,7 +189,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
-    cls_name = cls_name.upper()
+    #cls_name = cls_name.upper()
     build_test = True
     if not overwrite:
         full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
@@ -182,12 +208,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    if resample !=0:
+    if resampleID !=0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resample, shuffle=True,
+                                                                       random_state=resampleID, shuffle=True,
                                                                        stratify=allLabels)
 
 
