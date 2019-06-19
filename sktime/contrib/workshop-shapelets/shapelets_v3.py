@@ -451,7 +451,8 @@ class ShapeletTransform(TransformerMixin):
                     comparison = ShapeletTransform.zscore(this_series[:, start_pos:start_pos + this_shapelet_length])
 
                     dist = np.linalg.norm(self.shapelets[s].data - comparison)
-                    min_dist = min(dist * dist, min_dist)/this_shapelet_length
+                    dist = 1.0/this_shapelet_length*(dist*dist)
+                    min_dist = min(min_dist, dist)
 # FLAG TO NORMALIZE DISTANCE BY LENGTH - DEFAULT TO TRUE
 
                     output[i][s] = min_dist
