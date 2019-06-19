@@ -90,10 +90,10 @@ def msm_kernel(X,Y,sigma,c, dim_to_use):
 
 
 #Kernels for lcss distance
-def lcss_pairs(s1,s2,sigma, delta, epsilon):
+def lcss_pairs(s1,s2,sigma, delta, epsilon, dim_to_use):
     s1 = unpack_series(s1)
     s2 = unpack_series(s2)
-    dist = lcss_distance(s1, s2,delta, epsilon)
+    dist = lcss_distance(s1, s2,delta, epsilon, dim_to_use)
     return np.exp(-(dist**2) / (sigma**2))
 
 
@@ -103,10 +103,10 @@ def lcss_kernel(X,Y,sigma,delta, epsilon, dim_to_use):
 
 
 #Kernels for erp distance
-def erp_pairs(s1,s2,sigma, band_size, g):
+def erp_pairs(s1,s2,sigma, band_size, g, dim_to_use):
     s1 = unpack_series(s1)
     s2 = unpack_series(s2)
-    dist = erp_distance(s1, s2,band_size, g)
+    dist = erp_distance(s1, s2,band_size, g, dim_to_use)
     return np.exp(-(dist**2) / (sigma**2))
 
 
