@@ -2,7 +2,7 @@ import os
 
 import sktime.classifiers.proximity
 from sktime.classifiers import proximity
-from sktime.transformers.kernels import DistanceMeasureSvm
+from sktime.transformers.kernels import DtwSvm
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -134,9 +134,8 @@ def set_classifier(cls, resampleId, verbosity):
     """
     cls = cls.lower()
     if cls == 'dtw_svm':
-        return DistanceMeasureSvm(distance_measure_getter = proximity.dtw_distance_measure_getter,
-                                  random_state = resampleId,
-                                    verbosity = verbosity)
+        return DtwSvm(random_state = resampleId,
+                      verbosity = verbosity)
     if cls == 'pt' or cls == 'proximity_tree':
         return sktime.classifiers.proximity.ProximityTree(
                 random_state = resampleId,

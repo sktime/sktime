@@ -6,6 +6,7 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
 
+from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
 from sktime.classifiers.proximity import dtw_distance_measure_getter
 from sklearn.metrics import accuracy_score
@@ -123,6 +124,27 @@ def twe_kernel(X, Y, sigma, penalty, stiffness):
     return M
 
 
+class Kernel(BaseEstimator, TransformerMixin):
+    def __init__(self,
+                 sigma=1.0,
+                 distance_measure = None,
+                 **distance_measure_parameters,
+                 ):
+        self.sigma = sigma
+        self.distance_measure_parameters = distance_measure_parameters
+        self.distance_measure = distance_measure
+
+    def distance(self, s1, s2):
+        s1 = unpack_series(s1)
+        s2 = unpack_series(s2)
+        dist = twe_distance(s1, s2, **self.distance_measure_parameters)
+        return np.exp(-(dist**2) / (self.sigma ** 2))
+
+
+    def transform(self, X, y=None):
+        kernel = cdist(X, X, metric=self.distance)
+        return kernel
+
 class DtwKernel(BaseEstimator, TransformerMixin):
     def __init__(self, sigma=1.0, w=0):
         super(DtwKernel, self).__init__()
@@ -207,40 +229,40 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
-class DistanceMeasureSvm(BaseClassifier):
+class DtwSvm(BaseClassifier):
 
     def __init__(self,
-                 distance_measure_getter = None,
                  random_state = None,
                  verbosity = 0,
                  ):
-        self.distance_measure_getter = distance_measure_getter
         self.random_state = random_state
         self.verbosity = verbosity
         self.model = None
 
     def fit(self, X, y):
         self.random_state = check_random_state(self.random_state)
-        distance_measure = self.distance_measure_getter(X)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
         pipe = Pipeline([
             ('conv', PandasToNumpy()),
             ('dk', DtwKernel()),
             ('svm', SVC(probability=True)),
         ])
         cv_params = {}
-        for k, v in distance_measure.items(): cv_params['dk__' + k] = v
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
         cv_params = {
             **cv_params,
             'svm__kernel': ['precomputed'],
             'svm__C': [1]
         }
         self.model = RandomizedSearchCV(pipe,
-                                   cv_params,
-                                   scoring=make_scorer(accuracy_score),
-                                   n_jobs=1,
-                                   verbose=self.verbosity,
-                                   random_state=self.random_state,
-                                   )
+                                        cv_params,
+                                        scoring=make_scorer(accuracy_score),
+                                        n_jobs=1,
+                                        verbose=self.verbosity,
+                                        random_state=self.random_state,
+                                        )
         self.model.fit(X, y)
         return self
 
