@@ -84,8 +84,8 @@ def msm_pairs(s1,s2,sigma,c):
     return np.exp(-(dist**2) / (sigma**2))
 
 
-def msm_kernel(X,Y,sigma,c):
-    M=cdist(X,Y,metric=msm_pairs,sigma=sigma,c=c)
+def msm_kernel(X,Y,sigma,c, dim_to_use):
+    M=cdist(X,Y,metric=msm_pairs,sigma=sigma,c=c,dim_to_use=dim_to_use)
     return M
 
 
@@ -97,8 +97,8 @@ def lcss_pairs(s1,s2,sigma, delta, epsilon):
     return np.exp(-(dist**2) / (sigma**2))
 
 
-def lcss_kernel(X,Y,sigma,delta, epsilon):
-    M=cdist(X,Y,metric=lcss_pairs,sigma=sigma, delta=delta, epsilon=epsilon)
+def lcss_kernel(X,Y,sigma,delta, epsilon, dim_to_use):
+    M=cdist(X,Y,metric=lcss_pairs,sigma=sigma, delta=delta, epsilon=epsilon, dim_to_use=dim_to_use)
     return M
 
 
@@ -110,8 +110,8 @@ def erp_pairs(s1,s2,sigma, band_size, g):
     return np.exp(-(dist**2) / (sigma**2))
 
 
-def erp_kernel(X,Y,sigma, band_size, g):
-    M=cdist(X,Y,metric=erp_pairs,sigma=sigma,band_size=band_size, g=g)
+def erp_kernel(X,Y,sigma, band_size, g, dim_to_use):
+    M=cdist(X,Y,metric=erp_pairs,sigma=sigma,band_size=band_size, g=g, dim_to_use=dim_to_use)
     return M
 
 #Kernels for twe distance
