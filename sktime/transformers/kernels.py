@@ -281,7 +281,7 @@ class DtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 100,
+                 n_iter = 10,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -794,14 +794,6 @@ class InvertKernel(BaseTransformer):
 
 
 
-def WdtwSvm():
-#wdtw kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', WdtwKernel()),
-        ('svm', SVC()),
-    ])
-
 
 class WdtwSvm(BaseClassifier):
 
@@ -983,7 +975,7 @@ class MsmSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 100,
+                 n_iter = 10,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1102,7 +1094,7 @@ class ErpSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 100,
+                 n_iter = 5,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1158,7 +1150,7 @@ class TweSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 10,
+                 n_iter = 1,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1194,7 +1186,7 @@ class TweSvm(BaseClassifier):
         }
         self.model = RandomizedSearchCV(pipe,
                                     cv_params,
-                                    cv=5,
+                                    cv=2,
                                     n_jobs=self.n_jobs,
                                     n_iter=self.n_iter,
                                     verbose=self.verbosity,

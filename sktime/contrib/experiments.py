@@ -1,10 +1,8 @@
 import os
 
 import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
+from ..transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm,DtwKnn, WdtwKnn, \
     MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
-from sktime.transformers.kernels import DtwSvm, DtwKnn
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
