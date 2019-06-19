@@ -228,6 +228,11 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
+
+
+
+
+
 class DtwSvm(BaseClassifier):
 
     def __init__(self,
@@ -252,6 +257,7 @@ class DtwSvm(BaseClassifier):
             cv_params['dk__' + k] = v
         cv_params = {
             **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
             'svm__kernel': ['precomputed'],
             'svm__C': [1]
         }
@@ -269,43 +275,6 @@ class DtwSvm(BaseClassifier):
         return self.model.predict_proba(X)
 
 
-
-
-
-def DtwSvm():
-    # wdtw kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', DtwKernel()),
-        ('svm', SVC()),
-    ])
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
-
-    # # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.1]),
-        ('dk__w', [1]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [1])
-    ])
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-
-    return model
 
 
 
