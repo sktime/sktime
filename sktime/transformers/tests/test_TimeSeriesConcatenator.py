@@ -1,23 +1,29 @@
 from sktime.transformers.series_to_series import TimeSeriesConcatenator
-from sktime.datasets import load_gunpoint
-import pandas as pd
-import pytest
+from sktime.datasets import load_basic_motions
+import numpy as np
 
 
-@pytest.mark.parametrize("n_dims", [1, 3, 5])
-def test_TimeSeriesConcatenator(n_dims):
+def test_TimeSeriesConcatenator():
 
-    univariate, y = load_gunpoint(return_X_y=True)
-    multivariate = pd.concat([univariate] * n_dims, axis=1)
+    X, y = load_basic_motions(return_X_y=True)
+
+    # check that loaded dataframe is multivariate
+    assert X.shape[1] > 1
 
     trans = TimeSeriesConcatenator()
 
-    Xt = trans.fit_transform(multivariate)
+    Xt = trans.fit_transform(X)
 
     # check if transformed dataframe is univariate
     assert Xt.shape[1] == 1
 
     # check if number of time series observations are correct
-    assert Xt.iloc[0, 0].shape[0] == univariate.iloc[0, 0].shape[0] * n_dims
+    n_obs = np.sum([X.loc[0, col].shape[0] for col in X])
+    assert Xt.iloc[0, 0].shape[0] == n_obs
+
+    # check specific observations
+    assert X.iloc[0, -1].iloc[-3] == Xt.iloc[0, 0].iloc[-3]
+    assert X.iloc[0, 0].iloc[3] == Xt.iloc[0, 0].iloc[3]
+
 
 
