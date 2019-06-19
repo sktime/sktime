@@ -2,7 +2,6 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from scipy import stats
 from sklearn.base import TransformerMixin, BaseEstimator
-from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
@@ -12,8 +11,8 @@ from sktime.transformers.base import BaseTransformer
 
 from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
-from sktime.classifiers.proximity import dtw_distance_measure_getter
-from sklearn.metrics import accuracy_score
+from sktime.classifiers.proximity import dtw_distance_measure_getter, wdtw_distance_measure_getter, \
+    msm_distance_measure_getter, lcss_distance_measure_getter, erp_distance_measure_getter, twe_distance_measure_getter
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
 from sktime.model_selection import GridSearchCV
@@ -162,17 +161,21 @@ class DtwKernel(BaseEstimator, TransformerMixin):
         self.X_train_ = X
         return self
 
+
 class WdtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, g=0):
         super(WdtwKernel,self).__init__()
         self.sigma = sigma
         self.g = g
 
-    def transform(self, X):
-        return wdtw_kernel(X, X, sigma=self.sigma, g=self.g)
+    def transform(self, X, y=None):
+        return wdtw_kernel(X, self.X_train_, sigma=self.sigma, g=self.g)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
+
+
 
 #Class for ddtw distance kernel
 class DdtwKernel(BaseEstimator,TransformerMixin):
@@ -181,11 +184,14 @@ class DdtwKernel(BaseEstimator,TransformerMixin):
         self.sigma = sigma
         self.w = w
 
-    def transform(self, X):
-        return ddtw_kernel(X, X, sigma=self.sigma, w=self.w)
+    def transform(self, X, y=None):
+        return ddtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
+
+
 
 #Class for wddtw distance kernel
 class WddtwKernel(BaseEstimator,TransformerMixin):
@@ -194,10 +200,11 @@ class WddtwKernel(BaseEstimator,TransformerMixin):
         self.sigma = sigma
         self.g = g
 
-    def transform(self, X):
-        return wddtw_kernel(X, X, sigma=self.sigma, g=self.g)
+    def transform(self, X, y=None):
+        return wddtw_kernel(X, self.X_train_, sigma=self.sigma, g=self.g)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
 
 
@@ -208,11 +215,13 @@ class MsmKernel(BaseEstimator,TransformerMixin):
         self.sigma = sigma
         self.c = c
 
-    def transform(self, X):
-        return msm_kernel(X, X, sigma=self.sigma, c=self.c)
+    def transform(self, X, y=None):
+        return msm_kernel(X, self.X_train_, sigma=self.sigma, c=self.c)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
+
 
 #Class for lcss distance kernel
 class LcssKernel(BaseEstimator,TransformerMixin):
@@ -222,10 +231,11 @@ class LcssKernel(BaseEstimator,TransformerMixin):
         self.epsilon = epsilon
         self.delta = delta
 
-    def transform(self, X):
-        return lcss_kernel(X, X, sigma=self.sigma, delta= self.delta, epsilon=self.epsilon)
+    def transform(self, X, y=None):
+        return lcss_kernel(X, self.X_train_, sigma=self.sigma, delta= self.delta, epsilon=self.epsilon)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
 
 
@@ -237,10 +247,11 @@ class ErpKernel(BaseEstimator,TransformerMixin):
         self.band_size = band_size
         self.g = g
 
-    def transform(self, X):
-        return erp_kernel(X, X, sigma=self.sigma, band_size= self.band_size, g=self.g)
+    def transform(self, X, y=None):
+        return erp_kernel(X, self.X_train_, sigma=self.sigma, band_size= self.band_size, g=self.g)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
 
 
@@ -252,12 +263,12 @@ class TweKernel(BaseEstimator,TransformerMixin):
         self.penalty = penalty
         self.stiffness = stiffness
 
-    def transform(self, X):
-        return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
+    def transform(self, X, y=None):
+        return twe_kernel(X, self.X_train_, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
-    def fit(self,X,y):
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
         return self
-
 
 
 
@@ -266,7 +277,7 @@ class DtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = 1,
+                 n_jobs = -1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -285,7 +296,7 @@ class DtwSvm(BaseClassifier):
             self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
         self.random_state = check_random_state(self.random_state)
-        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        distance_measure_space = dtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
             ('conv', PandasToNumpy()),
@@ -675,271 +686,407 @@ def WdtwSvm():
         ('svm', SVC()),
     ])
 
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__g', [0.01,0.1,0,10,100]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
 
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__g', [0.01,0.1,0,10,100]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
+class WdtwSvm(BaseClassifier):
 
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__g', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 5,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
 
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand =  RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-    return model
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = wdtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', WdtwKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
 
-
-
-def DdtwSvm():
-#ddtw kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', DdtwKernel()),
-        ('svm', SVC()),
-    ])
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
-
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__w', [-1]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-
-    return model
-
-
-def WddtwSmv():
-#wddtw kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', WdtwKernel()),
-        ('svm', SVC()),
-    ])
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__g', [0.01,0.1,0,10,100]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__g', [0.01,0.1,0,10,100]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
-
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__g', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-
-    return model
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 
 
 
 
-def MsmSvm():
-#msm kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', MsmKernel()),
-        ('svm', SVC()),
-    ])
+class DdtwSvm(BaseClassifier):
 
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__c', [0.01, 0.1, 1, 10, 100]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
 
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__c', [0.01, 0.1, 1, 10, 100]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = ddtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', DdtwKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
 
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__c', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1,  n_jobs=-1)
-    return model
-
-
-
-def LcssSvm():
-
-    # lcss kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', LcssKernel()),
-        ('svm', SVC()),
-    ])
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__delta', [0.1,1,10,100,500]),
-    #     ('dk__epsilon', [0.01,0.1,0.2,0.4]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__delta', [0.1,1,10,100,500]),
-        ('dk__epsilon', [0.01,0.1,0.2,0.4]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
-
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__delta', [0.1]),
-        ('dk__epsilon', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-    return model
-
-
-
-
-def ErpSvm():
-#erp kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', ErpKernel()),
-        ('svm', SVC()),
-    ])
-
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__band_size', [0.001,0.01,0.1,0.2,0.4]),
-    #     ('dk__g', [0.01,0.1,0,10,100]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
-
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__band_size', [0.001,0.01,0.1,0.2,0.4]),
-        ('dk__g', [0.01,0.1,0,10,100]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
-
-# To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.01]),
-        ('dk__band_size', [0.01]),
-        ('dk__g', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-    return model
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 
 
 
 
 
-def TweSvm():
-#twe kernel parameter estimation
-    pipe = Pipeline([
-        ('conv', PandasToNumpy()),
-        ('dk', TweKernel()),
-        ('svm', SVC()),
-    ])
 
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__penalty', [0.001,0.01,0.1,0.2,0.4]),
-    #     ('dk__stiffness', [0.01,0.1,0,10,100]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
+class WddtwSvm(BaseClassifier):
 
-    cv_params_random = dict([
-        ('dk__sigma', stats.expon(scale=.1)),
-        ('dk__penalty', [0.001,0.01,0.1,0.2,0.4]),
-        ('dk__stiffness', [0.01,0.1,0,10,100]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', stats.expon(scale=100))
-    ])
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = wddtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', WddtwKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 
 
-    # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.1]),
-        ('dk__penalty', [1]),
-        ('dk__stiffness', [0.01]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [0.01])
-    ])
-
-
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model_rand = RandomizedSearchCV(pipe, cv_params_random, n_iter=100, cv=5, verbose=1, n_jobs=-1)
-    return model
 
 
 
+class MsmSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = msm_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', MsmKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+
+
+
+class LcssSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = lcss_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', LcssKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+
+
+
+
+class ErpSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = erp_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', ErpKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+class TweSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 100,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = twe_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', TweKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 

@@ -1,7 +1,7 @@
 import os
 
 import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm
+from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -134,6 +134,34 @@ def set_classifier(cls, resampleId, verbosity):
     cls = cls.lower()
     if cls == 'dtw_svm':
         return DtwSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'wdtw_svm':
+        return WdtwSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'ddtw_svm':
+        return DdtwSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'wddtw_svm':
+        return WddtwSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'msm_svm':
+        return MsmSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'lcss_svm':
+        return LcssSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'erp_svm':
+        return ErpSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'twe_svm':
+        return TweSvm(random_state = resampleId,
                       verbosity = verbosity,
                       n_jobs = -1)
     if cls == 'pt' or cls == 'proximity_tree':
