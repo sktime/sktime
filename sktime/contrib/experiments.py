@@ -134,7 +134,8 @@ def set_classifier(cls, resampleId, verbosity):
     cls = cls.lower()
     if cls == 'dtw_svm':
         return DtwSvm(random_state = resampleId,
-                      verbosity = verbosity)
+                      verbosity = verbosity,
+                      n_jobs = -1)
     if cls == 'pt' or cls == 'proximity_tree':
         return sktime.classifiers.proximity.ProximityTree(
                 random_state = resampleId,
