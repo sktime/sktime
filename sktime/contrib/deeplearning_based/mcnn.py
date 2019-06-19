@@ -136,6 +136,8 @@ class MCNN(BaseDeepLearner):
             current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98  else 0.98
 
         increase_num = ori_len - int(ori_len * current_slice_ratio) + 1 #this can be used as the bath size
+        print(increase_num)
+
 
         train_batch_size = int(x_train.shape[0] * increase_num / self.n_train_batch)
         current_n_train_batch = self.n_train_batch
@@ -191,6 +193,7 @@ class MCNN(BaseDeepLearner):
         data_dim = train_set_x.shape[1]  
         num_dim = train_set_x.shape[2] # For MTS 
         nb_classes = train_set_y.shape[1]
+
 
         self.input_shapes, max_length = self.get_list_of_input_shapes(data_lengths,num_dim)
 
@@ -383,6 +386,7 @@ class MCNN(BaseDeepLearner):
             # add a dimension to make it multivariate with one dimension
             X = X.reshape((X.shape[0], X.shape[1], 1))
 
+
         y = self.convert_y(y)
 
         best_df_metrics = None
@@ -418,8 +422,6 @@ class MCNN(BaseDeepLearner):
             # add a dimension to make it multivariate with one dimension
             X = X.reshape((X.shape[0], X.shape[1], 1))
 
-
-
         ori_len = X.shape[1] # original_length of time series
 
         #restrict slice ratio when data lenght is too large
@@ -429,7 +431,8 @@ class MCNN(BaseDeepLearner):
 
         increase_num = ori_len - int(ori_len * current_slice_ratio) + 1 #this can be used as the bath size
 
-        #will need to slice at some point
+        #will need to slice at some poin
+
         x_test,_ = self.slice_data(X,None,current_slice_ratio)
 
         length_train = x_test.shape[1]  # length after slicing.
@@ -442,7 +445,6 @@ class MCNN(BaseDeepLearner):
         ##need to batch and downsample the test data.
         ma_test, ma_lengths = self.movingavrg(x_test, self.ma_base, self.ma_step, self.ma_num)
         ds_test, ds_lengths = self.downsample(x_test, self.ds_base, self.ds_step, current_ds_num)
-
 
         test_set_x = x_test
 
@@ -457,7 +459,6 @@ class MCNN(BaseDeepLearner):
             data_lengths += ma_lengths
             test_set_x = np.concatenate([test_set_x, ma_test], axis = 1)
 
-
         test_num = x_test.shape[0]
         test_num_batch = int(test_num / increase_num)
 
@@ -465,19 +466,12 @@ class MCNN(BaseDeepLearner):
         y_predicted = []
         for i in range(test_num_batch):
             x = test_set_x[i * (increase_num): (i + 1) * (increase_num)]
-            y_pred = self.model.predict_on_batch(self.split_input_for_model(x, self.input_shapes))
-
-            # convert the predicted from binary to integer
-            y_pred = np.argmax(y_pred, axis=1)
-
-            unique_value, sub_ind, correspond_ind, count = np.unique(y_pred, True, True, True)
-
-            idx_max = np.argmax(count)
-            predicted_label = unique_value[idx_max]
-
-            y_predicted.append(predicted_label)
+            preds = self.model.predict_on_batch(self.split_input_for_model(x, self.input_shapes))
+            y_predicted.append(np.average(preds[i * increase_num: ((i + 1) * increase_num) - 1], axis=0))
 
         y_pred = np.array(y_predicted)
+
+        return y_pred
 
 
     def score(self, X, y, **kwargs):
