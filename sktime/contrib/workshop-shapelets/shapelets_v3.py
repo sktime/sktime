@@ -21,9 +21,14 @@
 #                       doesn't make sense for full, time contract doesn't make sense for random enumeration, etc.)
 #
 #   - cythonise:        Could cythonise other important methods, eg the info gain calculations
+#
+#   - multivariate      This was implemented in the transform method in v2 but couldn't see the flag in transform! Unsure how this works. I
+#     independent       assume it extracts a shapelet from a single dimension rather than across all, and then in the transform it should
+#     shapelets         only calculate the distance between the shapelet and the same dimension of a test case? Taken out for now for
+#                       clarity as I'm not sure about it
 
 
-# end of 18/6/19 - full shapelet transform should be operational, small changes required for contracting and rnadom enumeration to follow
+# end of 18/6/19 - full shapelet transform should be operational, small changes required for contracting and random enumeration to follow
 import os
 import time
 import warnings
@@ -58,36 +63,23 @@ class ShapeletTransform(TransformerMixin):
     def __init__(self,
                  min_shapelet_length=3,
                  max_shapelet_length=np.inf,
-                 max_shapelets_per_class=200,
-                 dims_to_use=0,
+                 max_shapelets_to_store_per_class=200,
                  random_state=None,
                  verbose=0,
                  remove_self_similar=True,
-                 use_binary_info_gain=True,
                  independent_dimensions=False
                  ):
 
-        self.shapelet_search_algo = 'full'
-        self.shapelets = None
 
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
-
-        self.max_shapelets_per_class = max_shapelets_per_class
-
-        if isinstance(dims_to_use, (list, tuple, np.ndarray)) is True:
-            self.dims_to_use = dims_to_use
-        else:
-            self.dims_to_use = [dims_to_use]
-
+        self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
         self.random_state = random_state
         self.verbose = verbose
-
         self.remove_self_similar = remove_self_similar
-        self.use_binary_info_gain = use_binary_info_gain
         self.independent_dimensions = independent_dimensions
 
-        self.predefined_ig_rejection_level = 0.01
+        self.predefined_ig_rejection_level = 0.1
 
 
     def fit(self, X, y, **fit_params):
@@ -106,12 +98,13 @@ class ShapeletTransform(TransformerMixin):
             This estimator
         """
 
-        X_lens = np.array([len(X.iloc[r,self.dims_to_use[0]]) for r in range(len(X))])
-        X = np.array([[X.iloc[r,c].values for c in self.dims_to_use] for r in range(len(X))]) # may need to pad with nans here for uneq length, look at later
-
+        X_lens = np.array([len(X.iloc[r,0]) for r in range(len(X))]) # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
+        X = np.array([[X.iloc[r,c].values for c in range(len(X.columns))] for r in range(len(X))]) # may need to pad with nans here for uneq length, look at later
 
         num_ins = len(y)
         distinct_class_vals = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+
+        candidates_evaluated = 0
 
         if type(self) is RandomEnumerationShapeletTransform:
             num_series_to_visit = min(self.num_cases_to_sample, len(y))
@@ -170,7 +163,6 @@ class ShapeletTransform(TransformerMixin):
         time_last_shapelet = time_taken()
 
         # for every series
-        # for idx, series_id_and_class in enumerate(cases_to_visit):
         for case_idx in range(len(cases_to_visit)):
 
             series_id = cases_to_visit[case_idx][0]
@@ -188,9 +180,9 @@ class ShapeletTransform(TransformerMixin):
 
             this_series_len = len(X[series_id][0])
 
-            # The bohund on possible shapelet lengths will differ series-to-series if using unequal length data.
-            #             # However, shapelets cannot be longer than te series, so set to the minimum of the series length
-            # and max shapelet length (which is inf by default, unless set)
+            # The bound on possible shapelet lengths will differ series-to-series if using unequal length data.
+            # However, shapelets cannot be longer than the series, so set to the minimum of the series length
+            # and max shapelet length (which is inf by default)
             if self.max_shapelet_length == -1:
                 this_shapelet_length_upper_bound = this_series_len
             else:
@@ -213,24 +205,23 @@ class ShapeletTransform(TransformerMixin):
             num_candidates_per_case = len(candidate_starts_and_lens)
 
             # limit search otherwise:
-            if hasattr(self,"num_shapelets_to_sample_per_case"):
-                num_candidates_per_case = min(self.num_shapelets_to_sample_per_case, num_candidates_per_case)
+            if hasattr(self,"num_candidates_to_sample_per_case"):
+                num_candidates_per_case = min(self.num_candidates_to_sample_per_case, num_candidates_per_case)
                 cand_idx = list(self.random_state.choice(list(range(0, len(candidate_starts_and_lens))), num_candidates_per_case, replace=False))
                 candidates_to_visit = [candidate_starts_and_lens[x] for x in cand_idx]
 
             for candidate_idx in range(num_candidates_per_case):
-                can_ig_early_abandon = False
-                if shapelet_heaps_by_class[this_class_val].get_size() >= self.max_shapelets_per_class:
-                    # print("heap size: "+str(shapelet_heaps_by_class[this_class_val].get_size()))
-                    can_ig_early_abandon = True
-                    #get the ig of the current worst shapelet for this class as a bound
-                    ig_cutoff = shapelet_heaps_by_class[this_class_val].peek()[0]
+
+                # if shapelet heap for this class is not full yet, set entry criteria to be the predetermined IG threshold
+                ig_cutoff = self.predefined_ig_rejection_level
+                # otherwise if we have max shapelets already, set the threshold as the IG of the current 'worst' shapelet we have
+                if shapelet_heaps_by_class[this_class_val].get_size() >= self.max_shapelets_to_store_per_class:
+                    ig_cutoff = max(shapelet_heaps_by_class[this_class_val].peek()[0], ig_cutoff)
 
                 cand_start_pos = candidates_to_visit[candidate_idx][0]
                 cand_len = candidates_to_visit[candidate_idx][1]
 
                 candidate = ShapeletTransform.zscore(X[series_id][:,cand_start_pos: cand_start_pos + cand_len])
-                stop = False
 
                 # now go through all other series and get a distance from the candidate to each
                 orderline = []
@@ -239,7 +230,6 @@ class ShapeletTransform(TransformerMixin):
                 num_visited_this_class = 0
                 num_visited_other_class = 0
 
-                ig_upper_bound = 1.0 # bsf starts at 1
                 candidate_rejected = False
 
                 for comparison_series_idx in range(len(cases_to_visit)):
@@ -261,7 +251,6 @@ class ShapeletTransform(TransformerMixin):
 
                     bsf_dist = np.inf
 
-                    overlap = False
                     start_left = cand_start_pos
                     start_right = cand_start_pos+1
 
@@ -297,36 +286,30 @@ class ShapeletTransform(TransformerMixin):
                     # Can't use heap as need to traverse in order multiple times, not just access root
                     orderline.sort()
 
-                    # no point trying to abandon with 2 or less distances, also no point early abandoning when the last thing is added (just calc full ig after)
-                    if can_ig_early_abandon and len(orderline) > 2 and comparison_series_idx != len(cases_to_visit)-1:
-                        # calc optimistic ig bound here, reject candidate if possible
+                    if len(orderline) > 2:
                         ig_upper_bound = ShapeletTransform.calc_early_binary_ig(orderline, num_visited_this_class, num_visited_other_class, binary_ig_this_class_count-num_visited_this_class, binary_ig_other_class_count-num_visited_other_class)
-                        if ig_upper_bound <= ig_cutoff or ig_upper_bound < self.predefined_ig_rejection_level:
+                        # print("upper: "+str(ig_upper_bound))
+                        if ig_upper_bound <= ig_cutoff:
                             candidate_rejected = True
-                            print("rejected!")
-                            print(shapelet_heaps_by_class[this_class_val])
-                            print("cutoff: "+str(ig_cutoff))
-                            print("this: "+str(ig_upper_bound))
-                            print()
                             break
 
+                candidates_evaluated += 1
+                if self.verbose > 3 and candidates_evaluated % 100 == 0:
+                    print("candidates evaluated: " + str(candidates_evaluated))
 
-                if candidate_rejected:
-
-                    continue
-                else:
+                # only do if candidate was not rejected
+                if candidate_rejected is False:
                     final_ig = ShapeletTransform.calc_binary_ig(orderline, binary_ig_this_class_count, binary_ig_other_class_count)
+                    accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
-                accepted_candidate = Shapelet(series_id, self.dims_to_use, cand_start_pos, cand_len, final_ig, candidate)
+                    # add to min heap to store shapelets for this class
+                    shapelet_heaps_by_class[this_class_val].push(accepted_candidate)
 
-                # add to min heap to store shapelets for this class
-                shapelet_heaps_by_class[this_class_val].push(accepted_candidate)
+                    # informal, but extra 10% allowance for self similar later
+                    if shapelet_heaps_by_class[this_class_val].get_size() > self.max_shapelets_to_store_per_class*3:
+                        shapelet_heaps_by_class[this_class_val].pop()
 
-                # informal, but extra 10% allowance for self similar later
-                if shapelet_heaps_by_class[this_class_val].get_size() > self.max_shapelets_per_class*3:
-                    shapelet_heaps_by_class[this_class_val].pop()
-
-                # Takes into account the use of the MAX shapelet calculation time to not exceed the time_limit.
+                # Takes into account the use of the MAX shapelet calculation time to not exceed the time_limit (not exact, but likely a good guess).
                 if hasattr(self,'time_limit') and self.time_limit > 0:
                     time_now = time_taken()
                     time_this_shapelet = (time_now - time_last_shapelet)
@@ -340,8 +323,13 @@ class ShapeletTransform(TransformerMixin):
                         break
                     else:
                         if self.verbose > 0:
-                            print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
+                            if candidate_rejected is False:
+                                print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
                                                                                         int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+                            else:
+                                print("Candidate rejected. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
+                                                                                        int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+
 
             # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
             #                     in case of contracted transform (i.e. time limit has been reached)
@@ -349,7 +337,6 @@ class ShapeletTransform(TransformerMixin):
                 if self.verbose > 0:
                     print("Stopping search")
                 break
-
 
         # remove self similar here
         # for each class value
@@ -360,7 +347,7 @@ class ShapeletTransform(TransformerMixin):
         self.shapelets = []
         for class_val in distinct_class_vals:
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
-
+            print("Num shapelets  len of shapelets:"+str(len(by_class_descending_ig)))
             if self.remove_self_similar:
                 by_class_descending_ig = ShapeletTransform.remove_self_similar(by_class_descending_ig)
             else:
@@ -368,37 +355,21 @@ class ShapeletTransform(TransformerMixin):
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
 
             # if we have more than max_shapelet_per_class, trim to that amount here
-            if len(by_class_descending_ig) > self.max_shapelets_per_class:
-                by_class_descending_ig = by_class_descending_ig[:self.max_shapelets_per_class]
+            if len(by_class_descending_ig) > self.max_shapelets_to_store_per_class:
+                by_class_descending_ig = by_class_descending_ig[:self.max_shapelets_to_store_per_class]
 
             self.shapelets.extend(by_class_descending_ig)
 
-        for a in range(len(self.shapelets)):
-            print(self.shapelets[a].info_gain, end=" ")
-        print()
+        if self.verbose > 1:
+            for a in range(len(self.shapelets)):
+                print(self.shapelets[a].info_gain, end=" ")
+            print()
 
-        self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
-        for a in range(len(self.shapelets)):
-            print(self.shapelets[a].info_gain, end=" ")
-        print()
+            self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
+            for a in range(len(self.shapelets)):
+                print(self.shapelets[a].info_gain, end=" ")
+            print()
 
-
-        #
-        # # sort all shapelets by quality
-        # all_shapelets_classes = [item for k, v in shapelets_by_class.items() for item in v]
-        # all_shapelets_classes.sort(key=lambda x: x.info_gain, reverse=True)
-        #
-        # # moved to end as it is now possible to visit the same series multiple times, and a better series may be found in the second visit that removes
-        # # the best from the first (and then means previously similar shapelets with that may again be eligible)
-        # if self.remove_self_similar:
-        #     all_shapelets_classes = ShapeletTransform.remove_self_similar(all_shapelets_classes)
-        #
-        # # we keep the best num_shapelets_to_trim_to shapelets
-        # if self.num_shapelets_to_keep < len(all_shapelets_classes):
-        #     all_shapelets_classes = all_shapelets_classes[:self.num_shapelets_to_keep]
-
-        # self.shapelets = all_shapelets_classes
-        # return self.shapelets
 
     @staticmethod
     def remove_self_similar(shapelet_list):
@@ -442,6 +413,8 @@ class ShapeletTransform(TransformerMixin):
         return to_return
     # two "self-similar" shapelets are subsequences from the same series that are overlapping. This method
 
+
+    # not ctested yet
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, **transform_params):
         """Transforms X according to the extracted shapelets (self.shapelets)
@@ -457,46 +430,31 @@ class ShapeletTransform(TransformerMixin):
             The transformed dataframe in tabular format.
         """
         if self.shapelets is None:
-            raise Exception("Fit not called yet - no shapelets exist!")
+            raise Exception("Fit not called yet or no shapelets were generated")
 
-        X = X.iloc[:, self.dims_to_use]
-        X_aux = [[]] * len(X)
-        for i in range(0, len(X)):
-            X_aux[i] = np.array([np.asarray(x) for x in np.asarray(X.iloc[i, :])])
-        X = X_aux.copy()
+        # X_lens = np.array([len(X.iloc[r, 0]) for r in range(len(X))])  # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
+        X = np.array([[X.iloc[r, c].values for c in range(len(X.columns))] for r in range(len(X))])  # may need to pad with nans here for uneq length, look at later
 
         output = np.zeros([len(X), len(self.shapelets)], dtype=np.float32, )
 
+        # for the i^th series to transform
         for i in range(0, len(X)):
             this_series = X[i]
 
+            # get the s^th shapelet
             for s in range(0, len(self.shapelets)):
                 # find distance between this series and each shapelet
                 min_dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
 
-                # TODO: We have to think about how to work when we have shapelets with length higher than min(lengths_test_set)
-                if (self.independent_dimensions):
-                    # In this case, as we are measuring distances between shapelets and series at different points, the use of a nested list is
-                    # needed to use the same code for zscore and euclideanDistanceEarlyAbandon
-                    for dim in range(0, len(self.dims_to_use)):
-                        for start_pos in range(0, len(this_series[dim]) - this_shapelet_length + 1):
-                            comp_2 = this_series[dim, start_pos:start_pos + this_shapelet_length]
-                            comp = ShapeletTransform.zscore([comp_2])
-                            min_dist = ShapeletTransform.euclideanDistanceEarlyAbandon([self.shapelets[s].data[dim]], comp, min_dist)
+                for start_pos in range(0, len(this_series[0]) - this_shapelet_length + 1):
+                    comparison = ShapeletTransform.zscore(this_series[:, start_pos:start_pos + this_shapelet_length])
 
-                else:
-                    for start_pos in range(0, len(this_series[0]) - this_shapelet_length + 1):
-                        comp_2 = this_series[:, start_pos:start_pos + this_shapelet_length]
-                        comp = ShapeletTransform.zscore(comp_2)
-                        min_dist = ShapeletTransform.euclideanDistanceEarlyAbandon(self.shapelets[s].data, comp, min_dist)
+                    dist = np.linalg.norm(self.shapelets[s].data - comparison)
+                    min_dist = min(dist * dist, min_dist)/this_shapelet_length
+# FLAG TO NORMALIZE DISTANCE BY LENGTH - DEFAULT TO TRUE
 
-                try:
-                    output[i][s] = min_dist.astype(np.float32)
-                except Exception:
-                    output[i][s] = np.float32(min_dist)
-
-
+                    output[i][s] = min_dist
         return output
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -584,7 +542,7 @@ class ShapeletTransform(TransformerMixin):
         count_this_class = 0
         count_other_class = 0
 
-        total_all = num_this_class_in_orderline+num_other_class_in_orderline+num_to_add_this_class+num_other_class_in_orderline
+        total_all = num_this_class_in_orderline+num_other_class_in_orderline+num_to_add_this_class+num_to_add_other_class
 
         # evaluate each split point
         for split in range(0, len(orderline) - 1):
@@ -682,7 +640,32 @@ class ShapeletTransform(TransformerMixin):
     #     return dist
 
 class ContractedShapeletTransform(ShapeletTransform):
-    pass
+
+    def __init__(
+            self,
+            min_shapelet_length = 3,
+            max_shapelet_length = np.inf,
+            max_shapelets_to_store_per_class = 200,
+            time_limit_in_mins=60,
+            num_candidates_to_sample_per_case = 200,
+            random_state = None,
+            verbose = 0,
+            remove_self_similar = True,
+            independent_dimensions = False
+    ):
+
+        self.min_shapelet_length = min_shapelet_length
+        self.max_shapelet_length = max_shapelet_length
+        self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
+        self.num_candidates_to_sample_per_case = num_candidates_to_sample_per_case
+        self.time_limit = time_limit_in_mins*60
+        self.random_state = random_state
+        self.verbose = verbose
+        self.remove_self_similar = remove_self_similar
+        self.independent_dimensions = independent_dimensions
+
+        self.predefined_ig_rejection_level = 0.1
+
 
 class RandomEnumerationShapeletTransform(ShapeletTransform):
     pass
@@ -704,16 +687,15 @@ class Shapelet:
         The (z-normalised) data of this shapelet
     """
 
-    def __init__(self, series_id, dims, start_pos, length, info_gain, data):
+    def __init__(self, series_id, start_pos, length, info_gain, data):
         self.series_id = series_id
-        self.dims = dims
         self.start_pos = start_pos
         self.length = length
         self.info_gain = info_gain
         self.data = data
 
     def __str__(self):
-        return "Series ID: {0}, num_dim: {1}, start_pos: {2}, length: {3}, info_gain: {4}, ".format(self.series_id, self.dims, self.start_pos, self.length, self.info_gain)
+        return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}, ".format(self.series_id, self.start_pos, self.length, self.info_gain)
 
 # class ShapeletHeap(object):
 #    def __init__(self, ):
@@ -845,15 +827,35 @@ if __name__ == "__main__":
     train_x, train_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
 
-    a = ShapeletTransform(random_state=0, dims_to_use=0, verbose=3, min_shapelet_length=140, max_shapelet_length=150, max_shapelets_per_class=1000, remove_self_similar=False)
+    # a = ShapeletTransform(random_state=0, verbose=3, min_shapelet_length=140, max_shapelet_length=150, max_shapelets_per_class=1000, remove_self_similar=False)
+    # a = ShapeletTransform(
+    #     random_state=0,
+    #     verbose=3,
+    #     min_shapelet_length=3,
+    #     max_shapelet_length=150,
+    #     max_shapelets_to_store_per_class=1000,
+    #     remove_self_similar=True
+    # )
+    a = ContractedShapeletTransform(
+        random_state=0,
+        verbose=3,
+        min_shapelet_length=3,
+        max_shapelet_length=150,
+        time_limit_in_mins=1,
+        num_candidates_to_sample_per_case=10,
+        max_shapelets_to_store_per_class=1000,
+        remove_self_similar=True
+    )
     start_time = time.time()
     print(train_y[0:10])
-    shapelets = a.fit(train_x[0:10], train_y[0:10])
+    # shapelets = a.fit(train_x[0:10], train_y[0:10])
+    shapelets = a.fit(train_x, train_y)
     # shapelets = a.fit(train_x[0:10], train_y[0:10])
     end_time = time.time()
     print("time: "+str(end_time-start_time))
     print()
     for s in a.shapelets:
         print(s)
-    exit()
+
+
 
