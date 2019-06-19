@@ -1,7 +1,8 @@
 import os
 
 import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm
+from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
+    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
 from sktime.transformers.kernels import DtwSvm, DtwKnn
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -135,6 +136,34 @@ def set_classifier(cls, resampleId, verbosity):
     cls = cls.lower()
     if cls == 'dtw_knn':
         return DtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'wdtw_knn':
+        return WdtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'ddtw_knn':
+        return DdtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'wddtw_knn':
+        return WddtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'msm_knn':
+        return MsmKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'lcss_knn':
+        return LcssKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'erp_knn':
+        return ErpKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'twe_knn':
+        return TweKnn(random_state = resampleId,
                       verbosity = verbosity,
                       n_jobs = -1)
     if cls == 'dtw_svm':

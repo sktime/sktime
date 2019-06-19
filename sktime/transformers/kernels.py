@@ -658,6 +658,119 @@ class TweKnn(BaseClassifier):
         return self.model.predict_proba(X)
 
 
+class DdtwKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', DtwKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                        cv_params,
+                                        cv=5,
+                                        n_jobs=self.n_jobs,
+                                        n_iter=self.n_iter,
+                                        verbose=self.verbosity,
+                                        random_state=self.random_state,
+                                        )
+        self.model.fit(X, y)
+        raise Exception('need to impl der trans')
+        # return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class WddtwKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', WdtwKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                        cv_params,
+                                        cv=5,
+                                        n_jobs=self.n_jobs,
+                                        n_iter=self.n_iter,
+                                        verbose=self.verbosity,
+                                        random_state=self.random_state,
+                                        )
+        self.model.fit(X, y)
+        raise Exception('need to impl der trans')
+        # return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
 class InvertKernel(BaseTransformer):
 
     def __init__(self):
