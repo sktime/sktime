@@ -149,10 +149,14 @@ class DtwKernel(BaseEstimator, TransformerMixin):
         super(DtwKernel, self).__init__()
         self.sigma = sigma
         self.w = w
+        self.X_train_ = None
 
     def transform(self, X, y=None):
-        return dtw_kernel(X, X, sigma=self.sigma, w=self.w)
+        return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
 
 class WdtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, g=0):
@@ -238,9 +242,13 @@ class DtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 100,
                  ):
         self.random_state = random_state
         self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
         self.model = None
 
     def fit(self, X, y):
@@ -262,12 +270,13 @@ class DtwSvm(BaseClassifier):
             'svm__C': [1]
         }
         self.model = RandomizedSearchCV(pipe,
-                                        cv_params,
-                                        scoring=make_scorer(accuracy_score),
-                                        n_jobs=1,
-                                        verbose=self.verbosity,
-                                        random_state=self.random_state,
-                                        )
+                                    cv_params,
+                                    scoring=make_scorer(accuracy_score),
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
         self.model.fit(X, y)
         return self
 
