@@ -131,7 +131,9 @@ class MCNN(BaseDeepLearner):
         kernel_size = int(ori_len * filter_size)
 
         #restrict slice ratio when data lenght is too large
-        current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98 and ori_len>500 else 0.98
+        current_slice_ratio = self.slice_ratio
+        if ori_len > 500:
+            current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98  else 0.98
 
         increase_num = ori_len - int(ori_len * current_slice_ratio) + 1 #this can be used as the bath size
 
@@ -236,7 +238,7 @@ class MCNN(BaseDeepLearner):
 
                 x = self.split_input_for_model(x,self.input_shapes)
 
-                cost_ij, accuracy = self.model.train_on_batch(x,y)
+                cost_ij, accuracy = model.train_on_batch(x,y)
 
                 train_err = 1 - accuracy
 
@@ -319,7 +321,7 @@ class MCNN(BaseDeepLearner):
             max_length = max(max_length, i)
         return input_shapes , max_length
 
-    def build_sub_model(self, input_shapes, nb_classes, pool_factor, kernel_size,**kwargs):
+    def build_sub_model(self, input_shapes, nb_classes, pool_factor, kernel_size):
         input_layers = []
         stage_1_layers = []
 
@@ -421,7 +423,9 @@ class MCNN(BaseDeepLearner):
         ori_len = X.shape[1] # original_length of time series
 
         #restrict slice ratio when data lenght is too large
-        current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98 and ori_len>500 else 0.98
+        current_slice_ratio = self.slice_ratio
+        if ori_len > 500:
+            current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98  else 0.98
 
         increase_num = ori_len - int(ori_len * current_slice_ratio) + 1 #this can be used as the bath size
 
@@ -476,9 +480,25 @@ class MCNN(BaseDeepLearner):
         y_pred = np.array(y_predicted)
 
 
+    def score(self, X, y, **kwargs):
+        ####TODO: This should be wrapped into a function to check input.
+        if isinstance(X, pd.DataFrame):
+            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+
+        if len(X.shape) == 2:
+            # add a dimension to make it multivariate with one dimension
+            X = X.reshape((X.shape[0], X.shape[1], 1))
 
 
+        #One hot encoding.
+        y_onehot = self.convert_y(y)
 
+
+        print("implemented this yet")
 
 
 
