@@ -1,4 +1,3 @@
-from sktime.kernels.base import dtw_kernel
 from tslearn.datasets import UCR_UEA_datasets
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
@@ -8,6 +7,9 @@ from sklearn.pipeline import Pipeline
 import numpy as np
 
 #Class for dtw distance kernel
+from sktime.transformers.kernels import dtw_kernel
+
+
 class distancekernel_dtw(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, w=0):
         super(distancekernel_dtw,self).__init__()
@@ -18,7 +20,7 @@ class distancekernel_dtw(BaseEstimator,TransformerMixin):
         return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
     def fit(self, X, y=None, **fit_params):
-        self.X_train_ = X
+        #self.X_train_ = X
         return self
 
 
@@ -46,7 +48,7 @@ if __name__ == "__main__":
 
 
 
-    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=1)
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     acc_test_dtw = accuracy_score(y_test, y_pred)
@@ -58,5 +60,5 @@ if __name__ == "__main__":
 
 
 
-np.savetxt('GunPoint_dtw.out', [acc_test_dtw],fmt='%2f')
+#np.savetxt('GunPoint_dtw.out', [acc_test_dtw],fmt='%2f')
 

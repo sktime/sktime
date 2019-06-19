@@ -155,6 +155,9 @@ class DtwKernel(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
+    def fit(self,X,y):
+        return self
+
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
         return self
@@ -168,6 +171,9 @@ class WdtwKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return wdtw_kernel(X, X, sigma=self.sigma, g=self.g)
 
+    def fit(self,X,y):
+        return self
+
 #Class for ddtw distance kernel
 class DdtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, w=0):
@@ -178,6 +184,9 @@ class DdtwKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return ddtw_kernel(X, X, sigma=self.sigma, w=self.w)
 
+    def fit(self,X,y):
+        return self
+
 #Class for wddtw distance kernel
 class WddtwKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, g=0):
@@ -187,6 +196,9 @@ class WddtwKernel(BaseEstimator,TransformerMixin):
 
     def transform(self, X):
         return wddtw_kernel(X, X, sigma=self.sigma, g=self.g)
+
+    def fit(self,X,y):
+        return self
 
 
 #Class for msm distance kernel
@@ -199,6 +211,9 @@ class MsmKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return msm_kernel(X, X, sigma=self.sigma, c=self.c)
 
+    def fit(self,X,y):
+        return self
+
 #Class for lcss distance kernel
 class LcssKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, delta= 1, epsilon=0):
@@ -209,6 +224,9 @@ class LcssKernel(BaseEstimator,TransformerMixin):
 
     def transform(self, X):
         return lcss_kernel(X, X, sigma=self.sigma, delta= self.delta, epsilon=self.epsilon)
+
+    def fit(self,X,y):
+        return self
 
 
 #Class for erp distance kernel
@@ -222,6 +240,10 @@ class ErpKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return erp_kernel(X, X, sigma=self.sigma, band_size= self.band_size, g=self.g)
 
+    def fit(self,X,y):
+        return self
+
+
 #Class for twe distance kernel
 class TweKernel(BaseEstimator,TransformerMixin):
     def __init__(self, sigma=1.0, penalty=0,stiffness=1):
@@ -233,7 +255,8 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
-
+    def fit(self,X,y):
+        return self
 
 
 
@@ -276,7 +299,7 @@ class DtwSvm(BaseClassifier):
             **cv_params,
             'dk__sigma': stats.expon(scale=.1),
             'svm__kernel': ['precomputed'],
-            'svm__C': [1]
+            'svm__C': stats.expon(scale=100)
         }
         self.model = RandomizedSearchCV(pipe,
                                     cv_params,
