@@ -1,7 +1,8 @@
 import os
 
 import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm
+from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, FullDtwKnn, EdKnn, \
+    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn
 from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
     MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
 from sktime.transformers.kernels import DtwSvm, DtwKnn
@@ -137,6 +138,30 @@ def set_classifier(cls, resampleId, verbosity):
     cls = cls.lower()
     if cls == 'dtw_knn':
         return DtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'ed_knn':
+        return EdKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'fdtw_knn':
+        return FullDtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'fddtw_knn':
+        return FullDdtwKnn(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'ed_svm':
+        return EdSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'fdtw_svm':
+        return FullDtwSvm(random_state = resampleId,
+                      verbosity = verbosity,
+                      n_jobs = -1)
+    if cls == 'fddtw_svm':
+        return FullDdtwSvm(random_state = resampleId,
                       verbosity = verbosity,
                       n_jobs = -1)
     if cls == 'wdtw_knn':
