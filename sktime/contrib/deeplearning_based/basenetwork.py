@@ -1,11 +1,14 @@
 
 from sktime.classifiers.base import BaseClassifier
 from sktime.datasets import load_gunpoint
+from sktime.datasets import load_italy_power_demand
 import sys
 import numpy as np
 import pandas as pd
 import keras
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.multiclass import class_distribution
+from sklearn.preprocessing import LabelEncoder
 
 
 class BaseDeepLearner(BaseClassifier):
@@ -40,40 +43,32 @@ class BaseDeepLearner(BaseClassifier):
     def convert_y(self, y):
         # taken from kerasclassifier's fit
 
-        y = np.array(y)
-        if len(y.shape) == 2 and y.shape[1] > 1:
-            self.classes = np.arange(y.shape[1])
-        elif (len(y.shape) == 2 and y.shape[1] == 1) or len(y.shape) == 1:
-            self.classes = np.unique(y)
-            y = np.searchsorted(self.classes, y)
-        else:
-            raise ValueError('Invalid shape for y: ' + str(y.shape))
-        self.nb_classes = len(self.classes)
+        # y = np.array(y)
+        # if len(y.shape) == 2 and y.shape[1] > 1:
+        #    self.classes_ = np.arange(y.shape[1])
+        # elif (len(y.shape) == 2 and y.shape[1] == 1) or len(y.shape) == 1:
+        #    self.classes_ = np.unique(y)
+        #    y = np.searchsorted(self.classes_, y)
+        # else:
+        #    raise ValueError('Invalid shape for y: ' + str(y.shape))
+        # self.nb_classes = len(self.classes_)
+
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.classes_ = self.label_encoder.classes_
+        self.nb_classes = len(self.classes_)
+
+        # self.classes_ = class_distribution(y.reshape(-1, 1))[0][0]
+        # self.nb_classes = len(self.classes_)
+
+        #print(self.classes_)
+        #print(self.nb_classes)
 
         return keras.utils.to_categorical(y, self.nb_classes)
 
-    def score(self, X, y, **kwargs):
-        ####TODO: This should be wrapped into a function to check input.
-        if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
-
-        if len(X.shape) == 2:
-            # add a dimension to make it multivariate with one dimension
-            X = X.reshape((X.shape[0], X.shape[1], 1))
-
-
-        #One hot encoding.
-        y_onehot = self.convert_y(y)
-
-        outputs = self.model.evaluate(X, y_onehot, **kwargs)
-        outputs = keras.utils.generic_utils.to_list(outputs)
-        for name, output in zip(self.model.metrics_names, outputs):
-            if name == 'acc':
-                return output
 
 def test_basic(network):
     '''
@@ -87,8 +82,8 @@ def test_basic(network):
 
     print("Start test_basic()\n\n")
 
-    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
+    X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
 
 
     clf = network
@@ -121,8 +116,8 @@ def test_pipeline(network):
     ]
     clf = Pipeline(steps)
 
-    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
+    X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
 
     hist = clf.fit(X_train, y_train)
 
@@ -146,8 +141,8 @@ def test_highLevelsktime(network):
     from sktime.highlevel import TSCStrategy
     from sklearn.metrics import accuracy_score
 
-    train = load_gunpoint(split='TRAIN')
-    test = load_gunpoint(split='TEST')
+    train = load_italy_power_demand(split='TRAIN')
+    test = load_italy_power_demand(split='TEST')
     task = TSCTask(target='class_val', metadata=train)
 
     clf = network
@@ -167,13 +162,57 @@ def networkTests(network):
 
     test_basic(network)
     test_pipeline(network)
-    test_highLevelsktime(network)
+    #test_highLevelsktime(network)
+
+def comparisonExperiments():
+    data_dir = "C:/Univariate2018_ts/"
+    res_dir = "C:/JamesLPHD/sktimeStuff/InitialComparisonResults/"
+
+    complete_classifiers = [
+        "dl4tsc_cnn",
+        "dl4tsc_encoder",
+        "dl4tsc_fcn",
+        "dl4tsc_mcdcnn",
+        #"dl4tsc_mcnn",
+        "dl4tsc_mlp",
+        "dl4tsc_resnet",
+        #"dl4tsc_tlenet",
+        #"dl4tsc_twiesn",
+    ]
+
+    small_datasets = [
+        "Beef",
+        "Car",
+        "Coffee",
+        "CricketX",
+        "CricketY",
+        "CricketZ",
+        "DiatomSizeReduction",
+        "Fish",
+        "GunPoint",
+        "ItalyPowerDemand",
+        "MoteStrain",
+        "OliveOil",
+        "Plane",
+        "SonyAIBORobotSurface1",
+        "SonyAIBORobotSurface2",
+        "SyntheticControl",
+        "Trace",
+        "TwoLeadECG",
+    ]
+
+    num_folds = 30
+
+    import sktime.contrib.experiments as exp
+    for c in complete_classifiers:
+        for d in small_datasets:
+            for f in range(num_folds):
+                print(c, d, f)
+                exp.run_experiment(data_dir, res_dir, c, d, f)
 
 
 if __name__ == "__main__":
+    comparisonExperiments()
 
-    if len(sys.args > 1):
-        network = sys.args[1]
-        networkTests(network)
 
 

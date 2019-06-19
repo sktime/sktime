@@ -10,14 +10,14 @@ from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
 from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
 
-class MLP(BaseDeepLearner):
+class ResNet(BaseDeepLearner):
 
     def __init__(self, dim_to_use=0, rand_seed=0, verbose=False):
         self.verbose = verbose
         self.dim_to_use = dim_to_use
 
         # calced in fit
-        self.classes = None
+        self.classes_ = None
         self.nb_classes = -1
         self.input_shape = None
         self.model = None
@@ -145,4 +145,4 @@ class MLP(BaseDeepLearner):
                               verbose=self.verbose, callbacks=self.callbacks)
 
 if __name__ == '__main__':
-    networkTests(MLP())
+    networkTests(ResNet())

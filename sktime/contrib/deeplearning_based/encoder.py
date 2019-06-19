@@ -16,7 +16,7 @@ class Encoder(BaseDeepLearner):
         self.dim_to_use = dim_to_use
 
         # calced in fit
-        self.classes = None
+        self.classes_ = None
         self.nb_classes = -1
         self.input_shape = None
         self.model = None
