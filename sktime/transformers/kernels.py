@@ -204,16 +204,6 @@ class TweKernel(BaseEstimator,TransformerMixin):
 
 
 
-if __name__ == "__main__":
-    datasets_dir_path = '/scratch/data/Univariate2018'
-    dataset_name = 'GunPoint'
-    format = '.ts'
-    X_train, y_train = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TRAIN' + format)
-    X_test, y_test = load_ts(datasets_dir_path + '/' + dataset_name + '/' + dataset_name + '_TEST' + format)
-
-
-
-
 def DtwSvm():
 
     # dtw kernel parameter estimation
