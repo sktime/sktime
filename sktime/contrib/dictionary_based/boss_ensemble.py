@@ -6,9 +6,10 @@ import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
+from sktime.distances.boss_distance import boss_distance
 from sktime.transformers.SFA import SFA
 
-all__ = ["BOSSEnsemble", "BOSSIndividual", "BOSSTransform"]
+all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
 
 class BOSSEnsemble(BaseEstimator):
@@ -179,8 +180,6 @@ class BOSSEnsemble(BaseEstimator):
                                 correct += 1
 
                         accuracy = correct / num_insts
-                        print(accuracy)
-                        print(str(boss.window_size) + " " + str(boss.word_length) + " " + str(boss.norm))
                         if accuracy >= best_acc_for_win_size:
                             best_acc_for_win_size = accuracy
                             best_classifier_for_win_size = boss
@@ -320,16 +319,13 @@ class BOSSIndividual:
 
         test_bags = self.transform.transform(X)
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
-        #print(len(test_bags))
 
         for i, test_bag in enumerate(test_bags):
-            #print(test_bag)
-            #print(str(self.window_size) + " " + str(self.word_length) + " " + str(self.norm))
             bestDist = sys.float_info.max
             nn = -1
 
             for n, bag in enumerate(self.transformed_data):
-                dist = self.BOSS_distance(test_bag, bag, bestDist)
+                dist = boss_distance(test_bag, bag, bestDist)
 
                 if dist < bestDist:
                     bestDist = dist
@@ -348,29 +344,13 @@ class BOSSIndividual:
             if n == train_num:
                 continue
 
-            dist = self.BOSS_distance(test_bag, bag, best_dist)
+            dist = boss_distance(test_bag, bag, best_dist)
 
             if dist < best_dist:
                 best_dist = dist
                 nn = self.class_vals[n]
 
-        print(test_bag)
-        print(best_dist)
-        print(nn)
-
         return nn
-
-    def BOSS_distance(self, bag_a, bag_b, best_dist):
-        dist = 0
-
-        for word, val_a in bag_a.items():
-            val_b = bag_b.get(word, 0)
-            dist += (val_a - val_b) * (val_a - val_b)
-
-            if dist > best_dist:
-                return sys.float_info.max
-
-        return dist
 
     def shorten_bags(self, word_len):
         newBOSS = BOSSIndividual(self.window_size, word_len, self.alphabet_size, self.norm)
