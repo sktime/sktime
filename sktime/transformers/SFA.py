@@ -18,7 +18,8 @@ class SFA(BaseTransformer):
                  window_size=0,
                  norm=False,
                  remove_repeat_words=False,
-                 dim_to_use=0
+                 dim_to_use=0,
+                 save_words=False
                  ):
         self.words = []
         self.breakpoints = []
@@ -31,6 +32,7 @@ class SFA(BaseTransformer):
             self.inverse_sqrt_win_size = 1 / math.sqrt(window_size)
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
+        self.save_words = save_words
 
         # For the multivariate case treating this as a univariate classifier
         self.dim_to_use = dim_to_use
@@ -81,6 +83,8 @@ class SFA(BaseTransformer):
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
                                 "Series objects")
 
+        self.num_insts = X.shape[0]
+
         bags = pd.DataFrame()
         dim = []
 
@@ -96,7 +100,9 @@ class SFA(BaseTransformer):
                 words.append(word)
                 lastWord = self.add_to_bag(bag, word, lastWord)
 
-            self.words.append(words)
+            if self.save_words:
+                self.words.append(words)
+
             dim.append(pd.Series(bag))
 
         bags['dim_'+str(self.dim_to_use)] = dim
@@ -176,10 +182,6 @@ class SFA(BaseTransformer):
         #                  range(start, start + output_length)])
         # print(dft2)
         #
-        # dft2 = np.array([[[np.sum([series[n] * math.cos(2 * math.pi * n * i / length)])
-        #                   np.sum([-series[n] * math.sin(2 * math.pi * n * i / length)])] for n in range(length)] for i in
-        #                  range(start, start + output_length)])
-        # print(dft2)
 
         dft = np.zeros(output_length * 2)
 
@@ -190,7 +192,7 @@ class SFA(BaseTransformer):
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
 
-        print(dft)
+        #print(dft)
 
         if normalise:
             dft *= self.inverse_sqrt_win_size / std
@@ -271,7 +273,8 @@ class SFA(BaseTransformer):
         return word
 
     def shorten_bags(self, word_len):
-        new_bags = []
+        new_bags = pd.DataFrame()
+        dim = []
 
         for i in range(self.num_insts):
             bag = {}
@@ -282,12 +285,14 @@ class SFA(BaseTransformer):
                 new_word.shorten(16 - word_len)
                 last_word = self.add_to_bag(bag, new_word, last_word)
 
-            new_bags.append(bag)
+            dim.append(pd.Series(bag))
+
+        new_bags['dim_' + str(self.dim_to_use)] = dim
 
         return new_bags
 
     def add_to_bag(self, bag, word, last_word):
-        if self.remove_repeat_words & word.word == last_word:
+        if self.remove_repeat_words and word.word == last_word:
             return last_word
 
         if word.word in bag:
