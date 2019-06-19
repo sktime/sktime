@@ -1,4 +1,4 @@
-from sktime.kernels.base import GDS_dtw_matrix
+from sktime.kernels.base import dtw_kernel
 from tslearn.datasets import UCR_UEA_datasets
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import GridSearchCV
@@ -15,7 +15,7 @@ class distancekernel_dtw(BaseEstimator,TransformerMixin):
         self.w = w
 
     def transform(self, X):
-        return GDS_dtw_matrix(X, self.X_train_, sigma=self.sigma, w=self.w)
+        return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
