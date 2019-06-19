@@ -1,7 +1,7 @@
 import numpy as np
 from  scipy.spatial.distance import cdist
 from sklearn.base import TransformerMixin, BaseEstimator
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
@@ -212,9 +212,11 @@ class DistanceMeasureSvm(BaseClassifier):
     def __init__(self,
                  distance_measure_getter = None,
                  random_state = None,
+                 verbosity = 0,
                  ):
         self.distance_measure_getter = distance_measure_getter
         self.random_state = random_state
+        self.verbosity = verbosity
         self.model = None
 
     def fit(self, X, y):
@@ -223,7 +225,7 @@ class DistanceMeasureSvm(BaseClassifier):
         pipe = Pipeline([
             ('conv', PandasToNumpy()),
             ('dk', DtwKernel()),
-            ('svm', SVC()),
+            ('svm', SVC(probability=True)),
         ])
         cv_params = {}
         for k, v in distance_measure.items(): cv_params['dk__' + k] = v
@@ -234,15 +236,17 @@ class DistanceMeasureSvm(BaseClassifier):
         }
         self.model = RandomizedSearchCV(pipe,
                                    cv_params,
-                                   scoring=accuracy_score,
+                                   scoring=make_scorer(accuracy_score),
                                    n_jobs=1,
-                                   verbose=0,
+                                   verbose=self.verbosity,
                                    random_state=self.random_state,
                                    )
+        self.model.fit(X, y)
         return self
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
+
 def DtwSvm():
 
     # dtw kernel parameter estimation
