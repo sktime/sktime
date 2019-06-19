@@ -2,10 +2,9 @@ import numpy as np
 from  scipy.spatial.distance import cdist
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.svm import SVC
-
+from sklearn.metrics import accuracy_score
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
-
 from sktime.model_selection import GridSearchCV
 from sktime.pipeline import Pipeline
 from sktime.transformers.pandas_to_numpy import PandasToNumpy
@@ -202,6 +201,9 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
+
+
+
 if __name__ == "__main__":
     datasets_dir_path = '/scratch/data/Univariate2018'
     dataset_name = 'GunPoint'
@@ -211,7 +213,10 @@ if __name__ == "__main__":
 
 
 
-    #dtw kernel parameter estimation
+
+def DtwSvm():
+
+    # dtw kernel parameter estimation
     pipe = Pipeline([
         ('conv', PandasToNumpy()),
         ('dk', DtwKernel()),
@@ -234,269 +239,223 @@ if __name__ == "__main__":
     ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    acc_test_dtw = accuracy_score(y_test, y_pred)
-    print("Test accuracy dtw: {}".format(acc_test_dtw))
-    print("Best params:")
-    print(model.best_params_)
+    return model
+
+
+
+def WdtwSvm():
+#wdtw kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', WdtwKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__g', [0.01,0.1,0,10,100]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__g', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
+
+
+
+def DdtwSvm():
+#ddtw kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', DdtwKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__w', [-1]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
+
+
+def WddtwSmv():
+#wddtw kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', WdtwKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__g', [0.01,0.1,0,10,100]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__g', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
+
+
+
+
+def MsmSvm():
+#msm kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', MsmKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__c', [0.01, 0.1, 1, 10, 100]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__c', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
+
+
+
+def LcssSvm():
+
+    # lcss kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', LcssKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__delta', [0.1,1,10,100,500]),
+    #     ('dk__epsilon', [0.01,0.1,0.2,0.4]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__delta', [0.1]),
+        ('dk__epsilon', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
+
+
+
+
+def ErpSvm():
+#erp kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', ErpKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__band_size', [0.001,0.01,0.1,0.2,0.4]),
+    #     ('dk__g', [0.01,0.1,0,10,100]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.01]),
+        ('dk__band_size', [0.01]),
+        ('dk__g', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
 
 
 
 
 
-# #wdtw kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_wdtw()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__g', [0.01,0.1,0,10,100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__g', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_wdtw = accuracy_score(y_test, y_pred)
-#     print("Test accuracy wdtw: {}".format(acc_test_wdtw))
-#     print("Best params:")
-#     print(model.best_params_)
+def TweSvm():
+#twe kernel parameter estimation
+    pipe = Pipeline([
+        ('conv', PandasToNumpy()),
+        ('dk', TweKernel()),
+        ('svm', SVC()),
+    ])
+
+    # cv_params = dict([
+    #     ('dk__sigma', [0.01,0.1,1,10,100]),
+    #     ('dk__penalty', [0.001,0.01,0.1,0.2,0.4]),
+    #     ('dk__stiffness', [0.01,0.1,0,10,100]),
+    #     ('svm__kernel', ['precomputed']),
+    #     ('svm__C', [0.01,0.1,1,10,100])
+    # ])
+
+
+    # To test if it works
+    cv_params = dict([
+        ('dk__sigma', [0.1]),
+        ('dk__penalty', [1]),
+        ('dk__stiffness', [0.01]),
+        ('svm__kernel', ['precomputed']),
+        ('svm__C', [0.01])
+    ])
+
+
+    model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+    return model
 
 
 
-
-
-# #ddtw kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_ddtw()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__w', [-1]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_ddtw = accuracy_score(y_test, y_pred)
-#     print("Test accuracy ddtw: {}".format(acc_test_ddtw))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-#
-
-#
-# #wddtw kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_wddtw()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__g', [0.01,0.1,0,10,100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__g', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_wddtw = accuracy_score(y_test, y_pred)
-#     print("Test accuracy wddtw: {}".format(acc_test_wddtw))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-#
-#
-#
-# #msm kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_msm()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__c', [0.01, 0.1, 1, 10, 100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__c', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_msm = accuracy_score(y_test, y_pred)
-#     print("Test accuracy msm: {}".format(acc_test_msm))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-#
-#
-#
-#
-#
-# #lcss kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_lcss()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__delta', [0.1,1,10,100,500]),
-#     #     ('dk__epsilon', [0.01,0.1,0.2,0.4]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#
-#     #To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__delta', [0.1]),
-#         ('dk__epsilon', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_lcss = accuracy_score(y_test, y_pred)
-#     print("Test accuracy lcss: {}".format(acc_test_lcss))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-#
-#
-#
-#
-# #erp kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_erp()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__band_size', [0.001,0.01,0.1,0.2,0.4]),
-#     #     ('dk__g', [0.01,0.1,0,10,100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.01]),
-#         ('dk__band_size', [0.01]),
-#         ('dk__g', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_erp = accuracy_score(y_test, y_pred)
-#     print("Test accuracy erp: {}".format(acc_test_erp))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-#
-#
-#
-#
-#
-#
-#
-#
-#
-# #twe kernel parameter estimation
-#     pipe = Pipeline([
-#         ('dk', distancekernel_twe()),
-#         ('svm', SVC()),
-#     ])
-#
-#     # cv_params = dict([
-#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
-#     #     ('dk__penalty', [0.001,0.01,0.1,0.2,0.4]),
-#     #     ('dk__stiffness', [0.01,0.1,0,10,100]),
-#     #     ('svm__kernel', ['precomputed']),
-#     #     ('svm__C', [0.01,0.1,1,10,100])
-#     # ])
-#
-#
-#     # To test if it works
-#     cv_params = dict([
-#         ('dk__sigma', [0.1]),
-#         ('dk__penalty', [1]),
-#         ('dk__stiffness', [0.01]),
-#         ('svm__kernel', ['precomputed']),
-#         ('svm__C', [0.01])
-#     ])
-#
-#
-#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
-#     model.fit(X_train, y_train)
-#     y_pred = model.predict(X_test)
-#     acc_test_twe = accuracy_score(y_test, y_pred)
-#     print("Test accuracy twe: {}".format(acc_test_twe))
-#     print("Best params:")
-#     print(model.best_params_)
-#
-
-
-
-np.savetxt('GunPoint.out', [acc_test_dtw],fmt='%2f')
 
