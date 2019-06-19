@@ -172,6 +172,7 @@ def load_from_arff_to_dataframe(full_file_path_and_name, has_class_labels=True, 
 def load_from_ucr_tsv_to_dataframe(full_file_path_and_name, return_separate_X_and_y=True):
     df = pd.read_csv(full_file_path_and_name, sep="\t", header=-1)
     y = df.pop(0).values
+    df.columns -= 1
     X = pd.DataFrame()
     X['dim_0'] = [pd.Series(df.iloc[x, :]) for x in range(len(df))]
     if return_separate_X_and_y is True:
