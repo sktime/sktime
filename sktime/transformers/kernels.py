@@ -4,9 +4,12 @@ from scipy import stats
 from sklearn.base import TransformerMixin, BaseEstimator
 from sklearn.metrics import accuracy_score, make_scorer
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
+from sktime.transformers.base import BaseTransformer
+
 from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
 from sktime.classifiers.proximity import dtw_distance_measure_getter
@@ -155,9 +158,6 @@ class DtwKernel(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         return dtw_kernel(X, self.X_train_, sigma=self.sigma, w=self.w)
 
-    def fit(self,X,y):
-        return self
-
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
         return self
@@ -303,10 +303,10 @@ class DtwSvm(BaseClassifier):
         }
         self.model = RandomizedSearchCV(pipe,
                                     cv_params,
+                                    cv=5,
                                     n_jobs=self.n_jobs,
                                     n_iter=self.n_iter,
                                     verbose=self.verbosity,
-                                    refit=False,
                                     random_state=self.random_state,
                                     )
         self.model.fit(X, y)
@@ -314,6 +314,352 @@ class DtwSvm(BaseClassifier):
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
+
+
+class DtwKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', DtwKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class WdtwKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', WdtwKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class LcssKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', LcssKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class MsmKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', MsmKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+class ErpKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', ErpKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class TweKnn(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = proximity.dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', TweKernel()),
+            ('inv', InvertKernel()),
+            ('cls', KNeighborsClassifier(n_neighbors=1)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'cls__metric': ['precomputed'],
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class InvertKernel(BaseTransformer):
+
+    def __init__(self):
+        super().__init__()
+
+    def transform(self, X, y=None):
+        X = X + 1
+        ones = np.ones(X.shape)
+        X = ones / X
+        return X
+
+    def fit(self, X, y=None, **fit_params):
+        return self
 
 
 
