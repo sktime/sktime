@@ -1,7 +1,13 @@
 import numpy as np
 from  scipy.spatial.distance import cdist
 from sklearn.base import TransformerMixin, BaseEstimator
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import RandomizedSearchCV
 from sklearn.svm import SVC
+from sklearn.utils import check_random_state
+
+from sktime.classifiers.base import BaseClassifier
+from sktime.classifiers.proximity import dtw_distance_measure_getter
 from sklearn.metrics import accuracy_score
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
@@ -201,9 +207,42 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def transform(self, X):
         return twe_kernel(X, X, sigma=self.sigma, penalty= self.penalty, stiffness=self.stiffness)
 
+class DistanceMeasureSvm(BaseClassifier):
 
+    def __init__(self,
+                 distance_measure_getter = None,
+                 random_state = None,
+                 ):
+        self.distance_measure_getter = distance_measure_getter
+        self.random_state = random_state
+        self.model = None
 
+    def fit(self, X, y):
+        self.random_state = check_random_state(self.random_state)
+        distance_measure = self.distance_measure_getter(X)
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', DtwKernel()),
+            ('svm', SVC()),
+        ])
+        cv_params = {}
+        for k, v in distance_measure.items(): cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'svm__kernel': ['precomputed'],
+            'svm__C': [1]
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                   cv_params,
+                                   scoring=accuracy_score,
+                                   n_jobs=1,
+                                   verbose=0,
+                                   random_state=self.random_state,
+                                   )
+        return self
 
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 def DtwSvm():
 
     # dtw kernel parameter estimation
@@ -213,24 +252,41 @@ def DtwSvm():
         ('svm', SVC()),
     ])
 
-    # cv_params = dict([
-    #     ('dk__sigma', [0.01,0.1,1,10,100]),
-    #     ('dk__w', [-1,0.01,0.1,0.2,0.4]),
-    #     ('svm__kernel', ['precomputed']),
-    #     ('svm__C', [0.01,0.1,1,10,100])
-    # ])
+    def predict(self, X):
+        return self.model.predict(X)
 
-    # # To test if it works
-    cv_params = dict([
-        ('dk__sigma', [0.1]),
-        ('dk__w', [1]),
-        ('svm__kernel', ['precomputed']),
-        ('svm__C', [1])
-    ])
 
     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
     return model
 
+# #wdtw kernel parameter estimation
+#     pipe = Pipeline([
+#         ('dk', distancekernel_wdtw()),
+#         ('svm', SVC()),
+#     ])
+#
+#     # cv_params = dict([
+#     #     ('dk__sigma', [0.01,0.1,1,10,100]),
+#     #     ('dk__g', [0.01,0.1,0,10,100]),
+#     #     ('svm__kernel', ['precomputed']),
+#     #     ('svm__C', [0.01,0.1,1,10,100])
+#     # ])
+#
+#     # To test if it works
+#     cv_params = dict([
+#         ('dk__sigma', [0.01]),
+#         ('dk__g', [0.01]),
+#         ('svm__kernel', ['precomputed']),
+#         ('svm__C', [0.01])
+#     ])
+#
+#     model = GridSearchCV(pipe, cv_params, cv=5, verbose=1, n_jobs=-1)
+#     model.fit(X_train, y_train)
+#     y_pred = model.predict(X_test)
+#     acc_test_wdtw = accuracy_score(y_test, y_pred)
+#     print("Test accuracy wdtw: {}".format(acc_test_wdtw))
+#     print("Best params:")
+#     print(model.best_params_)
 
 
 def WdtwSvm():
