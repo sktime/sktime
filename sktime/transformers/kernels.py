@@ -77,10 +77,10 @@ def wddtw_kernel(X,Y,sigma,g):
 
 
 #Kernels for msm distance
-def msm_pairs(s1,s2,sigma,c):
+def msm_pairs(s1,s2,sigma,c,dim_to_use):
     s1 = unpack_series(s1)
     s2 = unpack_series(s2)
-    dist = msm_distance(s1, s2,c)
+    dist = msm_distance(s1, s2,c,dim_to_use)
     return np.exp(-(dist**2) / (sigma**2))
 
 
