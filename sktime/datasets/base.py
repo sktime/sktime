@@ -131,6 +131,11 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
+def load_japanese_vowels(split='TRAIN', return_X_y=False):
+
+    name = 'JapaneseVowels'
+    return _load_dataset(name, split, return_X_y)
+
 def load_arrow_head(split='TRAIN', return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
