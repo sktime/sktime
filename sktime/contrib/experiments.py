@@ -1,10 +1,6 @@
 import os
 
 import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, FullDtwKnn, EdKnn, \
-    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
-    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -17,13 +13,15 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
-
 import sktime.classifiers.ensemble as ensemble
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
 from sktime.utils.load_data import load_ts
 import argparse
+from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
+    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn, FullDtwKnn, EdKnn, \
+    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn
 
 __author__ = "Anthony Bagnall"
 
