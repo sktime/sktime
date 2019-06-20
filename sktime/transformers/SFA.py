@@ -43,7 +43,7 @@ class SFA(BaseTransformer):
         self.num_insts = 0
         self.num_atts = 0
 
-    def fit(self, X, **kwargs):
+    def fit(self, X, y=None, **kwargs):
         """Build a histogram
 
         Parameters
@@ -53,6 +53,7 @@ class SFA(BaseTransformer):
         Returns
         -------
         self : object
+        :param y:
         :param **kwargs:
          """
 
@@ -184,7 +185,7 @@ class SFA(BaseTransformer):
             if s != 0:
                 std = s
 
-        # dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
+        #dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
         #                  range(start, start + output_length)])
         # print(dft2)
         #

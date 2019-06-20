@@ -11,8 +11,8 @@ from sktime.transformers.base import BaseTransformer
 class SAX(BaseTransformer):
 
     def __init__(self,
-                 word_length,
-                 alphabet_size,
+                 word_length=8,
+                 alphabet_size=4,
                  window_size=0,
                  remove_repeat_words=False,
                  dim_to_use=0,
@@ -33,7 +33,7 @@ class SAX(BaseTransformer):
         self.num_insts = 0
         self.num_atts = 0
 
-    def fit(self, X, **kwargs):
+    def fit(self, X, y=None, **kwargs):
         if self.alphabet_size < 2 or self.alphabet_size > 4:
             raise RuntimeError("Alphabet size must be an integer between 2 and 4")
 
@@ -103,10 +103,10 @@ class SAX(BaseTransformer):
         frames = []
         current_frame = 0
         current_frame_size = 0
-        frame_length = self.num_atts / self.word_length
+        frame_length = self.window_size / self.word_length
         frame_sum = 0
 
-        for i in range(self.num_atts):
+        for i in range(self.window_size):
             remaining = frame_length - current_frame_size
 
             if remaining > 1:
@@ -129,12 +129,12 @@ class SAX(BaseTransformer):
 
         return frames
 
-    def create_word(self, dft):
+    def create_word(self, pattern):
         word = BitWord()
 
         for i in range(self.word_length):
             for bp in range(self.alphabet_size):
-                if dft[i] <= self.breakpoints[i][bp]:
+                if pattern[i] <= self.breakpoints[bp]:
                     word.push(bp)
                     break
 

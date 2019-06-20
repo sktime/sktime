@@ -18,11 +18,12 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
 
     return dist
 
+
 def euclidean_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
 
     if isinstance(first, dict):
-        words = first.keys()
+        words = set(list(first) + list(second))
         for word in words:
             val_a = first.get(word, 0)
             val_b = second.get(word, 0)
