@@ -1,4 +1,19 @@
-# Encoder
+# Encoder, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/encoder.py
+#
+# Network originally proposed by:
+#
+# @article{serra2018towards,
+#   title={Towards a universal neural network encoder for time series},
+#   author={Serr{\`a}, J and Pascual, S and Karatzoglou, A},
+#   journal={Artif Intell Res Dev Curr Chall New Trends Appl},
+#   volume={308},
+#   pages={120},
+#   year={2018}
+# }
+
+__author__ = "James Large"
+
 import keras
 import keras_contrib
 import numpy as np

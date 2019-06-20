@@ -1,3 +1,24 @@
+# Base class for the Keras neural networks adapted from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc
+#
+# @article{fawaz2019deep,
+#   title={Deep learning for time series classification: a review},
+#   author={Fawaz, Hassan Ismail and Forestier, Germain and Weber, Jonathan and Idoumghar, Lhassane and Muller, Pierre-Alain},
+#   journal={Data Mining and Knowledge Discovery},
+#   pages={1--47},
+#   year={2019},
+#   publisher={Springer}
+# }
+#
+# File also contains some simple unit-esque tests for the networks and
+# their compatibility wit hthe rest of the package,
+# and experiments for confirming accurate reproduction
+#
+# todo proper unit tests
+# todo confirm compaitbility of class bales especially between networks and rest of sktime
+
+
+__author__ = "James Large"
 
 from sktime.classifiers.base import BaseClassifier
 from sktime.datasets import load_gunpoint
@@ -173,11 +194,11 @@ def comparisonExperiments():
         "dl4tsc_encoder",
         "dl4tsc_fcn",
         "dl4tsc_mcdcnn",
-        #"dl4tsc_mcnn",
+        "dl4tsc_mcnn",
         "dl4tsc_mlp",
         "dl4tsc_resnet",
-        #"dl4tsc_tlenet",
-        #"dl4tsc_twiesn",
+        "dl4tsc_tlenet",
+        "dl4tsc_twiesn",
     ]
 
     small_datasets = [
@@ -204,11 +225,15 @@ def comparisonExperiments():
     num_folds = 30
 
     import sktime.contrib.experiments as exp
-    for c in complete_classifiers:
+
+    for f in range(num_folds):
         for d in small_datasets:
-            for f in range(num_folds):
+            for c in complete_classifiers:
                 print(c, d, f)
-                exp.run_experiment(data_dir, res_dir, c, d, f)
+                try:
+                    exp.run_experiment(data_dir, res_dir, c, d, f)
+                except:
+                    print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 
 
 if __name__ == "__main__":

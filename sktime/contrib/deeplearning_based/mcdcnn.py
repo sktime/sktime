@@ -1,4 +1,19 @@
-# MCDCNN
+# Multi channel deep convolutional neural network, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcdcnn.py
+#
+# Network originally proposed by:
+#
+# @inproceedings{zheng2014time,
+#   title={Time series classification using multi-channels deep convolutional neural networks},
+#   author={Zheng, Yi and Liu, Qi and Chen, Enhong and Ge, Yong and Zhao, J Leon},
+#   booktitle={International Conference on Web-Age Information Management},
+#   pages={298--310},
+#   year={2014},
+#   organization={Springer}
+# }
+
+__author__ = "James Large"
+
 import keras
 import numpy as np
 import pandas as pd

@@ -1,7 +1,25 @@
-# MCNN
+# Multi-scale convolutional neural network, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mcnn.py
+#
+# Network originally proposed by:
+#
+# @article{cui2016multi,
+#   title={Multi-scale convolutional neural networks for time series classification},
+#   author={Cui, Zhicheng and Chen, Wenlin and Chen, Yixin},
+#   journal={arXiv preprint arXiv:1603.06995},
+#   year={2016}
+# }
+#
+# todo keras/tesnorflow memory problem when search over network parameters
+#      currently just deleting EVERY model and retraining the best parameters
+#      at the end, see **1
+
+__author__ = "Aaron Bostrom, James Large"
+
 import keras
 import numpy as np
 import pandas as pd
+import gc
 
 
 from sklearn.model_selection import train_test_split
@@ -14,7 +32,8 @@ class MCNN(BaseDeepLearner):
     def __init__(self,
                  output_directory=None,
                  verbose=False,
-                 dim_to_use=0):
+                 dim_to_use=0,
+                 rand_seed=0):
         self.output_directory = output_directory
         self.verbose = verbose
         self.pool_factors = [2,3,5] # used for hyperparameters grid search
@@ -35,7 +54,15 @@ class MCNN(BaseDeepLearner):
         self.ds_step= 1
         self.ds_num = 4
 
+        # calced in fit
+        self.classes_ = None
+        self.nb_classes = -1
+        self.input_shape = None
+        self.model = None
+        self.history = None
 
+        self.rand_seed = rand_seed
+        self.random_state = np.random.RandomState(self.rand_seed)
 
     def slice_data(self, data_x, data_y, slice_ratio): 
         n = data_x.shape[0]
@@ -136,7 +163,7 @@ class MCNN(BaseDeepLearner):
             current_slice_ratio = self.slice_ratio if self.slice_ratio > 0.98  else 0.98
 
         increase_num = ori_len - int(ori_len * current_slice_ratio) + 1 #this can be used as the bath size
-        print(increase_num)
+        #print(increase_num)
 
 
         train_batch_size = int(x_train.shape[0] * increase_num / self.n_train_batch)
@@ -198,6 +225,7 @@ class MCNN(BaseDeepLearner):
         self.input_shapes, max_length = self.get_list_of_input_shapes(data_lengths,num_dim)
 
         model = self.build_sub_model(self.input_shapes, nb_classes, pool_factor, kernel_size)
+        #print('submodel built', model)
 
         if (self.verbose==True) : 
             model.summary()
@@ -241,7 +269,9 @@ class MCNN(BaseDeepLearner):
 
                 x = self.split_input_for_model(x,self.input_shapes)
 
+                #print('\t pre train batch')
                 cost_ij, accuracy = model.train_on_batch(x,y)
+                #print('\t post train batch')
 
                 train_err = 1 - accuracy
 
@@ -396,17 +426,34 @@ class MCNN(BaseDeepLearner):
         # grid search
         for pool_factor in self.pool_factors:
             for filter_size in self.filter_sizes:
+                #print('pretrain')
                 valid_loss, model = self.train(X, y, pool_factor,filter_size)
+                #print('posttrain')
 
                 if (valid_loss < best_valid_loss):
                     best_valid_loss = valid_loss
                     self.best_pool_factor = pool_factor
                     self.best_filter_size = filter_size
-                    self.model = model
+                    #self.model = model # see **1 below
 
+                #print('postbest', self.model)
+
+                # clear memory in all the ways... **1
                 model = None
-                # clear memeory
+                del model
+                gc.collect()
                 keras.backend.clear_session()
+
+                #print('postclear',self.model)
+
+
+        # **1
+        # had issues with, we suspect, memory on the gpu with models hanging around.
+        # deleting EVERY model after evaluation, and RETRAINING the best for now.
+        # after design discussions, can talk about writing best model (so far at each stage)
+        # to disk and reloading at the end, as fawaz (and I imagine most dl-experimental code
+        # does to be honest)
+        _, self.model = self.train(X, y, pool_factor, filter_size)
 
 
     def predict_proba(self, X, input_checks=True, **kwargs):
@@ -472,31 +519,6 @@ class MCNN(BaseDeepLearner):
         y_pred = np.array(y_predicted)
 
         return y_pred
-
-
-    def score(self, X, y, **kwargs):
-        ####TODO: This should be wrapped into a function to check input.
-        if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
-
-        if len(X.shape) == 2:
-            # add a dimension to make it multivariate with one dimension
-            X = X.reshape((X.shape[0], X.shape[1], 1))
-
-
-        #One hot encoding.
-        y_onehot = self.convert_y(y)
-
-
-        print("implemented this yet")
-
-
-
-
 
 
 
