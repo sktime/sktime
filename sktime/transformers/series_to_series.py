@@ -3,11 +3,11 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, concat_nested_arrays
+from ..utils.transformations import tabularize, detabularize, concat_nested_arrays
 from .base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer']
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator']
 __author__ = ["Markus Löning", "Jason Lines"]
 
 
@@ -70,7 +70,8 @@ class IntervalSegmenter(BaseTransformer):
                                for c in range(self.input_shape_[1])]
 
         else:
-            raise ValueError()
+            raise ValueError(f"`intervals` must be either an integer, a single array or list of arrays with "
+                             f"start and end points, but found: {self.intervals}")
 
         return self
 
@@ -125,8 +126,7 @@ class IntervalSegmenter(BaseTransformer):
 
 
 class RandomIntervalSegmenter(IntervalSegmenter):
-    """
-    Transformer that segments time-series into random intervals with random starting points and lengths. Some
+    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
     intervals may overlap and may be duplicates.
 
     Parameters
@@ -318,3 +318,34 @@ class DerivativeSlopeTransformer(BaseTransformer):
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
+
+
+class TimeSeriesConcatenator(BaseTransformer):
+    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
+        data by simply concatenating times series in time.
+    """
+
+    def transform(self, X, y=None):
+        """Concatenate multivariate time series/panel data into long univiariate time series/panel
+        data by simply concatenating times series in time.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and single column
+        """
+
+        check_is_fitted(self, 'is_fitted_')
+
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")
+
+        Xt = detabularize(tabularize(X))
+        return Xt
+
+
