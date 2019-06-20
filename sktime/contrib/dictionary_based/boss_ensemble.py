@@ -2,11 +2,10 @@ import numpy as np
 import random
 import sys
 import pandas as pd
-import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.distances.boss_distance import boss_distance
+from sktime.distances.dictionary_distances import boss_distance
 from sktime.transformers.SFA import SFA
 
 all__ = ["BOSSEnsemble", "BOSSIndividual"]

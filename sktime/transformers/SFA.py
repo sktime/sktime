@@ -3,6 +3,7 @@ import pandas as pd
 import math
 import sys
 
+from sktime.utils.bitword import BitWord
 from sktime.transformers.base import BaseTransformer
 
 
@@ -12,6 +13,7 @@ class SFA(BaseTransformer):
     By default returns the word for each input instance
     Options allows for configurations used in BOSS and related classifiers
     """
+
     def __init__(self,
                  word_length,
                  alphabet_size,
@@ -30,6 +32,7 @@ class SFA(BaseTransformer):
         self.window_size = window_size
         if window_size != 0:
             self.inverse_sqrt_win_size = 1 / math.sqrt(window_size)
+
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
@@ -40,7 +43,7 @@ class SFA(BaseTransformer):
         self.num_insts = 0
         self.num_atts = 0
 
-    def fit(self, X):
+    def fit(self, X, **kwargs):
         """Build a histogram
 
         Parameters
@@ -52,6 +55,12 @@ class SFA(BaseTransformer):
         self : object
         :param **kwargs:
          """
+
+        if self.alphabet_size < 2 or self.alphabet_size > 4:
+            raise RuntimeError("Alphabet size must be an integer between 2 and 4")
+
+        if self.word_length < 1 or self.word_length > 16:
+            raise RuntimeError("Word length must be an integer between 1 and 16")
 
         if isinstance(X, pd.DataFrame):
             if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
@@ -91,7 +100,7 @@ class SFA(BaseTransformer):
         for i in range(self.num_insts):
             dfts = self.MFT(X[i, :])
             bag = {}
-            lastWord = -1
+            lastWord = None
 
             words = []
 
@@ -105,7 +114,7 @@ class SFA(BaseTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_'+str(self.dim_to_use)] = dim
+        bags['dim_' + str(self.dim_to_use)] = dim
 
         return bags
 
@@ -119,7 +128,7 @@ class SFA(BaseTransformer):
         num_windows_per_inst = math.ceil(self.num_atts / self.window_size)
         dft = np.zeros((self.num_insts, num_windows_per_inst, int((self.word_length / 2) * 2)))
 
-        for i in range(X.shape[0]):
+        for i in range(self.num_insts):
             split = np.split(X[i, :], np.linspace(self.window_size, self.window_size * (num_windows_per_inst - 1),
                                                   num_windows_per_inst - 1, dtype=np.int_))
             split[-1] = X[i, self.num_atts - self.window_size:self.num_atts]
@@ -169,10 +178,11 @@ class SFA(BaseTransformer):
         output_length = int(self.word_length / 2)
         start = 1 if self.norm else 0
 
+        std = 1
         if normalise:
-            std = np.std(series)
-            if std == 0:
-                std = 1
+            s = np.std(series)
+            if s != 0:
+                std = s
 
         # dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
         #                  range(start, start + output_length)])
@@ -192,7 +202,7 @@ class SFA(BaseTransformer):
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
 
-        #print(dft)
+        # print(dft)
 
         if normalise:
             dft *= self.inverse_sqrt_win_size / std
@@ -210,9 +220,9 @@ class SFA(BaseTransformer):
         phis = np.zeros(length)
 
         for i in range(0, length, 2):
-            half = -(i + start_offset)/2
+            half = -(i + start_offset) / 2
             phis[i] = math.cos(2 * math.pi * half / self.window_size)
-            phis[i+1] = -math.sin(2 * math.pi * half / self.window_size)
+            phis[i + 1] = -math.sin(2 * math.pi * half / self.window_size)
 
         end = max(1, len(series) - self.window_size + 1)
         stds = self.calc_incremental_mean_std(series, end)
@@ -255,7 +265,8 @@ class SFA(BaseTransformer):
         for w in range(1, end):
             series_sum += series[w + self.window_size - 1] - series[w - 1]
             means[w] = series_sum * rWindowLength
-            square_sum += series[w + self.window_size - 1] * series[w + self.window_size - 1] - series[w - 1] * series[w - 1]
+            square_sum += series[w + self.window_size - 1] * series[w + self.window_size - 1] - series[w - 1] * series[
+                w - 1]
             buf = square_sum * rWindowLength - means[w] * means[w]
             stds[w] = math.sqrt(buf) if buf > 0 else 0
 
@@ -301,34 +312,3 @@ class SFA(BaseTransformer):
             bag[word.word] = 1
 
         return word.word
-
-
-class BitWord:
-
-    def __init__(self,
-                 word=np.int_(0),
-                 length=0):
-        self.word = word
-        self.length = length
-
-    def push(self, letter):
-        self.word = (self.word << 2) | letter
-        self.length += 1
-
-    def shorten(self, amount):
-        self.word = self.right_shift(self.word, amount * 2)
-        self.length -= amount
-
-    def word_list(self):
-        word_list = []
-        shift = 32-(self.length*2)
-
-        for i in range(self.length-1, -1, -1):
-            word_list.append(self.right_shift(self.word << shift, 32 - 2))
-            shift += 2
-
-        return word_list
-
-    @staticmethod
-    def right_shift(left, right):
-        return (left % 0x100000000) >> right
