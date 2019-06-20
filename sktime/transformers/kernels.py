@@ -673,7 +673,6 @@ class EdKnn(BaseClassifier):
             ('cls', KNeighborsClassifier(n_neighbors=1)),
         ])
         cv_params = {
-            'dk__w': [0],
             'dk__sigma': stats.expon(scale=.1),
             'cls__metric': ['precomputed'],
         }
@@ -753,7 +752,7 @@ class LcssKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 5,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1190,7 +1189,6 @@ class EdSvm(BaseClassifier):
             ('svm', SVC(probability=True)),
         ])
         cv_params = {
-            'dk__w': [0],
             'dk__sigma': stats.expon(scale=.1),
             'svm__kernel': ['precomputed'],
             'svm__C': stats.expon(scale=100)
