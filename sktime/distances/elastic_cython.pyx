@@ -1,20 +1,33 @@
-##### cython: language_level=3, boundscheck=False, wraparound=False, initializedcheck=False, nonecheck=False,
 
 # believe it or not, the below variable is required for cython to compile properly. A global python variable hooks
 # into a c global variable. Without this functions do not compile properly!
+import cython
+
 STUFF = "Hi" # https://stackoverflow.com/questions/8024805/cython-compiled-c-extension-importerror-dynamic-module-does-not-define-init-fu
 
 import numpy as np
 cimport numpy as cnp
-cimport cython
-np.import_array()
 
 from libc.float cimport DBL_MAX
 from libc.math cimport exp, sqrt, fabs
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef inline double min_c(double a, double b): return a if a <= b else b
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef inline int max_c_int(int a, int b): return a if a >= b else b
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef inline int min_c_int(int a, int b): return a if a <= b else b
 
 # TO-DO: convert DDTW and WDDTW to use slope-based derivatives rather than np.diff
@@ -37,7 +50,12 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 # the w argument corresponds to the length of the warping window in percentage of
 # the smallest length of the time series min(x,y) - if negative then no warping window
 # this function assumes that x is shorter than y
-cdef double dtw_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y , double w):
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cpdef double dtw_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y , double w):
     # make sure x is shorter than y
     # if not permute
     cdef cnp.ndarray[double, ndim=2] X = x
@@ -88,6 +106,10 @@ cdef double dtw_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim
     return D[lx,ly]
 
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cpdef double wdtw_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y , double g):
 
     # make sure x is shorter than y
@@ -155,7 +177,11 @@ cpdef double wdtw_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, nd
 #     return wdtw_distance(np.diff(x.T).T,np.diff(y.T).T,g)
 #
 #
-cdef double msm_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, double c, int dim_to_use):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cpdef double msm_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, double c, int dim_to_use):
 
     cdef cnp.ndarray[double, ndim=2] first = x
     cdef cnp.ndarray[double, ndim=2] second = y
@@ -198,6 +224,10 @@ cdef double msm_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim
     return cost[m - 1, n - 1]
 
 #
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef double _msm_calc_cost(double new_point, double x, double y, double c):
     cdef double dist = 0
 
@@ -206,7 +236,11 @@ cdef double _msm_calc_cost(double new_point, double x, double y, double c):
     else:
         return c + min_c(fabs(new_point - x), fabs(new_point - y))
 
-cdef double lcss_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, int delta, double epsilon, int dim_to_use):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cpdef double lcss_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, int delta, double epsilon, int dim_to_use):
 
     cdef cnp.ndarray[double, ndim=2] first = x
     cdef cnp.ndarray[double, ndim=2] second = y
@@ -245,8 +279,11 @@ cdef double lcss_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndi
 
     return 1 - (max_val / m)
 
-#cython: boundscheck=False, wraparound=False, nonecheck=False
-cdef double twe_distance(cnp.ndarray[double, ndim=2] ta, cnp.ndarray[double, ndim=2] tb, double penalty, double stiffness):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cpdef double twe_distance(cnp.ndarray[double, ndim=2] ta, cnp.ndarray[double, ndim=2] tb, double penalty, double stiffness):
 
     cdef int dim = ta.shape[1] - 1
     cdef double dist, disti1, distj1
@@ -337,7 +374,11 @@ cdef double twe_distance(cnp.ndarray[double, ndim=2] ta, cnp.ndarray[double, ndi
     dist = D[r][c]
     return dist
 
-def erp_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, double band_size, double g, int dim_to_use):
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
+cpdef double erp_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, double band_size, double g, int dim_to_use):
     """
     Adapted from:
         This file is part of ELKI:
@@ -421,6 +462,10 @@ def erp_distance(cnp.ndarray[double, ndim=2] x, cnp.ndarray[double, ndim=2] y, d
 
     return sqrt(curr[m-1])
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef _get_der(cnp.ndarray[double, ndim=2] x):
     cdef cnp.ndarray[double, ndim=2] der_x = np.empty((len(x),len(x[0])-1))
     cdef int i
@@ -428,6 +473,10 @@ cdef _get_der(cnp.ndarray[double, ndim=2] x):
         der_x[i] = np.diff(x[i])
     return der_x
 #
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.initializedcheck(False)
+@cython.nonecheck(False)
 cdef _wdtw_calc_weights(int len_x, double g):
     cdef cnp.ndarray[double, ndim=1] weight_vector = np.zeros(len_x)
     cdef int i
