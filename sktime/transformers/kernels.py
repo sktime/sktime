@@ -172,14 +172,31 @@ class EigKernel(BaseEstimator, TransformerMixin):
         self.X_train_ = None
 
     def transform(self, X, y=None):
-        eigen_values, eigen_vectors = np.linalg.eig(X)
-        # ------ mod eig values
-        if len(eigen_values[eigen_values < 0]) > 0:
-            eigen_values = self.transform_eigen_values(eigen_values)
-        diag = np.diag(eigen_values)
-        inv_eigen_vectors = np.linalg.inv(eigen_vectors)
-        result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
-        return result
+        if X.shape[0]==X.shape[1]:
+            eigen_values, eigen_vectors = np.linalg.eig(X)
+            eigen_values = np.real(eigen_values)
+            eigen_vectors = np.real(eigen_vectors)
+            # ------ mod eig values
+            if len(eigen_values[eigen_values < 0]) > 0:
+                eigen_values = self.transform_eigen_values(eigen_values)
+            diag = np.diag(eigen_values)
+            inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+            result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+            return result
+        if X.shape[0]!=X.shape[1]:
+            eigen_values, eigen_vectors = np.linalg.eig(self.X_train_)
+            eigen_values = np.real(eigen_values)
+            eigen_vectors = np.real(eigen_vectors)
+            # ------ mod eig values
+            if len(eigen_values[eigen_values < 0]) > 0:
+                eigen_values = self.transform_eigen_values(eigen_values)
+            diag = np.diag(eigen_values)
+            inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+            regularized = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+            P = np.matmul(regularized,np.linalg.pinv(self.X_train_))
+            return np.matmul(X,P)
+
+
 
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
