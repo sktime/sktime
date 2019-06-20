@@ -43,6 +43,7 @@ from sklearn.utils.multiclass import class_distribution
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 import heapq
 from operator import itemgetter
+from sktime.transformers.base import BaseTransformer
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -59,7 +60,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #        branch at time of writing however so this can be updated later)
 
 
-class ShapeletTransform(TransformerMixin):
+class ShapeletTransform(BaseTransformer):
 
     def __init__(self,
                  min_shapelet_length=3,
