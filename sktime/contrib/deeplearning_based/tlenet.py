@@ -1,4 +1,17 @@
-# t-leNettwi-esn
+# Time Le-Net, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/tlenet.py
+#
+# Network originally proposed by:
+#
+# @inproceedings{le2016data,
+#   title={Data augmentation for time series classification using convolutional neural networks},
+#   author={Le Guennec, Arthur and Malinowski, Simon and Tavenard, Romain},
+#   booktitle={ECML/PKDD workshop on advanced analytics and learning on temporal data},
+#   year={2016}
+# }
+
+__author__ = "Aaron Bostrom, James Large"
+
 import keras
 import numpy as np
 

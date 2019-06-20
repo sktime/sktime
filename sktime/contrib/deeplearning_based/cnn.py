@@ -1,4 +1,21 @@
-# Time-CNN
+# Time convolutional neural network, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
+#
+# Network originally proposed by:
+#
+# @article{zhao2017convolutional,
+#   title={Convolutional neural networks for time series classification},
+#   author={Zhao, Bendong and Lu, Huanzhang and Chen, Shangfeng and Liu, Junliang and Wu, Dongya},
+#   journal={Journal of Systems Engineering and Electronics},
+#   volume={28},
+#   number={1},
+#   pages={162--169},
+#   year={2017},
+#   publisher={BIAI}
+# }
+
+__author__ = "James Large"
+
 import keras
 import numpy as np
 import pandas as pd

@@ -1,4 +1,19 @@
-# model TWIESN
+# Time warping invariant echo state network, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/twiesn.py
+#
+# Network originally proposed by:
+#
+# @inproceedings{tanisaro2016time,
+#   title={Time series classification using time warping invariant echo state networks},
+#   author={Tanisaro, Pattreeya and Heidemann, Gunther},
+#   booktitle={2016 15th IEEE International Conference on Machine Learning and Applications (ICMLA)},
+#   pages={831--836},
+#   year={2016},
+#   organization={IEEE}
+# }
+
+__author__ = "Aaron Bostrom, James Large"
+
 import numpy as np
 from scipy import sparse
 #scipy

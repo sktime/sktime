@@ -1,6 +1,19 @@
-# ResNet
-# when tuning start with learning rate->mini_batch_size ->
-# momentum-> #hidden_units -> # learning_rate_decay -> #layers
+# Residual network, adapted from the implementation from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
+#
+# Network originally proposed by:
+#
+# @inproceedings{wang2017time,
+#   title={Time series classification from scratch with deep neural networks: A strong baseline},
+#   author={Wang, Zhiguang and Yan, Weizhong and Oates, Tim},
+#   booktitle={2017 International joint conference on neural networks (IJCNN)},
+#   pages={1578--1585},
+#   year={2017},
+#   organization={IEEE}
+# }
+
+__author__ = "James Large"
+
 import keras
 import numpy as np
 import pandas as pd

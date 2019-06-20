@@ -20,8 +20,11 @@ import sktime.contrib.deeplearning_based.cnn as cnn
 import sktime.contrib.deeplearning_based.encoder as encoder
 import sktime.contrib.deeplearning_based.fcn as fcn
 import sktime.contrib.deeplearning_based.mcdcnn as mcdcnn
+import sktime.contrib.deeplearning_based.mcnn as mcnn
 import sktime.contrib.deeplearning_based.mlp as mlp
 import sktime.contrib.deeplearning_based.resnet as resnet
+import sktime.contrib.deeplearning_based.tlenet as tlenet
+import sktime.contrib.deeplearning_based.twiesn as twiesn
 
 
 #from sktime.classifiers.proximity import ProximityForest
@@ -154,16 +157,16 @@ def set_classifier(cls, resampleId):
         return fcn.FCN()
     elif cls == 'dl4tsc_mcdcnn':
         return mcdcnn.MCDCNN()
-    #elif cls == 'dl4tsc_mcnn':
-    #    return dl.cnn.MCNN()
+    elif cls == 'dl4tsc_mcnn':
+        return mcnn.MCNN()
     elif cls == 'dl4tsc_mlp':
         return mlp.MLP()
     elif cls == 'dl4tsc_resnet':
         return resnet.ResNet()
-    #elif cls == 'dl4tsc_tlenet':
-    #    return dl.cnn.TLENET()
-    #elif cls == 'dl4tsc_twiesn':
-    #    return dl.twiesn.TWIESN()
+    elif cls == 'dl4tsc_tlenet':
+        return tlenet.TLENET()
+    elif cls == 'dl4tsc_twiesn':
+        return twiesn.TWIESN()
 #    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
 #        return dist.ElasticEnsemble()
     elif cls == 'TSF_Markus':

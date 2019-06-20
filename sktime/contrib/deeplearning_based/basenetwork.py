@@ -1,3 +1,24 @@
+# Base class for the Keras neural networks adapted from Fawaz et. al
+# https://github.com/hfawaz/dl-4-tsc
+#
+# @article{fawaz2019deep,
+#   title={Deep learning for time series classification: a review},
+#   author={Fawaz, Hassan Ismail and Forestier, Germain and Weber, Jonathan and Idoumghar, Lhassane and Muller, Pierre-Alain},
+#   journal={Data Mining and Knowledge Discovery},
+#   pages={1--47},
+#   year={2019},
+#   publisher={Springer}
+# }
+#
+# File also contains some simple unit-esque tests for the networks and
+# their compatibility wit hthe rest of the package,
+# and experiments for confirming accurate reproduction
+#
+# todo proper unit tests
+# todo confirm compaitbility of class bales especially between networks and rest of sktime
+
+
+__author__ = "James Large"
 
 from sktime.classifiers.base import BaseClassifier
 from sktime.datasets import load_gunpoint
@@ -8,10 +29,18 @@ import pandas as pd
 import keras
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.multiclass import class_distribution
+
 from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import OneHotEncoder
+
+from sktime.utils.validation import check_X_y
+from sktime.utils import comparison
 
 
 class BaseDeepLearner(BaseClassifier):
+
+    classes_ = None
+    nb_classes = None
 
     def build_model(self, input_shape, nb_classes, **kwargs):
         raise NotImplementedError('this is an abstract method')
@@ -41,8 +70,7 @@ class BaseDeepLearner(BaseClassifier):
         return probs
 
     def convert_y(self, y):
-        # taken from kerasclassifier's fit
-
+        ### taken from kerasclassifier's fit
         # y = np.array(y)
         # if len(y.shape) == 2 and y.shape[1] > 1:
         #    self.classes_ = np.arange(y.shape[1])
@@ -52,22 +80,20 @@ class BaseDeepLearner(BaseClassifier):
         # else:
         #    raise ValueError('Invalid shape for y: ' + str(y.shape))
         # self.nb_classes = len(self.classes_)
+        #
+        #return keras.utils.to_categorical(y, self.nb_classes)
 
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
-            y = self.label_encoder.transform(y)
+        self.label_encoder = LabelEncoder()
+        self.onehot_encoder = OneHotEncoder(sparse=False)
+
+        y = self.label_encoder.fit_transform(y)
         self.classes_ = self.label_encoder.classes_
         self.nb_classes = len(self.classes_)
 
-        # self.classes_ = class_distribution(y.reshape(-1, 1))[0][0]
-        # self.nb_classes = len(self.classes_)
+        y = y.reshape(len(y), 1)
+        y = self.onehot_encoder.fit_transform(y)
 
-        #print(self.classes_)
-        #print(self.nb_classes)
-
-        return keras.utils.to_categorical(y, self.nb_classes)
+        return y
 
 
 def test_basic(network):
@@ -151,7 +177,7 @@ def test_highLevelsktime(network):
 
     y_pred = strategy.predict(test)
     y_test = test[task.target]
-    accuracy_score(y_test, y_pred)
+    print(accuracy_score(y_test, y_pred))
 
     print("end test_highLevelsktime()\n\n")
 
@@ -160,9 +186,9 @@ def networkTests(network):
     # sklearn compatibility
     # check_estimator(FCN)
 
-    test_basic(network)
-    test_pipeline(network)
-    #test_highLevelsktime(network)
+    #test_basic(network)
+    #test_pipeline(network)
+    test_highLevelsktime(network)
 
 def comparisonExperiments():
     data_dir = "C:/Univariate2018_ts/"
@@ -173,11 +199,11 @@ def comparisonExperiments():
         "dl4tsc_encoder",
         "dl4tsc_fcn",
         "dl4tsc_mcdcnn",
-        #"dl4tsc_mcnn",
+        "dl4tsc_mcnn",
         "dl4tsc_mlp",
         "dl4tsc_resnet",
-        #"dl4tsc_tlenet",
-        #"dl4tsc_twiesn",
+        "dl4tsc_tlenet",
+        "dl4tsc_twiesn",
     ]
 
     small_datasets = [
@@ -204,11 +230,15 @@ def comparisonExperiments():
     num_folds = 30
 
     import sktime.contrib.experiments as exp
-    for c in complete_classifiers:
+
+    for f in range(num_folds):
         for d in small_datasets:
-            for f in range(num_folds):
+            for c in complete_classifiers:
                 print(c, d, f)
-                exp.run_experiment(data_dir, res_dir, c, d, f)
+                try:
+                    exp.run_experiment(data_dir, res_dir, c, d, f)
+                except:
+                    print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 
 
 if __name__ == "__main__":
