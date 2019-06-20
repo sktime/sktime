@@ -16,15 +16,15 @@ import sktime.classifiers.ensemble as ensemble
 import sktime.contrib.dictionary_based.boss_ensemble as db
 import sktime.contrib.frequency_based.rise as fb
 import sktime.contrib.interval_based.tsf as ib
-import sktime.contrib.deeplearning_based.cnn as cnn
-import sktime.contrib.deeplearning_based.encoder as encoder
-import sktime.contrib.deeplearning_based.fcn as fcn
-import sktime.contrib.deeplearning_based.mcdcnn as mcdcnn
-import sktime.contrib.deeplearning_based.mcnn as mcnn
-import sktime.contrib.deeplearning_based.mlp as mlp
-import sktime.contrib.deeplearning_based.resnet as resnet
-import sktime.contrib.deeplearning_based.tlenet as tlenet
-import sktime.contrib.deeplearning_based.twiesn as twiesn
+import sktime.contrib.deeplearning_based.dl4tsc.cnn as cnn
+import sktime.contrib.deeplearning_based.dl4tsc.encoder as encoder
+import sktime.contrib.deeplearning_based.dl4tsc.fcn as fcn
+import sktime.contrib.deeplearning_based.dl4tsc.mcdcnn as mcdcnn
+import sktime.contrib.deeplearning_based.dl4tsc.mcnn as mcnn
+import sktime.contrib.deeplearning_based.dl4tsc.mlp as mlp
+import sktime.contrib.deeplearning_based.dl4tsc.resnet as resnet
+import sktime.contrib.deeplearning_based.dl4tsc.tlenet as tlenet
+import sktime.contrib.deeplearning_based.dl4tsc.twiesn as twiesn
 
 
 #from sktime.classifiers.proximity import ProximityForest
