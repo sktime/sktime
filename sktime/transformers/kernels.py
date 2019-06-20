@@ -325,7 +325,7 @@ class DtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -380,7 +380,7 @@ class FullDtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -431,7 +431,7 @@ class FullDdtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1106,7 +1106,7 @@ class WdtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1161,7 +1161,7 @@ class EdSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1212,7 +1212,7 @@ class WddtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1270,7 +1270,7 @@ class DdtwSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1326,7 +1326,7 @@ class MsmSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1385,7 +1385,7 @@ class LcssSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1445,7 +1445,7 @@ class ErpSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
@@ -1501,7 +1501,7 @@ class TweSvm(BaseClassifier):
     def __init__(self,
                  random_state = None,
                  verbosity = 0,
-                 n_jobs = -1,
+                 n_jobs = 1,
                  n_iter = 100,
                  label_encoder = None,
                  ):
