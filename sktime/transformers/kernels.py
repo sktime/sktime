@@ -453,8 +453,8 @@ class FullDdtwSvm(BaseClassifier):
         distance_measure_space = dtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', DtwKernel()),
             ('svm', SVC(probability=True)),
         ])
@@ -612,8 +612,8 @@ class FullDdtwKnn(BaseClassifier):
         distance_measure_space = proximity.dtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', DtwKernel()),
             ('inv', InvertKernel()),
             ('cls', KNeighborsClassifier(n_neighbors=1)),
@@ -994,8 +994,8 @@ class DdtwKnn(BaseClassifier):
         distance_measure_space = proximity.dtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', DtwKernel()),
             ('inv', InvertKernel()),
             ('cls', KNeighborsClassifier(n_neighbors=1)),
@@ -1017,8 +1017,7 @@ class DdtwKnn(BaseClassifier):
                                         random_state=self.random_state,
                                         )
         self.model.fit(X, y)
-        raise Exception('need to impl der trans')
-        # return self
+        return self
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
@@ -1051,8 +1050,8 @@ class WddtwKnn(BaseClassifier):
         distance_measure_space = proximity.wdtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', WdtwKernel()),
             ('inv', InvertKernel()),
             ('cls', KNeighborsClassifier(n_neighbors=1)),
@@ -1235,8 +1234,8 @@ class WddtwSvm(BaseClassifier):
         distance_measure_space = wdtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', WdtwKernel()),
             ('svm', SVC(probability=True)),
         ])
@@ -1293,8 +1292,8 @@ class DdtwSvm(BaseClassifier):
         distance_measure_space = dtw_distance_measure_getter(X)
         del distance_measure_space['distance_measure']
         pipe = Pipeline([
-            ('conv', PandasToNumpy()),
             ('der', DerivativeSlopeTransformer()),
+            ('conv', PandasToNumpy()),
             ('dk', DdtwKernel()),
             ('svm', SVC(probability=True)),
         ])
