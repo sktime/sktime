@@ -432,7 +432,7 @@ class FullDdtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 100,
+                 n_iter = 5,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -918,7 +918,7 @@ class TweKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 1,
+                 n_iter = 10,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1271,7 +1271,7 @@ class DdtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 100,
+                 n_iter = 5,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1502,7 +1502,7 @@ class TweSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 1,
+                 n_iter = 10,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1538,7 +1538,7 @@ class TweSvm(BaseClassifier):
         }
         self.model = RandomizedSearchCV(pipe,
                                     cv_params,
-                                    cv=2,
+                                    cv=5,
                                     n_jobs=self.n_jobs,
                                     n_iter=self.n_iter,
                                     verbose=self.verbosity,
