@@ -918,7 +918,7 @@ class TweKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 1,
                  label_encoder = None,
                  ):
         self.random_state = random_state
