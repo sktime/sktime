@@ -165,6 +165,45 @@ class DtwKernel(BaseEstimator, TransformerMixin):
         self.X_train_ = X
         return self
 
+class EigKernel(BaseEstimator, TransformerMixin):
+    def __init__(self, transform_eigen_values = None):
+        super().__init__()
+        self.transform_eigen_values = transform_eigen_values
+        self.X_train_ = None
+
+    def transform(self, X, y=None):
+        eigen_values, eigen_vectors = np.linalg.eig(X)
+        # ------ mod eig values
+        if len(eigen_values[eigen_values < 0]) > 0:
+            eigen_values = self.transform_eigen_values(eigen_values)
+        diag = np.diag(eigen_values)
+        inv_eigen_vectors = np.linalg.inv(eigen_vectors)
+        result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        return result
+
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+class NegEigToZero(EigKernel):
+    def __init__(self):
+        super().__init__(transform_eigen_values=lambda a: np.where(a > 0, a, 0))
+
+
+class NegEigToAbs(EigKernel):
+    def __init__(self):
+        super().__init__(transform_eigen_values=lambda a: np.where(a > 0, a, np.abs(a)))
+
+
+class NegEigToMin(EigKernel):
+    def __init__(self):
+        super().__init__(transform_eigen_values=self.convert)
+
+    def convert(self, eigen_values):
+        min = np.min(eigen_values)
+        result = eigen_values - min
+        return result
 
 class EdKernel(BaseEstimator, TransformerMixin):
     def __init__(self, sigma=1.0, label_encoder = None):
@@ -317,6 +356,62 @@ class TweKernel(BaseEstimator,TransformerMixin):
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
         return self
+
+
+class EigDtwSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = -1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        distance_measure_space = dtw_distance_measure_getter(X)
+        del distance_measure_space['distance_measure']
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', DtwKernel()),
+            ('eig', NegEigToZero()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {}
+        for k, v in distance_measure_space.items():
+            cv_params['dk__' + k] = v
+        cv_params = {
+            **cv_params,
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
 
 
 
