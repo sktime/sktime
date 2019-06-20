@@ -5,15 +5,16 @@ from sktime.transformers.base import BaseTransformer
 from enum import Enum
 
 
+
 class DiscreteFourierType(Enum):
-    Standard = 1
-    Real = 2
-    Hermitian = 3
+    STANDARD = 1
+    REAL = 2
+    HERMITIAN = 3
 
 
 class DiscreteFourierTransformer(BaseTransformer):
 
-    def __init__(self, fourier_type=DiscreteFourierType.Standard, axis=None, norm=None, check_input=True):
+    def __init__(self, fourier_type=DiscreteFourierType.STANDARD, axis=None, norm=None, check_input=True):
         if not isinstance(self.type, DiscreteFourierType):
             raise TypeError("type should be defined as a DiscreteFourierTransform type")
 
