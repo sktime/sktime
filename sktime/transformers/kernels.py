@@ -326,7 +326,7 @@ class DtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -432,7 +432,7 @@ class FullDdtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -485,7 +485,7 @@ class DtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -540,7 +540,7 @@ class FullDtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -591,7 +591,7 @@ class FullDdtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -646,7 +646,7 @@ class EdKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -697,7 +697,7 @@ class WdtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -752,7 +752,7 @@ class LcssKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -807,7 +807,7 @@ class MsmKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -863,7 +863,7 @@ class ErpKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -918,7 +918,7 @@ class TweKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -973,7 +973,7 @@ class DdtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1029,7 +1029,7 @@ class WddtwKnn(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = 1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1107,7 +1107,7 @@ class WdtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1162,7 +1162,7 @@ class EdSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1213,7 +1213,7 @@ class WddtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1271,7 +1271,7 @@ class DdtwSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1327,7 +1327,7 @@ class MsmSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1446,7 +1446,7 @@ class ErpSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 5,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
@@ -1502,7 +1502,7 @@ class TweSvm(BaseClassifier):
                  random_state = None,
                  verbosity = 0,
                  n_jobs = -1,
-                 n_iter = 10,
+                 n_iter = 100,
                  label_encoder = None,
                  ):
         self.random_state = random_state
