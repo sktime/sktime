@@ -20,22 +20,19 @@
 
 __author__ = "James Large"
 
-from sktime.classifiers.base import BaseClassifier
-from sktime.datasets import load_gunpoint
-from sktime.datasets import load_italy_power_demand
+
 import sys
 import numpy as np
 import pandas as pd
-import keras
-from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.multiclass import class_distribution
 
+from sktime.classifiers.base import BaseClassifier
+from sktime.datasets import load_gunpoint
+from sktime.datasets import load_italy_power_demand
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
+
+from sklearn.utils.estimator_checks import check_estimator
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
-
-from sktime.utils.validation import check_X_y
-from sktime.utils import comparison
-
 
 class BaseDeepLearner(BaseClassifier):
 
@@ -111,13 +108,9 @@ def test_basic(network):
     X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
     X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
 
+    hist = network.fit(X_train, y_train)
 
-    clf = network
-
-    hist = clf.fit(X_train, y_train)
-    #clf.model.summary()
-
-    print(clf.score(X_test, y_test))
+    print(network.score(X_test, y_test))
     print("end test_basic()\n\n")
 
 def test_pipeline(network):
@@ -171,8 +164,7 @@ def test_highLevelsktime(network):
     test = load_italy_power_demand(split='TEST')
     task = TSCTask(target='class_val', metadata=train)
 
-    clf = network
-    strategy = TSCStrategy(clf)
+    strategy = TSCStrategy(network)
     strategy.fit(task, train)
 
     y_pred = strategy.predict(test)
@@ -182,13 +174,25 @@ def test_highLevelsktime(network):
     print("end test_highLevelsktime()\n\n")
 
 
+def test_multivariate(network):
+    print("Start test_multivariate()\n\n")
+
+    X_train, y_train = load_from_tsfile_to_dataframe('Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TRAIN.ts')
+    X_test, y_test = load_from_tsfile_to_dataframe('Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TEST.ts')
+
+    hist = network.fit(X_train, y_train)
+
+    print(network.score(X_test, y_test))
+    print("end test_multivariate()\n\n")
+
 def networkTests(network):
     # sklearn compatibility
     # check_estimator(FCN)
 
-    #test_basic(network)
-    #test_pipeline(network)
+    test_basic(network)
+    test_pipeline(network)
     test_highLevelsktime(network)
+    test_multivariate(network)
 
 def comparisonExperiments():
     data_dir = "C:/Univariate2018_ts/"
