@@ -364,11 +364,6 @@ class FlatTransformer(BaseTransformer):
         """
         Fit transformer, finding positions & lengths of missing value
         intervals.
-
-        .. todo::
-            Important caveat: the method currently only works if the timeseries
-            does not start or end with the value.  Do not use if starting /
-            ending values are equal to the value!
         """
         for _, x in X.iterrows():
             # turn Series into 1darrays
@@ -376,16 +371,19 @@ class FlatTransformer(BaseTransformer):
 
             # find indices of transition
             if np.isnan(self.value):
-                i = np.isnan(x)
+                i = np.where(np.isnan(x), 1, 0)
             elif np.isinf(self.value):
-                i = np.isinf(x)
+                i = np,where(np.isinf(x), 1, 0)
             else:
-                i = (x == self.value)
+                i = np.where(x == self.value, 1, 0)
 
-            # compute starts, ends and lengths of the plateaus
-            starts = np.where(i[:-1] != i[1:])[0][::2] + 1
-            ends = np.where(i[:-1] != i[1:])[0][1::2]
-            lengths = (ends - starts) + 1
+            # pad and find where segments transition
+            transitions = np.diff(np.hstack([0, i, 0]))
+
+            # compute starts, ends and lengths of the segments
+            starts = np.where(transitions == 1)[0]
+            ends = np.where(transitions == -1)[0]
+            lengths = ends - starts
 
             # filter out single points
             starts = starts[lengths > 1]
@@ -398,7 +396,7 @@ class FlatTransformer(BaseTransformer):
 
     def transform(self, X, y=None, column="dim_0"):
         """
-        Transform X.
+        Add columns with starting points and durations of flat intervals to X.
         """
         out = X
         column_prefix = "%s_%s" % (column, "nan" if np.isnan(self.value) else str(self.value))
