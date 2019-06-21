@@ -1,3 +1,4 @@
+__author__ = 'Aaron Bostrom'
 
 from sktime.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier

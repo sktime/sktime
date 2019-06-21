@@ -1,11 +1,12 @@
-import numpy as np
 
 #TODO may need these imports.
 from sklearn.utils.validation import check_is_fitted, check_array
 from sklearn.exceptions import NotFittedError
 
-from itertools import chain
+__author__ = 'Aaron Bostrom'
 
+from itertools import chain
+import numpy as np
 from sklearn.base import clone
 
 from sklearn.preprocessing.label import LabelEncoder
