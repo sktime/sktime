@@ -8,9 +8,8 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
 from sktime.transformers.series_to_series import DerivativeSlopeTransformer
-
+from scipy import spatial
 from sktime.transformers.base import BaseTransformer
-
 from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
 from sktime.classifiers.proximity import dtw_distance_measure_getter, wdtw_distance_measure_getter, \
@@ -18,15 +17,92 @@ from sktime.classifiers.proximity import dtw_distance_measure_getter, wdtw_dista
     euclidean_distance_measure_getter
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
-from sktime.model_selection import GridSearchCV
 from sktime.pipeline import Pipeline
 from sktime.transformers.pandas_to_numpy import PandasToNumpy
 import pandas as pd
+from scipy.linalg import norm
+
+def unpack_series_row(ts):
+    if isinstance(ts, pd.Series): ts = ts.values
+    return ts
 
 def unpack_series(ts):
-    if isinstance(ts, pd.Series): ts = ts.values
     ts = np.reshape(ts, (ts.shape[0], 1))
     return ts
+
+
+#Kernel for triangle similarity
+def triangle_similarity_pairs(s1, s2,sigma):
+    s1 = unpack_series(s1)
+    s2 = unpack_series(s2)
+    dist = spatial.distance.cosine(s1, s2)
+    return np.exp(-(dist**2) / (sigma**2))
+
+def triangle_kernel(X,Y,sigma):
+    M=cdist(X,Y,metric=triangle_similarity_pairs,sigma=sigma)
+    return M
+
+
+#Kernel for polynomial similarity
+def polynomial_similarity_pairs(s1, s2,sigma,degree):
+    s1 = unpack_series_row(s1)
+    s2 = unpack_series_row(s2)
+    coef1 = np.polynomial.polynomial.polyfit(range(0,len(s1)),s1,degree)
+    coef2 = np.polynomial.polynomial.polyfit(range(0,len(s2)),s2,degree)
+    dist = np.linalg.norm(coef1-coef2)
+    return np.exp(-(dist**2) / (sigma**2))
+
+def polynomial_kernel(X,Y,sigma,degree):
+    M=cdist(X,Y,metric=polynomial_similarity_pairs,sigma=sigma,degree=degree)
+    return M
+
+
+
+def KL2_similarity_pairs(s1, s2,sigma,degree):
+    s1 = unpack_series_row(s1)
+    s2 = unpack_series_row(s2)
+    coef1, residuals1, rank, singular_values, rcond = np.polyfit(range(len(s1)), s1, full=True, deg=degree)
+    coef2, residuals2, rank, singular_values, rcond = np.polyfit(range(len(s2)), s2, full=True, deg=degree)
+    means1 = np.polyval(np.polyfit(s1, range(len(s1)), deg=degree), range(len(s1)))
+    means2 = np.polyval(np.polyfit(s2, range(len(s2)), deg=degree), range(len(s2)))
+    samples1 = np.random.normal(0, np.sqrt(residuals1), len(means1))
+    samples1 = samples1 + means1
+    samples2 = np.random.normal(0, np.sqrt(residuals2), len(means2))
+    samples2 = samples2 + means2
+    dist = stats.entropy(samples1,samples2)
+    return np.exp(-(dist**2) / (sigma**2))
+
+def KL2_kernel(X,Y,sigma,degree):
+    M = cdist(X, Y, metric=KL2_similarity_pairs, sigma=sigma, degree=degree)
+    return M
+
+
+
+def Hell_similarity_pairs(s1, s2,sigma,degree):
+    s1 = unpack_series_row(s1)
+    s2 = unpack_series_row(s2)
+    coef1, residuals1, rank, singular_values, rcond = np.polyfit(range(len(s1)), s1, full=True, deg=degree)
+    coef2, residuals2, rank, singular_values, rcond = np.polyfit(range(len(s2)), s2, full=True, deg=degree)
+    means1 = np.polyval(np.polyfit(s1, range(len(s1)), deg=degree), range(len(s1)))
+    means2 = np.polyval(np.polyfit(s2, range(len(s2)), deg=degree), range(len(s2)))
+    samples1 = np.random.normal(0, np.sqrt(residuals1), len(means1))
+    samples1 = samples1 + means1
+    samples2 = np.random.normal(0, np.sqrt(residuals2), len(means2))
+    samples2 = samples2 + means2
+    _SQRT2 = np.sqrt(2)
+    dist = np.sqrt(np.sum((np.sqrt(samples1) - np.sqrt(samples2)) ** 2)) / _SQRT2
+    return np.exp(-(dist**2) / (sigma**2))
+
+def Hell_kernel(X,Y,sigma,degree):
+    M = cdist(X, Y, metric=Hell_similarity_pairs, sigma=sigma, degree=degree)
+    return M
+
+
+
+
+
+
+
 
 #Kernels for dtw distance
 def dtw_pairs(s1,s2,sigma,w):
@@ -151,6 +227,69 @@ class Kernel(BaseEstimator, TransformerMixin):
         kernel = cdist(X, X, metric=self.distance)
         return kernel
 
+
+class TriKernel(BaseEstimator, TransformerMixin):
+    def __init__(self, sigma=1.0, label_encoder=None):
+        super(TriKernel, self).__init__()
+        self.sigma = sigma
+        self.X_train_ = None
+
+    def transform(self, X, y=None):
+        return triangle_kernel(X, self.X_train_, sigma=self.sigma)
+
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+class PolyKernel(BaseEstimator, TransformerMixin):
+    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+        super(PolyKernel, self).__init__()
+        self.sigma = sigma
+        self.degree = degree
+        self.X_train_ = None
+
+    def transform(self, X, y=None):
+        return polynomial_kernel(X, self.X_train_, sigma=self.sigma, degree=self.degree)
+
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+class KL2Kernel(BaseEstimator, TransformerMixin):
+    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+        super(KL2Kernel, self).__init__()
+        self.sigma = sigma
+        self.degree = degree
+        self.X_train_ = None
+
+    def transform(self, X, y=None):
+        return KL2_kernel(X, self.X_train_, sigma=self.sigma, degree=self.degree)
+
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+
+class HellKernel(BaseEstimator, TransformerMixin):
+    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+        super(HellKernel, self).__init__()
+        self.sigma = sigma
+        self.degree = degree
+        self.X_train_ = None
+
+    def transform(self, X, y=None):
+        return Hell_kernel(X, self.X_train_, sigma=self.sigma, degree=self.degree)
+
+    def fit(self, X, y=None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+
+
 class DtwKernel(BaseEstimator, TransformerMixin):
     def __init__(self, sigma=1.0, w=0, label_encoder = None):
         super(DtwKernel, self).__init__()
@@ -164,6 +303,9 @@ class DtwKernel(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None, **fit_params):
         self.X_train_ = X
         return self
+
+
+
 
 class EigKernel(BaseEstimator, TransformerMixin):
     def __init__(self, transform_eigen_values = None):
@@ -429,6 +571,213 @@ class EigDtwSvm(BaseClassifier):
 
     def predict_proba(self, X):
         return self.model.predict_proba(X)
+
+
+class TriSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', TriKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+class PolySvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', PolyKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {
+            'dk__degree':  stats.randint(low = 1, high=10),
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+
+
+class KL2Svm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', KL2Kernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {
+            'dk__degree':  stats.randint(low = 1, high=10),
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
+
+
+
+
+
+class HellSvm(BaseClassifier):
+
+    def __init__(self,
+                 random_state = None,
+                 verbosity = 0,
+                 n_jobs = 1,
+                 n_iter = 10,
+                 label_encoder = None,
+                 ):
+        self.random_state = random_state
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+        self.n_iter = n_iter
+        self.label_encoder = label_encoder
+        self.model = None
+        self.classes_ = None
+
+    def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+        if not hasattr(self.label_encoder, 'classes_'):
+            self.label_encoder.fit(y)
+        self.classes_ = self.label_encoder.classes_
+        self.random_state = check_random_state(self.random_state)
+        pipe = Pipeline([
+            ('conv', PandasToNumpy()),
+            ('dk', HellKernel()),
+            ('svm', SVC(probability=True)),
+        ])
+        cv_params = {
+            'dk__degree':  stats.randint(low = 1, high=10),
+            'dk__sigma': stats.expon(scale=.1),
+            'svm__kernel': ['precomputed'],
+            'svm__C': stats.expon(scale=100)
+        }
+        self.model = RandomizedSearchCV(pipe,
+                                    cv_params,
+                                    cv=5,
+                                    n_jobs=self.n_jobs,
+                                    n_iter=self.n_iter,
+                                    verbose=self.verbosity,
+                                    random_state=self.random_state,
+                                    )
+        self.model.fit(X, y)
+        return self
+
+    def predict_proba(self, X):
+        return self.model.predict_proba(X)
+
 
 
 

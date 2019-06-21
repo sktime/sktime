@@ -2,7 +2,7 @@ import os
 
 import sktime.classifiers.proximity
 from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, FullDtwKnn, EdKnn, \
-    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn, EigDtwSvm
+    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn, EigDtwSvm, TriSvm, PolySvm, KL2Svm, HellSvm
 from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
     MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
 
@@ -137,6 +137,25 @@ def set_classifier(cls, resampleId, verbosity):
 
     """
     cls = cls.lower()
+    if cls == 'tri_svm':
+        return TriSvm(random_state=resampleId,
+                         verbosity=verbosity,
+                         n_jobs=-1)
+    if cls == 'poly_svm':
+        return PolySvm(random_state=resampleId,
+                         verbosity=verbosity,
+                         n_jobs=-1)
+
+    if cls == 'kl2_svm':
+        return KL2Svm(random_state=resampleId,
+                         verbosity=verbosity,
+                         n_jobs=-1)
+
+    if cls == 'hell_svm':
+        return HellSvm(random_state=resampleId,
+                         verbosity=verbosity,
+                         n_jobs=1)
+
     if cls == 'eig_dtw_svm':
         return EigDtwSvm(random_state = resampleId,
                       verbosity = verbosity,
