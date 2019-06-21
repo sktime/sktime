@@ -24,6 +24,8 @@ __author__ = "James Large"
 import sys
 import numpy as np
 import pandas as pd
+import keras
+import gc
 
 from sktime.classifiers.base import BaseClassifier
 from sktime.datasets import load_gunpoint
@@ -203,7 +205,7 @@ def comparisonExperiments():
         "dl4tsc_encoder",
         "dl4tsc_fcn",
         "dl4tsc_mcdcnn",
-        "dl4tsc_mcnn",
+        #"dl4tsc_mcnn",
         "dl4tsc_mlp",
         "dl4tsc_resnet",
         "dl4tsc_tlenet",
@@ -241,6 +243,8 @@ def comparisonExperiments():
                 print(c, d, f)
                 try:
                     exp.run_experiment(data_dir, res_dir, c, d, f)
+                    gc.collect()
+                    keras.backend.clear_session()
                 except:
                     print('\n\n FAILED: ', sys.exc_info()[0], '\n\n')
 

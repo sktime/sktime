@@ -38,11 +38,13 @@ class CNN_Tunable(BaseDeepLearner):
                  nb_epochs=2000,
                  batch_size=16,
                  kernel_size=7,
-                 pool_size=3,
+                 avg_pool_size=3,
                  nb_conv_layers=2,
                  filter_sizes=[6,12]):
         self.verbose = verbose
         self.dim_to_use = dim_to_use
+
+        self.callbacks = []
 
         # calced in fit
         self.classes_ = None
@@ -55,16 +57,9 @@ class CNN_Tunable(BaseDeepLearner):
         self.nb_epochs = nb_epochs
         self.batch_size = batch_size
         self.kernel_size = kernel_size
-        self.pool_size = pool_size
+        self.avg_pool_size = avg_pool_size
         self.nb_conv_layers = nb_conv_layers
         self.filter_sizes = filter_sizes
-        if len(filter_sizes) > nb_conv_layers:
-            self.filter_sizes = filter_sizes[:nb_conv_layers]
-        elif len(filter_sizes) < nb_conv_layers:
-            self.filter_sizes = filter_sizes + [filter_sizes[-1]] * (nb_conv_layers - len(filter_sizes))
-
-        if len(self.filter_sizes) != nb_conv_layers:
-            print('\n\n\n\n\n difference', len(self.filter_sizes), nb_conv_layers, '\n\n\n\n')
 
         self.rand_seed = rand_seed
         self.random_state = np.random.RandomState(self.rand_seed)
@@ -77,31 +72,28 @@ class CNN_Tunable(BaseDeepLearner):
         if input_shape[0] < 60: # for italypowerondemand dataset
             padding = 'same'
 
+        if len(self.filter_sizes) > self.nb_conv_layers:
+            self.filter_sizes = self.filter_sizes[:self.nb_conv_layers]
+        elif len(self.filter_sizes) < self.nb_conv_layers:
+            self.filter_sizes = self.filter_sizes + [self.filter_sizes[-1]] * (self.nb_conv_layers - len(self.filter_sizes))
+
         conv = keras.layers.Conv1D(filters=self.filter_sizes[0],
                                     kernel_size=self.kernel_size,
                                     padding=padding,
                                     activation='sigmoid')(input_layer)
-        conv = keras.layers.AveragePooling1D(pool_size=self.pool_size)(conv)
+        conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
 
         for i in range(1, self.nb_conv_layers):
             conv = keras.layers.Conv1D(filters=self.filter_sizes[i],
                                         kernel_size=self.kernel_size,
                                         padding=padding,
                                         activation='sigmoid')(conv)
-            conv = keras.layers.AveragePooling1D(pool_size=self.pool_size)(conv)
-
-        # conv1 = keras.layers.Conv1D(filters=self.filter_sizes[0],kernel_size=self.kernel_size,padding=padding,activation='sigmoid')(input_layer)
-        # conv1 = keras.layers.AveragePooling1D(pool_size=self.pool_size)(conv1)
-        #
-        # conv2 = keras.layers.Conv1D(filters=self.filter_sizes[1],kernel_size=self.kernel_size,padding=padding,activation='sigmoid')(conv1)
-        # conv2 = keras.layers.AveragePooling1D(pool_size=self.pool_size)(conv2)
+            conv = keras.layers.AveragePooling1D(pool_size=self.avg_pool_size)(conv)
 
         flatten_layer = keras.layers.Flatten()(conv)
-
         output_layer = keras.layers.Dense(units=nb_classes,activation='sigmoid')(flatten_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
-
         model.compile(loss='mean_squared_error', optimizer=keras.optimizers.Adam(),
                       metrics=['accuracy'])
 
@@ -109,7 +101,6 @@ class CNN_Tunable(BaseDeepLearner):
         #model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
         #                                                   save_best_only=True)
         #self.callbacks = [model_checkpoint]
-        self.callbacks = []
 
         return model
 
@@ -141,17 +132,18 @@ class CNN_Tunable(BaseDeepLearner):
 
 
 if __name__ == '__main__':
-    model = CNN_Tunable()
+    model = CNN()
+    # model = CNN_Tunable()
 
     X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
     X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
 
     param_grid = dict(
-        nb_epochs=[5, 10],
-        batch_size=[8, 16],
+        #nb_epochs=[5, 10],
+        #batch_size=[8, 16],
         kernel_size=[3, 7],
-        pool_size=[2, 3],
-        nb_conv_layers=[2, 4],
+        avg_pool_size=[2, 3],
+        nb_conv_layers=[1, 2],
         filter_sizes=[[6, 12], [4, 8]]
     )
     grid = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1)
