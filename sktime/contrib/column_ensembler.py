@@ -6,9 +6,15 @@ from sklearn.exceptions import NotFittedError
 
 from itertools import chain
 
+from sklearn.base import clone
+
 from sklearn.preprocessing.label import LabelEncoder
 
 from sktime.classifiers.base import BaseClassifier
+
+
+
+
 
 #TODO: should probably inherit from a meta estimator in SKlearn
 class ColumnEnsembler(BaseClassifier):
@@ -65,9 +71,9 @@ class ColumnEnsembler(BaseClassifier):
 
     @_estimators.setter
     def _estimators(self, value):
-        self.transformers = [
+        self.estimators = [
             (name, estim, col) for ((name, estim), (_, _, col))
-            in zip(value, self.transformers)]
+            in zip(value, self.estimators)]
 
     #from metaestimators.py
     def _get_params(self, attr, deep=True):
@@ -264,18 +270,7 @@ class ColumnEnsembler(BaseClassifier):
         transformed_y = self.le_.transform(y)
 
         for name, estim, column in self._iter(replace_strings=True):
-            print(_get_column(X, column))
-            estim.fit(_get_column(X, column), y)
-
-
-
-
-        #TODO: This stuff
-        #the data passed in could be one data frame
-        #that we need to split into multiple sub dataframes.
-
-        #if self.estimator is length 1.
-        #then we need to make sure we clone it for num_dimensions
+            estim.fit(_get_column(X, column), transformed_y)
 
         return self
 
@@ -286,12 +281,6 @@ class ColumnEnsembler(BaseClassifier):
     #TODO: check if it is fitted
     def predict_proba(self, X, input_checks=True):
         """Predict class probabilities for X in 'soft' voting """
-        #if self.voting == 'hard':
-        #    raise AttributeError("predict_proba is not available when"
-        #                         " voting=%r" % self.voting)
-        #check_is_fitted(self, 'estimators_')
-
-
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
@@ -444,39 +433,26 @@ def _is_empty_column_selection(column):
         return False
 
 
-from sklearn.neighbors.classification import KNeighborsClassifier
-from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
-from sktime.datasets.base import _load_dataset
-from sktime.contrib.dictionary_based.boss_ensemble import BOSSEnsemble
+class SimpleColumnEnsembler(ColumnEnsembler):
 
+    def __init__(self,
+                 estimator,
+                 verbose=False):
+        self.estimator = estimator
+        self.verbose = verbose
 
-if __name__ == '__main__':
-
-    #ct = ColumnEnsembler(
-        #[("KNN1", KNNTSC(n_neighbors=1), [1]),
-        # ("KNN2", KNNTSC(n_neighbors=1), [2])]
-        #)
-
-
-    X_train,y_train  = _load_dataset("JapaneseVowels", "TRAIN", True)
-    X_test, y_test = _load_dataset("JapaneseVowels", "TEST", True)
-
-    ct = ColumnEnsembler(
-        [("KNN%d"%i, KNNTSC(n_neighbors=1), [i]) for i in range(0,X_train.shape[1])]
-    )
-
-    print(y_train)
-    
-    ct.fit(X_train, y_train)
-
-    print(ct.predict_proba(X_train))
-    print(ct.score(X_train,y_train))
+        super().__init__(None, verbose=verbose)
 
 
 
-    ct = ColumnEnsembler(
-        [("BOSSEnsemble%d"%i, BOSSEnsemble(), [i]) for i in range(0,X_train.shape[1])]
-    )
+    def fit(self, X, y, input_checks=True):
+        self.estimators = [("Clf%d"%i, clone(self.estimator), [i]) for i in range(0,X.shape[1])]
+        super().fit(X,y, input_checks)
 
-    ct.fit(X_train, y_train)
-    print(ct.score(X_train,y_test))
+
+
+
+
+
+
+
