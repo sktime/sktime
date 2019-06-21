@@ -1,4 +1,6 @@
 from statsmodels.tsa.stattools import pacf
+from statsmodels.tsa.stattools import acf
+from statsmodels.tsa.stattools import periodogram
 from enum import Enum
 import numpy as np
 from sktime.transformers.base import BaseTransformer

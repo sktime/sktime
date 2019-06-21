@@ -109,3 +109,6 @@ if __name__ == "__main__":
 #    loc = 'C:\Users\Jeremy\PycharmProjects\transformers\sktime\datasets\data\GunPoint\GunPoint_TEST.ts'
 #    train,test = load_ts(loc)
     print(dataset)
+
+
+
