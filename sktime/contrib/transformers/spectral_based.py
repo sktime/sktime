@@ -2,8 +2,6 @@ from statsmodels.tsa.stattools import pacf
 from enum import Enum
 import numpy as np
 from sktime.transformers.base import BaseTransformer
-from sktime.contrib.transformers.mapped_transformer_base import BaseMappedTransformer
-from sktime.contrib.transformers.mapped_function_config import FunctionConfigs
 
 
 __author__ = ["Jeremy Sellier"]
@@ -19,30 +17,30 @@ __author__ = ["Jeremy Sellier"]
 class FunctionConfigs:
 
     class FuncType(Enum):
-        discreteFT = 1
-        discreteRealFT = 2,
-        discreteHermiteFT = 3,
-        powerSpectrum = 4,
-        stdACF = 5,
-        pACF = 6
+        DFT = 1
+        DFT_REAL = 2,
+        DFT_HERMITE = 3,
+        POWER_SPECTRUM = 4,
+        ACF = 5,
+        PACF = 6
 
     lambdaContainer = {
-        FuncType.discreteFT: lambda p: np.fft.fftn(**p),
-        FuncType.discreteRealFT: lambda p: np.fft.rfftn(**p),
-        FuncType.discreteHermiteFT: lambda p: np.fft.hfft(**p),
-        FuncType.powerSpectrum: lambda p: periodogram(**p),
-        FuncType.stdACF: lambda p: acf(**p),
-        FuncType.pACF: lambda p: pacf(**p)
+        FuncType.DFT: lambda p: np.fft.fftn(**p),
+        FuncType.DFT_REAL: lambda p: np.fft.rfftn(**p),
+        FuncType.DFT_HERMITE: lambda p: np.fft.hfft(**p),
+        FuncType.POWER_SPECTRUM: lambda p: periodogram(**p),
+        FuncType.ACF: lambda p: acf(**p),
+        FuncType.PACF: lambda p: pacf(**p)
     }
 
     constraintTo1D = {
-        FuncType.powerSpectrum: True,
-        FuncType.stdACF: True,
-        FuncType.pACF: True
+        FuncType.POWER_SPECTRUM: True,
+        FuncType.ACF: True,
+        FuncType.PACF: True
     }
 
     indexReturn = {
-        FuncType.powerSpectrum: 0
+        FuncType.POWER_SPECTRUM: 0
     }
 
     def __init__(self):
@@ -143,11 +141,11 @@ class DiscreteFourierTransformer(BaseMappedTransformer):
     def __init__(self, fourier_type='standard', axes=None, norm=None, check_input=True):
 
         if fourier_type == 'standard':
-            self.type_ = FunctionConfigs.FuncType.discreteFT
+            self.type_ = FunctionConfigs.FuncType.DFT
         elif fourier_type == 'real':
-            self.type_ = FunctionConfigs.FuncType.discreteRealFT
+            self.type_ = FunctionConfigs.FuncType.DFT_REAL
         elif fourier_type == 'hermite':
-            self.type_ = FunctionConfigs.FuncType.discreteHermiteFT
+            self.type_ = FunctionConfigs.FuncType.DFT_HERMITE
         else:
             raise TypeError("unrecognized discrete fourier type")
 
@@ -166,11 +164,11 @@ class AutoCorrelationFunctionTransformer(BaseMappedTransformer):
                  alpha=None, missing='none', check_input=True):
 
         if acf_type == 'standard':
-            self.type_ = FunctionConfigs.FuncType.stdACF
+            self.type_ = FunctionConfigs.FuncType.ACF
             self.transform_parameters = {'unbiased': unbiased, 'nlags': nlags, 'qstat': qstat, 'fft': fft,
                                          'alpha': alpha, 'missing': missing}
         elif acf_type == 'partial':
-            self.type_ = FunctionConfigs.FuncType.pACF
+            self.type_ = FunctionConfigs.FuncType.PACF
             self.transform_parameters = {'unbiased': unbiased, 'nlags': nlags, 'method': method, 'alpha': alpha}
         else:
             raise TypeError("unrecognized ACF type")
@@ -190,7 +188,7 @@ class PowerSpectrumTransformer(BaseMappedTransformer):
         self.transform_parameters = {'fs': fs, 'window': window, 'nfft': nfft, 'detrend': detrend,
                                      'return_onesided': return_onesided, 'scaling': scaling, 'axis': axis}
 
-        self.type_ = FunctionConfigs.FuncType.powerSpectrum
+        self.type_ = FunctionConfigs.FuncType.POWER_SPECTRUM
         self.input_key_ = 'x'
         self.check_input_ = check_input
         self.is_fitted_ = True
