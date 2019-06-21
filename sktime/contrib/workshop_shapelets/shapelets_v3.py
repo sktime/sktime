@@ -1,43 +1,10 @@
-# WORSHOP NOTE: v3 initially is a full shapelet transform (extension to random and contract should be ready to implement, but not
-# enabled yet). Specific TO-DOs:
-#   - TESTING:          HAS NOT BEEN TESTED THOROUGHLY. Good to test against shapelets from the java UEA implementation to check for parity.
-#                       Important to make sure info gain calcs are correct with binary info gain (this has been rewritten from v2 to avoid
-#                       multiple sorts and some calls that were not necessary. I believe it is correct, but good to test further)
-#
-#                       Note: known issue is that transform does not currently return shapelets - run main to see where it's up to :)
-#
-#   - distance measure: it has been rewired with the latest early abandon for evaluating a candidate (i.e. start in the same location of
-#                       a comparison series as the candidate, then move left and right). However, full distance of the subsequence is
-#                       currently calculated using np.linalg.norm(candidate-comparison)^2 as it's faster than doing a Euclidean distance
-#                       early abandon! This means there's no benefit in the left and right search currently, but it is there and ready to
-#                       go as the plan is to do the ED calculation as a cython function with early abandon (which should add benefit).
-#                       Cython dist to-do however, and timing experiments necessary to settle on which approach is fastest
-#
-#   - contracting:      to validate correctness the transform below should be a full, sequential search of candidate shapelets. This should
-#     (also random)     be extended to  random enumeration and also a random time contract transforms. I think the best way to do this is
-#     (subclasses)      to create two subclasses, RandomShapeletTransform and RandomContractedShapeletTransform (or something more catchy).
-#                       These should use the same fit method (plus others) from the full/base class; the subclasses should effectively
-#                       handle setting up Full/Random/Contract separately to avoid overlapping arguements (such as number of cases to visit
-#                       doesn't make sense for full, time contract doesn't make sense for random enumeration, etc.)
-#
-#   - cythonise:        Could cythonise other important methods, eg the info gain calculations
-#
-#   - multivariate      This was implemented in the transform method in v2 but couldn't see the flag in transform! Unsure how this works. I
-#     independent       assume it extracts a shapelet from a single dimension rather than across all, and then in the transform it should
-#     shapelets         only calculate the distance between the shapelet and the same dimension of a test case? Taken out for now for
-#                       clarity as I'm not sure about it
-
-
-# end of 18/6/19 - full shapelet transform should be operational, small changes required for contracting and random enumeration to follow
 import os
 import time
 import warnings
 import numpy as np
 import pandas as pd
 
-from collections import Counter
 from itertools import zip_longest
-from sklearn.base import TransformerMixin
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
@@ -52,12 +19,13 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # TO-DO: in case of unequal length time series, we have two options:
 # 1) fix the maximum length for the shapelets to the minimum length time series (of train dataset,
-#      which can also fails if there is a smaller time series in the test set).
+#      which can also fail if there is a smaller time series in the test set).
 # 2) use another time series distance measure such as DTW to avoid this, since you can compare unequal
 #      time series (we lose the early abandon in the distance measurement).
-
-# TO-DO: Currently extends TransformerMixin - class should extend the sktime transformer base class (not on dev at
-#        branch at time of writing however so this can be updated later)
+#
+# TO-DO: could cythonise important methods, eg the distance and info gain calculations
+#
+# TO-DO: add CI tests, comments, documentation, etc.
 
 
 class ShapeletTransform(BaseTransformer):
@@ -79,11 +47,10 @@ class ShapeletTransform(BaseTransformer):
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
         self.independent_dimensions = independent_dimensions
+        self.predefined_ig_rejection_level = 0.05
+        self.shapelets = None
 
-        self.predefined_ig_rejection_level = 0.1
-
-
-    def fit(self, X, y, **fit_params):
+    def fit(self, X, y=None):
         """A method to fit the shapelet transform to a specified X and y
 
         Parameters
@@ -113,7 +80,6 @@ class ShapeletTransform(BaseTransformer):
             num_series_to_visit = min(self.num_cases_to_sample, len(y))
         else:
             num_series_to_visit = num_ins
-
 
         shapelet_heaps_by_class = {i: ShapeletPQ() for i in distinct_class_vals}
 
@@ -228,7 +194,7 @@ class ShapeletTransform(BaseTransformer):
                 # now go through all other series and get a distance from the candidate to each
                 orderline = []
 
-                # initialise here as copy, decrease the new val each time we evaliate a comparison series
+                # initialise here as copy, decrease the new val each time we evaluate a comparison series
                 num_visited_this_class = 0
                 num_visited_other_class = 0
 
@@ -327,15 +293,13 @@ class ShapeletTransform(BaseTransformer):
                         if self.verbose > 0:
                             if candidate_rejected is False:
                                 print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
-                                                                                        int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+                                                                                            int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
                             else:
                                 print("Candidate rejected. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
-                                                                                        int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+                                                                                            int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
 
-
-
-            # # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
-            # #                     in case of contracted transform (i.e. time limit has been reached)
+            # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
+            #                     in case of contracted transform (i.e. time limit has been reached)
             case_idx += 1
 
             if case_idx >= num_series_to_visit:
@@ -345,7 +309,6 @@ class ShapeletTransform(BaseTransformer):
                 if self.verbose > 0:
                     print("Stopping search")
                 break
-
 
         # remove self similar here
         # for each class value
@@ -369,16 +332,8 @@ class ShapeletTransform(BaseTransformer):
 
             self.shapelets.extend(by_class_descending_ig)
 
-        if self.verbose > 1:
-            for a in range(len(self.shapelets)):
-                print(self.shapelets[a].info_gain, end=" ")
-            print()
-
-            self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
-            for a in range(len(self.shapelets)):
-                print(self.shapelets[a].info_gain, end=" ")
-            print()
-
+        # final sort so that all shapelets from all classes are in descending order of information gain
+        self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
 
     @staticmethod
     def remove_self_similar(shapelet_list):
@@ -395,8 +350,8 @@ class ShapeletTransform(BaseTransformer):
         shapelet_list: list of Shapelet objects
         """
 
-        # IMPORTANT: shapelets must be in descending order of quality. This is preferable in the fit method as removing self-similar
-        # shapelets may be False. However, could be dangerous if something else uses this code later.
+        # IMPORTANT: it is assumed that shapelets are already in descending order of quality. This is preferable in the fit method as removing self-similar
+        # shapelets may be False so the sort needs to happen there in those cases, and avoids a second redundant sort here if it is set to True
 
         def is_self_similar(shapelet_one, shapelet_two):
             # not self similar if from different series
@@ -408,11 +363,11 @@ class ShapeletTransform(BaseTransformer):
             if (shapelet_two.start_pos >= shapelet_one.start_pos) and (shapelet_two.start_pos <= shapelet_one.start_pos + shapelet_one.length):
                 return True
 
+        # [s][2] will be a tuple with (info_gain,id,Shapelet), so we need to access [2]
         to_return = [shapelet_list[0][2]]  # first shapelet must be ok
         for s in range(1, len(shapelet_list)):
             can_add = True
             for c in range(0, s):
-                #[s][2] and [c][2] used as the list of shapelets is now a tuple with (info_gain,id,Shapelet), so we need to access [2]
                 if is_self_similar(shapelet_list[s][2], shapelet_list[c][2]):
                     can_add = False
                     break
@@ -420,10 +375,7 @@ class ShapeletTransform(BaseTransformer):
                 to_return.append(shapelet_list[s][2])
 
         return to_return
-    # two "self-similar" shapelets are subsequences from the same series that are overlapping. This method
 
-
-    # not tested yet
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, **transform_params):
         """Transforms X according to the extracted shapelets (self.shapelets)
@@ -441,12 +393,11 @@ class ShapeletTransform(BaseTransformer):
         if self.shapelets is None:
             raise Exception("Fit not called yet or no shapelets were generated")
 
-        # X_lens = np.array([len(X.iloc[r, 0]) for r in range(len(X))])  # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
         X = np.array([[X.iloc[r, c].values for c in range(len(X.columns))] for r in range(len(X))])  # may need to pad with nans here for uneq length, look at later
 
         output = np.zeros([len(X), len(self.shapelets)], dtype=np.float32, )
 
-        # for the i^th series to transformnet
+        # for the i^th series to transform
         for i in range(0, len(X)):
             this_series = X[i]
 
@@ -486,7 +437,7 @@ class ShapeletTransform(BaseTransformer):
         elif self.shapelets is not None:
             raise Exception("Trying to fit but shapelets already exist.")
         else:
-            raise Exception("No class values specified - shapelet extraction is supervised")
+            raise Exception("No class values specified - shapelet extraction is supervised and requires Y to build the transform")
 
         return self.transform(X)
 
@@ -791,7 +742,7 @@ def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
 
 if __name__ == "__main__":
 
-    from sktime.utils.load_data import load_from_arff_to_dataframe
+    # from sktime.utils.load_data import load_from_arff_to_dataframe
     # dataset = "BasicMotions"
     dataset = "GunPoint"
 
@@ -807,11 +758,8 @@ if __name__ == "__main__":
         remove_self_similar=True
     )
     start_time = time.time()
-    # print(train_y[0:10])
     shapelets = a.fit(train_x, train_y)
     end_time = time.time()
-    # print("time: "+str(end_time-start_time))
-    # print()
     for s in a.shapelets:
         print(s)
         print(s.data)
