@@ -20,6 +20,7 @@ import pandas as pd
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
 from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
+
 class TLENET(BaseDeepLearner):
 
     def __init__(self, output_directory=None, verbose=False, dim_to_use=0, rand_seed=0):
@@ -132,13 +133,12 @@ class TLENET(BaseDeepLearner):
             if y is not None:
                 y_augmented.append(y)
 
-
         increase_nums = []
 
         # data augmentation using WS
         for i in range(0, len(x_augmented)):
             x_augmented[i], y_train_augmented_i, increase_num = self.slice_data(x_augmented[i], y, length_ratio)
-            #print("inc num",increase_num)
+            # print("inc num",increase_num)
             if y is not None:
                 y_augmented[i] = y_train_augmented_i
 
@@ -166,10 +166,8 @@ class TLENET(BaseDeepLearner):
                     increase_num = increase_nums[j]
                     new_y[idx:idx + increase_num, :] = y_augmented[j][i * increase_num:(i + 1) * increase_num, :]
                     idx += increase_num
-					
-					
-        return new_x, new_y, tot_increase_num
 
+        return new_x, new_y, tot_increase_num
 
     def fit(self, X, y, input_checks=True, **kwargs):
         # check and convert input to a univariate Numpy array
@@ -198,16 +196,15 @@ class TLENET(BaseDeepLearner):
             self.slice_ratio = 8 / m
 
         X, y, tot_increase_num = self.pre_processing(X, y)
-        #print(y.shape)
+        # print(y.shape)
 
-        #print('Total increased number for each MTS: ', tot_increase_num)
+        # print('Total increased number for each MTS: ', tot_increase_num)
 
         input_shape = X.shape[1:]
         self.model = self.build_model(input_shape, self.nb_classes)
 
         self.hist = self.model.fit(X, y, batch_size=self.batch_size, epochs=self.nb_epochs,
-                         verbose=self.verbose, callbacks=self.callbacks)
-
+                                   verbose=self.verbose, callbacks=self.callbacks)
 
     def predict_proba(self, X, input_checks=True, **kwargs):
         # preprocess test.
@@ -223,23 +220,24 @@ class TLENET(BaseDeepLearner):
             X = X.reshape((X.shape[0], X.shape[1], 1))
 
         X, _, tot_increase_num = self.pre_processing(X)
-        #print(X.shape)
+        # print(X.shape)
 
         # predict some stuff based on the keras.
         preds = self.model.predict(X, batch_size=self.batch_size)
 
         y_predicted = []
-        test_num_batch = int(X.shape[0]/tot_increase_num)
+        test_num_batch = int(X.shape[0] / tot_increase_num)
 
         ##TODO: could fix this to be an array literal.
         for i in range(test_num_batch):
-            y_predicted.append(np.average(preds[i*tot_increase_num: ((i+1)*tot_increase_num)-1], axis=0))
+            y_predicted.append(np.average(preds[i * tot_increase_num: ((i + 1) * tot_increase_num) - 1], axis=0))
 
         y_pred = np.array(y_predicted)
 
         keras.backend.clear_session()
 
         return y_pred
+
 
 if __name__ == "__main__":
     networkTests(TLENET())

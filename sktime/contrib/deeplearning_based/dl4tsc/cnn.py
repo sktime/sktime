@@ -24,6 +24,7 @@ from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
 from sktime.contrib.deeplearning_based.basenetwork import networkTests
 
+
 class CNN(BaseDeepLearner):
 
     def __init__(self, dim_to_use=0, rand_seed=0, verbose=False,
@@ -64,7 +65,7 @@ class CNN(BaseDeepLearner):
             self.filter_sizes = self.filter_sizes[:self.nb_conv_layers]
         elif len(self.filter_sizes) < self.nb_conv_layers:
             self.filter_sizes = self.filter_sizes + [self.filter_sizes[-1]] * (
-                        self.nb_conv_layers - len(self.filter_sizes))
+                    self.nb_conv_layers - len(self.filter_sizes))
 
         conv = keras.layers.Conv1D(filters=self.filter_sizes[0],
                                    kernel_size=self.kernel_size,
@@ -117,7 +118,7 @@ class CNN(BaseDeepLearner):
             self.model.summary()
 
         self.history = self.model.fit(X, y_onehot, batch_size=self.batch_size, epochs=self.nb_epochs,
-                              verbose=self.verbose, callbacks=self.callbacks)
+                                      verbose=self.verbose, callbacks=self.callbacks)
 
 
 if __name__ == '__main__':

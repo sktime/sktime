@@ -121,10 +121,10 @@ class ResNet(BaseDeepLearner):
 
         reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50, min_lr=0.0001)
 
-        #file_path = self.output_directory + 'best_model.hdf5'
-        #model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
+        # file_path = self.output_directory + 'best_model.hdf5'
+        # model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
         #                                                   save_best_only=True)
-        #self.callbacks = [reduce_lr, model_checkpoint]
+        # self.callbacks = [reduce_lr, model_checkpoint]
         self.callbacks = [reduce_lr]
 
         return model
@@ -155,7 +155,8 @@ class ResNet(BaseDeepLearner):
             self.model.summary()
 
         self.history = self.model.fit(X, y_onehot, batch_size=self.batch_size, epochs=self.nb_epochs,
-                              verbose=self.verbose, callbacks=self.callbacks)
+                                      verbose=self.verbose, callbacks=self.callbacks)
+
 
 if __name__ == '__main__':
     networkTests(ResNet())

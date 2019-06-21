@@ -20,7 +20,6 @@
 
 __author__ = "James Large"
 
-
 import sys
 import numpy as np
 import pandas as pd
@@ -36,15 +35,15 @@ from sklearn.utils.estimator_checks import check_estimator
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
 
-class BaseDeepLearner(BaseClassifier):
 
+class BaseDeepLearner(BaseClassifier):
     classes_ = None
     nb_classes = None
 
     def build_model(self, input_shape, nb_classes, **kwargs):
         raise NotImplementedError('this is an abstract method')
 
-    def fit(self, X, y, input_checks = True, **kwargs):
+    def fit(self, X, y, input_checks=True, **kwargs):
         raise NotImplementedError()
 
     def predict_proba(self, X, input_checks=True, **kwargs):
@@ -80,7 +79,7 @@ class BaseDeepLearner(BaseClassifier):
         #    raise ValueError('Invalid shape for y: ' + str(y.shape))
         # self.nb_classes = len(self.classes_)
         #
-        #return keras.utils.to_categorical(y, self.nb_classes)
+        # return keras.utils.to_categorical(y, self.nb_classes)
 
         self.label_encoder = LabelEncoder()
         self.onehot_encoder = OneHotEncoder(sparse=False)
@@ -114,6 +113,7 @@ def test_basic(network):
 
     print(network.score(X_test, y_test))
     print("end test_basic()\n\n")
+
 
 def test_pipeline(network):
     '''
@@ -179,13 +179,16 @@ def test_highLevelsktime(network):
 def test_multivariate(network):
     print("Start test_multivariate()\n\n")
 
-    X_train, y_train = load_from_tsfile_to_dataframe('Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TRAIN.ts')
-    X_test, y_test = load_from_tsfile_to_dataframe('Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TEST.ts')
+    X_train, y_train = load_from_tsfile_to_dataframe(
+        'Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TRAIN.ts')
+    X_test, y_test = load_from_tsfile_to_dataframe(
+        'Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TEST.ts')
 
     hist = network.fit(X_train, y_train)
 
     print(network.score(X_test, y_test))
     print("end test_multivariate()\n\n")
+
 
 def networkTests(network):
     # sklearn compatibility
@@ -196,6 +199,7 @@ def networkTests(network):
     test_highLevelsktime(network)
     test_multivariate(network)
 
+
 def comparisonExperiments():
     data_dir = "C:/Univariate2018_ts/"
     res_dir = "C:/JamesLPHD/sktimeStuff/InitialComparisonResults/"
@@ -205,7 +209,7 @@ def comparisonExperiments():
         "dl4tsc_encoder",
         "dl4tsc_fcn",
         "dl4tsc_mcdcnn",
-        #"dl4tsc_mcnn",
+        # "dl4tsc_mcnn",
         "dl4tsc_mlp",
         "dl4tsc_resnet",
         "dl4tsc_tlenet",
@@ -251,6 +255,3 @@ def comparisonExperiments():
 
 if __name__ == "__main__":
     comparisonExperiments()
-
-
-
