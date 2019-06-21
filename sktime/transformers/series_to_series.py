@@ -7,8 +7,8 @@ from ..utils.transformations import tabularize, detabularize, concat_nested_arra
 from .base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator']
-__author__ = ["Markus Löning", "Jason Lines"]
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator', 'FlatTransformer']
+__author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -295,7 +295,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
         return np.column_stack([starts, ends])
 
-      
+
 class DerivativeSlopeTransformer(BaseTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
@@ -349,3 +349,59 @@ class TimeSeriesConcatenator(BaseTransformer):
         return Xt
 
 
+class FlatTransformer(BaseTransformer):
+    """
+    Finds segments of unchanging values (such as NaN, or any provided) and
+    returns the starting indices and lengths.
+    """
+
+    def __init__(self, value=np.nan):
+        self.value = value
+        self.starts = []
+        self.lengths = []
+
+    def fit(self, X, y=None, column="dim_0"):
+        """
+        Fit transformer, finding positions & lengths of missing value
+        intervals.
+
+        .. todo::
+            Important caveat: the method currently only works if the timeseries
+            does not start or end with the value.  Do not use if starting /
+            ending values are equal to the value!
+        """
+        for _, x in X.iterrows():
+            # turn Series into 1darrays
+            x = x[column].values
+
+            # find indices of transition
+            if np.isnan(self.value):
+                i = np.isnan(x)
+            elif np.isinf(self.value):
+                i = np.isinf(x)
+            else:
+                i = (x == self.value)
+
+            # compute starts, ends and lengths of the plateaus
+            starts = np.where(i[:-1] != i[1:])[0][::2] + 1
+            ends = np.where(i[:-1] != i[1:])[0][1::2]
+            lengths = (ends - starts) + 1
+
+            # filter out single points
+            starts = starts[lengths > 1]
+            lengths = lengths[lengths > 1]
+
+            self.starts.append(starts)
+            self.lengths.append(lengths)
+
+        return self
+
+    def transform(self, X, y=None, column="dim_0"):
+        """
+        Transform X.
+        """
+        out = X
+        column_prefix = "%s_%s" % (column, "nan" if np.isnan(self.value) else str(self.value))
+        out["%s_starts" % column_prefix] = pd.Series(self.starts)
+        out["%s_lengths" % column_prefix] = pd.Series(self.lengths)
+        return out
