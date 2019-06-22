@@ -3,8 +3,9 @@ import sys
 import numpy as np
 import pandas as pd
 import sktime.transformers.shapelets as shapelets
+from sktime.contrib.dictionary_based.PAA import PAA
 
-from sktime.utils.bitword import BitWord
+from sktime.contrib.dictionary_based.bitword import BitWord
 from sktime.transformers.base import BaseTransformer
 
 
@@ -83,9 +84,14 @@ class SAX(BaseTransformer):
             num_windows_per_inst = self.num_atts - self.window_size + 1
             split = np.array(X[i, np.arange(self.window_size)[None, :] + np.arange(num_windows_per_inst)[:, None]])
 
-            for window in range(split.shape[0]):
-                pattern = shapelets.RandomShapeletTransform.zscore(split[window])  # lazy code
-                pattern = self.PAA(pattern)
+            split = shapelets.RandomShapeletTransform.zscore(split, axis=None)  # move to utils or create new method?
+
+            paa = PAA(num_intervals=self.word_length)
+            patterns = paa.fit_transform(split)
+            patterns = np.asarray([a.values for a in patterns.iloc[:, 0]])
+
+            for n in range(patterns.shape[0]):
+                pattern = patterns[n, :]
                 word = self.create_word(pattern)
                 words.append(word)
                 lastWord = self.add_to_bag(bag, word, lastWord)
@@ -98,36 +104,6 @@ class SAX(BaseTransformer):
         bags['dim_' + str(self.dim_to_use)] = dim
 
         return bags
-
-    def PAA(self, series):
-        frames = []
-        current_frame = 0
-        current_frame_size = 0
-        frame_length = self.window_size / self.word_length
-        frame_sum = 0
-
-        for i in range(self.window_size):
-            remaining = frame_length - current_frame_size
-
-            if remaining > 1:
-                frame_sum += series[i]
-                current_frame_size += 1
-            else:
-                frame_sum += remaining * series[i]
-                current_frame_size += remaining
-
-            if current_frame_size == frame_length:
-                frames.append(frame_sum / frame_length)
-                current_frame += 1
-
-                frame_sum = (1-remaining) * series[i]
-                current_frame_size = (1-remaining)
-
-        # if the last frame was lost due to double imprecision
-        if current_frame == self.word_length-1:
-            frames.append(frame_sum / frame_length)
-
-        return frames
 
     def create_word(self, pattern):
         word = BitWord()

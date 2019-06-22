@@ -3,8 +3,8 @@ from sklearn.model_selection import GridSearchCV
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
 from sktime.pipeline import Pipeline
-from sktime.transformers.SAX import SAX
-from sktime.distances.dictionary_distances import euclidean_distance
+from sktime.contrib.dictionary_based.SAX import SAX
+from sktime.contrib.dictionary_based.dictionary_distances import euclidean_distance
 
 
 def bop_pipeline(X, y):
