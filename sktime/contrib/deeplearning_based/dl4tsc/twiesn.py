@@ -15,19 +15,17 @@
 __author__ = "Aaron Bostrom, James Large"
 
 import numpy as np
+import pandas as pd
+
 from scipy import sparse
-# scipy
 from scipy.sparse import linalg as slinalg
 
-########   sklearn
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-import pandas as pd
-
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 # class Classifier_TWIESN:
@@ -258,4 +256,4 @@ class TWIESN(BaseDeepLearner):
 
 
 if __name__ == "__main__":
-    networkTests(TWIESN())
+    test_network(TWIESN())

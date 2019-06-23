@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 class TLENET(BaseDeepLearner):
@@ -240,4 +240,4 @@ class TLENET(BaseDeepLearner):
 
 
 if __name__ == "__main__":
-    networkTests(TLENET())
+    test_network(TLENET())

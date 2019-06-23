@@ -20,7 +20,7 @@ import pandas as pd
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 class ResNet(BaseDeepLearner):
@@ -159,4 +159,4 @@ class ResNet(BaseDeepLearner):
 
 
 if __name__ == '__main__':
-    networkTests(ResNet())
+    test_network(ResNet())

@@ -14,14 +14,13 @@
 
 __author__ = "James Large"
 
-
 import keras
 import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 class FCN(BaseDeepLearner):
@@ -72,10 +71,10 @@ class FCN(BaseDeepLearner):
         reduce_lr = keras.callbacks.ReduceLROnPlateau(monitor='loss', factor=0.5, patience=50,
                                                       min_lr=0.0001)
 
-        #file_path = self.output_directory + 'best_model.hdf5'
-        #model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
+        # file_path = self.output_directory + 'best_model.hdf5'
+        # model_checkpoint = keras.callbacks.ModelCheckpoint(filepath=file_path, monitor='loss',
         #                                                   save_best_only=True)
-        #self.callbacks = [reduce_lr, model_checkpoint]
+        # self.callbacks = [reduce_lr, model_checkpoint]
         self.callbacks = [reduce_lr]
 
         return model
@@ -106,7 +105,8 @@ class FCN(BaseDeepLearner):
             self.model.summary()
 
         self.history = self.model.fit(X, y_onehot, batch_size=self.batch_size, epochs=self.nb_epochs,
-                              verbose=self.verbose, callbacks=self.callbacks)
+                                      verbose=self.verbose, callbacks=self.callbacks)
+
 
 if __name__ == '__main__':
-    networkTests(FCN())
+    test_network(FCN())

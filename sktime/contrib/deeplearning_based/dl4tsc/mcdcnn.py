@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 class MCDCNN(BaseDeepLearner):
@@ -163,4 +163,4 @@ class MCDCNN(BaseDeepLearner):
 
 
 if __name__ == '__main__':
-    networkTests(MCDCNN())
+    test_network(MCDCNN())

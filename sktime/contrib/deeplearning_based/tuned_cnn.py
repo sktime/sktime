@@ -1,8 +1,8 @@
 # Time convolutional neural network, adapted from the implementation from Fawaz et. al
 # https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/cnn.py
 #
-# Default parameters (without tuning) corresponds to the exact setup defined cnn
-#
+# Default parameters (without tuning) corresponds to the exact setup defined in cnn, i.e. the parameters in
+# Fawaz et. al
 #
 # Network originally proposed by:
 #
@@ -19,21 +19,19 @@
 
 __author__ = "James Large"
 
-import keras
 import numpy as np
-import pandas as pd
 
 from sktime.utils.validation import check_X_y
 from sktime.classifiers.base import BaseClassifier
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sktime.contrib.deeplearning_based.dl4tsc.cnn import CNN
 
 
-class CNN_Tunable(BaseDeepLearner):
+class Tuned_CNN(BaseDeepLearner):
 
     def __init__(self, dim_to_use=0, rand_seed=0, verbose=False, n_jobs=1,
                  param_grid=dict(
@@ -50,7 +48,7 @@ class CNN_Tunable(BaseDeepLearner):
 
         self.base_model = CNN()
         # todo make decisions on wrapping each network
-        #  separately or one by one, etc.
+        #  separately or generalise the parameters across networks, etc.
 
         # search parameters
         self.param_grid = param_grid
@@ -90,7 +88,7 @@ class CNN_Tunable(BaseDeepLearner):
         self.tuned_params = self.grid.best_params_
 
         # copying data-wrangling info up
-        self.label_encoder = self.grid.best_estimator_.label_encoder#
+        self.label_encoder = self.grid.best_estimator_.label_encoder  #
         self.classes_ = self.grid.best_estimator_.classes_
         self.nb_classes = self.grid.best_estimator_.nb_classes
 
@@ -117,4 +115,4 @@ class CNN_Tunable(BaseDeepLearner):
 if __name__ == '__main__':
     # simple, small, fast search for testing. default nb_epochs = 2000
     param_grid = dict(nb_epochs=[5, 10])
-    networkTests(CNN_Tunable(param_grid=param_grid, cv_folds=2))
+    test_network(Tuned_CNN(param_grid=param_grid, cv_folds=2), verbose=True)

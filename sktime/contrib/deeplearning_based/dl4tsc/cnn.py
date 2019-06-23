@@ -22,7 +22,7 @@ import pandas as pd
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import networkTests
+from sktime.contrib.deeplearning_based.basenetwork import test_network
 
 
 class CNN(BaseDeepLearner):
@@ -122,4 +122,4 @@ class CNN(BaseDeepLearner):
 
 
 if __name__ == '__main__':
-    networkTests(CNN())
+    test_network(CNN())
