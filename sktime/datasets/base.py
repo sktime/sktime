@@ -18,7 +18,7 @@ DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)
 
 
-# time series classification datasets
+# time series classification data sets
 
 def _load_dataset(name, split, return_X_y):
     """
@@ -47,7 +47,6 @@ def _load_dataset(name, split, return_X_y):
     else:
         X['class_val'] = pd.Series(y)
         return X
-
 
 def load_gunpoint(split='TRAIN', return_X_y=False):
     """
@@ -177,7 +176,48 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-# forecasting datasets
+def load_basic_motions(split='TRAIN', return_X_y=False):
+    """
+    Loads the ArrowHead time series classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      251
+    Train cases:        36
+    Test cases:         175
+    Number of classes:  3
+
+    The arrowhead data consists of outlines of the images of arrowheads. The shapes of the
+    projectile points are converted into a time series using the angle-based method. The
+    classification of projectile points is an important topic in anthropology. The classes
+    are based on shape distinctions such as the presence and location of a notch in the
+    arrow. The problem in the repository is a length normalised version of that used in
+    Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
+
+    Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
+    """
+
+    name = 'BasicMotions'
+    return _load_dataset(name, split, return_X_y)
+
+
+# forecasting data sets
 
 def load_shampoo_sales(return_y_as_dataframe=False):
     """
