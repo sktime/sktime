@@ -28,7 +28,7 @@ import gc
 
 from sktime.classifiers.base import BaseClassifier
 from sktime.datasets import load_italy_power_demand
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sktime.datasets import load_basic_motions
 
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.preprocessing import LabelEncoder
@@ -81,7 +81,7 @@ class BaseDeepLearner(BaseClassifier):
         # return keras.utils.to_categorical(y, self.nb_classes)
 
         self.label_encoder = LabelEncoder()
-        self.onehot_encoder = OneHotEncoder(sparse=False)
+        self.onehot_encoder = OneHotEncoder(sparse=False, categories='auto')
 
         y = self.label_encoder.fit_transform(y)
         self.classes_ = self.label_encoder.classes_
@@ -102,7 +102,7 @@ def test_basic_univariate(network):
         score
     '''
 
-    print("Start test_basic()\n\n")
+    print("Start test_basic()")
 
     X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
     X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
@@ -110,7 +110,7 @@ def test_basic_univariate(network):
     hist = network.fit(X_train[:10], y_train[:10])
 
     print(network.score(X_test[:10], y_test[:10]))
-    print("end test_basic()\n\n")
+    print("End test_basic()")
 
 
 def test_pipeline(network):
@@ -139,7 +139,7 @@ def test_pipeline(network):
     hist = clf.fit(X_train[:10], y_train[:10])
 
     print(clf.score(X_test[:10], y_test[:10]))
-    print("end test_pipeline()\n\n")
+    print("End test_pipeline()")
 
 
 def test_highLevelsktime(network):
@@ -151,7 +151,7 @@ def test_highLevelsktime(network):
         score
     '''
 
-    print("start test_highLevelsktime()\n\n")
+    print("start test_highLevelsktime()")
 
     from sktime.highlevel import TSCTask
     from sktime.highlevel import TSCStrategy
@@ -165,10 +165,10 @@ def test_highLevelsktime(network):
     strategy.fit(task, train.iloc[:10])
 
     y_pred = strategy.predict(test.iloc[:10])
-    y_test = test[task.target]
+    y_test = test.iloc[:10][task.target]
     print(accuracy_score(y_test, y_pred))
 
-    print("end test_highLevelsktime()\n\n")
+    print("End test_highLevelsktime()")
 
 
 def test_basic_multivariate(network):
@@ -179,17 +179,15 @@ def test_basic_multivariate(network):
         fit,
         score
     '''
-    print("Start test_multivariate()\n\n")
+    print("Start test_multivariate()")
 
-    X_train, y_train = load_from_tsfile_to_dataframe(
-        'Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TRAIN.ts')
-    X_test, y_test = load_from_tsfile_to_dataframe(
-        'Z:/sktimeData/Multivariate2018_ts/BasicMotions/BasicMotions_TEST.ts')
+    X_train, y_train = load_basic_motions(split='TRAIN', return_X_y=True)
+    X_test, y_test = load_basic_motions(split='TRAIN', return_X_y=True)
 
-    hist = network.fit(X_train[:10], y_train[:10])
+    hist = network.fit(X_train, y_train)
 
-    print(network.score(X_test[:10], y_test[:10]))
-    print("end test_multivariate()\n\n")
+    print(network.score(X_test, y_test))
+    print("End test_multivariate()")
 
 
 def test_network(network):
@@ -214,20 +212,21 @@ def test_all_networks_all_tests():
     import sktime.contrib.deeplearning_based.dl4tsc.twiesn as twiesn
     import sktime.contrib.deeplearning_based.tuned_cnn as tuned_cnn
 
-    networks = [cnn.CNN(),
-                encoder.Encoder(),
-                fcn.FCN(),
-                mcdcnn.MCDCNN(),
-                mcnn.MCNN(),
-                mlp.MLP(),
-                resnet.ResNet(),
-                tlenet.TLENET(),
-                twiesn.TWIESN(),
-                tuned_cnn.Tuned_CNN(),
-                ]
+    networks = [
+        # cnn.CNN(),
+        # encoder.Encoder(),
+        # fcn.FCN(),
+        # mcdcnn.MCDCNN(),
+        mcnn.MCNN(),
+        mlp.MLP(),
+        resnet.ResNet(),
+        tlenet.TLENET(),
+        twiesn.TWIESN(),
+        tuned_cnn.Tuned_CNN(),
+    ]
 
     for network in networks:
-        print('\t\t' + network.__class__.__name__ + ' testing started')
+        print('\n\t\t' + network.__class__.__name__ + ' testing started')
         test_network(network)
         print('\t\t' + network.__class__.__name__ + ' testing finished')
 

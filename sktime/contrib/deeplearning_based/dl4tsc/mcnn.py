@@ -426,23 +426,33 @@ class MCNN(BaseDeepLearner):
                 # print('postbest', self.model)
 
                 # clear memory in all the ways... **1
-                model = None
                 del model
-                gc.collect()
                 keras.backend.clear_session()
+                gc.collect()
 
                 # print('postclear',self.model)
 
-        # **1
+        # **1 todo
         # had issues with, we suspect, memory on the gpu with models hanging around.
         # deleting EVERY model after evaluation, and RETRAINING the best for now.
         # after design discussions, can talk about writing best model (so far at each stage)
-        # to disk and reloading at the end, as fawaz (and I imagine most dl-experimental code
-        # does to be honest)
+        # to disk and reloading at the end, as fawaz (and I imagine most dl-experimental code)
+        # does
+        # update 2019/06/23 this might be a problem with keras itself and how it handles it's tf sessions
+        # https://github.com/keras-team/keras/issues/2102
+        # specific examples, https://github.com/keras-team/keras/issues/2102#issuecomment-410823700
+        #                    https://github.com/keras-team/keras/issues/2102#issuecomment-418888790
+        #
+        # genuinely possible to just switch to theano and avoid this problem altogether...
+        #
+        # aha, perhaps it is a problem not with keras specifically, but running keras stuff within pycharm...
+        #                https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000015484-exit-code-1073741819-0xC0000005-
+        #                https://stackoverflow.com/questions/46745523/keras-model-failing-to-compile-exit-code-1073741819-0xc0000005
+        #  leading to... https://youtrack.jetbrains.com/issue/PY-17069
         _, self.model = self.train(X, y, pool_factor, filter_size)
 
     def predict_proba(self, X, input_checks=True, **kwargs):
-        ####get predictions out of the model.
+        #### get predictions out of the model.
         # check and convert input to a univariate Numpy array
         if isinstance(X, pd.DataFrame):
             if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
@@ -450,6 +460,7 @@ class MCNN(BaseDeepLearner):
             else:
                 raise TypeError(
                     "Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+
         if len(X.shape) == 2:
             # add a dimension to make it multivariate with one dimension
             X = X.reshape((X.shape[0], X.shape[1], 1))

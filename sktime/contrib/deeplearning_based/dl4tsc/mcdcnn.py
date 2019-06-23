@@ -43,6 +43,7 @@ class MCDCNN(BaseDeepLearner):
         self.batch_size = 16
 
         self.rand_seed = rand_seed
+        self.random_state = np.random.RandomState(self.rand_seed)
 
     def build_model(self, input_shape, nb_classes, **kwargs):
         n_t = input_shape[0]
