@@ -427,8 +427,8 @@ class MCNN(BaseDeepLearner):
 
                 # clear memory in all the ways... **1
                 del model
-                keras.backend.clear_session()
                 gc.collect()
+                keras.backend.clear_session()
 
                 # print('postclear',self.model)
 
@@ -446,9 +446,15 @@ class MCNN(BaseDeepLearner):
         # genuinely possible to just switch to theano and avoid this problem altogether...
         #
         # aha, perhaps it is a problem not with keras specifically, but running keras stuff within pycharm...
-        #                https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000015484-exit-code-1073741819-0xC0000005-
-        #                https://stackoverflow.com/questions/46745523/keras-model-failing-to-compile-exit-code-1073741819-0xc0000005
+        #  https://intellij-support.jetbrains.com/hc/en-us/community/posts/360000015484-exit-code-1073741819-0xC0000005-
+        #  https://stackoverflow.com/questions/46745523/keras-model-failing-to-compile-exit-code-1073741819-0xc0000005
         #  leading to... https://youtrack.jetbrains.com/issue/PY-17069
+        #
+        # running multiple mcnns in pycharm leads to errors/exit codes, however running from e.g. anaconda prompt looks
+        # like it is fine, or at the very least is leaking memory much slower
+        #
+        # todo is jsut leaking slower - still fails. to be fixed when time for tedious deep-delving, else just do not expect
+        #  to be able to run multiple of these in a single execution
         _, self.model = self.train(X, y, pool_factor, filter_size)
 
     def predict_proba(self, X, input_checks=True, **kwargs):
@@ -510,7 +516,7 @@ class MCNN(BaseDeepLearner):
         for i in range(test_num_batch):
             x = test_set_x[i * (increase_num): (i + 1) * (increase_num)]
             preds = self.model.predict_on_batch(self.split_input_for_model(x, self.input_shapes))
-            y_predicted.append(np.average(preds[i * increase_num: ((i + 1) * increase_num) - 1], axis=0))
+            y_predicted.append(np.average(preds, axis=0))
 
         y_pred = np.array(y_predicted)
 

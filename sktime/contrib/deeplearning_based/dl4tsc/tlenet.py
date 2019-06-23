@@ -51,7 +51,7 @@ class TLENET(BaseDeepLearner):
         increase_num = length - length_sliced + 1  # if increase_num =5, it means one ori becomes 5 new instances.
         n_sliced = n * increase_num
 
-        print((n_sliced, length_sliced, n_dim))
+        # print((n_sliced, length_sliced, n_dim))
 
         new_x = np.zeros((n_sliced, length_sliced, n_dim))
 

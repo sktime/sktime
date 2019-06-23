@@ -82,6 +82,7 @@ class BaseDeepLearner(BaseClassifier):
 
         self.label_encoder = LabelEncoder()
         self.onehot_encoder = OneHotEncoder(sparse=False, categories='auto')
+        # categories='auto' to get rid of FutureWarning
 
         y = self.label_encoder.fit_transform(y)
         self.classes_ = self.label_encoder.classes_
@@ -194,8 +195,8 @@ def test_network(network):
     # sklearn compatibility
     # check_estimator(FCN)
 
-    test_basic_univariate(network)
-    test_basic_multivariate(network)
+    #test_basic_univariate(network)
+    #test_basic_multivariate(network)
     test_pipeline(network)
     test_highLevelsktime(network)
 
@@ -218,8 +219,8 @@ def test_all_networks_all_tests():
         # fcn.FCN(),
         # mcdcnn.MCDCNN(),
         mcnn.MCNN(),
-        mlp.MLP(),
-        resnet.ResNet(),
+        # mlp.MLP(),
+        # resnet.ResNet(),
         tlenet.TLENET(),
         twiesn.TWIESN(),
         tuned_cnn.Tuned_CNN(),
@@ -240,11 +241,11 @@ def comparisonExperiments():
         "dl4tsc_encoder",
         "dl4tsc_fcn",
         "dl4tsc_mcdcnn",
-        # "dl4tsc_mcnn",
+        "dl4tsc_mcnn",
         "dl4tsc_mlp",
         "dl4tsc_resnet",
-        # "dl4tsc_tlenet",
-        # "dl4tsc_twiesn",
+        "dl4tsc_tlenet",
+        "dl4tsc_twiesn",
     ]
 
     small_datasets = [
@@ -285,5 +286,5 @@ def comparisonExperiments():
 
 
 if __name__ == "__main__":
-    # comparisonExperiments()
-    test_all_networks_all_tests()
+    comparisonExperiments()
+    # test_all_networks_all_tests()
