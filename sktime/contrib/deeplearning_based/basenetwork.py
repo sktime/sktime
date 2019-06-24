@@ -61,19 +61,6 @@ class BaseDeepLearner(BaseClassifier):
         return probs
 
     def convert_y(self, y):
-        ### taken from kerasclassifier's fit
-        # y = np.array(y)
-        # if len(y.shape) == 2 and y.shape[1] > 1:
-        #    self.classes_ = np.arange(y.shape[1])
-        # elif (len(y.shape) == 2 and y.shape[1] == 1) or len(y.shape) == 1:
-        #    self.classes_ = np.unique(y)
-        #    y = np.searchsorted(self.classes_, y)
-        # else:
-        #    raise ValueError('Invalid shape for y: ' + str(y.shape))
-        # self.nb_classes = len(self.classes_)
-        #
-        # return keras.utils.to_categorical(y, self.nb_classes)
-
         self.label_encoder = LabelEncoder()
         self.onehot_encoder = OneHotEncoder(sparse=False, categories='auto')
         # categories='auto' to get rid of FutureWarning

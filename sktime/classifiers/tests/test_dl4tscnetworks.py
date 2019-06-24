@@ -107,8 +107,8 @@ def test_network(network):
     # sklearn compatibility
     # check_estimator(FCN)
 
-    #test_basic_univariate(network)
-    #test_basic_multivariate(network)
+    test_basic_univariate(network)
+    test_basic_multivariate(network)
     test_pipeline(network)
     test_highLevelsktime(network)
 
@@ -126,13 +126,13 @@ def test_all_networks_all_tests():
     import sktime.contrib.deeplearning_based.tuned_cnn as tuned_cnn
 
     networks = [
-        # cnn.CNN(),
-        # encoder.Encoder(),
-        # fcn.FCN(),
-        # mcdcnn.MCDCNN(),
+        cnn.CNN(),
+        encoder.Encoder(),
+        fcn.FCN(),
+        mcdcnn.MCDCNN(),
         mcnn.MCNN(),
-        # mlp.MLP(),
-        # resnet.ResNet(),
+        mlp.MLP(),
+        resnet.ResNet(),
         tlenet.TLENET(),
         twiesn.TWIESN(),
         tuned_cnn.Tuned_CNN(),
