@@ -24,7 +24,7 @@ import gc
 from sklearn.model_selection import train_test_split
 
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import test_network
+from sktime.classifiers.tests.test_dl4tscnetworks import test_network
 
 
 class MCNN(BaseDeepLearner):

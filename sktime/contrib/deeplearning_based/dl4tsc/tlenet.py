@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import test_network
+from sktime.classifiers.tests.test_dl4tscnetworks import test_network
 
 
 class TLENET(BaseDeepLearner):

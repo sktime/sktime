@@ -22,7 +22,7 @@ import pandas as pd
 
 from sktime.utils.validation import check_X_y
 from sktime.contrib.deeplearning_based.basenetwork import BaseDeepLearner
-from sktime.contrib.deeplearning_based.basenetwork import test_network
+from sktime.classifiers.tests.test_dl4tscnetworks import test_network
 
 
 class CNN(BaseDeepLearner):
