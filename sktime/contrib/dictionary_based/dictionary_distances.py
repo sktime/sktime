@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import sys
 
 
@@ -22,8 +21,6 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
 
 def euclidean_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
-
-    print("doing stuff")
 
     if isinstance(first, dict):
         words = set(list(first) + list(second))
