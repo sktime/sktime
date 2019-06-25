@@ -75,7 +75,7 @@ class BOSSEnsemble(BaseEstimator):
                  threshold=0.92,
                  max_ensemble_size=500,
                  max_win_len_prop=1,
-                 time_limit=sys.float_info.max,
+                 time_limit=0,
                  word_lengths=None,
                  alphabet_size=4,
                  min_window=10,
@@ -163,17 +163,19 @@ class BOSSEnsemble(BaseEstimator):
             lowest_acc = 0
             lowest_acc_idx = 0
 
-            while (train_time < self.time_limit and num_classifiers < self.max_ensemble_size) and num_classifiers < self.ensemble_size:
+            if self.time_limit > 0:
+                self.ensemble_size = 0
+
+            while (train_time < self.time_limit and num_classifiers < self.max_ensemble_size) or num_classifiers < self.ensemble_size:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
                 subsample = np.random.randint(self.num_insts, size=subsample_size)
                 X_subsample = X[subsample, :]
-                y_subsample = y[subsample, :]
+                y_subsample = y[subsample]
 
                 boss = BOSSIndividual(parameters[0], parameters[1], self.alphabet_size, parameters[2])
                 boss.fit(X_subsample, y_subsample)
                 boss.clean()
-                self.classifiers.append(boss)
 
                 boss.accuracy = self.individual_train_acc(boss, y_subsample, subsample_size, lowest_acc)
                 weight = math.pow(boss.accuracy, 4)
