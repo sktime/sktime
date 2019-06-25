@@ -10,8 +10,10 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 __all__ = ["load_gunpoint",
            "load_arrow_head",
            "load_italy_power_demand",
+           "load_basic_motions",
            "load_shampoo_sales",
            "load_longley"]
+
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 DIRNAME = 'data'
@@ -47,6 +49,7 @@ def _load_dataset(name, split, return_X_y):
     else:
         X['class_val'] = pd.Series(y)
         return X
+
 
 def load_gunpoint(split='TRAIN', return_X_y=False):
     """
