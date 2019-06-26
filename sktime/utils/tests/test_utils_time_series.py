@@ -29,7 +29,3 @@ def test_time_series_slope():
     for step in [-1, 0, 1]:
         y = np.arange(1, 4) * step
         np.testing.assert_almost_equal(time_series_slope(y), step, decimal=10)
-
-
-
-

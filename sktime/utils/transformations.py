@@ -6,10 +6,9 @@ __author__ = "Markus Löning"
 
 
 def tabularize(X, return_array=False):
-    """
-    Helper function to turn nested pandas DataFrames or Series with numpy arrays or pandas Series in cells into tabular
-    data with only primitives in cells, i.e. a matrix with the same number of rows as the input data and one column of
-    primitive values for each observation in all nested series. For each column, time-series must have the same index.
+    """Convert nested pandas DataFrames or Series with numpy arrays or pandas Series in cells into tabular
+    pandas DataFrame with primitives in cells, i.e. a data frame with the same number of rows as the input data and
+    as many columns as there are observations in the nested series. Requires series to be have the same index.
 
     Parameters
     ----------
@@ -24,7 +23,7 @@ def tabularize(X, return_array=False):
         Transformed dataframe in tabular format
     """
 
-    # TODO does not handle dataframes with nested series columns and standard columns containing only primitives
+    # TODO does not handle dataframes with nested series columns *and* standard columns containing only primitives
 
     if X.ndim == 1:
         Xt = np.array(X.tolist())
@@ -48,7 +47,48 @@ def tabularize(X, return_array=False):
     return Xt
 
 
+def detabularize(X, return_arrays=False):
+    """Convert tabular pandas DataFrame with only primitives in cells into nested pandas DataFrame with a single column.
+
+    Parameters
+    ----------
+    X : nested pandas DataFrame or nested Series
+    return_arrays : bool, optional (default=False)
+        - If True, returns a numpy arrays within cells of nested pandas DataFrame.
+        - If False, returns a pandas Series within cells.
+
+    Returns
+    -------
+    Xt : pandas DataFrame
+        Transformed dataframe in nested format
+    """
+    n_rows = X.shape[0]
+    container = np.asarray if return_arrays else pd.Series
+    Xt = [container(X.iloc[i, :].values) for i in range(n_rows)]
+    return pd.DataFrame(pd.Series(Xt))
+
+
 tabularise = tabularize
+
+
+detabularise = detabularize
+
+
+def select_times(X, times):
+    """Select times from time series within cells of nested pandas DataFrame.
+
+    Parameters
+    ----------
+    X : nested pandas DataFrame or nested Series
+    times : numpy ndarray of times to select from time series
+
+    Returns
+    -------
+    Xt : pandas DataFrame
+        pandas DataFrame in nested format containing only selected times
+    """
+    Xt = detabularise(tabularise(X).iloc[:, times])
+    return Xt
 
 
 def concat_nested_arrays(arrs, return_arrays=False):
@@ -80,8 +120,7 @@ def concat_nested_arrays(arrs, return_arrays=False):
 
 
 class RollingWindowSplit:
-    """
-    Rolling window iterator that allows to split time series index into two windows,
+    """Rolling window iterator that allows to split time series index into two windows,
     one containing observations used as feature variables and one containing observations used as
     target variables. The target window is of the length of the forecasting horizon.
 

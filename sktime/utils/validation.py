@@ -1,4 +1,12 @@
 import numpy as np
+import pandas as pd
+
+def check_X_y(instances, class_labels = None):
+    if not isinstance(instances, pd.DataFrame):
+        raise ValueError("instances not in panda dataframe")
+    if class_labels is not None:
+        if len(class_labels) != instances.shape[0]:
+            raise ValueError("instances not same length as class_labels")
 
 
 def check_ts_X_y(X, y):

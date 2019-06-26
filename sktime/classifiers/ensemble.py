@@ -8,32 +8,21 @@ from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
 from sklearn.ensemble.forest import _generate_sample_indices
 from sklearn.ensemble.forest import _generate_unsampled_indices
-from sklearn.ensemble.base import _partition_estimators, _set_random_states, clone
+from sklearn.ensemble.base import _partition_estimators
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.multiclass import class_distribution
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
-from sktime.transformers.series_to_series import DerivativeSlopeTransformer
+
 from ..pipeline import Pipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
-import os
-#from .time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
-#from ..distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
-#    wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
-#from itertools import product
-import time
 
-
-__all__ = ["TimeSeriesForestClassifier", "ElasticEnsemble"]
+__all__ = ["TimeSeriesForestClassifier"]
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
@@ -210,25 +199,26 @@ class TimeSeriesForestClassifier(ForestClassifier):
         elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
             raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
 
-        self.criterion = criterion
-        self.max_depth = max_depth
-        self.min_samples_split = min_samples_split
-        self.min_samples_leaf = min_samples_leaf
-        self.min_weight_fraction_leaf = min_weight_fraction_leaf
-        self.max_features = max_features
-        self.max_leaf_nodes = max_leaf_nodes
-        self.min_impurity_decrease = min_impurity_decrease
-        self.min_impurity_split = min_impurity_split
-        self.check_input = check_input
+        # Rename estimator params according to name in pipeline.
+        estimator = base_estimator.steps[-1][0]
+        estimator_params = {
+            "criterion": criterion,
+            "max_depth": max_depth,
+            "min_samples_split": min_samples_split,
+            "min_samples_leaf": min_samples_leaf,
+            "min_weight_fraction_leaf": min_weight_fraction_leaf,
+            "max_features": max_features,
+            "max_leaf_nodes": max_leaf_nodes,
+            "min_impurity_decrease": min_impurity_decrease,
+            "min_impurity_split": min_impurity_split,
+        }
+        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
 
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "min_weight_fraction_leaf",
-                              "max_features", "max_leaf_nodes",
-                              "min_impurity_decrease", "min_impurity_split"),
+            estimator_params=tuple(estimator_params.keys()),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -240,6 +230,11 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         # Assign random state to pipeline.
         base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
+
+        # Store renamed estimator params.
+        for pname, pval in estimator_params.items():
+            self.__setattr__(pname, pval)
+        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -392,10 +387,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
-        if len(all_proba) == 1:
-            return all_proba[0]
-        else:
-            return all_proba
+        return all_proba
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
@@ -460,28 +452,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         self.oob_score_ = oob_score / self.n_outputs_
 
-    def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `base_estimator_` attribute.
-
-        Adapted to handle pipelines as `base_estimators_`.
-
-        Warning: This method should be used to properly instantiate new
-        sub-estimators.
-        """
-        estimator = clone(self.base_estimator_)
-
-        # Name of final estimator in pipeline.
-        final_estimator = estimator.steps[-1][0]
-        estimator.set_params(**{f'{final_estimator}__{p}': getattr(self, p)
-                                for p in self.estimator_params})
-
-        if random_state is not None:
-            _set_random_states(estimator, random_state)
-
-        if append:
-            self.estimators_.append(estimator)
-
-        return estimator
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None):
@@ -520,4 +490,3 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         tree.fit(X, y, **fit_params)
 
     return tree
-
