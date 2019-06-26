@@ -77,7 +77,7 @@ def validate_fh(fh):
 
     Parameters
     ----------
-    fh : list of int
+    fh : int or list of int
         Forecasting horizon with steps ahead to predict.
 
     Returns

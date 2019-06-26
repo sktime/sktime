@@ -88,6 +88,7 @@ def select_times(X, times):
         pandas DataFrame in nested format containing only selected times
     """
     Xt = detabularise(tabularise(X).iloc[:, times])
+    Xt.columns = X.columns
     return Xt
 
 
@@ -121,8 +122,8 @@ def concat_nested_arrays(arrs, return_arrays=False):
 
 class RollingWindowSplit:
     """Rolling window iterator that allows to split time series index into two windows,
-    one containing observations used as feature variables and one containing observations used as
-    target variables. The target window is of the length of the forecasting horizon.
+    one containing observations used as feature data and one containing observations used as
+    target data to be predicted. The target window has the length of the given forecasting horizon.
 
     Parameters
     ----------
@@ -151,8 +152,8 @@ class RollingWindowSplit:
 
         Parameters
         ----------
-        data : 1d ndarray
-            Array of time series index to split.
+        data : ndarray
+            1-dimensional array of time series index to split.
 
         Yields
         ------
@@ -168,7 +169,7 @@ class RollingWindowSplit:
                              f"{data.ndim} dimensions")
 
         n_obs = data.shape[0]
-        max_fh = self.fh[-1]  # furthest step ahead, assume sorted
+        max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
 
         # Set default window length to sqrt of series length
         self.window_length_ = int(np.sqrt(n_obs)) if self.window_length is None else self.window_length
