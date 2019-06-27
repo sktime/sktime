@@ -2,12 +2,17 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
-from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, detabularize, concat_nested_arrays
-from .base import BaseTransformer
+from sktime.utils.validation import check_equal_index
+from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays, remove_trend, add_trend
+from sktime.transformers.base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator']
+__all__ = ['RandomIntervalSegmenter',
+           'IntervalSegmenter',
+           'DerivativeSlopeTransformer',
+           'TimeSeriesConcatenator',
+           'Detrender']
+
 __author__ = ["Markus Löning", "Jason Lines"]
 
 
@@ -226,7 +231,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         Parameters
         ----------
         x : array_like, shape = [n_observations]
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------
@@ -262,7 +266,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         x : array_like, shape = [n_observations]
             Array containing the time-series index.
         n : 'sqrt', 'log', float or int
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------
@@ -349,3 +352,95 @@ class TimeSeriesConcatenator(BaseTransformer):
         return Xt
 
 
+class Detrender(BaseTransformer):
+    """A transformer that removes trend of given polynomial order from time series/panel data
+
+    Parameters
+    ----------
+    order : int
+        Polynomial order, zero: mean, one: linear, two: quadratic, etc
+    check_input : bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
+    """
+
+    def __init__(self, order=0, check_input=True):
+
+        if not (isinstance(order, int) and (order >= 0)):
+            raise ValueError(f"order must be a positive integer, but found: {type(order)}")
+        self.order = order
+        self.check_input = check_input
+        self.theta = None
+
+    def transform(self, X, y=None):
+        """Transform X.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+        """
+
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        # TODO work on multiple columns, currently only works on first column
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # convert into tabular format
+        Xs = tabularize(X.iloc[:, 0])
+
+        # remove trend, keeping fitted polynomial coefficients
+        Xt, self.theta = remove_trend(Xs, order=self.order)
+
+        # convert back into nested format
+        Xt = detabularize(pd.DataFrame(Xt))
+        Xt.columns = X.columns
+        return Xt
+
+    def inverse_transform(self, X, y=None):
+        """Inverse transform X
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+        """
+
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        # TODO work on multiple columns, currently only works on first column
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # convert into tabular format
+        Xs = tabularize(X.iloc[:, 0])
+
+        # add trend, keeping fitted polynomial coefficients
+        Xit = add_trend(Xs, theta=self.theta)
+
+        # convert back into nested format
+        Xit = detabularize(pd.DataFrame(Xit))
+        Xit.columns = X.columns
+        return Xit
+
+
+class Deseasonaliser(BaseTransformer):
+    pass
+
+
+Deseasonalizer = Deseasonaliser

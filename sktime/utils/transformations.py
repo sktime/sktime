@@ -127,7 +127,7 @@ class RollingWindowSplit:
 
     Parameters
     ----------
-    window_length : int
+    window_length : int, optional (default is sqrt of time series length)
         Length of rolling window
     fh : array-like  or int, optional, (default=None)
         Single step ahead or array of steps ahead to forecast.
@@ -198,3 +198,106 @@ class RollingWindowSplit:
         Return the window length.
         """
         return self.window_length_
+
+
+def add_trend(x, theta, axis=1):
+    """Add trend to array for given fitted coeffients along axis 0 or 1, inverse function to remove_trend
+
+    Parameters
+    ----------
+    x : array_like, 1d or 2d
+        data, if 2d, then each row or column is independently detrended with the
+        same trendorder, but independent trend estimates
+    theta : ndarray, shape=[n_samples, order + 1]
+        fitted coefficients of polynomial order for each sample, one column means order zero, two columns mean order 1
+        (linear), three columns mean order 2 (quadratic), etc
+    axis : int, optional (default=1)
+        axis can be either 0, observations by rows, or 1, observations by columns
+
+    Returns
+    -------
+    xt : ndarray
+        The series with added trend components.
+
+    See Also
+    -------
+    remove_trend
+
+    """
+    # infer order from given theta array
+    order = theta.shape[1] - 1
+
+    if axis == 1:
+        x = x.T
+
+    if order == 0:
+        xt = x + theta.ravel()
+
+    else:
+        index = np.arange(x.shape[0])
+        poly_terms = np.vander(index, N=order + 1)
+        xt = x + np.dot(poly_terms, theta.T)
+
+    if axis == 1:
+        xt = xt.T
+
+    return xt
+
+
+def remove_trend(x, order=0, axis=1):
+    """
+    Remove trend from an array with a trend of given order along axis 0 or 1
+
+    Parameters
+    ----------
+    x : array_like, 1d or 2d
+        data, if 2d, then each row or column is independently detrended with the
+        same trendorder, but independent trend estimates
+    order : int
+        specifies the polynomial order of the trend, zero is constant (mean), one is
+        linear trend, two is quadratic trend, etc
+    axis : int
+        axis can be either 0, observations by rows,
+        or 1, observations by columns
+
+    Returns
+    -------
+    detrended data series : ndarray
+        The detrended series is the residual of the linear regression of the
+        data on the trend of given order.
+    theta : ndarray
+        Fitted coefficients of polynomial model
+
+    See Also
+    --------
+    add_trend
+
+    References
+    ----------
+    Adapted from statsmodels (0.9.0), see
+    https://www.statsmodels.org/dev/_modules/statsmodels/tsa/tsatools.html#detrend
+    """
+
+    x = np.asarray(x)
+
+    if axis == 1:
+        x = x.T
+
+    if order == 0:
+        #  special case of demeaning
+        theta = np.mean(x, axis=0)
+        xt = x - theta
+        theta = theta.reshape(-1, 1)
+
+    else:
+        #  fitting polynomials
+        index = np.arange(x.shape[0])
+        poly_terms = np.vander(index, N=order + 1)
+        theta = np.linalg.pinv(poly_terms).dot(x)
+        xt = x - np.dot(poly_terms, theta)
+        theta = theta.T
+
+    if axis == 1:
+        xt = xt.T
+
+    return xt, theta
