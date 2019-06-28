@@ -5,6 +5,7 @@ import pandas as pd
 from sktime.utils.validation import check_equal_index
 from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays, remove_trend, add_trend
 from sktime.transformers.base import BaseTransformer
+from sktime.utils.seasonality import remove_seasonality, add_seasonality
 
 
 __all__ = ['RandomIntervalSegmenter',
@@ -397,7 +398,7 @@ class Detrender(BaseTransformer):
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
 
-        # remove trend, keeping fitted polynomial coefficients
+        # remove trend, keeping fitted polynomial coefficients (theta)
         Xt, self.theta = remove_trend(Xs, order=self.order)
 
         # convert back into nested format
@@ -425,7 +426,8 @@ class Detrender(BaseTransformer):
 
         # TODO work on multiple columns, currently only works on first column
         if X.shape[1] > 1:
-            raise NotImplementedError(f"Currently does not work on multiple columns")
+            raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
+                                      f"instead")
 
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
@@ -440,7 +442,97 @@ class Detrender(BaseTransformer):
 
 
 class Deseasonaliser(BaseTransformer):
-    pass
+    """A transformer that removes trend of given polynomial order from time series/panel data
+
+    Parameters
+    ----------
+    freq : int
+        Seasonal frequency as period per year (ppy)
+    check_input : bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
+    """
+
+    def __init__(self, freq=1, check_input=True):
+        self.freq = freq
+        self.check_input = check_input
+        self.si = None
+
+    def transform(self, X, y=None):
+        """Transform X.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+        """
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        # TODO work on multiple columns, currently only works on first column
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
+                                      f"instead")
+
+        # convert into list of series/rows
+        xs = X.iloc[:, 0].tolist()
+
+        n = X.shape[0]  # number of rows
+        m = X.iloc[0, 0].shape[0]  # number of time series observations
+        xt = np.zeros((n, m))
+        self.si = np.zeros((n, self.freq))
+
+        # remove seasonality from each series/row
+        for i, x in enumerate(xs):
+            xt[i, :], self.si[i, :] = remove_seasonality(x, freq=self.freq)
+
+        # convert back into nested format
+        Xt = detabularize(pd.DataFrame(xt))
+        Xt.columns = X.columns
+        return Xt
+
+    def inverse_transform(self, X, y=None):
+        """Inverse transform X
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+        """
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        # TODO work on multiple columns, currently only works on first column
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # convert into list of series/rows
+        xs = X.iloc[:, 0].tolist()
+
+        n = X.shape[0]  # number of rows
+        m = X.iloc[0, 0].shape[0]  # number of time series observations
+        xit = np.zeros((n, m))
+
+        # remove seasonality from each series/row
+        for i, x in enumerate(xs):
+            xit[i, :] = add_seasonality(x, self.si[i, :])
+
+        # convert back into nested format
+        Xit = detabularize(pd.DataFrame(xit))
+        Xit.columns = X.columns
+        return Xit
 
 
 Deseasonalizer = Deseasonaliser
