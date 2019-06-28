@@ -18,6 +18,7 @@ def test_Detrender(data, order):
     X = data
     tran = Detrender(order=order)
     Xt = tran.fit_transform(X)
-    Xit = tran.inverse_transform(Xt)
+    assert X.shape == Xt.shape
 
-    np.testing.assert_array_almost_equal(tabularise(X), tabularise(Xit), decimal=10)
+    Xit = tran.inverse_transform(Xt)
+    np.testing.assert_array_almost_equal(tabularise(X), tabularise(Xit))
