@@ -128,6 +128,7 @@ The provisional Code of Conduct committee is:
 
 * Dr Franz Király: fkiraly@turing.ac.uk
 * Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
+* Markus Löning: markus.loning.17@ucl.ac.uk
 
 As the community grows, we will seek to build a larger committee including members outside of the core development team.
 
