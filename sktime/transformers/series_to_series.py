@@ -12,7 +12,9 @@ __all__ = ['RandomIntervalSegmenter',
            'IntervalSegmenter',
            'DerivativeSlopeTransformer',
            'TimeSeriesConcatenator',
-           'Detrender']
+           'Detrender',
+           "Deseasonaliser",
+           'Deseasonalizer']
 
 __author__ = ["Markus Löning", "Jason Lines"]
 
@@ -446,15 +448,18 @@ class Deseasonaliser(BaseTransformer):
 
     Parameters
     ----------
-    freq : int
-        Seasonal frequency as period per year (ppy)
+    sp : int, optional (default=1)
+        Seasonal periodicity
+    model : str {'additive', 'multiplicative'}, optional (default='additive')
+        Model to use for estimating seasonal component
     check_input : bool, optional (default=True)
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
 
-    def __init__(self, freq=1, check_input=True):
-        self.freq = freq
+    def __init__(self, sp=1, model='additive', check_input=True):
+        self.sp = sp
+        self.model = model
         self.check_input = check_input
         self.si = None
 
@@ -486,11 +491,11 @@ class Deseasonaliser(BaseTransformer):
         n = X.shape[0]  # number of rows
         m = X.iloc[0, 0].shape[0]  # number of time series observations
         xt = np.zeros((n, m))
-        self.si = np.zeros((n, self.freq))
+        self.si = np.zeros((n, self.sp))
 
         # remove seasonality from each series/row
         for i, x in enumerate(xs):
-            xt[i, :], self.si[i, :] = remove_seasonality(x, freq=self.freq)
+            xt[i, :], self.si[i, :] = remove_seasonality(x, sp=self.sp, model=self.model)
 
         # convert back into nested format
         Xt = detabularize(pd.DataFrame(xt))

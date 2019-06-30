@@ -3,13 +3,16 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import numpy as np
 
 
-def remove_seasonality(x, freq=1):
+def remove_seasonality(x, sp=1, model='additive'):
     """Remove seasonality from time series
 
     Parameters
     ----------
     x : ndarray
-    freq : Seasonal frequency
+    sp : int, optional (default=1)
+        Seasonal periodicity
+    model : str {'additive', 'multiplicative'}, optional (default='additive')
+        Model to use for estimating seasonal component
 
     Returns
     -------
@@ -28,17 +31,17 @@ def remove_seasonality(x, freq=1):
 
     x = np.asarray(x)
 
-    if freq > 1 and seasonality_test(x, freq=freq):
+    if sp > 1 and seasonality_test(x, freq=sp):
         # adjust for seasonality
-        si = seasonal_decompose(x, freq=freq, model='multiplicative', filt=None, two_sided=True,
+        si = seasonal_decompose(x, freq=sp, model=model, filt=None, two_sided=True,
                                 extrapolate_trend=0).seasonal
         xt = x / si
-        si = si[:freq]
+        si = si[:sp]
 
     else:
         # no seasonality adjustment
         xt = x
-        si = np.ones(freq)
+        si = np.ones(sp)
 
     return xt, si
 

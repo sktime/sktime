@@ -25,3 +25,4 @@ def time_series_slope(y, axis=0):
         x_mean = (m - 1) / 2  # x.mean()
         return (np.mean(x * y, axis=axis) - x_mean * np.mean(y, axis=axis)) / (np.mean(x ** 2) - x_mean ** 2)
 
+

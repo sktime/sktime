@@ -10,13 +10,14 @@ shampoo = load_shampoo_sales(return_y_as_dataframe=True)
 
 
 @pytest.mark.parametrize("X", [gunpoint, shampoo])
-@pytest.mark.parametrize("freq", [1, 4, 7, 12, 24])
-def test_Deseasonaliser(X, freq):
+@pytest.mark.parametrize("model", ['additive', 'multiplicative'])
+@pytest.mark.parametrize("sp", [1, 4, 7, 12, 24])
+def test_Deseasonaliser(X, model, sp):
 
     # ensure only positive time series values
     X = detabularize(tabularize(X) + 100)
 
-    t = Deseasonaliser(freq=freq)
+    t = Deseasonaliser(sp=sp, model=model)
     Xt = t.fit_transform(X)
     assert Xt.shape == X.shape
 
