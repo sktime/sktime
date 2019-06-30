@@ -494,6 +494,7 @@ class Deseasonaliser(BaseTransformer):
         self.si = np.zeros((n, self.sp))
 
         # remove seasonality from each series/row
+        # TODO make more efficient/vectorise to work on multiple rows simultaneously
         for i, x in enumerate(xs):
             xt[i, :], self.si[i, :] = remove_seasonality(x, sp=self.sp, model=self.model)
 

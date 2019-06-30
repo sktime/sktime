@@ -3,20 +3,20 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-from .base import BaseTransformer
-from ..utils.validation import check_ts_array
-from ..utils.transformations import tabularize
-from sklearn.utils.validation import check_is_fitted
-from sklearn.compose import ColumnTransformer
-from scipy import sparse
 import numpy as np
 import pandas as pd
+from scipy import sparse
+from sklearn.compose import ColumnTransformer as skColumnTransformer
+from sklearn.utils.validation import check_is_fitted
 
+from sktime.transformers.base import BaseTransformer
+from sktime.utils.transformations import tabularize
+from sktime.utils.validation import check_ts_array
 
 __all__ = ['ColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
 
 
-class ColumnTransformer(ColumnTransformer):
+class ColumnTransformer(skColumnTransformer):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
@@ -104,13 +104,13 @@ class ColumnTransformer(ColumnTransformer):
     """
 
     def __init__(
-        self,
-        transformers,
-        remainder="drop",
-        sparse_threshold=0.3,
-        n_jobs=1,
-        transformer_weights=None,
-        preserve_dataframe=True,
+            self,
+            transformers,
+            remainder="drop",
+            sparse_threshold=0.3,
+            n_jobs=1,
+            transformer_weights=None,
+            preserve_dataframe=True,
     ):
 
         self.preserve_dataframe = preserve_dataframe
@@ -148,7 +148,8 @@ class ColumnTransformer(ColumnTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, 'ndim', 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy " "matrix, array, or pandas DataFrame).".format(name))
+                    "The output of the '{0}' transformer should be 2D (scipy " "matrix, array, or pandas DataFrame).".format(
+                        name))
 
 
 class RowwiseTransformer(BaseTransformer):
@@ -163,6 +164,7 @@ class RowwiseTransformer(BaseTransformer):
         An estimator that can work on a row (i.e. a univariate time-series in form of a numpy array or pandas Series.
         must support `fit` and `transform`
     """
+
     def __init__(self, transformer):
         self.transformer = transformer
 
@@ -236,6 +238,7 @@ class Tabularizer(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
+
     def __init__(self, check_input=True):
         self.check_input = check_input
 

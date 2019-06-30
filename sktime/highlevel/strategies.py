@@ -33,7 +33,7 @@ ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 CASES = ("TSR", "TSC", "Forecasting")
 
 
-class BaseStrategy:
+class BaseStrategy(BaseEstimator):
     """
     Abstract base strategy class.
 
@@ -46,17 +46,21 @@ class BaseStrategy:
         self._check_estimator_compatibility(estimator)
 
         self._estimator = estimator
-
         self._name = estimator.__class__.__name__ if name is None else name
         self.check_input = check_input
         self._task = None
 
     @property
     def name(self):
-        """
-        Makes attribute read-only.
+        """Makes attribute accessible, but read-only.
         """
         return self._name
+
+    @property
+    def estimator(self):
+        """Makes attribute accessible, but read-only.
+        """
+        return self._estimator
 
     def __getitem__(self, key):
         """
@@ -157,23 +161,6 @@ class BaseStrategy:
         # if not isinstance(s, (np.ndarray, pd.Series)):
         #     raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
 
-    def get_params(self, deep=True):
-        """
-        Call get_params of the estimator. Retrieves hyper-parameters.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with parameter names and values of estimator.
-        """
-        return self._estimator.get_params(deep=deep)
-
-    def set_params(self, **params):
-        """
-        Call set_params of the estimator. Sets hyper-parameters.
-        """
-        self._estimator.set_params(**params)
-
     def save(self, dataset_name, cv_fold, strategies_save_dir):
         """
         Saves the strategy on the hard drive
@@ -196,7 +183,7 @@ class BaseStrategy:
             os.makedirs(save_path)
 
         # TODO pickling will not work for all strategies
-        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
+        pickle.dump(self, open(os.path.join(save_path, self.name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
 
     def load(self, path):
         """
@@ -215,50 +202,9 @@ class BaseStrategy:
 
     def __repr__(self):
         strategy_name = self.__class__.__name__
-        estimator_name = self._estimator.__class__.__name__
+        estimator_name = self.estimator.__class__.__name__
         return '%s(%s(%s))' % (strategy_name, estimator_name,
                                _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
-
-    def save(self, dataset_name, cv_fold, strategies_save_dir):
-        """
-        Saves the strategy on the hard drive
-
-        Parameters
-        ----------
-        dataset_name:string
-            Name of the dataset
-        cv_fold: int
-            Number of cross validation fold on which the strategy was trained
-        strategies_save_dir: string
-            Path were the strategies will be saved
-        """
-        if strategies_save_dir is None:
-            raise ValueError('Please provide a directory for saving the strategies')
-
-        # TODO implement check for overwriting already saved files
-        save_path = os.path.join(strategies_save_dir, dataset_name)
-
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-
-        # TODO pickling will not work for all strategies
-        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
-
-    def load(self, path):
-        """
-        Load saved strategy
-
-        Parameters
-        ----------
-        path: String
-            location on disk where the strategy was saved
-
-        Returns
-        -------
-        strategy:
-            sktime strategy
-        """
-        return pickle.load(open(path, 'rb'))
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):
@@ -287,7 +233,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         y = data[self._task.target]
 
         # fit the estimator
-        return self._estimator.fit(X, y)
+        return self.estimator.fit(X, y)
 
     def predict(self, data):
         """
@@ -309,7 +255,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         X = data[self._task.features]
 
         # predict
-        return self._estimator.predict(X)
+        return self.estimator.predict(X)
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
@@ -396,7 +342,7 @@ class ForecastingStrategy(BaseStrategy):
             kwargs = {}
 
         # fit the estimator
-        return self._estimator.fit(y, **kwargs)
+        return self.estimator.fit(y, **kwargs)
 
     def update(self, data):
         """
@@ -415,7 +361,7 @@ class ForecastingStrategy(BaseStrategy):
         if self.check_input:
             self._task.check_data_compatibility(data)
 
-        if hasattr(self._estimator, 'update'):
+        if hasattr(self.estimator, 'update'):
             try:
                 y = data[self._task.target]
                 if len(self._task.features) > 0:
@@ -425,9 +371,9 @@ class ForecastingStrategy(BaseStrategy):
                     kwargs = {}
             except KeyError:
                 raise ValueError("Task <-> data mismatch. The target/features are not in the data")
-            self._estimator.update(y, **kwargs)
+            self.estimator.update(y, **kwargs)
         else:
-            raise NotImplementedError(f"Supplied low-level estimator: {self._estimator} does not implement update "
+            raise NotImplementedError(f"Supplied low-level estimator: {self.estimator} does not implement update "
                                       f"method.")
 
         return self
@@ -462,7 +408,7 @@ class ForecastingStrategy(BaseStrategy):
         else:
             kwargs = {}
 
-        return self._estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
+        return self.estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
 
 
 class Forecasting2TSRReductionStrategy(BaseStrategy):
@@ -495,7 +441,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
 
         # TODO what's a good default for window length? sqrt(len(data))?
         self.window_length = window_length
-        self._dynamic = dynamic
+        self.dynamic = dynamic
 
     def _fit(self, data):
         """
@@ -520,7 +466,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
 
         # Set up window roller
         # For dynamic prediction, models are only trained on one-step ahead forecast
-        fh = 1 if self._dynamic else self._task.fh
+        fh = 1 if self.dynamic else self._task.fh
         fh = validate_fh(fh)
         n_fh = len(fh)
 
@@ -544,10 +490,10 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         Y = np.array([np.array(y) for y in ys])
 
         # Fitting
-        if self._dynamic:
+        if self.dynamic:
             # Fit estimator for one-step ahead forecast
             y = Y.ravel()  # convert into one-dimensional array
-            estimator = clone(self._estimator)
+            estimator = clone(self.estimator)
             estimator.fit(X, y)
             self.estimator_ = estimator
 
@@ -559,7 +505,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
             n_fh = len(fh)
 
             # Clone estimators
-            self.estimators = [clone(self._estimator) for _ in range(n_fh)]
+            self.estimators = [clone(self.estimator) for _ in range(n_fh)]
 
             # Iterate over estimators/forecast horizon
             for estimator, y in zip(self.estimators, Y.T):
@@ -605,7 +551,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
 
         # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
         # only the last window and using one fitted estimator for each step ahead forecast
-        if self._dynamic:
+        if self.dynamic:
             # Roll/extend last window using previous one-step ahead forecasts
             for i in range(n_fh):
                 y_pred[i] = self.estimator_.predict(x_test)
