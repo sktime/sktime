@@ -87,6 +87,7 @@ def select_times(X, times):
     Xt : pandas DataFrame
         pandas DataFrame in nested format containing only selected times
     """
+    # TODO currently we loose the time index, need to add it back to Xt after slicing in time
     Xt = detabularise(tabularise(X).iloc[:, times])
     Xt.columns = X.columns
     return Xt
@@ -224,13 +225,28 @@ def add_trend(x, theta, axis=1):
     remove_trend
 
     """
-    # infer order from given theta array
-    order = theta.shape[1] - 1
+
+    # input checks
+    if axis >= 2:
+        raise IndexError('tuple index out of range')
+
+    x = np.asarray(x)
+    ndim = x.ndim
+    if (axis == 1) and (ndim == 1):
+        raise IndexError('tuple index out of range')
+
+    # make into 2d array
+    if ndim == 1:
+        x = x.reshape(-1, 1)
 
     if axis == 1:
         x = x.T
 
+    # infer order from shape of given array of polynomial coefficients
+    order = theta.shape[1] - 1
+
     if order == 0:
+        # special case, add back mean of time series
         xt = x + theta.ravel()
 
     else:
@@ -238,8 +254,12 @@ def add_trend(x, theta, axis=1):
         poly_terms = np.vander(index, N=order + 1)
         xt = x + np.dot(poly_terms, theta.T)
 
+    # ensure output has same format as input
     if axis == 1:
         xt = xt.T
+
+    if ndim == 1:
+        xt = xt.ravel()
 
     return xt
 
@@ -252,7 +272,7 @@ def remove_trend(x, order=0, axis=1):
     ----------
     x : array_like, 1d or 2d
         data, if 2d, then each row or column is independently detrended with the
-        same trendorder, but independent trend estimates
+        same trend order, but independent trend estimates
     order : int
         specifies the polynomial order of the trend, zero is constant (mean), one is
         linear trend, two is quadratic trend, etc
@@ -277,8 +297,13 @@ def remove_trend(x, order=0, axis=1):
     Adapted from statsmodels (0.9.0), see
     https://www.statsmodels.org/dev/_modules/statsmodels/tsa/tsatools.html#detrend
     """
-
     x = np.asarray(x)
+
+    if (x.ndim == 1) and (axis == 1):
+        raise IndexError('tuple index out of range')
+
+    if axis >= 2:
+        raise IndexError('tuple index out of range')
 
     if axis == 1:
         x = x.T
@@ -290,12 +315,14 @@ def remove_trend(x, order=0, axis=1):
         theta = theta.reshape(-1, 1)
 
     else:
-        #  fitting polynomials
+        #  fitting polynomial coefficients
         index = np.arange(x.shape[0])
         poly_terms = np.vander(index, N=order + 1)
         theta = np.linalg.pinv(poly_terms).dot(x)
         xt = x - np.dot(poly_terms, theta)
-        theta = theta.T
+
+        # ensure correct output format for fitted coefficients
+        theta = np.atleast_2d(theta) if theta.ndim == 1 else theta.T
 
     if axis == 1:
         xt = xt.T

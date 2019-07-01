@@ -34,31 +34,60 @@ def test_tabularize():
     assert Xt.index.equals(X.index)
 
 
-def test_remove_trend_mean():
-    # generate random data
-    x = np.random.normal(size=(10, 5))
-    m = x.mean(axis=1).reshape(-1, 1)
-    expected = x - m
+@pytest.mark.parametrize("order", [0, 1, 2])
+def test_remove_add_trend(order):
 
-    # transform, remove trend
-    actual, theta = remove_trend(x, order=0, axis=1)
-
-    # check results
-    np.testing.assert_array_equal(theta, m)
-    np.testing.assert_array_equal(actual, expected)
-
-
-@pytest.mark.parametrize("order", [0, 1, 2, 3, 4])
-@pytest.mark.parametrize("axis", [0, 1])
-def test_add_remove_trend(order, axis):
-    # generate random data
+    # 2d input, multiple columns
     x = np.random.normal(size=(10, 5))
 
-    # transform, remove trend
+    axis = 0
     xt, theta = remove_trend(x, order=order, axis=axis)
-
-    # inverse transform, add trend
-    xit = add_trend(xt, theta, axis=axis)
-
-    # check if original data and inverse transform data are the same
+    assert xt.shape == x.shape
+    assert theta.shape == (xt.shape[1], order + 1)
+    xit = add_trend(xt, theta=theta, axis=axis)
     np.testing.assert_array_almost_equal(x, xit)
+
+    axis = 1
+    xt, theta = remove_trend(x, order=order, axis=axis)
+    assert xt.shape == x.shape
+    assert theta.shape == (xt.shape[0], order + 1)
+    xit = add_trend(xt, theta=theta, axis=axis)
+    np.testing.assert_array_almost_equal(x, xit)
+
+    # 2d input, single column
+    x = np.random.normal(size=(10, 1))
+
+    axis = 0
+    xt, theta = remove_trend(x, order=order, axis=axis)
+    assert xt.shape == x.shape
+    assert theta.shape == (x.shape[1], order + 1)
+    xit = add_trend(xt, theta=theta, axis=axis)
+    np.testing.assert_array_almost_equal(x, xit)
+
+    axis = 1
+    xt, theta = remove_trend(x, order=order, axis=axis)
+    assert xt.shape == x.shape
+    assert theta.shape == (x.shape[0], order + 1)
+    assert np.allclose(xt, 0)  # should be zero when demeaning single column array along columns
+    xit = add_trend(xt, theta=theta, axis=axis)
+    np.testing.assert_array_almost_equal(x, xit)
+
+    # 1d input
+    x = np.random.normal(size=(10,))
+
+    axis = 0
+    xt, theta = remove_trend(x, order=order, axis=axis)
+    assert xt.shape == x.shape
+    assert theta.shape == (1, order + 1)
+    xit = add_trend(xt, theta=theta, axis=axis)
+    np.testing.assert_array_almost_equal(x, xit)
+
+    # using axis 1 on 1d array should raise error
+    axis = 1
+    with pytest.raises(IndexError):
+        xt, theta = remove_trend(x, order=order, axis=axis)
+
+    # axis >= 2 should raise error, only 1d and 2d arrays are supported
+    axis = 2
+    with pytest.raises(IndexError):
+        xt, theta = remove_trend(x, order=order, axis=axis)
