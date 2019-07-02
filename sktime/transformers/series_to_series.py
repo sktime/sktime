@@ -2,10 +2,17 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
+
 from sktime.utils.validation import check_equal_index
-from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays, remove_trend, add_trend
+from sktime.utils.transformations import tabularize
+from sktime.utils.transformations import detabularize
+from sktime.utils.transformations import concat_nested_arrays
+from sktime.utils.transformations import fit_trend
+from sktime.utils.transformations import remove_trend
+from sktime.utils.transformations import add_trend
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.seasonality import remove_seasonality, add_seasonality
+from sktime.utils.seasonality import remove_seasonality
+from sktime.utils.seasonality import add_seasonality
 
 
 __all__ = ['RandomIntervalSegmenter',
@@ -367,13 +374,41 @@ class Detrender(BaseTransformer):
         and no checks are performed. Use with caution.
     """
 
+    # TODO make it work on multiple columns, currently only works on first column
+    # TODO make it more efficient/vectorise to work on multiple rows simultaneously
+    # TODO time index is lost and needs to be added the same after transformation
+    # TODO separate fit/transform steps currently confounded in transform, fitting polynomials to data should be in fit
+
     def __init__(self, order=0, check_input=True):
 
         if not (isinstance(order, int) and (order >= 0)):
             raise ValueError(f"order must be a positive integer, but found: {type(order)}")
         self.order = order
         self.check_input = check_input
-        self.theta = None
+        self.coefs_ = None
+        self._index = None
+
+    def fit(self, X, y=None):
+
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # keep time index as trend depends on it, e.g. to carry forward trend in inverse_transform
+        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
+            raise NotImplementedError()
+        self._index = index
+
+        # convert into tabular format
+        Xs = tabularize(X.iloc[:, 0])
+
+        self.coefs_ = fit_trend(Xs, order=self.order)
+
+        return self
 
     def transform(self, X, y=None):
         """Transform X.
@@ -389,19 +424,25 @@ class Detrender(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
+        check_is_fitted(self, 'coefs_')
+
         if self.check_input:
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
-        # TODO work on multiple columns, currently only works on first column
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # compare time series indices seen in fit and transform
+        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        if not self._index.equals(index):
+            raise ValueError(f"Time series index of data seen in `transform` does not match data seen in `fit`")
 
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
 
-        # remove trend, keeping fitted polynomial coefficients (theta)
-        Xt, self.theta = remove_trend(Xs, order=self.order)
+        # remove trend, keeping fitted polynomial coefficients
+        Xt = remove_trend(Xs, coefs=self.coefs_, index=index)
 
         # convert back into nested format
         Xt = detabularize(pd.DataFrame(Xt))
@@ -426,16 +467,19 @@ class Detrender(BaseTransformer):
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
-        # TODO work on multiple columns, currently only works on first column
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                       f"instead")
 
+        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
+            raise NotImplementedError()
+
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
 
-        # add trend, keeping fitted polynomial coefficients
-        Xit = add_trend(Xs, theta=self.theta)
+        # add trend at given time series index, keeping fitted polynomial coefficients
+        Xit = add_trend(Xs, coefs=self.coefs_, index=index)
 
         # convert back into nested format
         Xit = detabularize(pd.DataFrame(Xit))
@@ -456,6 +500,10 @@ class Deseasonaliser(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
+
+    # TODO make it work on multiple columns, currently only works on first column
+    # TODO make it more efficient/vectorise to work on multiple rows simultaneously
+    # TODO time index is lost and needs to be added the same after transformation
 
     def __init__(self, sp=1, model='additive', check_input=True):
         self.sp = sp
@@ -480,7 +528,6 @@ class Deseasonaliser(BaseTransformer):
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
-        # TODO work on multiple columns, currently only works on first column
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                       f"instead")
@@ -494,7 +541,6 @@ class Deseasonaliser(BaseTransformer):
         self.si = np.zeros((n, self.sp))
 
         # remove seasonality from each series/row
-        # TODO make more efficient/vectorise to work on multiple rows simultaneously
         for i, x in enumerate(xs):
             xt[i, :], self.si[i, :] = remove_seasonality(x, sp=self.sp, model=self.model)
 
@@ -520,7 +566,6 @@ class Deseasonaliser(BaseTransformer):
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
-        # TODO work on multiple columns, currently only works on first column
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns")
 

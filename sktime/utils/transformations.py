@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
-from .validation import validate_fh
+from sklearn.utils import check_array
+
+from sktime.utils.validation import validate_fh
 
 __author__ = "Markus Löning"
 
@@ -201,95 +203,62 @@ class RollingWindowSplit:
         return self.window_length_
 
 
-def add_trend(x, theta, axis=1):
-    """Add trend to array for given fitted coeffients along axis 0 or 1, inverse function to remove_trend
+def fit_trend(x, order=0):
+    """Fit linear regression with polynomial terms of given order
+    
+        x : array_like, shape=[n_samples, n_obs]
+        Time series data, each sample is fitted separately
+    order : int
+        The polynomial order of the trend, zero is constant (mean), one is
+        linear trend, two is quadratic trend, and so on.
+
+    Returns
+    -------
+    coefs : ndarray, shape=[n_samples, order + 1]
+        Fitted coefficients of polynomial order for each sample, one column means order zero, two columns mean order 1
+        (linear), three columns mean order 2 (quadratic), etc
+
+    See Also
+    -------
+    add_trend
+    remove_trend
+    """
+    x = check_array(x)
+
+    if order == 0:
+        coefs = np.mean(x, axis=1).reshape(-1, 1)
+
+    else:
+        n_obs = x.shape[1]
+        index = np.arange(n_obs)
+        poly_terms = np.vander(index, N=order + 1)
+        coefs = np.linalg.pinv(poly_terms).dot(x.T).T
+
+    return coefs
+
+
+def remove_trend(x, coefs, index=None):
+    """Remove trend from an array with a trend of given order along axis 0 or 1
 
     Parameters
     ----------
-    x : array_like, 1d or 2d
-        data, if 2d, then each row or column is independently detrended with the
-        same trendorder, but independent trend estimates
-    theta : ndarray, shape=[n_samples, order + 1]
-        fitted coefficients of polynomial order for each sample, one column means order zero, two columns mean order 1
+    x : array_like, shape=[n_samples, n_obs]
+        Time series data, each sample is de-trended separately
+    coefs : ndarray, shape=[n_samples, order + 1]
+        Fitted coefficients for each sample, single column means order zero, two columns mean order 1
         (linear), three columns mean order 2 (quadratic), etc
-    axis : int, optional (default=1)
-        axis can be either 0, observations by rows, or 1, observations by columns
+    index : array-like, shape=[n_obs], optional (default=None)
+        Time series index for which to add the trend components
 
     Returns
     -------
     xt : ndarray
-        The series with added trend components.
-
-    See Also
-    -------
-    remove_trend
-
-    """
-
-    # input checks
-    if axis >= 2:
-        raise IndexError('tuple index out of range')
-
-    x = np.asarray(x)
-    ndim = x.ndim
-    if (axis == 1) and (ndim == 1):
-        raise IndexError('tuple index out of range')
-
-    # make into 2d array
-    if ndim == 1:
-        x = x.reshape(-1, 1)
-
-    if axis == 1:
-        x = x.T
-
-    # infer order from shape of given array of polynomial coefficients
-    order = theta.shape[1] - 1
-
-    if order == 0:
-        # special case, add back mean of time series
-        xt = x + theta.ravel()
-
-    else:
-        index = np.arange(x.shape[0])
-        poly_terms = np.vander(index, N=order + 1)
-        xt = x + np.dot(poly_terms, theta.T)
-
-    # ensure output has same format as input
-    if axis == 1:
-        xt = xt.T
-
-    if ndim == 1:
-        xt = xt.ravel()
-
-    return xt
-
-
-def remove_trend(x, order=0, axis=1):
-    """
-    Remove trend from an array with a trend of given order along axis 0 or 1
-
-    Parameters
-    ----------
-    x : array_like, 1d or 2d
-        data, if 2d, then each row or column is independently detrended with the
-        same trend order, but independent trend estimates
-    order : int
-        specifies the polynomial order of the trend, zero is constant (mean), one is
-        linear trend, two is quadratic trend, etc
-    axis : int
-        axis can be either 0, observations by rows,
-        or 1, observations by columns
-
-    Returns
-    -------
-    detrended data series : ndarray
-        The detrended series is the residual of the linear regression of the
+        The de-trended series is the residual of the linear regression of the
         data on the trend of given order.
-    theta : ndarray
-        Fitted coefficients of polynomial model
 
     See Also
     --------
+    fit_trend
     add_trend
 
     References
@@ -297,37 +266,76 @@ def remove_trend(x, order=0, axis=1):
     Adapted from statsmodels (0.9.0), see
     https://www.statsmodels.org/dev/_modules/statsmodels/tsa/tsatools.html#detrend
     """
-    x = np.asarray(x)
+    x = check_array(x)
 
-    if (x.ndim == 1) and (axis == 1):
-        raise IndexError('tuple index out of range')
+    # infer order from shape of given coefficients
+    order = coefs.shape[1] - 1
 
-    if axis >= 2:
-        raise IndexError('tuple index out of range')
-
-    if axis == 1:
-        x = x.T
-
+    # special case, remove mean
     if order == 0:
-        #  special case of demeaning
-        theta = np.mean(x, axis=0)
-        xt = x - theta
-        theta = theta.reshape(-1, 1)
+        xt = x - coefs
+        return xt
 
     else:
-        #  fitting polynomial coefficients
-        index = np.arange(x.shape[0])
+        if index is None:
+            n_obs = x.shape[1]
+            index = np.arange(n_obs)
+        else:
+            if not len(index) == x.shape[1]:
+                raise ValueError('Length of passed index does not match length of passed x')
+
         poly_terms = np.vander(index, N=order + 1)
-        theta = np.linalg.pinv(poly_terms).dot(x)
-        xt = x - np.dot(poly_terms, theta)
+        xt = x - np.dot(poly_terms, coefs.T).T
 
-        # ensure correct output format for fitted coefficients
-        theta = np.atleast_2d(theta) if theta.ndim == 1 else theta.T
+    return xt
 
-    if axis == 1:
-        xt = xt.T
 
-    return xt, theta
+def add_trend(x, coefs, index=None):
+    """Add trend to array for given fitted coefficients along axis 0 or 1, inverse function to `remove_trend()`
+
+    Parameters
+    ----------
+    x : array_like, shape=[n_samples, n_obs]
+        Time series data, each sample is treated separately
+    coefs : array-like, shape=[n_samples, order + 1]
+        fitted coefficients of polynomial order for each sample, one column means order zero, two columns mean order 1
+        (linear), three columns mean order 2 (quadratic), etc
+    index : array-like, shape=[n_obs], optional (default=None)
+        Time series index for which to add the trend components
+
+    Returns
+    -------
+    xt : ndarray
+        The series with added trend.
+
+    See Also
+    -------
+    fit_trend
+    remove_trend
+
+    """
+    x = check_array(x)
+
+    #  infer order from shape of given coefficients
+    order = coefs.shape[1] - 1
+
+    # special case, add mean
+    if order == 0:
+        xt = x + coefs
+
+    else:
+        if index is None:
+            n_obs = x.shape[1]
+            index = np.arange(n_obs)
+        else:
+            if not len(index) == x.shape[1]:
+                raise ValueError('Length of passed index does not match length of passed x')
+
+        index = np.asarray(index)
+        poly_terms = np.vander(index, N=order + 1)
+        xt = x + np.dot(poly_terms, coefs.T).T
+
+    return xt
 
 
 def rolling_mean(x, window):

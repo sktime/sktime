@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.utils.testing import generate_df_from_array
-from sktime.utils.transformations import remove_trend, add_trend
+from sktime.utils.testing import generate_df_from_array, generate_polynomial_series
+from sktime.utils.transformations import fit_trend, remove_trend, add_trend
 from sktime.utils.transformations import tabularize
 
 
@@ -34,60 +34,25 @@ def test_tabularize():
     assert Xt.index.equals(X.index)
 
 
-@pytest.mark.parametrize("order", [0, 1, 2])
-def test_remove_add_trend(order):
+@pytest.mark.parametrize("order", [0, 1, 2])  # polynomial order
+@pytest.mark.parametrize("n_obs", [1, 10, 20])  # number of time series observations
+@pytest.mark.parametrize("n_samples", [1, 10, 20])  # number of samples
+def test_fit_remove_add_trend(order, n_samples, n_obs):
+    # generate random polynomial series data
+    coefs = np.random.normal(size=order + 1).reshape(-1, 1)
+    x = np.column_stack([generate_polynomial_series(n_obs, order, coefs=coefs)
+                         for _ in range(n_samples)]).T
+    # assert x.shape == (n_samples, n_obs)
 
-    # 2d input, multiple columns
-    x = np.random.normal(size=(10, 5))
+    # check shape of fitted coefficients
+    coefs = fit_trend(x, order=order)
+    assert coefs.shape == (n_samples, order + 1)
 
-    axis = 0
-    xt, theta = remove_trend(x, order=order, axis=axis)
-    assert xt.shape == x.shape
-    assert theta.shape == (xt.shape[1], order + 1)
-    xit = add_trend(xt, theta=theta, axis=axis)
+    # test if trend if properly remove when given true order
+    xt = remove_trend(x, coefs)
+    np.testing.assert_array_almost_equal(xt, np.zeros(x.shape))
+
+    # test inverse transform restores original series
+    xit = add_trend(xt, coefs=coefs)
     np.testing.assert_array_almost_equal(x, xit)
 
-    axis = 1
-    xt, theta = remove_trend(x, order=order, axis=axis)
-    assert xt.shape == x.shape
-    assert theta.shape == (xt.shape[0], order + 1)
-    xit = add_trend(xt, theta=theta, axis=axis)
-    np.testing.assert_array_almost_equal(x, xit)
-
-    # 2d input, single column
-    x = np.random.normal(size=(10, 1))
-
-    axis = 0
-    xt, theta = remove_trend(x, order=order, axis=axis)
-    assert xt.shape == x.shape
-    assert theta.shape == (x.shape[1], order + 1)
-    xit = add_trend(xt, theta=theta, axis=axis)
-    np.testing.assert_array_almost_equal(x, xit)
-
-    axis = 1
-    xt, theta = remove_trend(x, order=order, axis=axis)
-    assert xt.shape == x.shape
-    assert theta.shape == (x.shape[0], order + 1)
-    assert np.allclose(xt, 0)  # should be zero when demeaning single column array along columns
-    xit = add_trend(xt, theta=theta, axis=axis)
-    np.testing.assert_array_almost_equal(x, xit)
-
-    # 1d input
-    x = np.random.normal(size=(10,))
-
-    axis = 0
-    xt, theta = remove_trend(x, order=order, axis=axis)
-    assert xt.shape == x.shape
-    assert theta.shape == (1, order + 1)
-    xit = add_trend(xt, theta=theta, axis=axis)
-    np.testing.assert_array_almost_equal(x, xit)
-
-    # using axis 1 on 1d array should raise error
-    axis = 1
-    with pytest.raises(IndexError):
-        xt, theta = remove_trend(x, order=order, axis=axis)
-
-    # axis >= 2 should raise error, only 1d and 2d arrays are supported
-    axis = 2
-    with pytest.raises(IndexError):
-        xt, theta = remove_trend(x, order=order, axis=axis)
