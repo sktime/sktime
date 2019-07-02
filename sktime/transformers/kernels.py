@@ -97,13 +97,6 @@ def Hell_kernel(X,Y,sigma,degree):
     M = cdist(X, Y, metric=Hell_similarity_pairs, sigma=sigma, degree=degree)
     return M
 
-
-
-
-
-
-
-
 #Kernels for dtw distance
 def dtw_pairs(s1,s2,sigma,w):
     s1 = unpack_series(s1)
@@ -140,8 +133,6 @@ def ddtw_pairs(s1,s2,sigma,w):
 def ddtw_kernel(X,Y,sigma,w):
     M=cdist(X,Y,metric=ddtw_pairs,sigma=sigma,w=w)
     return M
-
-
 
 #Kernels for wddtw distance
 def wddtw_pairs(s1,s2,sigma,g):
@@ -228,8 +219,8 @@ class Kernel(BaseEstimator, TransformerMixin):
         return kernel
 
 
-class TriKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, label_encoder=None):
+class TriKernel(BaseTransformer):
+    def __init__(self, sigma=1.0):
         super(TriKernel, self).__init__()
         self.sigma = sigma
         self.X_train_ = None
@@ -242,8 +233,8 @@ class TriKernel(BaseEstimator, TransformerMixin):
         return self
 
 
-class PolyKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+class PolyKernel(BaseTransformer):
+    def __init__(self, sigma=1.0, degree=4):
         super(PolyKernel, self).__init__()
         self.sigma = sigma
         self.degree = degree
@@ -257,8 +248,8 @@ class PolyKernel(BaseEstimator, TransformerMixin):
         return self
 
 
-class KL2Kernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+class KL2Kernel(BaseTransformer):
+    def __init__(self, sigma=1.0, degree=4):
         super(KL2Kernel, self).__init__()
         self.sigma = sigma
         self.degree = degree
@@ -273,8 +264,8 @@ class KL2Kernel(BaseEstimator, TransformerMixin):
 
 
 
-class HellKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, degree=4, label_encoder=None):
+class HellKernel(BaseTransformer):
+    def __init__(self, sigma=1.0, degree=4):
         super(HellKernel, self).__init__()
         self.sigma = sigma
         self.degree = degree
@@ -290,8 +281,8 @@ class HellKernel(BaseEstimator, TransformerMixin):
 
 
 
-class DtwKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, w=0, label_encoder = None):
+class DtwKernel(BaseTransformer):
+    def __init__(self, sigma=1.0, w=0):
         super(DtwKernel, self).__init__()
         self.sigma = sigma
         self.w = w
@@ -307,36 +298,54 @@ class DtwKernel(BaseEstimator, TransformerMixin):
 
 
 
-class EigKernel(BaseEstimator, TransformerMixin):
+class EigKernel(BaseTransformer):
     def __init__(self, transform_eigen_values = None):
         super().__init__()
         self.transform_eigen_values = transform_eigen_values
         self.X_train_ = None
 
     def transform(self, X, y=None):
-        if X.shape[0]==X.shape[1]:
-            eigen_values, eigen_vectors = np.linalg.eig(X)
-            eigen_values = np.real(eigen_values)
-            eigen_vectors = np.real(eigen_vectors)
-            # ------ mod eig values
-            if len(eigen_values[eigen_values < 0]) > 0:
-                eigen_values = self.transform_eigen_values(eigen_values)
-            diag = np.diag(eigen_values)
-            inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
-            result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
-            return result
-        if X.shape[0]!=X.shape[1]:
+        if X.shape[0] != X.shape[1]:
             eigen_values, eigen_vectors = np.linalg.eig(self.X_train_)
-            eigen_values = np.real(eigen_values)
-            eigen_vectors = np.real(eigen_vectors)
-            # ------ mod eig values
-            if len(eigen_values[eigen_values < 0]) > 0:
-                eigen_values = self.transform_eigen_values(eigen_values)
-            diag = np.diag(eigen_values)
-            inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
-            regularized = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
-            P = np.matmul(regularized,np.linalg.pinv(self.X_train_))
-            return np.matmul(X,P)
+        else:
+            eigen_values, eigen_vectors = np.linalg.eig(X)
+        eigen_values = np.real(eigen_values)
+        eigen_vectors = np.real(eigen_vectors)
+        # ------ mod eig values
+        if len(eigen_values[eigen_values < 0]) > 0:
+            eigen_values = self.transform_eigen_values(eigen_values)
+        diag = np.diag(eigen_values)
+        inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+        regularized = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        if X.shape[0] != X.shape[1]:
+            P = np.matmul(regularized, np.linalg.pinv(self.X_train_))
+            return np.matmul(X, P)
+        else:
+            return regularized
+        # old version
+        # if X.shape[0]==X.shape[1]:
+        #     eigen_values, eigen_vectors = np.linalg.eig(X)
+        #     eigen_values = np.real(eigen_values)
+        #     eigen_vectors = np.real(eigen_vectors)
+        #     # ------ mod eig values
+        #     if len(eigen_values[eigen_values < 0]) > 0:
+        #         eigen_values = self.transform_eigen_values(eigen_values)
+        #     diag = np.diag(eigen_values)
+        #     inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+        #     result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        #     return result
+        # if X.shape[0]!=X.shape[1]:
+        #     eigen_values, eigen_vectors = np.linalg.eig(self.X_train_)
+        #     eigen_values = np.real(eigen_values)
+        #     eigen_vectors = np.real(eigen_vectors)
+        #     # ------ mod eig values
+        #     if len(eigen_values[eigen_values < 0]) > 0:
+        #         eigen_values = self.transform_eigen_values(eigen_values)
+        #     diag = np.diag(eigen_values)
+        #     inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+        #     regularized = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        #     P = np.matmul(regularized,np.linalg.pinv(self.X_train_))
+        #     return np.matmul(X,P)
 
 
 
@@ -364,8 +373,8 @@ class NegEigToMin(EigKernel):
         result = eigen_values - min
         return result
 
-class EdKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, label_encoder = None):
+class EdKernel(BaseTransformer):
+    def __init__(self, sigma=1.0):
         super(EdKernel, self).__init__()
         self.sigma = sigma
         self.X_train_ = None
@@ -377,8 +386,8 @@ class EdKernel(BaseEstimator, TransformerMixin):
         self.X_train_ = X
         return self
 
-class FullDtwKernel(BaseEstimator, TransformerMixin):
-    def __init__(self, sigma=1.0, label_encoder=None):
+class FullDtwKernel(BaseTransformer):
+    def __init__(self, sigma=1.0):
         super().__init__()
         self.sigma = sigma
         self.X_train_ = None
@@ -391,7 +400,7 @@ class FullDtwKernel(BaseEstimator, TransformerMixin):
         return self
 
 
-class WdtwKernel(BaseEstimator,TransformerMixin):
+class WdtwKernel(BaseTransformer):
     def __init__(self, sigma=1.0, g=0):
         super(WdtwKernel,self).__init__()
         self.sigma = sigma
@@ -407,7 +416,7 @@ class WdtwKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for ddtw distance kernel
-class DdtwKernel(BaseEstimator,TransformerMixin):
+class DdtwKernel(BaseTransformer):
     def __init__(self, sigma=1.0, w=0):
         super(DdtwKernel,self).__init__()
         self.sigma = sigma
@@ -422,9 +431,9 @@ class DdtwKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for ddtw distance kernel
-class FullDdtwKernel(BaseEstimator,TransformerMixin):
+class FullDdtwKernel(BaseTransformer):
     def __init__(self, sigma=1.0):
-        super(DdtwKernel,self).__init__()
+        super(FullDdtwKernel,self).__init__()
         self.sigma = sigma
 
     def transform(self, X, y=None):
@@ -437,7 +446,7 @@ class FullDdtwKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for wddtw distance kernel
-class WddtwKernel(BaseEstimator,TransformerMixin):
+class WddtwKernel(BaseTransformer):
     def __init__(self, sigma=1.0, g=0):
         super(WddtwKernel,self).__init__()
         self.sigma = sigma
@@ -452,7 +461,7 @@ class WddtwKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for msm distance kernel
-class MsmKernel(BaseEstimator,TransformerMixin):
+class MsmKernel(BaseTransformer):
     def __init__(self, sigma=1.0, c=0,dim_to_use=0):
         super(MsmKernel,self).__init__()
         self.sigma = sigma
@@ -468,7 +477,7 @@ class MsmKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for lcss distance kernel
-class LcssKernel(BaseEstimator,TransformerMixin):
+class LcssKernel(BaseTransformer):
     def __init__(self, sigma=1.0, delta= 1, epsilon=0,dim_to_use=0):
         super(LcssKernel,self).__init__()
         self.sigma = sigma
@@ -485,7 +494,7 @@ class LcssKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for erp distance kernel
-class ErpKernel(BaseEstimator,TransformerMixin):
+class ErpKernel(BaseTransformer):
     def __init__(self, sigma=1.0, band_size=5,g=0.5,dim_to_use=0):
         super(ErpKernel,self).__init__()
         self.sigma = sigma
@@ -502,7 +511,7 @@ class ErpKernel(BaseEstimator,TransformerMixin):
 
 
 #Class for twe distance kernel
-class TweKernel(BaseEstimator,TransformerMixin):
+class TweKernel(BaseTransformer):
     def __init__(self, sigma=1.0, penalty=0,stiffness=1):
         super(TweKernel,self).__init__()
         self.sigma = sigma
