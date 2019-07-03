@@ -2,11 +2,16 @@ import numpy as np
 import random
 import sys
 import pandas as pd
+import time
 import math
+
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
-#__all__ = ["BossEnsemble","BossIndividual","BOSSTransform"]
+from sktime.contrib.dictionary_based.dictionary_distances import boss_distance
+from sktime.contrib.dictionary_based.SFA import SFA
+
+all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
 
 class BOSSEnsemble(BaseEstimator):
@@ -35,11 +40,10 @@ class BOSSEnsemble(BaseEstimator):
     coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each 
     series is formed and stored. fit involves finding n histograms. 
     
-    predict used 1 nearest neighbour with a bespoke distance function.  
+    predict uses 1 nearest neighbour with a bespoke distance function.  
     
     For the Java version, see
     https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
-
 
 
     Parameters
@@ -69,12 +73,19 @@ class BOSSEnsemble(BaseEstimator):
                  random_state=None,
                  dim_to_use=0,
                  threshold=0.92,
-                 max_ensemble_size=250,
-                 word_lengths=[16, 14, 12, 10, 8],
+                 max_ensemble_size=500,
+                 max_win_len_prop=1,
+                 time_limit=0,
+                 word_lengths=None,
                  alphabet_size=4,
-                 min_window =10,
-                 norm_options=[True, False]
+                 min_window=10,
+                 norm_options=None
                  ):
+        if word_lengths is None:
+            word_lengths = [16, 14, 12, 10, 8]
+        if norm_options is None:
+            norm_options = [True, False]
+
         self.randomised_ensemble = randomised_ensemble
         self.ensemble_size = ensemble_size
         self.random_state = random_state
@@ -82,21 +93,26 @@ class BOSSEnsemble(BaseEstimator):
         self.dim_to_use = dim_to_use
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
+        self.max_win_len_prop = max_win_len_prop
+        self.time_limit = time_limit
 
         self.seed = 0
         self.classifiers = []
+        self.weights = []
         self.num_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
         self.num_classifiers = 0
-        self.series_length=0
+        self.series_length = 0
+        self.num_insts = 0
+
         # For the multivariate case treating this as a univariate classifier
+
         # Parameter search values
         self.word_lengths = word_lengths
         self.norm_options = norm_options
         self.alphabet_size = alphabet_size
         self.min_window = min_window
-
 
     def fit(self, X, y):
         """Build an ensemble of BOSS classifiers from the training set (X, y), either through randomising over the para
@@ -115,12 +131,13 @@ class BOSSEnsemble(BaseEstimator):
          """
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use],pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
+            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
+                                "Series objects")
 
-        num_insts, self.series_length = X.shape
+        self.num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -128,114 +145,145 @@ class BOSSEnsemble(BaseEstimator):
 
         # Window length parameter space dependent on series length
 
-        max_window_searches = self.series_length/4
-        win_inc = (int)((self.series_length - self.min_window) / max_window_searches)
-        if win_inc < 1: win_inc = 1
+        max_window_searches = self.series_length / 4
+        max_window = int(self.series_length * self.max_win_len_prop)
+        win_inc = int((max_window - self.min_window) / max_window_searches)
+        if win_inc < 1:
+            win_inc = 1
 
+        # RBOSS
         if self.randomised_ensemble:
             random.seed(self.seed)
 
-            while len(self.classifiers) < self.ensemble_size:
-                word_len = self.word_lengths[random.randint(0, len(self.word_lengths) - 1)]
-                win_size = self.min_window + win_inc * random.randint(0, max_window_searches)
-                if win_size > max_window_searches: win_size = max_window_searches
-                normalise = random.random() > 0.5
+            possible_parameters = self.unique_parameters(max_window, win_inc)
+            num_classifiers = 0
+            start_time = time.time_ns()
+            train_time = 0
+            subsample_size = int(self.num_insts*0.7)
+            lowest_acc = 0
+            lowest_acc_idx = 0
 
-                boss = BOSSIndividual(win_size, self.word_lengths[word_len], self.alphabet_size, normalise)
-                boss.fit(X, y)
+            if self.time_limit > 0:
+                self.ensemble_size = 0
+
+            while (train_time < self.time_limit and num_classifiers < self.max_ensemble_size) or num_classifiers < self.ensemble_size:
+                parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
+
+                subsample = np.random.randint(self.num_insts, size=subsample_size)
+                X_subsample = X[subsample, :]
+                y_subsample = y[subsample]
+
+                boss = BOSSIndividual(parameters[0], parameters[1], self.alphabet_size, parameters[2])
+                boss.fit(X_subsample, y_subsample)
                 boss.clean()
-                self.classifiers.append(boss)
+
+                boss.accuracy = self.individual_train_acc(boss, y_subsample, subsample_size, lowest_acc)
+                weight = math.pow(boss.accuracy, 4)
+
+                if num_classifiers < self.max_ensemble_size:
+                    if boss.accuracy < lowest_acc:
+                        lowest_acc = boss.accuracy
+                        lowest_acc_idx = num_classifiers
+                    self.weights.append(weight)
+                    self.classifiers.append(boss)
+                elif boss.accuracy > lowest_acc:
+                    self.weights[lowest_acc_idx] = weight
+                    self.classifiers[lowest_acc_idx] = boss
+                    lowest_acc, lowest_acc_idx = self.worst_ensemble_acc()
+
+                num_classifiers += 1
+                train_time = time.time_ns() - start_time
+        # BOSS
         else:
             max_acc = -1
             min_max_acc = -1
 
             for i, normalise in enumerate(self.norm_options):
-                for win_size in range(self.min_window, self.series_length+1, win_inc):
+                for win_size in range(self.min_window, max_window + 1, win_inc):
                     boss = BOSSIndividual(win_size, self.word_lengths[0], self.alphabet_size, normalise)
                     boss.fit(X, y)
 
-                    bestAccForWinSize = -1
+                    best_classifier_for_win_size = boss
+                    best_acc_for_win_size = -1
+                    best_word_len = self.word_lengths[0]
 
                     for n, word_len in enumerate(self.word_lengths):
                         if n > 0:
-                            boss = boss.shortenBags(word_len)
+                            boss = boss.shorten_bags(word_len)
 
-                        correct = 0
-                        for g in range(num_insts):
-                            c = boss.train_predict(g)
-                            if (c == y[g]):
-                                correct += 1
+                        boss.accuracy = self.individual_train_acc(boss, y, self.num_insts, best_acc_for_win_size)
 
-                        accuracy = correct/num_insts
-                        if (accuracy >= bestAccForWinSize):
-                            bestAccForWinSize = accuracy
-                            bestClassifierForWinSize = boss
-                            bestWordLen = word_len
+                        if boss.accuracy >= best_acc_for_win_size:
+                            best_acc_for_win_size = boss.accuracy
+                            best_classifier_for_win_size = boss
+                            best_word_len = word_len
 
-                    if self.include_in_ensemble(bestAccForWinSize, max_acc, min_max_acc, len(self.classifiers)):
-                        bestClassifierForWinSize.clean()
-                        bestClassifierForWinSize.setWordLen(bestWordLen)
-                        bestClassifierForWinSize.accuracy = bestAccForWinSize
-                        self.classifiers.append(bestClassifierForWinSize)
+                    if self.include_in_ensemble(best_acc_for_win_size, max_acc, min_max_acc, len(self.classifiers)):
+                        best_classifier_for_win_size.clean()
+                        best_classifier_for_win_size.set_word_len(best_word_len)
+                        self.classifiers.append(best_classifier_for_win_size)
 
-                        if bestAccForWinSize > max_acc:
-                            max_acc = bestAccForWinSize
+                        if best_acc_for_win_size > max_acc:
+                            max_acc = best_acc_for_win_size
 
                             for c, classifier in enumerate(self.classifiers):
                                 if classifier.accuracy < max_acc * self.threshold:
                                     self.classifiers.remove(classifier)
 
-                        min_max_acc, minAccInd = self.worst_of_best()
+                        min_max_acc, min_acc_ind = self.worst_ensemble_acc()
 
                         if len(self.classifiers) > self.max_ensemble_size:
-                            del self.classifiers[minAccInd]
-                            min_max_acc, minAccInd = self.worst_of_best()
+                            del self.classifiers[min_acc_ind]
+                            min_max_acc, min_acc_ind = self.worst_ensemble_acc()
+
+            self.weights = [1 for n in range(len(self.classifiers))]
 
         self.num_classifiers = len(self.classifiers)
 
     def predict(self, X):
-        return [self.classes_[np.argmax(prob)] for prob in self.predict_proba(X)]
+        return [self.classes_[int(np.argmax(prob))] for prob in self.predict_proba(X)]
 
     def predict_proba(self, X):
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use],pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
+            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
+                                "Series objects")
 
         sums = np.zeros((X.shape[0], self.num_classes))
 
-        for i, clf in enumerate(self.classifiers):
+        for n, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
-            for i in range(0,X.shape[0]):
-                sums[i,self.class_dictionary.get(preds[i])] += 1
+            for i in range(0, X.shape[0]):
+                sums[i, self.class_dictionary.get(preds[i])] += 1 * self.weights[n]
 
         dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
 
         return dists
 
-    def include_in_ensemble(self, acc, maxAcc, minMaxAcc, size):
-        if acc >= maxAcc * self.threshold:
+    def include_in_ensemble(self, acc, max_acc, min_max_acc, size):
+        if acc >= max_acc * self.threshold:
             if size >= self.max_ensemble_size:
-                return acc > minMaxAcc
+                return acc > min_max_acc
             else:
                 return True
         return False
 
-    def worst_of_best(self):
-        minAcc = -1;
-        minAccInd = 0
+    def worst_ensemble_acc(self):
+        min_acc = -1
+        min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
-            if classifier.accuracy < minAcc:
-                minAcc = classifier.accuracy
-                minAccInd = c
+            if classifier.accuracy < min_acc:
+                min_acc = classifier.accuracy
+                min_acc_idx = c
 
-        return minAcc, minAccInd
+        return min_acc, min_acc_idx
 
     def get_train_probs(self, X):
         num_inst = X.shape[0]
-        results = np.zeros((num_inst,self.num_classes))
+        results = np.zeros((num_inst, self.num_classes))
         divisor = (np.ones(self.num_classes) * self.num_classifiers)
         for i in range(num_inst):
             sums = np.zeros(self.num_classes)
@@ -265,59 +313,122 @@ class BOSSEnsemble(BaseEstimator):
             if c == self.class_dictionary.get(y[i], -1):
                 correct += 1
 
-            results[0][i+1] = self.class_dictionary.get(y[i], -1)
-            results[1][i+1] = c
+            results[0][i + 1] = self.class_dictionary.get(y[i], -1)
+            results[1][i + 1] = c
 
             for n in range(self.num_classes):
-                results[2+n][i+1] = dists[n]
+                results[2 + n][i + 1] = dists[n]
 
-        results[0][0] = correct/num_inst
+        results[0][0] = correct / num_inst
         return results
 
+    def unique_parameters(self, max_window, win_inc):
+        possible_parameters = []
 
-class BOSSIndividual:
+        for i in range(self.num_insts):
+            for n, normalise in enumerate(self.norm_options):
+                for win_size in range(self.min_window, max_window + 1, win_inc):
+                    for g, word_len in enumerate(self.word_lengths):
+                        possible_parameters.append([win_size, word_len, normalise])
+
+        return possible_parameters
+
+    def individual_train_acc(self, boss, y, train_size, lowest_acc):
+        correct = 0
+        required_correct = int(lowest_acc * train_size)
+
+        for i in range(train_size):
+            if correct + train_size - i < required_correct:
+                return -1
+
+            c = boss.train_predict(i)
+
+            if c == y[i]:
+                correct += 1
+
+        return correct / train_size
+
+
+class BOSSIndividual(BaseEstimator):
     """ Single Bag of SFA Symbols (BOSS) classifier
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
     @article
     """
-    def __init__(self, window_size, word_length, alphabet_size, norm):
+
+    def __init__(self,
+                 window_size,
+                 word_length,
+                 alphabet_size,
+                 norm,
+                 dim_to_use=0):
         self.window_size = window_size
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.norm = norm
 
-        self.transform = BOSSTransform(window_size, word_length, alphabet_size, norm)
+        self.dim_to_use = dim_to_use
+
+        self.transform = SFA(word_length, alphabet_size, window_size=window_size, norm=norm, remove_repeat_words=True,
+                             save_words=True)
         self.transformed_data = []
-        self.class_vals = []
         self.accuracy = 0
 
+        self.class_vals = []
+        self.num_classes = 0
+        self.classes_ = []
+        self.class_dictionary = {}
+
     def fit(self, X, y):
-        self.transformed_data = self.transform.fit(X)
+        sfa = self.transform.fit_transform(X)
+        self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
+
         self.class_vals = y
+        self.num_classes = np.unique(y).shape[0]
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        for index, classVal in enumerate(self.classes_):
+            self.class_dictionary[classVal] = index
 
     def predict(self, X):
-        num_insts, num_atts = X.shape
+        if isinstance(X, pd.DataFrame):
+            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
+                                "Series objects")
+
+        num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)
 
-        for i in range(num_insts):
-            testBag = self.transform.transform_single(X[i, :])
+        test_bags = self.transform.transform(X)
+        test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
+
+        for i, test_bag in enumerate(test_bags):
             bestDist = sys.float_info.max
             nn = -1
 
             for n, bag in enumerate(self.transformed_data):
-                dist = self.BOSSDistance(testBag, bag, bestDist)
+                dist = boss_distance(test_bag, bag, bestDist)
 
                 if dist < bestDist:
-                    bestDist = dist;
+                    bestDist = dist
                     nn = self.class_vals[n]
 
             classes[i] = nn
 
         return classes
 
+    def predict_proba(self, X):
+        dists = np.zeros((X.shape[0], self.num_classes))
+
+        preds = self.predict(X)
+        for i in range(0, X.shape[0]):
+            dists[i, self.class_dictionary.get(preds[i])] += 1
+
+        return dists
+
     def train_predict(self, train_num):
-        testBag = self.transformed_data[train_num]
+        test_bag = self.transformed_data[train_num]
         best_dist = sys.float_info.max
         nn = -1
 
@@ -325,319 +436,27 @@ class BOSSIndividual:
             if n == train_num:
                 continue
 
-            dist = self.BOSSDistance(testBag, bag, best_dist)
+            dist = boss_distance(test_bag, bag, best_dist)
 
             if dist < best_dist:
-                best_dist = dist;
+                best_dist = dist
                 nn = self.class_vals[n]
 
         return nn
 
-    def BOSSDistance(self, bagA, bagB, best_dist):
-        dist = 0
-
-        for word, valA in bagA.items():
-            valB = bagB.get(word, 0)
-            dist += (valA-valB)*(valA-valB)
-
-            if dist > best_dist:
-                return sys.float_info.max
-
-        return dist
-
-    def shortenBags(self, word_len):
+    def shorten_bags(self, word_len):
         newBOSS = BOSSIndividual(self.window_size, word_len, self.alphabet_size, self.norm)
         newBOSS.transform = self.transform
-        newBOSS.transformed_data = self.transform.shorten_bags(word_len)
+        sfa = self.transform.shorten_bags(word_len)
+        newBOSS.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
         newBOSS.class_vals = self.class_vals
 
         return newBOSS
 
     def clean(self):
         self.transform.words = None
-
-    def setWordLen(self, wordLen):
-        self.word_length = wordLen
-        self.transform.word_length = wordLen
-
-class BOSSTransform():
-    """ Boss Transform for a fixed set of parameters
-    An internal class not to be used outside of the BOSS transform
-    """
-    def __init__(self, window_size, word_length, alphabet_size, norm):
-        self.words = []
-        self.breakpoints = []
-
-        self.inverse_sqrt_win_size = 1 / math.sqrt(window_size)
-        self.window_size = window_size
-        self.word_length = word_length
-        self.alphabet_size = alphabet_size
-        self.norm = norm
-
-        self.num_insts = 0
-        self.num_atts = 0
-
-    def fit(self, X):
-        """Build a histogram
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-
-        Returns
-        -------
-        self : object
-         """
-
-        self.num_insts, self.num_atts = X.shape
-        self.breakpoints = self.MCB(X)
-
-        bags = []
-
-        for i in range(self.num_insts):
-            dfts = self.MFT(X[i, :])
-            bag = {}
-            lastWord = -1
-
-            words = []
-
-            for window in range(dfts.shape[0]):
-                word = self.createWord(dfts[window])
-                words.append(word)
-                lastWord = self.addToBag(bag, word, lastWord)
-
-            self.words.append(words)
-            bags.append(bag)
-
-        return bags
-
-    def transform_single(self, series):
-        dfts = self.MFT(series)
-        bag = {}
-        lastWord = -1
-
-        for window in range(dfts.shape[0]):
-            word = self.createWord(dfts[window])
-            lastWord = self.addToBag(bag, word, lastWord)
-
-        return bag
-
-    def MCB(self, X):
-        """
-
-
-        :param X: the training data
-        :return:
-        """
-        num_windows_per_inst = math.ceil(self.num_atts / self.window_size)
-        dft = np.zeros((self.num_insts, num_windows_per_inst, int((self.word_length / 2) * 2)))
-
-        for i in range(X.shape[0]):
-            split = np.split(X[i, :], np.linspace(self.window_size, self.window_size * (num_windows_per_inst - 1),
-                                                  num_windows_per_inst - 1, dtype=np.int_))
-            split[-1] = X[i, self.num_atts - self.window_size:self.num_atts]
-
-            for n, row in enumerate(split):
-                dft[i, n] = self.discrete_fourier_transform(row)
-
-        total_num_windows = self.num_insts * num_windows_per_inst
-        breakpoints = np.zeros((self.word_length, self.alphabet_size))
-
-        for letter in range(self.word_length):
-            column = np.zeros(total_num_windows)
-
-            for inst in range(self.num_insts):
-                for window in range(num_windows_per_inst):
-                    column[(inst * num_windows_per_inst) + window] = round(dft[inst][window][letter] * 100) / 100
-
-            column = np.sort(column)
-
-            bin_index = 0
-            target_bin_depth = total_num_windows / self.alphabet_size
-
-            for bp in range(self.alphabet_size - 1):
-                bin_index += target_bin_depth
-                breakpoints[letter][bp] = column[int(bin_index)]
-
-            breakpoints[letter][self.alphabet_size - 1] = sys.float_info.max
-
-        return breakpoints
-
-    def discrete_fourier_transform(self, series):
-        """ Performs a discrete fourier transform using standard O(n^2) transform
-        if self.norm is True, then the first term of the DFT is ignored
-
-        TO DO: Use a fast fourier transform
-        Input
-        -------
-        X : The training input samples.  array-like or sparse matrix of shape = [n_samps, num_atts]
-
-        Returns
-        -------
-        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length num_atts or
-        num_atts-2 if if self.norm is True
-        """
-
-        length = len(series)
-        outputLength = int(self.word_length / 2)
-        start = 1 if self.norm else 0
-
-        std = np.std(series)
-        if std == 0: std = 1
-        normalising_factor = self.inverse_sqrt_win_size / std
-
-        dft = np.zeros(outputLength * 2)
-
-        for i in range(start, start + outputLength):
-            idx = (i - start) * 2
-
-            for n in range(length):
-                dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
-                dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
-
-        dft *= normalising_factor
-
-        return dft
-
-    def DFTunnormed(self, series):
-        length = len(series)
-        outputLength = int(self.word_length / 2)
-        start = 1 if self.norm else 0
-
-        dft = np.zeros(outputLength * 2)
-
-        for i in range(start, start + outputLength):
-            idx = (i - start) * 2
-
-            for n in range(length):
-                dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
-                dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
-
-        return dft
-
-    def MFT(self, series):
-        """
-
-        :param series:
-        :return:
-        """
-        startOffset = 2 if self.norm else 0
-        l = self.word_length + self.word_length % 2
-        phis = np.zeros(l)
-
-        for i in range(0, l, 2):
-            half = -(i + startOffset)/2
-            phis[i] = math.cos(2 * math.pi * half / self.window_size);
-            phis[i+1] = -math.sin(2 * math.pi * half / self.window_size)
-
-        end = max(1, len(series) - self.window_size + 1)
-        stds = self.calcIncrementalMeanStd(series, end)
-        transformed = np.zeros((end, l))
-        mftData = None
-
-        for i in range(end):
-            if i > 0:
-                for n in range(0, l, 2):
-                    real1 = mftData[n] + series[i + self.window_size - 1] - series[i - 1]
-                    imag1 = mftData[n + 1]
-                    real = real1 * phis[n] - imag1 * phis[n + 1]
-                    imag = real1 * phis[n + 1] + phis[n] * imag1
-                    mftData[n] = real
-                    mftData[n + 1] = imag
-            else:
-                mftData = self.DFTunnormed(series[0:self.window_size])
-
-            normalisingFactor = (1 / stds[i] if stds[i] > 0 else 1) * self.inverse_sqrt_win_size;
-            transformed[i] = mftData * normalisingFactor;
-
-        return transformed
-
-    def calcIncrementalMeanStd(self, series, end):
-        means = np.zeros(end)
-        stds = np.zeros(end)
-
-        sum = 0
-        squareSum = 0
-
-        for ww in range(self.window_size):
-            sum += series[ww]
-            squareSum += series[ww] * series[ww]
-
-        rWindowLength = 1 / self.window_size
-        means[0] = sum * rWindowLength
-        buf = squareSum * rWindowLength - means[0] * means[0]
-        stds[0] = math.sqrt(buf) if buf > 0 else 0
-
-        for w in range(1, end):
-            sum += series[w + self.window_size - 1] - series[w - 1]
-            means[w] = sum * rWindowLength
-            squareSum += series[w + self.window_size - 1] * series[w + self.window_size - 1] - series[w - 1] * series[w - 1]
-            buf = squareSum * rWindowLength - means[w] * means[w]
-            stds[w] = math.sqrt(buf) if buf > 0 else 0
-
-        return stds
-
-    def createWord(self, dft):
-        word = BitWord()
-
-        for i in range(self.word_length):
-            for bp in range(self.alphabet_size):
-                if dft[i] <= self.breakpoints[i][bp]:
-                    word.push(bp)
-                    break
-
-        return word
-
-    def shorten_bags(self, wordLen):
-        newBags = []
-
-        for i in range(self.num_insts):
-            bag = {}
-            lastWord = -1
-
-            for n, word in enumerate(self.words[i]):
-                newWord = BitWord(word = word.word, length = word.length)
-                newWord.shorten(16 - wordLen)
-                lastWord = self.addToBag(bag, newWord, lastWord)
-
-            newBags.append(bag)
-
-        return newBags;
-
-    def addToBag(self, bag, word, lastWord):
-        if word.word == lastWord:
-            return lastWord
-
-        if word.word in bag:
-            bag[word.word] += 1
-        else:
-            bag[word.word] = 1
-
-        return word.word
-
-class BitWord:
-
-    def __init__(self, word = np.int_(0), length = 0):
-        self.word = word
-        self.length = length
-
-    def push(self, letter):
-        self.word = (self.word << 2) | letter
-        self.length += 1
-
-    def shorten(self, amount):
-        self.word = self.rightShift(self.word,amount*2)
-        self.length -= amount
-
-    def wordList(self):
-        wordList = []
-        shift = 32-(self.length*2)
-
-        for i in range(self.length-1, -1, -1):
-            wordList.append(self.rightShift(self.word << shift, 32-2))
-            shift += 2
-
-        return wordList
-
-    def rightShift(self, left, right):
-        return (left % 0x100000000) >> right
+        self.transform.save_words = False
+
+    def set_word_len(self, word_len):
+        self.word_length = word_len
+        self.transform.word_length = word_len
