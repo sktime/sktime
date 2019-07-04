@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sktime.utils.transformations import detabularise
+from sktime.utils.data_container import detabularise
 
 
 def generate_df_from_array(array, n_rows=10, n_cols=1):

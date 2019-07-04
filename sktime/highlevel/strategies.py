@@ -14,7 +14,7 @@ from sklearn.base import RegressorMixin
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
-from sktime.utils.transformations import RollingWindowSplit
+from sktime.utils.time_series import RollingWindowSplit
 from sktime.classifiers.base import BaseClassifier
 from sktime.forecasters.base import BaseForecaster
 from sktime.regressors.base import BaseRegressor

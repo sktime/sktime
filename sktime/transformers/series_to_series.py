@@ -5,19 +5,15 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array, check_is_fitted_in_transform
-from sktime.utils.transformations import tabularize
-from sktime.utils.transformations import detabularize
-from sktime.utils.transformations import concat_nested_arrays
-from sktime.utils.transformations import fit_trend
-from sktime.utils.transformations import remove_trend
-from sktime.utils.transformations import add_trend
+from sktime.utils.time_series import fit_trend, remove_trend, add_trend
+from sktime.utils.data_container import tabularize, concat_nested_arrays, get_time_index
 from sktime.transformers.base import BaseTransformer
+from sktime.transformers.compose import Tabulariser
 
 
 __all__ = ['RandomIntervalSegmenter',
            'IntervalSegmenter',
            'DerivativeSlopeTransformer',
-           'TimeSeriesConcatenator',
            'Detrender',
            "Deseasonaliser",
            'Deseasonalizer']
@@ -332,35 +328,6 @@ class DerivativeSlopeTransformer(BaseTransformer):
         return [get_der(x) for x in X]
 
 
-class TimeSeriesConcatenator(BaseTransformer):
-    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
-        data by simply concatenating times series in time.
-    """
-
-    def transform(self, X, y=None):
-        """Concatenate multivariate time series/panel data into long univiariate time series/panel
-        data by simply concatenating times series in time.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_samples, n_features]
-            Nested dataframe with time-series in cells.
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame with same number of rows and single column
-        """
-
-        check_is_fitted(self, 'is_fitted_')
-
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")
-
-        Xt = detabularize(tabularize(X))
-        return Xt
-
-
 class Detrender(BaseTransformer):
     """A transformer that removes trend of given polynomial order from time series/panel data
 
@@ -379,6 +346,7 @@ class Detrender(BaseTransformer):
         self.order = order
         self.check_input = check_input
         self._time_index = None
+        self._input_shape = None
 
     def transform(self, X, y=None):
         """Transform X.
@@ -401,23 +369,23 @@ class Detrender(BaseTransformer):
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns")
 
+        self._input_shape = X.shape
+
         # keep time index as trend depends on it, e.g. to carry forward trend in inverse_transform
-        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-            raise NotImplementedError()
-        self._time_index = time_index
+        self._time_index = get_time_index(X)
 
         # convert into tabular format
-        Xs = tabularize(X.iloc[:, 0])
+        tabulariser = Tabulariser()
+        Xs = tabulariser.transform(X.iloc[:, 0:])
 
         # fit polynomial trend
         self.coefs_ = fit_trend(Xs, order=self.order)
 
         # remove trend, keeping fitted polynomial coefficients
-        Xt = remove_trend(Xs, coefs=self.coefs_, index=time_index)
+        Xt = remove_trend(Xs, coefs=self.coefs_, time_index=self._time_index)
 
         # convert back into nested format
-        Xt = detabularize(pd.DataFrame(Xt))
+        Xt = tabulariser.inverse_transform(pd.DataFrame(Xt))
         Xt.columns = X.columns
         return Xt
 
@@ -445,18 +413,22 @@ class Detrender(BaseTransformer):
             raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                       f"instead")
 
-        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-            raise NotImplementedError()
+        if not X.shape[0] == self._input_shape[0]:
+            raise ValueError(f"Inverse transform only works on data with the same number samples "
+                             f"as seen during transform, but found: {X.shape[0]} samples "
+                             f"!= {self._input_shape[0]} samples (seen during transform)")
+
+        time_index = get_time_index(X)
 
         # convert into tabular format
-        Xs = tabularize(X.iloc[:, 0])
+        tabulariser = Tabulariser()
+        Xs = tabulariser.transform(X.iloc[:, 0:])
 
         # add trend at given time series index, keeping fitted polynomial coefficients
-        Xit = add_trend(Xs, coefs=self.coefs_, index=time_index)
+        Xit = add_trend(Xs, coefs=self.coefs_, time_index=time_index)
 
         # convert back into nested format
-        Xit = detabularize(pd.DataFrame(Xit))
+        Xit = tabulariser.inverse_transform(pd.DataFrame(Xit))
         Xit.columns = X.columns
         return Xit
 
@@ -512,13 +484,11 @@ class Deseasonaliser(BaseTransformer):
             return X
 
         # keep time index as transform/inverse transform depends on it, e.g. to carry forward trend in inverse_transform
-        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-            raise NotImplementedError()
-        self._time_index = time_index
+        self._time_index = get_time_index(X)
 
-        # tabularise data, assuming equal length time series
-        Xs = tabularize(X.iloc[:, 0])
+        # convert into tabular format
+        tabulariser = Tabulariser()
+        Xs = tabulariser.transform(X.iloc[:, 0:])
 
         # fit seasonal decomposition model
         seasonal_components = self._fit_seasonal_decomposition_model(Xs)
@@ -534,7 +504,7 @@ class Deseasonaliser(BaseTransformer):
         self.seasonal_components_ = seasonal_components[:, :self.sp]
 
         # convert back into nested format
-        Xt = detabularize(pd.DataFrame(Xt))
+        Xt = tabulariser.inverse_transform(pd.DataFrame(Xt))
         Xt.columns = X.columns
         return Xt
 
@@ -559,9 +529,10 @@ class Deseasonaliser(BaseTransformer):
 
         # check that number of samples are the same, inverse transform depends on parameters fitted in transform and
         # hence only works on data with the same (number of) rows
-        if not X.shape == self._input_shape:
-            raise ValueError(f"Inverse transform only works on data with the same samples as seen during transform, but"
-                             f"found: {X.shape[0]} samples != {self._input_shape[0]} samples (seen during transform)")
+        if not X.shape[0] == self._input_shape[0]:
+            raise ValueError(f"Inverse transform only works on data with the same number samples "
+                             f"as seen during transform, but found: {X.shape[0]} samples "
+                             f"!= {self._input_shape[0]} samples (seen during transform)")
 
         # if the seasonal periodicity is 1, return unchanged X
         sp = self.sp
@@ -572,9 +543,7 @@ class Deseasonaliser(BaseTransformer):
         check_is_fitted_in_transform(self, 'seasonal_components_')
 
         # check if time index is aligned with time index seen during transform
-        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-            raise NotImplementedError()
+        time_index = get_time_index(X)
 
         # align seasonal components with index of X
         if self._time_index.equals(time_index):
@@ -592,8 +561,9 @@ class Deseasonaliser(BaseTransformer):
             seasonal_components = np.tile(seasonal_components, n_tiles)
         seasonal_components = seasonal_components[:, :n_obs]
 
-        # tabularise data for inverse transform, assuming equal length time series
-        Xs = tabularize(X.iloc[:, 0])
+        # convert into tabular format
+        tabulariser = Tabulariser()
+        Xs = tabulariser.transform(X.iloc[:, 0:])
 
         # inverse transform data
         if self.model == 'additive':
@@ -602,7 +572,7 @@ class Deseasonaliser(BaseTransformer):
             Xit = Xs * seasonal_components
 
         # convert back into nested format
-        Xit = detabularize(pd.DataFrame(Xit))
+        Xit = tabulariser.inverse_transform(pd.DataFrame(Xit))
         Xit.columns = X.columns
         return Xit
 

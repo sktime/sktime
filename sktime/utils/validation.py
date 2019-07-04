@@ -23,6 +23,12 @@ def check_ts_X_y(X, y):
 
 def check_ts_array(X):
     """Helper function for input checks"""
+    # if not isinstance(X, pd.DataFrame):
+    #     raise ValueError(f"Input data must be pandas DataFrame, but found: {type(X)}")
+    #
+    # if X.shape[1] > 1:
+    #     raise NotImplementedError(f"Input data must be a univariate pandas DataFrame with a single column, "
+    #                               f"but found: {X.shape[1]} columns")
     return X
 
 

@@ -44,7 +44,7 @@ from ..distances.elastic_cython import (
     )
 from ..utils import comparison
 from ..utils import dataset_properties
-from ..utils.transformations import tabularise
+from sktime.utils.data_container import tabularise
 from ..utils.validation import check_X_y
 
 

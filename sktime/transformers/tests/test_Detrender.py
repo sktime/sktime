@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from sktime.utils.transformations import tabularise, select_times
+from sktime.utils.data_container import select_times, tabularise
 from sktime.utils.testing import generate_time_series_data_with_trend
 from sktime.datasets import load_gunpoint
 from sktime.transformers.series_to_series import Detrender
@@ -46,8 +46,8 @@ def test_transform_inverse_transform_equivalence(n_samples, order):
 
     # test correct inverse transform on new data with a different time index
     # e.g. necessary for inverse transforms after predicting/forecasting
-    c = pd.Series(np.zeros(n_obs - cutoff), index=b_times)
-    C = pd.DataFrame(pd.Series([c]))
+    c = [pd.Series(np.zeros(n_obs - cutoff), index=b_times) for i in range(n_samples)]
+    C = pd.DataFrame(pd.Series(c))
     Cit = tran.inverse_transform(C)
     np.testing.assert_array_almost_equal(B.iloc[0, 0].values, Cit.iloc[0, 0].values)
 

@@ -10,8 +10,7 @@ from sktime.highlevel.tasks import ForecastingTask
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.validation import validate_fh
-from sktime.utils.transformations import select_times
-
+from sktime.utils.data_container import select_times
 
 regressor = Pipeline([('tabularise', Tabulariser()), ('clf', RandomForestRegressor(n_estimators=2))])
 

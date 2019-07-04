@@ -3,7 +3,7 @@ import pytest
 
 from sktime.transformers.series_to_series import Deseasonaliser
 from sktime.utils.testing import generate_seasonal_time_series_data_with_trend, generate_time_series_data_with_trend
-from sktime.utils.transformations import tabularise, select_times
+from sktime.utils.data_container import select_times, tabularise
 
 
 @pytest.mark.parametrize("n_samples", [1, 10])
