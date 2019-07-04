@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from warnings import warn
 
 from sktime.utils.validation import check_ts_array
 
@@ -44,10 +45,11 @@ def tabularize(X, return_array=False):
     # TODO does not handle dataframes with nested series columns *and* standard columns containing only primitives
 
     # convert nested data into tabular data
-    if X.ndim == 1:
+    if isinstance(X, pd.Series):
         Xt = np.array(X.tolist())
+
     else:
-        Xt = np.hstack([col.tolist() for _, col in X.items()])
+        Xt = np.hstack([X.iloc[:, i].tolist() for i in range(X.shape[1])])
 
     if return_array:
         return Xt
@@ -170,10 +172,5 @@ def get_time_index(X):
 
     # get time index
     time_index = Xs.index if hasattr(Xs, 'index') else pd.RangeIndex(Xs.shape[0])
-
-    # check time index
-    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-        raise NotImplementedError(f"{type(time_index)} is not supported yet, "
-                                  f"use pandas RangeIndex instead")
 
     return time_index

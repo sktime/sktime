@@ -2,6 +2,16 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 
+__all__ = ['check_is_fitted_in_transform',
+           'check_ts_array',
+           'check_equal_index',
+           'check_consistent_indices',
+           'check_X_y',
+           'check_ts_X_y',
+           'validate_time_index',
+           'validate_sp',
+           'validate_fh']
+
 
 def check_X_y(instances, class_labels=None):
     if not isinstance(instances, pd.DataFrame):
@@ -183,3 +193,40 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
                "appropriate arguments before using this method.")
 
     check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
+
+
+def validate_time_index(time_index):
+    """Validate time index
+
+    Parameters
+    ----------
+    time_index : array-like
+
+    Returns
+    -------
+    time_index : ndarray
+    """
+    # period or datetime index are not support yet
+    # TODO add support for period/datetime indexing
+    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
+        raise NotImplementedError(f"{type(time_index)} is not fully supported yet, "
+                                  f"use pandas RangeIndex instead")
+
+    return np.asarray(time_index)
+
+
+def check_consistent_indices(x, y):
+    """Check that x and y have consistent indices.
+
+    Parameters
+    ----------
+    x : pandas Series
+    y : pandas Series
+
+    Raises:
+    -------
+    ValueError
+        If indicies are not equal
+    """
+    if not x.index.equals(y.index):
+        raise ValueError(f"Found input variables with inconsistent indices")

@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.utils.validation import check_consistent_length
+from sktime.utils.validation import check_consistent_indices, validate_time_index
 
 __author__ = ['Markus Loning']
 
@@ -29,8 +29,13 @@ def mase_loss(y_true, y_pred, y_train, sp=1):
     ----------
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
     """
+    check_consistent_indices(y_true, y_pred)
 
-    check_consistent_length(y_true, y_pred)
+    # check if training series is before forecasted series
+    train_index = validate_time_index(y_train.index)
+    pred_index = validate_time_index(y_pred)
+    if train_index.max() >= pred_index.min():
+        raise ValueError(f"Found y_train with an index which is not strictly prior to index of y_pred")
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)
@@ -57,7 +62,7 @@ def smape_loss(y_true, y_pred):
     loss : float
         SMAPE loss
     """
-    check_consistent_length(y_true, y_pred)
+    check_consistent_indices(y_true, y_pred)
 
     nominator = np.abs(y_true - y_pred)
     denominator = np.abs(y_true) + np.abs(y_pred)

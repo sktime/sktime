@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.utils.validation import validate_fh
+from sktime.utils.validation import validate_fh, validate_time_index
 
 
 def time_series_slope(y, axis=0):
@@ -25,7 +25,7 @@ def time_series_slope(y, axis=0):
     if n_obs < 2:
         return np.zeros(n_samples) if n_samples > 1 else 0
     else:
-        x = np.arange(n_obs)
+        x = np.arange(n_obs)  # time index
         x_mean = (n_obs - 1) / 2  # faster than x.mean()
         return (np.mean(x * y, axis=axis) - x_mean * np.mean(y, axis=axis)) / (np.mean(x ** 2) - x_mean ** 2)
 
@@ -185,9 +185,12 @@ def remove_trend(x, coefs, time_index=None):
 
     else:
         if time_index is None:
+            # if no time index is given, create range index
             n_obs = x.shape[1]
             time_index = np.arange(n_obs)
         else:
+            # validate given time index
+            time_index = validate_time_index(time_index)
             if not len(time_index) == x.shape[1]:
                 raise ValueError('Length of passed index does not match length of passed x')
 
@@ -233,11 +236,14 @@ def add_trend(x, coefs, time_index=None):
         if time_index is None:
             n_obs = x.shape[1]
             time_index = np.arange(n_obs)
+
         else:
+            # validate given time index
+            time_index = validate_time_index(time_index)
+
             if not len(time_index) == x.shape[1]:
                 raise ValueError('Length of passed index does not match length of passed x')
 
-        time_index = np.asarray(time_index)
         poly_terms = np.vander(time_index, N=order + 1)
         xt = x + np.dot(poly_terms, coefs.T).T
 
