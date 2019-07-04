@@ -1,15 +1,14 @@
+import numpy as np
+import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 from statsmodels.tsa.seasonal import seasonal_decompose
-import numpy as np
-import pandas as pd
 
-from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array, check_is_fitted_in_transform
-from sktime.utils.time_series import fit_trend, remove_trend, add_trend
-from sktime.utils.data_container import tabularize, concat_nested_arrays, get_time_index
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
-
+from sktime.utils.data_container import tabularize, concat_nested_arrays, get_time_index
+from sktime.utils.time_series import fit_trend, remove_trend, add_trend
+from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array, check_is_fitted_in_transform
 
 __all__ = ['RandomIntervalSegmenter',
            'IntervalSegmenter',
@@ -303,16 +302,16 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
         return np.column_stack([starts, ends])
 
-      
+
 class DerivativeSlopeTransformer(BaseTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
         for dim in range(num_dim):
-            dim_data = X.iloc[:,dim]
+            dim_data = X.iloc[:, dim]
             out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
-            output_df['der_dim_'+str(dim)] = pd.Series(out)
+            output_df['der_dim_' + str(dim)] = pd.Series(out)
 
         return output_df
 
@@ -339,6 +338,7 @@ class Detrender(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
+
     def __init__(self, order=0, check_input=True):
 
         if not (isinstance(order, int) and (order >= 0)):
@@ -376,7 +376,7 @@ class Detrender(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, 0:])
+        Xs = tabulariser.transform(X.iloc[:, :1])
 
         # fit polynomial trend
         self.coefs_ = fit_trend(Xs, order=self.order)
@@ -422,7 +422,7 @@ class Detrender(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, 0:])
+        Xs = tabulariser.transform(X.iloc[:, :1])
 
         # add trend at given time series index, keeping fitted polynomial coefficients
         Xit = add_trend(Xs, coefs=self.coefs_, time_index=time_index)
@@ -446,6 +446,7 @@ class Deseasonaliser(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
+
     def __init__(self, sp=1, model='additive', check_input=True):
         self.sp = validate_sp(sp)
         allowed_models = ('additive', 'multiplicative')
@@ -488,7 +489,7 @@ class Deseasonaliser(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, 0:])
+        Xs = tabulariser.transform(X.iloc[:, :1])
 
         # fit seasonal decomposition model
         seasonal_components = self._fit_seasonal_decomposition_model(Xs)
@@ -563,7 +564,7 @@ class Deseasonaliser(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, 0:])
+        Xs = tabulariser.transform(X.iloc[:, :1])
 
         # inverse transform data
         if self.model == 'additive':

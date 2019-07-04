@@ -1,8 +1,3 @@
-"""Meta Transformers module
-
-This module has meta-transformers that is build using the pre-existing
-transformers as building blocks.
-"""
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -13,7 +8,11 @@ from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
 from sktime.utils.validation import check_ts_array, check_is_fitted_in_transform
 
-__all__ = ['ColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
+__all__ = ['ColumnTransformer',
+           'RowwiseTransformer',
+           'Tabularizer',
+           'Tabulariser',
+           'ColumnConcatenator']
 
 
 class ColumnTransformer(skColumnTransformer):
