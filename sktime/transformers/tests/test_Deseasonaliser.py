@@ -10,18 +10,6 @@ from sktime.transformers.series_to_series import Deseasonaliser
 from sktime.utils.transformations import tabularise, select_times
 from sktime.utils.testing import generate_seasonal_time_series_data_with_trend, generate_time_series_data_with_trend
 
-# # run on toy dataset
-# @pytest.mark.parametrize("sp", [1, 4, 12, 24])
-# @pytest.mark.parametrize("model", ['additive', 'multiplicative'])
-# def test_Deseasonaliser(model, sp):
-#     X, _ = load_italy_power_demand(return_X_y=True)
-#     t = Deseasonaliser(sp=sp, model=model)
-#     Xt = t.fit_transform(X)
-#     assert Xt.shape == X.shape
-#
-#     Xit = t.inverse_transform(Xt)
-#     np.testing.assert_array_almost_equal(tabularize(X).values, tabularize(Xit).values)
-
 
 @pytest.mark.parametrize("n_samples", [1, 10])
 @pytest.mark.parametrize("order", [0, 1, 2])

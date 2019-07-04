@@ -373,7 +373,6 @@ class Detrender(BaseTransformer):
         and no checks are performed. Use with caution.
     """
 
-    # TODO make it work on multiple columns, currently only works on first column
     # TODO make it more efficient/vectorise to work on multiple rows simultaneously
     # TODO time index is lost and needs to be added the same after transformation
     # TODO separate fit/transform steps currently confounded in transform, fitting polynomials to data should be in fit
@@ -386,29 +385,7 @@ class Detrender(BaseTransformer):
         self.order = order
         self.check_input = check_input
         self.coefs_ = None
-        self._index = None
-
-    def fit(self, X, y=None):
-
-        if self.check_input:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
-
-        if X.shape[1] > 1:
-            raise NotImplementedError(f"Currently does not work on multiple columns")
-
-        # keep time index as trend depends on it, e.g. to carry forward trend in inverse_transform
-        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
-            raise NotImplementedError()
-        self._index = index
-
-        # convert into tabular format
-        Xs = tabularize(X.iloc[:, 0])
-
-        self.coefs_ = fit_trend(Xs, order=self.order)
-
-        return self
+        self._time_index = None
 
     def transform(self, X, y=None):
         """Transform X.
@@ -424,8 +401,6 @@ class Detrender(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
-        check_is_fitted(self, 'coefs_')
-
         if self.check_input:
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
@@ -433,16 +408,20 @@ class Detrender(BaseTransformer):
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns")
 
-        # compare time series indices seen in fit and transform
-        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if not self._index.equals(index):
-            raise ValueError(f"Time series index of data seen in `transform` does not match data seen in `fit`")
+        # keep time index as trend depends on it, e.g. to carry forward trend in inverse_transform
+        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
+            raise NotImplementedError()
+        self._time_index = time_index
 
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
 
+        # fit polynomial trend
+        self.coefs_ = fit_trend(Xs, order=self.order)
+
         # remove trend, keeping fitted polynomial coefficients
-        Xt = remove_trend(Xs, coefs=self.coefs_, index=index)
+        Xt = remove_trend(Xs, coefs=self.coefs_, index=time_index)
 
         # convert back into nested format
         Xt = detabularize(pd.DataFrame(Xt))
@@ -471,15 +450,15 @@ class Detrender(BaseTransformer):
             raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                       f"instead")
 
-        index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-        if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
+        time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
             raise NotImplementedError()
 
         # convert into tabular format
         Xs = tabularize(X.iloc[:, 0])
 
         # add trend at given time series index, keeping fitted polynomial coefficients
-        Xit = add_trend(Xs, coefs=self.coefs_, index=index)
+        Xit = add_trend(Xs, coefs=self.coefs_, index=time_index)
 
         # convert back into nested format
         Xit = detabularize(pd.DataFrame(Xit))
