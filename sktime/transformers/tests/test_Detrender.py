@@ -24,19 +24,6 @@ def test_transform_inverse_transform_equivalence(order):
 @pytest.mark.parametrize("n_samples", [1, 10])
 def test_transform_inverse_transform_equivalence(n_samples, order):
     # generate data
-    # n_obs = 20
-    # coefs = np.random.normal(size=order + 1).reshape(-1, 1)
-    # x = generate_polynomial_series(n_obs, order, coefs=coefs)
-    # s = pd.Series(x)
-    #
-    # # split data for testinggit s
-    # cutoff = n_obs - (n_obs // 2)
-    # a = s.iloc[:cutoff]
-    # b = s.iloc[cutoff:]
-    #
-    # A = pd.DataFrame(pd.Series([a]))
-    # B = pd.DataFrame(pd.Series([b]))
-
     n_obs = 100
     X = generate_time_series_data_with_trend(n_samples=n_samples, n_obs=n_obs, order=order)
 

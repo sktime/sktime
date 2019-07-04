@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
+from sklearn.utils.validation import check_is_fitted
 
-def check_X_y(instances, class_labels = None):
+
+def check_X_y(instances, class_labels=None):
     if not isinstance(instances, pd.DataFrame):
         raise ValueError("instances not in panda dataframe")
     if class_labels is not None:
@@ -20,12 +22,7 @@ def check_ts_X_y(X, y):
 
 
 def check_ts_array(X):
-    """
-    Placeholder function for input validation.
-    """
-    # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
-    # currently it checks neither the data nor the datatype
-    # return check_array(X, dtype=None, ensure_2d=False)
+    """Helper function for input checks"""
     return X
 
 
@@ -71,9 +68,32 @@ def check_equal_index(X):
     return indexes
 
 
-def validate_fh(fh):
+def validate_sp(sp):
+    """Validate seasonal periodicity.
+
+    Parameters
+    ----------
+    sp : int
+        Seasonal periodicity
+
+    Returns
+    -------
+    sp : int
+        Validated seasonal periodicity
     """
-    Validate forecasting horizon.
+
+    if sp is None:
+        return sp
+
+    else:
+        if not isinstance(sp, int) and (sp >= 0):
+            raise ValueError(f"Seasonal periodicity (sp) has to be a positive integer, but found: "
+                             f"{sp} of type: {type(sp)}")
+        return sp
+
+
+def validate_fh(fh):
+    """Validate forecasting horizon.
 
     Parameters
     ----------
@@ -121,3 +141,39 @@ def validate_fh(fh):
                              f"integer, but found: {type(fh)}")
 
         return np.asarray(np.sort(fh), dtype=np.int)
+
+
+def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
+    """Checks if the estimator is fitted during transform by verifying the presence of
+    "all_or_any" of the passed attributes and raises a NotFittedError with the
+    given message.
+    
+    Parameters
+    ----------
+    estimator : estimator instance.
+        estimator instance for which the check is performed.
+    attributes : attribute name(s) given as string or a list/tuple of strings
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
+    msg : string
+        The default error message is, "This %(name)s instance is not fitted
+        yet. Call 'fit' with appropriate arguments before using this method."
+        For custom messages if "%(name)s" is present in the message string,
+        it is substituted for the estimator name.
+        Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
+    Returns
+    -------
+    None
+    
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.    
+    """
+    if msg is None:
+        msg = ("This %(name)s instance has not been fitted yet. Call 'transform' with "
+               "appropriate arguments before using this method.")
+
+    check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)

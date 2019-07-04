@@ -312,7 +312,6 @@ def add_trend(x, coefs, index=None):
     -------
     fit_trend
     remove_trend
-
     """
     x = check_array(x)
 

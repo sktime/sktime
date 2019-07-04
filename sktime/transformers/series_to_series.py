@@ -4,7 +4,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array
+from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array, check_is_fitted_in_transform
 from sktime.utils.transformations import tabularize
 from sktime.utils.transformations import detabularize
 from sktime.utils.transformations import concat_nested_arrays
@@ -372,19 +372,12 @@ class Detrender(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
-
-    # TODO make it more efficient/vectorise to work on multiple rows simultaneously
-    # TODO time index is lost and needs to be added the same after transformation
-    # TODO separate fit/transform steps currently confounded in transform, fitting polynomials to data should be in fit
-    # TODO factor out getting of time series index of dataframe, also used in all forecasters and Deseasonaliser below
-
     def __init__(self, order=0, check_input=True):
 
         if not (isinstance(order, int) and (order >= 0)):
             raise ValueError(f"order must be a positive integer, but found: {type(order)}")
         self.order = order
         self.check_input = check_input
-        self.coefs_ = None
         self._time_index = None
 
     def transform(self, X, y=None):
@@ -442,6 +435,8 @@ class Detrender(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
+        check_is_fitted_in_transform(self, 'coefs_')
+
         if self.check_input:
             if not isinstance(X, pd.DataFrame):
                 raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
@@ -479,11 +474,6 @@ class Deseasonaliser(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
-
-    # TODO make it work on multiple columns, currently only works on first column
-    # TODO make it more efficient/vectorise to work on multiple rows simultaneously
-    # TODO time index is lost and needs to be added the same after transformation
-
     def __init__(self, sp=1, model='additive', check_input=True):
         self.sp = validate_sp(sp)
         allowed_models = ('additive', 'multiplicative')
@@ -493,7 +483,6 @@ class Deseasonaliser(BaseTransformer):
             raise ValueError(f"Allowed models are {allowed_models}, but found: {model}")
         self.check_input = check_input
 
-        self.seasonal_components_ = None
         self._time_index = None
         self._input_shape = None
 
@@ -562,6 +551,7 @@ class Deseasonaliser(BaseTransformer):
         Xt : pandas DataFrame
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
+
         if self.check_input:
             check_ts_array(X)
             if X.shape[1] > 1:
@@ -577,6 +567,9 @@ class Deseasonaliser(BaseTransformer):
         sp = self.sp
         if sp == 1:
             return X
+
+        # check if seasonal decomposition model has been fitted in transform
+        check_is_fitted_in_transform(self, 'seasonal_components_')
 
         # check if time index is aligned with time index seen during transform
         time_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])

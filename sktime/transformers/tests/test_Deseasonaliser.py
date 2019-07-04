@@ -1,14 +1,9 @@
-from sktime.datasets import load_gunpoint
+import numpy as np
 import pytest
 
-from sktime.datasets import load_italy_power_demand
-from sktime.datasets import load_shampoo_sales
-from sktime.utils.transformations import tabularize, detabularize
-import numpy as np
 from sktime.transformers.series_to_series import Deseasonaliser
-
-from sktime.utils.transformations import tabularise, select_times
 from sktime.utils.testing import generate_seasonal_time_series_data_with_trend, generate_time_series_data_with_trend
+from sktime.utils.transformations import tabularise, select_times
 
 
 @pytest.mark.parametrize("n_samples", [1, 10])
