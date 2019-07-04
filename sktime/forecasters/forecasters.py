@@ -2,16 +2,15 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-
-from .base import BaseForecaster
-from .base import BaseSingleSeriesForecaster
-from .base import BaseUpdateableForecaster
-
 # SARIMAX is better maintained and offers the same functionality as standard ARIMA class
 # https://github.com/statsmodels/statsmodels/issues/3884
 
+from sktime.forecasters.base import BaseForecaster
+from sktime.forecasters.base import BaseSingleSeriesForecaster
+from sktime.forecasters.base import BaseUpdateableForecaster
+from sktime.utils.validation import validate_sp, validate_fh
 
-__all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster", "EnsembleForecaster"]
+__all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster"]
 __author__ = ['Markus Löning']
 
 
@@ -88,7 +87,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         self.disp = disp
         super(ARIMAForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, y, X=None):
+    def _fit(self, y, fh=None, X=None):
         """
         Internal fit.
 
@@ -96,6 +95,8 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
+        fh : array-like, optional (default=[1])
+            The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -191,7 +192,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         X = self._prepare_X(X)
 
         # Adjust forecasters horizon to time index seen in fit, (assume sorted forecasters horizon)
-        fh = len(self._y_idx) - 1 + fh
+        fh = len(self._time_index) - 1 + fh
         start = fh[0]
         end = fh[-1]
 
@@ -292,7 +293,7 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         self.use_basinhopping = use_basinhopping
         super(ExpSmoothingForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, y):
+    def _fit(self, y, fh=None):
         """
         Internal fit.
 
@@ -300,7 +301,8 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-
+        fh : array-like, optional (default=[1])
+            The forecasters horizon with the steps ahead to to predict.
         Returns
         -------
         self : returns an instance of self.
@@ -321,7 +323,7 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         return self
 
 
-class DummyForecaster(BaseSingleSeriesForecaster):
+class DummyForecaster(BaseForecaster):
     """
     Dummy forecaster for naive forecasters approaches.
 
@@ -329,21 +331,31 @@ class DummyForecaster(BaseSingleSeriesForecaster):
     ----------
     strategy : str{'mean', 'last', 'linear'}, optional (default='last')
         Naive forecasters strategy
+    sp : int
+        Seasonal periodicity
     check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
 
-    def __init__(self, strategy='last', check_input=True):
+    def __init__(self, strategy='last', sp=None, check_input=True):
 
-        allowed_strategies = ('mean', 'last', 'linear')  # seasonal_last
+        # TODO add constant strategy
+        allowed_strategies = ('mean', 'last', 'linear', 'seasonal_last')
         if strategy not in allowed_strategies:
             raise ValueError(f'Unknown strategy: {strategy}, expected one of {allowed_strategies}')
 
+        if strategy == 'seasonal_last':
+            if sp is None:
+                raise ValueError("Seasonal periodicity (sp) has to be specified "
+                                 "when the 'seasonal_last' strategy is used.")
+
+        self.sp = validate_sp(sp)
         self.strategy = strategy
+        self._y_pred = None
         super(DummyForecaster, self).__init__(check_input=check_input)
 
-    def _fit(self, y):
+    def _fit(self, y, fh=None):
         """
         Internal fit.
 
@@ -351,130 +363,81 @@ class DummyForecaster(BaseSingleSeriesForecaster):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
+        fh : array-like, optional (default=[1])
+            The forecasters horizon with the steps ahead to to predict.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        # Unnest series.
-        y = y.iloc[0]
+
+        if fh is None:
+            raise ValueError(f"{self.__name__} requires to specify the forecasting horizon in `fit`")
+
+        # Unnest series
+        y = self._prepare_y(y)
+
+        # Convert step-ahead prediction horizon into zero-based index
+        self._fh = fh
+        n_fh = len(fh)
 
         # Fit estimator.
         if self.strategy == 'mean':
-            self.estimator = ExponentialSmoothing(y)
-            self._fitted_estimator = self.estimator.fit(smoothing_level=0)
+            y_pred = np.repeat(np.mean(y), n_fh)
 
-        if self.strategy == 'last':
-            self.estimator = ExponentialSmoothing(y)
-            self._fitted_estimator = self.estimator.fit(smoothing_level=1)
+        elif self.strategy == 'last':
+            y_pred = np.repeat(y.iloc[-1], n_fh)
 
-        if self.strategy == 'linear':
-            self.estimator = SARIMAX(y, order=(0, 0, 0), trend='t')
-            self._fitted_estimator = self.estimator.fit()
+        elif self.strategy == 'linear':
+            # get start and end of forecast horizon
+            fh = len(self._time_index) - 1 + fh
+            start = fh[0]
+            end = fh[-1]
 
+            # fit linear model
+            estimator = SARIMAX(y, order=(0, 0, 0), trend='t')
+            fitted_estimator = estimator.fit()
+            y_pred = fitted_estimator.predict(start=start, end=end)
+
+            # select forecast steps
+            fh_idx = fh - np.min(fh)
+            y_pred = y_pred.iloc[fh_idx].values
+
+        elif self.strategy == 'seasonal_last':
+            # for seasonal periodicity of 1, forecast mean
+            if self.sp == 1:
+                y_pred = np.repeat(np.mean(y), n_fh)
+            else:
+                y_pred = y.iloc[-self.sp:(-self.sp + n_fh)]
+
+        self._y_pred = y_pred
         return self
 
-
-class EnsembleForecaster(BaseForecaster):
-    """
-    Ensemble of forecasters.
-
-    Parameters
-    ----------
-    estimators : list of (str, estimator) tuples
-        List of (name, estimator) tuples.
-    weights : array-like, shape = [n_estimators], optional (default=None)
-        Sequence of weights (float or int) to weight the occurrences of predicted values before averaging.
-        Uses uniform weights if None.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
-    """
-
-    # TODO: experimental, major functionality not implemented (input checks, params interface, exogenous variables)
-
-    def __init__(self, estimators=None, weights=None, check_input=True):
-        # TODO add input checks
-        self.estimators = estimators
-        self.weights = weights
-        self.fitted_estimators_ = []
-        super(EnsembleForecaster, self).__init__(check_input=check_input)
-
-    def _fit(self, y, X=None):
+    def _predict(self, fh=None):
         """
-        Internal fit.
+        Internal predict.
 
         Parameters
         ----------
-        y : pandas.Series
-            Target time series to which to fit the forecaster.
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that
-            if an ``ARIMA`` is fit on exogenous features, it must also be provided
-            exogenous features for making predictions.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        for _, estimator in self.estimators:
-            # TODO implement set/get params interface
-            # estimator.set_params(**{"check_input": False})
-            fitted_estimator = estimator.fit(y, X=X)
-            self.fitted_estimators_.append(fitted_estimator)
-        return self
-
-    def _predict(self, fh=None, X=None):
-        """
-        Internal predict using fitted estimator.
-
-        Parameters
-        ----------
-        fh : array-like, optional (default=None)
+        fh : array-like
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that if
-            provided, the forecaster must also have been fitted on the exogenous
-            features.
 
         Returns
         -------
-        Predictions : pandas.Series, shape=(len(fh),)
+        y_pred : pandas.Series
             Returns series of predicted values.
         """
-        # TODO pass X only to estimators where the predict method accepts X, currenlty X is ignored
 
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        fh_idx = fh - np.min(fh)
+        # if fh is not None:
+        #     fh = validate_fh(fh)
+        #     if not np.array_equal(self._fh, fh):
+        #         raise ValueError(f"The forecasting horizon cannot be changed after setting it in `fit`, "
+        #                          f"re-run `fit` with new forecasting horizon")
 
-        # Iterate over estimators
-        y_preds = np.zeros((len(self.fitted_estimators_), len(fh)))
-        indexes = []
-        for i, estimator in enumerate(self.fitted_estimators_):
-            y_pred = estimator.predict(fh=fh)
-            y_preds[i, :] = y_pred
-            indexes.append(y_pred.index)
+        y_pred = self._y_pred
 
-        # Check if all predicted horizons are identical
-        if not all(index.equals(indexes[0]) for index in indexes):
-            raise ValueError('Predicted horizons from estimators do not match')
-
-        # Average predictions over estimators
-        avg_preds = np.average(y_preds, axis=0, weights=self.weights)
-
-        # Return average predictions with index
-        index = indexes[0]
-        name = y_preds[0].name if hasattr(y_preds[0], 'name') else None
-        return pd.Series(avg_preds, index=index, name=name)
-
-    def get_params(self, deep=True):
-        # TODO fix get and set params interface following sklearn double underscore convention
-        raise NotImplementedError()
-
-    def set_params(self, **params):
-        raise NotImplementedError()
+        # return as series and add index
+        time_index = self._time_index[-1] + self._fh
+        y_pred = pd.Series(y_pred, index=time_index)
+        return y_pred

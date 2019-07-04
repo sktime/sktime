@@ -254,7 +254,12 @@ def load_shampoo_sales(return_y_as_dataframe=False):
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
-    data.index = pd.PeriodIndex(data.index, freq='M')
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='M')
+    data = data.reset_index(drop=True)
+
     if return_y_as_dataframe:
         # return nested pandas DataFrame with a single row and column
         return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
@@ -322,7 +327,11 @@ def load_longley(return_X_y=False, return_y_as_dataframe=False):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data = data.set_index('YEAR')
-    data.index = pd.PeriodIndex(data.index, freq='Y')
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
 
     # Get target series
     yname = 'TOTEMP'
@@ -389,7 +398,12 @@ def load_lynx(return_y_as_dataframe=False):
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
-    data.index = pd.PeriodIndex(data.index, freq='Y')
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
+
     if return_y_as_dataframe:
         # return nested pandas DataFrame with a single row and column
         return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])

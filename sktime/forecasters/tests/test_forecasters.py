@@ -32,7 +32,7 @@ y = load_shampoo_sales()
 def test_fhs(forecaster, fh):
     m = forecaster()
 
-    m.fit(y)
+    m.fit(y, fh=fh)
     y_pred = m.predict(fh=fh)
 
     # adjust for default value
@@ -71,7 +71,7 @@ def test_score(forecaster, fh):
     train = pd.Series([y.iloc[0].iloc[:30]])
     test = pd.Series([y.iloc[0].iloc[30:]])
     fh = np.arange(len(test.iloc[0])) + 1
-    m.fit(train)
+    m.fit(train, fh=fh)
     y_pred = m.predict(fh=fh)
     expected = np.sqrt(mean_squared_error(y_pred.values, test.iloc[0].values))
     assert m.score(test, fh=fh) == expected

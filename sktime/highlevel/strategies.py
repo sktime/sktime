@@ -335,6 +335,8 @@ class ForecastingStrategy(BaseStrategy):
         """
 
         y = data[self._task.target]
+        fh = self._task.fh
+
         if len(self._task.features) > 0:
             X = data[self._task.features]
             kwargs = {'X': X}
@@ -342,7 +344,7 @@ class ForecastingStrategy(BaseStrategy):
             kwargs = {}
 
         # fit the estimator
-        return self.estimator.fit(y, **kwargs)
+        return self.estimator.fit(y, fh=fh, **kwargs)
 
     def update(self, data):
         """

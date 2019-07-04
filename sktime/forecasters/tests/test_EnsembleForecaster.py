@@ -2,10 +2,9 @@ import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
 
-from sktime.forecasters import DummyForecaster
+from sktime.forecasters import DummyForecaster, EnsembleForecaster
 from sktime.forecasters import ExpSmoothingForecaster
 from sktime.forecasters import ARIMAForecaster
-from sktime.forecasters import EnsembleForecaster
 from sktime.datasets import load_shampoo_sales
 
 __author__ = "Markus Löning"
@@ -29,7 +28,7 @@ def test_EnsembleForecaster_fhs(fh):
         ('last', DummyForecaster(strategy='last'))
     ]
     m = EnsembleForecaster(estimators=estimators)
-    m.fit(y)
+    m.fit(y, fh=fh)
     y_pred = m.predict(fh=fh)
 
     # adjust for default value

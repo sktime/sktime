@@ -5,8 +5,7 @@ from numpy.testing import assert_array_almost_equal
 from sktime.forecasters import DummyForecaster
 from sktime.datasets import load_shampoo_sales
 
-__author__ = "Markus Löning"
-
+__author__ = ["Markus Löning"]
 
 # forecast horizons
 FHS = (None, [1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(1, 5))
@@ -22,10 +21,6 @@ y = load_shampoo_sales()
 @pytest.mark.parametrize("strategy, expected", [("mean", y.iloc[0].mean()), ("last", y.iloc[0].iloc[-1])])
 def test_DummyForecaster_strategies(fh, strategy, expected):
     m = DummyForecaster(strategy=strategy)
-    m.fit(y)
-    y_pred = m.predict(fh=fh)
+    m.fit(y, fh=fh)
+    y_pred = m.predict()
     assert_array_almost_equal(y_pred, expected, decimal=4)
-
-
-
-
