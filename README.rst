@@ -2,8 +2,8 @@
     :target: https://travis-ci.com/alan-turing-institute/sktime   
 .. image:: https://badge.fury.io/py/sktime.svg
     :target: https://badge.fury.io/py/sktime
-[![Gitter](https://badges.gitter.im/sktime/community.svg)](https://gitter.im/sktime/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-
+.. image:: https://badges.gitter.im/sktime/community.svg
+    :target: https://gitter.im/sktime/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
 
 sktime
 ======
