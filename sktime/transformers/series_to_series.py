@@ -2,12 +2,14 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
-from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, detabularize, concat_nested_arrays
-from .base import BaseTransformer
+
+from sktime.utils.validation import check_equal_index, check_ts_array
+from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
+from sktime.transformers.base import BaseTransformer
 
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator', 'FlatTransformer']
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator',
+           'PlateauFinder']
 __author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
 
 
@@ -349,31 +351,64 @@ class TimeSeriesConcatenator(BaseTransformer):
         return Xt
 
 
-class FlatTransformer(BaseTransformer):
-    """
-    Finds segments of unchanging values (such as NaN, or any provided) and
+class PlateauFinder(BaseTransformer):
+    """Transformer that finds segments of the same given value, plateau in the time series, and
     returns the starting indices and lengths.
+
+    Parameters
+    ----------
+    value : {int, float, np.nan, np.inf}
+        Value for which to find segments
+    min_length : int
+        Minimum lengths of segments with same value to include.
+        If min_length is set to 1, the transformer can be used as a value finder.
+    check_input : bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
     """
 
-    def __init__(self, value=np.nan):
+    def __init__(self, value=np.nan, min_length=2, check_input=True):
         self.value = value
-        self.starts = []
-        self.lengths = []
+        self.min_length = min_length
+        self.check_input = check_input
 
-    def fit(self, X, y=None, column="dim_0"):
+        self._starts = []
+        self._lengths = []
+
+    def transform(self, X, y=None):
+        """Transform X.
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_columns]
+            Nested dataframe with time-series in cells.
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame
         """
-        Fit transformer, finding positions & lengths of missing value
-        intervals.
-        """
-        for _, x in X.iterrows():
-            # turn Series into 1darrays
-            x = x[column].values
+
+        # input checks
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # get column name
+        column_name = X.columns[0]
+
+        # find plateaus (segments of the same value)
+        for x in X.iloc[:, 0]:
+            x = np.asarray(x)
 
             # find indices of transition
             if np.isnan(self.value):
                 i = np.where(np.isnan(x), 1, 0)
+
             elif np.isinf(self.value):
-                i = np,where(np.isinf(x), 1, 0)
+                i = np.where(np.isinf(x), 1, 0)
+
             else:
                 i = np.where(x == self.value, 1, 0)
 
@@ -386,20 +421,15 @@ class FlatTransformer(BaseTransformer):
             lengths = ends - starts
 
             # filter out single points
-            starts = starts[lengths > 1]
-            lengths = lengths[lengths > 1]
+            starts = starts[lengths >= self.min_length]
+            lengths = lengths[lengths >= self.min_length]
 
-            self.starts.append(starts)
-            self.lengths.append(lengths)
+            self._starts.append(starts)
+            self._lengths.append(lengths)
 
-        return self
-
-    def transform(self, X, y=None, column="dim_0"):
-        """
-        Add columns with starting points and durations of flat intervals to X.
-        """
-        out = X
-        column_prefix = "%s_%s" % (column, "nan" if np.isnan(self.value) else str(self.value))
-        out["%s_starts" % column_prefix] = pd.Series(self.starts)
-        out["%s_lengths" % column_prefix] = pd.Series(self.lengths)
-        return out
+        # put into dataframe
+        Xt = pd.DataFrame()
+        column_prefix = "%s_%s" % (column_name, "nan" if np.isnan(self.value) else str(self.value))
+        Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
+        Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
+        return Xt
