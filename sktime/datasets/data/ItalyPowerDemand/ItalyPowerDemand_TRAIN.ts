@@ -1,6 +1,13 @@
+#The data was derived from twelve monthly electrical power demand
+#time series from Italy and first used in the paper "Intelligent
+#Icons: Integrating Lite-Weight Data Mining and Visualization into
+#GUI Operating Systems". The classification task is to distinguish
+#days from Oct to March (inclusive) from April to September.
 @problemName ItalyPowerDemand
 @timeStamps false
+
 @classLabel true 1 2
+@univariate true
 @data
 -0.71052,-1.1833,-1.3724,-1.5931,-1.467,-1.3724,-1.0888,0.045967,0.92853,1.0861,1.2753,0.96005,0.61333,0.014447,-0.64748,-0.26923,-0.20619,0.61333,1.3698,1.4644,1.0546,0.58181,0.17205,-0.26923:1
 -0.99301,-1.4268,-1.5799,-1.6054,-1.6309,-1.3758,-1.0185,-0.3551,0.71658,1.2014,1.1248,1.0483,0.79313,0.46142,0.48694,0.56348,0.61452,0.30832,0.25729,1.0993,1.0483,0.69107,-0.048906,-0.38062:1
