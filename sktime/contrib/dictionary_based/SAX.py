@@ -10,7 +10,21 @@ from sktime.transformers.base import BaseTransformer
 
 
 class SAX(BaseTransformer):
-
+    __author__ = "Matthew Middlehurst"
+    """ SAX (Symbolic Aggregate approXimation) Transformer, as described in 
+    Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
+    "Experiencing SAX: a novel symbolic representation of time series"
+    Data Mining and Knowledge Discovery, 15(2):107-144
+    
+    Overview: for each series: 
+        run a sliding window across the series
+        for each window
+            shorten the series with PAA (Piecewise Approximate Aggregation)
+            discretise the shortened seried into fixed bins
+            form a word from these discrete values     
+    by default SAX produces a single word per series (window_size=0)
+                
+            """
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,

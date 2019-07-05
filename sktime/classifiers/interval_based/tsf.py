@@ -14,7 +14,7 @@ class TimeSeriesForest(ForestClassifier):
     """ Time-Series Forest Classifier.
 
 
-    TimeSeriesForest: Implementation of Deng 's Time Series Forest, with minor changes
+    TimeSeriesForest: Implementation of Deng's Time Series Forest, with minor changes
     @article
     {deng13forest,
      author = {H.Deng and G.Runger and E.Tuv and M.Vladimir},
@@ -31,15 +31,14 @@ class TimeSeriesForest(ForestClassifier):
     ensemble the trees with averaged probability estimates
     
     This implementation deviates from the original in minor ways. It samples intervals with replacement and 
-    does not use the splitting criteria tiny refinement described in deng13forest. This is an intentionally stripped down,
-    non configurable version for use as a hive-cote component. For a configurable tree based ensemble, see
-    sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    does not use the splitting criteria tiny refinement described in deng13forest. This is an intentionally 
+    stripped down, non configurable version for use as a hive-cote component. For a configurable tree based 
+    ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
     Parameters
     ----------
     n_trees         : int, ensemble size, optional (default = 200)
     random_state    : int, seed for random, optional (default to no seed, I think!)
-    dim_to_use      : int, the column of the panda passed to use, optional (default to 0)
     min_interval    : int, minimum width of an interval, optional (default to 3)
 
     Attributes
@@ -56,7 +55,6 @@ class TimeSeriesForest(ForestClassifier):
 
     def __init__(self,
                     random_state = None,
-                    dim_to_use = 0,
                     min_interval=3,
                     num_trees = 200
                 ):
@@ -68,7 +66,6 @@ class TimeSeriesForest(ForestClassifier):
         random.seed(random_state)
         self.num_trees=num_trees
         self.min_interval=min_interval
-        self.dim_to_use = dim_to_use
 # The following set in method fit
         self.num_classes = 0
         self.series_length = 0
@@ -91,10 +88,12 @@ class TimeSeriesForest(ForestClassifier):
         self : object
          """
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use], pd.Series):
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         n_samps, self.series_length = X.shape
 
         self.num_classes = np.unique(y).shape[0]
@@ -134,7 +133,9 @@ class TimeSeriesForest(ForestClassifier):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
-        If a Pandas data frame is passed, the column _dim_to_use is extracted
+        If a Pandas data frame is passed, a check is performed that it only has one column.
+        If not, an exception is thrown, since this classifier does not yet have
+        multivariate capability.
 
         Returns
         -------
@@ -150,7 +151,11 @@ class TimeSeriesForest(ForestClassifier):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not yet have
+            multivariate capability.
 
         Local variables
         ----------
@@ -162,10 +167,12 @@ class TimeSeriesForest(ForestClassifier):
         output : array of shape = [n_samples, num_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use], pd.Series):
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         n_samps, num_atts = X.shape
         if num_atts != self.series_length:

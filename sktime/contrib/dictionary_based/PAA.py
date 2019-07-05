@@ -5,6 +5,14 @@ from sktime.transformers.base import BaseTransformer
 
 
 class PAA(BaseTransformer):
+    __author__ = "Matthew Middlehurst"
+    """ (PAA) Piecewise Aggregate Approximation Transformer, as described in 
+
+    Overview: for each series: 
+        run a sliding window accross the series
+        for each window
+            shorten the series with PAA (Piecewise Approximate Aggregation    
+            """
 
     def __init__(self,
                  num_intervals=8,

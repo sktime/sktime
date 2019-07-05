@@ -58,7 +58,6 @@ class RandomIntervalSpectralForest(ForestClassifier):
     def __init__(self,
                  num_trees=500,
                  random_state=None,
-                 dim_to_use=0,
                  min_interval=16,
                  acf_lag=100,
                  acf_min_values=4
@@ -69,7 +68,6 @@ class RandomIntervalSpectralForest(ForestClassifier):
         self.num_trees=num_trees
         self.random_state = random_state
         random.seed(random_state)
-        self.dim_to_use = dim_to_use
         self.min_interval=min_interval
         self.acf_lag=acf_lag
         self.acf_min_values=acf_min_values
@@ -97,12 +95,13 @@ class RandomIntervalSpectralForest(ForestClassifier):
         -------
         self : object
          """
-
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use], pd.Series):
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         n_samps, self.series_length = X.shape
 
         self.num_classes = np.unique(y).shape[0]
