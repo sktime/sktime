@@ -17,7 +17,6 @@ def test_PlateauFinder(value):
             pd.Series([2, value, value, value, 2, value, 3, 1]),
             pd.Series([0, value, value, 3, value, value, 2, 0])
     ]))
-    X.columns = ['dim_0']
     n_samples = X.shape[0]
 
     t = PlateauFinder(value=value, min_length=2)
