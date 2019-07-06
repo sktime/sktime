@@ -6,6 +6,7 @@ from sklearn.tree import DecisionTreeClassifier
 from numpy import random
 from copy import deepcopy
 from sklearn.utils.multiclass import class_distribution
+from sktime.utils.load_data import load_from_tsfile_to_dataframe as ld
 
 
 class TimeSeriesForest(ForestClassifier):
@@ -35,6 +36,8 @@ class TimeSeriesForest(ForestClassifier):
     stripped down, non configurable version for use as a hive-cote component. For a configurable tree based 
     ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
+    TO DO: handle missing values, unequal length series and multivariate problems
+    
     Parameters
     ----------
     n_trees         : int, ensemble size, optional (default = 200)
@@ -79,7 +82,7 @@ class TimeSeriesForest(ForestClassifier):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
+            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
         y : array-like, shape = [n_samples]
             The class labels.
 

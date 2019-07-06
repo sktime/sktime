@@ -4,8 +4,7 @@ from sklearn.base import BaseEstimator
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
 from sktime.pipeline import Pipeline
-from sktime.contrib.dictionary_based.SAX import SAX
-from sktime.contrib.dictionary_based.dictionary_distances import euclidean_distance
+from sktime.contrib.transformers.SAX import SAX
 
 
 class BagOfPatterns(BaseEstimator):
@@ -37,6 +36,26 @@ class BagOfPatterns(BaseEstimator):
                              )
         model.fit(X, y)
         return model
+
+
+
+def euclidean_distance(first, second, best_dist=sys.float_info.max):
+    dist = 0
+
+    if isinstance(first, dict):
+        words = set(list(first) + list(second))
+        for word in words:
+            val_a = first.get(word, 0)
+            val_b = second.get(word, 0)
+            dist += (val_a - val_b) * (val_a - val_b)
+
+            if dist > best_dist:
+                return sys.float_info.max
+    else:
+        dist = np.sum([(first[n] - second[n]) * (first[n] - second[n]) for n in range(len(first))])
+
+    return dist
+
 
 
 if __name__ == "__main__":

@@ -50,8 +50,8 @@ class RandomIntervalSpectralForest(ForestClassifier):
     num_atts       : int, extracted from the data
     classifiers    : array of shape = [num_classes] of DecisionTree classifiers
     intervals      : array of shape = [num_classes][2] stores indexes of  start and end points for all classifiers
-    dim_to_use     : int, the column of the panda passed to use (can be passed a multidimensional problem, but will only use one)
 
+    TO DO: handle missing values, unequal length series and multivariate problems
     
     """
 
@@ -87,7 +87,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
+            The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The class labels.
 

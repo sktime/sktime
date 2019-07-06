@@ -3,9 +3,8 @@ import sys
 import numpy as np
 import pandas as pd
 import sktime.transformers.shapelets as shapelets
-from sktime.contrib.dictionary_based.PAA import PAA
+from sktime.transformers.PAA import PAA
 
-from sktime.contrib.dictionary_based.bitword import BitWord
 from sktime.transformers.base import BaseTransformer
 
 
@@ -56,11 +55,12 @@ class SAX(BaseTransformer):
             raise RuntimeError("Word length must be an integer between 1 and 16")
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_atts = X.shape[1]
 
@@ -78,11 +78,12 @@ class SAX(BaseTransformer):
             raise RuntimeError("The fit method must be called before calling transform")
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_insts = X.shape[0]
 
@@ -154,3 +155,43 @@ class SAX(BaseTransformer):
             9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22, sys.float_info.max],
             10: [-1.28, -0.84, -0.52, -0.25, 0.0, 0.25, 0.52, 0.84, 1.28, sys.float_info.max]
         }[self.alphabet_size]
+
+
+class BitWord:
+    # Used to represent a word for dictionary based classifiers such as BOSS an BOP.
+    # Can currently only handle an alphabet size of <= 4 and word length of <= 16.
+    # Current literature shows little reason to go beyond this, but the class will need changes/expansions
+    # if this is needed.
+
+    def __init__(self,
+                 word=0,
+                 length=0):
+        self.word = word
+        self.length = length
+        self.bits_per_letter = 2  # this ^2 == max alphabet size
+        self.word_space = 32  # max amount of bits to be stored, max word length == this/bits_per_letter
+
+    def push(self, letter):
+        # add letter to a word
+        self.word = (self.word << self.bits_per_letter) | letter
+        self.length += 1
+
+    def shorten(self, amount):
+        # shorten a word by set amount of letters
+        self.word = self.right_shift(self.word, amount * self.bits_per_letter)
+        self.length -= amount
+
+    def word_list(self):
+        # list of input integers to obtain current word
+        word_list = []
+        shift = self.word_space - (self.length * self.bits_per_letter)
+
+        for i in range(self.length-1, -1, -1):
+            word_list.append(self.right_shift(self.word << shift, self.word_space - self.bits_per_letter))
+            shift += self.bits_per_letter
+
+        return word_list
+
+    @staticmethod
+    def right_shift(left, right):
+        return (left % 0x100000000) >> right
