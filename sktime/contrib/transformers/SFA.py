@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import sys
 
-from sktime.contrib.dictionary_based.bitword import BitWord
+from sktime.contrib.transformers.SAX import BitWord
 from sktime.transformers.base import BaseTransformer
 
 

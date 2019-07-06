@@ -13,11 +13,10 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
 import sktime.classifiers.ensemble as ensemble
-import sktime.contrib.dictionary_based.boss_ensemble as db
-import sktime.contrib.frequency_based.rise as fb
-import sktime.contrib.interval_based.tsf as ib
-import sktime.contrib.rotation_forest.rotation_forest_dev as rf
-#from sktime.classifiers.proximity import ProximityForest
+import sktime.contrib.dictionary_based.boss as db
+import sktime.classifiers.frequency_based.rise as fb
+import sktime.classifiers.interval_based.tsf as ib
+from sktime.classifiers.proximity import ProximityForest
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -131,8 +130,8 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-#    if cls.lower() == 'pf':
-#        return ProximityForest(rand = resampleId)
+    if cls.lower() == 'pf':
+        return ProximityForest(rand = resampleId)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'TSF' or cls == 'tsf':
@@ -143,8 +142,6 @@ def set_classifier(cls, resampleId):
 #        return dist.ElasticEnsemble()
     elif cls == 'TSF_Markus':
         return ensemble.TimeSeriesForestClassifier()
-    elif cls == 'RotF' or cls == 'RotationForest' or cls == 'ROTF':
-        return rf.RotationForest()
     else:
         return 'UNKNOWN CLASSIFIER'
 
@@ -329,11 +326,11 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-#        data_dir = "/scratch/datasets/"
-#        results_dir = "/scratch/results"
-        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
-        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "TSF"
+        data_dir = "/scratch/datasets/"
+        results_dir = "/scratch/results"
+#        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+#        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        classifier = "PF"
         resample = 0
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]

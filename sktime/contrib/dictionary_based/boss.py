@@ -8,8 +8,7 @@ import math
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.contrib.dictionary_based.dictionary_distances import boss_distance
-from sktime.contrib.dictionary_based.SFA import SFA
+from sktime.contrib.transformers.SFA import SFA
 
 all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
@@ -460,3 +459,21 @@ class BOSSIndividual(BaseEstimator):
     def set_word_len(self, word_len):
         self.word_length = word_len
         self.transform.word_length = word_len
+
+
+def boss_distance(first, second, best_dist=sys.float_info.max):
+    dist = 0
+
+    if isinstance(first, dict):
+        for word, val_a in first.items():
+            val_b = second.get(word, 0)
+            dist += (val_a - val_b) * (val_a - val_b)
+
+            if dist > best_dist:
+                return sys.float_info.max
+    else:
+        dist = np.sum([0 if first[n] == 0 else (first[n] - second[n]) * (first[n] - second[n])
+                       for n in range(len(first))])
+
+    return dist
+
