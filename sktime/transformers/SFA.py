@@ -3,24 +3,46 @@ import pandas as pd
 import math
 import sys
 
-from sktime.contrib.transformers.SAX import BitWord
+from sktime.transformers.SAX import BitWord
 from sktime.transformers.base import BaseTransformer
+#TO DO: Finish comments
+#TO DO: Test correctness
 
 
 class SFA(BaseTransformer):
-    """
-    SFA Transform for a fixed set of parameters
-    By default returns the word for each input instance
-    Options allows for configurations used in BOSS and related classifiers
-    """
+    __author__ = "Matthew Middlehurst"
+    """ SFA Transformer, as described in 
 
+    Overview: for each series: 
+        run a sliding window across the series
+        for each window
+            shorten the series with DFT
+            discretise the shortened series into bins set by MFC
+            form a word from these discrete values     
+    by default SAX produces a single word per series (window_size=0)
+    if a window is used, it forms a histogram of counts of words. 
+
+    Parameters
+    ----------
+        word_length:         int, length of word to shorten window to (using PAA) (default 8)
+        alphabet_size:       int, number of values to discretise each value to (default to 4)
+        window_size:         int, size of window for sliding. If 0, uses the whole series (default to 0)
+        remove_repeat_words: boolean, whether to use numerosity reduction (default False)
+        save_words:          boolean, whether to use numerosity reduction (default False)
+
+    Attributes
+    ----------
+        words:      histor = []
+        breakpoints: = []
+        num_insts = 0
+        num_atts = 0
+"""
     def __init__(self,
                  word_length,
                  alphabet_size,
                  window_size=0,
                  norm=False,
                  remove_repeat_words=False,
-                 dim_to_use=0,
                  save_words=False
                  ):
         self.words = []
@@ -36,10 +58,6 @@ class SFA(BaseTransformer):
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
-
-        # For the multivariate case treating this as a univariate classifier
-        self.dim_to_use = dim_to_use
-
         self.num_insts = 0
         self.num_atts = 0
 

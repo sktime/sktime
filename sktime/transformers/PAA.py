@@ -19,12 +19,8 @@ Could have: Tune the interval size in fit somehow?
         
     Parameters
     ----------
-    num_intervals   : int, dimension of the transformed data
+    num_intervals   : int, dimension of the transformed data (default 8)
 
-    Attributes
-    ----------
-    num_inst        : int, extracted from the data, not sure its required.
-    num_atts       : int, extracted from the data
          """
 
     def __init__(self,
