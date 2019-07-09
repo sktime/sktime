@@ -4,7 +4,7 @@ from sklearn.base import BaseEstimator
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
 from sktime.pipeline import Pipeline
-from sktime.contrib.transformers.SAX import SAX
+from sktime.transformers.SAX import SAX
 
 
 class BagOfPatterns(BaseEstimator):

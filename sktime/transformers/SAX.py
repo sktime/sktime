@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 import sktime.transformers.shapelets as shapelets
 from sktime.transformers.PAA import PAA
-
+from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.base import BaseTransformer
+#    TO DO: verify this returned pandas is consistent with sktime definition. Timestamps?
+#    TO DO: remove the call to normalize in shapelets, which should move to utils
 
 
 class SAX(BaseTransformer):
@@ -21,42 +23,64 @@ class SAX(BaseTransformer):
             shorten the series with PAA (Piecewise Approximate Aggregation)
             discretise the shortened seried into fixed bins
             form a word from these discrete values     
-    by default SAX produces a single word per series (window_size=0)
-                
+    by default SAX produces a single word per series (window_size=0). 
+    SAX returns a pandas data frame where column 0 is the histogram (sparse pd.series)
+    of each series.
+
+    Parameters
+    ----------
+        word_length:         int, length of word to shorten window to (using PAA) (default 8)
+        alphabet_size:       int, number of values to discretise each value to (default to 4)
+        window_size:         int, size of window for sliding. If 0, uses the whole series (default to 0)
+        remove_repeat_words: boolean, whether to use numerosity reduction (default False)
+        save_words:          boolean, whether to use numerosity reduction (default False)
+
+    Attributes
+    ----------
+        words:      histor = []
+        breakpoints: = []
+        num_insts = 0
+        num_atts = 0
+                    
             """
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
                  window_size=0,
                  remove_repeat_words=False,
-                 dim_to_use=0,
                  save_words=False
                  ):
-        self.words = []
-        self.breakpoints = []
-
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
 
-        self.dim_to_use = dim_to_use
+        self.words = []
+        self.breakpoints = []
 
         self.num_insts = 0
         self.num_atts = 0
 
-    def fit(self, X, y=None, **kwargs):
+    def transform(self, X):
+        """
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samples, num_atts]
+            The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
+
+        Returns
+        -------
+        dims: Pandas data frame with first dimension in column zero
+        """
         if self.alphabet_size < 2 or self.alphabet_size > 4:
             raise RuntimeError("Alphabet size must be an integer between 2 and 4")
-
         if self.word_length < 1 or self.word_length > 16:
             raise RuntimeError("Word length must be an integer between 1 and 16")
-
         if isinstance(X, pd.DataFrame):
-            if X.columns > 1:
-                raise TypeError("TSF cannot handle multivariate problems yet")
+            if X.shape[1] > 1:
+                raise TypeError("SAX cannot handle multivariate problems yet")
             elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
@@ -68,23 +92,6 @@ class SAX(BaseTransformer):
             self.window_size = self.num_atts
 
         self.breakpoints = self.generate_breakpoints()
-
-        self.is_fitted_ = True
-
-        return self
-
-    def transform(self, X):
-        if not self.is_fitted_:
-            raise RuntimeError("The fit method must be called before calling transform")
-
-        if isinstance(X, pd.DataFrame):
-            if X.columns > 1:
-                raise TypeError("TSF cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
-            else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
-
         self.num_insts = X.shape[0]
 
         bags = pd.DataFrame()
@@ -116,7 +123,7 @@ class SAX(BaseTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_' + str(self.dim_to_use)] = dim
+        bags[0] = dim
 
         return bags
 
@@ -134,7 +141,6 @@ class SAX(BaseTransformer):
     def add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word.word == last_word:
             return last_word
-
         if word.word in bag:
             bag[word.word] += 1
         else:
@@ -195,3 +201,22 @@ class BitWord:
     @staticmethod
     def right_shift(left, right):
         return (left % 0x100000000) >> right
+
+
+if __name__ == "__main__":
+    testPath="C:\\Users\\ajb\\Dropbox\\Data\\TSCProblems\\Chinatown\\Chinatown_TRAIN.ts"
+    train_x, train_y =  load_ts(testPath)
+
+    print("Correctness testing for SAX using Chinatown")
+#    print("First case used for testing")
+#    print(train_x.iloc[0,0])
+    p = SAX(window_size=24, alphabet_size=2,word_length=4,save_words=False)
+    print("Test 1: window_size =0, result should be single series for each")
+    x2=p.transform(train_x)
+    print("Correct single series SAX for case 1: = b,a,a,b,d,d,d,b")
+    print("Transform mean case 1: =")
+    dict=x2.iloc[0,0]
+    print(dict)
+#    for x in p.words:
+#        print(x)
+
