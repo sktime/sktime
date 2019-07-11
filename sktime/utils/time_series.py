@@ -139,7 +139,13 @@ def fit_trend(x, order=0):
         n_obs = x.shape[1]
         index = np.arange(n_obs)
         poly_terms = np.vander(index, N=order + 1)
-        coefs = np.linalg.pinv(poly_terms).dot(x.T).T
+
+        # linear least squares fitting using numpy's optimised routine, assuming samples in columns
+        # coefs = np.linalg.pinv(poly_terms).dot(x.T).T
+        coefs, _, _, _ = np.linalg.lstsq(poly_terms, x.T, rcond=None)
+
+        # returning fitted coefficients in expected format with samples in rows
+        coefs = coefs.T
 
     return coefs
 
