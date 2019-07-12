@@ -165,7 +165,7 @@ class BOSSEnsemble(BaseEstimator):
             if self.time_limit > 0:
                 self.ensemble_size = 0
 
-            while (train_time < self.time_limit and num_classifiers < self.max_ensemble_size) or num_classifiers < self.ensemble_size:
+            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
                 subsample = np.random.randint(self.num_insts, size=subsample_size)
