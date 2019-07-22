@@ -8,6 +8,7 @@ from sktime.forecasters import DummyForecaster
 from sktime.forecasters import ExpSmoothingForecaster
 from sktime.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
+from sktime.utils.validation import validate_fh
 
 __author__ = "Markus Löning"
 
@@ -36,10 +37,7 @@ def test_fhs(forecaster, fh):
     y_pred = m.predict(fh=fh)
 
     # adjust for default value
-    if fh is None:
-        fh = np.array([1])
-    elif isinstance(fh, list):
-        fh = np.asarray(fh)
+    fh = validate_fh(fh)
 
     # test length of output
     assert len(y_pred) == len(fh)

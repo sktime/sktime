@@ -317,8 +317,7 @@ class BaseUpdateableForecaster(BaseForecaster):
 
 
 class BaseSingleSeriesForecaster(BaseForecaster):
-    """
-    Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
+    """Statsmodels interface wrapper class, classical forecaster which implements predict method for single-series/univariate fitted/updated classical
     forecasters techniques without exogenous variables (X).
     """
 

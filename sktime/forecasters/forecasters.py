@@ -198,7 +198,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
 
         # Predict updated (pre-initialised) model with start and end values relative to end of train series
         if self._is_updated:
-            y_pred = self._updated_estimator.predict(start=start, end=end, exog=X)
+            y_pred = self._updated_estimator.predict()
 
         # Predict fitted model with start and end points relative to start of train series
         else:
