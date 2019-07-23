@@ -7,9 +7,10 @@ import math
 
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
+from sktime.transformers.SFA import SFA
+#TO DO: Change the horrible cabibilities hack
+#TO DO: Make more efficient
 
-from sktime.contrib.dictionary_based.dictionary_distances import boss_distance
-from sktime.contrib.dictionary_based.SFA import SFA
 
 all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
@@ -19,7 +20,7 @@ class BOSSEnsemble(BaseEstimator):
 
     """ Bag of SFA Symbols (BOSS)
 
-    Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
+    Bag of SFA Symbols Ensemble: implementation of BOSS from Schafer:
     @article
     {schafer15boss,
      author = {Patrick Schäfer,
@@ -51,7 +52,6 @@ class BOSSEnsemble(BaseEstimator):
     randomised_ensemble   : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False) 
     random_ensemble_size: int, if randomising, generate this number of base classifiers
     random_state    : int or None, seed for random, integer, optional (default to no seed)
-    dim_to_use      : int >=0, the column of the panda passed to use, optional (default = 0)
     threshold       : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
     max_ensemble_size    : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
     wordLengths     : list of int, search space for word lengths (default =100)
@@ -71,7 +71,6 @@ class BOSSEnsemble(BaseEstimator):
                  randomised_ensemble=False,
                  ensemble_size=100,
                  random_state=None,
-                 dim_to_use=0,
                  threshold=0.92,
                  max_ensemble_size=500,
                  max_win_len_prop=1,
@@ -90,7 +89,6 @@ class BOSSEnsemble(BaseEstimator):
         self.ensemble_size = ensemble_size
         self.random_state = random_state
         random.seed(random_state)
-        self.dim_to_use = dim_to_use
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
@@ -131,11 +129,12 @@ class BOSSEnsemble(BaseEstimator):
          """
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            if X.shape[1] > 1:
+                raise TypeError("BOSS cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
@@ -166,7 +165,7 @@ class BOSSEnsemble(BaseEstimator):
             if self.time_limit > 0:
                 self.ensemble_size = 0
 
-            while (train_time < self.time_limit and num_classifiers < self.max_ensemble_size) or num_classifiers < self.ensemble_size:
+            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
                 subsample = np.random.randint(self.num_insts, size=subsample_size)
@@ -245,11 +244,12 @@ class BOSSEnsemble(BaseEstimator):
 
     def predict_proba(self, X):
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            if X.shape[1] > 1:
+                raise TypeError("BOSS cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         sums = np.zeros((X.shape[0], self.num_classes))
 
@@ -360,14 +360,12 @@ class BOSSIndividual(BaseEstimator):
                  window_size,
                  word_length,
                  alphabet_size,
-                 norm,
-                 dim_to_use=0):
+                 norm
+                 ):
         self.window_size = window_size
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.norm = norm
-
-        self.dim_to_use = dim_to_use
 
         self.transform = SFA(word_length, alphabet_size, window_size=window_size, norm=norm, remove_repeat_words=True,
                              save_words=True)
@@ -391,11 +389,13 @@ class BOSSIndividual(BaseEstimator):
 
     def predict(self, X):
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+            if X.shape[1] > 1:
+                raise TypeError("BOSS cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)
@@ -460,3 +460,21 @@ class BOSSIndividual(BaseEstimator):
     def set_word_len(self, word_len):
         self.word_length = word_len
         self.transform.word_length = word_len
+
+
+def boss_distance(first, second, best_dist=sys.float_info.max):
+    dist = 0
+
+    if isinstance(first, dict):
+        for word, val_a in first.items():
+            val_b = second.get(word, 0)
+            dist += (val_a - val_b) * (val_a - val_b)
+
+            if dist > best_dist:
+                return sys.float_info.max
+    else:
+        dist = np.sum([0 if first[n] == 0 else (first[n] - second[n]) * (first[n] - second[n])
+                       for n in range(len(first))])
+
+    return dist
+
