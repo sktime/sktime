@@ -5,11 +5,13 @@ import pandas as pd
 import time
 import math
 
+from itertools import compress
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 from sktime.transformers.SFA import SFA
-#TO DO: Change the horrible cabibilities hack
-#TO DO: Make more efficient
+
+# TO DO: Change the horrible cabibilities hack
+# TO DO: Make more efficient
 
 
 all__ = ["BOSSEnsemble", "BOSSIndividual"]
@@ -40,9 +42,9 @@ class BOSSEnsemble(BaseEstimator):
     an l length word through taking a Fourier transform and keeping the first l/2 complex coefficients. These l 
     coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each 
     series is formed and stored. fit involves finding n histograms. 
-    
+
     predict uses 1 nearest neighbour with a bespoke distance function.  
-    
+
     For the Java version, see
     https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
 
@@ -56,7 +58,7 @@ class BOSSEnsemble(BaseEstimator):
     max_ensemble_size    : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
     wordLengths     : list of int, search space for word lengths (default =100)
     alphabet_size    : range of alphabet sizes to try (default to single value, 4)
-    
+
     Attributes
     ----------
     num_classes    : extracted from the data
@@ -97,6 +99,7 @@ class BOSSEnsemble(BaseEstimator):
         self.seed = 0
         self.classifiers = []
         self.weights = []
+        self.weight_sum = 0
         self.num_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
@@ -131,8 +134,8 @@ class BOSSEnsemble(BaseEstimator):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
                 raise TypeError("BOSS cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
@@ -158,14 +161,15 @@ class BOSSEnsemble(BaseEstimator):
             num_classifiers = 0
             start_time = time.time_ns()
             train_time = 0
-            subsample_size = int(self.num_insts*0.7)
+            subsample_size = int(self.num_insts * 0.7)
             lowest_acc = 0
             lowest_acc_idx = 0
 
             if self.time_limit > 0:
                 self.ensemble_size = 0
 
-            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(possible_parameters) > 0:
+            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(
+                    possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
                 subsample = np.random.randint(self.num_insts, size=subsample_size)
@@ -224,10 +228,9 @@ class BOSSEnsemble(BaseEstimator):
 
                         if best_acc_for_win_size > max_acc:
                             max_acc = best_acc_for_win_size
-
-                            for c, classifier in enumerate(self.classifiers):
-                                if classifier.accuracy < max_acc * self.threshold:
-                                    self.classifiers.remove(classifier)
+                            self.classifiers = list(compress(self.classifiers,
+                                                             [classifier.accuracy >= max_acc * self.threshold for
+                                                              c, classifier in enumerate(self.classifiers)]))
 
                         min_max_acc, min_acc_ind = self.worst_ensemble_acc()
 
@@ -238,6 +241,7 @@ class BOSSEnsemble(BaseEstimator):
             self.weights = [1 for n in range(len(self.classifiers))]
 
         self.num_classifiers = len(self.classifiers)
+        self.weight_sum = np.sum(self.weights)
 
     def predict(self, X):
         return [self.classes_[int(np.argmax(prob))] for prob in self.predict_proba(X)]
@@ -246,8 +250,8 @@ class BOSSEnsemble(BaseEstimator):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
                 raise TypeError("BOSS cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
@@ -256,9 +260,9 @@ class BOSSEnsemble(BaseEstimator):
         for n, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                sums[i, self.class_dictionary.get(preds[i])] += 1 * self.weights[n]
+                sums[i, self.class_dictionary.get(preds[i])] += self.weights[n]
 
-        dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
+        dists = sums / (np.ones(self.num_classes) * self.weight_sum)
 
         return dists
 
@@ -294,6 +298,7 @@ class BOSSEnsemble(BaseEstimator):
             dists = sums / divisor
             for n in range(self.num_classes):
                 results[i][n] = dists[n]
+
         return results
 
     def find_ensemble_train_acc(self, X, y):
@@ -323,13 +328,9 @@ class BOSSEnsemble(BaseEstimator):
         return results
 
     def unique_parameters(self, max_window, win_inc):
-        possible_parameters = []
-
-        for i in range(self.num_insts):
-            for n, normalise in enumerate(self.norm_options):
-                for win_size in range(self.min_window, max_window + 1, win_inc):
-                    for g, word_len in enumerate(self.word_lengths):
-                        possible_parameters.append([win_size, word_len, normalise])
+        possible_parameters = [[win_size, word_len, normalise] for n, normalise in enumerate(self.norm_options)
+                               for win_size in range(self.min_window, max_window + 1, win_inc)
+                               for g, word_len in enumerate(self.word_lengths)]
 
         return possible_parameters
 
@@ -394,8 +395,7 @@ class BOSSIndividual(BaseEstimator):
             elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)
@@ -477,4 +477,3 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
                        for n in range(len(first))])
 
     return dist
-

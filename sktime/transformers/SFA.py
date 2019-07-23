@@ -6,7 +6,6 @@ import sys
 from sktime.transformers.SAX import BitWord
 from sktime.transformers.base import BaseTransformer
 #TO DO: Finish comments
-#TO DO: Test correctness
 
 
 class SFA(BaseTransformer):
@@ -82,11 +81,12 @@ class SFA(BaseTransformer):
             raise RuntimeError("Word length must be an integer between 1 and 16")
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+            if X.shape[1] > 1:
+                raise TypeError("SFA cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_insts, self.num_atts = X.shape
 
@@ -105,11 +105,12 @@ class SFA(BaseTransformer):
             raise RuntimeError("The fit method must be called before calling transform")
 
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0, self.dim_to_use], pd.Series):
+            if X.shape[1] > 1:
+                raise TypeError("SFA cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing "
-                                "Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_insts = X.shape[0]
 
@@ -133,7 +134,7 @@ class SFA(BaseTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_' + str(self.dim_to_use)] = dim
+        bags['dim_' + str(0)] = dim
 
         return bags
 
@@ -203,14 +204,12 @@ class SFA(BaseTransformer):
             if s != 0:
                 std = s
 
-        #dft2 = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length) for n in range(length)]) for i in
-        #                  range(start, start + output_length)])
-        # print(dft2)
-        #
-        # dft2 = np.array([np.sum([-series[n] * math.sin(2 * math.pi * n * i / length) for n in range(length)]) for i in
-        #                  range(start, start + output_length)])
-        # print(dft2)
-        #
+        # dftReal = np.array([np.sum([series[n] * math.cos(2 * math.pi * n * i / length)
+        #                             for n in range(length)]) for i in range(start, start + output_length)])
+        # dftImag = np.array([np.sum([-series[n] * math.sin(2 * math.pi * n * i / length)
+        #                             for n in range(length)]) for i in range(start, start + output_length)])
+        # dft = np.column_stack((dftReal, dftImag)).flatten()
+
 
         dft = np.zeros(output_length * 2)
 
@@ -220,8 +219,6 @@ class SFA(BaseTransformer):
             for n in range(length):
                 dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
                 dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
-
-        # print(dft)
 
         if normalise:
             dft *= self.inverse_sqrt_win_size / std
@@ -236,6 +233,13 @@ class SFA(BaseTransformer):
         """
         start_offset = 2 if self.norm else 0
         length = self.word_length + self.word_length % 2
+
+        # phisReal = np.array([math.cos(2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size)
+        #                     for i in range(0, int(length / 2))])
+        # phisImag = np.array([-math.sin(2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size)
+        #                     for i in range(0, int(length / 2))])
+        # phis = np.column_stack((phisReal, phisImag)).flatten()
+
         phis = np.zeros(length)
 
         for i in range(0, length, 2):
@@ -246,7 +250,7 @@ class SFA(BaseTransformer):
         end = max(1, len(series) - self.window_size + 1)
         stds = self.calc_incremental_mean_std(series, end)
         transformed = np.zeros((end, length))
-        mft_data = None
+        mft_data = np.array([])
 
         for i in range(end):
             if i > 0:
@@ -317,7 +321,7 @@ class SFA(BaseTransformer):
 
             dim.append(pd.Series(bag))
 
-        new_bags['dim_' + str(self.dim_to_use)] = dim
+        new_bags['dim_' + str(0)] = dim
 
         return new_bags
 
