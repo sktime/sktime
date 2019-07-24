@@ -258,6 +258,8 @@ class ReducedForecastingRegressor(BaseForecaster):
 
         # Unnest target series
         yt = y.iloc[0]
+        if not isinstance(yt, pd.Series):
+            yt = pd.Series(yt)
         index = np.arange(len(yt))
 
         # Transform target series into tabular format using rolling window splits
