@@ -15,13 +15,13 @@ import platform
 try:
     import numpy as np
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'Numpy'. Please install "
-                              "Numpy first using `pip install Numpy`.")
+    raise ModuleNotFoundError("No module named 'numpy'. Please install "
+                              "numpy first using `pip install numpy`.")
 try:
     from Cython.Build import cythonize
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'Cython'. Please install "
-                              "Cython first using `pip install Cython`.")
+    raise ModuleNotFoundError("No module named 'cython'. Please install "
+                              "cython first using `pip install cython`.")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -64,7 +64,12 @@ PROJECT_URLS = {
     'Source Code': 'https://github.com/alan-turing-institute/sktime'
 }
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = ['numpy', 'scipy', 'scikit-learn', 'pandas', 'scikit-posthocs', 'cython', 'statsmodels', 'joblib']
+INSTALL_REQUIRES = ['numpy>=1.16.0',
+                    'scipy>=1.2.0',
+                    'scikit-learn>=0.21.0',
+                    'pandas>=0.23.0',
+                    'scikit-posthocs>=0.5.0',
+                    'statsmodels>=0.9.0']
 CLASSIFIERS = ['Intended Audience :: Science/Research',
                'Intended Audience :: Developers',
                'License :: OSI Approved',

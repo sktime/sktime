@@ -14,11 +14,11 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath('../..'))
 
 
 # -- Project information -----------------------------------------------------
-
 project = 'sktime'
 copyright = '2019, The Alan Turing Institute'
 author = ' '
@@ -30,7 +30,6 @@ release = ''
 
 
 # -- General configuration ---------------------------------------------------
-
 # If your documentation needs a minimal Sphinx version, state it here.
 #
 # needs_sphinx = '1.0'
@@ -137,7 +136,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'sktime.tex', 'sktime Documentation',
-     'Alan Turing', 'manual'),
+     'The Alan Turing Institute', 'manual'),
 ]
 
 

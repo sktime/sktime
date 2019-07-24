@@ -38,27 +38,26 @@ class RandomIntervalSpectralForest(ForestClassifier):
 
     Parameters
     ----------
-    n_trees         : ensemble size, integer, optional (default = 200)
-    random_state    : seed for random, integer, optional (default to no seed)
-    dim_to_use      : the column of the panda passed to use, optional (default = 0)
-    min_interval    : minimum width of an interval, optional (default = 16)
-    acf_lag         : maximum number of autocorellation terms to use (default =100)
-    acf_min_values : never use fewer than this number of terms to fnd a correlation (default =4)
+    n_trees         : int, ensemble size, optional (default = 200)
+    random_state    : int, seed for random, integer, optional (default to no seed)
+    dim_to_use      : int, the column of the panda passed to use, optional (default = 0)
+    min_interval    : int, minimum width of an interval, optional (default = 16)
+    acf_lag         : int, maximum number of autocorellation terms to use (default =100)
+    acf_min_values  : int, never use fewer than this number of terms to fnd a correlation (default =4)
     Attributes
     ----------
-    num_classes    : extracted from the data
-    num_atts       : extracted from the data
-    classifiers    : array of DecisionTree classifiers
-    intervals      : stores indexes of the start and end points for all classifiers
-    dim_to_use     : the column of the panda passed to use (can be passed a multidimensional problem, but will only use one)
+    num_classes    : int, extracted from the data
+    num_atts       : int, extracted from the data
+    classifiers    : array of shape = [num_classes] of DecisionTree classifiers
+    intervals      : array of shape = [num_classes][2] stores indexes of  start and end points for all classifiers
 
+    TO DO: handle missing values, unequal length series and multivariate problems
     
     """
 
     def __init__(self,
                  num_trees=500,
                  random_state=None,
-                 dim_to_use=0,
                  min_interval=16,
                  acf_lag=100,
                  acf_min_values=4
@@ -69,7 +68,6 @@ class RandomIntervalSpectralForest(ForestClassifier):
         self.num_trees=num_trees
         self.random_state = random_state
         random.seed(random_state)
-        self.dim_to_use = dim_to_use
         self.min_interval=min_interval
         self.acf_lag=acf_lag
         self.acf_min_values=acf_min_values
@@ -88,8 +86,8 @@ class RandomIntervalSpectralForest(ForestClassifier):
         """Build a forest of trees from the training set (X, y) using random intervals and summary measures.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
+        X : array-like or sparse matrix of shape = [n_samples, num_atts]
+            The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The class labels.
 
@@ -97,12 +95,13 @@ class RandomIntervalSpectralForest(ForestClassifier):
         -------
         self : object
          """
-
         if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,self.dim_to_use], pd.Series):
+            if X.columns > 1:
+                raise TypeError("TSF cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe containing Series objects")
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         n_samps, self.series_length = X.shape
 
         self.num_classes = np.unique(y).shape[0]
@@ -144,12 +143,12 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Find predictions for all cases in X. Built on top of predict_proba
         Parameters
         ----------
-        X : The training input samples.  array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
+        X : array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
         If a Pandas data frame is passed, the column _dim_to_use is extracted
 
         Returns
         -------
-        output : 1D array of predictions,
+        output : array of shape = [n_samples]
         """
 
         probs=self.predict_proba(X)
@@ -165,12 +164,12 @@ class RandomIntervalSpectralForest(ForestClassifier):
 
         Local variables
         ----------
-        n_samps     : number of cases to classify
-        num_atts    : number of attributes in X, must match _num_atts determined in fit
+        n_samps     : int, number of cases to classify
+        num_atts    : int, number of attributes in X, must match _num_atts determined in fit
 
         Returns
         -------
-        output : 2D array of probabilities,
+        output : array of shape = [n_samples, num_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
             if isinstance(X.iloc[0,self.dim_to_use],pd.Series):
@@ -204,12 +203,12 @@ def acf(x, max_lag):
 
     Parameters
     ----------
-    x : a 1D array
-    max_lag: number of ACF terms to find
+    x : array-like shape = [interval_width]
+    max_lag: int, number of ACF terms to find
 
     Return
     ----------
-    an array of length max_lag
+    y : array-like shape = [max_lag]
 
     """
     y = np.zeros(max_lag)
@@ -246,16 +245,17 @@ def matrix_acf(x, num_cases, max_lag):
     We could use inverse of power spectrum, especially given we already have found it, worth testing for speed and correctness
     HOWEVER, for long series, it may not give much benefit, as we do not use that many ACF terms
 
-    Parameters
+     Parameters
     ----------
-    x : a matrix of num_cases,
-    max_lag: number of ACF terms to find
+    x : array-like shape = [num_cases, interval_width]
+    max_lag: int, number of ACF terms to find
 
     Return
     ----------
-    an matrix of length max_lag
+    y : array-like shape = [num_cases,max_lag]
 
     """
+
     y = np.empty(shape=(num_cases,max_lag))
     for lag in range(1, max_lag + 1):
         # Could just do it ourselves ... TO TEST
@@ -276,11 +276,11 @@ def ps(x):
     It would be worth looking at ff implementation, see difference in speed to java
     Parameters
     ----------
-    x : an array
+    x : array-like shape = [interval_width]
 
     Return
     ----------
-    an array of length x.length/2
+    y : array-like shape = [len(x)/2]
     """
     fft=np.fft.fft(x)
     fft=fft.real*fft.real+fft.imag*fft.imag

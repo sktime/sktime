@@ -84,7 +84,7 @@ def cython_wrapper(distance_measure):
 
 
 def pure(y):
-    '''
+    """
     test whether a set of class labels are pure (i.e. all the same)
     ----
     Parameters
@@ -96,7 +96,7 @@ def pure(y):
     ----
     result : boolean
         whether the set of class labels is pure
-    '''
+    """
     # get unique class labels
     unique_class_labels = np.unique(np.array(y))
     # if more than 1 unique then not pure
