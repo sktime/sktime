@@ -381,7 +381,7 @@ class Detrender(BaseTransformer):
         # fit polynomial trend
         self.coefs_ = fit_trend(Xs, order=self.order)
 
-        # remove trend, keeping fitted polynomial coefficients
+        # remove trend
         Xt = remove_trend(Xs, coefs=self.coefs_, time_index=self._time_index)
 
         # convert back into nested format
@@ -424,7 +424,7 @@ class Detrender(BaseTransformer):
         tabulariser = Tabulariser()
         Xs = tabulariser.transform(X.iloc[:, :1])
 
-        # add trend at given time series index, keeping fitted polynomial coefficients
+        # add trend at given time series index
         Xit = add_trend(Xs, coefs=self.coefs_, time_index=time_index)
 
         # convert back into nested format

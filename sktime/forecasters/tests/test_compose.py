@@ -49,16 +49,6 @@ def test_TransformedTargetForecaster_fit_predict(trend_order, arima_order):
     np.testing.assert_allclose(actual, expected)
 
 
-# define setting
-# forecasting horizon
-fh = np.arange(3) + 1
-n_fh = len(fh)
-
-# load data and split into train/test series
-y = load_shampoo_sales()
-train = pd.Series([y.iloc[0].iloc[:-n_fh]])
-test = pd.Series([y.iloc[0].iloc[-n_fh:]])
-
 tsr = Pipeline([  # time series regressor
     ('tabularise', Tabulariser()),
     ('regress', DummyRegressor())
@@ -66,7 +56,16 @@ tsr = Pipeline([  # time series regressor
 
 @pytest.mark.parametrize("window_length", [3, 5, 7])
 @pytest.mark.parametrize("dynamic", [True, False])
-def test_ReducedForecastingRegressor(window_length, dynamic):
+@pytest.mark.parametrize("fh", [np.array([1]), np.array([1, 2]), np.array([5, 6])])
+def test_ReducedForecastingRegressor(window_length, dynamic, fh):
+    # define setting
+    # forecasting horizon
+    n_fh = len(fh)
+
+    # load data and split into train/test series
+    y = load_shampoo_sales()
+    train = pd.Series([y.iloc[0].iloc[:-n_fh]])
+    test = pd.Series([y.iloc[0].iloc[-n_fh:]])
 
     forecaster = ReducedForecastingRegressor(tsr, window_length=window_length, dynamic=dynamic)
     # check if error is raised when dynamic is set to true but fh is not specified
@@ -81,10 +80,22 @@ def test_ReducedForecastingRegressor(window_length, dynamic):
 
 @pytest.mark.parametrize("window_length", [3, 5, 7])
 @pytest.mark.parametrize("dynamic", [True, False])
-def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_length, dynamic):
+@pytest.mark.parametrize("fh", [np.array([1]), np.array([1, 2]), np.array([5, 6])])
+def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_length, dynamic, fh):
+    # define setting
+    # forecasting horizon
+    n_fh = len(fh)
+
+    # load data and split into train/test series
+    y = load_shampoo_sales()
+    train = pd.Series([y.iloc[0].iloc[:-n_fh]])
+    test = pd.Series([y.iloc[0].iloc[-n_fh:]])
 
     forecaster = ReducedForecastingRegressor(tsr, window_length=window_length, dynamic=dynamic)
-    transformer = Pipeline([('detrend', Detrender(order=1)), ('deseasonalise', Deseasonaliser(sp=12))])
+    transformer = Pipeline([
+        ('deseasonalise', Deseasonaliser(sp=12)),
+        ('detrend', Detrender(order=1))
+    ])
     m = TransformedTargetForecaster(forecaster, transformer)
 
     # check if error is raised when dynamic is set to true but fh is not specified

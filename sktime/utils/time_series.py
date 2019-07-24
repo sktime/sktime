@@ -256,25 +256,6 @@ def add_trend(x, coefs, time_index=None):
     return xt
 
 
-def rolling_mean(x, window):
-    """Helper function from M4 competition to compute rolling mean
-
-    Link: https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
-
-    """
-
-    x = pd.Series(x)
-
-    xt = x.rolling(window=window, center=True).mean()
-
-    if window % 2 == 0:
-        #  edge case
-        xt = xt.rolling(window=2, center=True).mean()
-        xt = np.roll(xt, -1)
-
-    return np.asarray(xt)
-
-
 def split_into_tabular_train_test(x, window_length=None, fh=None, test_size=1):
     """Helper function to split single time series into tabular train and
     test sets using rolling window approach"""

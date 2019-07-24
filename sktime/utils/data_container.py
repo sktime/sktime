@@ -48,8 +48,24 @@ def tabularize(X, return_array=False):
     if isinstance(X, pd.Series):
         Xt = np.array(X.tolist())
 
+    elif isinstance(X, pd.DataFrame):
+        try:
+            Xt = np.hstack([X.iloc[:, i].tolist() for i in range(X.shape[1])])
+
+        # except strange key error for specific case
+        except KeyError:
+            if (X.shape == (1, 1)) and (X.iloc[0, 0].shape == (1,)):
+                # in fact only breaks when an additional condition is met,
+                # namely that the index of the time series of a single value
+                # does not start with 0, e.g. pd.RangeIndex(9, 10) as is the
+                # case in forecasting
+                Xt = X.iloc[0, 0].values
+            else:
+                raise
+
     else:
-        Xt = np.hstack([X.iloc[:, i].tolist() for i in range(X.shape[1])])
+        raise ValueError(f"Expected input is pandas Series or pandas DataFrame, "
+                         f"but found: {type(X)}")
 
     if return_array:
         return Xt
@@ -159,9 +175,8 @@ def get_time_index(X):
         Index of time series
     """
 
-    # assumes that all samples share the same the time index
+    # assumes that all samples share the same the time index, only looks at first row
     if isinstance(X, pd.DataFrame):
-        X = check_ts_array(X)
         Xs = X.iloc[0, 0]
 
     elif isinstance(X, pd.Series):

@@ -234,7 +234,8 @@ class ReducedForecastingRegressor(BaseForecaster):
         """
         # validate forecasting horizon
         if fh is None and not self.dynamic:
-            raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit")
+            raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit, "
+                             f"as one estimator is fit for each step ahead forecast of the forecasting horizon")
 
         # Make interface compatible with estimators that only take y and no X
         kwargs = {} if X is None else {'X': X}
@@ -317,18 +318,19 @@ class ReducedForecastingRegressor(BaseForecaster):
         # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
         # only the last window and using one fitted estimator for each step ahead forecast
         if self.dynamic:
-            # Roll/extend last window using previous one-step ahead forecasts
+            # Roll last window using previous one-step ahead forecasts
             for i in range(n_fh):
                 y_pred[i] = self.estimators_.predict(x_test)
 
-                # append prediction to last window and update x
+                # append prediction to last window and roll window
                 x_test = np.append(x_test.iloc[0, 0].values, y_pred[i])[-self.window_length_:]
 
-                # put data into required format
+                # put data into required nested format
                 x_test = pd.DataFrame(pd.Series([pd.Series(x_test)]))
 
         else:
             # Iterate over estimators/forecast horizon
+            # Any fh is ignored if specified
             for i, estimator in enumerate(self.estimators_):
                 y_pred[i] = estimator.predict(x_test)
 
