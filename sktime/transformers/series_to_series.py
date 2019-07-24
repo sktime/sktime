@@ -6,18 +6,21 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.utils.data_container import tabularize, concat_nested_arrays, get_time_index
+from sktime.utils.data_container import get_time_index
+from sktime.utils.data_container import tabularize, concat_nested_arrays
 from sktime.utils.time_series import fit_trend, remove_trend, add_trend
-from sktime.utils.validation import check_equal_index, validate_sp, check_ts_array, check_is_fitted_in_transform
+from sktime.utils.validation import check_equal_index, check_ts_array
+from sktime.utils.validation import validate_sp, check_is_fitted_in_transform
 
 __all__ = ['RandomIntervalSegmenter',
            'IntervalSegmenter',
            'DerivativeSlopeTransformer',
            'Detrender',
-           "Deseasonaliser",
-           'Deseasonalizer']
+           'Deseasonaliser',
+           'Deseasonalizer',
+           'PlateauFinder']
 
-__author__ = ["Markus Löning", "Jason Lines"]
+__author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -595,3 +598,87 @@ class Deseasonaliser(BaseTransformer):
 
 
 Deseasonalizer = Deseasonaliser
+
+
+class PlateauFinder(BaseTransformer):
+    """Transformer that finds segments of the same given value, plateau in the time series, and
+    returns the starting indices and lengths.
+
+    Parameters
+    ----------
+    value : {int, float, np.nan, np.inf}
+        Value for which to find segments
+    min_length : int
+        Minimum lengths of segments with same value to include.
+        If min_length is set to 1, the transformer can be used as a value finder.
+    check_input : bool, optional (default=True)
+        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        and no checks are performed. Use with caution.
+    """
+
+    def __init__(self, value=np.nan, min_length=2, check_input=True):
+        self.value = value
+        self.min_length = min_length
+        self.check_input = check_input
+
+        self._starts = []
+        self._lengths = []
+
+    def transform(self, X, y=None):
+        """Transform X.
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_columns]
+            Nested dataframe with time-series in cells.
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame
+        """
+
+        # input checks
+        if self.check_input:
+            if not isinstance(X, pd.DataFrame):
+                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+
+        if X.shape[1] > 1:
+            raise NotImplementedError(f"Currently does not work on multiple columns")
+
+        # get column name
+        column_name = X.columns[0]
+
+        # find plateaus (segments of the same value)
+        for x in X.iloc[:, 0]:
+            x = np.asarray(x)
+
+            # find indices of transition
+            if np.isnan(self.value):
+                i = np.where(np.isnan(x), 1, 0)
+
+            elif np.isinf(self.value):
+                i = np.where(np.isinf(x), 1, 0)
+
+            else:
+                i = np.where(x == self.value, 1, 0)
+
+            # pad and find where segments transition
+            transitions = np.diff(np.hstack([0, i, 0]))
+
+            # compute starts, ends and lengths of the segments
+            starts = np.where(transitions == 1)[0]
+            ends = np.where(transitions == -1)[0]
+            lengths = ends - starts
+
+            # filter out single points
+            starts = starts[lengths >= self.min_length]
+            lengths = lengths[lengths >= self.min_length]
+
+            self._starts.append(starts)
+            self._lengths.append(lengths)
+
+        # put into dataframe
+        Xt = pd.DataFrame()
+        column_prefix = "%s_%s" % (column_name, "nan" if np.isnan(self.value) else str(self.value))
+        Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
+        Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
+        return Xt

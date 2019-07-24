@@ -185,6 +185,8 @@ class RowwiseTransformer(BaseTransformer):
 
         # check the validity of input
         X = check_ts_array(X)
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
         # fitting - this transformer needs no fitting
         self.is_fitted_ = True
@@ -207,18 +209,22 @@ class RowwiseTransformer(BaseTransformer):
         """
         # check the validity of input
         X = check_ts_array(X)
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
         check_is_fitted(self, 'is_fitted_')
 
         # Works on single column, but on multiple columns only if columns have equal-length series.
-        try:
-            Xt = X.apply(self.transformer.fit_transform)
-
-        # Otherwise call apply on each column separately.
-        except ValueError as e:
-            if str(e) == 'arrays must all be same length':
-                Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform)) for _, col in X.items()], axis=1)
-            else:
-                raise
+        # try:
+        #     Xt = X.apply(self.transformer.fit_transform)
+        #
+        # # Otherwise call apply on each column separately.
+        # except ValueError as e:
+        #     if str(e) == 'arrays must all be same length':
+        #         Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform)) for _, col in X.items()], axis=1)
+        #     else:
+        #         raise
+        Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform))
+                        for _, col in X.items()], axis=1)
 
         return Xt
 
