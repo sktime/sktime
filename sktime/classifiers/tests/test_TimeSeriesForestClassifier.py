@@ -46,6 +46,13 @@ def test_predict_proba():
     assert proba.shape == (X.shape[0], n_classes)
     np.testing.assert_array_equal(np.ones(n), np.sum(proba, axis=1))
 
+    # test single row input
+    y_proba = clf.predict_proba(X.iloc[[0], :])
+    assert y_proba.shape == (1, n_classes)
+
+    y_pred = clf.predict(X.iloc[[0], :])
+    assert y_pred.shape == (1,)
+
 
 # Compare results from different but equivalent implementations.
 def test_different_implementations():
