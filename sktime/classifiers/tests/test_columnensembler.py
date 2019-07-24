@@ -12,8 +12,8 @@ import numpy as np
 from sklearn.neighbors.classification import KNeighborsClassifier
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets.base import _load_dataset
-from sktime.contrib.dictionary_based.boss_ensemble import BOSSEnsemble
-from sktime. contrib.column_ensembler import ColumnEnsembler, SimpleColumnEnsembler
+from sktime.dictionary_based.boss import BOSSEnsemble
+from sktime.contrib.column_ensembler import ColumnEnsembler, SimpleColumnEnsembler
 
 
 def test_univariate_column_ensembler():
