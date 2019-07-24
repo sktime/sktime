@@ -1,6 +1,6 @@
 from sklearn.pipeline import Pipeline as skPipeline
 from sklearn.pipeline import FeatureUnion as skFeatureUnion
-from sklearn.pipeline import _fit_one, _transform_one, _fit_transform_one
+from sklearn.pipeline import _transform_one, _fit_transform_one
 from sklearn.utils._joblib import Parallel, delayed
 import pandas as pd
 import numpy as np
