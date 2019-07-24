@@ -154,7 +154,7 @@ def load_japanese_vowels(split='TRAIN', return_X_y=False):
 
         Details
         -------
-        Dimensionality:     multivariate
+        Dimensionality:     multivariate, 12
         Series length:      29
         Train cases:        270
         Test cases:         370
