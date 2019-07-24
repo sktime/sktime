@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
 import sktime.classifiers.ensemble as ensemble
-import sktime.dictionary_based.boss as db
+import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
 from sktime.classifiers.proximity import ProximityForest

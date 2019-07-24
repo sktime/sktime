@@ -10,7 +10,7 @@ from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets.base import _load_dataset
-from sktime.dictionary_based.boss import BOSSEnsemble
+from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
 from sktime.contrib.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
 
 
