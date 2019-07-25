@@ -2,9 +2,6 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
-from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, concat_nested_arrays, tabularise
-from .base import BaseTransformer
 
 from sktime.utils.validation import check_equal_index, check_ts_array
 from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays

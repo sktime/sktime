@@ -170,9 +170,6 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
 
     # Parse the file
 
-    with open(full_file_path_and_name, 'r') as file:
-        for line in file:
-
     is_first_case = True
     with open(full_file_path_and_name, 'r') as f:
         for line in f:

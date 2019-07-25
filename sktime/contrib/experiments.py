@@ -1,6 +1,6 @@
 import os
 
-import sktime.classifiers.proximity
+import contrib.distance_based.proximity
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -15,9 +15,9 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
 import sktime.classifiers.ensemble as ensemble
-import sktime.contrib.dictionary_based.boss_ensemble as db
-import sktime.contrib.frequency_based.rise as fb
-import sktime.contrib.interval_based.tsf as ib
+# import sktime.contrib.dictionary_based.boss_ensemble as db
+# import sktime.contrib.frequency_based.rise as fb
+# import sktime.contrib.interval_based.tsf as ib
 from sktime.utils.load_data import load_ts
 import argparse
 
@@ -132,27 +132,27 @@ def set_classifier(cls, resampleId, verbosity):
     """
     cls = cls.lower()
     if cls == 'pt' or cls == 'proximity_tree':
-        return sktime.classifiers.proximity.ProximityTree(
+        return contrib.distance_based.proximity.ProximityTree(
                 random_state = resampleId,
                 verbosity = verbosity,
                 )
     if cls == 'pf' or cls == 'proximity_forest':
-        return sktime.classifiers.proximity.ProximityForest(
+        return contrib.distance_based.proximity.ProximityForest(
                 random_state = resampleId,
                 verbosity = verbosity,
                 )
     if cls == 'ps' or cls == 'proximity_stump':
-        return sktime.classifiers.proximity.ProximityStump(
+        return contrib.distance_based.proximity.ProximityStump(
                 random_state = resampleId,
                 verbosity = verbosity,
                 n_jobs = -1
                 )
-    if cls == 'rise':
-        return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif cls == 'tsf':
-        return ib.TimeSeriesForest(random_state = resampleId)
-    elif cls == 'boss':
-        return db.BOSSEnsemble()
+    # if cls == 'rise':
+    #     return fb.RandomIntervalSpectralForest(random_state = resampleId)
+    # elif cls == 'tsf':
+    #     return ib.TimeSeriesForest(random_state = resampleId)
+    # elif cls == 'boss':
+    #     return db.BOSSEnsemble()
     # elif classifier == 'elasticensemble':
     #     return dist.ElasticEnsemble()
     elif cls == 'tsf_markus':
@@ -370,15 +370,15 @@ if __name__ == "__main__":
         #     run_experiment(**args)
         run_experiment(**args)
     else:  # Local run
-        data_dir = "/scratch/datasets/"
+        data_dir = "/scratch/datasets/Univariate2018/"
         results_dir = "/scratch/results"
         #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
         #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "PS"
+        classifier = "PF"
         resample = 3
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
-        dataset = "Beef"
+        dataset = "Coffee"
         tf = False
         run_experiment(overwrite_results = True, datasets_dir_path = data_dir, results_dir_path = results_dir,
                        classifier_name = classifier, dataset_name = dataset, resample_seed = resample,

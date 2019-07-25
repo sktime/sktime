@@ -145,3 +145,5 @@ dask-worker-space
 build_doc_site/
 
 envs/
+
+sktime/distances/elastic_cython\.html

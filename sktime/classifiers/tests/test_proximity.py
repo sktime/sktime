@@ -1,10 +1,3 @@
-import numpy as np
-import pandas as pd
-from numpy import testing
-
-from sktime.classifiers.proximity import ProximityForest, ProximityStump, ProximityTree, pure, gini_purity, gini_gain, pick_one_exemplar_per_class
-from sktime.datasets import load_gunpoint
-
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
 # def test_pure_pure():

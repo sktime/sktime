@@ -44,12 +44,12 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
 
-from .base import BaseClassifier
-from ..distances import (dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, wdtw_distance)
-from ..transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
-from ..utils import comparison, dataset_properties
-from ..utils.transformations import tabularise
-from ..utils.validation import check_X, check_X_y
+from sktime.classifiers.base import BaseClassifier
+from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, wdtw_distance
+from sktime.transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
+from sktime.utils import comparison, dataset_properties
+from sktime.utils.transformations import tabularise
+from sktime.utils.validation import check_X, check_X_y
 
 
 def _derivative_distance(distance_measure, transformer):
