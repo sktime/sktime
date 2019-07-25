@@ -10,6 +10,7 @@ from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
 
+
 # load data
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
 X_train = pd.concat([X_train, X_train], axis=1)
@@ -106,3 +107,15 @@ def test_Pipeline_check_input():
     for step in pipe.steps:
         assert step[1].check_input == ci
         assert step[1].get_params()['check_input'] == ci
+
+
+def test_FeatureUnion():
+    X, y = load_gunpoint(return_X_y=True)
+    ft = FunctionTransformer(func=np.mean, validate=False)
+    t = RowwiseTransformer(ft)
+    fu = FeatureUnion([
+        ('mean', t),
+        ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
+    ])
+    Xt = fu.fit_transform(X, y)
+    assert Xt.shape == (X.shape[0], X.shape[1] * len(fu.transformer_list))
