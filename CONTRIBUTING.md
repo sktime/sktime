@@ -5,7 +5,7 @@ The preferred workflow for contributing to sktime is to fork the
 [main repository](https://github.com/alan-turing-institute/sktime/) on
 GitHub, clone, and develop on a branch. Steps:
 
-1. Fork the [project repository](https://github.com/kiraly-group/sktime)
+1. Fork the [project repository](https://github.com/alan-turing-institute/sktime)
    by clicking on the 'Fork' button near the top right of the page. This creates
    a copy of the code under your GitHub user account. For more details on
    how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
