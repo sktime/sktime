@@ -2,7 +2,7 @@ How to contribute
 -----------------
 
 The preferred workflow for contributing to sktime is to fork the
-[main repository](https://github.com/kiraly-group/sktime) on
+[main repository](https://github.com/alan-turing-institute/sktime/) on
 GitHub, clone, and develop on a branch. Steps:
 
 1. Fork the [project repository](https://github.com/kiraly-group/sktime)
@@ -99,8 +99,8 @@ It is recommended to check that your issue complies with the
 following rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/kiraly-group/sktime/issues)
-   or [pull requests](https://github.com/kiraly-group/sktime/pulls).
+   [issues](https://github.com/alan-turing-institute/sktime/issues)
+   or [pull requests](https://github.com/alan-turing-institute/sktime/pulls).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
