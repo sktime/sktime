@@ -8,7 +8,7 @@ SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build_doc_site
 PROJECTDIR    = "../sktime/"
-EXCLUDEPATH   = "../sktime/tests ../sktime/utils"
+EXCLUDEPATHS   = "../sktime/tests ../sktime/utils ../sktime/classifiers/tests ../sktime/regressors/tests ../sktime/forecasters/tests ../sktime/experiments/tests ../sktime/transformers/tests"
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -20,6 +20,6 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	-rm -rf $(AUTOGENDIR)
-	@$(PREPROCESS) -eMT -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATH)"
+	@$(PREPROCESS) -eMT -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
 	-rm -rf $(BUILDDIR)
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

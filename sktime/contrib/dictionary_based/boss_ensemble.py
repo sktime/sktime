@@ -44,13 +44,13 @@ class BOSSEnsemble(BaseEstimator):
 
     Parameters
     ----------
-    randomised_ensemble   : boolean, turns the option to just randomise the ensemble members rather than cross validate (default=False) 
-    random_ensemble_size: integer, if randomising, generate this number of base classifiers
-    random_state    : integer or None, seed for random, integer, optional (default to no seed)
-    dim_to_use      : integer >=0, the column of the panda passed to use, optional (default = 0)
+    randomised_ensemble   : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False) 
+    random_ensemble_size: int, if randomising, generate this number of base classifiers
+    random_state    : int or None, seed for random, integer, optional (default to no seed)
+    dim_to_use      : int >=0, the column of the panda passed to use, optional (default = 0)
     threshold       : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
-    max_ensemble_size    : integer, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
-    wordLengths     : list of integers, search space for word lengths (default =100)
+    max_ensemble_size    : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
+    wordLengths     : list of int, search space for word lengths (default =100)
     alphabet_size    : range of alphabet sizes to try (default to single value, 4)
     
     Attributes
