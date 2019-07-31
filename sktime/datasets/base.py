@@ -10,15 +10,17 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 __all__ = ["load_gunpoint",
            "load_arrow_head",
            "load_italy_power_demand",
+           "load_basic_motions",
            "load_shampoo_sales",
            "load_longley"]
+
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)
 
 
-# time series classification datasets
+# time series classification data sets
 
 def _load_dataset(name, split, return_X_y):
     """
@@ -131,6 +133,49 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
+def load_japanese_vowels(split='TRAIN', return_X_y=False):
+    """
+        Loads the JapaneseVowels time series classification problem and returns X and y.
+
+        Parameters
+        ----------
+        split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+            Whether to load the train or test partition of the problem. By default it loads the train split.
+        return_X_y: bool, optional (default=False)
+            If True, returns (features, target) separately instead of a single dataframe with columns for
+            features and the target.
+
+        Returns
+        -------
+        X: pandas DataFrame with m rows and c columns
+            The time series data for the problem with m cases and c dimensions
+        y: numpy array
+            The class labels for each case in X
+
+        Details
+        -------
+        Dimensionality:     multivariate, 12
+        Series length:      29
+        Train cases:        270
+        Test cases:         370
+        Number of classes:  9
+
+        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying the vowels 'a' and 'e'. A '12-degree
+        linear prediction analysis' is applied to the raw recordings to obtain time-series with 12 dimensions, a
+        originally a length between 7 and 29. In this dataset, instances have been padded to the longest length,
+        29. The classification task is to predict the speaker. Therefore, each instance is a transformed utterance,
+        12*29 values with a single class label attached, [1...9]. The given training set is comprised of 30
+        utterances for each speaker, however the test set has a varied distribution based on external factors of
+        timing and experimenal availability, between 24 and 88 instances per speaker. Reference: M. Kudo, J. Toyama
+        and M. Shimbo. (1999). "Multidimensional Curve Classification Using Passing-Through Regions". Pattern
+        Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
+
+        Dataset details: http://timeseriesclassification.com/description.php?Dataset=JapaneseVowels
+    """
+
+    name = 'JapaneseVowels'
+    return _load_dataset(name, split, return_X_y)
+
 def load_arrow_head(split='TRAIN', return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
@@ -172,7 +217,48 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-# forecasting datasets
+def load_basic_motions(split='TRAIN', return_X_y=False):
+    """
+    Loads the ArrowHead time series classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        Whether to load the train or test partition of the problem. By default it loads the train split.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      251
+    Train cases:        36
+    Test cases:         175
+    Number of classes:  3
+
+    The arrowhead data consists of outlines of the images of arrowheads. The shapes of the
+    projectile points are converted into a time series using the angle-based method. The
+    classification of projectile points is an important topic in anthropology. The classes
+    are based on shape distinctions such as the presence and location of a notch in the
+    arrow. The problem in the repository is a length normalised version of that used in
+    Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
+
+    Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
+    """
+
+    name = 'BasicMotions'
+    return _load_dataset(name, split, return_X_y)
+
+
+# forecasting data sets
 
 def load_shampoo_sales(return_y_as_dataframe=False):
     """
