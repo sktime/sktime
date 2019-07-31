@@ -20,11 +20,12 @@ def stdp(instances):
     sum_sq = 0
     num_instances = instances.shape[0]
     num_dimensions = instances.shape[1]
-    num_values = num_instances * num_dimensions
+    num_values = 0
     for instance_index in range(0, num_instances):
         for dimension_index in range(0, num_dimensions):
             instance = instances.iloc[instance_index, dimension_index]
             for value in instance:
+                num_values += 1
                 sum += value
                 sum_sq += (value ** 2)  # todo missing values NaN messes this up!
     mean = sum / num_values

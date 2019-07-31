@@ -2,10 +2,10 @@ How to contribute
 -----------------
 
 The preferred workflow for contributing to sktime is to fork the
-[main repository](https://github.com/kiraly-group/sktime) on
+[main repository](https://github.com/alan-turing-institute/sktime/) on
 GitHub, clone, and develop on a branch. Steps:
 
-1. Fork the [project repository](https://github.com/kiraly-group/sktime)
+1. Fork the [project repository](https://github.com/alan-turing-institute/sktime)
    by clicking on the 'Fork' button near the top right of the page. This creates
    a copy of the code under your GitHub user account. For more details on
    how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
@@ -18,9 +18,10 @@ disk:
    $ cd sktime
    ```
 
-3. Create a ``feature`` branch to hold your development changes:
+3. Create a new ``feature`` branch from the ``dev`` branch to hold your changes:
 
    ```bash
+   $ git checkout dev
    $ git checkout -b my-feature-branch
    ```
 
@@ -88,6 +89,7 @@ In addition, we add the following guidelines:
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
 
+
 Filing bugs
 -----------
 We use GitHub issues to track all bugs and feature requests; feel free to
@@ -97,8 +99,8 @@ It is recommended to check that your issue complies with the
 following rules before submitting:
 
 -  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/kiraly-group/sktime/issues)
-   or [pull requests](https://github.com/kiraly-group/sktime/pulls).
+   [issues](https://github.com/alan-turing-institute/sktime/issues)
+   or [pull requests](https://github.com/alan-turing-institute/sktime/pulls).
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.
@@ -109,3 +111,12 @@ following rules before submitting:
    [reproducible](https://stackoverflow.com/help/mcve) code snippet
    or link to a [gist](https://gist.github.com). If an exception is raised,
    please provide the traceback.
+
+
+Coding tips:
+------------
+
+-  When writing new classes, inherit from appropriate base classes (`BaseTransformer`, `BaseClassifier`, `BaseRegressor`),
+
+-  Use relative imports when importing functions or classes from within sktime, except for unit tests where you should use absolute imports.
+

@@ -387,10 +387,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
-        if len(all_proba) == 1:
-            return all_proba[0]
-        else:
-            return all_proba
+        return all_proba
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
