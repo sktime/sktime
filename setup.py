@@ -16,11 +16,18 @@ try:
 except ModuleNotFoundError as e:
     raise ModuleNotFoundError("No module named 'numpy'. Please install "
                               "numpy first using `pip install numpy`.")
+
+
+extensions = []
 try:
-    from Cython.Build import cythonize
+    from Cython.Build import cythonize # attempt to import cython
+    # add cythonized extension if cython is available
+    extensions.append(setuptools.Extension("sktime.distances.elastic_cython", ["sktime/distances/elastic_cython.pyx"],
+                         include_dirs=[np.get_include()],
+                         libraries=['m'],
+                         extra_compile_args = ["-ffast-math"]))
 except ModuleNotFoundError as e:
-    raise ModuleNotFoundError("No module named 'cython'. Please install "
-                              "cython first using `pip install cython`.")
+    raise Warning("Cython is not installed - distance measures will be much slower.")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -94,12 +101,6 @@ EXTRAS_REQUIRE = {
     ]
 }
 
-extensions = [
-    setuptools.Extension("sktime.distances.elastic_cython", ["sktime/distances/elastic_cython.pyx"],
-                         include_dirs=[np.get_include()],
-                         libraries=['m'],
-                         extra_compile_args = ["-ffast-math"])]
-
 setup(name=DISTNAME,
       maintainer=MAINTAINER,
       maintainer_email=MAINTAINER_EMAIL,
@@ -116,6 +117,6 @@ setup(name=DISTNAME,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       ext_modules=cythonize(
-          ["sktime/distances/elastic_cython.pyx"],
+          extensions,
           annotate=True),
       )
