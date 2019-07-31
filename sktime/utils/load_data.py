@@ -83,6 +83,44 @@ def arff_to_ts(file_path_src, file_path_dest):
     source.close()
     destination.close()
 
+def load_ts(path):
+    # todo timestamps
+    # todo ensure all instances have same number of dimensions? (is it needed?)
+    class_labels = []
+    defined_class_labels = None
+    data_begun = False
+    data = []
+    with open(path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if data_begun:
+                dimensions = line.split(':')
+                class_label = dimensions[-1]
+                if class_label not in defined_class_labels:
+                    raise ValueError('class label ' + class_label + ' not in declared header class labels')
+                class_labels.append(class_label)
+                dimensions = dimensions[:-1]
+                for index in range(0, len(dimensions)):
+                    dimension = dimensions[index]
+                    dimension.replace('?', 'NaN')
+                    dimension = dimension.split(',')
+                    dimension = [float(value) for value in dimension]
+                    dimension = pd.Series(dimension)
+                    dimensions[index] = dimension
+                data.append(dimensions)
+            else:
+                line = line.lower()
+                if line.startswith('@classlabel'):
+                    parts = line.split(' ')
+                    if parts[1] == 'true':
+                        defined_class_labels = parts[2:]
+                elif line.startswith('@data'):
+                    data_begun = True
+    data = pd.DataFrame(data)
+    class_labels = np.array(class_labels)
+    data.columns = [('dim_' + str(index)) for index in range(0, len(data.columns))]
+    return data, class_labels
+
 class TsFileParseException(Exception):
     """
     Should be raised when parsing a .ts file and the format is incorrect.

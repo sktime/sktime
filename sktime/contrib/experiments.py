@@ -18,11 +18,14 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 import sktime.classifiers.ensemble as ensemble
-import sktime.classifiers.dictionary_based.boss as db
-import sktime.classifiers.frequency_based.rise as fb
-import sktime.classifiers.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+import sktime.contrib.dictionary_based.boss_ensemble as db
+import sktime.contrib.frequency_based.rise as fb
+import sktime.contrib.interval_based.tsf as ib
+from sktime.utils.load_data import load_ts
+import argparse
+from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
+    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn, FullDtwKnn, EdKnn, \
+    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn
 
 __author__ = "Anthony Bagnall"
 
