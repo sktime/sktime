@@ -121,6 +121,13 @@ def load_ts(path):
     data.columns = [('dim_' + str(index)) for index in range(0, len(data.columns))]
     return data, class_labels
 
+class TsFileParseException(Exception):
+    """
+    Should be raised when parsing a .ts file and the format is incorrect.
+    """
+    pass
+
+
 def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and_y=True, replace_missing_vals_with='NaN'):
     """Loads data from a .ts file into a Pandas DataFrame.
 
