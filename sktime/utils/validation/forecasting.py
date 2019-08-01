@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
 
+__author__ = "Markus Löning"
+__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh"]
+
 
 def validate_y_X(y, X):
     """Validate input data.

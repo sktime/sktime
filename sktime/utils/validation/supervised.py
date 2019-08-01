@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
+__author__ = "Markus Löning"
+__all__ = ["validate_X", "validate_univariate_X", "validate_y", "validate_X_y"]
+
 
 def validate_X(X):
     """Validate input data.
