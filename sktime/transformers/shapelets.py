@@ -319,7 +319,7 @@ class ShapeletTransform(BaseTransformer):
         self.shapelets = []
         for class_val in distinct_class_vals:
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
-            print("Num shapelets  len of shapelets:"+str(len(by_class_descending_ig)))
+
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
                 by_class_descending_ig = ShapeletTransform.remove_self_similar(by_class_descending_ig)
             else:
@@ -614,6 +614,7 @@ class ContractedShapeletTransform(ShapeletTransform):
         self.independent_dimensions = independent_dimensions
 
         self.predefined_ig_rejection_level = 0.1
+        self.shapelets = None
 
 
 class RandomEnumerationShapeletTransform(ShapeletTransform):
