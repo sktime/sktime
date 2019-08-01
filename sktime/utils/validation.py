@@ -1,74 +1,79 @@
 import numpy as np
 import pandas as pd
-
-def check_X_y(instances, class_labels = None):
-    if not isinstance(instances, pd.DataFrame):
-        raise ValueError("instances not in panda dataframe")
-    if class_labels is not None:
-        if len(class_labels) != instances.shape[0]:
-            raise ValueError("instances not same length as class_labels")
+from sklearn.utils.validation import check_consistent_length
 
 
-def check_ts_X_y(X, y):
-    """
-    Placeholder function for input validation.
-    """
-    # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
-    # currently it checks neither the data nor the datatype
-    # return check_X_y(X, y, dtype=None, ensure_2d=False)
-    return X, y
-
-
-def check_ts_array(X):
-    """
-    Placeholder function for input validation.
-    """
-    # TODO: add proper checks (e.g. check if input stuff is pandas full of objects)
-    # currently it checks neither the data nor the datatype
-    # return check_array(X, dtype=None, ensure_2d=False)
-    return X
-
-
-def check_equal_index(X):
-    """
-    Check if all time-series for a given column in a
-    nested pandas DataFrame have the same index.
+def check_X(X):
+    """Validate input data.
 
     Parameters
     ----------
-    X : nested pandas DataFrame
-        Input dataframe with time-series in cells.
+    X : pandas DataFrame
+        input data
 
     Returns
     -------
-    indexes : list of indixes
-        List of indixes with one index for each column
+    None
+
+    Raises
+    ------
+    ValueError
+        If X is an invalid input
     """
-    # TODO handle 1d series, not only 2d dataframes
-    # TODO assumes columns are typed (i.e. all rows for a given column have the same type)
-    # TODO only handles series columns, raises error for columns with primitives
+    if not isinstance(X, pd.DataFrame):
+        raise ValueError(f"X must be a pandas.DataFrame, but found:"
+                         f"{(type(X))}")
 
-    indexes = []
-    # Check index for each column separately.
-    for c, col in enumerate(X.columns):
 
-        # Get index from first row, can be either pd.Series or np.array.
-        first_index = X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index') else np.arange(X.iloc[c, 0].shape[0])
+def check_y(y):
+    """Validate input data.
 
-        # Series must contain at least 2 observations, otherwise should be primitive.
-        if len(first_index) < 2:
-            raise ValueError(f'Time series must contain at least 2 observations, but found: '
-                             f'{len(first_index)} observations in column: {col}')
+    Parameters
+    ----------
+    y : pandas Series or numpy ndarray
 
-        # Check index for all rows.
-        for i in range(1, X.shape[0]):
-            index = X.iloc[i, c].index if hasattr(X.iloc[i, c], 'index') else np.arange(X.iloc[c, 0].shape[0])
-            if not np.array_equal(first_index, index):
-                raise ValueError(f'Found time series with unequal index in column {col}. '
-                                 f'Input time-series must have the same index.')
-        indexes.append(first_index)
 
-    return indexes
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If y is an invalid input
+    """
+    if not isinstance(y, (pd.Series, np.ndarray)):
+        raise ValueError(f"y must be either a pandas.Series or a numpy.ndarray, "
+                         f"but found type: {type(y)}")
+
+
+def check_X_y(X, y):
+    """Validate input data.
+
+    Parameters
+    ----------
+    y : pandas Series or numpy ndarray
+
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If y is an invalid input
+    """
+
+    check_X(X)
+    check_y(y)
+    check_consistent_length(X, y)
+
+
+def check_univariate_X(X):
+    if X.shape[1] > 1:
+        raise ValueError(f"X must be univariate with X.shape[1] == 1, "
+                         f"but found: X.shape[1] == {X.shape[1]}")
 
 
 def validate_fh(fh):

@@ -45,7 +45,7 @@ from ..distances.elastic_cython import (
 from ..utils import comparison
 from ..utils import dataset_properties
 from ..utils.transformations import tabularise
-from ..utils.validation import check_X_y
+from ..utils.validation import check_X_y, check_X
 
 
 def get_default_dimension():
@@ -560,7 +560,7 @@ class ProximityStump(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            check_X(X)
         num_instances = X.shape[0]
         distances = []
         # for each instance
@@ -624,7 +624,7 @@ class ProximityStump(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            check_X(X)
         # find distances to each exemplar for each test instance
         distances = self.exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
@@ -765,7 +765,7 @@ class ProximityTree(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            check_X(X)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -1136,7 +1136,7 @@ class ProximityForest(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            check_X(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree

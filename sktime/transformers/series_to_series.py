@@ -3,7 +3,8 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation import check_equal_index, check_ts_array
+from sktime.utils.validation import check_X
+from sktime.utils.data_container import check_equal_index
 from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
 

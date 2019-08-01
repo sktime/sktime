@@ -4,7 +4,7 @@ This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
 from .base import BaseTransformer
-from ..utils.validation import check_ts_array
+from ..utils.validation import check_X
 from ..utils.transformations import tabularize
 from sklearn.utils.validation import check_is_fitted
 from sklearn.compose import ColumnTransformer
@@ -181,11 +181,7 @@ class RowwiseTransformer(BaseTransformer):
         self : object
             Returns self.
         """
-
-        # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        check_X(X)
 
         # fitting - this transformer needs no fitting
         self.is_fitted_ = True
@@ -207,9 +203,7 @@ class RowwiseTransformer(BaseTransformer):
             The transformed data
         """
         # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        check_X(X)
         check_is_fitted(self, 'is_fitted_')
 
         # Works on single column, but on multiple columns only if columns have equal-length series.
@@ -264,7 +258,7 @@ class Tabularizer(BaseTransformer):
         # check the validity of input
         # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            X = check_ts_array(X)
+            check_X(X)
 
         # let the model know that it is fitted
         self.is_fitted_ = True
@@ -287,7 +281,7 @@ class Tabularizer(BaseTransformer):
 
         # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            X = check_ts_array(X)
+            check_X(X)
 
         Xt = tabularize(X)
         return Xt
