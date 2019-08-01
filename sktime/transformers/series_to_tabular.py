@@ -1,6 +1,8 @@
 from sktime.utils.data_container import check_equal_index
-from ..utils.transformations import tabularize
-from .series_to_series import RandomIntervalSegmenter
+from sktime.utils.transformations import tabularize
+from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sktime.utils.validation.supervised import validate_X
+
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd
@@ -72,12 +74,12 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         Xt : pandas.DataFrame
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
-
-        # Check is fit had been called
-        check_is_fitted(self, 'intervals_')
-
         # check inputs
         if self.check_input:
+            # Check is fit had been called
+            check_is_fitted(self, 'intervals_')
+            validate_X(X)
+
             # Check that the input is of the same shape as the one passed
             # during fit.
             if X.shape[1] != self.input_shape_[1]:

@@ -18,9 +18,9 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 
-from ..pipeline import Pipeline
-from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from ..utils.time_series import time_series_slope
+from sktime.pipeline import Pipeline
+from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from sktime.utils.time_series import time_series_slope
 
 __all__ = ["TimeSeriesForestClassifier"]
 
@@ -406,7 +406,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     @property
     def feature_importances_(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""

@@ -235,7 +235,7 @@ class ColumnEnsembleClassifier(BaseClassifier):
             transformers.
 
         y : array-like, shape (n_samples, ...), optional
-            Targets for supervised learning.
+            Targets for validation learning.
 
         """
 

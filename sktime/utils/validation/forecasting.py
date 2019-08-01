@@ -1,37 +1,66 @@
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_consistent_length
 
 
-def check_X(X):
+def validate_y_X(y, X):
+    """Validate input data.
+
+    Parameters
+    ----------
+    y : pandas Series or numpy ndarray
+    X : pandas DataFrame
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If y is an invalid input
+    """
+    validate_y(y)
+    validate_X(X)
+
+
+def validate_y(y):
+    """Validate input data.
+
+    Parameters
+    ----------
+    y : pandas Series or numpy ndarray
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    ValueError
+        If y is an invalid input
+    """
+    # Check if pandas series
+    if not isinstance(y, pd.Series):
+        raise ValueError(f'y must be a pandas Series, but found: {type(y)}')
+
+    # Check if single row
+    if not y.shape[0] == 1:
+        raise ValueError(f'y must consist of a pandas Series with a single row, '
+                         f'but found: {y.shape[0]} rows')
+
+    # Check if contained time series is either pandas series or numpy array
+    s = y.iloc[0]
+    if not isinstance(s, (np.ndarray, pd.Series)):
+        raise ValueError(f'y must contain a pandas Series or numpy array, '
+                         f'but found: {type(s)}.')
+
+
+def validate_X(X):
     """Validate input data.
 
     Parameters
     ----------
     X : pandas DataFrame
-        input data
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    ValueError
-        If X is an invalid input
-    """
-    if not isinstance(X, pd.DataFrame):
-        raise ValueError(f"X must be a pandas.DataFrame, but found:"
-                         f"{(type(X))}")
-
-
-def check_y(y):
-    """Validate input data.
-
-    Parameters
-    ----------
-    y : pandas Series or numpy ndarray
-
 
     Returns
     -------
@@ -42,38 +71,28 @@ def check_y(y):
     ValueError
         If y is an invalid input
     """
-    if not isinstance(y, (pd.Series, np.ndarray)):
-        raise ValueError(f"y must be either a pandas.Series or a numpy.ndarray, "
-                         f"but found type: {type(y)}")
+    if X is not None:
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"`X` must a pandas DataFrame, but found: {type(X)}")
+        if X.shape[0] > 1:
+            raise ValueError(f"`X` must consist of a single row, but found: {X.shape[0]} rows")
 
+        # Check if index is the same for all columns.
 
-def check_X_y(X, y):
-    """Validate input data.
+        # Get index from first row, can be either pd.Series or np.array.
+        first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
 
-    Parameters
-    ----------
-    y : pandas Series or numpy ndarray
+        # Series must contain at least 2 observations, otherwise should be primitive.
+        if len(first_index) < 1:
+            raise ValueError(f'Time series must contain at least 2 observations, but found: '
+                             f'{len(first_index)} observations in column: {X.columns[0]}')
 
-
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    ValueError
-        If y is an invalid input
-    """
-
-    check_X(X)
-    check_y(y)
-    check_consistent_length(X, y)
-
-
-def check_univariate_X(X):
-    if X.shape[1] > 1:
-        raise ValueError(f"X must be univariate with X.shape[1] == 1, "
-                         f"but found: X.shape[1] == {X.shape[1]}")
+        # Compare with remaining columns
+        for c, col in enumerate(X.columns):
+            index = X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+            if not np.array_equal(first_index, index):
+                raise ValueError(f'Found time series with unequal index in column {col}. '
+                                 f'Input time-series must have the same index.')
 
 
 def validate_fh(fh):

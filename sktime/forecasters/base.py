@@ -4,8 +4,10 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_squared_error
 from sklearn.utils.validation import check_is_fitted
 
-from ..utils.validation import validate_fh
-
+from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import validate_X
+from sktime.utils.validation.forecasting import validate_y
+from sktime.utils.validation.forecasting import validate_y_X
 
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
 __author__ = ['Markus Löning']
@@ -48,7 +50,7 @@ class BaseForecaster(BaseEstimator):
         self : returns an instance of self.
         """
         if self.check_input:
-            self._validate_X_y(y, X)
+            validate_y_X(y, X)
 
         # Keep index for predicting where forecasting horizon will be relative to y seen in fit
         self._y_idx = self._get_y_index(y)
@@ -85,7 +87,7 @@ class BaseForecaster(BaseEstimator):
         check_is_fitted(self, '_is_fitted')
 
         if self.check_input:
-            self._validate_X(X)
+            validate_X(X)
 
         # validate forecasting horizon
         fh = validate_fh(fh)
@@ -122,7 +124,7 @@ class BaseForecaster(BaseEstimator):
         """
         # only check y here, X and fh will be checked during predict
         if self.check_input:
-            self._validate_y(y)
+            validate_y(y)
 
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
@@ -130,7 +132,7 @@ class BaseForecaster(BaseEstimator):
         y_pred = self.predict(fh=fh, **kwargs)
 
         # Unnest y_true
-        y_true = y.iloc[0]
+        y_true = self._prepare_y(y)
 
         # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
@@ -141,85 +143,12 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _get_y_index(y):
-        """
-        Helper function to get (time) index of y used in fitting for later comparison
+        """Helper function to get (time) index of y used in fitting for later comparison
         with forecast horizon
         """
         y = y.iloc[0]
         index = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
         return index
-
-    def _validate_X_y(self, y, X=None):
-        """
-        Helper function to check input data for forecasting
-
-        Parameters
-        ----------
-        y : pandas.Series
-            Time series to forecast.
-        X : pandas.DataFrame
-            Dataframe with exogenous data
-        """
-        # TODO add more input checks for consistency of X and y
-        self._validate_y(y)
-        self._validate_X(X)
-
-    @staticmethod
-    def _validate_y(y):
-        """
-        Helper function to check input data for forecasting
-
-        Parameters
-        ----------
-        y : pandas.Series
-            Time series to forecast.
-        """
-        # Check if pandas series
-        if not isinstance(y, pd.Series):
-            raise ValueError(f'``y`` must be a pandas Series, but found: {type(y)}')
-
-        # Check if single row
-        if not y.shape[0] == 1:
-            raise ValueError(f'``y`` must consist of a pandas Series with a single row, '
-                             f'but found: {y.shape[0]} rows')
-
-        # Check if contained time series is either pandas series or numpy array
-        s = y.iloc[0]
-        if not isinstance(s, (np.ndarray, pd.Series)):
-            raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
-
-    @staticmethod
-    def _validate_X(X):
-        """
-        Helper function to check input data for forecasting
-
-        Parameters
-        ----------
-        X : pandas.DataFrame
-            Dataframe with exogenous data
-        """
-        if X is not None:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"`X` must a pandas DataFrame, but found: {type(X)}")
-            if X.shape[0] > 1:
-                raise ValueError(f"`X` must consist of a single row, but found: {X.shape[0]} rows")
-
-            # Check if index is the same for all columns.
-
-            # Get index from first row, can be either pd.Series or np.array.
-            first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-
-            # Series must contain at least 2 observations, otherwise should be primitive.
-            if len(first_index) < 1:
-                raise ValueError(f'Time series must contain at least 2 observations, but found: '
-                                 f'{len(first_index)} observations in column: {X.columns[0]}')
-
-            # Compare with remaining columns
-            for c, col in enumerate(X.columns):
-                index = X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
-                if not np.array_equal(first_index, index):
-                    raise ValueError(f'Found time series with unequal index in column {col}. '
-                                     f'Input time-series must have the same index.')
 
     @staticmethod
     def _prepare_X(X):
@@ -303,7 +232,7 @@ class BaseUpdateableForecaster(BaseForecaster):
         """
         check_is_fitted(self, '_is_fitted')
         if self.check_input:
-            self._validate_X_y(y, X)
+            validate_y_X(y, X)
             self._validate_y_update(y)
 
         self._update(y, X=X)

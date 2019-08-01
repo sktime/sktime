@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from .validation import validate_fh
+from sktime.utils.validation.forecasting import validate_fh
 
 __author__ = "Markus Löning"
 

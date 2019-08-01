@@ -4,7 +4,7 @@ This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
 from .base import BaseTransformer
-from ..utils.validation import check_X
+from sktime.utils.validation.supervised import validate_X
 from ..utils.transformations import tabularize
 from sklearn.utils.validation import check_is_fitted
 from sklearn.compose import ColumnTransformer
@@ -181,7 +181,7 @@ class RowwiseTransformer(BaseTransformer):
         self : object
             Returns self.
         """
-        check_X(X)
+        validate_X(X)
 
         # fitting - this transformer needs no fitting
         self.is_fitted_ = True
@@ -203,7 +203,7 @@ class RowwiseTransformer(BaseTransformer):
             The transformed data
         """
         # check the validity of input
-        check_X(X)
+        validate_X(X)
         check_is_fitted(self, 'is_fitted_')
 
         # Works on single column, but on multiple columns only if columns have equal-length series.
@@ -228,7 +228,7 @@ class Tabularizer(BaseTransformer):
 
     This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
     dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard supervised learning algorithms (as in sklearn).
+    time-series/panel data into a format that is accepted by standard validation learning algorithms (as in sklearn).
 
     Parameters
     ----------
@@ -258,7 +258,7 @@ class Tabularizer(BaseTransformer):
         # check the validity of input
         # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            check_X(X)
+            validate_X(X)
 
         # let the model know that it is fitted
         self.is_fitted_ = True
@@ -281,7 +281,7 @@ class Tabularizer(BaseTransformer):
 
         # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            check_X(X)
+            validate_X(X)
 
         Xt = tabularize(X)
         return Xt

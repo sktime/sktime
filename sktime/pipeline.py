@@ -169,7 +169,7 @@ class FeatureUnion(skFeatureUnion):
         X : pandas DataFrame
             Input data to be transformed.
         y : pandas Series, shape (n_samples, ...), optional
-            Targets for supervised learning.
+            Targets for validation learning.
         Returns
         -------
         Xt : pandas DataFrame
