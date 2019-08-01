@@ -471,7 +471,7 @@ class BaseStrategy:
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):
-    """Abstract strategy class for time series validation learning that accepts a low-level estimator to
+    """Abstract strategy class for time series supervised learning that accepts a low-level estimator to
     perform a given task.
 
     Implements predict and internal fit methods for time series regression and classification.

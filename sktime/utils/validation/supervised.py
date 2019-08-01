@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
 __author__ = "Markus Löning"
-__all__ = ["validate_X", "validate_univariate_X", "validate_y", "validate_X_y"]
+__all__ = ["validate_X", "check_X_is_univariate", "validate_y", "validate_X_y"]
 
 
 def validate_X(X):
@@ -71,7 +71,7 @@ def validate_X_y(X, y):
     check_consistent_length(X, y)
 
 
-def validate_univariate_X(X):
+def check_X_is_univariate(X):
     """Validate input data.
 
     Parameters

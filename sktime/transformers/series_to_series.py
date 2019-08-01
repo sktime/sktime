@@ -3,7 +3,7 @@ from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation.supervised import validate_X, validate_univariate_X
+from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 from sktime.utils.data_container import check_equal_index
 from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
@@ -389,7 +389,7 @@ class PlateauFinder(BaseTransformer):
         # input checks
         if self.check_input:
             validate_X(X)
-            validate_univariate_X(X)
+            check_X_is_univariate(X)
 
         # get column name
         column_name = X.columns[0]
