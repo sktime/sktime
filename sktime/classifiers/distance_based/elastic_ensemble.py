@@ -16,6 +16,8 @@ __all__ = ["ElasticEnsemble"]
 
 
 class ElasticEnsemble(BaseClassifier):
+    __author__ = "Jason Lines"
+
     """ The Elastic Ensemble
 
     An ensemble of elastic nearest neighbor classifiers
