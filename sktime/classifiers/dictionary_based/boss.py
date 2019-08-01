@@ -137,7 +137,8 @@ class BOSSEnsemble(BaseEstimator):
             elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         self.num_insts, self.series_length = X.shape
         self.num_classes = np.unique(y).shape[0]
@@ -253,7 +254,8 @@ class BOSSEnsemble(BaseEstimator):
             elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         sums = np.zeros((X.shape[0], self.num_classes))
 
@@ -395,7 +397,8 @@ class BOSSIndividual(BaseEstimator):
             elif isinstance(X.iloc[0, 0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:, 0]])
             else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
         num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)

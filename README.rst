@@ -24,6 +24,7 @@ The package is under active development. Development takes place in the `sktime 
 Currently, modular modelling workflows for forecasting and supervised learning with time series have been implemented.
 As next steps, we will move to supervised forecasting and integration of a modified `pysf <https://github.com/alan-turing-institute/pysf>`__ interface and extensions to the existing frameworks.
 
+For deep learning methods, we have a separate extension package: `sktime-dl <https://github.com/uea-machine-learning/sktime-dl>`_.
 
 Installation
 ------------
@@ -49,6 +50,18 @@ and :code:`pip install Cython`.
 Overview
 --------
 
+Low-level interface
+~~~~~~~~~~~~~~~~~~~
+The low-level interface extends the standard scikit-learn API to handle time series and panel data.
+Currently, the package implements:
+
+* Various state-of-the-art approaches to supervised learning with time series features,
+* Transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
+* Pipelining, allowing to chain multiple transformers with a final estimator,
+* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator,
+* Off-shelf composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
+* Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
+
 High-level interface
 ~~~~~~~~~~~~~~~~~~~~
 There are numerous different time series data related learning tasks, for example
@@ -63,18 +76,6 @@ The sktime high-level interface aims to create a unified interface for these dif
 * :code:`Task` object that encapsulates meta-data from a dataset and the necessary information about the particular supervised learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
 * :code:`Strategy` objects that wrap low-level estimators and allows to use :code:`fit` and :code:`predict` methods using data and a task object.
 
-
-Low-level interface
-~~~~~~~~~~~~~~~~~~~
-The low-level interface extends the standard scikit-learn API to handle time series and panel data.
-Currently, the package implements:
-
-* Various state-of-the-art approaches to supervised learning with time series features,
-* Transformation of time series, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms aka feature extractors, (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
-* Pipelining, allowing to chain multiple transformers with a final estimator,
-* Meta-learning strategies including tuning and ensembling, accepting pipelines as the base estimator,
-* Off-shelf composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
-* Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
 
 Documentation
 -------------

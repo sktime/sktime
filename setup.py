@@ -66,6 +66,7 @@ INSTALL_REQUIRES = ['numpy>=1.16.0',
                     'scipy>=1.2.0',
                     'scikit-learn>=0.21.0',
                     'pandas>=0.23.0',
+                    'joblib',
                     'scikit-posthocs>=0.5.0',
                     'statsmodels>=0.9.0']
 CLASSIFIERS = ['Intended Audience :: Science/Research',

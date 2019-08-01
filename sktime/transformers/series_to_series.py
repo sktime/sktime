@@ -1,20 +1,12 @@
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
-from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize, concat_nested_arrays, tabularise
-from .base import BaseTransformer
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_random_state
 
-from sktime.utils.validation import check_equal_index, check_ts_array
-from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
+from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
+from sktime.utils.validation import check_equal_index
 
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'CachedTransformer']
-__author__ = ["Markus Löning", "Jason Lines", 'George Oastler']
-
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator',
-           'PlateauFinder']
 __author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
 
 
@@ -312,6 +304,7 @@ class DerivativeSlopeTransformer(BaseTransformer):
             dim_data = X.iloc[:,dim]
             out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
             output_df['der_dim_'+str(dim)] = pd.Series(out)
+
         return output_df
 
     @staticmethod
@@ -438,8 +431,6 @@ class PlateauFinder(BaseTransformer):
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
         return Xt
 
-    def __str__(self):
-        return 'd'
 
 class CachedTransformer(BaseTransformer):
 
@@ -466,7 +457,7 @@ class CachedTransformer(BaseTransformer):
             transformed_uncached_instances = transformed_uncached_instances.to_dict('index')
             self.cache.update(transformed_uncached_instances)
             cached_instances.update(transformed_uncached_instances)
-        cached_instances = pd.DataFrame.from_dict(cached_instances, orient = 'index')
+        cached_instances = pd.DataFrame.from_dict(cached_instances, orient='index')
         return cached_instances
 
     def __str__(self):

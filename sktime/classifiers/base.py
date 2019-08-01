@@ -1,8 +1,9 @@
-import numpy as np
-from sklearn.metrics import accuracy_score
 from sklearn.base import BaseEstimator
-from sktime.utils.validation import check_X_y
+from sklearn.metrics import accuracy_score
+
 from sktime.utils import comparison
+from sktime.utils.validation import check_X
+
 
 class BaseClassifier(BaseEstimator):
     """
@@ -12,13 +13,13 @@ class BaseClassifier(BaseEstimator):
     label_encoder = None
     random_state = None
 
-    def fit(self, X, y):
+    def fit(self, X, y, input_checks = True):
         raise NotImplementedError()
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, input_checks = True):
         raise NotImplementedError('this is an abstract method')
 
-    def predict(self, X):
+    def predict(self, X, input_checks = True):
         '''
         classify instances
         ----
@@ -34,7 +35,9 @@ class BaseClassifier(BaseEstimator):
         predictions : 1d numpy array
             array of predictions of each instance (class value)
         '''
-        distributions = self.predict_proba(X)
+        if input_checks:
+            check_X(X)
+        distributions = self.predict_proba(X, input_checks = False)
         predictions = []
         for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]

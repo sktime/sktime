@@ -28,25 +28,25 @@ def bests(array, comparator):
 
 
 # find min values in array
-def mins(array, getter = None):
+def mins(array, getter=None):
     indices = arg_mins(array, getter)
     return pick_from_indices(array, indices)
 
 
 # find max values in array
-def maxs(array, getter = None):
+def maxs(array, getter=None):
     indices = arg_maxs(array, getter)
     return pick_from_indices(array, indices)
 
 
 # find min value in array, randomly breaking ties
-def min(array, rand, getter = None):
+def min(array, rand, getter=None):
     index = arg_min(array, rand, getter)
     return array[index]
 
 
 # find max value in array, randomly breaking ties
-def max(array, rand, getter = None):
+def max(array, rand, getter=None):
     index = arg_max(array, rand, getter)
     return array[index]
 
@@ -62,27 +62,27 @@ def arg_best(array, comparator, rand):
 
 
 # find index of min value in array, randomly breaking ties
-def arg_min(array, rand, getter = None):
+def arg_min(array, rand, getter=None):
     return rand.choice(arg_mins(array, getter))
 
 
 # find indices of best value in array, randomly breaking ties
-def arg_mins(array, getter = None):
+def arg_mins(array, getter=None):
     return arg_bests(array, chain(less_than, getter))
 
 
 # find index of max value in array, randomly breaking ties
-def arg_max(array, rand, getter = None):
+def arg_max(array, rand, getter=None):
     return rand.choice(arg_maxs(array, getter))
 
 
 # find indices of max value in array, randomly breaking ties
-def arg_maxs(array, getter = None):
+def arg_maxs(array, getter=None):
     return arg_bests(array, chain(more_than, getter))
 
 
 # obtain a value before using in func
-def chain(func, getter = None):
+def chain(func, getter=None):
     if getter is None:
         return func
     else:

@@ -1,6 +1,6 @@
 <!--
 Thanks for contributing a pull request! Please ensure you have taken a look at
-the extension guidelines: https://github.com/sktime/sktime/blob/master/CONTRIBUTING.md
+the extension guidelines: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md
 -->
 
 #### Reference Issues/PRs

@@ -43,19 +43,20 @@ from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
+from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, \
+    wdtw_distance
 
-from .base import BaseClassifier
-from ..distances import (dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, wdtw_distance)
-from ..transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
-from ..utils import comparison, dataset_properties
-from ..utils.transformations import tabularise
-from ..utils.validation import check_X, check_X_y
+from sktime.classifiers.base import BaseClassifier
+from sktime.transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
+from sktime.utils import comparison, dataset_properties
+from sktime.utils.transformations import tabularise
+from sktime.utils.validation import check_X, check_X_y
 
 
 def _derivative_distance(distance_measure, transformer):
-    def distance(instance_a, instance_b, **params):  # todo limit
+    def distance(instance_a, instance_b, **params):
         df = pd.DataFrame([instance_a, instance_b])
-        df = transformer.transform(X = df)
+        df = transformer.transform(X=df)
         instance_a = df.iloc[0, :]
         instance_b = df.iloc[1, :]
         return distance_measure(instance_a, instance_b, **params)
@@ -73,9 +74,9 @@ def distance_predefined_params(distance_measure, **params):
 def cython_wrapper(distance_measure):
     def distance(instance_a, instance_b, **params):
         # find distance
-        instance_a = tabularise(instance_a, return_array = True)  # todo use specific dimension rather than whole
+        instance_a = tabularise(instance_a, return_array=True)  # todo use specific dimension rather than whole
         # thing?
-        instance_b = tabularise(instance_b, return_array = True)  # todo use specific dimension rather than whole thing?
+        instance_b = tabularise(instance_b, return_array=True)  # todo use specific dimension rather than whole thing?
         instance_a = np.transpose(instance_a)
         instance_b = np.transpose(instance_b)
         return distance_measure(instance_a, instance_b, **params)
@@ -240,33 +241,33 @@ def get_one_exemplar_per_class(X, y, random_state):
 
 def dtw_distance_measure_getter(X):
     return {
-            'distance_measure': [cython_wrapper(dtw_distance)],
-            'w'               : stats.uniform(0, 0.25)
-            }
+        'distance_measure': [cython_wrapper(dtw_distance)],
+        'w': stats.uniform(0, 0.25)
+    }
 
 
 def msm_distance_measure_getter(X):
     n_dimensions = 1  # todo use other dimensions
     return {
-            'distance_measure': [cython_wrapper(msm_distance)],
-            'dim_to_use'      : stats.randint(low = 0, high = n_dimensions),
-            'c'               : [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
-                                 0.03625, 0.04, 0.04375, 0.0475, 0.05125,
-                                 0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
-                                 0.08125, 0.085, 0.08875, 0.0925, 0.09625,
-                                 0.1, 0.136, 0.172, 0.208,
-                                 0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
-                                 0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
-                                 0.784, 0.82, 0.856,
-                                 0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
-                                 3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
-                                 6.04, 6.4, 6.76, 7.12,
-                                 7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
-                                 20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
-                                 49.6, 53.2, 56.8, 60.4,
-                                 64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
-                                 100]
-            }
+        'distance_measure': [cython_wrapper(msm_distance)],
+        'dim_to_use': stats.randint(low=0, high=n_dimensions),
+        'c': [0.01, 0.01375, 0.0175, 0.02125, 0.025, 0.02875, 0.0325,
+              0.03625, 0.04, 0.04375, 0.0475, 0.05125,
+              0.055, 0.05875, 0.0625, 0.06625, 0.07, 0.07375, 0.0775,
+              0.08125, 0.085, 0.08875, 0.0925, 0.09625,
+              0.1, 0.136, 0.172, 0.208,
+              0.244, 0.28, 0.316, 0.352, 0.388, 0.424, 0.46, 0.496,
+              0.532, 0.568, 0.604, 0.64, 0.676, 0.712, 0.748,
+              0.784, 0.82, 0.856,
+              0.892, 0.928, 0.964, 1, 1.36, 1.72, 2.08, 2.44, 2.8,
+              3.16, 3.52, 3.88, 4.24, 4.6, 4.96, 5.32, 5.68,
+              6.04, 6.4, 6.76, 7.12,
+              7.48, 7.84, 8.2, 8.56, 8.92, 9.28, 9.64, 10, 13.6, 17.2,
+              20.8, 24.4, 28, 31.6, 35.2, 38.8, 42.4, 46,
+              49.6, 53.2, 56.8, 60.4,
+              64, 67.6, 71.2, 74.8, 78.4, 82, 85.6, 89.2, 92.8, 96.4,
+              100]
+    }
 
 
 def erp_distance_measure_getter(X):
@@ -276,12 +277,12 @@ def erp_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-            'distance_measure': [cython_wrapper(erp_distance)],
-            'dim_to_use'      : stats.randint(low = 0, high = n_dimensions),
-            'g'               : stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
-            'band_size'       : stats.randint(low = 0, high = max_raw_warping_window + 1)
-            # scipy stats randint is exclusive on the max value, hence + 1
-            }
+        'distance_measure': [cython_wrapper(erp_distance)],
+        'dim_to_use': stats.randint(low=0, high=n_dimensions),
+        'g': stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
+        'band_size': stats.randint(low=0, high=max_raw_warping_window + 1)
+        # scipy stats randint is exclusive on the max value, hence + 1
+    }
 
 
 def lcss_distance_measure_getter(X):
@@ -291,46 +292,46 @@ def lcss_distance_measure_getter(X):
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
     return {
-            'distance_measure': [cython_wrapper(lcss_distance)],
-            'dim_to_use'      : stats.randint(low = 0, high = n_dimensions),
-            'epsilon'         : stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-            'delta'           : stats.randint(low = 0, high = max_raw_warping_window +
-                                                              1)  # scipy stats randint
-            # is exclusive on the max value, hence + 1
-            }
+        'distance_measure': [cython_wrapper(lcss_distance)],
+        'dim_to_use': stats.randint(low=0, high=n_dimensions),
+        'epsilon': stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
+        'delta': stats.randint(low=0, high=max_raw_warping_window +
+                                           1)  # scipy stats randint
+        # is exclusive on the max value, hence + 1
+    }
 
 
 def twe_distance_measure_getter(X):
     return {
-            'distance_measure': [cython_wrapper(twe_distance)],
-            'penalty'         : [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
-                                 0.077777778, 0.088888889, 0.1],
-            'stiffness'       : [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
-            }
+        'distance_measure': [cython_wrapper(twe_distance)],
+        'penalty': [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
+                    0.077777778, 0.088888889, 0.1],
+        'stiffness': [0.00001, 0.0001, 0.0005, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+    }
 
 
 def wdtw_distance_measure_getter(X):
     return {
-            'distance_measure': [cython_wrapper(wdtw_distance)],
-            'g'               : stats.uniform(0,
-                                              1)
-            }
+        'distance_measure': [cython_wrapper(wdtw_distance)],
+        'g': stats.uniform(0,
+                           1)
+    }
 
 
 def euclidean_distance_measure_getter(X):
     return {
-            'distance_measure': [cython_wrapper(dtw_distance)],
-            'w'               : [0]
-            }
+        'distance_measure': [cython_wrapper(dtw_distance)],
+        'w': [0]
+    }
 
 
 def setup_wddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
-                'distance_measure': [_derivative_distance(cython_wrapper(wdtw_distance), transformer)],
-                'g'               : stats.uniform(0,
-                                                  1)
-                }
+            'distance_measure': [_derivative_distance(cython_wrapper(wdtw_distance), transformer)],
+            'g': stats.uniform(0,
+                               1)
+        }
 
     return getter
 
@@ -338,10 +339,10 @@ def setup_wddtw_distance_measure_getter(transformer):
 def setup_ddtw_distance_measure_getter(transformer):
     def getter(X):
         return {
-                'distance_measure': [_derivative_distance(cython_wrapper(dtw_distance), transformer)],
-                'w'               : stats.uniform(0,
-                                                  0.25)
-                }
+            'distance_measure': [_derivative_distance(cython_wrapper(dtw_distance), transformer)],
+            'w': stats.uniform(0,
+                               0.25)
+        }
 
     return getter
 
@@ -349,15 +350,15 @@ def setup_ddtw_distance_measure_getter(transformer):
 def setup_all_distance_measure_getter(proximity):
     transformer = CachedTransformer(DerivativeSlopeTransformer())
     distance_measure_getters = [
-            euclidean_distance_measure_getter,
-            dtw_distance_measure_getter,
-            setup_ddtw_distance_measure_getter(transformer),
-            wdtw_distance_measure_getter,
-            setup_wddtw_distance_measure_getter(transformer),
-            msm_distance_measure_getter,
-            lcss_distance_measure_getter,
-            erp_distance_measure_getter,
-            twe_distance_measure_getter,
+        euclidean_distance_measure_getter,
+        dtw_distance_measure_getter,
+        setup_ddtw_distance_measure_getter(transformer),
+        wdtw_distance_measure_getter,
+        setup_wddtw_distance_measure_getter(transformer),
+        msm_distance_measure_getter,
+        lcss_distance_measure_getter,
+        erp_distance_measure_getter,
+        twe_distance_measure_getter,
             ]
 
     def pick_rand_distance_measure(proximity):
@@ -405,7 +406,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
         # else if parameter is a distribution
         elif hasattr(param_values, 'rvs'):
             # sample from the distribution
-            param_value = param_values.rvs(random_state = random_state)
+            param_value = param_values.rvs(random_state=random_state)
         else:
             # otherwise we don't know how to obtain a value from the parameter
             raise Exception('unknown type of parameter pool')
@@ -471,16 +472,15 @@ def best_of_n_stumps(n):
         for index in range(n):
             # duplicate tree configuration
             stump = ProximityStump(
-                    random_state = proximity.random_state,
-                    get_exemplars = proximity.get_exemplars,
-                    distance_measure = proximity.distance_measure,
-                    setup_distance_measure = proximity.setup_distance_measure,
-                    get_distance_measure = proximity.get_distance_measure,
-                    get_gain = proximity.get_gain,
-                    verbosity = proximity.verbosity,
-                    label_encoder = proximity.label_encoder,
-                    n_jobs = proximity.n_jobs
-                    )
+                random_state=proximity.random_state,
+                get_exemplars=proximity.get_exemplars,
+                distance_measure=proximity.distance_measure,
+                setup_distance_measure=proximity.setup_distance_measure,
+                get_distance_measure=proximity.get_distance_measure,
+                get_gain=proximity.get_gain,
+                verbosity=proximity.verbosity,
+                n_jobs=proximity.n_jobs
+            )
             # grow the stump
             stump.fit(proximity.X, proximity.y)
             stump.grow()
@@ -550,14 +550,13 @@ class ProximityStump(BaseClassifier):
 
     def __init__(self,
                  random_state = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity,
-                 setup_distance_measure = setup_all_distance_measure_getter,
-                 get_distance_measure = None,
-                 distance_measure = None,
-                 get_gain = gini_gain,
-                 verbosity = 0,
-                 label_encoder = None,
-                 n_jobs = 1,
+                 get_exemplars=get_one_exemplar_per_class_proximity,
+                 setup_distance_measure=setup_all_distance_measure_getter,
+                 get_distance_measure=None,
+                 distance_measure=None,
+                 get_gain=gini_gain,
+                 verbosity=0,
+                 n_jobs=1,
                  ):
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
@@ -566,9 +565,9 @@ class ProximityStump(BaseClassifier):
         self.pick_exemplars = get_exemplars
         self.get_gain = get_gain
         self.verbosity = verbosity
-        self.label_encoder = label_encoder
         self.n_jobs = n_jobs
         # set in fit
+        self.label_encoder = None
         self.y_exemplar = None
         self.X_exemplar = None
         self.X_branches = None
@@ -611,17 +610,15 @@ class ProximityStump(BaseClassifier):
         distances = np.vstack(np.array(distances))
         return distances
 
-    def fit(self, X, y):
-        check_X_y(X, y)
+    def fit(self, X, y, input_checks = True):
+        if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
-        self.y = y
         self.random_state = check_random_state(self.random_state)
-        # setup label encoding if not already
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
+        # setup label encoding
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
+        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -630,10 +627,10 @@ class ProximityStump(BaseClassifier):
         return self
 
     def find_closest_exemplar_indices(self, X):
-        check_X(X)
+        check_X(X)  # todo make checks optional and propogate from forest downwards
         n_instances = X.shape[0]
         distances = self.distance_to_exemplars(X)
-        indices = np.empty(X.shape[0], dtype = int)
+        indices = np.empty(X.shape[0], dtype=int)
         for index in range(n_instances):
             exemplar_distances = distances[index]
             closest_exemplar_index = comparison.arg_min(exemplar_distances, self.random_state)
@@ -654,8 +651,8 @@ class ProximityStump(BaseClassifier):
         self.entropy = self.get_gain(self.y, self.y_branches)
         return self
 
-    def predict_proba(self, X):
-        check_X(X)
+    def predict_proba(self, X, input_checks = True):
+        if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
@@ -714,18 +711,17 @@ class ProximityTree(BaseClassifier):
 
     def __init__(self,
                  # note: any changes of these params must be reflected in the fit method for building trees / clones
-                 random_state = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity,
-                 distance_measure = None,
-                 get_distance_measure = None,
-                 setup_distance_measure = setup_all_distance_measure_getter,
-                 get_gain = gini_gain,
+                 random_state=None,
+                 get_exemplars=get_one_exemplar_per_class_proximity,
+                 distance_measure=None,
+                 get_distance_measure=None,
+                 setup_distance_measure=setup_all_distance_measure_getter,
+                 get_gain=gini_gain,
                  max_depth = np.math.inf,
-                 is_leaf = pure,
-                 verbosity = 0,
-                 label_encoder = None,
-                 n_jobs = 1,
-                 find_stump = best_of_n_stumps(5),
+                 is_leaf=pure,
+                 verbosity=0,
+                 n_jobs=1,
+                 find_stump=best_of_n_stumps(5),
                  ):
         self.verbosity = verbosity
         self.find_stump = find_stump
@@ -736,11 +732,11 @@ class ProximityTree(BaseClassifier):
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure = setup_distance_measure
         self.get_exemplars = get_exemplars
-        self.label_encoder = label_encoder
         self.get_gain = get_gain
         self.n_jobs = n_jobs
         self.depth = 0
         # below set in fit method
+        self.label_encoder = None
         self.distance_measure = None
         self.stump = None
         self.branches = None
@@ -748,17 +744,15 @@ class ProximityTree(BaseClassifier):
         self.y = None
         self.classes_ = None
 
-    def fit(self, X, y):
-        check_X_y(X, y)
+    def fit(self, X, y, input_checks = True):
+        if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
-        self.y = y
         self.random_state = check_random_state(self.random_state)
-        # setup label encoding if not already
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
+        # setup label encoding
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
+        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -771,26 +765,25 @@ class ProximityTree(BaseClassifier):
                 sub_y = self.stump.y_branches[index]
                 if not self.is_leaf(sub_y):
                     sub_tree = ProximityTree(
-                            random_state = self.random_state,
-                            get_exemplars = self.get_exemplars,
-                            distance_measure = self.distance_measure,
-                            setup_distance_measure = self.setup_distance_measure,
-                            get_distance_measure = self.get_distance_measure,
-                            get_gain = self.get_gain,
-                            is_leaf = self.is_leaf,
-                            verbosity = self.verbosity,
-                            max_depth = self.max_depth,
-                            label_encoder = self.label_encoder,
-                            n_jobs = self.n_jobs
-                            )
+                        random_state=self.random_state,
+                        get_exemplars=self.get_exemplars,
+                        distance_measure=self.distance_measure,
+                        setup_distance_measure=self.setup_distance_measure,
+                        get_distance_measure=self.get_distance_measure,
+                        get_gain=self.get_gain,
+                        is_leaf=self.is_leaf,
+                        verbosity=self.verbosity,
+                        max_depth=self.max_depth,
+                        n_jobs=self.n_jobs
+                    )
                     sub_tree.depth = self.depth + 1
                     self.branches[index] = sub_tree
                     sub_X = self.stump.X_branches[index]
                     sub_tree.fit(sub_X, sub_y)
         return self
 
-    def predict_proba(self, X):
-        check_X(X)
+    def predict_proba(self, X, input_checks=True):
+        if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
@@ -808,7 +801,7 @@ class ProximityTree(BaseClassifier):
                     sub_X = X.iloc[indices, :]
                     sub_distribution = sub_tree.predict_proba(sub_X)
                 np.add.at(distribution, indices, sub_distribution)
-        normalize(distribution, copy = False, norm = 'l1')
+        normalize(distribution, copy=False, norm='l1')
         return distribution
 
 
@@ -856,17 +849,17 @@ class ProximityForest(BaseClassifier):
 
     def __init__(self,
                  random_state = None,
-                 n_trees = 100,
-                 label_encoder = None,
-                 distance_measure = None,
-                 get_distance_measure = None,
-                 get_exemplars = get_one_exemplar_per_class_proximity,
-                 get_gain = gini_gain,
-                 verbosity = 0,
+                 n_trees=100,
+                 distance_measure=None,
+                 get_distance_measure=None,
+                 get_exemplars=get_one_exemplar_per_class_proximity,
+                 get_gain=gini_gain,
+                 verbosity=0,
                  max_depth = np.math.inf,
-                 is_leaf = pure,
-                 n_jobs = 1,
-                 setup_distance_measure_getter = setup_all_distance_measure_getter,
+                 is_leaf=pure,
+                 n_jobs=1,
+                 find_stump=best_of_n_stumps(5),
+                 setup_distance_measure_getter=setup_all_distance_measure_getter,
                  ):
         self.is_leaf = is_leaf
         self.verbosity = verbosity
@@ -876,11 +869,12 @@ class ProximityForest(BaseClassifier):
         self.random_state = random_state
         self.n_trees = n_trees
         self.n_jobs = n_jobs
-        self.label_encoder = label_encoder
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure_getter = setup_distance_measure_getter
         self.distance_measure = distance_measure
+        self.find_stump = find_stump
         # set in fit method
+        self.label_encoder = None
         self.trees = None
         self.X = None
         self.y = None
@@ -890,32 +884,30 @@ class ProximityForest(BaseClassifier):
         if self.verbosity > 0:
             print('tree ' + str(index) + ' building')
         tree = ProximityTree(
-                random_state = random_state,
-                verbosity = self.verbosity,
-                get_exemplars = self.get_exemplars,
-                get_gain = self.get_gain,
-                label_encoder = self.label_encoder,
-                distance_measure = self.distance_measure,
-                setup_distance_measure = self.setup_distance_measure_getter,
-                get_distance_measure = self.get_distance_measure,
-                max_depth = self.max_depth,
-                is_leaf = self.is_leaf,
-                n_jobs = 1,
-                )
+            random_state=random_state,
+            verbosity=self.verbosity,
+            get_exemplars=self.get_exemplars,
+            get_gain=self.get_gain,
+            distance_measure=self.distance_measure,
+            setup_distance_measure=self.setup_distance_measure_getter,
+            get_distance_measure=self.get_distance_measure,
+            max_depth=self.max_depth,
+            is_leaf=self.is_leaf,
+            n_jobs=1,
+            find_stump=self.find_stump,
+        )
         tree.fit(X, y)
         return tree
 
-    def fit(self, X, y):
-        check_X_y(X, y)
+    def fit(self, X, y, input_checks = True):
+        if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
-        self.y = y
         self.random_state = check_random_state(self.random_state)
-        # setup label encoding if not already
-        if self.label_encoder is None:
-            self.label_encoder = LabelEncoder()
-        if not hasattr(self.label_encoder, 'classes_'):
-            self.label_encoder.fit(y)
+        # setup label encoding
+        self.label_encoder = LabelEncoder()
+        self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
+        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
@@ -933,8 +925,8 @@ class ProximityForest(BaseClassifier):
     def _predict_proba_tree(X, tree):
         return tree.predict_proba(X)
 
-    def predict_proba(self, X):
-        check_X(X)
+    def predict_proba(self, X, input_checks = True):
+        if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
@@ -942,6 +934,6 @@ class ProximityForest(BaseClassifier):
         else:
             distributions = [self._predict_proba_tree(X, tree) for tree in self.trees]
         distributions = np.array(distributions)
-        distributions = np.sum(distributions, axis = 0)
-        normalize(distributions, copy = False, norm = 'l1')
+        distributions = np.sum(distributions, axis=0)
+        normalize(distributions, copy=False, norm='l1')
         return distributions
