@@ -1,7 +1,8 @@
 import numpy as np
-from sktime.utils.validation import check_consistent_indices, validate_time_index
+from sktime.utils.validation import check_consistent_time_indices, validate_time_index
 
-__author__ = ['Markus Loning']
+__author__ = ['Markus Löning']
+__all__ = ["mase_loss", "smape_loss"]
 
 # for reference implementations, see https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
 
@@ -11,11 +12,11 @@ def mase_loss(y_true, y_pred, y_train, sp=1):
 
     Parameters
     ----------
-    y_true : array-like of shape = (fh) where fh is the forecasting horizon
+    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
         Ground truth (correct) target values.
-    y_pred : array-like of shape = (fh)
+    y_pred : pandas Series of shape = (fh,)
         Estimated target values.
-    y_train : array-like of shape = (n_samples)
+    y_train : pandas Series of shape = (n_obs,)
         Observed training values.
     sp : int
         Seasonal periodicity of training data.
@@ -29,13 +30,14 @@ def mase_loss(y_true, y_pred, y_train, sp=1):
     ----------
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
     """
-    check_consistent_indices(y_true, y_pred)
+    check_consistent_time_indices(y_true, y_pred)
 
     # check if training series is before forecasted series
     train_index = validate_time_index(y_train.index)
     pred_index = validate_time_index(y_pred)
     if train_index.max() >= pred_index.min():
-        raise ValueError(f"Found y_train with an index which is not strictly prior to index of y_pred")
+        raise ValueError(f"Found y_train with time index which is not "
+                         f"before time index of y_pred")
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)
@@ -52,9 +54,9 @@ def smape_loss(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like of shape = (fh) where fh is the forecasting horizon
+    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
         Ground truth (correct) target values.
-    y_pred : array-like of shape = (fh)
+    y_pred : pandas Series of shape = (fh,)
         Estimated target values.
 
     Returns
@@ -62,7 +64,7 @@ def smape_loss(y_true, y_pred):
     loss : float
         SMAPE loss
     """
-    check_consistent_indices(y_true, y_pred)
+    check_consistent_time_indices(y_true, y_pred)
 
     nominator = np.abs(y_true - y_pred)
     denominator = np.abs(y_true) + np.abs(y_pred)

@@ -7,7 +7,7 @@ from sktime.forecasters import ARIMAForecaster
 from sktime.forecasters.compose import TransformedTargetForecaster, ReducedForecastingRegressor
 from sktime.transformers.series_to_series import Detrender, Deseasonaliser
 from sktime.datasets import load_shampoo_sales
-from sktime.utils.validation import check_consistent_indices
+from sktime.utils.validation import check_consistent_time_indices
 from sktime.pipeline import Pipeline
 from sktime.transformers.series_to_series import Tabulariser
 
@@ -31,7 +31,7 @@ def test_TransformedTargetForecaster_fit_predict(trend_order, arima_order):
     forecaster = TransformedTargetForecaster(forecaster, transformer)
     forecaster.fit(train)
     actual = forecaster.predict(fh=fh)
-    check_consistent_indices(actual, test.iloc[0])
+    check_consistent_time_indices(actual, test.iloc[0])
 
     # checking against manual transform-inverse-transform
     train = pd.DataFrame(train)
@@ -44,7 +44,7 @@ def test_TransformedTargetForecaster_fit_predict(trend_order, arima_order):
     pred = pd.DataFrame(pd.Series([pred]))
     pred = transformer.inverse_transform(pred)
     expected = pred.iloc[0, 0]
-    check_consistent_indices(expected, test.iloc[0])
+    check_consistent_time_indices(expected, test.iloc[0])
 
     np.testing.assert_allclose(actual, expected)
 

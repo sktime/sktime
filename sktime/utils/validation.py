@@ -5,7 +5,7 @@ from sklearn.utils.validation import check_is_fitted
 __all__ = ['check_is_fitted_in_transform',
            'check_ts_array',
            'check_equal_index',
-           'check_consistent_indices',
+           'check_consistent_time_indices',
            'check_X_y',
            'check_ts_X_y',
            'validate_time_index',
@@ -215,7 +215,7 @@ def validate_time_index(time_index):
     return np.asarray(time_index)
 
 
-def check_consistent_indices(x, y):
+def check_consistent_time_indices(x, y):
     """Check that x and y have consistent indices.
 
     Parameters
@@ -226,7 +226,8 @@ def check_consistent_indices(x, y):
     Raises:
     -------
     ValueError
-        If indicies are not equal
+        If time indicies are not equal
     """
+
     if not x.index.equals(y.index):
         raise ValueError(f"Found input variables with inconsistent indices")
