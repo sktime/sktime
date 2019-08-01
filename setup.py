@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 """Install script for sktime"""
-import distutils.extension
 
 from setuptools import find_packages
 from setuptools import setup
@@ -110,7 +109,7 @@ setup(name=DISTNAME,
       install_requires=INSTALL_REQUIRES,
       extras_require=EXTRAS_REQUIRE,
       ext_modules=cythonize(
-          extensions,
+          ["sktime/distances/elastic_cython.pyx"],
           annotate=True),
       include_dirs=[np.get_include()]
       )
