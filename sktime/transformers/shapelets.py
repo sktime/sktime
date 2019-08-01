@@ -29,16 +29,46 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 class ShapeletTransform(BaseTransformer):
+    __author__ = ["Jason Lines", "David Guijo"]
+
+    """Shapelet Transform.
+
+    Original journal publication:
+    @article{hills2014classification,
+      title={Classification of time series by shapelet transformation},
+      author={Hills, Jon and Lines, Jason and Baranauskas, Edgaras and Mapp, James and Bagnall, Anthony},
+      journal={Data Mining and Knowledge Discovery},
+      volume={28},
+      number={4},
+      pages={851--881},
+      year={2014},
+      publisher={Springer}
+    }
+
+    Parameters
+    ----------
+    min_shapelet_length                 : int, lower bound on candidatie shapelet lengths (default = 3)
+    max_shapelet_length                 : int, upper bound on candidatie shapelet lengths (default = inf or series length)
+    max_shapelets_to_store_per_class    : int, upper bound on number of shapelets to retain from each distinct class (default = 200)
+    random_state                        : RandomState, int, or none: to control reandom state objects for deterministic results (default = None)
+    verbose                             : int, level of output printed to the console (for information only) (default = 0)
+    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelets from the final transform (default = True)
+
+    Attributes
+    ----------
+
+    predefined_ig_rejection_level       : float, minimum information gain required to keep a shapelet (default = 0.05)
+    self.shapelets                      : list of Shapelet objects, the stored shapelets after a dataest has been processed
+    """
 
     def __init__(self,
-                 min_shapelet_length=3,
-                 max_shapelet_length=np.inf,
-                 max_shapelets_to_store_per_class=200,
-                 random_state=None,
-                 verbose=0,
-                 remove_self_similar=True,
-                 independent_dimensions=False
-                 ):
+             min_shapelet_length=3,
+             max_shapelet_length=np.inf,
+             max_shapelets_to_store_per_class=200,
+             random_state=None,
+             verbose=0,
+             remove_self_similar=True,
+             ):
 
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
@@ -46,7 +76,6 @@ class ShapeletTransform(BaseTransformer):
         self.random_state = random_state
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
-        self.independent_dimensions = independent_dimensions
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
 
@@ -238,7 +267,7 @@ class ShapeletTransform(BaseTransformer):
                         if start_left == start_right:
                             continue
 
-                        #right
+                        # right
                         if start_right == X_lens[i]-cand_len+1:
                             start_right = 0
                         comparison = ShapeletTransform.zscore(X[i][:,start_right: start_right + cand_len])
@@ -321,7 +350,7 @@ class ShapeletTransform(BaseTransformer):
             by_class_descending_ig = sorted(shapelet_heaps_by_class[class_val].get_array(), key=itemgetter(0), reverse=True)
 
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
-                by_class_descending_ig = ShapeletTransform.remove_self_similar(by_class_descending_ig)
+                by_class_descending_ig = ShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig)
             else:
                 # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
@@ -336,7 +365,7 @@ class ShapeletTransform(BaseTransformer):
         self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
 
     @staticmethod
-    def remove_self_similar(shapelet_list):
+    def remove_self_similar_shapelets(shapelet_list):
         """Remove self-similar shapelets from an input list. Note: this method assumes
         that shapelets are pre-sorted in descending order of quality (i.e. if two candidates
         are self-similar, the one with the later index will be removed)
@@ -589,6 +618,36 @@ class ShapeletTransform(BaseTransformer):
 
 
 class ContractedShapeletTransform(ShapeletTransform):
+    __author__ = "Jason Lines and David Guijo"
+
+    """Contracted Shapelet Transform.
+    @incollection{bostrom2017binary,
+      title={Binary shapelet transform for multiclass time series classification},
+      author={Bostrom, Aaron and Bagnall, Anthony},
+      booktitle={Transactions on Large-Scale Data-and Knowledge-Centered Systems XXXII},
+      pages={24--46},
+      year={2017},
+      publisher={Springer}
+    }
+
+    Parameters
+    ----------
+    min_shapelet_length                 : int, lower bound on candidatie shapelet lengths (default = 3)
+    max_shapelet_length                 : int, upper bound on candidatie shapelet lengths (default = inf or series length)
+    max_shapelets_to_store_per_class    : int, upper bound on number of shapelets to retain from each distinct class (default = 200)
+    time_limit_in_mins                  : float, the number of minutes allowed for shapelet extraction (default = 60)
+    num_candidates_to_sample_per_case   : int, number of candidate shapelets to assess per training series before moving on to 
+                                          the next series (default = 20)
+    random_state                        : RandomState, int, or none: to control reandom state objects for deterministic results (default = None)
+    verbose                             : int, level of output printed to the console (for information only) (default = 0)
+    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelets from the final transform (default = True)
+
+    Attributes
+    ----------
+
+    predefined_ig_rejection_level       : float, minimum information gain required to keep a shapelet (default = 0.05)
+    self.shapelets                      : list of Shapelet objects, the stored shapelets after a dataest has been processed
+    """
 
     def __init__(
             self,
@@ -599,8 +658,7 @@ class ContractedShapeletTransform(ShapeletTransform):
             num_candidates_to_sample_per_case = 20,
             random_state = None,
             verbose = 0,
-            remove_self_similar = True,
-            independent_dimensions = False
+            remove_self_similar = True
     ):
 
         self.min_shapelet_length = min_shapelet_length
@@ -611,14 +669,14 @@ class ContractedShapeletTransform(ShapeletTransform):
         self.random_state = random_state
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
-        self.independent_dimensions = independent_dimensions
 
-        self.predefined_ig_rejection_level = 0.1
+        self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
 
 
 class RandomEnumerationShapeletTransform(ShapeletTransform):
     pass
+    # to follow
 
 
 class Shapelet:
@@ -741,32 +799,6 @@ def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
     f.close()
 
 
-if __name__ == "__main__":
 
-    # from sktime.utils.load_data import load_from_arff_to_dataframe
-    # dataset = "BasicMotions"
-    dataset = "GunPoint"
-
-    train_x, train_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
-    test_x, test_y = load_from_tsfile_to_dataframe("../../datasets/data/"+dataset+"/"+dataset+"_TRAIN.ts")
-
-    a = ContractedShapeletTransform(
-        random_state=0,
-        verbose=3,
-        time_limit_in_mins=1,
-        num_candidates_to_sample_per_case=1,
-        max_shapelets_to_store_per_class=1000,
-        remove_self_similar=True
-    )
-    start_time = time.time()
-    shapelets = a.fit(train_x, train_y)
-    end_time = time.time()
-    for s in a.shapelets:
-        print(s)
-        print(s.data)
-
-    t_train_x = a.transform(train_x)
-    print()
-    print(t_train_x)
 
 
