@@ -36,7 +36,7 @@ from sktime.transformers.summarise import DerivativeSlopeTransformer
 
 from sktime.transformers.base import BaseTransformer
 
-from utils.validation.supervised import validate_X, validate_X_y
+from sktime.utils.validation.supervised import validate_X, validate_X_y
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 

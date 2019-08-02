@@ -1,0 +1,4 @@
+from sktime.classifiers.distance_based.elastic_ensemble import ElasticEnsemble
+from sktime.classifiers.distance_based.proximity import ProximityForest
+from sktime.classifiers.distance_based.proximity import ProximityStump
+from sktime.classifiers.distance_based.proximity import ProximityTree
