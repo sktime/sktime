@@ -17,15 +17,15 @@ def positive_dataframe_indices(X):
     return X
 
 # find the standard deviation of the dataset
-def stdp(instances):
+def stdp(X):
     sum = 0
     sum_sq = 0
-    num_instances = instances.shape[0]
-    num_dimensions = instances.shape[1]
+    num_instances = X.shape[0]
+    num_dimensions = X.shape[1]
     num_values = 0
     for instance_index in range(0, num_instances):
         for dimension_index in range(0, num_dimensions):
-            instance = instances.iloc[instance_index, dimension_index]
+            instance = X.iloc[instance_index, dimension_index]
             for value in instance:
                 num_values += 1
                 sum += value
@@ -35,13 +35,13 @@ def stdp(instances):
     return stdp
 
 # convert given instances and class labels into dict of class label mapped to instances
-def bin_instances_by_class(instances, class_labels):
+def bin_instances_by_class(X, class_labels):
     bins = {}
     for class_label in np.unique(class_labels):
         bins[class_label] = []
-    num_instances = instances.shape[0]
+    num_instances = X.shape[0]
     for instance_index in range(0, num_instances):
-        instance = instances.iloc[instance_index, :]
+        instance = X.iloc[instance_index, :]
         class_label = class_labels[instance_index]
         instances_bin = bins[class_label]
         instances_bin.append(instance)
@@ -49,23 +49,23 @@ def bin_instances_by_class(instances, class_labels):
 
 
 # find the maximum length of an instance from a set of instances for a given dimension
-def max_instance_dimension_length(instances, dimension):
-    num_instances = instances.shape[0]
+def max_instance_dimension_length(X, dimension):
+    num_instances = X.shape[0]
     max = -1
     for instance_index in range(0, num_instances):
-        instance = instances.iloc[instance_index, dimension]
+        instance = X.iloc[instance_index, dimension]
         if len(instance) > max:
             max = len(instance)
     return max
 
 
 # find the maximum length of an instance from a set of instances for all dimensions
-def max_instance_length(instances):
+def max_instance_length(X):
     # todo use all dimensions / uneven length dataset
-    max = len(instances.iloc[0, 0])
+    max_length = len(X.iloc[0, 0])
     # max = -1
     # for dimension in range(0, instances.shape[1]):
     #     length = max_instance_dimension_length(instances, dimension)
     #     if length > max:
     #         max = length
-    return max
+    return max_length
