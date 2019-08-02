@@ -4,7 +4,7 @@ from sklearn.dummy import DummyRegressor
 import pytest
 
 from sktime.forecasters import ARIMAForecaster
-from sktime.forecasters.compose import TransformedTargetForecaster, ReducedForecastingRegressor
+from sktime.forecasters.compose import TransformedTargetForecaster, ReducedRegressionForecaster
 from sktime.transformers.series_to_series import Detrender, Deseasonaliser
 from sktime.datasets import load_shampoo_sales
 from sktime.utils.validation import check_consistent_time_indices
@@ -67,7 +67,7 @@ def test_ReducedForecastingRegressor(window_length, dynamic, fh):
     train = pd.Series([y.iloc[0].iloc[:-n_fh]])
     test = pd.Series([y.iloc[0].iloc[-n_fh:]])
 
-    forecaster = ReducedForecastingRegressor(tsr, window_length=window_length, dynamic=dynamic)
+    forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
     # check if error is raised when dynamic is set to true but fh is not specified
     if not dynamic:
         with pytest.raises(ValueError):
@@ -91,7 +91,7 @@ def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_leng
     train = pd.Series([y.iloc[0].iloc[:-n_fh]])
     test = pd.Series([y.iloc[0].iloc[-n_fh:]])
 
-    forecaster = ReducedForecastingRegressor(tsr, window_length=window_length, dynamic=dynamic)
+    forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
     transformer = Pipeline([
         ('deseasonalise', Deseasonaliser(sp=12)),
         ('detrend', Detrender(order=1))

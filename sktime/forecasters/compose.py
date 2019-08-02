@@ -10,7 +10,7 @@ from sktime.forecasters.base import BaseForecaster
 __author__ = "Markus Löning"
 __all__ = ["EnsembleForecaster",
            "TransformedTargetForecaster",
-           "ReducedForecastingRegressor"]
+           "ReducedRegressionForecaster"]
 
 
 class EnsembleForecaster(BaseForecaster):
@@ -182,7 +182,7 @@ class TransformedTargetForecaster(BaseForecaster):
         return y_pred_it.iloc[0]
 
 
-class ReducedForecastingRegressor(BaseForecaster):
+class ReducedRegressionForecaster(BaseForecaster):
     """
     Forecasting to time series regression reduction strategy.
 
@@ -200,10 +200,6 @@ class ReducedForecastingRegressor(BaseForecaster):
         extending the last window of the training data with already made forecasts.
         - If False, one estimator is fitted for each step-ahead forecast and only the last window is used for making
         forecasts.
-    name : str, optional (default=None)
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
     def __init__(self, estimator, window_length=None, dynamic=False):
@@ -252,29 +248,11 @@ class ReducedForecastingRegressor(BaseForecaster):
             # TODO concatenate exogeneous variables X to rolled window matrix X below
             raise NotImplementedError()
 
-        # Set up window roller
-        # For dynamic prediction, models are only trained on one-step ahead forecast
-        rw_fh = np.array([1]) if self.dynamic else fh
-        rw = RollingWindowSplit(window_length=self.window_length, fh=rw_fh)
+        # Unnest series
+        yt = self._prepare_y(y)
 
-        # Unnest target series
-        yt = y.iloc[0]
-        if not isinstance(yt, pd.Series):
-            yt = pd.Series(yt)
-        index = np.arange(len(yt))
-
-        # Transform target series into tabular format using rolling window splits
-        xs = []
-        ys = []
-        for feature_window, target_window in rw.split(index):
-            x = yt[feature_window]
-            y = yt[target_window]
-            xs.append(x)
-            ys.append(y)
-
-        # Construct nested pandas DataFrame for X
-        X = pd.DataFrame(pd.Series([x for x in np.array(xs)]))
-        Y = np.array([np.array(y) for y in ys])
+        # Transform using rolling window
+        X, Y = self._transform(yt, fh)
 
         # Fitting
         if self.dynamic:
@@ -297,9 +275,34 @@ class ReducedForecastingRegressor(BaseForecaster):
                 self.estimators_.append(estimator)
 
         # Save the last window-length number of observations for predicting
-        self.window_length_ = rw.get_window_length()
+        self.window_length_ = self.rw.get_window_length()
         self._last_window = yt.iloc[-self.window_length_:]
         return self
+
+    def _transform(self, y, fh):
+        """Helper function to transform data using rolling window approach"""
+
+        # Set up window roller
+        # For dynamic prediction, models are only trained on one-step ahead forecast
+        fh = np.array([1]) if self.dynamic else fh
+        self.rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
+
+        # get numeric time index
+        time_index = np.arange(len(y))
+
+        # Transform target series into tabular format using rolling window splits
+        xs = []
+        ys = []
+        for feature_window, target_window in self.rw.split(time_index):
+            xi = y[feature_window]
+            yi = y[target_window]
+            xs.append(xi)
+            ys.append(yi)
+
+        # Construct nested pandas DataFrame for X
+        X = pd.DataFrame(pd.Series([xi for xi in np.array(xs)]))
+        Y = np.array([np.array(yi) for yi in ys])
+        return X, Y
 
     def predict(self, fh=None, X=None):
 
