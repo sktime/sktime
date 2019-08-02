@@ -1,6 +1,6 @@
 import pytest
 
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
+from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_italy_power_demand
 from sktime.highlevel.strategies import TSCStrategy
