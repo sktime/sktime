@@ -5,11 +5,11 @@ import pytest
 
 from sktime.forecasters import ARIMAForecaster
 from sktime.forecasters.compose import TransformedTargetForecaster, ReducedRegressionForecaster
-from sktime.transformers.series_to_series import Detrender, Deseasonaliser
+from sktime.transformers.forecasting import Deseasonaliser, Detrender
 from sktime.datasets import load_shampoo_sales
 from sktime.utils.validation.forecasting import check_consistent_time_indices
 from sktime.pipeline import Pipeline
-from sktime.transformers.series_to_series import Tabulariser
+from sktime.transformers.compose import Tabulariser
 
 
 @pytest.mark.parametrize("trend_order", [0, 1, 2])

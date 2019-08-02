@@ -29,7 +29,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.pipeline import Pipeline
-from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 
 

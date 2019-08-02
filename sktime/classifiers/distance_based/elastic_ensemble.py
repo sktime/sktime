@@ -12,7 +12,7 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
-from sktime.transformers.series_to_series import DerivativeSlopeTransformer
+from sktime.transformers.summarise import DerivativeSlopeTransformer
 import os
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
