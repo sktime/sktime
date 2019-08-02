@@ -1,4 +1,4 @@
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
+from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
 from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np

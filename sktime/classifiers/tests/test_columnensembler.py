@@ -11,7 +11,7 @@ from sktime.transformers.compose import RowwiseTransformer
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets.base import _load_dataset
 from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
-from sktime.classifiers.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
+from sktime.classifiers.compose.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
 
 
 def test_univariate_column_ensembler():
