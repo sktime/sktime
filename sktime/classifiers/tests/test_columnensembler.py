@@ -6,12 +6,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.pipeline import FeatureUnion, Pipeline
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets.base import _load_dataset
 from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
-from sktime.contrib.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
+from sktime.classifiers.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
 
 
 def test_univariate_column_ensembler():

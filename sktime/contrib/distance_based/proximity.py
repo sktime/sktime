@@ -32,6 +32,7 @@
 # todo set params use func name or func pointer
 # todo constructor accept str name func / pointer
 # todo duck-type functions
+from utils.validation.supervised import validate_X, validate_X_y
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -47,8 +48,7 @@ from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_dis
 from sktime.classifiers.base import BaseClassifier
 from sktime.transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
 from sktime.utils import comparison, dataset_properties
-from sktime.utils.transformations import tabularise
-from sktime.utils.validation import check_X, check_X_y
+from sktime.utils.data_container import tabularise
 
 
 def _derivative_distance(distance_measure, transformer):
@@ -654,7 +654,7 @@ class ProximityStump(BaseClassifier):
         :param X: the dataset containing a list of instances
         :return: 2d numpy array of distances from each instance to each exemplar (instance by exemplar)
         """
-        check_X(X)
+        validate_X(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
             distances = parallel(delayed(self._distance_to_exemplars_inst)
@@ -684,7 +684,7 @@ class ProximityStump(BaseClassifier):
         -------
         self : object
         """
-        if input_checks: check_X_y(X, y)
+        if input_checks: validate_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
@@ -705,7 +705,7 @@ class ProximityStump(BaseClassifier):
         :param X: the dataframe containing instances
         :return: 1d numpy array of indices, one for each instance, reflecting the index of the closest exemplar
         """
-        check_X(X)  # todo make checks optional and propogate from forest downwards
+        validate_X(X)  # todo make checks optional and propogate from forest downwards
         n_instances = X.shape[0]
         distances = self.distance_to_exemplars(X)
         indices = np.empty(X.shape[0], dtype=int)
@@ -750,7 +750,7 @@ class ProximityStump(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        if input_checks: check_X(X)
+        if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
@@ -850,7 +850,7 @@ class ProximityTree(BaseClassifier):
         -------
         self : object
         """
-        if input_checks: check_X_y(X, y)
+        if input_checks: validate_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
@@ -904,7 +904,7 @@ class ProximityTree(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        if input_checks: check_X(X)
+        if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
@@ -1047,7 +1047,7 @@ class ProximityForest(BaseClassifier):
         -------
         self : object
         """
-        if input_checks: check_X_y(X, y)
+        if input_checks: validate_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
@@ -1104,7 +1104,7 @@ class ProximityForest(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        if input_checks: check_X(X)
+        if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)

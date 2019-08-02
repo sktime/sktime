@@ -6,8 +6,8 @@ from sktime.transformers.compose import RowwiseTransformer
 from sktime.datasets import load_gunpoint
 from sktime.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
-from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
 

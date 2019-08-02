@@ -3,9 +3,11 @@ import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 
+from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
+from sktime.utils.validation.supervised import validate_X
+
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
-from sktime.utils.validation import check_equal_index
+from sktime.utils.data_container import tabularize, detabularize, concat_nested_arrays
 
 __author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz", "George Oastler"]
 __all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator', 'CachedTransformer']
@@ -47,8 +49,7 @@ class IntervalSegmenter(BaseTransformer):
         """
 
         if self.check_input:
-            pass
-            # TODO check input is series column, not column of primitives
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -90,11 +91,13 @@ class IntervalSegmenter(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
-        # Check is fit had been called
-        check_is_fitted(self, 'intervals_')
-
         # Check inputs.
         if self.check_input:
+            # Check is fit had been called
+            check_is_fitted(self, 'intervals_')
+
+            validate_X(X)
+
             # Check that the input is of the same shape as the one passed
             # during fit.
             if (X.shape[1] if X.ndim == 2 else 1) != self.input_shape_[1]:
@@ -196,8 +199,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         """
 
         if self.check_input:
-            # TODO check input is series column, not column of primitives
-            pass
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -225,7 +227,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         Parameters
         ----------
         x : array_like, shape = [n_observations]
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------
@@ -261,7 +262,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         x : array_like, shape = [n_observations]
             Array containing the time-series index.
         n : 'sqrt', 'log', float or int
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------

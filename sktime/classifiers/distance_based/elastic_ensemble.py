@@ -1,9 +1,18 @@
+""" The Elastic Ensemble (EE)
+    An ensemble of elastic nearest neighbour classifiers
+"""
+
+__author__ = "Jason Lines"
+__all__ = ["ElasticEnsemble"]
+
+
 import numpy as np
+import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
-from sktime.transformers.series_to_series import DerivativeSlopeTransformer
+from sktime.transformers.summarise import DerivativeSlopeTransformer
 import os
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
@@ -12,15 +21,43 @@ from itertools import product
 import time
 from sklearn.preprocessing import LabelEncoder
 from sktime.classifiers.base import BaseClassifier
-__all__ = ["ElasticEnsemble"]
 
 
 class ElasticEnsemble(BaseClassifier):
-    """ The Elastic Ensemble
 
+    """ The Elastic Ensemble as described in
+    @article{lines15elastic,
+      title={Time Series Classification with Ensembles of Elastic Distance Measures},
+      author={J. Lines and A. Bagnall},
+      journal={Data Mining and Knowledge Discovery},
+      volume={29},
+      issue={3},
+      pages={565--592},
+      year={2015}
+    }
+    Overview: Input n series length m
+    EE contains 11
     An ensemble of elastic nearest neighbor classifiers
+    Parameters
+    ----------
+    distance_measures                   : a list of strings identifying which distance measures to include optional (default='all')
+    proportion_of_param_option          :    the proportion of the parameter grid space to search optional(default =1, i.e. all)
+    proportion_train_in_param_finding   : proprtion of the train set to use in the parameter search optional (default =1, i.e. all)
+    proportion_train_for_test           : proportion of the train set to use in classifying new cases optional (default =1, i.e. all)
+    random_seed                         : int  seed for random, integer, optional (default to seed 0)
+    verbose                             : int, if >0 prints out debug inf, optional (default=0)
+
+    Attributes
+    ----------
+    estimators_ = None                  :  list of classifiers
+    train_accs_by_classifier = None     :  train accuracies of the classifiers
+    train_preds_by_classifier = None    :  train predictions of each classifier
+    classes_ = None                     :  class values (isnt this inherited?)
+    train = None                        :   train data
+    constituent_build_times = None      : stored build time for each classifier
 
     """
+
     def __init__(
             self,
             distance_measures='all',
@@ -28,7 +65,6 @@ class ElasticEnsemble(BaseClassifier):
             proportion_train_in_param_finding=1.0,
             proportion_train_for_test=1.0,
             random_seed=0,
-            dim_to_use=0,
             verbose=0
     ):
         if distance_measures == 'all':
@@ -39,7 +75,6 @@ class ElasticEnsemble(BaseClassifier):
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
         self.random_seed = random_seed
-        self.dim_to_use = dim_to_use
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.train_preds_by_classifier = None
@@ -49,6 +84,28 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = None
 
     def fit(self, X, y, **kwargs):
+        """Build an ensemble of 1-NN classifiers from th training set (X, y),
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.  If a Pandas data frame is passed, it must have a single column. BOSS not configured
+            to handle multivariate
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+         """
+
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
@@ -57,12 +114,12 @@ class ElasticEnsemble(BaseClassifier):
         if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().transform(X)
             # reshape X for use with the efficient cython distance measures
-            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, 0]])
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, 0]])
 
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
@@ -176,6 +233,15 @@ class ElasticEnsemble(BaseClassifier):
             self.train_preds_by_classifier[dm] = preds
 
     def predict_proba(self, X):
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
@@ -183,12 +249,12 @@ class ElasticEnsemble(BaseClassifier):
         # is made. Please note that using DDTW elsewhere will not benefit from this speed enhancement
         if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().transform(X)
-            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, 0]])
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, 0]])
 
         output_probas = []
         train_sum = 0

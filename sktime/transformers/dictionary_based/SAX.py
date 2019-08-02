@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import sktime.transformers.shapelets as shapelets
-from sktime.transformers.PAA import PAA
+from sktime.transformers.dictionary_based.PAA import PAA
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.base import BaseTransformer
 #    TO DO: verify this returned pandas is consistent with sktime definition. Timestamps?
