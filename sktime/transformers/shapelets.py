@@ -1,3 +1,10 @@
+""" shapelet transformers
+transformer from the time domain into the shapelet domain. Standard full transform, a contracted version and
+a randoms sampler
+"""
+__author__ = ["Jason Lines", "David Guijo"]
+__all__=["ShapeletTransform","ContractedShapeletTransform","RandomEnumerationShapeletTransform","Shapelet","ShapeletPQ"]
+
 import os
 import time
 import warnings
@@ -27,9 +34,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #
 # TO-DO: add CI tests, comments, documentation, etc.
 
-
 class ShapeletTransform(BaseTransformer):
-    __author__ = ["Jason Lines", "David Guijo"]
 
     """Shapelet Transform.
 
