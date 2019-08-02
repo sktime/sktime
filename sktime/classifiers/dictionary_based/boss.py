@@ -15,7 +15,7 @@ import math
 from itertools import compress
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
-from sktime.transformers.SFA import SFA
+from sktime.transformers.dictionary_based.SFA import SFA
 
 
 # TO DO: Make more efficient

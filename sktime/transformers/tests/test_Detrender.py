@@ -5,7 +5,7 @@ import pandas as pd
 from sktime.utils.data_container import select_times, tabularise
 from sktime.utils.testing import generate_time_series_data_with_trend
 from sktime.datasets import load_gunpoint
-from sktime.transformers.series_to_series import Detrender
+from sktime.transformers.forecasting import Detrender
 
 
 @pytest.mark.parametrize("order", [0, 1, 2])
