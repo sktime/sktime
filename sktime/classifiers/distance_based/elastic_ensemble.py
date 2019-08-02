@@ -7,6 +7,7 @@ __all__ = ["ElasticEnsemble"]
 
 
 import numpy as np
+import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -36,7 +37,6 @@ class ElasticEnsemble(BaseClassifier):
             proportion_train_in_param_finding=1.0,
             proportion_train_for_test=1.0,
             random_seed=0,
-            dim_to_use=0,
             verbose=0
     ):
         if distance_measures == 'all':
@@ -47,7 +47,6 @@ class ElasticEnsemble(BaseClassifier):
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
         self.random_seed = random_seed
-        self.dim_to_use = dim_to_use
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.train_preds_by_classifier = None
@@ -58,6 +57,16 @@ class ElasticEnsemble(BaseClassifier):
 
     def fit(self, X, y, **kwargs):
 
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+
+
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
         # standard DTW algorithm on it, rather than transforming each series every time a distance calculation
@@ -65,12 +74,12 @@ class ElasticEnsemble(BaseClassifier):
         if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().transform(X)
             # reshape X for use with the efficient cython distance measures
-            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, 0]])
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, 0]])
 
         self.train_accs_by_classifier = np.zeros(len(self.distance_measures))
         self.train_preds_by_classifier = [None] * len(self.distance_measures)
@@ -184,6 +193,15 @@ class ElasticEnsemble(BaseClassifier):
             self.train_preds_by_classifier[dm] = preds
 
     def predict_proba(self, X):
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError(
+                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
@@ -191,12 +209,12 @@ class ElasticEnsemble(BaseClassifier):
         # is made. Please note that using DDTW elsewhere will not benefit from this speed enhancement
         if self.distance_measures.__contains__(ddtw_c) or self.distance_measures.__contains__(wddtw_c):
             der_X = DerivativeSlopeTransformer().transform(X)
-            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, self.dim_to_use]])
+            der_X = np.array([np.asarray([x]).reshape(len(x), 1) for x in der_X.iloc[:, 0]])
         else:
             der_X = None
 
         # reshape X for use with the efficient cython distance measures
-        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, self.dim_to_use]])
+        X = np.array([np.asarray([x]).reshape(len(x),1) for x in X.iloc[:, 0]])
 
         output_probas = []
         train_sum = 0

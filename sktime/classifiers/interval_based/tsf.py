@@ -3,6 +3,7 @@ Implementation of Deng's Time Series Forest, with minor changes
 """
 
 __author__ = "Tony Bagnall"
+__all__ = ["TimeSeriesForest"]
 
 import numpy as np
 import pandas as pd

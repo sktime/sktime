@@ -1,3 +1,13 @@
+""" configurable time series ensembles
+Currently contains a TimeSeriesForest. This is a concatenation of transforms followed
+by a Forest classifier
+"""
+
+
+__all__ = ["TimeSeriesForestClassifier"]
+__author__ = "Markus Loning"
+
+
 from warnings import warn
 from warnings import catch_warnings
 from warnings import simplefilter
@@ -22,7 +32,6 @@ from ..pipeline import Pipeline
 from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
 from ..utils.time_series import time_series_slope
 
-__all__ = ["TimeSeriesForestClassifier"]
 
 
 class TimeSeriesForestClassifier(ForestClassifier):

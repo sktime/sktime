@@ -1,9 +1,10 @@
-"""ColumnEnsembleClassifier: For Multivariate Time Series Classification.
+""" ColumnEnsembleClassifier: For Multivariate Time Series Classification.
 Builds classifiers on each dimension (column) independently
 
 """
 
 __author__ = 'Aaron Bostrom'
+__all__ = ["ColumnEnsembleClassifier","HomogeneousColumnEnsembleClassifier"]
 
 from itertools import chain
 import numpy as np
