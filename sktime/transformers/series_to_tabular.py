@@ -1,4 +1,4 @@
-from sktime.utils.transformations import tabularize
+from sktime.utils.data_container import tabularize
 from sktime.utils.validation.supervised import validate_X
 from sktime.utils.data_container import check_equal_index
 from sktime.utils.data_container import tabularize
