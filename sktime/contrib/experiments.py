@@ -16,7 +16,8 @@ import sktime.classifiers.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest
+import sktime.classifiers.distance_based.elastic_ensemble as dist
+#from sktime.classifiers.proximity import ProximityForest
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -130,16 +131,16 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-    if cls.lower() == 'pf':
-        return ProximityForest(rand = resampleId)
+#    if cls.lower() == 'pf':
+#        return ProximityForest(rand = resampleId)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'TSF' or cls == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
     elif  cls == 'BOSS' or cls == 'boss':
         return db.BOSSEnsemble()
-#    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
-#        return dist.ElasticEnsemble()
+    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
+        return dist.ElasticEnsemble()
     elif cls == 'TSF_Markus':
         return ensemble.TimeSeriesForestClassifier()
     else:
