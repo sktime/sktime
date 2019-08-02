@@ -5,7 +5,7 @@ from sklearn.utils.validation import check_random_state
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
-from sktime.utils.transformations import tabularize, concat_nested_arrays
+from sktime.utils.data_container import tabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import get_time_index

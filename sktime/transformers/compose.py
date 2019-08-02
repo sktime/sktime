@@ -5,7 +5,7 @@ transformers as building blocks.
 """
 
 from sktime.utils.validation.supervised import validate_X
-from sktime.utils.transformations import tabularize
+from sktime.utils.data_container import tabularize
 from sklearn.compose import ColumnTransformer
 
 import numpy as np
