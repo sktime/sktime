@@ -32,6 +32,10 @@
 # todo set params use func name or func pointer
 # todo constructor accept str name func / pointer
 # todo duck-type functions
+from sktime.transformers.summarise import DerivativeSlopeTransformer
+
+from sktime.transformers.base import BaseTransformer
+
 from utils.validation.supervised import validate_X, validate_X_y
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
@@ -46,7 +50,6 @@ from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_dis
     wdtw_distance
 
 from sktime.classifiers.base import BaseClassifier
-from sktime.transformers.series_to_series import DerivativeSlopeTransformer
 from sktime.utils import comparison, dataset_properties
 from sktime.utils.data_container import tabularise
 
