@@ -7,8 +7,8 @@ from sktime.transformers.base import BaseTransformer
 from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
 from sktime.utils.validation import check_equal_index
 
-__author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
-
+__author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz", "George Oastler"]
+__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator', 'CachedTransformer']
 
 class IntervalSegmenter(BaseTransformer):
     """
@@ -433,15 +433,40 @@ class PlateauFinder(BaseTransformer):
 
 
 class CachedTransformer(BaseTransformer):
+    """Transformer that transforms data and adds the transformed version to a cache. If the transformation is called again on already seen data the data is fetched from the cache rather than performing the expensive transformation.
+
+        Parameters
+        ----------
+        transformer : transformer
+            the transformer to transform uncached data
+        """
 
     def __init__(self, transformer):
         self.cache = {}
         self.transformer = transformer
 
+    """
+        clear the cache
+    """
     def clear(self):
         self.cache = {}
 
     def transform(self, X, y=None):
+        """
+        Fit transformer, creating a cache for transformation.
+
+        Parameters
+        ----------
+        X : pandas DataFrame of shape [n_samples, n_features]
+            Input data
+        y : pandas Series, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        # for each instance, get transformed instance from cache or transform and add to cache
         cached_instances = {}
         uncached_indices = []
         for index in X.index.values:
