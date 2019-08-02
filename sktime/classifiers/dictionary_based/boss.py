@@ -56,17 +56,23 @@ class BOSSEnsemble(BaseEstimator):
 
     Parameters
     ----------
-    randomised_ensemble   : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False) 
-    random_ensemble_size: int, if randomising, generate this number of base classifiers
-    random_state    : int or None, seed for random, integer, optional (default to no seed)
-    threshold       : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
-    max_ensemble_size    : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
-    wordLengths     : list of int, search space for word lengths (default =100)
-    alphabet_size    : range of alphabet sizes to try (default to single value, 4)
+    randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
+    random_ensemble_size    : int, if randomising, generate this number of base classifiers
+    random_state            : int or None, seed for random, integer, optional (default to no seed)
+    threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
+    max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
+    wordLengths             : list of int, search space for word lengths (default =100)
+    alphabet_size           : range of alphabet sizes to try (default to single value, 4)
+    max_win_len_prop        : maximum window length as a proportion of series length (default =1),
+    time_limit              : time contract to limit build time (default=0, no limit)
+    word_lengths            : search range for word lengths (default =[16, 14, 12, 10, 8])
+    alphabet_size           : range of alphabet size to search for (default, a single value a=4),
+    min_window              : minu=imum window size, (default=10_,
+    norm_options            : search space for normalise, not normalise (default [True, False]_
 
     Attributes
     ----------
-    num_classes    : extracted from the data
+    n_classes    : extracted from the data
     num_atts       : extracted from the data
     classifiers    : array of DecisionTree classifiers
     intervals      : stores indexes of the start and end points for all classifiers
@@ -104,16 +110,13 @@ class BOSSEnsemble(BaseEstimator):
         self.classifiers = []
         self.weights = []
         self.weight_sum = 0
-        self.num_classes = 0
+        self.n_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
-        self.num_classifiers = 0
+        self.n_classifiers = 0
         self.series_length = 0
-        self.num_insts = 0
+        self.n_instances = 0
 
-        # For the multivariate case treating this as a univariate classifier
-
-        # Parameter search values
         self.word_lengths = word_lengths
         self.norm_options = norm_options
         self.alphabet_size = alphabet_size
@@ -125,10 +128,10 @@ class BOSSEnsemble(BaseEstimator):
          of the best
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The class labels.
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.  If a Pandas data frame is passed, it must have a single column. BOSS not configured
+            to handle multivariate
+        y : array-like, shape = [n_instances] The class labels.
 
         Returns
         -------
@@ -144,8 +147,8 @@ class BOSSEnsemble(BaseEstimator):
                 raise TypeError(
                     "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
-        self.num_insts, self.series_length = X.shape
-        self.num_classes = np.unique(y).shape[0]
+        self.n_instances, self.series_length = X.shape
+        self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
@@ -166,7 +169,7 @@ class BOSSEnsemble(BaseEstimator):
             num_classifiers = 0
             start_time = time.time_ns()
             train_time = 0
-            subsample_size = int(self.num_insts * 0.7)
+            subsample_size = int(self.n_instances * 0.7)
             lowest_acc = 0
             lowest_acc_idx = 0
 
@@ -177,7 +180,7 @@ class BOSSEnsemble(BaseEstimator):
                     possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
-                subsample = np.random.randint(self.num_insts, size=subsample_size)
+                subsample = np.random.randint(self.n_instances, size=subsample_size)
                 X_subsample = X[subsample, :]
                 y_subsample = y[subsample]
 
@@ -219,7 +222,7 @@ class BOSSEnsemble(BaseEstimator):
                         if n > 0:
                             boss = boss.shorten_bags(word_len)
 
-                        boss.accuracy = self.individual_train_acc(boss, y, self.num_insts, best_acc_for_win_size)
+                        boss.accuracy = self.individual_train_acc(boss, y, self.n_instances, best_acc_for_win_size)
 
                         if boss.accuracy >= best_acc_for_win_size:
                             best_acc_for_win_size = boss.accuracy
@@ -245,7 +248,7 @@ class BOSSEnsemble(BaseEstimator):
 
             self.weights = [1 for n in range(len(self.classifiers))]
 
-        self.num_classifiers = len(self.classifiers)
+        self.n_classifiers = len(self.classifiers)
         self.weight_sum = np.sum(self.weights)
 
     def predict(self, X):
@@ -261,14 +264,14 @@ class BOSSEnsemble(BaseEstimator):
                 raise TypeError(
                     "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
-        sums = np.zeros((X.shape[0], self.num_classes))
+        sums = np.zeros((X.shape[0], self.n_classes))
 
         for n, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary.get(preds[i])] += self.weights[n]
 
-        dists = sums / (np.ones(self.num_classes) * self.weight_sum)
+        dists = sums / (np.ones(self.n_classes) * self.weight_sum)
 
         return dists
 
@@ -293,32 +296,32 @@ class BOSSEnsemble(BaseEstimator):
 
     def get_train_probs(self, X):
         num_inst = X.shape[0]
-        results = np.zeros((num_inst, self.num_classes))
-        divisor = (np.ones(self.num_classes) * self.num_classifiers)
+        results = np.zeros((num_inst, self.n_classes))
+        divisor = (np.ones(self.n_classes) * self.n_classifiers)
         for i in range(num_inst):
-            sums = np.zeros(self.num_classes)
+            sums = np.zeros(self.n_classes)
 
             for n in range(len(self.classifiers)):
                 sums[self.class_dictionary.get(self.classifiers[n].train_predict(i), -1)] += 1
 
             dists = sums / divisor
-            for n in range(self.num_classes):
+            for n in range(self.n_classes):
                 results[i][n] = dists[n]
 
         return results
 
     def find_ensemble_train_acc(self, X, y):
         num_inst = X.shape[0]
-        results = np.zeros((2 + self.num_classes, num_inst + 1))
+        results = np.zeros((2 + self.n_classes, num_inst + 1))
         correct = 0
 
         for i in range(num_inst):
-            sums = np.zeros(self.num_classes)
+            sums = np.zeros(self.n_classes)
 
             for n in range(len(self.classifiers)):
                 sums[self.class_dictionary.get(self.classifiers[n].train_predict(i), -1)] += 1
 
-            dists = sums / (np.ones(self.num_classes) * self.num_classifiers)
+            dists = sums / (np.ones(self.n_classes) * self.n_classifiers)
             c = dists.argmax()
 
             if c == self.class_dictionary.get(y[i], -1):
@@ -327,7 +330,7 @@ class BOSSEnsemble(BaseEstimator):
             results[0][i + 1] = self.class_dictionary.get(y[i], -1)
             results[1][i + 1] = c
 
-            for n in range(self.num_classes):
+            for n in range(self.n_classes):
                 results[2 + n][i + 1] = dists[n]
 
         results[0][0] = correct / num_inst

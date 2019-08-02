@@ -25,11 +25,39 @@ from sktime.classifiers.base import BaseClassifier
 
 class ElasticEnsemble(BaseClassifier):
 
-    """ The Elastic Ensemble
-
+    """ The Elastic Ensemble as described in
+    @article{lines15elastic,
+      title={Time Series Classification with Ensembles of Elastic Distance Measures},
+      author={J. Lines and A. Bagnall},
+      journal={Data Mining and Knowledge Discovery},
+      volume={29},
+      issue={3},
+      pages={565--592},
+      year={2015}
+    }
+    Overview: Input n series length m
+    EE contains 11
     An ensemble of elastic nearest neighbor classifiers
+    Parameters
+    ----------
+    distance_measures                   : a list of strings identifying which distance measures to include optional (default='all')
+    proportion_of_param_option          :    the proportion of the parameter grid space to search optional(default =1, i.e. all)
+    proportion_train_in_param_finding   : proprtion of the train set to use in the parameter search optional (default =1, i.e. all)
+    proportion_train_for_test           : proportion of the train set to use in classifying new cases optional (default =1, i.e. all)
+    random_seed                         : int  seed for random, integer, optional (default to seed 0)
+    verbose                             : int, if >0 prints out debug inf, optional (default=0)
+
+    Attributes
+    ----------
+    estimators_ = None                  :  list of classifiers
+    train_accs_by_classifier = None     :  train accuracies of the classifiers
+    train_preds_by_classifier = None    :  train predictions of each classifier
+    classes_ = None                     :  class values (isnt this inherited?)
+    train = None                        :   train data
+    constituent_build_times = None      : stored build time for each classifier
 
     """
+
     def __init__(
             self,
             distance_measures='all',
@@ -56,6 +84,18 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = None
 
     def fit(self, X, y, **kwargs):
+        """Build an ensemble of 1-NN classifiers from th training set (X, y),
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+            The training input samples.  If a Pandas data frame is passed, it must have a single column. BOSS not configured
+            to handle multivariate
+        y : array-like, shape = [n_instances] The class labels.
+
+        Returns
+        -------
+        self : object
+         """
 
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
