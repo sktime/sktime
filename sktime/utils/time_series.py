@@ -4,7 +4,7 @@ from sklearn.utils import check_array
 from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 
-def time_series_slope(y, axis=0):
+def time_series_slope(y):
     """Compute slope of time series (y) using ordinary least squares.
 
     Parameters
@@ -19,14 +19,15 @@ def time_series_slope(y, axis=0):
     slope : float
         Slope of time-series.
     """
+    y = np.asarray(y).ravel()
+    len_series = len(y)
 
-    n_samples, n_obs = np.atleast_2d(y).shape
-    if n_obs < 2:
-        return np.zeros(n_samples) if n_samples > 1 else 0
+    if len_series < 2:
+        return 0
     else:
-        x = np.arange(n_obs)  # time index
-        x_mean = (n_obs - 1) / 2  # faster than x.mean()
-        return (np.mean(x * y, axis=axis) - x_mean * np.mean(y, axis=axis)) / (np.mean(x ** 2) - x_mean ** 2)
+        x = np.arange(len_series)  # time index
+        x_mean = (len_series - 1) / 2  # faster than x.mean()
+        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
 
 
 class RollingWindowSplit:
