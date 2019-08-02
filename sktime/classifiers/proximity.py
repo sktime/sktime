@@ -32,8 +32,6 @@
 # todo set params use func name or func pointer
 # todo constructor accept str name func / pointer
 # todo duck-type functions
-# todo comment-up transformers / util classes
-# todo fix docstrings
 
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -54,6 +52,12 @@ from sktime.utils.validation import check_X, check_X_y
 
 
 def _derivative_distance(distance_measure, transformer):
+    """
+    take derivative before conducting distance measure
+    :param distance_measure: the distance measure to use
+    :param transformer: the transformer to use
+    :return: a distance measure function with built in transformation
+    """
     def distance(instance_a, instance_b, **params):
         df = pd.DataFrame([instance_a, instance_b])
         df = transformer.transform(X=df)
@@ -65,6 +69,12 @@ def _derivative_distance(distance_measure, transformer):
 
 
 def distance_predefined_params(distance_measure, **params):
+    """
+    conduct distance measurement with a predefined set of parameters
+    :param distance_measure: the distance measure to use
+    :param params: the parameters to use in the distance measure
+    :return: a distance measure with no parameters
+    """
     def distance(instance_a, instance_b):
         return distance_measure(instance_a, instance_b, **params)
 
@@ -72,6 +82,11 @@ def distance_predefined_params(distance_measure, **params):
 
 
 def cython_wrapper(distance_measure):
+    """
+    wrap a distance measure in cython convertion (to 1 column per dimension format)
+    :param distance_measure: distance measure to wrap
+    :return: a distance measure which automatically formats data for cython distance measures
+    """
     def distance(instance_a, instance_b, **params):
         # find distance
         instance_a = tabularise(instance_a, return_array=True)  # todo use specific dimension rather than whole
@@ -179,7 +194,7 @@ def gini(y):
 
 
 def get_one_exemplar_per_class_proximity(proximity):
-    '''
+    """
     unpack proximity object into X, y and random_state for picking exemplars.
     ----
     Parameters
@@ -189,18 +204,16 @@ def get_one_exemplar_per_class_proximity(proximity):
     ----
     Returns
     ----
-    chosen_instances : list
-        list of the chosen exemplar instances.
-    chosen_class_labels : array
-        list of corresponding class labels for each of the chosen exemplar instances.
-    '''
+    result : function
+        function choosing one exemplar per class
+    """
     return get_one_exemplar_per_class(proximity.X,
                                       proximity.y,
                                       proximity.random_state)
 
 
 def get_one_exemplar_per_class(X, y, random_state):
-    '''
+    """
     Pick one exemplar instance per class in the dataset.
     ----
     Parameters
@@ -218,7 +231,7 @@ def get_one_exemplar_per_class(X, y, random_state):
         list of the chosen exemplar instances.
     chosen_class_labels : array
         list of corresponding class labels for each of the chosen exemplar instances.
-    '''
+    """
     # find unique class labels
     unique_class_labels = np.unique(y)
     n_unique_class_labels = len(unique_class_labels)
@@ -240,6 +253,11 @@ def get_one_exemplar_per_class(X, y, random_state):
 
 
 def dtw_distance_measure_getter(X):
+    """
+    generate the dtw distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     return {
         'distance_measure': [cython_wrapper(dtw_distance)],
         'w': stats.uniform(0, 0.25)
@@ -247,6 +265,11 @@ def dtw_distance_measure_getter(X):
 
 
 def msm_distance_measure_getter(X):
+    """
+    generate the msm distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     n_dimensions = 1  # todo use other dimensions
     return {
         'distance_measure': [cython_wrapper(msm_distance)],
@@ -271,6 +294,11 @@ def msm_distance_measure_getter(X):
 
 
 def erp_distance_measure_getter(X):
+    """
+    generate the erp distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     stdp = dataset_properties.stdp(X)
     instance_length = dataset_properties.max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
@@ -286,6 +314,11 @@ def erp_distance_measure_getter(X):
 
 
 def lcss_distance_measure_getter(X):
+    """
+    generate the lcss distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     stdp = dataset_properties.stdp(X)
     instance_length = dataset_properties.max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
@@ -302,6 +335,11 @@ def lcss_distance_measure_getter(X):
 
 
 def twe_distance_measure_getter(X):
+    """
+    generate the twe distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     return {
         'distance_measure': [cython_wrapper(twe_distance)],
         'penalty': [0, 0.011111111, 0.022222222, 0.033333333, 0.044444444, 0.055555556, 0.066666667,
@@ -311,6 +349,11 @@ def twe_distance_measure_getter(X):
 
 
 def wdtw_distance_measure_getter(X):
+    """
+    generate the wdtw distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     return {
         'distance_measure': [cython_wrapper(wdtw_distance)],
         'g': stats.uniform(0,
@@ -319,6 +362,11 @@ def wdtw_distance_measure_getter(X):
 
 
 def euclidean_distance_measure_getter(X):
+    """
+    generate the ed distance measure
+    :param X: dataset to derive parameter ranges from
+    :return: distance measure and parameter range dictionary
+    """
     return {
         'distance_measure': [cython_wrapper(dtw_distance)],
         'w': [0]
@@ -326,6 +374,11 @@ def euclidean_distance_measure_getter(X):
 
 
 def setup_wddtw_distance_measure_getter(transformer):
+    """
+    generate the wddtw distance measure by baking the derivative transformer into the wdtw distance measure
+    :param transformer: the transformer to use
+    :return: a getter to produce the distance measure
+    """
     def getter(X):
         return {
             'distance_measure': [_derivative_distance(cython_wrapper(wdtw_distance), transformer)],
@@ -337,6 +390,11 @@ def setup_wddtw_distance_measure_getter(transformer):
 
 
 def setup_ddtw_distance_measure_getter(transformer):
+    """
+    generate the ddtw distance measure by baking the derivative transformer into the dtw distance measure
+    :param transformer: the transformer to use
+    :return: a getter to produce the distance measure
+    """
     def getter(X):
         return {
             'distance_measure': [_derivative_distance(cython_wrapper(dtw_distance), transformer)],
@@ -348,6 +406,11 @@ def setup_ddtw_distance_measure_getter(transformer):
 
 
 def setup_all_distance_measure_getter(proximity):
+    """
+    setup all distance measure getter functions from a proximity object
+    :param proximity: a PT / PF / PS
+    :return: a list of distance measure getters
+    """
     transformer = CachedTransformer(DerivativeSlopeTransformer())
     distance_measure_getters = [
         euclidean_distance_measure_getter,
@@ -362,6 +425,11 @@ def setup_all_distance_measure_getter(proximity):
             ]
 
     def pick_rand_distance_measure(proximity):
+        """
+        generate a distance measure from a range of parameters
+        :param proximity: proximity object containing distance measures, ranges and dataset
+        :return: a distance measure with no parameters
+        """
         random_state = proximity.random_state
         X = proximity.X
         distance_measure_getter = random_state.choice(distance_measure_getters)
@@ -375,7 +443,7 @@ def setup_all_distance_measure_getter(proximity):
 
 
 def pick_rand_param_perm_from_dict(param_pool, random_state):
-    '''
+    """
     pick a parameter permutation given a list of dictionaries contain potential values OR a list of values OR a
     distribution of values (a distribution must have the .rvs() function to sample values)
     ----------
@@ -390,7 +458,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
     -------
     param_perm : dict
         distance measure and corresponding parameters in dictionary format
-    '''
+    """
     # construct empty permutation
     param_perm = {}
     # for each parameter
@@ -416,7 +484,7 @@ def pick_rand_param_perm_from_dict(param_pool, random_state):
 
 
 def pick_rand_param_perm_from_list(params, random_state):
-    '''
+    """
     get a random parameter permutation providing a distance measure and corresponding parameters
     ----------
     params : list of dicts
@@ -429,7 +497,7 @@ def pick_rand_param_perm_from_list(params, random_state):
     -------
     permutation : dict
         distance measure and corresponding parameters in dictionary format
-    '''
+    """
     #
     param_pool = random_state.choice(params)
     permutation = pick_rand_param_perm_from_dict(param_pool, random_state)
@@ -437,7 +505,7 @@ def pick_rand_param_perm_from_list(params, random_state):
 
 
 def best_of_n_stumps(n):
-    '''
+    """
     Generate the function to pick the best of n stump evaluations.
     ----
     Parameters
@@ -449,12 +517,12 @@ def best_of_n_stumps(n):
     ----
     find_best_stump : func
         function to find the best of n stumps.
-    '''
+    """
     if n < 1:
         raise ValueError('n cannot be less than 1')
 
     def find_best_stump(proximity):
-        '''
+        """
         Pick the best of n stump evaluations.
         ----
         Parameters
@@ -466,7 +534,7 @@ def best_of_n_stumps(n):
         ----
         stump : ProximityStump
             the best stump / split of data of the n attempts.
-        '''
+        """
         stumps = []
         # for n stumps
         for index in range(n):
@@ -493,58 +561,27 @@ def best_of_n_stumps(n):
 
 
 class ProximityStump(BaseClassifier):
-    '''
-        proximity tree classifier of depth 1 - in other words, a k=1 nearest neighbour classifier with neighbourhood
-        limited
-        to x exemplar instances
-        ----
-        Parameters
-        ----
-        pick_exemplars_method : callable
-            Method to pick exemplars from a set of instances and class labels
-        param_perm : dict
-            a dictionary containing a distance measure and corresponding parameter
-        gain_method : callable
-            a method to calculate the gain of this split / stump
-        label_encoder : LabelEncoder
-            a label encoder, can be pre-populated
-        random_state : numpy RandomState
-            a random state for sampling random numbers
-        verbosity : int
-            level of verbosity in output
-        dimension : int
-            dimension of the dataset to use. Defaults to zero for univariate datasets.
-        ----
-        Attributes
-        ----
-        exemplar_instances : panda dataframe
-            the chosen exemplar instances
-        exemplar_class_labels : numpy 1d array
-            array of class labels corresponding to the exemplar instances
-            the exemplar instances class labels
-        remaining_instances : panda dataframe
-            the remaining instances after exemplars have been removed
-        remaining_class_labels : numpy 1d array
-            array of class labels corresponding to the exemplar instances
-            the remaining instances class labels after picking exemplars
-        branch_instances : list of panda dataframes
-            list of dataframes of instances, one for each child of this stump. I.e. if a stump splits into two children,
-            there will be a list of dataframes of length two. branch_instance[0] will contain all train instances
-            closest to exemplar 0, branch_instances[1] contains all train instances closest to exemplar 1,
-            etc. Exemplars are in the exemplar_instances variable
-        branch_class_labels: list of numpy 1d arrays
-            similar to branch_instances, but contains the class labels of the instances closest to each exemplar
-        distance_measure_param_perm: dict
-            parameters to pass to the distance measure method
-        distance_measure: callable
-            the distance measure to use for measure similarity between instances
-        gain: float
-            the gain of this stump
-        label_encoder : LabelEncoder
-            a label encoder, can be pre-populated
-        classes_ :
-            pointer to the label_encoder classes_
-        '''
+
+    """
+    Proximity Stump class to model a decision stump which uses a distance measure to partition data.
+
+    Attributes:
+        label_encoder: label encoder to change string labels to numeric indices
+        y_exemplar: class label list of the exemplar instances
+        X_exemplar: dataframe of the exemplar instances
+        X_branches: dataframes for each branch, one per exemplar
+        y_branches: class label list for each branch, one per exemplar
+        classes_: unique list of classes
+        entropy: the gain associated with the split of data
+        random_state: the random state
+        get_exemplars: function to extract exemplars from a dataframe and class value list
+        setup_distance_measure: function to setup the distance measure getters from dataframe and class value list
+        get_distance_measure: distance measure getters
+        distance_measure: distance measures
+        get_gain: function to score the quality of a split
+        verbosity: logging verbosity
+        n_jobs: number of jobs to run in parallel *across threads"
+    """
 
     __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -558,6 +595,17 @@ class ProximityStump(BaseClassifier):
                  verbosity=0,
                  n_jobs=1,
                  ):
+        """
+        construct a proximity stump
+        :param random_state: the random state
+        :param get_exemplars: function to extract exemplars from a dataframe and class value list
+        :param setup_distance_measure: function to setup the distance measure getters from dataframe and class value list
+        :param get_distance_measure: distance measure getters
+        :param distance_measure: distance measures
+        :param get_gain: function to score the quality of a split
+        :param verbosity: logging verbosity
+        :param n_jobs: number of jobs to run in parallel *across threads"
+        """
         self.setup_distance_measure = setup_distance_measure
         self.random_state = random_state
         self.get_distance_measure = get_distance_measure
@@ -579,6 +627,13 @@ class ProximityStump(BaseClassifier):
 
     @staticmethod
     def _distance_to_exemplars_inst(exemplars, instance, distance_measure):
+        """
+        find distance between a given instance and the exemplar instances
+        :param exemplars: the exemplars to use
+        :param instance: the instance to compare to each exemplar
+        :param distance_measure: the distance measure to provide similarity values
+        :return: list of distances to each exemplar
+        """
         n_exemplars = len(exemplars)
         distances = np.empty(n_exemplars)
         min_distance = np.math.inf
@@ -594,6 +649,11 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def distance_to_exemplars(self, X):
+        """
+        find distance to exemplars
+        :param X: the dataset containing a list of instances
+        :return: 2d numpy array of distances from each instance to each exemplar (instance by exemplar)
+        """
         check_X(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
@@ -611,6 +671,19 @@ class ProximityStump(BaseClassifier):
         return distances
 
     def fit(self, X, y, input_checks = True):
+        """
+        Build the classifierr on the training set (X, y)
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
+        y : array-like, shape = [n_samples]
+            The class labels.
+        input_checks: boolean
+            whether to check the X and y parameters
+        Returns
+        -------
+        self : object
+        """
         if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
@@ -627,6 +700,11 @@ class ProximityStump(BaseClassifier):
         return self
 
     def find_closest_exemplar_indices(self, X):
+        """
+        find the closest exemplar index for each instance in a dataframe
+        :param X: the dataframe containing instances
+        :return: 1d numpy array of indices, one for each instance, reflecting the index of the closest exemplar
+        """
         check_X(X)  # todo make checks optional and propogate from forest downwards
         n_instances = X.shape[0]
         distances = self.distance_to_exemplars(X)
@@ -638,6 +716,10 @@ class ProximityStump(BaseClassifier):
         return indices
 
     def grow(self):
+        """
+        grow the stump, creating branches for each exemplar
+        :return: self
+        """
         n_exemplars = len(self.y_exemplar)
         indices = self.find_closest_exemplar_indices(self.X)
         self.X_branches = [None] * n_exemplars
@@ -652,6 +734,22 @@ class ProximityStump(BaseClassifier):
         return self
 
     def predict_proba(self, X, input_checks = True):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not yet have
+            multivariate capability.
+        input_checks: boolean
+            whether to check the X parameter
+        Returns
+        -------
+        output : array of shape = [n_samples, num_classes] of probabilities
+        """
         if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
@@ -663,49 +761,29 @@ class ProximityStump(BaseClassifier):
 
 
 class ProximityTree(BaseClassifier):
-    '''
-        proximity tree classifier using proximity stumps at each tree node to split data into branches.
-        ----
-        Parameters
-        ----
-        pick_exemplars_method : callable
-            Method to pick exemplars from a set of instances and class labels
-        param_pool : list of dicts
-            a list of dictionaries containing a distance measure and corresponding parameter sources (distribution or
-            predefined value)
-        gain_method : callable
-            a method to calculate the gain of this split / stump
-        label_encoder : LabelEncoder
-            a label encoder, can be pre-populated
-        random_state : numpy RandomState
-            a random state for sampling random numbers
-        dimension : int
-            dimension of the dataset to use. Defaults to zero for univariate datasets.
-        verbosity : int
-            level of verbosity in output
-        num_stump_evaluations : int
-            the number of proximity stumps to produce at each node. Each stump has a random distance measure and
-            distance
-            measure parameter set. The stump with the best gain is used to split the data.
-        is_leaf_method : callable
-            a method which takes a split of data and produces a boolean value indicating whether the tree should
-            continue
-            splitting.
-        ----
-        Attributes
-        ----
-        level : int
-            the level of the current tree. Each tree is made up of a collection of trees, one for each branch. Each one
-            of these trees are level + 1 deep. The level begins on 0.
-        branches : array of trees
-            trees corresponding to each branch output of the proximity stump.
-        stump : ProximityStump
-            the proximity stump used to split the data at this node.
-        label_encoder : LabelEncoder
-            a label encoder, can be pre-populated
-        classes_ :
-            pointer to the label_encoder classes_
-        '''
+
+    """
+    Proximity Tree class to model a decision tree which uses distance measures to partition data.
+
+    Attributes:
+        label_encoder: label encoder to change string labels to numeric indices
+        classes_: unique list of classes
+        random_state: the random state
+        get_exemplars: function to extract exemplars from a dataframe and class value list
+        setup_distance_measure: function to setup the distance measure getters from dataframe and class value list
+        get_distance_measure: distance measure getters
+        distance_measure: distance measures
+        get_gain: function to score the quality of a split
+        verbosity: logging verbosity
+        n_jobs: number of jobs to run in parallel *across threads"
+        find_stump: function to find the best split of data
+        max_depth: max tree depth
+        depth: current depth of tree, as each node is a tree itself, therefore can have a depth of >=0
+        X: train data
+        y: train data labels
+        stump: the stump used to split data at this node
+        branches: the partitions of data driven by the stump
+    """
 
     __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -723,6 +801,20 @@ class ProximityTree(BaseClassifier):
                  n_jobs=1,
                  find_stump=best_of_n_stumps(5),
                  ):
+        """
+        build a Proximity Tree object
+        :param random_state: the random state
+        :param get_exemplars: get the exemplars from a given dataframe and list of class labels
+        :param distance_measure: distance measure to use
+        :param get_distance_measure: method to get the distance measure if no already set
+        :param setup_distance_measure: method to setup the distance measures based upon the dataset given
+        :param get_gain: method to find the gain of a data split
+        :param max_depth: maximum depth of the tree
+        :param is_leaf: function to decide when to mark a node as a leaf node
+        :param verbosity: number reflecting the verbosity of logging
+        :param n_jobs: number of parallel threads to use while building
+        :param find_stump: method to find the best split of data / stump at a node
+        """
         self.verbosity = verbosity
         self.find_stump = find_stump
         self.max_depth = max_depth
@@ -745,6 +837,19 @@ class ProximityTree(BaseClassifier):
         self.classes_ = None
 
     def fit(self, X, y, input_checks = True):
+        """
+        Build the classifierr on the training set (X, y)
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
+        y : array-like, shape = [n_samples]
+            The class labels.
+        input_checks: boolean
+            whether to check the X and y parameters
+        Returns
+        -------
+        self : object
+        """
         if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
@@ -783,6 +888,22 @@ class ProximityTree(BaseClassifier):
         return self
 
     def predict_proba(self, X, input_checks=True):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not yet have
+            multivariate capability.
+        input_checks: boolean
+            whether to check the X parameter
+        Returns
+        -------
+        output : array of shape = [n_samples, num_classes] of probabilities
+        """
         if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
@@ -806,44 +927,29 @@ class ProximityTree(BaseClassifier):
 
 
 class ProximityForest(BaseClassifier):
+
     """
-    proximity forest classifier using an ensemble proximity trees.
-    ----
-    Parameters
-    ----
-    pick_exemplars_method : callable
-        Method to pick exemplars from a set of instances and class labels
-    param_pool : list of dicts
-        a list of dictionaries containing a distance measure and corresponding parameter sources (distribution or
-        predefined value)
-    verbosity : int
-        level of verbosity in output
-    gain_method : callable
-        a method to calculate the gain of splits / stumps in trees
-    label_encoder : LabelEncoder
-        a label encoder, can be pre-populated
-    random_state : numpy RandomState
-        a random state for sampling random numbers
-    dimension : int
-        dimension of the dataset to use. Defaults to zero for univariate datasets.
-    num_stump_evaluations : int
-        a tree parameter dictating the number of proximity stumps to produce at each node. Each stump has a random
-        distance measure and distance measure parameter set. The stump with the best gain is used to split the data.
-    num_trees : int
-        the number of trees to construct
-    is_leaf_method : callable
-        a method which takes a split of data and produces a boolean value indicating whether the tree should
-        continue splitting.
-    ----
-    Attributes
-    ----
-    trees : list of ProximityTrees
-        ProximityTrees in this forest.
-    label_encoder : LabelEncoder
-        a label encoder, can be pre-populated
-    classes_ :
-        pointer to the label_encoder classes_
+    Proximity Forest class to model a decision tree forest which uses distance measures to partition data.
+
+    Attributes:
+        label_encoder: label encoder to change string labels to numeric indices
+        classes_: unique list of classes
+        random_state: the random state
+        get_exemplars: function to extract exemplars from a dataframe and class value list
+        setup_distance_measure_getter: function to setup the distance measure getters from dataframe and class value list
+        get_distance_measure: distance measure getters
+        distance_measure: distance measures
+        get_gain: function to score the quality of a split
+        verbosity: logging verbosity
+        n_jobs: number of jobs to run in parallel *across threads"
+        find_stump: function to find the best split of data
+        max_depth: max tree depth
+        X: train data
+        y: train data labels
+        trees: list of trees in the forest
     """
+
+
 
     __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -861,6 +967,21 @@ class ProximityForest(BaseClassifier):
                  find_stump=best_of_n_stumps(5),
                  setup_distance_measure_getter=setup_all_distance_measure_getter,
                  ):
+        """
+        build a Proximity Forest object
+        :param random_state: the random state
+        :param get_exemplars: get the exemplars from a given dataframe and list of class labels
+        :param distance_measure: distance measure to use
+        :param get_distance_measure: method to get the distance measure if no already set
+        :param setup_distance_measure_getter: method to setup the distance measures based upon the dataset given
+        :param get_gain: method to find the gain of a data split
+        :param max_depth: maximum depth of the tree
+        :param is_leaf: function to decide when to mark a node as a leaf node
+        :param verbosity: number reflecting the verbosity of logging
+        :param n_jobs: number of parallel threads to use while building
+        :param find_stump: method to find the best split of data / stump at a node
+        :param n_trees: number of trees to construct
+        """
         self.is_leaf = is_leaf
         self.verbosity = verbosity
         self.max_depth = max_depth
@@ -881,6 +1002,19 @@ class ProximityForest(BaseClassifier):
         self.classes_ = None
 
     def _fit_tree(self, X, y, index, random_state):
+        """
+        Build the classifierr on the training set (X, y)
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
+        y : array-like, shape = [n_samples]
+            The class labels.
+        index : index of the tree to be constructed
+        random_state: random_state to send to the tree to be constructed
+        Returns
+        -------
+        self : object
+        """
         if self.verbosity > 0:
             print('tree ' + str(index) + ' building')
         tree = ProximityTree(
@@ -900,6 +1034,19 @@ class ProximityForest(BaseClassifier):
         return tree
 
     def fit(self, X, y, input_checks = True):
+        """
+        Build the classifierr on the training set (X, y)
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
+        y : array-like, shape = [n_samples]
+            The class labels.
+        input_checks: boolean
+            whether to check the X and y parameters
+        Returns
+        -------
+        self : object
+        """
         if input_checks: check_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
@@ -923,9 +1070,40 @@ class ProximityForest(BaseClassifier):
 
     @staticmethod
     def _predict_proba_tree(X, tree):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not yet have
+            multivariate capability.
+        tree : the tree to collect predictions from
+        Returns
+        -------
+        output : array of shape = [n_samples, num_classes] of probabilities
+        """
         return tree.predict_proba(X)
 
     def predict_proba(self, X, input_checks = True):
+        """
+        Find probability estimates for each class for all cases in X.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+            The training input samples.
+            If a Pandas data frame is passed (sktime format)
+            If a Pandas data frame is passed, a check is performed that it only has one column.
+            If not, an exception is thrown, since this classifier does not yet have
+            multivariate capability.
+        input_checks: boolean
+            whether to check the X parameter
+        Returns
+        -------
+        output : array of shape = [n_samples, num_classes] of probabilities
+        """
         if input_checks: check_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
