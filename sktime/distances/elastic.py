@@ -1,5 +1,7 @@
 import numpy as np
 
+__author__ = "Jason Lines"
+
 
 def dtw_distance(first, second, **kwargs):
 

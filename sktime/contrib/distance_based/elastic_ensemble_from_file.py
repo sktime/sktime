@@ -1,4 +1,3 @@
-from sktime.classifiers.elastic_ensemble import ElasticEnsemble
 import numpy as np
 import os
 from sklearn.metrics.scorer import accuracy_score
@@ -6,6 +5,7 @@ from sktime.contrib.experiments import write_results_to_uea_format
 
 
 class ElasticEnsemblePostProcess:
+    __author__ = "Jason Lines"
 
     def __init__(self, results_path, dataset_name, distance_measures='all', resample_id=0, alpha=1):
         """

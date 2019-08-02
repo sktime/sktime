@@ -43,6 +43,15 @@ from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
+
+from .base import BaseClassifier
+from ..distances.elastic_cython import (
+    ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
+    )
+from sktime.utils import comparison
+from sktime.utils import dataset_properties
+from sktime.utils.data_container import tabularise
+from sktime.utils.validation.supervised import validate_X_y, validate_X
 from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, \
     wdtw_distance
 
