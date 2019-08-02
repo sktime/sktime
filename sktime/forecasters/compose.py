@@ -265,10 +265,10 @@ class ReducedRegressionForecaster(BaseForecaster):
         else:
             # Fit one estimator for each step-ahead forecast
             self.estimators_ = []
-            n_fh = len(fh)
+            len_fh = len(fh)
 
             # Iterate over estimators/forecast horizon
-            for i in range(n_fh):
+            for i in range(len_fh):
                 estimator = clone(self.estimator)
                 y = pd.Series(Y[:, i])
                 estimator.fit(X, y)
@@ -312,7 +312,7 @@ class ReducedRegressionForecaster(BaseForecaster):
 
         # get forecasting horizon
         fh = validate_fh(fh)
-        n_fh = len(fh)
+        len_fh = len(fh)
 
         # use last window as test data for prediction
         x_test = pd.DataFrame(pd.Series([self._last_window]))
@@ -322,7 +322,7 @@ class ReducedRegressionForecaster(BaseForecaster):
         # only the last window and using one fitted estimator for each step ahead forecast
         if self.dynamic:
             # Roll last window using previous one-step ahead forecasts
-            for i in range(n_fh):
+            for i in range(len_fh):
                 y_pred[i] = self.estimators_.predict(x_test)
 
                 # append prediction to last window and roll window

@@ -17,12 +17,12 @@ from sktime.transformers.series_to_series import Tabulariser
 def test_TransformedTargetForecaster_fit_predict(trend_order, arima_order):
     # forecasting horizon
     fh = np.arange(3) + 1
-    n_fh = len(fh)
+    len_fh = len(fh)
 
     # load data and split into train/test series
     y = load_shampoo_sales()
-    train = pd.Series([y.iloc[0].iloc[:-n_fh]])
-    test = pd.Series([y.iloc[0].iloc[-n_fh:]])
+    train = pd.Series([y.iloc[0].iloc[:-len_fh]])
+    test = pd.Series([y.iloc[0].iloc[-len_fh:]])
 
     transformer = Detrender(order=trend_order)
     forecaster = ARIMAForecaster(order=arima_order)
@@ -60,12 +60,12 @@ tsr = Pipeline([  # time series regressor
 def test_ReducedForecastingRegressor(window_length, dynamic, fh):
     # define setting
     # forecasting horizon
-    n_fh = len(fh)
+    len_fh = len(fh)
 
     # load data and split into train/test series
     y = load_shampoo_sales()
-    train = pd.Series([y.iloc[0].iloc[:-n_fh]])
-    test = pd.Series([y.iloc[0].iloc[-n_fh:]])
+    train = pd.Series([y.iloc[0].iloc[:-len_fh]])
+    test = pd.Series([y.iloc[0].iloc[-len_fh:]])
 
     forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
     # check if error is raised when dynamic is set to true but fh is not specified
@@ -84,12 +84,12 @@ def test_ReducedForecastingRegressor(window_length, dynamic, fh):
 def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_length, dynamic, fh):
     # define setting
     # forecasting horizon
-    n_fh = len(fh)
+    len_fh = len(fh)
 
     # load data and split into train/test series
     y = load_shampoo_sales()
-    train = pd.Series([y.iloc[0].iloc[:-n_fh]])
-    test = pd.Series([y.iloc[0].iloc[-n_fh:]])
+    train = pd.Series([y.iloc[0].iloc[:-len_fh]])
+    test = pd.Series([y.iloc[0].iloc[-len_fh:]])
 
     forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
     transformer = Pipeline([

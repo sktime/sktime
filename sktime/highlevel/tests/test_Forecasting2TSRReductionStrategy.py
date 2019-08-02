@@ -21,13 +21,13 @@ regressor = Pipeline([('tabularise', Tabulariser()), ('clf', RandomForestRegress
 def test_univariate(dynamic, fh):
 
     fh = validate_fh(fh)
-    n_fh = len(fh)
+    len_fh = len(fh)
 
     y = load_shampoo_sales(return_y_as_dataframe=True)
 
     index = np.arange(y.iloc[0, 0].shape[0])
-    train_times = index[:-n_fh]
-    test_times = index[-n_fh:]
+    train_times = index[:-len_fh]
+    test_times = index[-len_fh:]
 
     y_train = select_times(y, train_times)
     y_test = select_times(y, test_times)

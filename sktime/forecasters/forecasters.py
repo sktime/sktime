@@ -379,14 +379,14 @@ class DummyForecaster(BaseForecaster):
 
         # Convert step-ahead prediction horizon into zero-based index
         self._fh = fh
-        n_fh = len(fh)
+        len_fh = len(fh)
 
         # Fit estimator.
         if self.strategy == 'mean':
-            y_pred = np.repeat(np.mean(y), n_fh)
+            y_pred = np.repeat(np.mean(y), len_fh)
 
         elif self.strategy == 'last':
-            y_pred = np.repeat(y.iloc[-1], n_fh)
+            y_pred = np.repeat(y.iloc[-1], len_fh)
 
         elif self.strategy == 'linear':
             # get start and end of forecast horizon
@@ -406,9 +406,9 @@ class DummyForecaster(BaseForecaster):
         elif self.strategy == 'seasonal_last':
             # for seasonal periodicity of 1, forecast mean
             if self.sp == 1:
-                y_pred = np.repeat(np.mean(y), n_fh)
+                y_pred = np.repeat(np.mean(y), len_fh)
             else:
-                y_pred = y.iloc[-self.sp:(-self.sp + n_fh)]
+                y_pred = y.iloc[-self.sp:(-self.sp + len_fh)]
 
         self._y_pred = y_pred
         return self
