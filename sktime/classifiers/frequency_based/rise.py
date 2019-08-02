@@ -1,3 +1,10 @@
+""" Random Interval Spectral Forest (RISE).
+Implementation of Deng's Time Series Forest, with minor changes
+"""
+
+__author__ = "Tony Bagnall"
+
+
 import numpy as np
 import pandas as pd
 import math
@@ -9,7 +16,6 @@ from sklearn.utils.multiclass import class_distribution
 
 
 class RandomIntervalSpectralForest(ForestClassifier):
-    __author__ = "Tony Bagnall"
 
     """Random Interval Spectral Forest (RISE).
 

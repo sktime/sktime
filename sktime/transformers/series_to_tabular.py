@@ -1,8 +1,8 @@
-from sktime.utils.data_container import check_equal_index
 from sktime.utils.transformations import tabularize
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sktime.utils.validation.supervised import validate_X
-
+from sktime.utils.data_container import check_equal_index
+from sktime.utils.data_container import tabularize
+from sktime.transformers.series_to_series import RandomIntervalSegmenter
 from sklearn.utils.validation import check_is_fitted
 import numpy as np
 import pandas as pd

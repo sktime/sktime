@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.utils.validation import check_is_fitted
 
 __author__ = "Markus Löning"
 __all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh"]
@@ -13,6 +14,7 @@ def validate_y_X(y, X):
     y : pandas Series or numpy ndarray
     X : pandas DataFrame
 
+<<<<<<< HEAD:sktime/utils/validation/forecasting.py
     Returns
     -------
     None
@@ -98,13 +100,36 @@ def validate_X(X):
                                  f'Input time-series must have the same index.')
 
 
-def validate_fh(fh):
-    """
-    Validate forecasting horizon.
+def validate_sp(sp):
+    """Validate seasonal periodicity.
 
     Parameters
     ----------
-    fh : list of int
+    sp : int
+        Seasonal periodicity
+
+    Returns
+    -------
+    sp : int
+        Validated seasonal periodicity
+    """
+
+    if sp is None:
+        return sp
+
+    else:
+        if not isinstance(sp, int) and (sp >= 0):
+            raise ValueError(f"Seasonal periodicity (sp) has to be a positive integer, but found: "
+                             f"{sp} of type: {type(sp)}")
+        return sp
+
+
+def validate_fh(fh):
+    """Validate forecasting horizon.
+
+    Parameters
+    ----------
+    fh : int or list of int
         Forecasting horizon with steps ahead to predict.
 
     Returns
@@ -148,3 +173,77 @@ def validate_fh(fh):
                              f"integer, but found: {type(fh)}")
 
         return np.asarray(np.sort(fh), dtype=np.int)
+
+
+def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
+    """Checks if the estimator is fitted during transform by verifying the presence of
+    "all_or_any" of the passed attributes and raises a NotFittedError with the
+    given message.
+    
+    Parameters
+    ----------
+    estimator : estimator instance.
+        estimator instance for which the check is performed.
+    attributes : attribute name(s) given as string or a list/tuple of strings
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
+    msg : string
+        The default error message is, "This %(name)s instance is not fitted
+        yet. Call 'fit' with appropriate arguments before using this method."
+        For custom messages if "%(name)s" is present in the message string,
+        it is substituted for the estimator name.
+        Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
+    all_or_any : callable, {all, any}, default all
+        Specify whether all or any of the given attributes must exist.
+    Returns
+    -------
+    None
+    
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.    
+    """
+    if msg is None:
+        msg = ("This %(name)s instance has not been fitted yet. Call 'transform' with "
+               "appropriate arguments before using this method.")
+
+    check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
+
+
+def validate_time_index(time_index):
+    """Validate time index
+
+    Parameters
+    ----------
+    time_index : array-like
+
+    Returns
+    -------
+    time_index : ndarray
+    """
+    # period or datetime index are not support yet
+    # TODO add support for period/datetime indexing
+    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
+        raise NotImplementedError(f"{type(time_index)} is not fully supported yet, "
+                                  f"use pandas RangeIndex instead")
+
+    return np.asarray(time_index)
+
+
+def check_consistent_time_indices(x, y):
+    """Check that x and y have consistent indices.
+
+    Parameters
+    ----------
+    x : pandas Series
+    y : pandas Series
+
+    Raises:
+    -------
+    ValueError
+        If time indicies are not equal
+    """
+
+    if not x.index.equals(y.index):
+        raise ValueError(f"Found input variables with inconsistent indices")

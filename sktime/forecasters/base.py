@@ -8,6 +8,8 @@ from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_X
 from sktime.utils.validation.forecasting import validate_y
 from sktime.utils.validation.forecasting import validate_y_X
+from sktime.utils.data_container import get_time_index, tabularise
+
 
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
 __author__ = ['Markus Löning']
@@ -27,10 +29,10 @@ class BaseForecaster(BaseEstimator):
 
     def __init__(self, check_input=True):
         self.check_input = check_input
-        self._y_idx = None
+        self._time_index = None
         self._is_fitted = False
 
-    def fit(self, y, X=None):
+    def fit(self, y, fh=None, X=None):
         """
         Fit forecaster.
 
@@ -38,6 +40,9 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
+        fh : array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -52,14 +57,17 @@ class BaseForecaster(BaseEstimator):
         if self.check_input:
             validate_y_X(y, X)
 
-        # Keep index for predicting where forecasting horizon will be relative to y seen in fit
-        self._y_idx = self._get_y_index(y)
+        # validate forecasting horizon
+        fh = validate_fh(fh)
 
-        # Make interface compatible with estimators that only take y
+        # Keep index for predicting where forecasters horizon will be relative to y seen in fit
+        self._time_index = get_time_index(y)
+
+        # Make interface compatible with estimators that only take y and no X
         kwargs = {} if X is None else {'X': X}
 
         # Internal fit.
-        self._fit(y, **kwargs)
+        self._fit(y, fh=fh, **kwargs)
         self._is_fitted = True
         return self
 
@@ -70,7 +78,7 @@ class BaseForecaster(BaseEstimator):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
@@ -89,7 +97,7 @@ class BaseForecaster(BaseEstimator):
         if self.check_input:
             validate_X(X)
 
-        # validate forecasting horizon
+        # validate forecasters horizon
         fh = validate_fh(fh)
 
         # make interface compatible with estimators that only take y
@@ -107,7 +115,7 @@ class BaseForecaster(BaseEstimator):
         y : pandas.Series
             Target time series to which to fit the forecaster.
         fh : array-like, optional (default=[1])
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
             variables are used as additional features in the regression
@@ -137,7 +145,7 @@ class BaseForecaster(BaseEstimator):
         # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
             raise ValueError(f"Index of passed time series `y` does not match index of predicted time series; "
-                             f"make sure the forecasting horizon `fh` matches the time index of `y`")
+                             f"make sure the forecasters horizon `fh` matches the time index of `y`")
 
         return np.sqrt(mean_squared_error(y_true, y_pred, sample_weight=sample_weight))
 
@@ -152,34 +160,32 @@ class BaseForecaster(BaseEstimator):
 
     @staticmethod
     def _prepare_X(X):
-        """
-        Helper function to transform nested pandas DataFrame X into 2d numpy array as required by `statsmodels`
+        """Helper function to transform nested pandas DataFrame X into 2d numpy array as required by `statsmodels`
         estimators.
-
 
         Parameters
         ----------
-        X : pandas.DataFrame, shape = [1, n_variables]
+        X : pandas.DataFrame, shape=[1, n_variables]
             Nested dataframe with series of shape [n_obs,] in cells
 
         Returns
         -------
-        numpy ndarray, shape = [n_obs, n_variables]
+        Xt : ndarray, shape=[n_obs, n_variables]
         """
         if X is None:
             return X
 
-        xl = X.iloc[0, :].tolist()
         if X.shape[1] > 1:
-            return np.column_stack(xl)
+            Xl = X.iloc[0, :].tolist()
+            Xt = np.column_stack(Xl)
         else:
-            return np.array(xl).T.reshape(-1, 1)
+            Xt = tabularise(X).values.T
+
+        return Xt
 
     @staticmethod
     def _prepare_y(y):
-        """
-        Helper function to prepare y as required by `statsmodels` estimators.
-
+        """Helper function to prepare y as required by `statsmodels` estimators.
 
         Parameters
         ----------
@@ -188,7 +194,7 @@ class BaseForecaster(BaseEstimator):
 
         Returns
         -------
-        pandas.Series, shape = [n_obs,]
+        yt : pandas Series, shape=[n_obs,]
         """
         return y.iloc[0]
 
@@ -247,14 +253,13 @@ class BaseUpdateableForecaster(BaseForecaster):
         # TODO add additional input checks for update data, i.e. that update data is newer than data seen in fit
         y = y.iloc[0]
         y_idx = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
-        if not isinstance(y_idx, type(self._y_idx)):
+        if not isinstance(y_idx, type(self._time_index)):
             raise ValueError('Passed y does not match the initial y used for fitting')
 
 
 class BaseSingleSeriesForecaster(BaseForecaster):
-    """
-    Classical forecaster which implements predict method for single-series/univariate fitted/updated classical
-    forecasting techniques without exogenous variables (X).
+    """Statsmodels interface wrapper class, classical forecaster which implements predict method for single-series/univariate fitted/updated classical
+    forecasters techniques without exogenous variables (X).
     """
 
     def _predict(self, fh=None):
@@ -264,7 +269,7 @@ class BaseSingleSeriesForecaster(BaseForecaster):
         Parameters
         ----------
         fh : array-like, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
 
         Returns
@@ -277,7 +282,7 @@ class BaseSingleSeriesForecaster(BaseForecaster):
         fh_idx = fh - np.min(fh)
 
         # Predict fitted model with start and end points relative to start of train series
-        fh = len(self._y_idx) - 1 + fh
+        fh = len(self._time_index) - 1 + fh
         start = fh[0]
         end = fh[-1]
         y_pred = self._fitted_estimator.predict(start=start, end=end)

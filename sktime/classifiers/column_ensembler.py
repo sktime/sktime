@@ -1,3 +1,8 @@
+"""ColumnEnsembleClassifier: For Multivariate Time Series Classification.
+Builds classifiers on each dimension (column) independently
+
+"""
+
 __author__ = 'Aaron Bostrom'
 
 from itertools import chain
@@ -8,6 +13,8 @@ from sktime.classifiers.base import BaseClassifier
 
 
 class ColumnEnsembleClassifier(BaseClassifier):
+
+
     """Applies estimators to columns of an array or pandas DataFrame.
 
         This estimator allows different columns or column subsets of the input

@@ -42,9 +42,9 @@ from .base import BaseClassifier
 from ..distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
-from ..utils import comparison
-from ..utils import dataset_properties
-from ..utils.transformations import tabularise
+from sktime.utils import comparison
+from sktime.utils import dataset_properties
+from sktime.utils.data_container import tabularise
 from sktime.utils.validation.supervised import validate_X_y, validate_X
 
 

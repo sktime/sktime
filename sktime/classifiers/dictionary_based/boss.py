@@ -1,3 +1,10 @@
+""" BOSS classifiers
+dictionary based BOSS classifiers based on SFA transform
+"""
+
+__author__ = "Matthew Middlehurst"
+__all__ = ["BOSSEnsemble", "BOSSIndividual"]
+
 import numpy as np
 import random
 import sys
@@ -10,15 +17,13 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
 from sktime.transformers.SFA import SFA
 
-# TO DO: Change the horrible cabibilities hack
+
 # TO DO: Make more efficient
 
 
-all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
 
 class BOSSEnsemble(BaseEstimator):
-    __author__ = "Matthew Middlehurst"
 
     """ Bag of SFA Symbols (BOSS)
 
