@@ -46,9 +46,67 @@ from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_dis
     wdtw_distance
 
 from sktime.classifiers.base import BaseClassifier
-from sktime.transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
+from sktime.transformers.series_to_series import DerivativeSlopeTransformer
 from sktime.utils import comparison, dataset_properties
 from sktime.utils.data_container import tabularise
+
+
+class CachedTransformer(BaseTransformer):
+    """Transformer that transforms data and adds the transformed version to a cache. If the transformation is called again on already seen data the data is fetched from the cache rather than performing the expensive transformation.
+
+        Parameters
+        ----------
+        transformer : transformer
+            the transformer to transform uncached data
+        """
+
+    def __init__(self, transformer):
+        self.cache = {}
+        self.transformer = transformer
+
+    """
+        clear the cache
+    """
+    def clear(self):
+        self.cache = {}
+
+    def transform(self, X, y=None):
+        """
+        Fit transformer, creating a cache for transformation.
+
+        Parameters
+        ----------
+        X : pandas DataFrame of shape [n_samples, n_features]
+            Input data
+        y : pandas Series, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : an instance of self.
+        """
+        # for each instance, get transformed instance from cache or transform and add to cache
+        cached_instances = {}
+        uncached_indices = []
+        for index in X.index.values:
+            try:
+                cached_instances[index] = self.cache[index]
+            except:
+                uncached_indices.append(index)
+        if len(uncached_indices) > 0:
+            uncached_instances = X.loc[uncached_indices, :]
+            transformed_uncached_instances = \
+                self.transformer.transform(uncached_instances)
+            transformed_uncached_instances.index = uncached_instances.index
+            transformed_uncached_instances = transformed_uncached_instances.to_dict('index')
+            self.cache.update(transformed_uncached_instances)
+            cached_instances.update(transformed_uncached_instances)
+        cached_instances = pd.DataFrame.from_dict(cached_instances, orient='index')
+        return cached_instances
+
+    def __str__(self):
+        return self.transformer.__str__()
+
 
 
 def _derivative_distance(distance_measure, transformer):
