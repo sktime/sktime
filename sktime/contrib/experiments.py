@@ -328,9 +328,9 @@ if __name__ == "__main__":
     else : #Local run
         data_dir = "/scratch/datasets/"
         results_dir = "/scratch/results"
-#        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
-#        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "PF"
+        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        classifier = "BOSS"
         resample = 0
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
