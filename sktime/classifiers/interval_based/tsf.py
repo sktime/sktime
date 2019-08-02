@@ -51,45 +51,44 @@ class TimeSeriesForest(ForestClassifier):
 
     Attributes
     ----------
-    num_classes    : int, extracted from the data
+    n_classes    : int, extracted from the data
     num_atts       : int, extracted from the data
-    num_intervals  : int, sqrt(num_atts)
-    classifiers    : array of shape = [num_classes] of DecisionTree classifiers
-    min_interval   : int, minimum width of an interval
-    intervals      : array of shape = [num_classes][num_intervals][2] stores indexes of all start and end points for all classifiers
+    n_intervals  : int, sqrt(num_atts)
+    classifiers    : array of shape = [n_trees] of DecisionTree classifiers
+    intervals      : array of shape = [n_trees][n_intervals][2] stores indexes of all start and end points for all classifiers
     dim_to_use     : int, the column of the panda passed to use (can be passed a multidimensional problem, but will only use one)
     
     """
 
     def __init__(self,
-                    random_state = None,
-                    min_interval=3,
-                    num_trees = 200
-                ):
+                 random_state = None,
+                 min_interval=3,
+                 n_trees = 200
+                 ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=num_trees)
+            n_estimators=n_trees)
 
         self.random_state = random_state
         random.seed(random_state)
-        self.num_trees=num_trees
+        self.n_trees=n_trees
         self.min_interval=min_interval
 # The following set in method fit
-        self.num_classes = 0
+        self.n_classes = 0
         self.series_length = 0
-        self.num_intervals = 0
+        self.n_intervals = 0
         self.classifiers = []
         self.intervals=[]
         self.classes_ = []
 
     def fit(self, X, y):
-        """  Build a forest of trees from the training set (X, y) using random intervals and summary measures.
+        """Build a forest of trees from the training set (X, y) using random intervals and summary features
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
-        y : array-like, shape = [n_samples]
-            The class labels.
+        X : array-like or sparse matrix of shape = [n_instances,series_length] or shape = [n_instances,n_columns]
+            The training input samples.  If a Pandas data frame is passed it must have a single column (i.e. univariate
+            classification. RISE has no bespoke method for multivariate classification as yet.
+        y : array-like, shape =  [n_instances]    The class labels.
 
         Returns
         -------
@@ -104,19 +103,19 @@ class TimeSeriesForest(ForestClassifier):
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         n_samps, self.series_length = X.shape
 
-        self.num_classes = np.unique(y).shape[0]
+        self.n_classes = np.unique(y).shape[0]
 
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.num_intervals = int(math.sqrt(self.series_length))
-        if self.num_intervals==0:
-            self.num_intervals = 1
+        self.n_intervals = int(math.sqrt(self.series_length))
+        if self.n_intervals==0:
+            self.n_intervals = 1
         if self.series_length <self.min_interval:
             self.min_interval=self.series_length
-        self.intervals=np.zeros((self.num_trees, 3 * self.num_intervals, 2), dtype=int)
-        for i in range(0, self.num_trees):
-            transformed_x = np.empty(shape=(3 * self.num_intervals, n_samps))
+        self.intervals=np.zeros((self.n_trees, 3 * self.n_intervals, 2), dtype=int)
+        for i in range(0, self.n_trees):
+            transformed_x = np.empty(shape=(3 * self.n_intervals, n_samps))
             # Find the random intervals for classifier i and concatentate features
-            for j in range(0, self.num_intervals):
+            for j in range(0, self.n_intervals):
                 self.intervals[i][j][0]=random.randint(self.series_length - self.min_interval)
                 length=random.randint(self.series_length - self.intervals[i][j][0] - 1)
                 if length < self.min_interval:
@@ -140,14 +139,14 @@ class TimeSeriesForest(ForestClassifier):
         Find predictions for all cases in X. Built on top of predict_proba
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
+        X : The training input samples. array-like or pandas data frame.
         If a Pandas data frame is passed, a check is performed that it only has one column.
         If not, an exception is thrown, since this classifier does not yet have
         multivariate capability.
 
         Returns
         -------
-        output : array of shape = [n_samples]
+        output : array of shape = [n_test_instances]
         """
 
         proba=self.predict_proba(X)
@@ -158,21 +157,19 @@ class TimeSeriesForest(ForestClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.
-            If a Pandas data frame is passed (sktime format)
-            If a Pandas data frame is passed, a check is performed that it only has one column.
+        X : The training input samples. array-like or sparse matrix of shape = [n_test_instances, series_length]
+            If a Pandas data frame is passed (sktime format) a check is performed that it only has one column.
             If not, an exception is thrown, since this classifier does not yet have
             multivariate capability.
 
         Local variables
         ----------
-        n_samps     : int, number of cases to classify
-        num_atts    : int, number of attributes in X, must match _num_atts determined in fit
+        n_test_instances     : int, number of cases to classify
+        series_length    : int, number of attributes in X, must match _num_atts determined in fit
 
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_test_instances, num_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
             if X.columns > 1:
@@ -182,13 +179,13 @@ class TimeSeriesForest(ForestClassifier):
             else:
                 raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
-        n_samps, num_atts = X.shape
-        if num_atts != self.series_length:
+        n_test_instances, series_length = X.shape
+        if series_length != self.series_length:
             raise TypeError(" ERROR number of attributes in the train does not match that in the test data")
-        sums = np.zeros((X.shape[0],self.num_classes), dtype=np.float64)
-        for i in range(0, self.num_trees):
-            transformed_x = np.empty(shape=(3 * self.num_intervals, n_samps), dtype=np.float32)
-            for j in range(0, self.num_intervals):
+        sums = np.zeros((X.shape[0],self.n_classes), dtype=np.float64)
+        for i in range(0, self.n_trees):
+            transformed_x = np.empty(shape=(3 * self.n_intervals, n_test_instances), dtype=np.float32)
+            for j in range(0, self.n_intervals):
                 means = np.mean(X[:, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1)
                 std_dev = np.std(X[:, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1)
                 slope = self.lsq_fit(X[:, self.intervals[i][j][0]:self.intervals[i][j][1]])
@@ -198,7 +195,7 @@ class TimeSeriesForest(ForestClassifier):
             transformed_x=transformed_x.T
             sums += self.classifiers[i].predict_proba(transformed_x)
 
-        output = sums / (np.ones(self.num_classes) * self.n_estimators)
+        output = sums / (np.ones(self.n_classes) * self.n_estimators)
         return output
 
     def lsq_fit(self, Y):
@@ -215,6 +212,7 @@ class TimeSeriesForest(ForestClassifier):
         x = np.arange(Y.shape[1]) + 1
         slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / ((x * x).mean() - x.mean() ** 2)
         return slope
+
 
 if __name__ == "__main__":
     dataset = "Gunpoint"
