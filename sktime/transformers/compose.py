@@ -3,11 +3,6 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-from sktime.utils.transformations import tabularize, concat_nested_arrays
-
-from sktime.utils.validation.supervised import validate_X
-from sklearn.compose import ColumnTransformer
-
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -15,8 +10,10 @@ from sklearn.compose import ColumnTransformer as skColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
+from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
 from sktime.utils.validation.forecasting import check_is_fitted_in_transform
+from sktime.utils.validation.supervised import validate_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 __all__ = ['ColumnTransformer',
@@ -247,13 +244,12 @@ class RowwiseTransformer(BaseTransformer):
             cols_t.append(rows_t)  # append transformed columns
 
         # if series-to-series transform, flatten transformed series
-        if isinstance(row_t, (pd.Series, np.ndarray)) and len(row_t) > 1:
-            Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
+        Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
 
-        # else unnest series-to-primitive transforms
-        else:
-            Xt = pd.DataFrame([pd.Series([r for r in rows_t])
-                               for rows_t in cols_t]).T
+        # tabularise/unnest series-to-primitive transforms
+        xt = Xt.iloc[0, 0]
+        if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
+            Xt = tabularize(Xt)
         return Xt
 
 
