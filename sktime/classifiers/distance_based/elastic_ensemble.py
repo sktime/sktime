@@ -1,3 +1,11 @@
+""" The Elastic Ensemble (EE)
+    An ensemble of elastic nearest neighbour classifiers
+"""
+
+__author__ = "Jason Lines"
+__all__ = ["ElasticEnsemble"]
+
+
 import numpy as np
 from sklearn.utils.multiclass import class_distribution
 from sklearn.metrics import accuracy_score
@@ -12,11 +20,9 @@ from itertools import product
 import time
 from sklearn.preprocessing import LabelEncoder
 from sktime.classifiers.base import BaseClassifier
-__all__ = ["ElasticEnsemble"]
 
 
 class ElasticEnsemble(BaseClassifier):
-    __author__ = "Jason Lines"
 
     """ The Elastic Ensemble
 
