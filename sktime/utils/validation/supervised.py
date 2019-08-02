@@ -88,5 +88,8 @@ def check_X_is_univariate(X):
         If X has more than one column
     """
     if X.shape[1] > 1:
-        raise ValueError(f"X must be univariate with X.shape[1] == 1, "
-                         f"but found: X.shape[1] == {X.shape[1]}")
+        raise NotImplementedError(f"X must be univariate with X.shape[1] == 1, "
+                                  f"but found: X.shape[1] == {X.shape[1]}. For "
+                                  f"multivariate please use compositor classes. "
+                                  f"Estimator-specific multivariate approaches are "
+                                  f"not implemented yet.")

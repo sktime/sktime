@@ -1,6 +1,5 @@
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.testing import generate_df_from_array
-import pytest
 import pandas as pd
 import numpy as np
 from sktime.transformers.compose import RowwiseTransformer
@@ -9,34 +8,28 @@ from sktime.transformers.segment import RandomIntervalSegmenter
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
 from sktime.pipeline import Pipeline, FeatureUnion
+import pytest
 
-N_ITER = 10
 
 
 # Test output format and dimensions.
-def _test_output_format_dim(X):
+@pytest.mark.parametrize("n_instances", [1, 3])
+@pytest.mark.parametrize("len_series", [2, 3])
+@pytest.mark.parametrize("n_intervals", [1, 3, 'log', 'sqrt', 'random'])
+@pytest.mark.parametrize("features", [[np.mean], [np.mean, np.median],
+                                      [np.mean, np.median, np.mean]])
+def test_output_format_dim(n_instances, len_series, n_intervals, features):
+    X = generate_df_from_array(np.ones(len_series), n_rows=n_instances, n_cols=1)
     n_rows, n_cols = X.shape
-    n_intervals_args = [1, 3, 10, 'sqrt', 'random']
-    feature_args = [[np.mean], [np.mean, np.median], [np.mean, np.median, np.mean]]
-    for n_intervals in n_intervals_args:
-        for features in feature_args:
-            trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
-            Xt = trans.fit_transform(X)
-            assert isinstance(Xt, pd.DataFrame)
-            assert Xt.shape[0] == n_rows
-            assert np.array_equal(Xt.values, np.ones(Xt.shape))
-
-
-def test_output_format_dim():
-    for n_cols in range(1, 3, 10):
-        for n_rows in [1, 3, 10]:
-            for n_obs in [2, 3, 10]:
-                X = generate_df_from_array(np.ones(n_obs), n_rows=n_rows, n_cols=n_cols)
-                _test_output_format_dim(X)
+    trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
+    Xt = trans.fit_transform(X)
+    assert isinstance(Xt, pd.DataFrame)
+    assert Xt.shape[0] == n_rows
+    assert np.array_equal(Xt.values, np.ones(Xt.shape))
 
 
 # Check that exception is raised for bad input args.
-@pytest.mark.parametrize("bad_n_intervals", [0, 'abc', 1.1])
+@pytest.mark.parametrize("bad_n_intervals", [0, 'abc', 1.1, -1])
 def test_bad_n_intervals(bad_n_intervals):
     X, y = load_gunpoint(return_X_y=True)
     with pytest.raises(ValueError):
@@ -52,6 +45,7 @@ def test_bad_features(bad_features):
 
 # Check if random state always gives same results
 def test_random_state():
+    N_ITER = 10
     X = generate_df_from_array(np.random.normal(size=20))
     random_state = 1234
     trans = RandomIntervalFeatureExtractor(n_intervals='random', random_state=random_state)
@@ -63,26 +57,20 @@ def test_random_state():
 
 
 # Check specific results
-def _test_results(n_cols, n_obs, n_intervals):
-    x = np.random.normal(size=n_obs)
-    X = generate_df_from_array(x, n_rows=3, n_cols=n_cols)
+@pytest.mark.parametrize("n_instances", [1, 3])
+@pytest.mark.parametrize("len_series", [2, 3])
+@pytest.mark.parametrize("n_intervals", [1, 3, 'log', 'sqrt', 'random'])
+def test_results(n_instances, len_series, n_intervals):
+    x = np.random.normal(size=len_series)
+    X = generate_df_from_array(x, n_rows=n_instances, n_cols=1)
     trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
                                            features=[np.mean, np.std, time_series_slope])
     Xt = trans.fit_transform(X)
-
     # Check results
-    for c in range(n_cols):
-        for s, e in trans.intervals_[c]:
-            assert np.all(Xt.filter(like=f'_{s}_{e}_mean') == np.mean(x[s:e]))
-            assert np.all(Xt.filter(like=f'_{s}_{e}_std') == np.std(x[s:e]))
-            assert np.all(Xt.filter(like=f'_{s}_{e}_time_series_slope') == time_series_slope(x[s:e]))
-
-
-def test_results():
-    for n_cols in [1, 3]:
-        for n_obs in [2, 10]:
-            for n_intervals in [1, 3, 10]:
-                _test_results(n_cols, n_obs, n_intervals)
+    for s, e in trans.intervals_:
+        assert np.all(Xt.filter(like=f'_{s}_{e}_mean') == np.mean(x[s:e]))
+        assert np.all(Xt.filter(like=f'_{s}_{e}_std') == np.std(x[s:e]))
+        assert np.all(Xt.filter(like=f'_{s}_{e}_time_series_slope') == time_series_slope(x[s:e]))
 
 
 # Test against equivalent pipelines.
@@ -100,22 +88,23 @@ def test_different_implementations():
 
     np.testing.assert_array_equal(A, B)
 
-    # Compare with transformer pipeline using TSFeatureUnion.
+
+# Compare with transformer pipeline using TSFeatureUnion.
+def test_different_pipelines():
+    random_seed = 1233
+    X_train, y_train = load_gunpoint(return_X_y=True)
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
         ('transform', FeatureUnion([
             ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
             ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
+            ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False))),
         ])),
     ]
     pipe = Pipeline(steps, random_state=random_seed)
     a = pipe.fit_transform(X_train)
-    n_ints = a.shape[1] // 2  # Rename columns for comparing re-ordered arrays.
-    a.columns = [*a.columns[:n_ints] + '_mean', *a.columns[n_ints:n_ints * 2] + '_std']
-    a = a.reindex(np.sort(a.columns), axis=1)
-
-    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean, np.std],
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean, np.std, time_series_slope],
                                           random_state=random_seed)
     b = tran.fit_transform(X_train)
-    b = b.reindex(np.sort(b.columns), axis=1)
     np.testing.assert_array_equal(a, b)
+    np.testing.assert_array_equal(pipe.steps[0][1].intervals_, tran.intervals_)

@@ -19,15 +19,11 @@ class PlateauFinder(BaseTransformer):
     min_length : int
         Minimum lengths of segments with same value to include.
         If min_length is set to 1, the transformer can be used as a value finder.
-    check_input : bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
     """
 
-    def __init__(self, value=np.nan, min_length=2, check_input=True):
+    def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
-        self.check_input = check_input
 
         self._starts = []
         self._lengths = []
@@ -45,9 +41,8 @@ class PlateauFinder(BaseTransformer):
         """
 
         # input checks
-        if self.check_input:
-            validate_X(X)
-            check_X_is_univariate(X)
+        validate_X(X)
+        check_X_is_univariate(X)
 
         # get column name
         column_name = X.columns[0]
@@ -139,18 +134,13 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    check_input: bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
     """
 
-    def __init__(self, n_intervals='sqrt', min_length=None, features=None, random_state=None, check_input=True):
+    def __init__(self, n_intervals='sqrt', min_length=2, features=None, random_state=None):
         super(RandomIntervalFeatureExtractor, self).__init__(
             n_intervals=n_intervals,
             min_length=min_length,
             random_state=random_state,
-            check_input=check_input
         )
 
         # Check input of feature calculators, i.e list of functions to be applied to time-series
@@ -177,49 +167,51 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         Xt : pandas.DataFrame
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
-        # check inputs
-        if self.check_input:
-            # Check is fit had been called
-            check_is_fitted(self, 'intervals_')
-            validate_X(X)
+        # Check is fit had been called
+        check_is_fitted(self, 'intervals_')
+        validate_X(X)
+        check_X_is_univariate(X)
 
-            # Check that the input is of the same shape as the one passed
-            # during fit.
-            if X.shape[1] != self.input_shape_[1]:
-                raise ValueError('Number of columns of input is different from what was seen'
-                                 'in `fit`')
-            # Input validation
-            if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                                         self.input_indexes_)]):
-                raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
+        # Check that the input is of the same shape as the one passed
+        # during fit.
+        if X.shape[1] != self.input_shape_[1]:
+            raise ValueError('Number of columns of input is different from what was seen'
+                             'in `fit`')
+        # Input validation
+        # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
+        #                                                                              self._time_index)]):
+        #     raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
-        n_rows, n_cols = X.shape
+        n_rows, n_columns = X.shape
         n_features = len(self.features)
-        n_cols_intervals = sum([intervals.shape[0] for intervals in self.intervals_])
+
+        n_intervals = len(self.intervals_)
 
         # Compute features on intervals.
-        Xt = np.zeros((n_rows, n_features * n_cols_intervals))  # Allocate output array for transformed data
+        Xt = np.zeros((n_rows, n_features * n_intervals))  # Allocate output array for transformed data
         self.columns_ = []
-        i = 0
-        for c, (colname, col) in enumerate(X.items()):
-            # Tabularize each column assuming series have equal indexes in any given column.
-            # TODO generalise to non-equal-index cases
-            arr = tabularize(col, return_array=True)
-            for func in self.features:
-                # TODO generalise to series-to-series functions and function kwargs
-                for start, end in self.intervals_[c]:
-                    interval = arr[:, start:end]
+        colname = X.columns[0]
 
-                    # Try to use optimised computations over axis if possible, otherwise iterate over rows.
-                    try:
-                        Xt[:, i] = func(interval, axis=1)
-                    except TypeError as e:
-                        if str(e) == f"{func.__name__}() got an unexpected keyword argument 'axis'":
-                            Xt[:, i] = np.apply_along_axis(func, 1, interval)
-                        else:
-                            raise
-                    i += 1
-                    self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
+        # Tabularize each column assuming series have equal indexes in any given column.
+        # TODO generalise to non-equal-index cases
+        arr = tabularize(X, return_array=True)
+        i = 0
+        for func in self.features:
+            # TODO generalise to series-to-series functions and function kwargs
+            for start, end in self.intervals_:
+                interval = arr[:, start:end]
+
+                # Try to use optimised computations over axis if possible, otherwise iterate over rows.
+                try:
+                    Xt[:, i] = func(interval, axis=1)
+                except TypeError as e:
+                    if str(e) == f"{func.__name__}() got an unexpected keyword argument 'axis'":
+                        Xt[:, i] = np.apply_along_axis(func, 1, interval)
+                    else:
+                        raise
+                i += 1
+                self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
+
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
         return Xt
