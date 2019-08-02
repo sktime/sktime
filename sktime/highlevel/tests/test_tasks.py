@@ -3,10 +3,10 @@ from pytest import raises
 
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_shampoo_sales
-from sktime.highlevel import BaseTask
-from sktime.highlevel import TSCTask
-from sktime.highlevel import TSRTask
-from sktime.highlevel import ForecastingTask
+from sktime.highlevel.tasks import BaseTask
+from sktime.highlevel.tasks import TSCTask
+from sktime.highlevel.tasks import TSRTask
+from sktime.highlevel.tasks import ForecastingTask
 
 __author__ = "Markus Löning"
 

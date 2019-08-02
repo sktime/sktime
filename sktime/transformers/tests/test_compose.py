@@ -7,7 +7,7 @@ from sktime.pipeline import Pipeline
 from sktime.tests.test_pipeline import X_train, y_train, X_test, y_test
 from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
 from sktime.datasets import load_basic_motions
-from sktime.utils.transformations import tabularise
+from sktime.utils.data_container import tabularise
 
 # load data
 X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)

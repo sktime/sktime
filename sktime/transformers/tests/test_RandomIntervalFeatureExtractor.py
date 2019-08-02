@@ -1,11 +1,11 @@
-from sktime.transformers.series_to_tabular import RandomIntervalFeatureExtractor
+from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.testing import generate_df_from_array
 import pytest
 import pandas as pd
 import numpy as np
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.datasets import load_gunpoint
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sktime.transformers.segment import RandomIntervalSegmenter
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
 from sktime.pipeline import Pipeline, FeatureUnion

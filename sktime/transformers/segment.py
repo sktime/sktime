@@ -1,16 +1,11 @@
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.validation import check_random_state
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_random_state
+from sklearn.utils.validation import check_is_fitted
 
-from sktime.utils.validation import check_equal_index, check_ts_array
-from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
-
-
-__all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator',
-           'PlateauFinder']
-__author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz"]
+from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
+from sktime.utils.validation.supervised import validate_X
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -50,8 +45,7 @@ class IntervalSegmenter(BaseTransformer):
         """
 
         if self.check_input:
-            pass
-            # TODO check input is series column, not column of primitives
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -93,11 +87,13 @@ class IntervalSegmenter(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
-        # Check is fit had been called
-        check_is_fitted(self, 'intervals_')
-
         # Check inputs.
         if self.check_input:
+            # Check is fit had been called
+            check_is_fitted(self, 'intervals_')
+
+            validate_X(X)
+
             # Check that the input is of the same shape as the one passed
             # during fit.
             if (X.shape[1] if X.ndim == 2 else 1) != self.input_shape_[1]:
@@ -199,8 +195,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         """
 
         if self.check_input:
-            # TODO check input is series column, not column of primitives
-            pass
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -228,7 +223,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         Parameters
         ----------
         x : array_like, shape = [n_observations]
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------
@@ -264,7 +258,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         x : array_like, shape = [n_observations]
             Array containing the time-series index.
         n : 'sqrt', 'log', float or int
-        random_state : int, RandomState instance or None, optional (default=None)
 
         Returns
         -------
@@ -296,140 +289,3 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
         return np.column_stack([starts, ends])
-
-
-class DerivativeSlopeTransformer(BaseTransformer):
-    # TODO add docstrings
-    def transform(self, X, y=None):
-        num_cases, num_dim = X.shape
-        output_df = pd.DataFrame()
-        for dim in range(num_dim):
-            dim_data = X.iloc[:,dim]
-            out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
-            output_df['der_dim_'+str(dim)] = pd.Series(out)
-
-        return output_df
-
-    @staticmethod
-    def row_wise_get_der(X):
-
-        def get_der(x):
-            der = []
-            for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
-            return pd.Series([der[0]] + der + [der[-1]])
-
-        return [get_der(x) for x in X]
-
-
-class TimeSeriesConcatenator(BaseTransformer):
-    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
-        data by simply concatenating times series in time.
-    """
-
-    def transform(self, X, y=None):
-        """Concatenate multivariate time series/panel data into long univiariate time series/panel
-        data by simply concatenating times series in time.
-
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_samples, n_features]
-            Nested dataframe with time-series in cells.
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame with same number of rows and single column
-        """
-
-        check_is_fitted(self, 'is_fitted_')
-
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")
-
-        Xt = detabularize(tabularize(X))
-        return Xt
-
-
-class PlateauFinder(BaseTransformer):
-    """Transformer that finds segments of the same given value, plateau in the time series, and
-    returns the starting indices and lengths.
-
-    Parameters
-    ----------
-    value : {int, float, np.nan, np.inf}
-        Value for which to find segments
-    min_length : int
-        Minimum lengths of segments with same value to include.
-        If min_length is set to 1, the transformer can be used as a value finder.
-    check_input : bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
-    """
-
-    def __init__(self, value=np.nan, min_length=2, check_input=True):
-        self.value = value
-        self.min_length = min_length
-        self.check_input = check_input
-
-        self._starts = []
-        self._lengths = []
-
-    def transform(self, X, y=None):
-        """Transform X.
-        Parameters
-        ----------
-        X : nested pandas DataFrame of shape [n_samples, n_columns]
-            Nested dataframe with time-series in cells.
-        Returns
-        -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame
-        """
-
-        # input checks
-        if self.check_input:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
-
-        if X.shape[1] > 1:
-            raise NotImplementedError(f"Currently does not work on multiple columns")
-
-        # get column name
-        column_name = X.columns[0]
-
-        # find plateaus (segments of the same value)
-        for x in X.iloc[:, 0]:
-            x = np.asarray(x)
-
-            # find indices of transition
-            if np.isnan(self.value):
-                i = np.where(np.isnan(x), 1, 0)
-
-            elif np.isinf(self.value):
-                i = np.where(np.isinf(x), 1, 0)
-
-            else:
-                i = np.where(x == self.value, 1, 0)
-
-            # pad and find where segments transition
-            transitions = np.diff(np.hstack([0, i, 0]))
-
-            # compute starts, ends and lengths of the segments
-            starts = np.where(transitions == 1)[0]
-            ends = np.where(transitions == -1)[0]
-            lengths = ends - starts
-
-            # filter out single points
-            starts = starts[lengths >= self.min_length]
-            lengths = lengths[lengths >= self.min_length]
-
-            self._starts.append(starts)
-            self._lengths.append(lengths)
-
-        # put into dataframe
-        Xt = pd.DataFrame()
-        column_prefix = "%s_%s" % (column_name, "nan" if np.isnan(self.value) else str(self.value))
-        Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
-        Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
-        return Xt

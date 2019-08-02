@@ -1,3 +1,10 @@
+""" BOSS classifiers
+dictionary based BOSS classifiers based on SFA transform. Contains a single BOSS and a BOSS ensemble
+"""
+
+__author__ = "Matthew Middlehurst"
+__all__ = ["BOSSEnsemble", "BOSSIndividual", "boss_distance"]
+
 import numpy as np
 import random
 import sys
@@ -8,17 +15,15 @@ import math
 from itertools import compress
 from sklearn.base import BaseEstimator
 from sklearn.utils.multiclass import class_distribution
-from sktime.transformers.SFA import SFA
+from sktime.transformers.dictionary_based.SFA import SFA
 
-# TO DO: Change the horrible cabibilities hack
+
 # TO DO: Make more efficient
 
 
-all__ = ["BOSSEnsemble", "BOSSIndividual"]
 
 
 class BOSSEnsemble(BaseEstimator):
-    __author__ = "Matthew Middlehurst"
 
     """ Bag of SFA Symbols (BOSS)
 
@@ -65,7 +70,6 @@ class BOSSEnsemble(BaseEstimator):
     num_atts       : extracted from the data
     classifiers    : array of DecisionTree classifiers
     intervals      : stores indexes of the start and end points for all classifiers
-    dim_to_use     : the column of the panda passed to use (can be passed a multidimensional problem, but will only use one)
 
     """
 

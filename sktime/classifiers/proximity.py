@@ -42,10 +42,10 @@ from .base import BaseClassifier
 from ..distances.elastic_cython import (
     ddtw_distance, dtw_distance, erp_distance, lcss_distance, msm_distance, wddtw_distance, wdtw_distance,
     )
-from ..utils import comparison
-from ..utils import dataset_properties
-from ..utils.transformations import tabularise
-from ..utils.validation import check_X_y
+from sktime.utils import comparison
+from sktime.utils import dataset_properties
+from sktime.utils.data_container import tabularise
+from sktime.utils.validation.supervised import validate_X_y, validate_X
 
 
 def get_default_dimension():
@@ -484,7 +484,7 @@ class ProximityStump(BaseClassifier):
         """
         # checks
         if input_checks:
-            check_X_y(X, y)
+            validate_X_y(X, y)
         if callable(self.param_perm):
             self.param_perm = self.param_perm(X, self.dimension)
         if not isinstance(self.param_perm, dict):
@@ -560,7 +560,7 @@ class ProximityStump(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            validate_X(X)
         num_instances = X.shape[0]
         distances = []
         # for each instance
@@ -624,7 +624,7 @@ class ProximityStump(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            validate_X(X)
         # find distances to each exemplar for each test instance
         distances = self.exemplar_distances(X, input_checks = False)
         distances = np.array(distances)
@@ -765,7 +765,7 @@ class ProximityTree(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            validate_X(X)
         num_instances = X.shape[0]
         distributions = []
         # for each instance
@@ -855,7 +855,7 @@ class ProximityTree(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X, y)
+            validate_X_y(X, y)
         # check parameter values
         if self.max_depth < 0:
             raise ValueError('max depth cannot be less than 0')
@@ -1079,7 +1079,7 @@ class ProximityForest(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X, y)
+            validate_X_y(X, y)
         # check parameter values
         if self.num_trees < 1:
             raise ValueError('number of trees cannot be less than 1')
@@ -1136,7 +1136,7 @@ class ProximityForest(BaseClassifier):
         """
         # check data
         if input_checks:
-            check_X_y(X)
+            validate_X(X)
         # store sum of overall predictions. (majority vote)
         overall_predict_probas = np.zeros((X.shape[0], len(self.label_encoder.classes_)))
         # for each tree

@@ -1,3 +1,10 @@
+""" Time Series Forest Classifier (TSF).
+Implementation of Deng's Time Series Forest, with minor changes
+"""
+
+__author__ = "Tony Bagnall"
+__all__ = ["TimeSeriesForest"]
+
 import numpy as np
 import pandas as pd
 import math
@@ -10,10 +17,8 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe as ld
 
 
 class TimeSeriesForest(ForestClassifier):
-    __author__ = "Tony Bagnall"
 
     """ Time-Series Forest Classifier.
-
 
     TimeSeriesForest: Implementation of Deng's Time Series Forest, with minor changes
     @article

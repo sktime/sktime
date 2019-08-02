@@ -3,21 +3,30 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation import check_ts_array
 from sktime.utils.transformations import tabularize, concat_nested_arrays
-from sklearn.utils.validation import check_is_fitted
+
+from sktime.utils.validation.supervised import validate_X
 from sklearn.compose import ColumnTransformer
-from scipy import sparse
+
 import numpy as np
 import pandas as pd
+from scipy import sparse
+from sklearn.compose import ColumnTransformer as skColumnTransformer
+from sklearn.utils.validation import check_is_fitted
 
+from sktime.transformers.base import BaseTransformer
+from sktime.utils.data_container import tabularize, detabularize, get_time_index
+from sktime.utils.validation.forecasting import check_is_fitted_in_transform
 
-__all__ = ['ColumnTransformer', 'RowwiseTransformer', 'Tabularizer', 'Tabulariser']
 __author__ = ["Markus Löning", "Sajay Ganesh"]
+__all__ = ['ColumnTransformer',
+           'RowwiseTransformer',
+           'Tabularizer',
+           'Tabulariser',
+           'ColumnConcatenator']
 
 
-class ColumnTransformer(ColumnTransformer):
+class ColumnTransformer(skColumnTransformer):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
@@ -105,13 +114,13 @@ class ColumnTransformer(ColumnTransformer):
     """
 
     def __init__(
-        self,
-        transformers,
-        remainder="drop",
-        sparse_threshold=0.3,
-        n_jobs=1,
-        transformer_weights=None,
-        preserve_dataframe=True,
+            self,
+            transformers,
+            remainder="drop",
+            sparse_threshold=0.3,
+            n_jobs=1,
+            transformer_weights=None,
+            preserve_dataframe=True,
     ):
 
         self.preserve_dataframe = preserve_dataframe
@@ -149,7 +158,8 @@ class ColumnTransformer(ColumnTransformer):
         for Xs, name in zip(result, names):
             if not (getattr(Xs, 'ndim', 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy " "matrix, array, or pandas DataFrame).".format(name))
+                    "The output of the '{0}' transformer should be 2D (scipy " "matrix, array, or pandas DataFrame).".format(
+                        name))
 
 
 class RowwiseTransformer(BaseTransformer):
@@ -164,6 +174,7 @@ class RowwiseTransformer(BaseTransformer):
         An estimator that can work on a row (i.e. a univariate time-series in form of a numpy array or pandas Series.
         must support `fit` and `transform`
     """
+
     def __init__(self, transformer):
         self.transformer = transformer
 
@@ -182,11 +193,7 @@ class RowwiseTransformer(BaseTransformer):
         self : object
             Returns self.
         """
-
-        # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        validate_X(X)
 
         # fitting - this transformer needs no fitting
         self.is_fitted_ = True
@@ -208,10 +215,8 @@ class RowwiseTransformer(BaseTransformer):
             The transformed data
         """
         # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
 
+        validate_X(X)
         check_is_fitted(self, 'is_fitted_')
 
         # 1st attempt: try and exceptt, but sometimes breaks in other cases than excepted ValueError
@@ -258,7 +263,7 @@ class Tabularizer(BaseTransformer):
 
     This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
     dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard supervised learning algorithms (as in sklearn).
+    time-series/panel data into a format that is accepted by standard validation learning algorithms (as in sklearn).
 
     Parameters
     ----------
@@ -266,55 +271,89 @@ class Tabularizer(BaseTransformer):
         When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
         and no checks are performed. Use with caution.
     """
+
+    # TODO: allow to keep column names, but unclear how to handle multivariate data
+
     def __init__(self, check_input=True):
         self.check_input = check_input
 
-    def fit(self, X, y=None):
-        """
-        Empty fit function that does nothing. Kept here for consistency.
+    def transform(self, X, y=None):
+        """Transform nested pandas dataframe into tabular dataframe.
 
         Parameters
         ----------
-        X : 1D array-like, pandas Series, shape (n_samples, 1)
-            The training input samples. Shoould not be a DataFrame.
-        y : None, as it is transformer on X
+        X : pandas DataFrame
+            Nested dataframe with pandas series or numpy arrays in cells.
+        y : array-like, optional (default=None)
 
         Returns
         -------
-        self : object
-            Returns self.
+        Xt : pandas DataFrame
+            Transformed dataframe with only primitives in cells.
         """
 
-        # check the validity of input
-        # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            X = check_ts_array(X)
+            validate_X(X)
 
-        # let the model know that it is fitted
-        self.is_fitted_ = True
-        # `fit` should always return `self`
-        return self
-
-    def transform(self, X):
-        """
-        Transform nested pandas dataframe into tabular dataframe.
-
-        param X : pandas.DataFrame
-            Nested dataframe with pandas series or numpy arrays in cells.
-
-        return : pandas.DataFrame
-            Tabular dataframe with only primitives in cells.
-        """
-
-        # check the validity of input
-        check_is_fitted(self, 'is_fitted_')
-
-        # TODO check if for each column, all rows have equal-index series
-        if self.check_input:
-            X = check_ts_array(X)
+        self._columns = X.columns
+        self._index = X.index
+        self._time_index = get_time_index(X)
 
         Xt = tabularize(X)
         return Xt
 
+    def inverse_transform(self, X, y=None):
+        """Transform tabular pandas dataframe into nested dataframe.
+
+        Parameters
+        ----------
+        X : pandas DataFrame
+            Tabular dataframe with primitives in cells.
+        y : array-like, optional (default=None)
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+            Transformed dataframe with series in cells.
+        """
+
+        check_is_fitted_in_transform(self, '_time_index')
+
+        # TODO check if for each column, all rows have equal-index series
+        if self.check_input:
+            validate_X(X)
+
+        Xit = detabularize(X, index=self._index, time_index=self._time_index)
+        return Xit
+
 
 Tabulariser = Tabularizer
+
+
+class ColumnConcatenator(BaseTransformer):
+    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
+        data by simply concatenating times series in time.
+    """
+
+    def transform(self, X, y=None):
+        """Concatenate multivariate time series/panel data into long univiariate time series/panel
+        data by simply concatenating times series in time.
+
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_samples, n_features]
+            Nested dataframe with time-series in cells.
+
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame with same number of rows and single column
+        """
+
+        check_is_fitted(self, 'is_fitted_')
+
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")
+
+        Xt = detabularize(tabularize(X))
+        return Xt
