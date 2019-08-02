@@ -1,5 +1,5 @@
 import numpy as np
-from sktime.utils.validation import check_consistent_time_indices, validate_time_index
+from sktime.utils.validation.forecasting import check_consistent_time_indices, validate_time_index
 
 __author__ = ['Markus Löning']
 __all__ = ["mase_loss", "smape_loss"]

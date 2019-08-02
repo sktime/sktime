@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.utils.validation import check_is_fitted
 
-from sktime.utils.validation import validate_fh
+from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.time_series import RollingWindowSplit
 from sktime.forecasters.base import BaseForecaster
 

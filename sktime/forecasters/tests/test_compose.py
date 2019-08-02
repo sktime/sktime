@@ -7,7 +7,7 @@ from sktime.forecasters import ARIMAForecaster
 from sktime.forecasters.compose import TransformedTargetForecaster, ReducedRegressionForecaster
 from sktime.transformers.series_to_series import Detrender, Deseasonaliser
 from sktime.datasets import load_shampoo_sales
-from sktime.utils.validation import check_consistent_time_indices
+from sktime.utils.validation.forecasting import check_consistent_time_indices
 from sktime.pipeline import Pipeline
 from sktime.transformers.series_to_series import Tabulariser
 

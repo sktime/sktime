@@ -1,3 +1,13 @@
+"""Meta Transformers module
+
+This module has meta-transformers that is build using the pre-existing
+transformers as building blocks.
+"""
+
+from sktime.utils.validation.supervised import validate_X
+from sktime.utils.transformations import tabularize
+from sklearn.compose import ColumnTransformer
+
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -6,7 +16,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
-from sktime.utils.validation import check_ts_array, check_is_fitted_in_transform
+from sktime.utils.validation.forecasting import check_is_fitted_in_transform
 
 __all__ = ['ColumnTransformer',
            'RowwiseTransformer',
@@ -182,11 +192,7 @@ class RowwiseTransformer(BaseTransformer):
         self : object
             Returns self.
         """
-
-        # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        validate_X(X)
 
         # fitting - this transformer needs no fitting
         self.is_fitted_ = True
@@ -208,9 +214,7 @@ class RowwiseTransformer(BaseTransformer):
             The transformed data
         """
         # check the validity of input
-        X = check_ts_array(X)
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        validate_X(X)
         check_is_fitted(self, 'is_fitted_')
 
         # Works on single column, but on multiple columns only if columns have equal-length series.
@@ -235,7 +239,7 @@ class Tabularizer(BaseTransformer):
 
     This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
     dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard supervised learning algorithms (as in sklearn).
+    time-series/panel data into a format that is accepted by standard validation learning algorithms (as in sklearn).
 
     Parameters
     ----------
@@ -265,7 +269,7 @@ class Tabularizer(BaseTransformer):
         """
 
         if self.check_input:
-            X = check_ts_array(X)
+            validate_X(X)
 
         self._columns = X.columns
         self._index = X.index
@@ -291,6 +295,9 @@ class Tabularizer(BaseTransformer):
 
         check_is_fitted_in_transform(self, '_time_index')
 
+        # TODO check if for each column, all rows have equal-index series
+        if self.check_input:
+            validate_X(X)
 
         Xit = detabularize(X, index=self._index, time_index=self._time_index)
         return Xit

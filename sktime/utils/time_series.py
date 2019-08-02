@@ -1,8 +1,7 @@
 import numpy as np
-import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.utils.validation import validate_fh, validate_time_index
+from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 
 def time_series_slope(y, axis=0):

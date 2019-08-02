@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 
-from ..utils.validation import validate_fh
+from sktime.utils.validation.forecasting import validate_fh
 
 
 class BaseTask:

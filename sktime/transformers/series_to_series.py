@@ -4,13 +4,15 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import check_random_state
 from statsmodels.tsa.seasonal import seasonal_decompose
 
+from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.transformations import tabularize, concat_nested_arrays
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import get_time_index
 from sktime.utils.data_container import tabularize, concat_nested_arrays
 from sktime.utils.time_series import fit_trend, remove_trend, add_trend
-from sktime.utils.validation import check_equal_index, check_ts_array
-from sktime.utils.validation import validate_sp, check_is_fitted_in_transform
+from sktime.utils.data_container import check_equal_index
+from sktime.utils.validation.forecasting import validate_sp, check_is_fitted_in_transform
 
 __all__ = ['RandomIntervalSegmenter',
            'IntervalSegmenter',
@@ -60,8 +62,7 @@ class IntervalSegmenter(BaseTransformer):
         """
 
         if self.check_input:
-            pass
-            # TODO check input is series column, not column of primitives
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -103,11 +104,13 @@ class IntervalSegmenter(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
-        # Check is fit had been called
-        check_is_fitted(self, 'intervals_')
-
         # Check inputs.
         if self.check_input:
+            # Check is fit had been called
+            check_is_fitted(self, 'intervals_')
+
+            validate_X(X)
+
             # Check that the input is of the same shape as the one passed
             # during fit.
             if (X.shape[1] if X.ndim == 2 else 1) != self.input_shape_[1]:
@@ -209,8 +212,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         """
 
         if self.check_input:
-            # TODO check input is series column, not column of primitives
-            pass
+            validate_X(X)
 
         self.input_shape_ = X.shape
 
@@ -476,7 +478,7 @@ class Deseasonaliser(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
         if self.check_input:
-            check_ts_array(X)
+            validate_X(X)
             if X.shape[1] > 1:
                 raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                           f"instead")
@@ -493,6 +495,9 @@ class Deseasonaliser(BaseTransformer):
         # convert into tabular format
         tabulariser = Tabulariser()
         Xs = tabulariser.transform(X.iloc[:, :1])
+
+        check_is_fitted(self, 'is_fitted_')
+        validate_X(X)
 
         # fit seasonal decomposition model
         seasonal_components = self._fit_seasonal_decomposition_model(Xs)
@@ -527,9 +532,8 @@ class Deseasonaliser(BaseTransformer):
         """
 
         if self.check_input:
-            check_ts_array(X)
-            if X.shape[1] > 1:
-                raise NotImplementedError(f"Currently does not work on multiple columns")
+            validate_X(X)
+            check_X_is_univariate(X)
 
         # check that number of samples are the same, inverse transform depends on parameters fitted in transform and
         # hence only works on data with the same (number of) rows
@@ -638,11 +642,8 @@ class PlateauFinder(BaseTransformer):
 
         # input checks
         if self.check_input:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
-
-        if X.shape[1] > 1:
-            raise NotImplementedError(f"Currently does not work on multiple columns")
+            validate_X(X)
+            check_X_is_univariate(X)
 
         # get column name
         column_name = X.columns[0]

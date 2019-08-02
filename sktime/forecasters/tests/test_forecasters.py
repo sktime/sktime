@@ -8,7 +8,7 @@ from sktime.forecasters import DummyForecaster
 from sktime.forecasters import ExpSmoothingForecaster
 from sktime.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
-from sktime.utils.validation import validate_fh
+from sktime.utils.validation.forecasting import validate_fh
 
 __author__ = "Markus Löning"
 

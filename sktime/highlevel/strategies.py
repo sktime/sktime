@@ -11,14 +11,17 @@ from sklearn.base import BaseEstimator
 from sklearn.base import _pprint
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
 
+from sktime.utils.transformations import RollingWindowSplit
+from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.time_series import RollingWindowSplit
 from sktime.classifiers.base import BaseClassifier
 from sktime.forecasters.base import BaseForecaster
 from sktime.regressors.base import BaseRegressor
-from sktime.utils.validation import validate_fh
+
 
 __all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy", "Forecasting2TSRReductionStrategy"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']

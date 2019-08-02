@@ -8,7 +8,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sktime.forecasters.base import BaseForecaster
 from sktime.forecasters.base import BaseSingleSeriesForecaster
 from sktime.forecasters.base import BaseUpdateableForecaster
-from sktime.utils.validation import validate_sp, validate_fh
+from sktime.utils.validation.forecasting import validate_sp, validate_fh
 
 __all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster"]
 __author__ = ['Markus Löning']
