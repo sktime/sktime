@@ -7,10 +7,12 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
+from sktime.contrib.distance_based import proximity
 from sktime.transformers.series_to_series import DerivativeSlopeTransformer
 from scipy import spatial
+from sktime.utils.data_container import tabularise
+
 from sktime.transformers.base import BaseTransformer
-from sktime.classifiers import proximity
 from sktime.classifiers.base import BaseClassifier
 from sktime.classifiers.proximity import dtw_distance_measure_getter, wdtw_distance_measure_getter, \
     msm_distance_measure_getter, lcss_distance_measure_getter, erp_distance_measure_getter, twe_distance_measure_getter, \
@@ -18,9 +20,24 @@ from sktime.classifiers.proximity import dtw_distance_measure_getter, wdtw_dista
 from sktime.distances.elastic_cython import wdtw_distance, ddtw_distance, wddtw_distance, msm_distance, lcss_distance, \
     erp_distance, dtw_distance, twe_distance
 from sktime.pipeline import Pipeline
-from sktime.transformers.pandas_to_numpy import PandasToNumpy
 import pandas as pd
 from scipy.linalg import norm
+
+
+class PandasToNumpy(BaseTransformer):
+
+    def __init__(self,
+                 cls = None,
+                 unpack_train = True,
+                 unpack_test = True):
+        self.cls = cls
+        self.unpack_train = unpack_train
+        self.unpack_test = unpack_test
+
+    def transform(self, X, y=None):
+        if self.unpack_train and isinstance(X, pd.DataFrame): X = tabularise(X, return_array=True)
+        return X
+
 
 def unpack_series_row(ts):
     if isinstance(ts, pd.Series): ts = ts.values
