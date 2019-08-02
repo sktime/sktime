@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
-
+from abc import ABC
+from abc import abstractmethod
 import numpy as np
 from sklearn.metrics import accuracy_score, mean_squared_error
 

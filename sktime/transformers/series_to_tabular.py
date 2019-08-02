@@ -1,5 +1,5 @@
 from ..utils.validation import check_equal_index
-from ..utils.transformations import tabularize
+from sktime.utils.data_container import tabularize
 from .series_to_series import RandomIntervalSegmenter
 from sklearn.utils.validation import check_is_fitted
 import numpy as np

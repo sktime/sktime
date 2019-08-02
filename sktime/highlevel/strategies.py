@@ -1,34 +1,26 @@
 """
-Unified high-level interface for various time series related learning tasks.
+Unified high-level interface for various time series related learning strategies.
 """
 
 import numpy as np
 import pandas as pd
-import os
 import pickle
-from sklearn.base import _pprint
+import os
+from sklearn.base import clone
 from sklearn.base import BaseEstimator
+from sklearn.base import _pprint
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
-from sklearn.base import clone
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from inspect import signature
 
-from .classifiers.base import BaseClassifier
-from .forecasters.base import BaseForecaster
-from .regressors.base import BaseRegressor
-from sktime.utils.transformations import RollingWindowSplit
-from .utils.validation import validate_fh
+from sktime.utils.time_series import RollingWindowSplit
+from sktime.classifiers.base import BaseClassifier
+from sktime.forecasters.base import BaseForecaster
+from sktime.regressors.base import BaseRegressor
+from sktime.utils.validation import validate_fh
 
-__all__ = ['TSCTask',
-           'TSRTask',
-           'ForecastingTask',
-           'TSCStrategy',
-           'TSRStrategy',
-           'ForecastingStrategy',
-           'Forecasting2TSRReductionStrategy']
+__all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy", "Forecasting2TSRReductionStrategy"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 
@@ -41,249 +33,7 @@ ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 CASES = ("TSR", "TSC", "Forecasting")
 
 
-class BaseTask:
-    """
-    Abstract base task class.
-
-    A task encapsulates metadata information such as the feature and
-    target variable which to fit the data to and additional necessary
-    instructions on how to fit and predict.
-
-    Implements attributes and operations shared by all tasks,
-    including compatibility checks between the concrete task type and
-    passed metadata.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal, (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        # TODO input checks on target and feature args
-        self._target = target
-        self._features = features if features is None else pd.Index(features)
-
-        self._metadata = None  # initialised as None, properly updated through setter method below
-        if metadata is not None:
-            self.set_metadata(metadata)  # using the modified setter method below
-
-    @property
-    def target(self):
-        """
-        Make attributes read-only.
-        """
-        return self._target
-
-    @property
-    def features(self):
-        """
-        Make attributes read-only.
-        """
-        return self._features
-
-    @property
-    def metadata(self):
-        """
-        Make attributes read-only.
-        """
-        # TODO if metadata is a mutable object itself, its contents may still be mutable
-        return self._metadata
-
-    def set_metadata(self, metadata):
-        """
-        Provide missing metadata information to task if not already set.
-
-        This method is especially useful in orchestration where metadata may not be
-        available when specifying the task.
-
-        Parameters
-        ----------
-        metadata : pandas.DataFrame
-            Metadata container
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        # TODO replace whole pandas data container as input argument with separated metadata container
-
-        # only set metadata if metadata is not already set, otherwise raise error
-        if self._metadata is not None:
-            raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
-                                 'metadata')
-
-        # check for consistency of information provided in task with given metadata
-        self.check_data_compatibility(metadata)
-
-        # set default feature information (all columns but target) using metadata
-        if self.features is None:
-            self._features = metadata.columns.drop(self.target)
-
-        # set metadata
-        self._metadata = {
-            "nrow": metadata.shape[0],
-            "ncol": metadata.shape[1],
-            "target_type": {self.target: type(i) for i in metadata[self.target]},
-            "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
-        }
-        return self
-
-    def check_data_compatibility(self, metadata):
-        """
-        Check compatibility of task with passed metadata.
-
-        Parameters
-        ----------
-        metadata : pandas.DataFrame
-            Metadata container
-        """
-        if not isinstance(metadata, pd.DataFrame):
-            raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found: {type(metadata)}')
-
-        if self.target not in metadata.columns:
-            raise ValueError(f"Target: {self.target} not found in metadata")
-
-        if self.features is not None:
-            if not np.all(self.features.isin(metadata.columns)):
-                raise ValueError(f"Features: {list(self.features)} not found in metadata")
-
-        if isinstance(self, (TSCTask, TSRTask)):
-            if self.features is None:
-                if len(metadata.columns.drop(self.target)) == 0:
-                    raise ValueError(f"For task of type: {type(self)}, at least one feature must be given, "
-                                     f"but found none")
-
-            if metadata.shape[0] <= 1:
-                raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
-                                 f"found: {metadata.shape[0]} samples")
-
-        if isinstance(self, ForecastingTask):
-            if metadata.shape[0] > 1:
-                raise ValueError(f"For task of type: {type(self)}, only a single sample (row) can be given, but found: "
-                                 f"{metadata.shape[0]} rows")
-
-    @classmethod
-    def _get_param_names(cls):
-        """Get parameter names for the task"""
-        # fetch the constructor or the original constructor before
-        # deprecation wrapping if any
-        init = getattr(cls.__init__, 'deprecated_original', cls.__init__)
-        if init is object.__init__:
-            # No explicit constructor to introspect
-            return []
-
-        # introspect the constructor arguments to find the model parameters
-        # to represent
-        init_signature = signature(init)
-        # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
-
-        # Extract and sort argument names excluding 'self'
-        return sorted([p.name for p in parameters])
-
-    def _get_params(self):
-        """Get parameters of the task.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        out = {key: getattr(self, key, None) for key in self._get_param_names()}
-        return out
-
-    def __repr__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self._get_params(), offset=len(class_name), ),)
-
-
-class TSCTask(BaseTask):
-    """
-    Time series classification task.
-
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
-    to fit and predict.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
-
-
-class TSRTask(BaseTask):
-    """
-    Time series regression task.
-
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
-    to fit and predict.
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    """
-
-    def __init__(self, target, features=None, metadata=None):
-        self._case = 'TSR'
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
-
-
-class ForecastingTask(BaseTask):
-    """
-    Time series forecasting task.
-
-    A task encapsulates metadata information such as the feature and target
-    variable which to fit the data to and additional necessary instructions on how to fit and predict.
-
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optional, (default=None)
-        The column name(s) for the exogenous feature variable. If None, every column apart from target will be used as
-        a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
-    """
-
-    def __init__(self, target, fh=None, features=None, metadata=None):
-        self._case = "Forecasting"
-        self._fh = validate_fh(fh)
-        super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
-
-    @property
-    def fh(self):
-        """
-        Makes attribute read-only.
-        """
-        return self._fh
-
-
-class BaseStrategy:
+class BaseStrategy(BaseEstimator):
     """
     Abstract base strategy class.
 
@@ -296,17 +46,21 @@ class BaseStrategy:
         self._check_estimator_compatibility(estimator)
 
         self._estimator = estimator
-
         self._name = estimator.__class__.__name__ if name is None else name
         self.check_input = check_input
         self._task = None
 
     @property
     def name(self):
-        """
-        Makes attribute read-only.
+        """Makes attribute accessible, but read-only.
         """
         return self._name
+
+    @property
+    def estimator(self):
+        """Makes attribute accessible, but read-only.
+        """
+        return self._estimator
 
     def __getitem__(self, key):
         """
@@ -407,23 +161,6 @@ class BaseStrategy:
         # if not isinstance(s, (np.ndarray, pd.Series)):
         #     raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
 
-    def get_params(self, deep=True):
-        """
-        Call get_params of the estimator. Retrieves hyper-parameters.
-
-        Returns
-        -------
-        params : dict
-            Dictionary with parameter names and values of estimator.
-        """
-        return self._estimator.get_params(deep=deep)
-
-    def set_params(self, **params):
-        """
-        Call set_params of the estimator. Sets hyper-parameters.
-        """
-        self._estimator.set_params(**params)
-
     def save(self, dataset_name, cv_fold, strategies_save_dir):
         """
         Saves the strategy on the hard drive
@@ -446,7 +183,7 @@ class BaseStrategy:
             os.makedirs(save_path)
 
         # TODO pickling will not work for all strategies
-        pickle.dump(self, open(os.path.join(save_path, self._name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
+        pickle.dump(self, open(os.path.join(save_path, self.name + '_cv_fold' + str(cv_fold) + '.p'), "wb"))
 
     def load(self, path):
         """
@@ -465,7 +202,7 @@ class BaseStrategy:
 
     def __repr__(self):
         strategy_name = self.__class__.__name__
-        estimator_name = self._estimator.__class__.__name__
+        estimator_name = self.estimator.__class__.__name__
         return '%s(%s(%s))' % (strategy_name, estimator_name,
                                _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
 
@@ -496,7 +233,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         y = data[self._task.target]
 
         # fit the estimator
-        return self._estimator.fit(X, y)
+        return self.estimator.fit(X, y)
 
     def predict(self, data):
         """
@@ -518,7 +255,7 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         X = data[self._task.features]
 
         # predict
-        return self._estimator.predict(X)
+        return self.estimator.predict(X)
 
 
 class TSCStrategy(BaseSupervisedLearningStrategy):
@@ -565,7 +302,7 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
 
 class ForecastingStrategy(BaseStrategy):
     """
-    Strategy for time series forecasting.
+    Strategy for time series forecasters.
 
     Parameters
     ----------
@@ -598,6 +335,8 @@ class ForecastingStrategy(BaseStrategy):
         """
 
         y = data[self._task.target]
+        fh = self._task.fh
+
         if len(self._task.features) > 0:
             X = data[self._task.features]
             kwargs = {'X': X}
@@ -605,7 +344,7 @@ class ForecastingStrategy(BaseStrategy):
             kwargs = {}
 
         # fit the estimator
-        return self._estimator.fit(y, **kwargs)
+        return self.estimator.fit(y, fh=fh, **kwargs)
 
     def update(self, data):
         """
@@ -624,7 +363,7 @@ class ForecastingStrategy(BaseStrategy):
         if self.check_input:
             self._task.check_data_compatibility(data)
 
-        if hasattr(self._estimator, 'update'):
+        if hasattr(self.estimator, 'update'):
             try:
                 y = data[self._task.target]
                 if len(self._task.features) > 0:
@@ -634,9 +373,9 @@ class ForecastingStrategy(BaseStrategy):
                     kwargs = {}
             except KeyError:
                 raise ValueError("Task <-> data mismatch. The target/features are not in the data")
-            self._estimator.update(y, **kwargs)
+            self.estimator.update(y, **kwargs)
         else:
-            raise NotImplementedError(f"Supplied low-level estimator: {self._estimator} does not implement update "
+            raise NotImplementedError(f"Supplied low-level estimator: {self.estimator} does not implement update "
                                       f"method.")
 
         return self
@@ -671,14 +410,14 @@ class ForecastingStrategy(BaseStrategy):
         else:
             kwargs = {}
 
-        return self._estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
+        return self.estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
 
 
 class Forecasting2TSRReductionStrategy(BaseStrategy):
     """
     Forecasting to time series regression reduction strategy.
 
-    Strategy to reduce a forecasting problem to a time series regression
+    Strategy to reduce a forecasters problem to a time series regression
     problem using a rolling window approach
 
     Parameters
@@ -687,20 +426,24 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         Time series regressor.
     window_length : int, optional (default=None)
         Window length of rolling window approach.
+    dynamic : bool, optional (default=False)
+        - If True, estimator is fitted for one-step ahead forecasts and only one-step ahead forecasts are made using
+        extending the last window of the training data with already made forecasts.
+        - If False, one estimator is fitted for each step-ahead forecast and only the last window is used for making
+        forecasts.
     name : str, optional (default=None)
     check_input : bool, optional (default=True)
         - If True, input are checked.
         - If False, input are not checked and assumed correct. Use with caution.
     """
-    def __init__(self, estimator, window_length=None, name=None, check_input=True):
+    def __init__(self, estimator, window_length=None, dynamic=False, name=None, check_input=True):
         self._case = "Forecasting"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
         super(Forecasting2TSRReductionStrategy, self).__init__(estimator, name=name, check_input=check_input)
 
         # TODO what's a good default for window length? sqrt(len(data))?
         self.window_length = window_length
-        self.estimators = []
-        self.estimators_ = []
+        self.dynamic = dynamic
 
     def _fit(self, data):
         """
@@ -724,9 +467,12 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
             raise NotImplementedError()
 
         # Set up window roller
-        fh = self._task.fh
-        rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
-        self.rw = rw
+        # For dynamic prediction, models are only trained on one-step ahead forecast
+        fh = 1 if self.dynamic else self._task.fh
+        fh = validate_fh(fh)
+        n_fh = len(fh)
+
+        self.rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
 
         # Unnest target series
         yt = y.iloc[0]
@@ -735,7 +481,7 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         # Transform target series into tabular format using rolling window splits
         xs = []
         ys = []
-        for feature_window, target_window in rw.split(index):
+        for feature_window, target_window in self.rw.split(index):
             x = yt[feature_window]
             y = yt[target_window]
             xs.append(x)
@@ -743,20 +489,34 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
 
         # Construct nested pandas DataFrame for X
         X = pd.DataFrame(pd.Series([x for x in np.array(xs)]))
-        Y = np.array(ys)
+        Y = np.array([np.array(y) for y in ys])
 
-        # Clone estimators, one for each step in the forecasting horizon
-        n_steps = len(fh)
-        self.estimators = [clone(self._estimator) for _ in range(n_steps)]
-
-        # Iterate over estimators/forecast horizon
-        for estimator, y in zip(self.estimators, Y.T):
-            y = pd.Series(y)
+        # Fitting
+        if self.dynamic:
+            # Fit estimator for one-step ahead forecast
+            y = Y.ravel()  # convert into one-dimensional array
+            estimator = clone(self.estimator)
             estimator.fit(X, y)
-            self.estimators_.append(estimator)
+            self.estimator_ = estimator
+
+        else:
+            # Fit one estimator for each step-ahead forecast
+            self.estimators = []
+            self.estimators_ = []
+
+            n_fh = len(fh)
+
+            # Clone estimators
+            self.estimators = [clone(self.estimator) for _ in range(n_fh)]
+
+            # Iterate over estimators/forecast horizon
+            for estimator, y in zip(self.estimators, Y.T):
+                y = pd.Series(y)
+                estimator.fit(X, y)
+                self.estimators_.append(estimator)
 
         # Save the last window-length number of observations for predicting
-        self.window_length_ = rw.get_window_length()
+        self.window_length_ = self.rw.get_window_length()
         self._last_window = yt.iloc[-self.window_length_:]
 
         return self
@@ -779,22 +539,38 @@ class Forecasting2TSRReductionStrategy(BaseStrategy):
         y_pred : pandas.Series
             Series of predicted values.
         """
-
-        fh = self._task.fh
-
         if data is not None:
             # TODO handle exog data
             raise NotImplementedError()
 
-        # Predict using last window (single row) and fitted estimators
-        x = pd.DataFrame(pd.Series([self._last_window]))
+        # get forecasting horizon
+        fh = self._task.fh
+        n_fh = len(fh)
+
+        # use last window as test data for prediction
+        x_test = pd.DataFrame(pd.Series([self._last_window]))
         y_pred = np.zeros(len(fh))
 
-        # Iterate over estimators/forecast horizon
-        for i, estimator in enumerate(self.estimators_):
-            y_pred[i] = estimator.predict(x)
+        # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
+        # only the last window and using one fitted estimator for each step ahead forecast
+        if self.dynamic:
+            # Roll/extend last window using previous one-step ahead forecasts
+            for i in range(n_fh):
+                y_pred[i] = self.estimator_.predict(x_test)
 
-        # Add name and predicted index
+                # append prediction to last window and update x
+                x_test = np.append(x_test.iloc[0, 0].values, y_pred[i])[-self.window_length_:]
+
+                # put data into required format
+                x_test = pd.DataFrame(pd.Series([pd.Series(x_test)]))
+
+        else:
+            # Iterate over estimators/forecast horizon
+            for i, estimator in enumerate(self.estimators_):
+                y_pred[i] = estimator.predict(x_test)
+
+        # Add name and forecast index
         index = self._last_window.index[-1] + fh
         name = self._last_window.name
+
         return pd.Series(y_pred, name=name, index=index)

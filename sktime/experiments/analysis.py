@@ -1,12 +1,8 @@
 import itertools
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import scikit_posthocs as sp
 from scipy import stats
 from scipy.stats import ranksums
-from scipy.stats import ttest_ind
+import scikit_posthocs as sp
+import matplotlib.pyplot as plt
 
 from .losses import Losses
 
