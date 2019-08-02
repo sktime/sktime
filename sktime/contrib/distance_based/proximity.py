@@ -48,7 +48,7 @@ from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_dis
 from sktime.classifiers.base import BaseClassifier
 from sktime.transformers.series_to_series import CachedTransformer, DerivativeSlopeTransformer
 from sktime.utils import comparison, dataset_properties
-from sktime.utils.transformations import tabularise
+from sktime.utils.data_container import tabularise
 
 
 def _derivative_distance(distance_measure, transformer):

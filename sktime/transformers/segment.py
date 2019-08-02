@@ -7,7 +7,7 @@ from sktime.utils.data_container import check_equal_index, tabularize, concat_ne
 from sktime.utils.validation.supervised import validate_X
 
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.transformations import tabularize, detabularize, concat_nested_arrays
+from sktime.utils.data_container import tabularize, detabularize, concat_nested_arrays
 
 __author__ = ["Markus Löning", "Jason Lines", "Piotr Oleśkiewicz", "George Oastler"]
 __all__ = ['RandomIntervalSegmenter', 'IntervalSegmenter', 'DerivativeSlopeTransformer', 'TimeSeriesConcatenator', 'CachedTransformer']
