@@ -216,7 +216,8 @@ class RowwiseTransformer(BaseTransformer):
         validate_X(X)
         check_is_fitted(self, 'is_fitted_')
 
-        # 1st attempt: try and exceptt, but sometimes breaks in other cases than excepted ValueError
+        # 1st attempt: apply, relatively fast but not robust
+        # try and except, but sometimes breaks in other cases than excepted ValueError
         # Works on single column, but on multiple columns only if columns have equal-length series.
         # try:
         #     Xt = X.apply(self.transformer.fit_transform)
@@ -228,28 +229,31 @@ class RowwiseTransformer(BaseTransformer):
         #     else:
         #         raise
 
-        # 2nd attempt: always iterate over columns, but column is not 2d and thus breaks if transformer expects 2d input
-        # Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform))
-        #                 for _, col in X.items()], axis=1)
+        # 2nd attempt: apply but iterate over columns, still relatively fast but still not very robust
+        # but column is not 2d and thus breaks if transformer expects 2d input
+        try:
+            Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform))
+                            for _, col in X.items()], axis=1)
 
-        # 3rd attempt: explicit for-loops, most robust but slow
-        cols_t = []
-        for c in range(X.shape[1]):  # loop over columns
-            col = X.iloc[:, c]
-            rows_t = []
-            for row in col:  # loop over rows in each column
-                row_2d = pd.DataFrame(row)  # convert into 2d dataframe
-                row_t = self.transformer.fit_transform(row_2d)  # apply transform
-                rows_t.append(row_t)  # append transformed rows
-            cols_t.append(rows_t)  # append transformed columns
+        # 3rd attempt: explicit for-loops, most robust but very slow
+        except:
+            cols_t = []
+            for c in range(X.shape[1]):  # loop over columns
+                col = X.iloc[:, c]
+                rows_t = []
+                for row in col:  # loop over rows in each column
+                    row_2d = pd.DataFrame(row)  # convert into 2d dataframe
+                    row_t = self.transformer.fit_transform(row_2d).ravel()  # apply transform
+                    rows_t.append(row_t)  # append transformed rows
+                cols_t.append(rows_t)  # append transformed columns
 
-        # if series-to-series transform, flatten transformed series
-        Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
+            # if series-to-series transform, flatten transformed series
+            Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
 
-        # tabularise/unnest series-to-primitive transforms
-        xt = Xt.iloc[0, 0]
-        if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
-            Xt = tabularize(Xt)
+            # tabularise/unnest series-to-primitive transforms
+            xt = Xt.iloc[0, 0]
+            if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
+                Xt = tabularize(Xt)
         return Xt
 
 
