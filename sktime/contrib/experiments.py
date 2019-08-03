@@ -17,7 +17,7 @@ import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
 import sktime.classifiers.distance_based.elastic_ensemble as dist
-#from sktime.classifiers.proximity import ProximityForest
+import sktime.contrib.distance_based.proximity as pf
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -131,8 +131,8 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-#    if cls.lower() == 'pf':
-#        return ProximityForest(rand = resampleId)
+    if cls.lower() == 'pf':
+        return pf.ProximityForest(random_state = resampleId)
     if cls == 'RISE' or cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls == 'TSF' or cls == 'tsf':
@@ -327,11 +327,11 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-        data_dir = "/scratch/datasets/"
-        results_dir = "/scratch/results"
+#        data_dir = "/scratch/datasets/"
+#        results_dir = "/scratch/results"
         data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "BOSS"
+        classifier = "PF"
         resample = 0
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]

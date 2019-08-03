@@ -47,6 +47,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
     min_interval    : int, minimum width of an interval, optional (default = 16)
     acf_lag         : int, maximum number of autocorellation terms to use (default =100)
     acf_min_values  : int, never use fewer than this number of terms to fnd a correlation (default =4)
+
     Attributes
     ----------
     n_classes    : int, extracted from the data
