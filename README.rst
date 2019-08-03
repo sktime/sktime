@@ -98,8 +98,8 @@ Former and current active contributors are as follows.
 
 Project management: Jason Lines (@jasonlines), Franz Király (@fkiraly)
 
-Design: Anthony Bagnall(@TonyBagnall), Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz Király (@fkiraly), Markus Löning (@mloning)
+Design: Anthony Bagnall (@TonyBagnall), Sajaysurya Ganesh (@sajaysurya), Jason Lines (@jasonlines), Viktor Kazakov (@viktorkaz), Franz Király (@fkiraly), Markus Löning (@mloning)
 
-Coding: Sajaysurya Ganesh (@sajaysurya), Bagnall (@TonyBagnall), Jason Lines (@jasonlines), George Oastler (@goastler), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
+Coding: Sajaysurya Ganesh (@sajaysurya), Anthony Bagnall (@TonyBagnall), Jason Lines (@jasonlines), George Oastler (@goastler), Viktor Kazakov (@viktorkaz), Markus Löning (@mloning)
 
 We are actively looking for contributors. Please contact @fkiraly or @jasonlines for volunteering or information on paid opportunities, or simply raise an issue in the tracker.
