@@ -12,6 +12,7 @@ from sktime.experiments.analysis import AnalyseResults
 from sktime.experiments.scores import ScoreAccuracy
 from sktime.classifiers.proximity import ProximityForest 
 
+
 def test_orchestration():
     data = load_gunpoint()
 
@@ -114,5 +115,3 @@ def test_stat():
     np.testing.assert_equal([rank_array, sign_array],[rank_array_test,sign_array_test])
 
 
-if __name__ == '__main__':
-    test_stat()

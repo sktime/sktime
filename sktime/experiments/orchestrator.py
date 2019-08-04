@@ -1,3 +1,8 @@
+
+__all__ = ['Orchestrator']
+__author__ = ['Viktor Kazakov']
+
+
 class Orchestrator:
     """
     Orchestrates the sequencing of running the machine learning experiments.

@@ -8,7 +8,8 @@ import pandas as pd
 from ..utils.load_data import load_from_tsfile_to_dataframe
 from ..utils.results_writing import write_results_to_uea_format
 
-
+__all__ =['DatasetHDD','DatasetRAM','DatasetLoadFromDir','Result','ResultRAM','ResultHDD']
+__author__ = ['Viktor Kazakov']
 class DatasetHDD:
     """
     Another class for holding the data
