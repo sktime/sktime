@@ -338,7 +338,7 @@ if __name__ == "__main__":
         data_dir = "Z:/sktimeData/Univariate2018_ts/"
         results_dir = "Z:/Results/sktime Bakeoff/"
 
-        classifier = "PF"
+        classifier = "RISE"
         resample = 0
         for i in range(0, len(datasets)):
             dataset = datasets[i]
