@@ -1,4 +1,4 @@
-from sktime.transformers.series_to_series import TimeSeriesConcatenator
+from sktime.transformers.compose import ColumnConcatenator
 from sktime.datasets import load_basic_motions
 import numpy as np
 
@@ -10,7 +10,7 @@ def test_TimeSeriesConcatenator():
     # check that loaded dataframe is multivariate
     assert X.shape[1] > 1
 
-    trans = TimeSeriesConcatenator()
+    trans = ColumnConcatenator()
 
     Xt = trans.fit_transform(X)
 

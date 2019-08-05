@@ -2,8 +2,7 @@ from pytest import raises
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal
-from sktime.utils.validation import validate_fh
-
+from sktime.utils.validation.forecasting import validate_fh
 
 __author__ = ["Markus Löning"]
 

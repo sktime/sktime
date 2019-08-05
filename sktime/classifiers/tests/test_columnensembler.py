@@ -6,24 +6,24 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import FunctionTransformer
 
 from sktime.pipeline import FeatureUnion, Pipeline
-from sktime.transformers.series_to_series import RandomIntervalSegmenter
+from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
-from sktime.datasets.base import _load_dataset
+from sktime.datasets import load_basic_motions
 from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
-from sktime.classifiers.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
+from sktime.classifiers.compose.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
 
 
-def test_univariate_column_ensembler():
+def test_univariate_column_ensembler_init():
     ct = ColumnEnsembleClassifier(
         [("KNN1", KNNTSC(n_neighbors=1), [1]),
          ("KNN2", KNNTSC(n_neighbors=1), [2])]
     )
 
 
-def test_simple_column_ensembler():
-    X_train, y_train = _load_dataset("JapaneseVowels", "TRAIN", True)
-    X_test, y_test = _load_dataset("JapaneseVowels", "TEST", True)
+def test_homogeneous_column_ensembler():
+    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
+    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
 
     cts = HomogeneousColumnEnsembleClassifier(KNNTSC(n_neighbors=1))
 
@@ -32,8 +32,8 @@ def test_simple_column_ensembler():
 
 
 def test_homogeneous_pipeline_column_ensmbler():
-    X_train, y_train = _load_dataset("JapaneseVowels", "TRAIN", True)
-    X_test, y_test = _load_dataset("JapaneseVowels", "TEST", True)
+    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
+    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
 
     ct = ColumnEnsembleClassifier(
         [("KNN%d " % i, KNNTSC(n_neighbors=1), [i]) for i in range(0, X_train.shape[1])]
@@ -44,13 +44,13 @@ def test_homogeneous_pipeline_column_ensmbler():
 
 
 def test_heterogenous_pipeline_column_ensmbler():
-    X_train, y_train = _load_dataset("JapaneseVowels", "TRAIN", True)
-    X_test, y_test = _load_dataset("JapaneseVowels", "TEST", True)
+    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
+    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
 
     n_intervals = 3
 
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals=n_intervals, check_input=False)),
+        ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
         ('transform', FeatureUnion([
             ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
             ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
@@ -64,9 +64,9 @@ def test_heterogenous_pipeline_column_ensmbler():
         [
             ("RandomIntervalTree", clf1, [0]),
             ("KNN4", KNNTSC(n_neighbors=1), [4]),
-            ("BOSSEnsemble1 ", BOSSEnsemble(), [1]),
+            ("BOSSEnsemble1 ", BOSSEnsemble(ensemble_size=3), [1]),
             ("KNN2", KNNTSC(n_neighbors=1), [2]),
-            ("BOSSEnsemble3", BOSSEnsemble(), [3]),
+            ("BOSSEnsemble3", BOSSEnsemble(ensemble_size=3), [3]),
         ]
     )
 

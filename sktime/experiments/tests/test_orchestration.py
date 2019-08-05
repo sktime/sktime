@@ -4,13 +4,10 @@ from sktime.datasets import load_gunpoint
 from sktime.experiments.data import DatasetRAM
 from sktime.experiments.data import ResultRAM
 from sktime.experiments.orchestrator import Orchestrator
-from sktime.highlevel import TSCTask
-from sktime.highlevel import TSCStrategy
+from sktime.highlevel.tasks import TSCTask
+from sktime.highlevel.strategies import TSCStrategy
 from sktime.model_selection import SingleSplit
-from sktime.classifiers.ensemble import TimeSeriesForestClassifier
-from sktime.experiments.analysis import AnalyseResults
-from sktime.experiments.scores import ScoreAccuracy
-from sktime.classifiers.proximity import ProximityForest 
+from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
 
 
 def test_orchestration():

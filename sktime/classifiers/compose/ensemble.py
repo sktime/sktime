@@ -1,9 +1,15 @@
+"""
+Configurable time series ensembles
+"""
+
+__all__ = ["TimeSeriesForestClassifier"]
+__author__ = "Markus Löning"
+
+
 from warnings import warn
 from warnings import catch_warnings
 from warnings import simplefilter
 import numpy as np
-import pandas as pd
-from scipy.sparse import issparse
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
 from sklearn.ensemble.forest import _generate_sample_indices
@@ -18,11 +24,10 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 
-from ..pipeline import Pipeline
-from ..transformers.series_to_tabular import RandomIntervalFeatureExtractor
-from ..utils.time_series import time_series_slope
-
-__all__ = ["TimeSeriesForestClassifier"]
+from sktime.pipeline import Pipeline
+from sktime.transformers.summarise import RandomIntervalFeatureExtractor
+from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
@@ -122,7 +127,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
-    None, optional (default=None)
+        None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -152,7 +157,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
     n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
-    n_features_ : int
+    n_columns : int
         The number of features when ``fit`` is performed.
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -185,8 +190,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None,
-                 check_input=True):
+                 class_weight=None):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
@@ -234,7 +238,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
-        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -263,15 +266,14 @@ class TimeSeriesForestClassifier(ForestClassifier):
         """
 
         # Validate or convert input data
+        validate_X_y(X, y)
+        check_X_is_univariate(X)
+
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
-        if issparse(X):
-            # Pre-sort indices to avoid that each individual tree of the
-            # ensemble sorts the indices.
-            X.sort_indices()
 
         # Remap output
-        self.n_features_ = X.shape[1] if X.ndim == 2 else 1
+        self.n_columns = X.shape[1]
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
@@ -329,7 +331,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
             trees = [self._make_estimator(append=False,
                                           random_state=random_state)
-                     for i in range(n_more_estimators)]
+                     for _ in range(n_more_estimators)]
 
             # Parallel loop: for standard random forests, the threading
             # backend is preferred as the Cython code for fitting the trees
@@ -377,25 +379,24 @@ class TimeSeriesForestClassifier(ForestClassifier):
         check_is_fitted(self, 'estimators_')
 
         # Check data
-        if self.check_input:
-            X = self._validate_X_predict(X)
+        validate_X(X)
+        check_X_is_univariate(X)
+        X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
 
-        all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
-
-        return all_proba
+        return np.sum(all_proba, axis=0) / len(self.estimators_)
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
-        if self.n_features_ != n_features:
+        if self.n_columns != n_features:
             raise ValueError("Number of features of the model must "
                              "match the input. Model n_features is %s and "
                              "input n_features is %s "
-                             % (self.n_features_, n_features))
+                             % (self.n_columns, n_features))
         return X
 
     def apply(self, X):
@@ -406,12 +407,12 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     @property
     def feature_importances_(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
-        if X.ndim == 1:
-            X = pd.DataFrame(X)
+        validate_X_y(X, y)
+        check_X_is_univariate(X)
 
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
@@ -425,7 +426,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples)
             p_estimator = estimator.predict_proba(X.iloc[unsampled_indices, :])
-
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
