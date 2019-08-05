@@ -1,44 +1,11 @@
-# Proximity Forest: An effective and scalable distance-based classifier for time series
-#
-# author: George Oastler (linkedin.com/goastler; github.com/goastler)
-#
-# paper link: https://arxiv.org/abs/1808.10594
-# bibtex reference:
-# @article{DBLP:journals/corr/abs-1808-10594,
-#   author    = {Benjamin Lucas and
-#                Ahmed Shifaz and
-#                Charlotte Pelletier and
-#                Lachlan O'Neill and
-#                Nayyar A. Zaidi and
-#                Bart Goethals and
-#                Fran{\c{c}}ois Petitjean and
-#                Geoffrey I. Webb},
-#   title     = {Proximity Forest: An effective and scalable distance-based classifier
-#                for time series},
-#   journal   = {CoRR},
-#   volume    = {abs/1808.10594},
-#   year      = {2018},
-#   url       = {http://arxiv.org/abs/1808.10594},
-#   archivePrefix = {arXiv},
-#   eprint    = {1808.10594},
-#   timestamp = {Mon, 03 Sep 2018 13:36:40 +0200},
-#   biburl    = {https://dblp.org/rec/bib/journals/corr/abs-1808-10594},
-#   bibsource = {dblp computer science bibliography, https://dblp.org}
-# }
-#
-# todo unit tests / sort out current unit tests
-# todo logging package rather than print to screen
-# todo get params avoid func pointer - use name
-# todo set params use func name or func pointer
-# todo constructor accept str name func / pointer
-# todo duck-type functions
-from sktime.transformers.summarise import DerivativeSlopeTransformer
-
-from sktime.transformers.base import BaseTransformer
-
-from sktime.utils.validation.supervised import validate_X, validate_X_y
-
+"""Proximity Forest time series classifier
+a decision tree forest which uses distance measures to partition data.
+B. Lucas and A. Shifaz, C. Pelletier, L. O’Neill, N. Zaidi, B. Goethals, F. Petitjean and G. Webb
+Proximity Forest: an effective and scalable distance-based classifier for time series,
+Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
+"""
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
+__all__ = ["ProximityForest","CachedTransformer","ProximityStump","ProximityTree"]
 
 import numpy as np
 import pandas as pd
@@ -46,31 +13,45 @@ from joblib import Parallel, delayed
 from scipy import stats
 from sklearn.preprocessing import LabelEncoder, normalize
 from sklearn.utils import check_random_state
-from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, \
-    wdtw_distance
-
-from sktime.classifiers.base import BaseClassifier
 from sktime.utils import comparison, dataset_properties
 from sktime.utils.data_container import tabularise
+from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_distance, msm_distance, twe_distance, \
+    wdtw_distance
+from sktime.transformers.summarise import DerivativeSlopeTransformer
+from sktime.transformers.base import BaseTransformer
+from sktime.utils.validation.supervised import validate_X, validate_X_y
+from sktime.classifiers.base import BaseClassifier
+
+# todo unit tests / sort out current unit tests
+# todo logging package rather than print to screen
+# todo get params avoid func pointer - use name
+# todo set params use func name or func pointer
+# todo constructor accept str name func / pointer
+# todo duck-type functions
 
 
 class CachedTransformer(BaseTransformer):
-    """Transformer that transforms data and adds the transformed version to a cache. If the transformation is called again on already seen data the data is fetched from the cache rather than performing the expensive transformation.
+    """Transformer container that transforms data and adds the transformed version to a cache.
+    If the transformation is called again on already seen data the data is fetched
+    from the cache rather than performing the expensive transformation.
 
-        Parameters
-        ----------
-        transformer : transformer
-            the transformer to transform uncached data
+    Parameters
+    ----------
+    transformer : the transformer to transform uncached data
+    Attributes
+    ----------
+    cache       : location to store transforms seen before for fast look up
+
         """
 
     def __init__(self, transformer):
         self.cache = {}
         self.transformer = transformer
 
-    """
-        clear the cache
-    """
     def clear(self):
+        """
+        clear the cache
+        """
         self.cache = {}
 
     def transform(self, X, y=None):
@@ -79,14 +60,14 @@ class CachedTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : pandas DataFrame of shape [n_samples, n_features]
+        X : pandas DataFrame of shape [n_instances, n_features]
             Input data
-        y : pandas Series, shape (n_samples, ...), optional
+        y : pandas Series, shape (n_instances), optional
             Targets for supervised learning.
 
         Returns
         -------
-        self : an instance of self.
+        cached_instances.
         """
         # for each instance, get transformed instance from cache or transform and add to cache
         cached_instances = {}
@@ -181,7 +162,7 @@ def pure(y):
 
 
 def gini_gain(y, y_subs):
-    '''
+    """
     get gini score of a split, i.e. the gain from parent to children
     ----
     Parameters
@@ -196,7 +177,7 @@ def gini_gain(y, y_subs):
     score : float
         gini score of the split from parent class labels to children. Note a higher score means better gain,
         i.e. a better split
-    '''
+    """
     y = np.array(y)
     # find number of instances overall
     parent_n_instances = y.shape[0]
@@ -224,7 +205,7 @@ def gini_gain(y, y_subs):
 
 
 def gini(y):
-    '''
+    """
     get gini score at a specific node
     ----
     Parameters
@@ -237,7 +218,7 @@ def gini(y):
     score : float
         gini score for the set of class labels (i.e. how pure they are). A larger score means more impurity. Zero means
         pure.
-    '''
+    """
     y = np.array(y)
     # get number instances at node
     n_instances = y.shape[0]
@@ -733,11 +714,11 @@ class ProximityStump(BaseClassifier):
 
     def fit(self, X, y, input_checks = True):
         """
-        Build the classifierr on the training set (X, y)
+        Build the classifier on the training set (X, y)
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_instances]
             The class labels.
         input_checks: boolean
             whether to check the X and y parameters
@@ -799,7 +780,7 @@ class ProximityStump(BaseClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
             If a Pandas data frame is passed, a check is performed that it only has one column.
@@ -809,7 +790,7 @@ class ProximityStump(BaseClassifier):
             whether to check the X parameter
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, num_classes] of probabilities
         """
         if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
@@ -899,11 +880,11 @@ class ProximityTree(BaseClassifier):
 
     def fit(self, X, y, input_checks = True):
         """
-        Build the classifierr on the training set (X, y)
+        Build the classifier on the training set (X, y)
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_instances]
             The class labels.
         input_checks: boolean
             whether to check the X and y parameters
@@ -953,7 +934,7 @@ class ProximityTree(BaseClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
             If a Pandas data frame is passed, a check is performed that it only has one column.
@@ -963,7 +944,7 @@ class ProximityTree(BaseClassifier):
             whether to check the X parameter
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
@@ -990,7 +971,20 @@ class ProximityTree(BaseClassifier):
 class ProximityForest(BaseClassifier):
 
     """
-    Proximity Forest class to model a decision tree forest which uses distance measures to partition data.
+    Proximity Forest class to model a decision tree forest which uses distance measures to
+    partition data.
+
+@article{lucas19proximity,
+
+  title={Proximity Forest: an effective and scalable distance-based classifier for time series},
+  author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N. Zaidi and B. Goethals and F. Petitjean and G. Webb},
+  journal={Data Mining and Knowledge Discovery},
+  volume={33},
+  number={3},
+  pages={607--635},
+  year={2019}
+  }
+
 
     Attributes:
         label_encoder: label encoder to change string labels to numeric indices
@@ -1009,8 +1003,6 @@ class ProximityForest(BaseClassifier):
         y: train data labels
         trees: list of trees in the forest
     """
-
-
 
     __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
 
@@ -1066,9 +1058,9 @@ class ProximityForest(BaseClassifier):
         """
         Build the classifierr on the training set (X, y)
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_instances]
             The class labels.
         index : index of the tree to be constructed
         random_state: random_state to send to the tree to be constructed
@@ -1096,11 +1088,11 @@ class ProximityForest(BaseClassifier):
 
     def fit(self, X, y, input_checks = True):
         """
-        Build the classifierr on the training set (X, y)
+        Build the classifier on the training set (X, y)
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed, column 0 is extracted.
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = [n_instances]
             The class labels.
         input_checks: boolean
             whether to check the X and y parameters
@@ -1135,7 +1127,7 @@ class ProximityForest(BaseClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
             If a Pandas data frame is passed, a check is performed that it only has one column.
@@ -1144,7 +1136,7 @@ class ProximityForest(BaseClassifier):
         tree : the tree to collect predictions from
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         return tree.predict_proba(X)
 
@@ -1153,7 +1145,7 @@ class ProximityForest(BaseClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.
             If a Pandas data frame is passed (sktime format)
             If a Pandas data frame is passed, a check is performed that it only has one column.
@@ -1163,7 +1155,7 @@ class ProximityForest(BaseClassifier):
             whether to check the X parameter
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
