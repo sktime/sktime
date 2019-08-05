@@ -25,7 +25,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #        before everything has been fully verified)
 
 # TO-DO: in case of unequal length time series, we have two options:
-# 1) fix the maximum length for the shapelet_based to the minimum length time series (of train dataset,
+# 1) fix the maximum length for the shapelets to the minimum length time series (of train dataset,
 #      which can also fail if there is a smaller time series in the test set).
 # 2) use another time series distance measure such as DTW to avoid this, since you can compare unequal
 #      time series (we lose the early abandon in the distance measurement).
@@ -54,16 +54,16 @@ class ShapeletTransform(BaseTransformer):
     ----------
     min_shapelet_length                 : int, lower bound on candidatie shapelet lengths (default = 3)
     max_shapelet_length                 : int, upper bound on candidatie shapelet lengths (default = inf or series length)
-    max_shapelets_to_store_per_class    : int, upper bound on number of shapelet_based to retain from each distinct class (default = 200)
+    max_shapelets_to_store_per_class    : int, upper bound on number of shapelets to retain from each distinct class (default = 200)
     random_state                        : RandomState, int, or none: to control reandom state objects for deterministic results (default = None)
     verbose                             : int, level of output printed to the console (for information only) (default = 0)
-    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelet_based from the final transform (default = True)
+    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelets from the final transform (default = True)
 
     Attributes
     ----------
 
     predefined_ig_rejection_level       : float, minimum information gain required to keep a shapelet (default = 0.05)
-    self.shapelet_based                      : list of Shapelet objects, the stored shapelet_based after a dataest has been processed
+    self.shapelets                      : list of Shapelet objects, the stored shapelets after a dataest has been processed
     """
 
     def __init__(self,
@@ -119,11 +119,11 @@ class ShapeletTransform(BaseTransformer):
 
         self.random_state = check_random_state(self.random_state)
 
-        # Here we establish the order of cases to sample. We need to sample x cases and y shapelet_based from each (where x = num_cases_to_sample
-        # and y = num_shapelets_to_sample_per_case). We could simply sample x cases without replacement and y shapelet_based from each case, but
-        # the idea is that if we are using a time contract we may extract all y shapelet_based from each x candidate and still have time remaining.
+        # Here we establish the order of cases to sample. We need to sample x cases and y shapelets from each (where x = num_cases_to_sample
+        # and y = num_shapelets_to_sample_per_case). We could simply sample x cases without replacement and y shapelets from each case, but
+        # the idea is that if we are using a time contract we may extract all y shapelets from each x candidate and still have time remaining.
         # Therefore, if we get a list of the indices of the series and shuffle them appropriately, we can go through the list again and extract
-        # another y shapelet_based from each series (if we have time).
+        # another y shapelets from each series (if we have time).
 
         # We also want to ensure that we visit all classes so we will visit in round-robin order. Therefore, the code below extracts the indices
         # of all series by class, shuffles the indices for each class independently, and then combines them in alternating order. This results in
@@ -183,14 +183,14 @@ class ShapeletTransform(BaseTransformer):
             this_series_len = len(X[series_id][0])
 
             # The bound on possible shapelet lengths will differ series-to-series if using unequal length data.
-            # However, shapelet_based cannot be longer than the series, so set to the minimum of the series length
+            # However, shapelets cannot be longer than the series, so set to the minimum of the series length
             # and max shapelet length (which is inf by default)
             if self.max_shapelet_length == -1:
                 this_shapelet_length_upper_bound = this_series_len
             else:
                 this_shapelet_length_upper_bound = min(this_series_len, self.max_shapelet_length)
 
-            # all possible start and lengths for shapelet_based within this series (calculates if series length is new, a simple look-up if not)
+            # all possible start and lengths for shapelets within this series (calculates if series length is new, a simple look-up if not)
             # enumerate all possible candidate starting positions and lengths.
 
             # First, try to reuse if they have been calculated for a series of the same length before.
@@ -216,7 +216,7 @@ class ShapeletTransform(BaseTransformer):
 
                 # if shapelet heap for this class is not full yet, set entry criteria to be the predetermined IG threshold
                 ig_cutoff = self.predefined_ig_rejection_level
-                # otherwise if we have max shapelet_based already, set the threshold as the IG of the current 'worst' shapelet we have
+                # otherwise if we have max shapelets already, set the threshold as the IG of the current 'worst' shapelet we have
                 if shapelet_heaps_by_class[this_class_val].get_size() >= self.max_shapelets_to_store_per_class:
                     ig_cutoff = max(shapelet_heaps_by_class[this_class_val].peek()[0], ig_cutoff)
 
@@ -304,7 +304,7 @@ class ShapeletTransform(BaseTransformer):
                     final_ig = ShapeletTransform.calc_binary_ig(orderline, binary_ig_this_class_count, binary_ig_other_class_count)
                     accepted_candidate = Shapelet(series_id, cand_start_pos, cand_len, final_ig, candidate)
 
-                    # add to min heap to store shapelet_based for this class
+                    # add to min heap to store shapelets for this class
                     shapelet_heaps_by_class[this_class_val].push(accepted_candidate)
 
                     # informal, but extra 10% allowance for self similar later
@@ -346,7 +346,7 @@ class ShapeletTransform(BaseTransformer):
 
         # remove self similar here
         # for each class value
-        #       get list of shapelet_based
+        #       get list of shapelets
         #       sort by quality
         #       remove self similar
 
@@ -357,7 +357,7 @@ class ShapeletTransform(BaseTransformer):
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
                 by_class_descending_ig = ShapeletTransform.remove_self_similar_shapelets(by_class_descending_ig)
             else:
-                # need to extract shapelet_based from tuples
+                # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
 
             # if we have more than max_shapelet_per_class, trim to that amount here
@@ -366,13 +366,13 @@ class ShapeletTransform(BaseTransformer):
 
             self.shapelets.extend(by_class_descending_ig)
 
-        # final sort so that all shapelet_based from all classes are in descending order of information gain
+        # final sort so that all shapelets from all classes are in descending order of information gain
         self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
 
     @staticmethod
     def remove_self_similar_shapelets(shapelet_list):
-        """Remove self-similar shapelet_based from an input list. Note: this method assumes
-        that shapelet_based are pre-sorted in descending order of quality (i.e. if two candidates
+        """Remove self-similar shapelets from an input list. Note: this method assumes
+        that shapelets are pre-sorted in descending order of quality (i.e. if two candidates
         are self-similar, the one with the later index will be removed)
 
         Parameters
@@ -384,8 +384,8 @@ class ShapeletTransform(BaseTransformer):
         shapelet_list: list of Shapelet objects
         """
 
-        # IMPORTANT: it is assumed that shapelet_based are already in descending order of quality. This is preferable in the fit method as removing self-similar
-        # shapelet_based may be False so the sort needs to happen there in those cases, and avoids a second redundant sort here if it is set to True
+        # IMPORTANT: it is assumed that shapelets are already in descending order of quality. This is preferable in the fit method as removing self-similar
+        # shapelets may be False so the sort needs to happen there in those cases, and avoids a second redundant sort here if it is set to True
 
         def is_self_similar(shapelet_one, shapelet_two):
             # not self similar if from different series
@@ -412,7 +412,7 @@ class ShapeletTransform(BaseTransformer):
 
     # transform a set of data into distances to each extracted shapelet
     def transform(self, X, **transform_params):
-        """Transforms X according to the extracted shapelet_based (self.shapelet_based)
+        """Transforms X according to the extracted shapelets (self.shapelets)
 
         Parameters
         ----------
@@ -425,7 +425,7 @@ class ShapeletTransform(BaseTransformer):
             The transformed dataframe in tabular format.
         """
         if self.shapelets is None:
-            raise Exception("Fit not called yet or no shapelet_based were generated")
+            raise Exception("Fit not called yet or no shapelets were generated")
 
         X = np.array([[X.iloc[r, c].values for c in range(len(X.columns))] for r in range(len(X))])  # may need to pad with nans here for uneq length, look at later
 
@@ -469,18 +469,18 @@ class ShapeletTransform(BaseTransformer):
         if self.shapelets is None and y is not None:
             self.fit(X, y)
         elif self.shapelets is not None:
-            raise Exception("Trying to fit but shapelet_based already exist.")
+            raise Exception("Trying to fit but shapelets already exist.")
         else:
             raise Exception("No class values specified - shapelet extraction is supervised and requires Y to build the transform")
 
         return self.transform(X)
 
     def get_shapelets(self):
-        """An accessor method to return the extracted shapelet_based
+        """An accessor method to return the extracted shapelets
 
         Returns
         -------
-        shapelet_based: a list of Shapelet objects
+        shapelets: a list of Shapelet objects
         """
         return self.shapelets
 
@@ -573,7 +573,7 @@ class ShapeletTransform(BaseTransformer):
     def zscore(a, axis=0, ddof=0):
         """ A static method to return the normalised version of series.  This mirrors the scipy implementation
         with a small difference - rather than allowing /0, the function returns output = np.zeroes(len(input)).
-        This is to allow for sensible processing of candidate shapelet_based/comparison subseries that are a straight
+        This is to allow for sensible processing of candidate shapelets/comparison subseries that are a straight
         line. Original version: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.zscore.html
 
         Parameters
@@ -639,19 +639,19 @@ class ContractedShapeletTransform(ShapeletTransform):
     ----------
     min_shapelet_length                 : int, lower bound on candidatie shapelet lengths (default = 3)
     max_shapelet_length                 : int, upper bound on candidatie shapelet lengths (default = inf or series length)
-    max_shapelets_to_store_per_class    : int, upper bound on number of shapelet_based to retain from each distinct class (default = 200)
+    max_shapelets_to_store_per_class    : int, upper bound on number of shapelets to retain from each distinct class (default = 200)
     time_limit_in_mins                  : float, the number of minutes allowed for shapelet extraction (default = 60)
-    num_candidates_to_sample_per_case   : int, number of candidate shapelet_based to assess per training series before moving on to 
+    num_candidates_to_sample_per_case   : int, number of candidate shapelets to assess per training series before moving on to 
                                           the next series (default = 20)
     random_state                        : RandomState, int, or none: to control reandom state objects for deterministic results (default = None)
     verbose                             : int, level of output printed to the console (for information only) (default = 0)
-    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelet_based from the final transform (default = True)
+    remove_self_similar                 : boolean, remove overlapping "self-similar" shapelets from the final transform (default = True)
 
     Attributes
     ----------
 
     predefined_ig_rejection_level       : float, minimum information gain required to keep a shapelet (default = 0.05)
-    self.shapelet_based                      : list of Shapelet objects, the stored shapelet_based after a dataest has been processed
+    self.shapelets                      : list of Shapelet objects, the stored shapelets after a dataest has been processed
     """
 
     def __init__(
@@ -769,18 +769,18 @@ def write_transformed_data_to_arff(transform, labels, file_name):
 
 
 def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
-    """ A simple function to save the shapelet_based obtained in csv format
+    """ A simple function to save the shapelets obtained in csv format
 
     Parameters
     ----------
     shapelets: array-like
-        The shapelet_based obtained for a dataset
+        The shapelets obtained for a dataset
     data: array-like
         The original data
     time: fload
-        The time spent obtaining shapelet_based
+        The time spent obtaining shapelets
     file_name: string
-        The directory to save the set of shapelet_based
+        The directory to save the set of shapelets
     """
     data = data.iloc[:, dim_to_use]
 
@@ -795,7 +795,7 @@ def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
         os.makedirs(directory)
 
     with open(file_name, 'w+') as f:
-        # Number of shapelet_based and time extracting
+        # Number of shapelets and time extracting
         f.write(str(len(shapelets)) + "," + str(time) + "\n")
         for i, j in enumerate(shapelets):
             f.write(str(j.info_gain) + "," + str(j.series_id) + "," + ''.join(str(j.dims)).replace(', ', ':') + "," + str(j.start_pos) + "," + str(j.length) + "\n")

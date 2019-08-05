@@ -7,7 +7,7 @@ from sktime.transformers.dictionary_based.PAA import PAA
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.base import BaseTransformer
 #    TO DO: verify this returned pandas is consistent with sktime definition. Timestamps?
-#    TO DO: remove the call to normalize in shapelet_based, which should move to utils
+#    TO DO: remove the call to normalize in shapelets, which should move to utils
 
 
 class SAX(BaseTransformer):
