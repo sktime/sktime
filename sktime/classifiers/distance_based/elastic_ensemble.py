@@ -14,7 +14,7 @@ from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
 from sktime.transformers.summarise import DerivativeSlopeTransformer
 import os
-from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
+from sktime.classifiers.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
     wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
 from itertools import product

@@ -8,10 +8,10 @@ from sklearn.preprocessing import FunctionTransformer
 from sktime.pipeline import FeatureUnion, Pipeline
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import RowwiseTransformer
-from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
+from sktime.classifiers.distance_based import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets import load_basic_motions
-from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
-from sktime.classifiers.compose.column_ensembler import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
+from sktime.classifiers.dictionary_based import BOSSEnsemble
+from sktime.classifiers.compose import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
 
 
 def test_univariate_column_ensembler_init():
