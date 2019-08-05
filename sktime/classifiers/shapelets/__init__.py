@@ -1,0 +1,1 @@
+from sktime.classifiers.shapelets.stc import ShapeletTransformClassifier

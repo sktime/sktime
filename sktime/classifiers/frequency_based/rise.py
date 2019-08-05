@@ -59,7 +59,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
     """
 
     def __init__(self,
-                 n_trees=500,
+                 n_trees=200,
                  random_state=None,
                  min_interval=16,
                  acf_lag=100,
@@ -146,12 +146,12 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Find predictions for all cases in X. Built on top of predict_proba
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
+        X : array-like or sparse matrix of shape = [n_instances, n_columns] or a data frame.
         If a Pandas data frame is passed,
 
         Returns
         -------
-        output : array of shape = [n_samples]
+        output : array of shape = [n_instances]
         """
 
         probs=self.predict_proba(X)
@@ -162,17 +162,17 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
 
         Local variables
         ----------
         n_samps     : int, number of cases to classify
-        num_atts    : int, number of attributes in X, must match _num_atts determined in fit
+        n_columns    : int, number of attributes in X, must match _num_atts determined in fit
 
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
@@ -184,8 +184,8 @@ class RandomIntervalSpectralForest(ForestClassifier):
                     "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         rows,cols=X.shape
         #HERE Do transform againnum_att
-        n_samps, num_atts = X.shape
-        if num_atts != self.series_length:
+        n_samps, n_columns = X.shape
+        if n_columns != self.series_length:
             raise TypeError(" ERROR number of attributes in the train does not match that in the test data")
         sums = np.zeros((X.shape[0],self.n_classes), dtype=np.float64)
 
