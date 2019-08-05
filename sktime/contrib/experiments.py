@@ -18,7 +18,7 @@ import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
 import sktime.classifiers.distance_based.elastic_ensemble as dist
 import sktime.classifiers.distance_based.proximity_forest as pf
-import sktime.classifiers.shapelets.stc as st
+import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
