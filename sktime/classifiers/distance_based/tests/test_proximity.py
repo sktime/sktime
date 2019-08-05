@@ -2,7 +2,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.classifiers.distance_based import ProximityForest, ProximityStump, ProximityTree
-from sktime.classifiers.distance_based.proximity import best_of_n_stumps
+from sktime.classifiers.distance_based.proximity_forest import best_of_n_stumps
 from sktime.datasets import load_gunpoint
 
 
