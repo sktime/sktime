@@ -7,6 +7,7 @@ import pandas as pd
 
 from ..utils.load_data import load_from_tsfile_to_dataframe
 from ..utils.results_writing import write_results_to_uea_format
+import logging
 
 __all__ =['DatasetHDD','DatasetRAM','DatasetLoadFromDir','Result','ResultRAM','ResultHDD']
 __author__ = ['Viktor Kazakov']
@@ -302,22 +303,20 @@ class ResultHDD(SKTimeResult):
         y_true : array
             True lables array
         y_pred : array
-            Predictions array
+            Predictions array. If available probabilities should be provided.
         cv_fold : int
             Cross validation fold
         """
         if not os.path.exists(self._results_save_dir):
             os.makedirs(self._results_save_dir)
-        # TODO BUG: write write_results_to_uea_format does not write the results property unless the probas are provided as well.
-        # Dummy probas to make the write_results_to_uea_format function work
-        y_true = list(map(int, y_true))
-        y_pred = list(map(int, y_pred))
-        num_class_true = np.max(y_true)
-        num_class_pred = np.max(y_pred)
-        num_classes = max(num_class_pred, num_class_true)
-        num_predictions = len(y_pred)
-        probas = (num_predictions, num_classes)
-        probas = np.zeros(probas)
+        
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        probas = y_pred.copy()
+        try:
+            y_pred = np.argmax(y_pred, axis=1)
+        except:
+            logging.info(f'Class probabilities not available for {strategy_name} on {dataset_name}')
 
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,

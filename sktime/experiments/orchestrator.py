@@ -51,7 +51,10 @@ class Orchestrator:
                     strategy.fit(task, dts_loaded.iloc[train])
 
                     if predict_on_runtime:
-                        y_pred = strategy.predict(dts_loaded.iloc[test])
+                        if hasattr(strategy, 'predict_proba'):
+                            y_pred = strategy.predict_proba(dts_loaded.iloc[test])
+                        else:
+                            y_pred = strategy.predict(dts_loaded.iloc[test])
                         y_true = dts_loaded[task.target].iloc[test].values
                         self._result.save(dataset_name=data.dataset_name,
                                           strategy_name=strategy.name,
