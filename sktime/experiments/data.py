@@ -292,7 +292,7 @@ class ResultHDD(SKTimeResult):
         """
         return self._strategies_save_dir
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+    def save(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold):
         """
         Parameters
         ----------
@@ -303,27 +303,22 @@ class ResultHDD(SKTimeResult):
         y_true : array
             True lables array
         y_pred : array
-            Predictions array. If available probabilities should be provided.
+            Predictions array.
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         cv_fold : int
             Cross validation fold
         """
         if not os.path.exists(self._results_save_dir):
             os.makedirs(self._results_save_dir)
         
-        y_true = np.array(y_true)
-        y_pred = np.array(y_pred)
-        probas = y_pred.copy()
-        try:
-            y_pred = np.argmax(y_pred, axis=1)
-        except:
-            logging.info(f'Class probabilities not available for {strategy_name} on {dataset_name}')
-
+        
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
                                     actual_class_vals=y_true,
                                     predicted_class_vals=y_pred,
-                                    actual_probas=probas,
+                                    actual_probas=actual_probas,
                                     resample_seed=cv_fold)
 
     def load(self):
