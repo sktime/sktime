@@ -57,25 +57,25 @@ class BOSSEnsemble(BaseEstimator):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
-    random_ensemble_size    : int, if randomising, generate this number of base classifiers
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
-    wordLengths             : list of int, search space for word lengths (default =100)
     alphabet_size           : range of alphabet sizes to try (default to single value, 4)
     max_win_len_prop        : maximum window length as a proportion of series length (default =1),
     time_limit              : time contract to limit build time (default=0, no limit)
     word_lengths            : search range for word lengths (default =[16, 14, 12, 10, 8])
     alphabet_size           : range of alphabet size to search for (default, a single value a=4),
-    min_window              : minu=imum window size, (default=10_,
-    norm_options            : search space for normalise, not normalise (default [True, False]_
+    min_window              : minimum window size, (default=10),
+    norm_options            : search space for normalise, not normalise (default [True, False])
 
     Attributes
     ----------
-    n_classes    : extracted from the data
-    num_atts       : extracted from the data
-    classifiers    : array of DecisionTree classifiers
-    intervals      : stores indexes of the start and end points for all classifiers
+    n_classes               : extracted from the data
+    n_instances             : extracted from the data
+    n_classifiers           : The final number of classifiers used (<=max_ensemble_size)
+    series_length           : length of all series (assumed equal)
+    classifiers             : array of DecisionTree classifiers
+    weights                 : weight of each classifier in the ensemble
 
     """
 
