@@ -17,7 +17,8 @@ import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
 import sktime.classifiers.distance_based.elastic_ensemble as dist
-#from sktime.classifiers.proximity import ProximityForest
+import sktime.classifiers.distance_based.proximity_forest as pf
+import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -32,6 +33,7 @@ Will have both low level version and high level orchestration version soon.
 
 
 datasets = [
+    "Chinatown",
     "GunPoint",
     "ItalyPowerDemand",
     "ArrowHead",
@@ -131,17 +133,19 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-#    if cls.lower() == 'pf':
-#        return ProximityForest(rand = resampleId)
-    if cls == 'RISE' or cls == 'rise':
+    if cls.lower() == 'pf':
+        return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls == 'TSF' or cls == 'tsf':
+    elif  cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
-    elif  cls == 'BOSS' or cls == 'boss':
+    elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
-    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
+    elif cls.lower() == 'st':
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1)
+    elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
-    elif cls == 'TSF_Markus':
+    elif cls.lower() == 'tsf_markus':
         return ensemble.TimeSeriesForestClassifier()
     else:
         return 'UNKNOWN CLASSIFIER'
@@ -327,15 +331,19 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-        data_dir = "/scratch/datasets/"
-        results_dir = "/scratch/results"
+#        data_dir = "/scratch/datasets/"
+#        results_dir = "/scratch/results"
         data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "BOSS"
+        data_dir = "Z:/sktimeData/Univariate2018_ts/"
+        results_dir = "Z:/Results/sktime Bakeoff/"
+
+        classifier = "RISE"
         resample = 0
-        # for i in range(0, len(datasets)):
-        #     dataset = datasets[i]
-        dataset = "GunPoint"
-        tf=True
-        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
+        for i in range(0, len(datasets)):
+            dataset = datasets[i]
+            print(i)
+            print(" problem = "+dataset)
+            tf=False
+            run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
 

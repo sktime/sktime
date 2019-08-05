@@ -8,20 +8,24 @@ __all__ = ["ElasticEnsemble"]
 
 import numpy as np
 import pandas as pd
+import warnings
+import time
+import os
+from itertools import product
+
 from sklearn.utils.multiclass import class_distribution
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, LeaveOneOut, cross_val_predict
+from sklearn.preprocessing import LabelEncoder
+from sktime.classifiers.base import BaseClassifier
 from sktime.transformers.summarise import DerivativeSlopeTransformer
-import os
 from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.distances.elastic_cython import dtw_distance as dtw_c, wdtw_distance as wdtw_c, ddtw_distance as ddtw_c, \
     wddtw_distance as wddtw_c, lcss_distance as lcss_c, erp_distance as erp_c, msm_distance as msm_c
-from itertools import product
-import time
-from sklearn.preprocessing import LabelEncoder
-from sktime.classifiers.base import BaseClassifier
 
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 class ElasticEnsemble(BaseClassifier):
 
@@ -100,12 +104,6 @@ class ElasticEnsemble(BaseClassifier):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
                 raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0, 0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
-
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
         # To increase the efficiency of DDTW we can pre-transform the data into derivatives, and then call the
@@ -236,11 +234,6 @@ class ElasticEnsemble(BaseClassifier):
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
                 raise TypeError("ElasticEnsemble cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0, 0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
 
 
         # Derivative DTW (DDTW) uses the regular DTW algorithm on data that are transformed into derivatives.
