@@ -1,3 +1,27 @@
+""" experiments.py: method to run experiments as an alternative to orchestration.
+
+Note ProximityForest and ElasticEnsemble use cython implementations of the distance measures. You need a c++ compiler for this.
+These are notes mainly for me.
+On  windows:
+The easiest way to install visual studio. Then, from an anaconda prompt, change to the sktime dir, then
+python setup.py install
+python setup.py build_ext -i
+(may not be necessary with pipinstall).
+
+on the cluster
+copy source over then as above,
+enter interactive mode, got to sktime root
+module add python/anaconda/2019.3/3.7
+export PYTHONPATH=$(pwd)
+IF not done before,
+conda create -n sktime
+conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn [add any new deps]
+
+co
+but use the full path for setup.py
+
+"""
+
 import os
 
 os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
