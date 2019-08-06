@@ -155,7 +155,7 @@ class Result:
     Used for passing results to the analyse results class
     """
 
-    def __init__(self, dataset_name, strategy_name, y_true, y_pred):
+    def __init__(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv):
         """
         Parameters
         ----------
@@ -165,13 +165,19 @@ class Result:
             name of the strategy
         y_true : list
             True labels
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         y_pred : list
             predictions
+        cv_fold : int
+            Cross validation fold
         """
         self._dataset_name = dataset_name
         self._strategy_name = strategy_name
         self._y_true = y_true
         self._y_pred = y_pred
+        self._actual_probas=actual_probas
+        self._cv = cv
 
     @property
     def dataset_name(self):
@@ -236,7 +242,7 @@ class ResultRAM(SKTimeResult):
     def __init__(self):
         self._results = []
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+    def save(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold):
         """
         Parameters
         ----------
@@ -248,10 +254,17 @@ class ResultRAM(SKTimeResult):
             True lables array
         y_pred: array
             Predictions array
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         cv_fold : int
             Cross validation fold
         """
-        result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true, y_pred=y_pred)
+        result = Result(dataset_name=dataset_name, 
+                        strategy_name=strategy_name, 
+                        y_true=y_true, 
+                        y_pred=y_pred, 
+                        actual_probas=actual_probas, 
+                        cv=cv_fold)
         self._results.append(result)
 
     def load(self):
