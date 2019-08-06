@@ -14,8 +14,6 @@ from sktime.classifiers.base import BaseClassifier
 
 
 class ColumnEnsembleClassifier(BaseClassifier):
-
-
     """Applies estimators to columns of an array or pandas DataFrame.
 
         This estimator allows different columns or column subsets of the input
