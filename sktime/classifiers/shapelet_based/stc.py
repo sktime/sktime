@@ -8,21 +8,16 @@ __author__ = "Tony Bagnall"
 __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
-import random
-import sys
-import pandas as pd
-import time
-import math
-
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.transformers.shapelets import ContractedShapeletTransform
 from sktime.classifiers.base import BaseClassifier
+from sktime.transformers.shapelets import ContractedShapeletTransform
+from sktime.utils.validation.supervised import validate_X_y, validate_X
+
 
 class ShapeletTransformClassifier(BaseClassifier):
-
     """ Shapelet Transform Classifier
         Basic implementation along the lines of
     @article{hills14shapelet,
@@ -47,19 +42,19 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     """
 
-    def __init__(self,time_contract_in_mins=300,n_classifiers=500, shouty=False):
-        self.time_contract_in_mins=time_contract_in_mins
-        self.n_classifiers=n_classifiers
+    def __init__(self, time_contract_in_mins=300, n_classifiers=500):
+        self.time_contract_in_mins = time_contract_in_mins
+        self.n_classifiers = n_classifiers
 
-        self.pipeline = Pipeline([
+        self.classifier = Pipeline([
             ('st', ContractedShapeletTransform(time_limit_in_mins=time_contract_in_mins,
                                                verbose=False)),
-            ('rf', RandomForestClassifier(n_estimators=n_classifiers)),
+            ('rf', RandomForestClassifier(n_estimators=n_classifiers))
         ])
 
-#        self.shapelet_transform=ContractedShapeletTransform(time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
-#        self.classifier=RandomForestClassifier( n_estimators=self.n_classifiers,criterion="entropy")
-#        self.st_X=None;
+    #        self.shapelet_transform=ContractedShapeletTransform(time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
+    #        self.classifier=RandomForestClassifier( n_estimators=self.n_classifiers,criterion="entropy")
+    #        self.st_X=None;
 
     def fit(self, X, y):
         """Perform a shapelet transform then builds a random forest. Contract default for ST is 5 hours
@@ -73,21 +68,21 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         self : object
          """
+
+        validate_X_y(X, y)
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("RISE cannot handle multivariate problems yet")
-        self.pipeline.fit(X, y)
+        self.classifier.fit(X, y)
 
-#        self.shapelet_transform.fit(X,y)
-#        print("Shapelet Search complete")
-#        self.st_X =self.shapelet_transform.transform(X)
-#        print("Transform complete")
-#        X = np.asarray([a.values for a in X.iloc[:, 0]])
-#        self.classifier.fit(X,y)
- #       print("Build classifier complete")
+        #        self.shapelet_transform.fit(X,y)
+        #        print("Shapelet Search complete")
+        #        self.st_X =self.shapelet_transform.transform(X)
+        #        print("Transform complete")
+        #        X = np.asarray([a.values for a in X.iloc[:, 0]])
+        #        self.classifier.fit(X,y)
+        #       print("Build classifier complete")
+        return self
 
     def predict(self, X):
         """
@@ -101,10 +96,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples]
         """
-
-        probs=self.predict_proba(X)
-        return [self.classes_[np.argmax(prob)] for prob in probs]
-
+        probs = self.predict_proba(X)
+        return np.array([self.classes_[np.argmax(prob)] for prob in probs])
 
     def predict_proba(self, X):
         """
@@ -117,14 +110,15 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-#        tempX=self.shapelet_transform.transform(X)
-#        X = np.asarray([a.values for a in tempX.iloc[:, 0]])
+        #        tempX=self.shapelet_transform.transform(X)
+        #        X = np.asarray([a.values for a in tempX.iloc[:, 0]])
+        validate_X(X)
+        return self.classifier.predict_proba(X)
 
-        return self.pipeline.predict_proba(X)
-
-    def set_contract_minutes(self,minutes):
-        self.time_contract_in_mins = minutes
-        self.shapelet_transform.time_limit_in_mins=minutes
-
-    def set_classifier(self,cls):
-        self.classifier=cls
+    #
+    # def set_contract_minutes(self, minutes):
+    #     self.time_contract_in_mins = minutes
+    #     self.shapelet_transform.time_limit_in_mins = minutes
+    #
+    # def set_classifier(self, cls):
+    #     self.classifier = cls
