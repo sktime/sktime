@@ -1,5 +1,6 @@
 from sklearn.pipeline import Pipeline as skPipeline
 from sklearn.pipeline import FeatureUnion as skFeatureUnion
+from sklearn.pipeline import _transform_one, _fit_transform_one
 from sklearn.utils._joblib import Parallel, delayed
 import pandas as pd
 import numpy as np
@@ -88,27 +89,39 @@ class Pipeline(skPipeline):
                     step[1].set_params(**{'check_input': self.check_input})
 
 
-def _fit_one_transformer(transformer, X, y, weight=None, **fit_params):
-    return transformer.fit(X, y)
-
-
-def _transform_one(transformer, X, y, weight, **fit_params):
-    res = X.apply(transformer.transform)
-    # if we have a weight for this transformer, multiply output
-    if weight is None:
-        return res
-    return res * weight
-
-
-def _fit_transform_one(transformer, X, y, weight, **fit_params):
-    if hasattr(transformer, 'fit_transform'):
-        res = X.apply(transformer.fit_transform, **fit_params)
-    else:
-        res = X.apply(transformer.fit(X, y, **fit_params).transform)
-    # if we have a weight for this transformer, multiply output
-    if weight is None:
-        return res, transformer
-    return res * weight, transformer
+# def _fit_one_transformer(transformer, X, y, weight=None, **fit_params):
+#     return transformer.fit(X, y)
+#
+#
+# def _transform_one(transformer, X, y, weight, **fit_params):
+#     # res = X.apply(transformer.transform)
+#     # res = pd.concat([pd.Series(col.apply(transformer.transform, **fit_params))
+#     #                  for _, col in X.items()], axis=1)
+#
+#     res = transformer.transform(X, y)
+#
+#     # if we have a weight for this transformer, multiply output
+#     if weight is None:
+#         return res
+#     return res * weight
+#
+#
+# def _fit_transform_one(transformer, X, y, weight, **fit_params):
+#     if hasattr(transformer, 'fit_transform'):
+#         # res = X.apply(transformer.fit_transform, **fit_params)
+#         # res = pd.concat([pd.Series(col.apply(transformer.fit_transform, **fit_params))
+#         #                  for _, col in X.items()], axis=1)
+#         res = transformer.fit_transform(X, y, **fit_params)
+#     else:
+#         # res = X.apply(transformer.fit(X, y, **fit_params).transform)
+#         # res = pd.concat([pd.Series(col.apply(transformer.fit(X, y, **fit_params).transform))
+#         #                  for _, col in X.items()], axis=1)
+#         res = transformer.fit(X, y, **fit_params).transform(X, y)
+#
+#     # if we have a weight for this transformer, multiply output
+#     if weight is None:
+#         return res, transformer
+#     return res * weight, transformer
 
 
 class FeatureUnion(skFeatureUnion):
@@ -157,6 +170,7 @@ class FeatureUnion(skFeatureUnion):
             Input data to be transformed.
         y : pandas Series, shape (n_samples, ...), optional
             Targets for supervised learning.
+
         Returns
         -------
         Xt : pandas DataFrame

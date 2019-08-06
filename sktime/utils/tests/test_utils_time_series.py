@@ -1,14 +1,15 @@
-from sktime.utils.time_series import time_series_slope
-from sktime.transformers.tests.test_RandomIntervalFeatureExtractor import generate_df_from_array
 import numpy as np
+import pytest
 from scipy.stats import linregress
 
-N_ITER = 100
+from sktime.utils.time_series import time_series_slope
+from sktime.utils.testing import generate_polynomial_series
 
 
-def test_time_series_slope():
-    Y = np.array(generate_df_from_array(np.random.normal(size=10), n_rows=100).iloc[:, 0].tolist())
-    y = Y[0, :]
+@pytest.mark.parametrize("trend_order", [0, 3])
+def test_time_series_slope_against_scipy_linregress(trend_order):
+    coefs = np.random.normal(size=(trend_order + 1, 1))
+    y = generate_polynomial_series(20, order=trend_order, coefs=coefs)
 
     # Compare with scipy's linear regression function
     x = np.arange(y.size) + 1
@@ -16,16 +17,10 @@ def test_time_series_slope():
     b = time_series_slope(y)
     np.testing.assert_almost_equal(a, b, decimal=10)
 
-    # Check computations over axis
-    a = np.apply_along_axis(time_series_slope, 1, Y)
-    b = time_series_slope(Y, axis=1)
-    np.testing.assert_equal(a, b)
 
-    a = time_series_slope(Y, axis=1)[0]
-    b = time_series_slope(y)
-    np.testing.assert_equal(a, b)
-
-    # Check linear and constant cases
-    for step in [-1, 0, 1]:
-        y = np.arange(1, 4) * step
-        np.testing.assert_almost_equal(time_series_slope(y), step, decimal=10)
+# Check linear and constant cases
+@pytest.mark.parametrize("slope", [-1, 0, 1])
+def test_time_series_slope_against_simple_cases(slope):
+    x = np.arange(1, 10)
+    y = x * slope
+    np.testing.assert_almost_equal(time_series_slope(y), slope, decimal=10)

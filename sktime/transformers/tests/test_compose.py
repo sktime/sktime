@@ -1,33 +1,69 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.pipeline import Pipeline
 from sktime.tests.test_pipeline import X_train, y_train, X_test, y_test
 from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_gunpoint, load_basic_motions
+from sktime.utils.data_container import tabularise
+from sktime.utils.testing import generate_df_from_array
 
-# load data
-X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
-X_train = pd.concat([X_train, X_train], axis=1)
-X_train.columns = ['ts', 'ts_copy']
 
-X_test, y_test = load_gunpoint("TEST", return_X_y=True)
-X_test = pd.concat([X_test, X_test], axis=1)
-X_test.columns = ['ts', 'ts_copy']
+def test_rowwise_transformer_function_transformer_series_to_primitives():
+    X, y = load_gunpoint(return_X_y=True)
+    ft = FunctionTransformer(func=np.mean, validate=False)
+    t = RowwiseTransformer(ft)
+    Xt = t.fit_transform(X, y)
+    assert Xt.shape == X.shape
+    assert isinstance(Xt.iloc[0, 0], float)  # check series-to-primitive transforms
+
+
+def test_rowwise_transformer_function_transformer_series_to_series():
+    X, y = load_gunpoint(return_X_y=True)
+
+    # series-to-series transform function
+    def powerspectrum(x):
+        fft = np.fft.fft(x)
+        ps = fft.real * fft.real + fft.imag * fft.imag
+        return ps[:ps.shape[0] // 2]
+
+    ft = FunctionTransformer(func=powerspectrum, validate=False)
+    t = RowwiseTransformer(ft)
+    Xt = t.fit_transform(X, y)
+    assert Xt.shape == X.shape
+    assert isinstance(Xt.iloc[0, 0], (pd.Series, np.ndarray))  # check series-to-series transforms
+
+
+def test_rowwise_transformer_sklearn_transfomer():
+    mu = 10
+    sd = 5
+    X = generate_df_from_array(np.random.normal(loc=mu, scale=5, size=(100,)), n_rows=10, n_cols=1)
+    t = StandardScaler(with_mean=True, with_std=True)
+    r = RowwiseTransformer(t)
+
+    Xt = r.fit_transform(X)
+    assert Xt.shape == X.shape
+    assert isinstance(Xt.iloc[0, 0], (pd.Series, np.ndarray))  # check series-to-series transform
+    np.testing.assert_almost_equal(Xt.iloc[0, 0].mean(), 0)  # check standardisation
+    np.testing.assert_almost_equal(Xt.iloc[0, 0].std(), 1, decimal=2)
 
 
 def test_ColumnTransformer_pipeline():
+    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
+    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+
     # using Identity function transformers (transform series to series)
     id_func = lambda X: X
-    column_transformer = ColumnTransformer(
-        [('ts', FunctionTransformer(func=id_func, validate=False), 'ts'),
-         ('ts_copy', FunctionTransformer(func=id_func, validate=False), 'ts_copy')])
+    column_transformer = ColumnTransformer([
+        ('id0', FunctionTransformer(func=id_func, validate=False), ['dim_0']),
+        ('id1', FunctionTransformer(func=id_func, validate=False), ['dim_1'])
+    ])
     steps = [
-        ('feature_extract', column_transformer),
+        ('extract', column_transformer),
         ('tabularise', Tabulariser()),
-        ('rfestimator', RandomForestClassifier(n_estimators=2))]
+        ('classify', RandomForestClassifier(n_estimators=2))]
     model = Pipeline(steps=steps)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
@@ -36,30 +72,49 @@ def test_ColumnTransformer_pipeline():
 
 
 def test_RowwiseTransformer_pipeline():
+    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
+    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+
     # using pure sklearn
-    mean_func = lambda X: pd.DataFrame([np.mean(row) for row in X])
-    first_func = lambda X: pd.DataFrame([row[0] for row in X])
-    column_transformer = ColumnTransformer(
-        [('mean', FunctionTransformer(func=mean_func, validate=False), 'ts'),
-         ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
+    def rowwise_mean(X):
+        if isinstance(X, pd.Series):
+            X = pd.DataFrame(X)
+        Xt = pd.concat([pd.Series(col.apply(np.mean))
+                        for _, col in X.items()], axis=1)
+        return Xt
+
+    def rowwise_first(X):
+        if isinstance(X, pd.Series):
+            X = pd.DataFrame(X)
+        Xt = pd.concat([pd.Series(tabularise(col).iloc[:, 0])
+                        for _, col in X.items()], axis=1)
+        return Xt
+
+    # specify column as a list, otherwise pandas Series are selected and passed on to the transformers
+    transformer = ColumnTransformer([
+        ('mean', FunctionTransformer(func=rowwise_mean, validate=False), ['dim_0']),
+        ('first', FunctionTransformer(func=rowwise_first, validate=False), ['dim_1'])
+    ])
     estimator = RandomForestClassifier(n_estimators=2, random_state=1)
-    strategy = [
-        ('feature_extract', column_transformer),
-        ('rfestimator', estimator)]
-    model = Pipeline(steps=strategy)
+    steps = [
+        ('extract', transformer),
+        ('classify', estimator)
+    ]
+    model = Pipeline(steps=steps)
     model.fit(X_train, y_train)
     expected = model.predict(X_test)
 
     # using sktime with sklearn pipeline
-    first_func = lambda X: pd.DataFrame([row[0] for row in X])
-    column_transformer = ColumnTransformer(
-        [('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), 'ts'),
-         ('first', FunctionTransformer(func=first_func, validate=False), 'ts_copy')])
+    transformer = ColumnTransformer([
+        ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), ['dim_0']),
+        ('first', FunctionTransformer(func=rowwise_first, validate=False), ['dim_1'])
+    ])
     estimator = RandomForestClassifier(n_estimators=2, random_state=1)
-    strategy = [
-        ('feature_extract', column_transformer),
-        ('rfestimator', estimator)]
-    model = Pipeline(steps=strategy)
+    steps = [
+        ('extract', transformer),
+        ('classify', estimator)
+    ]
+    model = Pipeline(steps=steps)
     model.fit(X_train, y_train)
-    got = model.predict(X_test)
-    np.testing.assert_array_equal(expected, got)
+    actual = model.predict(X_test)
+    np.testing.assert_array_equal(expected, actual)
