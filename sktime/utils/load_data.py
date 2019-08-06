@@ -50,7 +50,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
     line_num = 0
 
     # Parse the file
-    print(full_file_path_and_name)
+    # print(full_file_path_and_name)
     with open(full_file_path_and_name, 'r',encoding='utf-8') as file:
         for line in file:
             # Strip white space from start/end of line and change to lowercase for use below
