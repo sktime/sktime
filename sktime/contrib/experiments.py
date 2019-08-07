@@ -11,12 +11,15 @@ python setup.py build_ext -i
 on the cluster
 copy source over then as above,
 enter interactive mode, got to sktime root
-module add python/anaconda/2019.3/3.7
-export PYTHONPATH=$(pwd)
+    module add python/anaconda/2019.3/3.7
+    export PYTHONPATH=$(pwd)
 IF not done before,
-conda create -n sktime
-conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn [add any new deps]
-
+    conda create -n sktime
+    conda init bash
+    conda activate sktime
+    conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn [add any new deps]
+then finally
+    conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn
 co
 but use the full path for setup.py
 
