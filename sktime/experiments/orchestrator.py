@@ -1,3 +1,9 @@
+import numpy as np
+
+__all__ = ['Orchestrator']
+__author__ = ['Viktor Kazakov']
+
+
 class Orchestrator:
     """
     Orchestrates the sequencing of running the machine learning experiments.
@@ -46,12 +52,25 @@ class Orchestrator:
                     strategy.fit(task, dts_loaded.iloc[train])
 
                     if predict_on_runtime:
-                        y_pred = strategy.predict(dts_loaded.iloc[test])
-                        y_true = dts_loaded[task.target].iloc[test].values
+                        y_pred = np.array(strategy.predict(dts_loaded.iloc[test]), dtype=np.intp)
+                        y_true = np.array(dts_loaded[task.target].iloc[test].values, dtype=np.intp)
+                        if hasattr(strategy, 'predict_proba'):
+                            actual_probas = strategy.predict_proba(dts_loaded.iloc[test])
+                        else:
+                            #if no prediction probabilities were given set the probability of the predicted class to 1 and the rest to zeto.
+                            num_class_true = np.max(y_true) + 1
+                            num_class_pred = np.max(y_pred) + 1
+                            num_classes = max(num_class_pred, num_class_true)
+                            num_predictions = len(y_pred)
+                            actual_probas = (num_predictions, num_classes)
+                            actual_probas = np.zeros(actual_probas)
+                            actual_probas[np.arange(num_predictions),y_pred] = 1
+ 
                         self._result.save(dataset_name=data.dataset_name,
                                           strategy_name=strategy.name,
                                           y_true=y_true.tolist(),
                                           y_pred=y_pred.tolist(),
+                                          actual_probas=actual_probas,
                                           cv_fold=cv_fold)
                     if save_strategies:
                         strategy.save(dataset_name=data.dataset_name,

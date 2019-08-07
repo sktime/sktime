@@ -7,8 +7,10 @@ import pandas as pd
 
 from ..utils.load_data import load_from_tsfile_to_dataframe
 from ..utils.results_writing import write_results_to_uea_format
+import logging
 
-
+__all__ =['DatasetHDD','DatasetRAM','DatasetLoadFromDir','Result','ResultRAM','ResultHDD']
+__author__ = ['Viktor Kazakov']
 class DatasetHDD:
     """
     Another class for holding the data
@@ -153,7 +155,7 @@ class Result:
     Used for passing results to the analyse results class
     """
 
-    def __init__(self, dataset_name, strategy_name, y_true, y_pred):
+    def __init__(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv):
         """
         Parameters
         ----------
@@ -163,13 +165,19 @@ class Result:
             name of the strategy
         y_true : list
             True labels
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         y_pred : list
             predictions
+        cv_fold : int
+            Cross validation fold
         """
         self._dataset_name = dataset_name
         self._strategy_name = strategy_name
         self._y_true = y_true
         self._y_pred = y_pred
+        self._actual_probas=actual_probas
+        self._cv = cv
 
     @property
     def dataset_name(self):
@@ -234,7 +242,7 @@ class ResultRAM(SKTimeResult):
     def __init__(self):
         self._results = []
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+    def save(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold):
         """
         Parameters
         ----------
@@ -246,10 +254,17 @@ class ResultRAM(SKTimeResult):
             True lables array
         y_pred: array
             Predictions array
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         cv_fold : int
             Cross validation fold
         """
-        result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true, y_pred=y_pred)
+        result = Result(dataset_name=dataset_name, 
+                        strategy_name=strategy_name, 
+                        y_true=y_true, 
+                        y_pred=y_pred, 
+                        actual_probas=actual_probas, 
+                        cv=cv_fold)
         self._results.append(result)
 
     def load(self):
@@ -290,7 +305,7 @@ class ResultHDD(SKTimeResult):
         """
         return self._strategies_save_dir
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred, cv_fold):
+    def save(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold):
         """
         Parameters
         ----------
@@ -301,29 +316,22 @@ class ResultHDD(SKTimeResult):
         y_true : array
             True lables array
         y_pred : array
-            Predictions array
+            Predictions array.
+        actual_probas : array
+             Probabilities for each class. Result of `estimator.predict_proba()`
         cv_fold : int
             Cross validation fold
         """
         if not os.path.exists(self._results_save_dir):
             os.makedirs(self._results_save_dir)
-        # TODO BUG: write write_results_to_uea_format does not write the results property unless the probas are provided as well.
-        # Dummy probas to make the write_results_to_uea_format function work
-        y_true = list(map(int, y_true))
-        y_pred = list(map(int, y_pred))
-        num_class_true = np.max(y_true)
-        num_class_pred = np.max(y_pred)
-        num_classes = max(num_class_pred, num_class_true)
-        num_predictions = len(y_pred)
-        probas = (num_predictions, num_classes)
-        probas = np.zeros(probas)
-
+        
+        
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
                                     actual_class_vals=y_true,
                                     predicted_class_vals=y_pred,
-                                    actual_probas=probas,
+                                    actual_probas=actual_probas,
                                     resample_seed=cv_fold)
 
     def load(self):
