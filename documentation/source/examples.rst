@@ -3,7 +3,6 @@ Tutorials
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials:
 
    examples/loading_data.ipynb
    examples/univariate_time_series_classification.ipynb
