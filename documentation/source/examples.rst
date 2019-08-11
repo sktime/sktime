@@ -3,12 +3,11 @@ Tutorials
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials:
 
-   examples/loading_data
-   examples/univariate_time_series_classification
-   examples/shapelet_transform
-   examples/plateau_finder
-   examples/multivariate_time_series_classification
-   examples/experiment_orchestration
-   examples/forecasting
+   examples/loading_data.ipynb
+   examples/univariate_time_series_classification.ipynb
+   examples/shapelet_transform.ipynb
+   examples/plateau_finder.ipynb
+   examples/multivariate_time_series_classification.ipynb
+   examples/experiment_orchestration.ipynb
+   examples/forecasting.ipynb
