@@ -193,28 +193,28 @@ class RowwiseTransformer(BaseTransformer):
         validate_X(X)
 
         # fitting - this transformer needs no fitting
-        self.is_fitted_ = True
+        self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
+        """Apply the `fit_transform()` method of the transformer on each row.
         """
-        Apply the `fit_transform()` method of the per-row transformer repeatedly
-        on each row.
+        func = self.transformer.fit_transform
+        return self._apply_rowwise(func, X, y)
 
-        Parameters
-        ----------
-        X : 1D array-like, pandas Series, shape (n_samples, 1)
-            The training input samples. Shoould not be a DataFrame.
-
-        Returns
-        -------
-        T : 1D array-like, pandas Series, shape (n_samples, ...)
-            The transformed data
+    def inverse_transform(self, X, y=None):
+        """Apply the `fit_transform()` method of the transformer on each row.
         """
-        # check the validity of input
+        if not hasattr(self.transformer, 'inverse_transform'):
+            raise AttributeError("Transformer does not have an inverse transform method")
 
+        func = self.transformer.inverse_transform
+        return self._apply_rowwise(func, X, y)
+
+    def _apply_rowwise(self, func, X, y=None):
+        """Helper function to apply transform or inverse_transform function on each row of data container"""
+        check_is_fitted(self, '_is_fitted')
         validate_X(X)
-        check_is_fitted(self, 'is_fitted_')
 
         # 1st attempt: apply, relatively fast but not robust
         # try and except, but sometimes breaks in other cases than excepted ValueError
@@ -232,7 +232,7 @@ class RowwiseTransformer(BaseTransformer):
         # 2nd attempt: apply but iterate over columns, still relatively fast but still not very robust
         # but column is not 2d and thus breaks if transformer expects 2d input
         try:
-            Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform))
+            Xt = pd.concat([pd.Series(col.apply(func))
                             for _, col in X.items()], axis=1)
 
         # 3rd attempt: explicit for-loops, most robust but very slow
@@ -243,7 +243,7 @@ class RowwiseTransformer(BaseTransformer):
                 rows_t = []
                 for row in col:  # loop over rows in each column
                     row_2d = pd.DataFrame(row)  # convert into 2d dataframe
-                    row_t = self.transformer.fit_transform(row_2d).ravel()  # apply transform
+                    row_t = func(row_2d).ravel()  # apply transform
                     rows_t.append(row_t)  # append transformed rows
                 cols_t.append(rows_t)  # append transformed columns
 
@@ -255,6 +255,8 @@ class RowwiseTransformer(BaseTransformer):
             if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
                 Xt = tabularize(Xt)
         return Xt
+
+
 
 
 class Tabularizer(BaseTransformer):
