@@ -14,8 +14,7 @@ from sklearn.utils.validation import check_X_y, check_array, check_random_state,
 
 
 class RotationForestClassifier(ForestClassifier):
-    """
-    Rotation Forest Classifier
+    """Rotation Forest Classifier
 
     Parameters
     ----------
@@ -38,6 +37,9 @@ class RotationForestClassifier(ForestClassifier):
         ISSN = {0162-8828},
         URL = {http://doi.ieeecomputersociety.org/10.1109/TPAMI.2006.211}
      }
+
+     Java reference implementation:
+     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/weka/classifiers/meta/RotationForest.java
     """
     def __init__(self,
                  n_estimators=200,
