@@ -14,13 +14,38 @@ from sklearn.utils.validation import check_X_y, check_array, check_random_state,
 
 
 class RotationForestClassifier(ForestClassifier):
+    """
+    Rotation Forest Classifier
 
+    Parameters
+    ----------
+    n_estimators :
+    n_column_subsets
+    p_instance_subset
+    random_state
+    verbose
+
+    References
+    ----------
+     @article{Rodriguez2006,
+        author = {Juan J. Rodriguez and Ludmila I. Kuncheva and Carlos J. Alonso},
+        journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+        number = {10},
+        pages = {1619-1630},
+        title = {Rotation Forest: A new classifier ensemble method},
+        volume = {28},
+        year = {2006},
+        ISSN = {0162-8828},
+        URL = {http://doi.ieeecomputersociety.org/10.1109/TPAMI.2006.211}
+     }
+    """
     def __init__(self,
                  n_estimators=200,
                  n_column_subsets=3,
                  p_instance_subset=0.75,
                  random_state=None,
                  verbose=0):
+
         super(RotationForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators)
@@ -46,7 +71,7 @@ class RotationForestClassifier(ForestClassifier):
         self.n_columns_ = None
         self.classes_ = None
         self.n_outputs_ = None
-        self.n_instances = None
+        self.n_instances_ = None
         self.n_instances_in_subset = None
 
     def fit(self, X, y):
@@ -65,12 +90,12 @@ class RotationForestClassifier(ForestClassifier):
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
-        self.n_columns_ = X.shape[1]
+        self.n_instances_, self.n_columns_ = X.shape
         self.classes_ = np.unique(y)
-        self.n_instances, self.n_outputs_ = y.shape
+        self.n_outputs_ = y.shape[1]
 
         # get number of instances in random subsets
-        self.n_instances_in_subset = int(self.n_instances * self.p_instance_subset)
+        self.n_instances_in_subset = int(self.n_instances_ * self.p_instance_subset)
 
         # check if there are at least as many samples as columns in subset for PCA,
         # as n_components will be min(n_samples, n_columns)
@@ -84,7 +109,7 @@ class RotationForestClassifier(ForestClassifier):
         X_norm = self._normalise_X(X)
 
         # preallocate matrix for transformed data
-        Xt = np.zeros(X_norm.shape)
+        Xt = np.zeros((self.n_instances_, self.n_columns_))
 
         # TODO: parallelize
         for i in range(self.n_estimators):
