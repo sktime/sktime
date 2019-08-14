@@ -17,8 +17,3 @@ def test_validate_fh_bad_input_args(arg):
         validate_fh(arg)
 
 
-def test_validate_fh_default_arg():
-    default = None
-    fh = validate_fh(default)
-    assert_array_equal(np.ones(1), fh)
-

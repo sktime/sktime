@@ -372,7 +372,7 @@ class DummyForecaster(BaseForecaster):
         """
 
         if fh is None:
-            raise ValueError(f"{self.__name__} requires to specify the forecasting horizon in `fit`")
+            raise ValueError(f"{self.__class__.__name__} requires to specify the forecasting horizon in `fit`")
 
         # Unnest series
         y = self._prepare_y(y)
