@@ -11,17 +11,20 @@ python setup.py build_ext -i
 on the cluster
 copy source over then as above,
 enter interactive mode, got to sktime root
-    module add python/anaconda/2019.3/3.7
-    export PYTHONPATH=$(pwd)
 IF not done before,
-    conda create -n sktime
-    conda init bash
-    conda activate sktime
-    conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn [add any new deps]
-then finally
-    conda install setuptools sphinx_rtd_theme scikit_posthocs nbsphinx numpy pandas scikit-learn
-co
-but use the full path for setup.py
+
+1) >interactive
+2) change dir to sktime
+3) module add python/anaconda/2019.3/3.7
+4) conda init bash
+5) conda create -n sktime
+6) conda activate sktime
+7) conda install setuptools scipy cython numpy pandas scikit-learn
+8) export PYTHONPATH=$(pwd)
+9) python <FULLPATH>setup.py install
+10) python <FULLPATH>setup.py build_ext -i
+
+then run sktime.sh script
 
 """
 
@@ -59,55 +62,80 @@ Will have both low level version and high level orchestration version soon.
 """
 
 
-datasets = [
-    "Chinatown",
-    "GunPoint",
-    "ItalyPowerDemand",
+univariate_datasets = [
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
     "ArrowHead",
     "Coffee",
     "Adiac",
     "Beef",
     "BeetleFly",
     "BirdChicken",
+    "BME",
     "Car",
     "CBF",
+    "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
     "Computers",
     "CricketX",
     "CricketY",
     "CricketZ",
+    "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxTW",
+    "DodgerLoopDay",
+    "DodgerLoopGame",
+    "DodgerLoopWeekend",
     "Earthquakes",
     "ECG200",
     "ECG5000",
     "ECGFiveDays",
-#    "ElectricDevices",
+    "ElectricDevices",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
     "FaceAll",
     "FaceFour",
     "FacesUCR",
     "FiftyWords",
     "Fish",
-#    "FordA",
-#    "FordB",
+    "FordA",
+    "FordB",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Fungi",
+    "GestureMidAirD1",
+    "GestureMidAirD2",
+    "GestureMidAirD3",
+    "GesturePebbleZ1",
+    "GesturePebbleZ2",
     "Ham",
-#    "HandOutlines",
+    "HandOutlines",
     "Haptics",
     "Herring",
     "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
     "InsectWingbeatSound",
+    "ItalyPowerDemand",
     "LargeKitchenAppliances",
     "Lightning2",
     "Lightning7",
     "Mallat",
     "Meat",
     "MedicalImages",
+    "MelbournePedestrian",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxTW",
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
     "MoteStrain",
     "NonInvasiveFetalECGThorax1",
     "NonInvasiveFetalECGThorax2",
@@ -115,18 +143,30 @@ datasets = [
     "OSULeaf",
     "PhalangesOutlinesCorrect",
     "Phoneme",
+    "PickupGestureWiimoteZ",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "PLAID",
     "Plane",
+    "PowerCons",
     "ProximalPhalanxOutlineCorrect",
     "ProximalPhalanxOutlineAgeGroup",
     "ProximalPhalanxTW",
     "RefrigerationDevices",
+    "Rock",
     "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShakeGestureWiimoteZ",
     "ShapeletSim",
     "ShapesAll",
     "SmallKitchenAppliances",
+    "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-#    "StarlightCurves",
+    "StarlightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -136,10 +176,11 @@ datasets = [
     "Trace",
     "TwoLeadECG",
     "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
     "UWaveGestureLibraryZ",
-    "UWaveGestureLibraryAll",
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -148,7 +189,38 @@ datasets = [
     "Yoga",
 ]
 
-
+multivariate_datasets = [
+        "ArticularyWordRecognition",
+        "AtrialFibrillation",
+        "BasicMotions",
+        "CharacterTrajectories",
+        "Cricket",
+        "DuckDuckGeese",
+        "EigenWorms",
+        "Epilepsy",
+        "EthanolConcentration",
+        "ERing",
+        "FaceDetection",
+        "FingerMovements",
+        "HandMovementDirection",
+        "Handwriting",
+        "Heartbeat",
+        "InsectWingbeat",
+        "JapaneseVowels",
+        "Libras",
+        "LSST",
+        "MotorImagery",
+        "NATOPS",
+        "PenDigits",
+        "PEMS-SF",
+        "PhonemeSpectra",
+        "RacketSports",
+        "SelfRegulationSCP1",
+        "SelfRegulationSCP2",
+        "SpokenArabicDigits",
+        "StandWalkJump",
+        "UWaveGestureLibrary"
+]
 
 
 def set_classifier(cls, resampleId):
@@ -339,13 +411,48 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     file.close()
 
 
+def test_loading():
 
+    #test multivariate
+    #Test univariate
+    for i in range(0, len(univariate_datasets)):
+        data_dir="E:/tsc_ts/"
+        dataset = univariate_datasets[i]
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        print("Loaded "+dataset+" in position "+str(i))
+        print("Train X shape :")
+        print(trainX.shape)
+        print("Train Y shape :")
+        print(trainY.shape)
+        print("Test X shape :")
+        print(testX.shape)
+        print("Test Y shape :")
+        print(testY.shape)
+    for i in range(16, len(multivariate_datasets)):
+        data_dir="E:/mtsc_ts/"
+        dataset = multivariate_datasets[i]
+        print("Loading "+dataset+" in position "+str(i)+".......")
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        print("Loaded "+dataset)
+        print("Train X shape :")
+        print(trainX.shape)
+        print("Train Y shape :")
+        print(trainY.shape)
+        print("Test X shape :")
+        print(testX.shape)
+        print("Test Y shape :")
+        print(testY.shape)
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-    print('experimenting...')
+
+#    test_loading()
+#    sys.exit()
+#    print('experimenting...')
 #Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1: #cluster run, this is fragile
         print(sys.argv)
@@ -358,19 +465,22 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-#        data_dir = "/scratch/datasets/"
+#        data_dir = "/scratch/univariate_datasets/"
 #        results_dir = "/scratch/results"
         data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/sktimeData/Univariate2018_ts/"
-        results_dir = "Z:/Results/sktime Bakeoff/"
-
-        classifier = "RISE"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "E:/Temp/"
+#        results_dir = "Z:/Results/sktime Bakeoff/"
+        dataset = "ItalyPowerDemand"
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        classifier = "BOSS"
         resample = 0
-        for i in range(0, len(datasets)):
-            dataset = datasets[i]
-            print(i)
-            print(" problem = "+dataset)
+        for i in range(0, len(univariate_datasets)):
+            dataset = univariate_datasets[i]
+#            print(i)
+#            print(" problem = "+dataset)
             tf=False
             run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
 
