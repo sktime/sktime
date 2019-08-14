@@ -138,41 +138,36 @@ def validate_fh(fh):
         Sorted and validated forecasting horizon.
     """
 
-    # Set default as one-step ahead
-    if fh is None:
-        return np.ones(1, dtype=np.int)
-
     # Check single integer
-    elif np.issubdtype(type(fh), np.integer):
+    if np.issubdtype(type(fh), np.integer):
         return np.array([fh], dtype=np.int)
 
     # Check array-like input
+    elif isinstance(fh, list):
+        if len(fh) < 1:
+            raise ValueError(f"`fh` must specify at least one step, but found: "
+                             f"{type(fh)} of length {len(fh)}")
+        if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
+            raise ValueError('If `fh` is passed as a list, '
+                             'it has to be a list of integers')
+
+    elif isinstance(fh, np.ndarray):
+        if fh.ndim > 1:
+            raise ValueError(f"`fh` must be a 1d array, but found: "
+                             f"{fh.ndim} dimensions")
+        if len(fh) < 1:
+            raise ValueError(f"`fh` must specify at least one step, but found: "
+                             f"{type(fh)} of length {len(fh)}")
+        if not np.issubdtype(fh.dtype, np.integer):
+            raise ValueError(
+                f'If `fh` is passed as an array, it has to be an array of '
+                f'integers, but found an array of dtype: {fh.dtype}')
+
     else:
-        if isinstance(fh, list):
-            if len(fh) < 1:
-                raise ValueError(f"`fh` must specify at least one step, but found: "
-                                 f"{type(fh)} of length {len(fh)}")
-            if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
-                raise ValueError('If `fh` is passed as a list, '
-                                 'it has to be a list of integers')
+        raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
+                         f"integer, but found: {type(fh)}")
 
-        elif isinstance(fh, np.ndarray):
-            if fh.ndim > 1:
-                raise ValueError(f"`fh` must be a 1d array, but found: "
-                                 f"{fh.ndim} dimensions")
-            if len(fh) < 1:
-                raise ValueError(f"`fh` must specify at least one step, but found: "
-                                 f"{type(fh)} of length {len(fh)}")
-            if not np.issubdtype(fh.dtype, np.integer):
-                raise ValueError(
-                    f'If `fh` is passed as an array, it has to be an array of '
-                    f'integers, but found an array of dtype: {fh.dtype}')
-
-        else:
-            raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
-                             f"integer, but found: {type(fh)}")
-
-        return np.asarray(np.sort(fh), dtype=np.int)
+    return np.asarray(np.sort(fh), dtype=np.int)
 
 
 def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):

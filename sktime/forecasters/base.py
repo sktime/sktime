@@ -1,3 +1,6 @@
+__all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
+__author__ = ['Markus Löning']
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -9,10 +12,6 @@ from sktime.utils.validation.forecasting import validate_X
 from sktime.utils.validation.forecasting import validate_y
 from sktime.utils.validation.forecasting import validate_y_X
 from sktime.utils.data_container import get_time_index, tabularise
-
-
-__all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
-__author__ = ['Markus Löning']
 
 
 class BaseForecaster(BaseEstimator):
@@ -32,7 +31,7 @@ class BaseForecaster(BaseEstimator):
         self._time_index = None
         self._is_fitted = False
 
-    def fit(self, y, fh=None, X=None):
+    def fit(self, y, fh=1, X=None):
         """
         Fit forecaster.
 
@@ -58,7 +57,8 @@ class BaseForecaster(BaseEstimator):
             validate_y_X(y, X)
 
         # validate forecasting horizon
-        fh = validate_fh(fh)
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # Keep index for predicting where forecasters horizon will be relative to y seen in fit
         self._time_index = get_time_index(y)
@@ -71,7 +71,7 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None):
+    def predict(self, fh=1, X=None):
         """
         Predict using fitted estimator.
 
@@ -98,7 +98,8 @@ class BaseForecaster(BaseEstimator):
             validate_X(X)
 
         # validate forecasters horizon
-        fh = validate_fh(fh)
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
