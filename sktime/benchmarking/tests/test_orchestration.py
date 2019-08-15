@@ -1,15 +1,15 @@
 import numpy as np
 
 from sktime.datasets import load_gunpoint
-from sktime.experiments.data import DatasetRAM
-from sktime.experiments.data import ResultRAM
-from sktime.experiments.orchestrator import Orchestrator
+from sktime.benchmarking.data import DatasetRAM
+from sktime.benchmarking.data import ResultRAM
+from sktime.benchmarking.orchestration import Orchestrator
 from sktime.highlevel.tasks import TSCTask
 from sktime.highlevel.strategies import TSCStrategy
 from sktime.model_selection import SingleSplit
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
-from sktime.experiments.analysis import AnalyseResults
-from sktime.experiments.scores import ScoreAccuracy
+from sktime.benchmarking.evaluation import Evaluator
+from sktime.benchmarking.metrics import ScoreAccuracy
 from sktime.classifiers.distance_based.proximity_forest import ProximityForest
 
 def test_orchestration():
@@ -30,7 +30,7 @@ def test_orchestration():
                                 cv=SingleSplit(random_state=1),
                                 result=resultRAM)
 
-    orchestrator.run(save_strategies=False)
+    orchestrator.fit_predict(save_strategies=False)
     result = resultRAM.load()
     actual = np.array(result[0].y_pred, dtype=np.intp)
 
@@ -65,9 +65,9 @@ def test_accuracy():
                                 cv=SingleSplit(random_state=1),
                                 result=resultRAM)
 
-    orchestrator.run(save_strategies=False)
+    orchestrator.fit_predict(save_strategies=False)
     
-    analyse = AnalyseResults(resultRAM)
+    analyse = Evaluator(resultRAM)
     strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())
     
     testing_loss = losses_df['loss'].iloc[0]
@@ -94,9 +94,9 @@ def test_stat():
                                 cv=SingleSplit(random_state=1),
                                 result=resultRAM)
 
-    orchestrator.run(save_strategies=False)
+    orchestrator.fit_predict(save_strategies=False)
 
-    analyse = AnalyseResults(resultRAM)
+    analyse = Evaluator(resultRAM)
     strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())
 
     ranks = analyse.ranks(strategy_dict)

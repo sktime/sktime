@@ -1,16 +1,16 @@
 import csv
-import os
 from abc import ABC, abstractmethod
 
-import numpy as np
-import pandas as pd
+from sktime.utils.results_writing import write_results_to_uea_format
 
-from ..utils.load_data import load_from_tsfile_to_dataframe
-from ..utils.results_writing import write_results_to_uea_format
-import logging
-
-__all__ =['DatasetHDD','DatasetRAM','DatasetLoadFromDir','Result','ResultRAM','ResultHDD']
+__all__ = ['DatasetHDD', 'DatasetRAM', 'DataHDD']
 __author__ = ['Viktor Kazakov']
+
+import os
+import pandas as pd
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
+
+
 class DatasetHDD:
     """
     Another class for holding the data
@@ -114,19 +114,20 @@ class DatasetRAM:
         return self._dataset
 
 
-class DatasetLoadFromDir:
+class DataHDD:
     """
     Loads all datasets in a root directory
     """
 
-    def __init__(self, root_dir):
+    def __init__(self, path, datasets=None):
         """
         Parameters
         ----------
-        root_dir : str
+        path : str
             Root directory where the datasets are located
         """
-        self._root_dir = root_dir
+        self.path = path
+        self.datasets = datasets
 
     def load_datasets(self, train_test_exists=True):
         """
@@ -140,13 +141,15 @@ class DatasetLoadFromDir:
         list
             list of DatasetHDD objects
         """
-        datasets = os.listdir(self._root_dir)
+        if self.datasets is None:
+            self.datasets = os.listdir(self.path)
 
         data = []
-        for dts in datasets:
-            dts = DatasetHDD(dataset_loc=os.path.join(self._root_dir, dts), dataset_name=dts,
-                             train_test_exists=train_test_exists)
-            data.append(dts)
+        for dataset in self.datasets:
+            dataset = DatasetHDD(dataset_loc=os.path.join(self.path, dataset),
+                                 dataset_name=dataset,
+                                 train_test_exists=train_test_exists)
+            data.append(dataset)
         return data
 
 
@@ -176,7 +179,7 @@ class Result:
         self._strategy_name = strategy_name
         self._y_true = y_true
         self._y_pred = y_pred
-        self._actual_probas=actual_probas
+        self._actual_probas = actual_probas
         self._cv = cv
 
     @property
@@ -259,11 +262,11 @@ class ResultRAM(SKTimeResult):
         cv_fold : int
             Cross validation fold
         """
-        result = Result(dataset_name=dataset_name, 
-                        strategy_name=strategy_name, 
-                        y_true=y_true, 
-                        y_pred=y_pred, 
-                        actual_probas=actual_probas, 
+        result = Result(dataset_name=dataset_name,
+                        strategy_name=strategy_name,
+                        y_true=y_true,
+                        y_pred=y_pred,
+                        actual_probas=actual_probas,
                         cv=cv_fold)
         self._results.append(result)
 
@@ -324,8 +327,7 @@ class ResultHDD(SKTimeResult):
         """
         if not os.path.exists(self._results_save_dir):
             os.makedirs(self._results_save_dir)
-        
-        
+
         write_results_to_uea_format(output_path=self._results_save_dir,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
