@@ -8,7 +8,7 @@ import pandas as pd
 from ..utils.load_data import load_from_tsfile_to_dataframe
 from ..utils.results_writing import write_results_to_uea_format
 import logging
-
+import re
 __all__ =['DatasetHDD','DatasetRAM','DatasetLoadFromDir','Result','ResultRAM','ResultHDD']
 __author__ = ['Viktor Kazakov']
 class DatasetHDD:
@@ -352,6 +352,10 @@ class ResultHDD(SKTimeResult):
                     dataset_name = ""
                     y_true = []
                     y_pred = []
+                    actual_probas = []
+
+                    file_name = path_to_load.split(os.sep)[-1]
+                    cv = re.findall('\d+', file_name)[0]
                     with open(path_to_load) as csvfile:
                         readCSV = csv.reader(csvfile, delimiter=',')
                         for row in readCSV:
@@ -362,12 +366,15 @@ class ResultHDD(SKTimeResult):
                             elif current_row >= 4:
                                 y_true.append(row[0])
                                 y_pred.append(row[1])
+                                actual_probas.append(row[3:])
                                 current_row += 1
                             else:
                                 current_row += 1
                     # create result object and append
                     result = Result(dataset_name=dataset_name, strategy_name=strategy_name, y_true=y_true,
-                                    y_pred=y_pred)
+                                    y_pred=y_pred,
+                                    actual_probas=actual_probas,
+                                    cv=cv) 
                     results.append(result)
 
         return results
