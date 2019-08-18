@@ -1,9 +1,5 @@
-import csv
-
-from sktime.utils.results_writing import write_results_to_uea_format
-
-__all__ = ["DatasetUEA", "DatasetRAM", "DataUEA"]
-__author__ = ["Viktor Kazakov"]
+__all__ = ["DatasetUEA", "DatasetCollectionUEA", "DatasetRAM", "DatasetHDD"]
+__author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
 import pandas as pd
@@ -84,7 +80,7 @@ class DatasetHDD(BaseDataset):
     pass
 
 
-class DataUEA:
+class DatasetCollectionUEA:
 
     def __init__(self, path, dataset_names=None):
         self.path = path

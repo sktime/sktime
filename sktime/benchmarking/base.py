@@ -1,3 +1,6 @@
+__author__ = ["Markus Löning"]
+__all__ = ["BaseDataset", "BaseResults"]
+
 from abc import ABC, abstractmethod
 
 
@@ -16,7 +19,7 @@ class BaseDataset(ABC):
         pass
 
 
-class BaseResult(ABC):
+class BaseResults(ABC):
 
     def __init__(self, predictions_path, fitted_strategies_path=None):
         # assigned in construction

@@ -1,26 +1,12 @@
 __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
-import numpy as np
 from sktime.highlevel.tasks import TSCTask, TSRTask
 
 
 class Orchestrator:
     """
-    Orchestrates the sequencing of running the machine learning experiments.
-
-    Parameters
-    ----------
-    tasks: sktime.highlevel.Task
-        task object
-    datasets: pandas dataframe
-        datasets in pandas skitme format
-    strategies: list of sktime strategy
-        strategy as per sktime.highlevel
-    cv: sklearn.model_selection cross validation
-        sklearn cross validation method. Must implement split()
-    results: sktime result class
-        Object for saving the results
+    Fit and predict one or more estimators on one or more datasets
     """
 
     def __init__(self, tasks, datasets, strategies, cv, results):
@@ -38,7 +24,8 @@ class Orchestrator:
 
     def _iter(self):
         """Iterator for orchestration"""
-        # TODO skip data loading if all strategies are skipped in case results already exist
+        # TODO skip data loading if all strategies are skipped in case all results already exist and all overwrite
+        #  options are set to False
 
         for task, dataset in zip(self.tasks, self.datasets):
             data = dataset.load()  # load data into memory from dataset hook
@@ -46,7 +33,7 @@ class Orchestrator:
                 for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data)):
                     yield task, dataset, data, strategy, cv_fold, train_idx, test_idx
 
-    def fit(self, overwrite_fitted_strategies=False, verbose=0):
+    def fit(self, overwrite_fitted_strategies=False, verbose=True):
         """Fit strategies on datasets"""
 
         for task, dataset, data, strategy, cv_fold, train_idx, test_idx in self._iter():
@@ -59,12 +46,14 @@ class Orchestrator:
             # else fit and save fitted strategy
             else:
                 train = data.iloc[train_idx]
+                if verbose:
+                    print(f"Fitting strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
                 strategy.fit(task, train)
                 self.results.save_fitted_strategy(strategy=strategy,
                                                   dataset_name=data.dataset_name,
                                                   cv_fold=cv_fold)
 
-    def predict(self, overwrite_predictions=False, predict_on_train=False, verbose=0):
+    def predict(self, overwrite_predictions=False, predict_on_train=False, verbose=True):
         """Predict from saved fitted strategies"""
         raise NotImplementedError("Predicting from saved fitted strategies is not implemented yet")
 
@@ -156,8 +145,6 @@ class Orchestrator:
         """Predict strategy on one dataset"""
         # TODO always try to get probabilistic predictions first, compute deterministic predictions using
         #  argmax to avoid rerunning predictions, only if no predict_proba is available, run predict
-
-        # if task is classification, return predicted probabilities for each class
 
         # if the task is classification and the strategies supports probabilistic predictions,
         # get probabilistic predictions

@@ -68,7 +68,7 @@ def test_accuracy():
     orchestrator.fit_predict(save_fitted_strategies=False)
     
     analyse = Evaluator(resultRAM)
-    strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())
+    strategy_dict, losses_df = analyse.compute_metric(metric= ScoreAccuracy())
     
     testing_loss = losses_df['loss'].iloc[0]
     true_loss = 0.15384615384615385
@@ -97,7 +97,7 @@ def test_stat():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(resultRAM)
-    strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())
+    strategy_dict, losses_df = analyse.compute_metric(metric= ScoreAccuracy())
 
     ranks = analyse.ranks(strategy_dict)
     pf_rank = ranks.loc['ProximityForest'][0] #1

@@ -1,3 +1,6 @@
+__author__ = ["Viktor Kazakov", "Markus Löning"]
+__all__ = ["Evaluator"]
+
 import collections
 import itertools
 
@@ -10,7 +13,7 @@ from scipy.stats import ranksums
 from scipy.stats import ttest_ind
 
 
-class Evaluator(object):
+class Evaluator:
     """
     Analyze results of machine learning experiments.
 
@@ -25,7 +28,7 @@ class Evaluator(object):
 
         self._results_list = results.load_predictions()
 
-    def prediction_errors(self, metric):
+    def compute_metric(self, metric):
         """
         Calculates the average prediction error per estimator as well as the prediction error achieved by each estimator on individual datasets.
 
@@ -39,7 +42,7 @@ class Evaluator(object):
             ``estimator_avg_error`` represents the average error and standard deviation achieved by each estimator. ``estimator_avg_error_per_dataset`` represents the average error and standard deviation achieved by each estimator on each dataset.
         """
         # load all predictions
-        losses = MetricCalculator(metric)
+        losses = _MetricCalculator(metric)
         for res in self._results_list:
             y_pred = res.y_pred
             y_pred = list(map(float, y_pred))
@@ -366,7 +369,7 @@ class Evaluator(object):
         return nemenyi
 
 
-class MetricCalculator(object):
+class _MetricCalculator(object):
     """
     Calculates prediction losses on test datasets achieved by the trained estimators. When the class is instantiated it creates a dictionary that stores the losses.
 

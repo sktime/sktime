@@ -1,11 +1,11 @@
-__all__ = ["Result", "ResultsCSV", "ResultRAM", "ResultUEA"]
-__author__ = ["Viktor Kazakov"]
+__all__ = ["Result", "ResultsCSV", "ResultsRAM", "ResultsUEA"]
+__author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
 import pandas as pd
 from joblib import dump, load
 
-from sktime.benchmarking.base import BaseResult
+from sktime.benchmarking.base import BaseResults
 
 
 class Result:
@@ -78,7 +78,7 @@ class Result:
         return self._y_pred
 
 
-class ResultRAM:
+class ResultsRAM:
     """
     Class for storing the results of the experiments in memory
     """
@@ -121,11 +121,11 @@ class ResultRAM:
         return self._results
 
 
-class ResultUEA(BaseResult):
+class ResultsUEA(BaseResults):
     pass
 
 
-class ResultsCSV(BaseResult):
+class ResultsCSV(BaseResults):
 
     def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
                          train_or_test="test", cv_fold=0):
