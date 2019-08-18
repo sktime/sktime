@@ -28,10 +28,10 @@ def test_orchestration():
                                 tasks=[task],
                                 strategies=[strategy],
                                 cv=SingleSplit(random_state=1),
-                                result=resultRAM)
+                                results=resultRAM)
 
-    orchestrator.fit_predict(save_strategies=False)
-    result = resultRAM.load()
+    orchestrator.fit_predict(save_fitted_strategies=False)
+    result = resultRAM.load_predictions()
     actual = np.array(result[0].y_pred, dtype=np.intp)
 
     # expected output
@@ -63,9 +63,9 @@ def test_accuracy():
                                 tasks=[task],
                                 strategies=[strategy],
                                 cv=SingleSplit(random_state=1),
-                                result=resultRAM)
+                                results=resultRAM)
 
-    orchestrator.fit_predict(save_strategies=False)
+    orchestrator.fit_predict(save_fitted_strategies=False)
     
     analyse = Evaluator(resultRAM)
     strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())
@@ -92,9 +92,9 @@ def test_stat():
                                 tasks=[task],
                                 strategies=[strategy_pf, strategy_fc],
                                 cv=SingleSplit(random_state=1),
-                                result=resultRAM)
+                                results=resultRAM)
 
-    orchestrator.fit_predict(save_strategies=False)
+    orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(resultRAM)
     strategy_dict, losses_df = analyse.prediction_errors(metric= ScoreAccuracy())

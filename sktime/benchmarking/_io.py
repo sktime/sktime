@@ -223,21 +223,7 @@ class Result:
         return self._y_pred
 
 
-class SKTimeResult(ABC):
-    @abstractmethod
-    def save(self):
-        """
-        Saves the result
-        """
-
-    @abstractmethod
-    def load(self):
-        """
-        method for loading the results
-        """
-
-
-class ResultRAM(SKTimeResult):
+class ResultRAM:
     """
     Class for storing the results of the experiments in memory
     """
@@ -280,22 +266,22 @@ class ResultRAM(SKTimeResult):
         return self._results
 
 
-class ResultHDD(SKTimeResult):
+class ResultHDD:
     """
     Class for storing the results of the orchestrator
     """
 
-    def __init__(self, results_save_dir, strategies_save_dir):
+    def __init__(self, path, strategies_save_dir):
         """
         Parameters
         -----------
-        results_save_dir : str
+        path : str
             path where the results will be saved
         strategies_save_dir : str
             path for saving the strategies
         """
 
-        self._results_save_dir = results_save_dir
+        self._path = path
         self._strategies_save_dir = strategies_save_dir
 
     @property
@@ -308,7 +294,8 @@ class ResultHDD(SKTimeResult):
         """
         return self._strategies_save_dir
 
-    def save(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold):
+    def save_predictions(self, dataset_name, strategy_name, y_true, y_pred, actual_probas, cv_fold,
+                         train_or_test='test'):
         """
         Parameters
         ----------
@@ -325,10 +312,10 @@ class ResultHDD(SKTimeResult):
         cv_fold : int
             Cross validation fold
         """
-        if not os.path.exists(self._results_save_dir):
-            os.makedirs(self._results_save_dir)
+        if not os.path.exists(self._path):
+            os.makedirs(self._path)
 
-        write_results_to_uea_format(output_path=self._results_save_dir,
+        write_results_to_uea_format(output_path=self._path,
                                     classifier_name=strategy_name,
                                     dataset_name=dataset_name,
                                     actual_class_vals=y_true,
@@ -336,7 +323,7 @@ class ResultHDD(SKTimeResult):
                                     actual_probas=actual_probas,
                                     resample_seed=cv_fold)
 
-    def load(self):
+    def load_predictions(self, train_or_test='test'):
         """
         Returns
         -------
@@ -344,7 +331,7 @@ class ResultHDD(SKTimeResult):
             sktime results
         """
         results = []
-        for r, d, f in os.walk(self._results_save_dir):
+        for r, d, f in os.walk(self._path):
             for file_to_load in f:
                 if file_to_load.endswith(".csv"):
                     # found .csv file. Load it and create results object
@@ -373,3 +360,42 @@ class ResultHDD(SKTimeResult):
                     results.append(result)
 
         return results
+
+    def save_fitted_strategy(self, strategy, strategy_name, dataset_name, fold):
+        """Save fitted strategy"""
+        filedir = self._prepare_save(strategy_name, dataset_name)
+        filename = strategy_name + str(fold)
+        strategy.save(os.path.join(filedir, filename))
+
+    def load_fitted_strategy(self, strategy_name, dataset_name, fold):
+        """Load saved (fitted) strategy"""
+        filedir = self._make_dir(strategy_name, dataset_name)
+        filename = strategy_name + str(fold)
+        # TODO if we use strategy specific saving function, how do we know how to load them? check file endings?
+        raise NotImplementedError()
+
+    def _prepare_save(self, strategy_name, dataset_name):
+        """Helper function to keep track of processed datasets and strategies during orchestration"""
+        self._append_names(strategy_name, dataset_name)
+        filedir = self._make_dir(strategy_name, dataset_name)
+        return filedir
+
+    def _make_dir(self, strategy_name, dataset_name):
+        """Helper function to create file directories"""
+        filedir = os.path.join(self.results_dir, strategy_name, dataset_name)
+        if not os.path.exists(filedir):
+            # recursively create directory including intermediate-level folders
+            os.makedirs(filedir)
+        return filedir
+
+    def _append_names(self, strategy_name, dataset_name):
+        """Helper function to append names of datasets and strategies to results objects during orchestration"""
+        if strategy_name not in self.strategy_names:
+            self.strategy_names.append(strategy_name)
+
+        if dataset_name not in self.dataset_names:
+            self.dataset_names.append(dataset_name)
+
+    def save(self):
+        """Save results object as master file"""
+        raise NotImplementedError()

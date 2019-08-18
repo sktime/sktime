@@ -23,7 +23,7 @@ class Evaluator(object):
     def __init__(self,
                  results):
 
-        self._results_list = results.load()
+        self._results_list = results.load_predictions()
 
     def prediction_errors(self, metric):
         """
