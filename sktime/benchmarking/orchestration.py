@@ -2,6 +2,7 @@ __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import numpy as np
+from sktime.highlevel.tasks import TSCTask, TSRTask
 
 
 class Orchestrator:
@@ -24,10 +25,7 @@ class Orchestrator:
 
     def __init__(self, tasks, datasets, strategies, cv, results):
 
-        # check if there is one task for each dataset
-        if len(tasks) != len(datasets.names):
-            raise ValueError("Inconsistent number of datasets and tasks, "
-                             "there must be one task for each dataset")
+        self._validate_tasks_and_datasets(tasks, datasets)
         self.tasks = tasks
         self.datasets = datasets
 
@@ -41,43 +39,41 @@ class Orchestrator:
     def _iter(self):
         """Iterator for orchestration"""
         # TODO skip data loading if all strategies are skipped in case results already exist
-        for task, data in zip(self.tasks, self.datasets):
-            dts_loaded = data.load_predictions()
-            for strategy in self.strategies:
-                for cv_fold, (train, test) in enumerate(self.cv.split(dts_loaded)):
-                    yield task, data, dts_loaded, strategy, cv_fold, train, test
 
-    def fit(self, overwrite_fitted_strategies=False):
+        for task, dataset in zip(self.tasks, self.datasets):
+            data = dataset.load()  # load data into memory from dataset hook
+            for strategy in self.strategies:
+                for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data)):
+                    yield task, dataset, data, strategy, cv_fold, train_idx, test_idx
+
+    def fit(self, overwrite_fitted_strategies=False, verbose=0):
         """Fit strategies on datasets"""
 
-        for task, data, dts_loaded, strategy, cv_fold, train, test in self._iter():
+        for task, dataset, data, strategy, cv_fold, train_idx, test_idx in self._iter():
 
             # skip strategy, if overwrite is set to False and fitted strategy already exists
-            if not overwrite_fitted_strategies and self.results.check_fitted_strategy_exists(strategy,
-                                                                                             data.dataset_name):
+            if not overwrite_fitted_strategies and self.results.check_fitted_strategy_exists(
+                    strategy, data.dataset_name):
                 continue
 
             # else fit and save fitted strategy
             else:
-                data_train = dts_loaded.iloc[train]
-                strategy.fit(task, data_train)
-                strategy.save_predictions(dataset_name=data.dataset_name,
-                                          cv_fold=cv_fold,
-                                          strategies_save_dir=self.results.strategies_save_dir)
+                train = data.iloc[train_idx]
+                strategy.fit(task, train)
+                self.results.save_fitted_strategy(strategy=strategy,
+                                                  dataset_name=data.dataset_name,
+                                                  cv_fold=cv_fold)
 
-    def predict(self, overwrite_predictions=False, predict_on_train=False):
+    def predict(self, overwrite_predictions=False, predict_on_train=False, verbose=0):
         """Predict from saved fitted strategies"""
-        # check if strategies have been saved
-        # for task, data, dts_loaded, strategy, cv_fold, train, test in self._iter():
-        # strategy = load(strategy)
-        # predict
-        raise NotImplementedError("Predicting from saved strategies is not implemented yet")
+        raise NotImplementedError("Predicting from saved fitted strategies is not implemented yet")
 
     def fit_predict(self,
                     overwrite_predictions=False,
                     predict_on_train=False,
                     save_fitted_strategies=True,
-                    overwrite_fitted_strategies=False):
+                    overwrite_fitted_strategies=False,
+                    verbose=True):
         """Fit and predict"""
 
         # check that for fitted strategies overwrite option is only set when save option is set
@@ -87,86 +83,99 @@ class Orchestrator:
                              f"overwrite_fitted_strategies={overwrite_fitted_strategies} and"
                              f"save_fitted_strategies={save_fitted_strategies}")
 
-        for task, data, dts_loaded, strategy, cv_fold, train, test in self._iter():
+        # fitting and prediction
+        for task, dataset, data, strategy, cv_fold, train_idx, test_idx in self._iter():
 
-            # skip strategy if overwrite is set to False, no training set predictions are needed,
-            # and test set predictions already exist
-            if not overwrite_predictions and not predict_on_train and self.results.check_predictions_exists(
-                    strategy, data.dataset_name, cv_fold, train_or_test='test'):
+            # check which results already exist
+            train_pred_exist = self.results.check_predictions_exist(strategy.name, dataset.name,
+                                                                    cv_fold, train_or_test='train')
+            test_pred_exist = self.results.check_predictions_exist(strategy.name, dataset.name,
+                                                                   cv_fold, train_or_test='test')
+            fitted_stategy_exists = self.results.check_fitted_strategy_exists(strategy.name, dataset.name,
+                                                                              cv_fold)
+
+            # skip if overwrite is set to False for both predictions and strategies and all results exist
+            if not overwrite_predictions and not overwrite_fitted_strategies and test_pred_exist and \
+                    train_pred_exist and fitted_stategy_exists:
+                print(f"Skipping strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
                 continue
 
-            # also skip strategy if overwrite is set to False, training set predictions are needed but already exist
-            if not overwrite_predictions and predict_on_train and self.results.check_predictions_exists(
-                    strategy, data.dataset_name, cv_fold, train_or_test='train'):
-                continue
-
-            # get train and test data
-            data_train = dts_loaded.iloc[train]
-            data_test = dts_loaded.iloc[test]
+            # split data into training and test sets
+            train = data.iloc[train_idx]
+            test = data.iloc[test_idx]
 
             # fit strategy
-            strategy.fit(task, data_train)
+            if verbose:
+                print(f"Fitting strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
+            strategy.fit(task, train)
 
-            # save fitted strategies
-            if save_fitted_strategies:
-                if overwrite_fitted_strategies or not self.results.check_fitted_strategy_exists(strategy,
-                                                                                                data.dataset_name):
-                    strategy.save_predictions(dataset_name=data.dataset_name,
-                                              cv_fold=cv_fold,
-                                              strategies_save_dir=self.results.strategies_save_dir)
+            # save fitted strategy if save fitted strategies is set to True and overwrite is set to True or the
+            # fitted strategy does not already exist
+            if save_fitted_strategies and (overwrite_fitted_strategies or not fitted_stategy_exists):
+                self.results.save_fitted_strategy(strategy, dataset_name=dataset.name, cv_fold=cv_fold)
 
-            # optionally, predict on training set
-            if predict_on_train:
-                y_pred = strategy.predict(data_train)
-                y_train = data_train.loc[:, task.target]
-                self.results.save_predictions(dataset_name=data.dataset_name,
-                                              strategy_name=strategy.name,
-                                              y_true=y_train,
+            # optionally, predict on training set if predict on train is set to True and and overwrite is set to True
+            # or the predicted values do not already exist
+            if predict_on_train and (overwrite_predictions or not train_pred_exist):
+                if verbose:
+                    print(f"Predict strategy {strategy.name} on CV-fold {cv_fold} of the training set of dataset"
+                          f" {dataset.name}")
+                y_true = train.loc[:, task.target]
+                y_pred = strategy.predict(train)
+                y_proba = self._predict_proba_one(strategy, task, train, y_true, y_pred)
+                self.results.save_predictions(strategy_name=strategy.name,
+                                              dataset_name=dataset.name,
+                                              index=train_idx,
+                                              y_true=y_true,
                                               y_pred=y_pred,
+                                              y_proba=y_proba,
                                               cv_fold=cv_fold,
                                               train_or_test='train')
 
-            # predict on test set
-            y_pred = strategy.predict(data_test)
-            y_true = data_test.loc[:, task.target]
+            # predict on test set if overwrite predictions is set to True or predictions do not already exist
+            if overwrite_predictions or not test_pred_exist:
+                if verbose:
+                    print(f"Predict strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
+                y_true = test.loc[:, task.target]
+                y_pred = strategy.predict(test)
+                y_proba = self._predict_proba_one(strategy, task, test, y_true, y_pred)
+                self.results.save_predictions(dataset_name=dataset.name,
+                                              strategy_name=strategy.name,
+                                              index=test_idx,
+                                              y_true=y_true,
+                                              y_pred=y_pred,
+                                              y_proba=y_proba,
+                                              cv_fold=cv_fold,
+                                              train_or_test='test')
 
-            # TODO always try to get probabilistic predictions, compute deterministic predictions using
-            #  argmax to avoid rerunning predictions, only if no predict_proba is available, run predict
-            # if available, get probabilistic predictions
-            if hasattr(strategy, "predict_proba"):
-                actual_probas = strategy.predict_proba(dts_loaded.iloc[test])
-            else:
-                # if no prediction probabilities were given set the probability of
-                # the predicted class to 1 and the rest to zero.
-                num_class_true = np.max(y_true) + 1
-                num_class_pred = np.max(y_pred) + 1
-                num_classes = max(num_class_pred, num_class_true)
-                num_predictions = len(y_pred)
-                actual_probas = (num_predictions, num_classes)
-                actual_probas = np.zeros(actual_probas)
-                actual_probas[np.arange(num_predictions), y_pred] = 1
-
-            # save predictions
-            self.results.save_predictions(dataset_name=data.dataset_name,
-                                          strategy_name=strategy.name,
-                                          y_true=y_true.tolist(),
-                                          y_pred=y_pred.tolist(),
-                                          actual_probas=actual_probas,
-                                          cv_fold=cv_fold)
-
-        # save results master file
+        # save results as master file
         self.results.save()
 
-    def _save_fitted_strategy(self, strategy, dataset_name, overwrite_fitted_strategy=False):
-        """Save fitted strategies"""
+    @staticmethod
+    def _predict_proba_one(strategy, task, data, y_true, y_pred):
+        """Predict strategy on one dataset"""
+        # TODO always try to get probabilistic predictions first, compute deterministic predictions using
+        #  argmax to avoid rerunning predictions, only if no predict_proba is available, run predict
 
-        # if overwrite is set, simply save fitted strategies
-        if overwrite_fitted_strategy:
-            self.results.save_fitted_strategy(strategy, dataset_name)
+        # if task is classification, return predicted probabilities for each class
 
-        # else check if fitted strategy exists, if so, skip it, else save it
-        if not self.results.check_fitted_strategy_exists(strategy, dataset_name):
-            self.results.save_fitted_strategy(strategy, dataset_name)
+        # if the task is classification and the strategies supports probabilistic predictions,
+        # get probabilistic predictions
+        if isinstance(task, TSCTask) and hasattr(strategy, "predict_proba"):
+            return strategy.predict_proba(data)
+
+            # otherwise, return deterministic predictions in expected format
+            # else:
+            #     n_class_true = len(np.unique(y_true))
+            #     n_class_pred = len(np.unique(y_pred))
+            #     n_classes = np.maximum(n_class_pred, n_class_true)
+            #     n_predictions = len(y_pred)
+            #     y_proba = (n_predictions, n_classes)
+            #     y_proba = np.zeros(y_proba)
+            #     y_proba[:, np.array(y_pred, dtype=np.int)] = 1
+
+        else:
+            return None
 
     @staticmethod
     def _validate_strategy_names(strategies):
@@ -194,3 +203,27 @@ class Orchestrator:
         if invalid_names:
             raise ValueError(f"Estimator names must not contain __: got "
                              f"{invalid_names}")
+
+    @staticmethod
+    def _validate_tasks_and_datasets(tasks, datasets):
+        """Validate tasks"""
+        # check input types
+        if not isinstance(datasets, list):
+            raise ValueError(f"datasets must be a list, but found: {type(datasets)}")
+        if not isinstance(tasks, list):
+            raise ValueError(f"tasks must be a list, but found: {type(tasks)}")
+
+        # check if there is one task for each dataset
+        if len(tasks) != len(datasets):
+            raise ValueError("Inconsistent number of datasets and tasks, "
+                             "there must be one task for each dataset")
+
+        # check if task is either time series regression or classification, other tasks not supported yet
+        if not all(isinstance(task, (TSCTask, TSRTask)) for task in tasks):
+            raise NotImplementedError("Currently, only time series classification and time series "
+                                      "regression tasks are supported")
+
+        # check if all tasks are of the same type
+        if not all(isinstance(task, type(tasks[0])) for task in tasks):
+            raise ValueError("Not all tasks are of the same type")
+

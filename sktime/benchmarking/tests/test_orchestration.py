@@ -15,7 +15,7 @@ from sktime.classifiers.distance_based.proximity_forest import ProximityForest
 def test_orchestration():
     data = load_gunpoint()
 
-    dataset = DatasetRAM(dataset=data, dataset_name='gunpoint')
+    dataset = DatasetRAM(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
 
     # create strategies
@@ -50,7 +50,7 @@ def test_orchestration():
 def test_accuracy():
     data = load_gunpoint()
 
-    dataset = DatasetRAM(dataset=data, dataset_name='gunpoint')
+    dataset = DatasetRAM(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
 
     # create strategies
@@ -78,7 +78,7 @@ def test_accuracy():
 
 def test_stat():
     data = load_gunpoint()
-    dataset = DatasetRAM(dataset=data, dataset_name='gunpoint')
+    dataset = DatasetRAM(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
     
     fc = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
