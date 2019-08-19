@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 __author__ = ["Markus Löning", "Viktor Kazakov"]
-__all__ = ["BaseDataset", "BaseResults", "HDDBaseResults"]
+__all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
 from joblib import dump
@@ -10,9 +10,8 @@ from joblib import load
 
 class BaseDataset:
 
-    def __init__(self, path, name):
-        self.path = path
-        self.name = name
+    def __init__(self, name):
+        self._name = name
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -20,6 +19,21 @@ class BaseDataset:
 
     def load(self):
         raise NotImplementedError()
+
+    @property
+    def name(self):
+        return self._name
+
+
+class HDDBaseDataset(BaseDataset):
+
+    def __init__(self, path, name):
+        self._path = path
+        super(HDDBaseDataset, self).__init__(name=name)
+
+    @property
+    def path(self):
+        return self._path
 
 
 class BaseResults:

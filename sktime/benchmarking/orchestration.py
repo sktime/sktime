@@ -84,8 +84,8 @@ class Orchestrator:
                                                                               cv_fold)
 
             # skip if overwrite is set to False for both predictions and strategies and all results exist
-            if not overwrite_predictions and not overwrite_fitted_strategies and test_pred_exist and \
-                    train_pred_exist and fitted_stategy_exists:
+            if not overwrite_predictions and test_pred_exist and (train_pred_exist or not predict_on_train) and \
+                    not overwrite_fitted_strategies and (fitted_stategy_exists or not save_fitted_strategies):
                 print(f"Skipping strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
                 continue
 

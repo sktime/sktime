@@ -1,15 +1,15 @@
-__all__ = ["UEADataset", "RAMDataset", "CSVDataset", "make_datasets"]
+__all__ = ["UEADataset", "RAMDataset", "make_datasets"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
 
 import pandas as pd
 
-from sktime.benchmarking.base import BaseDataset
+from sktime.benchmarking.base import BaseDataset, HDDBaseDataset
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
-class UEADataset(BaseDataset):
+class UEADataset(HDDBaseDataset):
 
     def __init__(self, path, name, suffix_train="_TRAIN",
                  suffix_test="_TEST", fmt=".ts", target="target"):
@@ -45,6 +45,7 @@ class UEADataset(BaseDataset):
 
 
 class RAMDataset(BaseDataset):
+
     def __init__(self, dataset, name):
         """
         Container for storing a dataset in memory
@@ -58,17 +59,7 @@ class RAMDataset(BaseDataset):
         """
 
         self._dataset = dataset
-        self._name = name
-
-    @property
-    def name(self):
-        """
-        Returns
-        -------
-        str
-            Name of the dataset
-        """
-        return self._name
+        super(RAMDataset, self).__init__(name=name)
 
     def load(self):
         """
@@ -78,25 +69,6 @@ class RAMDataset(BaseDataset):
             dataset in pandas DataFrame format
         """
         return self._dataset
-
-
-class CSVDataset(BaseDataset):
-    pass
-
-
-# class DatasetCollectionUEA:
-#
-#     def __init__(self, path, dataset_names=None):
-#         self.path = path
-#         self.dataset_names = os.listdir(self.path) if dataset_names is None else dataset_names
-#
-#     def generate_dataset_hooks(self):
-#         """Generate dataset hooks"""
-#         datasets = []
-#         for dataset_name in self.dataset_names:
-#             dataset = DatasetUEA(path=self.path, name=dataset_name)
-#             datasets.append(dataset)
-#         return datasets
 
 
 def make_datasets(path, dataset_cls, names=None, **kwargs):
