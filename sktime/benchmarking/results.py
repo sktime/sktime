@@ -1,13 +1,15 @@
-__all__ = ["ResultsCSV", "ResultsRAM", "ResultsUEA"]
+__all__ = ["HDDResults", "RAMResults", "UEAResults"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from sktime.benchmarking.base import BaseResults, BaseResultsHDD
 
 
-class Result:
+class _ResultWrapper:
     """Single result class to ensure consistency for return object when loading results"""
 
     def __init__(self, strategy_name, dataset_name, index, y_true, y_pred, y_proba=None):
@@ -27,11 +29,11 @@ class Result:
         self.y_proba = y_proba
 
 
-class ResultsRAM(BaseResults):
+class RAMResults(BaseResults):
 
     def __init__(self):
         self.results = {}
-        super(ResultsRAM, self).__init__()
+        super(RAMResults, self).__init__()
 
     def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
                          train_or_test="test", cv_fold=0):
@@ -50,7 +52,7 @@ class ResultsRAM(BaseResults):
                 index = predictions[:, 0]
                 y_true = predictions[:, 1]
                 y_pred = predictions[:, 2]
-                yield Result(strategy_name, dataset_name, index, y_true, y_pred)
+                yield _ResultWrapper(strategy_name, dataset_name, index, y_true, y_pred)
 
     def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test="test"):
         # for in-memory results, always false
@@ -71,7 +73,7 @@ class ResultsRAM(BaseResults):
         pass
 
 
-class ResultsCSV(BaseResultsHDD):
+class HDDResults(BaseResultsHDD):
 
     def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
                          train_or_test="test", cv_fold=0):
@@ -92,11 +94,12 @@ class ResultsCSV(BaseResultsHDD):
                 index = results.loc[:, "index"].values
                 y_true = results.loc[:, "y_true"].values
                 y_pred = results.loc[:, "y_pred"].values
-                yield Result(strategy_name, dataset_name, index, y_true, y_pred)
+                yield _ResultWrapper(strategy_name, dataset_name, index, y_true, y_pred)
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
         """Save fitted strategy"""
-        path = self._make_file_path(self.fitted_strategies_path, strategy.name, dataset_name, cv_fold) + ".pickle"
+        path = self._make_file_path(self.fitted_strategies_path, strategy.name, dataset_name, cv_fold,
+                                    train_or_test="train") + ".pickle"
         strategy.save(path)
         self._append_names(strategy.name, dataset_name)
 
@@ -106,9 +109,9 @@ class ResultsCSV(BaseResultsHDD):
         # TODO if we use strategy specific saving function, how do we know how to load them? check file endings?
         raise NotImplementedError()
 
-    def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold, train_or_test="test"):
+    def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold):
         path = self._make_file_path(self.fitted_strategies_path, strategy_name,
-                                    dataset_name, cv_fold,  train_or_test) + ".pickle"
+                                    dataset_name, cv_fold, train_or_test="train") + ".pickle"
         if os.path.isfile(path):
             return True
         else:
@@ -132,6 +135,5 @@ class ResultsCSV(BaseResultsHDD):
         return os.path.join(filepath, filename)
 
 
-class ResultsUEA(BaseResultsHDD):
+class UEAResults(BaseResultsHDD):
     pass
-

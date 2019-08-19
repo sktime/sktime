@@ -1,28 +1,32 @@
-__all__ = ["DatasetUEA", "DatasetCollectionUEA", "DatasetRAM", "DatasetHDD"]
+__all__ = ["UEADataset", "RAMDataset", "CSVDataset", "make_datasets"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
+
 import pandas as pd
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+
 from sktime.benchmarking.base import BaseDataset
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
-class DatasetUEA(BaseDataset):
+class UEADataset(BaseDataset):
 
-    def __init__(self, path, name, suffix_train="_TRAIN.ts",
-                 suffix_test="_TEST.ts", target="target"):
+    def __init__(self, path, name, suffix_train="_TRAIN",
+                 suffix_test="_TEST", fmt=".ts", target="target"):
         self.target = target
         self._suffix_train = suffix_train
         self._suffix_test = suffix_test
+        self._fmt = fmt
 
-        super(DatasetUEA, self).__init__(path, name)
+        super(UEADataset, self).__init__(path, name)
 
     def load(self):
         """Load dataset"""
 
         # load training and test set from separate files
-        train_path = os.path.join(self.path, self.name + self._suffix_train)
-        test_path = os.path.join(self.path, self.name + self._suffix_test)
+        filename = os.path.join(self.path, self.name, self.name)
+        train_path = filename + self._suffix_train + self._fmt
+        test_path = filename + self._suffix_test + self._fmt
         X_train, y_train = load_from_tsfile_to_dataframe(train_path, return_separate_X_and_y=True)
         X_test, y_test = load_from_tsfile_to_dataframe(test_path, return_separate_X_and_y=True)
 
@@ -40,7 +44,7 @@ class DatasetUEA(BaseDataset):
         return data
 
 
-class DatasetRAM(BaseDataset):
+class RAMDataset(BaseDataset):
     def __init__(self, dataset, name):
         """
         Container for storing a dataset in memory
@@ -76,22 +80,35 @@ class DatasetRAM(BaseDataset):
         return self._dataset
 
 
-class DatasetHDD(BaseDataset):
+class CSVDataset(BaseDataset):
     pass
 
 
-class DatasetCollectionUEA:
+# class DatasetCollectionUEA:
+#
+#     def __init__(self, path, dataset_names=None):
+#         self.path = path
+#         self.dataset_names = os.listdir(self.path) if dataset_names is None else dataset_names
+#
+#     def generate_dataset_hooks(self):
+#         """Generate dataset hooks"""
+#         datasets = []
+#         for dataset_name in self.dataset_names:
+#             dataset = DatasetUEA(path=self.path, name=dataset_name)
+#             datasets.append(dataset)
+#         return datasets
 
-    def __init__(self, path, dataset_names=None):
-        self.path = path
-        self.dataset_names = os.listdir(self.path) if dataset_names is None else dataset_names
 
-    def generate_dataset_hooks(self):
-        """Generate dataset hooks"""
-        datasets = []
-        for dataset_name in self.dataset_names:
-            path = os.path.join(self.path, dataset_name)
-            dataset = DatasetUEA(path=path, name=dataset_name)
-            datasets.append(dataset)
-        return datasets
+def make_datasets(path, dataset_cls, names=None, **kwargs):
+    """Helper function to make datasets"""
+    # check input format
+    # if not isinstance(dataset_cls, BaseDataset):
+    #     raise ValueError(f"dataset must inherit from BaseDataset, but found:"
+    #                      f"{type(dataset_cls)}")
+    if names is not None:
+        if not isinstance(names, list):
+            raise ValueError(f"names must be a list, but found: {type(names)}")
 
+    # get names if names is not specified
+    names = os.listdir(path) if names is None else names
+    return [dataset_cls(path=path, name=name, **kwargs) for name in names]

@@ -213,4 +213,3 @@ class Orchestrator:
         # check if all tasks are of the same type
         if not all(isinstance(task, type(tasks[0])) for task in tasks):
             raise ValueError("Not all tasks are of the same type")
-

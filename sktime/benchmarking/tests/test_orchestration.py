@@ -1,10 +1,10 @@
 import numpy as np
 
-from sktime.benchmarking.data import DatasetRAM
+from sktime.benchmarking.data import RAMDataset
 from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import Accuracy
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import ResultsRAM
+from sktime.benchmarking.results import RAMResults
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
 from sktime.classifiers.distance_based.proximity_forest import ProximityForest
 from sktime.datasets import load_gunpoint
@@ -16,7 +16,7 @@ from sktime.model_selection import SingleSplit
 def test_orchestration():
     data = load_gunpoint()
 
-    dataset = DatasetRAM(dataset=data, name='gunpoint')
+    dataset = RAMDataset(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
 
     # create strategies
@@ -24,7 +24,7 @@ def test_orchestration():
     strategy = TSCStrategy(clf)
 
     # result backend
-    results = ResultsRAM()
+    results = RAMResults()
     orchestrator = Orchestrator(datasets=[dataset],
                                 tasks=[task],
                                 strategies=[strategy],
@@ -52,7 +52,7 @@ def test_orchestration():
 def test_accuracy():
     data = load_gunpoint()
 
-    dataset = DatasetRAM(dataset=data, name='gunpoint')
+    dataset = RAMDataset(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
 
     # create strategies
@@ -60,7 +60,7 @@ def test_accuracy():
     strategy = TSCStrategy(clf)
 
     # result backend
-    results = ResultsRAM()
+    results = RAMResults()
     orchestrator = Orchestrator(datasets=[dataset],
                                 tasks=[task],
                                 strategies=[strategy],
@@ -70,7 +70,7 @@ def test_accuracy():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    strategy_dict, losses_df = analyse.compute_metric(metric=Accuracy())
+    strategy_dict, losses_df = analyse.evaluate(metric=Accuracy())
 
     testing_loss = losses_df['loss'].iloc[0]
     true_loss = 1 - 0.15384615384615385
@@ -80,7 +80,7 @@ def test_accuracy():
 
 def test_stat():
     data = load_gunpoint()
-    dataset = DatasetRAM(dataset=data, name='gunpoint')
+    dataset = RAMDataset(dataset=data, name='gunpoint')
     task = TSCTask(target='class_val')
 
     fc = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
@@ -89,7 +89,7 @@ def test_stat():
     strategy_pf = TSCStrategy(pf)
 
     # result backend
-    results = ResultsRAM()
+    results = RAMResults()
     orchestrator = Orchestrator(datasets=[dataset],
                                 tasks=[task],
                                 strategies=[strategy_pf, strategy_fc],
@@ -99,7 +99,7 @@ def test_stat():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    strategy_dict, losses_df = analyse.compute_metric(metric=Accuracy())
+    strategy_dict, losses_df = analyse.evaluate(metric=Accuracy())
 
     ranks = analyse.ranks(strategy_dict)
     pf_rank = ranks.loc['ProximityForest'][0]  # 1

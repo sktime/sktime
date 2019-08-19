@@ -29,8 +29,10 @@ class Evaluator:
         if not isinstance(results, BaseResults):
             raise ValueError(f"results must inherit from BaseResults")
         self.results = results
+        self.metrics_per_estimator = None
+        self.metric_per_estimator_dataset = None
 
-    def compute_metric(self, metric, train_or_test='test', cv_fold=0):
+    def evaluate(self, metric, train_or_test='test', cv_fold=0):
         """
         Calculates the average prediction error per estimator as well as the prediction error achieved by each estimator on individual datasets.
 
@@ -53,11 +55,12 @@ class Evaluator:
             y_true = result.y_true
             y_pred = result.y_pred
             y_proba = result.y_proba
-
             calculator.compute_metric(y_true, y_pred, dataset_name, strategy_name)
-        return calculator.get_metrics()
 
-    def average_and_std_error(self, scores_dict):
+        self.metrics_per_estimator, self.metric_per_estimator_dataset = calculator.get_metrics()
+        return self._metrics_to_dataframe(self.metric_per_estimator_dataset)
+
+    def average_and_std_error(self):
         """
         Calculates simple average and standard error.
 
@@ -72,10 +75,10 @@ class Evaluator:
             result with average score and standard error
         """
         result = {}
-        for k in scores_dict.keys():
-            average = np.average(scores_dict[k])
-            n = len(scores_dict[k])
-            std_error = np.std(scores_dict[k]) / np.sqrt(n)
+        for k in self.metrics_per_estimator.keys():
+            average = np.average(self.metrics_per_estimator[k])
+            n = len(self.metrics_per_estimator[k])
+            std_error = np.std(self.metrics_per_estimator[k]) / np.sqrt(n)
             result[k] = [average, std_error]
 
         res_df = pd.DataFrame.from_dict(result, orient='index')
@@ -84,13 +87,13 @@ class Evaluator:
 
         return res_df
 
-    def plot_boxcharts(self, scores_dict):
+    def plot_boxcharts(self):
         data = []
         labels = []
         avg_error = []
-        for e in scores_dict.keys():
-            data.append(scores_dict[e])
-            avg_error.append(np.mean(scores_dict[e]))
+        for e in self.metrics_per_estimato.keys():
+            data.append(self.metrics_per_estimato[e])
+            avg_error.append(np.mean(self.metrics_per_estimato[e]))
             labels.append(e)
         # sort data and labels based on avg_error
         idx_sort = np.array(avg_error).argsort()
@@ -104,7 +107,7 @@ class Evaluator:
 
         return fig
 
-    def ranks(self, strategy_dict, ascending=True):
+    def ranks(self, ascending=True):
         """
         Calculates the average ranks based on the performance of each estimator on each dataset
 
@@ -123,14 +126,14 @@ class Evaluator:
         if not isinstance(ascending, bool):
             raise ValueError('Variable ascending needs to be boolean')
 
-        df = pd.DataFrame(strategy_dict)
+        df = pd.DataFrame(self.metric_per_estimator_dataset)
         ranked = df.rank(axis=1, ascending=ascending)
         mean_r = pd.DataFrame(ranked.mean(axis=0))
         mean_r.columns = ['avg_rank']
         mean_r = mean_r.sort_values('avg_rank', ascending=ascending)
         return mean_r
 
-    def t_test(self, strategy_dict):
+    def t_test(self):
         """
         Runs t-test on all possible combinations between the estimators.
 
@@ -144,11 +147,11 @@ class Evaluator:
             pandas DataFrame (Database style and MultiIndex)
         """
         t_df = pd.DataFrame()
-        perms = itertools.product(strategy_dict.keys(), repeat=2)
+        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            x = np.array(strategy_dict[perm[0]])
-            y = np.array(strategy_dict[perm[1]])
+            x = np.array(self.metric_per_estimator_dataset[perm[0]])
+            y = np.array(self.metric_per_estimator_dataset[perm[1]])
             t_stat, p_val = ttest_ind(x, y)
 
             t_test = {
@@ -171,7 +174,7 @@ class Evaluator:
 
         return t_df, values_df_multiindex
 
-    def sign_test(self, strategy_dict):
+    def sign_test(self):
         """
         Non-parametric test for test for consistent differences between pairs of observations. See `<https://en.wikipedia.org/wiki/Sign_test>`_ for details about the test and `<https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.binom_test.html>`_ for details about the scipy implementation.
 
@@ -185,10 +188,10 @@ class Evaluator:
             pandas DataFrame (Database style), pivot table)
         """
         sign_df = pd.DataFrame()
-        perms = itertools.product(strategy_dict.keys(), repeat=2)
+        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
         for perm in perms:
-            x = np.array(strategy_dict[perm[0]])
-            y = np.array(strategy_dict[perm[1]])
+            x = np.array(self.metric_per_estimator_dataset[perm[0]])
+            y = np.array(self.metric_per_estimator_dataset[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
             p_val = stats.binom_test(signs, n)
@@ -203,7 +206,7 @@ class Evaluator:
 
         return sign_df, sign_df_pivot
 
-    def ranksum_test(self, strategy_dict):
+    def ranksum_test(self):
         """
         Non-parametric test for testing consistent differences between pairs of obeservations.
         The test counts the number of observations that are greater, smaller and equal to the mean
@@ -219,12 +222,12 @@ class Evaluator:
             Database style and MultiIndex
         """
         ranksum_df = pd.DataFrame()
-        perms = itertools.product(strategy_dict.keys(), repeat=2)
+        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
             comb = perm[0] + ' - ' + perm[1]
-            x = strategy_dict[perm[0]]
-            y = strategy_dict[perm[1]]
+            x = self.metric_per_estimator_dataset[perm[0]]
+            y = self.metric_per_estimator_dataset[perm[1]]
             t_stat, p_val = ranksums(x, y)
             ranksum = {
                 'estimator_1': perm[0],
@@ -245,7 +248,7 @@ class Evaluator:
 
         return ranksum_df, values_df_multiindex
 
-    def t_test_with_bonferroni_correction(self, strategy_dict, alpha=0.05):
+    def t_test_with_bonferroni_correction(self, alpha=0.05):
         """
         correction used to counteract multiple comparissons
         https://en.wikipedia.org/wiki/Bonferroni_correction
@@ -262,7 +265,7 @@ class Evaluator:
         DataFrame 
             MultiIndex DataFrame
         """
-        df_t_test, _ = self.t_test(strategy_dict)
+        df_t_test, _ = self.t_test(self.metric_per_estimator_dataset)
         idx_estim_1 = df_t_test['estimator_1'].unique()
         idx_estim_2 = df_t_test['estimator_2'].unique()
         estim_1 = len(idx_estim_1)
@@ -277,7 +280,7 @@ class Evaluator:
 
         return bonfer_df
 
-    def wilcoxon_test(self, strategy_dict):
+    def wilcoxon_test(self):
         """http://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
         `Wilcoxon signed-rank test <https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test>`_.
         Tests whether two  related paired samples come from the same distribution. 
@@ -294,12 +297,12 @@ class Evaluator:
         """
         wilcoxon_df = pd.DataFrame()
         values = np.array([])
-        prod = itertools.product(strategy_dict.keys(), repeat=2)
+        prod = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
         for p in prod:
             estim_1 = p[0]
             estim_2 = p[1]
-            w, p_val = stats.wilcoxon(strategy_dict[p[0]],
-                                      strategy_dict[p[1]])
+            w, p_val = stats.wilcoxon(self.metric_per_estimator_dataset[p[0]],
+                                      self.metric_per_estimator_dataset[p[1]])
 
             w_test = {
                 'estimator_1': estim_1,
@@ -321,7 +324,7 @@ class Evaluator:
 
         return wilcoxon_df, values_df_multiindex
 
-    def friedman_test(self, strategy_dict):
+    def friedman_test(self):
         """
         The Friedman test is a non-parametric statistical test used to detect differences 
         in treatments across multiple test attempts. The procedure involves ranking each row (or block) together, 
@@ -343,13 +346,14 @@ class Evaluator:
         use the * operator to unpack a sequence
         https://stackoverflow.com/questions/2921847/what-does-the-star-operator-mean/2921893#2921893
         """
-        friedman_test = stats.friedmanchisquare(*[strategy_dict[k] for k in strategy_dict.keys()])
+        friedman_test = stats.friedmanchisquare(
+            *[self.metric_per_estimator_dataset[k] for k in self.metric_per_estimator_dataset.keys()])
         values = [friedman_test[0], friedman_test[1]]
         values_df = pd.DataFrame([values], columns=['statistic', 'p_value'])
 
         return friedman_test, values_df
 
-    def nemenyi(self, strategy_dict):
+    def nemenyi(self):
         """
         Post-hoc test run if the `friedman_test` reveals statistical significance.
         For more information see `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
@@ -365,10 +369,50 @@ class Evaluator:
             Results of te Nemenyi test
         """
 
-        strategy_dict = pd.DataFrame(strategy_dict)
+        strategy_dict = pd.DataFrame(self.metric_per_estimator_dataset)
         strategy_dict = strategy_dict.melt(var_name='groups', value_name='values')
         nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col='values', group_col='groups')
         return nemenyi
+
+    def _metrics_to_dataframe(self, metrics):
+        """
+        Reformats the output of the dictionary returned by the
+        :func:`mlaut.analyze_results.metrics.metrics.get_metrics` to a
+        pandas DataFrame. This method can only be applied to reformat
+        the output produced by :func:`sktime.experiments.metrics.evaluate_per_dataset`.
+
+        Parameters
+        ----------
+        metrics : dict
+            Dictionary returned by the :func:`sktime.experiments.metrics.metrics.get_metrics`
+            generated by :func:`sktime.experiments.metrics.metrics.evaluate_per_dataset`
+
+        Returns
+        -------
+        dataframe
+            Multiindex dataframe with the metrics
+        """
+
+        df = pd.DataFrame(metrics)
+
+        # unpivot the data
+        df = df.melt(var_name='dts', value_name='values')
+        df['classifier'] = df.apply(lambda raw: raw.values[1][0], axis=1)
+        df['loss'] = df.apply(lambda raw: raw.values[1][1], axis=1)
+        df['std_error'] = df.apply(lambda raw: raw.values[1][2], axis=1)
+        df = df.drop('values', axis=1)
+        # create multilevel index dataframe
+        dts = df['dts'].unique()
+        estimators_list = df['classifier'].unique()
+        score = df['loss'].values
+        std = df['std_error'].values
+
+        df = df.drop('dts', axis=1)
+        df = df.drop('classifier', axis=1)
+
+        df.index = pd.MultiIndex.from_product([dts, estimators_list])
+
+        return df
 
 
 class MetricCalculator:
@@ -433,43 +477,4 @@ class MetricCalculator:
         errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the
         errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
         """
-        return self._metrics_per_estimator, self._metrics_to_dataframe(self._metrics_per_dataset_per_estimator)
-
-    def _metrics_to_dataframe(self, metrics):
-        """
-        Reformats the output of the dictionary returned by the
-        :func:`mlaut.analyze_results.metrics.metrics.get_metrics` to a
-        pandas DataFrame. This method can only be applied to reformat
-        the output produced by :func:`sktime.experiments.metrics.evaluate_per_dataset`.
-
-        Parameters
-        ----------
-        metrics : dict
-            Dictionary returned by the :func:`sktime.experiments.metrics.metrics.get_metrics`
-            generated by :func:`sktime.experiments.metrics.metrics.evaluate_per_dataset`
-
-        Returns
-        -------
-        dataframe
-            Multiindex dataframe with the metrics
-        """
-
-        df = pd.DataFrame(metrics)
-        # unpivot the data
-        df = df.melt(var_name='dts', value_name='values')
-        df['classifier'] = df.apply(lambda raw: raw.values[1][0], axis=1)
-        df['loss'] = df.apply(lambda raw: raw.values[1][1], axis=1)
-        df['std_error'] = df.apply(lambda raw: raw.values[1][2], axis=1)
-        df = df.drop('values', axis=1)
-        # create multilevel index dataframe
-        dts = df['dts'].unique()
-        estimators_list = df['classifier'].unique()
-        score = df['loss'].values
-        std = df['std_error'].values
-
-        df = df.drop('dts', axis=1)
-        df = df.drop('classifier', axis=1)
-
-        df.index = pd.MultiIndex.from_product([dts, estimators_list])
-
-        return df
+        return self._metrics_per_estimator, self._metrics_per_dataset_per_estimator

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "Viktor Kazakov"]
 __all__ = ["BaseDataset", "BaseResults", "BaseResultsHDD"]
 
 import os
@@ -47,11 +47,11 @@ class BaseResults:
         """Load fitted strategies for all datasets and strategies iteratively"""
         raise NotImplementedError()
 
-    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold, train_or_test="test"):
+    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold):
         raise NotImplementedError()
 
     def _append_names(self, strategy_name, dataset_name):
-        """Helper function to append names of datasets and strategies to results objects during orchestration"""
+        """Append names of datasets and strategies to results objects during orchestration"""
         if strategy_name not in self.strategy_names:
             self.strategy_names.append(strategy_name)
 
@@ -99,6 +99,9 @@ class BaseResultsHDD(BaseResults):
 
 
 class BaseMetric(ABC):
+
+    def __init__(self):
+        self.name = self.__class__.__name__
 
     @abstractmethod
     def calculate(self, y_true, y_pred):
