@@ -1,5 +1,5 @@
 __author__ = ["Viktor Kazakov", "Markus Löning"]
-__all__ = ["Evaluator"]
+__all__ = ["Evaluator", "MetricCalculator"]
 
 import collections
 import itertools
@@ -12,6 +12,8 @@ from scipy import stats
 from scipy.stats import ranksums
 from scipy.stats import ttest_ind
 
+from sktime.benchmarking.base import BaseResults
+
 
 class Evaluator:
     """
@@ -23,12 +25,12 @@ class Evaluator:
         class for storing the results
     """
 
-    def __init__(self,
-                 results):
+    def __init__(self, results):
+        if not isinstance(results, BaseResults):
+            raise ValueError(f"results must inherit from BaseResults")
+        self.results = results
 
-        self._results_list = results.load_predictions()
-
-    def compute_metric(self, metric):
+    def compute_metric(self, metric, train_or_test='test', cv_fold=0):
         """
         Calculates the average prediction error per estimator as well as the prediction error achieved by each estimator on individual datasets.
 
@@ -42,18 +44,18 @@ class Evaluator:
             ``estimator_avg_error`` represents the average error and standard deviation achieved by each estimator. ``estimator_avg_error_per_dataset`` represents the average error and standard deviation achieved by each estimator on each dataset.
         """
         # load all predictions
-        losses = _MetricCalculator(metric)
-        for res in self._results_list:
-            y_pred = res.y_pred
-            y_pred = list(map(float, y_pred))
-            y_true = res.y_true
-            y_true = list(map(float, y_true))
+        calculator = MetricCalculator(metric)
+        for result in self.results.load_predictions(train_or_test=train_or_test, cv_fold=cv_fold):
+            # unpack result object
+            strategy_name = result.strategy_name
+            dataset_name = result.dataset_name
+            index = result.index
+            y_true = result.y_true
+            y_pred = result.y_pred
+            y_proba = result.y_proba
 
-            losses.evaluate(predictions=y_pred,
-                            true_labels=y_true,
-                            dataset_name=res.dataset_name,
-                            strategy_name=res.strategy_name)
-        return losses.get_losses()
+            calculator.compute_metric(y_true, y_pred, dataset_name, strategy_name)
+        return calculator.get_metrics()
 
     def average_and_std_error(self, scores_dict):
         """
@@ -369,9 +371,9 @@ class Evaluator:
         return nemenyi
 
 
-class _MetricCalculator(object):
+class MetricCalculator:
     """
-    Calculates prediction losses on test datasets achieved by the trained estimators. When the class is instantiated it creates a dictionary that stores the losses.
+    Calculates prediction metrics on test datasets achieved by the trained estimators. When the class is instantiated it creates a dictionary that stores the metrics.
 
     Parameters
     ----------
@@ -385,20 +387,20 @@ class _MetricCalculator(object):
 
     def __init__(self, metric):
 
-        self._losses = collections.defaultdict(list)
+        self._metrics = collections.defaultdict(list)
         self._metric = metric
-        self._losses_per_estimator = collections.defaultdict(list)
-        self._losses_per_dataset_per_estimator = collections.defaultdict(list)
+        self._metrics_per_estimator = collections.defaultdict(list)
+        self._metrics_per_dataset_per_estimator = collections.defaultdict(list)
 
-    def evaluate(self, predictions, true_labels, dataset_name, strategy_name):
+    def compute_metric(self, y_pred, y_true, dataset_name, strategy_name):
         """
-        Calculates the loss metrics on the test sets.
+        Calculates the loss metrics.
 
         Parameters
         ----------
-        predictions : numpy array
+        y_pred : numpy array
             Predictions of trained estimators in the form
-        true_labels : numpy array
+        y_true : numpy array
             true labels of test dataset.
         dataset_name : str
             Name of the dataset
@@ -407,45 +409,52 @@ class _MetricCalculator(object):
         """
 
         # evaluates error per estimator
-        loss = self._metric.calculate(true_labels, predictions)
-        if strategy_name in self._losses_per_estimator:
-            self._losses_per_estimator[strategy_name].append(loss)
+        loss = self._metric.calculate(y_true, y_pred)
+        if strategy_name in self._metrics_per_estimator:
+            self._metrics_per_estimator[strategy_name].append(loss)
         else:
-            self._losses_per_estimator[strategy_name] = [loss]
+            self._metrics_per_estimator[strategy_name] = [loss]
 
         # evaluate per dataset
-        avg_score, std_score = self._metric.calculate_per_dataset(y_true=true_labels,
-                                                                  y_pred=predictions)
+        avg_score, std_score = self._metric.calculate_per_dataset(y_true=y_true, y_pred=y_pred)
 
-        self._losses_per_dataset_per_estimator[dataset_name].append([strategy_name, avg_score, std_score])
+        self._metrics_per_dataset_per_estimator[dataset_name].append([strategy_name, avg_score, std_score])
 
-    def get_losses(self):
+    def get_metrics(self):
         """
-        When the Losses class is instantiated a dictionary that holds all losses is created and appended every time the evaluate() method is run. This method returns this dictionary with the losses.
+        When the metrics class is instantiated a dictionary that holds all metrics is created and
+        appended every time the evaluate() method is run. This method returns this dictionary with
+        the metrics.
 
         Returns
         -------
         tuple
-            errors_per_estimator (dictionary), errors_per_dataset_per_estimator (dictionary), errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
+            errors_per_estimator (dictionary), errors_per_dataset_per_estimator (dictionary),
+        errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the
+        errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
         """
-        return self._losses_per_estimator, self._losses_to_dataframe(self._losses_per_dataset_per_estimator)
+        return self._metrics_per_estimator, self._metrics_to_dataframe(self._metrics_per_dataset_per_estimator)
 
-    def _losses_to_dataframe(self, losses):
+    def _metrics_to_dataframe(self, metrics):
         """
-        Reformats the output of the dictionary returned by the :func:`mlaut.analyze_results.losses.Losses.get_losses` to a pandas DataFrame. This method can only be applied to reformat the output produced by :func:`sktime.experiments.Losses.evaluate_per_dataset`.
+        Reformats the output of the dictionary returned by the
+        :func:`mlaut.analyze_results.metrics.metrics.get_metrics` to a
+        pandas DataFrame. This method can only be applied to reformat
+        the output produced by :func:`sktime.experiments.metrics.evaluate_per_dataset`.
 
         Parameters
         ----------
-        losses : dict
-            Dictionary returned by the :func:`sktime.experiments.losses.Losses.get_losses` generated by :func:`sktime.experiments.losses.Losses.evaluate_per_dataset`
+        metrics : dict
+            Dictionary returned by the :func:`sktime.experiments.metrics.metrics.get_metrics`
+            generated by :func:`sktime.experiments.metrics.metrics.evaluate_per_dataset`
 
         Returns
         -------
         dataframe
-            Multiindex dataframe with the losses
+            Multiindex dataframe with the metrics
         """
 
-        df = pd.DataFrame(losses)
+        df = pd.DataFrame(metrics)
         # unpivot the data
         df = df.melt(var_name='dts', value_name='values')
         df['classifier'] = df.apply(lambda raw: raw.values[1][0], axis=1)

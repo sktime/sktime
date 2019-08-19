@@ -54,17 +54,17 @@ class DatasetRAM(BaseDataset):
         """
 
         self._dataset = dataset
-        self._dataset_name = name
+        self._name = name
 
     @property
-    def dataset_name(self):
+    def name(self):
         """
         Returns
         -------
         str
             Name of the dataset
         """
-        return self._dataset_name
+        return self._name
 
     def load(self):
         """

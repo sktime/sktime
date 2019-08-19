@@ -33,7 +33,7 @@ class Orchestrator:
                 for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data)):
                     yield task, dataset, data, strategy, cv_fold, train_idx, test_idx
 
-    def fit(self, overwrite_fitted_strategies=False, verbose=True):
+    def fit(self, overwrite_fitted_strategies=False, verbose=False):
         """Fit strategies on datasets"""
 
         for task, dataset, data, strategy, cv_fold, train_idx, test_idx in self._iter():
@@ -53,7 +53,7 @@ class Orchestrator:
                                                   dataset_name=data.dataset_name,
                                                   cv_fold=cv_fold)
 
-    def predict(self, overwrite_predictions=False, predict_on_train=False, verbose=True):
+    def predict(self, overwrite_predictions=False, predict_on_train=False, verbose=False):
         """Predict from saved fitted strategies"""
         raise NotImplementedError("Predicting from saved fitted strategies is not implemented yet")
 
@@ -62,7 +62,7 @@ class Orchestrator:
                     predict_on_train=False,
                     save_fitted_strategies=True,
                     overwrite_fitted_strategies=False,
-                    verbose=True):
+                    verbose=False):
         """Fit and predict"""
 
         # check that for fitted strategies overwrite option is only set when save option is set

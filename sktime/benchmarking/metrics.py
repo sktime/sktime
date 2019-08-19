@@ -1,60 +1,16 @@
-from abc import ABC
-from abc import abstractmethod
+__all__ = ["Accuracy", "MSE"]
+__author__ = ["Viktor Kazakov", "Markus Löning"]
+
+
 import numpy as np
 from sklearn.metrics import accuracy_score, mean_squared_error
+from sktime.benchmarking.base import BaseMetric
 
 
-class SKTimeScore(ABC):
-    @abstractmethod
-    def calculate(self, y_true, y_pred):
-        """
-        Main method for performing the calculations.
-
-        Parameters
-        ----------
-        y_true: array
-            True dataset labels.
-        y_pred: array
-            predicted labels.
-
-        Returns
-        -------
-        float
-            Returns the result of the metric.
-        """
-
-    @abstractmethod
-    def calculate_per_dataset(self, y_true, y_pred):
-        """
-        Calculates the loss per dataset
-
-        Parameters
-        ----------
-        y_true: array
-            True dataset labels.
-        y_pred: array: 
-            predicted labels.
-       
-        Returns
-        -------
-        float
-            Returns the result of the metric.
-        """
-
-
-class ScoreAccuracy(SKTimeScore):
+class Accuracy(BaseMetric):
     """
     Calculates the accuracy between the true and predicted lables.
     """
-
-    def __init__(self, round_predictions=True):
-        """
-        Parameters
-        ----------
-        round_predictions: Boolean
-            Should the predictions be rounded before claculating the accuracy score. This is useful when the accuracy score is used on outputs produced by regressors.
-        """
-        self._round_predictions = round_predictions
 
     def calculate(self, y_true, y_pred):
         """
@@ -73,9 +29,6 @@ class ScoreAccuracy(SKTimeScore):
         float
             The accuracy of the prediction.
         """
-
-        if self._round_predictions is True:
-            y_pred = np.rint(y_pred)
         return accuracy_score(y_true, y_pred)
 
     def calculate_per_dataset(self, y_true, y_pred):
@@ -93,22 +46,19 @@ class ScoreAccuracy(SKTimeScore):
         Returns
         -------
         tuple
-            Tuple with average score and std error of the score
+            Tuple with average score and stderr error of the score
         """
-        errors = (np.array(y_true) - np.array(y_pred)) ** 2
-        errors = np.where(errors > 0, 1, 0)
-        n = len(errors)
+        n_instances = len(y_true)
+        pointwise_metrics = y_true == y_pred
 
-        std_score = np.std(errors) / np.sqrt(n)
-        sum_score = np.sum(errors)
-        avg_score = sum_score / n
-
-        return avg_score, std_score
+        stderr = np.std(pointwise_metrics) / np.sqrt(n_instances - 1)
+        mean = np.mean(pointwise_metrics)
+        return mean, stderr
 
 
-class ScoreMSE(SKTimeScore):
+class MSE(BaseMetric):
     """
-    Calculates the mean squared error between the true and predicted lables.
+    Calculates the mean squared error between the true and predicted labels.
     """
 
     def calculate(self, y_true, y_pred):
@@ -145,11 +95,9 @@ class ScoreMSE(SKTimeScore):
         float
             Returns the result of the metric.
         """
-        errors = (y_true - y_pred) ** 2
-        n = len(errors)
+        n_instances = len(y_true)
+        pointwise_metrics = (y_true - y_pred) ** 2
 
-        std_score = np.std(errors) / np.sqrt(n)
-        sum_score = np.sum(errors)
-        avg_score = sum_score / n
-
-        return avg_score, std_score
+        mean = np.mean(pointwise_metrics)
+        stderr = np.stderr(pointwise_metrics) / np.sqrt(n_instances - 1)
+        return mean, stderr
