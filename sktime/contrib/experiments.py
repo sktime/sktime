@@ -70,7 +70,6 @@ univariate_datasets = [
     "AllGestureWiimoteZ",
     "ArrowHead",
     "Coffee",
-    "Adiac",
     "Beef",
     "BeetleFly",
     "BirdChicken",
