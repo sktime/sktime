@@ -6,7 +6,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.base import BaseResults, BaseResultsHDD
+from sktime.benchmarking.base import BaseResults, HDDBaseResults
 
 
 class _ResultWrapper:
@@ -73,7 +73,7 @@ class RAMResults(BaseResults):
         pass
 
 
-class HDDResults(BaseResultsHDD):
+class HDDResults(HDDBaseResults):
 
     def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
                          train_or_test="test", cv_fold=0):
@@ -135,5 +135,5 @@ class HDDResults(BaseResultsHDD):
         return os.path.join(filepath, filename)
 
 
-class UEAResults(BaseResultsHDD):
+class UEAResults(HDDBaseResults):
     pass

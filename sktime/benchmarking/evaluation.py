@@ -30,9 +30,9 @@ class Evaluator:
             raise ValueError(f"results must inherit from BaseResults")
         self.results = results
         self.metrics_per_estimator = None
-        self.metric_per_estimator_dataset = None
+        self.metrics_per_estimator_dataset = None
 
-    def evaluate(self, metric, train_or_test='test', cv_fold=0):
+    def evaluate(self, metric, train_or_test="test", cv_fold=0):
         """
         Calculates the average prediction error per estimator as well as the prediction error achieved by each estimator on individual datasets.
 
@@ -57,10 +57,10 @@ class Evaluator:
             y_proba = result.y_proba
             calculator.compute_metric(y_true, y_pred, dataset_name, strategy_name)
 
-        self.metrics_per_estimator, self.metric_per_estimator_dataset = calculator.get_metrics()
-        return self._metrics_to_dataframe(self.metric_per_estimator_dataset)
+        self.metrics_per_estimator, self.metrics_per_estimator_dataset = calculator.get_metrics()
+        return self._metrics_to_dataframe(self.metrics_per_estimator_dataset)
 
-    def average_and_std_error(self):
+    def mean_and_stderr(self):
         """
         Calculates simple average and standard error.
 
@@ -81,9 +81,9 @@ class Evaluator:
             std_error = np.std(self.metrics_per_estimator[k]) / np.sqrt(n)
             result[k] = [average, std_error]
 
-        res_df = pd.DataFrame.from_dict(result, orient='index')
-        res_df.columns = ['avg_score', 'std_error']
-        res_df = res_df.sort_values(['avg_score', 'std_error'], ascending=[1, 1])
+        res_df = pd.DataFrame.from_dict(result, orient="index")
+        res_df.columns = ["mean", "stderr"]
+        res_df = res_df.sort_values(["mean", "stderr"], ascending=[1, 1])
 
         return res_df
 
@@ -91,9 +91,9 @@ class Evaluator:
         data = []
         labels = []
         avg_error = []
-        for e in self.metrics_per_estimato.keys():
-            data.append(self.metrics_per_estimato[e])
-            avg_error.append(np.mean(self.metrics_per_estimato[e]))
+        for e in self.metrics_per_estimator.keys():
+            data.append(self.metrics_per_estimator[e])
+            avg_error.append(np.mean(self.metrics_per_estimator[e]))
             labels.append(e)
         # sort data and labels based on avg_error
         idx_sort = np.array(avg_error).argsort()
@@ -124,13 +124,13 @@ class Evaluator:
             Returns the mean peformance rank for each estimator
         """
         if not isinstance(ascending, bool):
-            raise ValueError('Variable ascending needs to be boolean')
+            raise ValueError("Variable ascending needs to be boolean")
 
-        df = pd.DataFrame(self.metric_per_estimator_dataset)
+        df = pd.DataFrame(self.metrics_per_estimator_dataset)
         ranked = df.rank(axis=1, ascending=ascending)
         mean_r = pd.DataFrame(ranked.mean(axis=0))
-        mean_r.columns = ['avg_rank']
-        mean_r = mean_r.sort_values('avg_rank', ascending=ascending)
+        mean_r.columns = ["avg_rank"]
+        mean_r = mean_r.sort_values("avg_rank", ascending=ascending)
         return mean_r
 
     def t_test(self):
@@ -147,26 +147,26 @@ class Evaluator:
             pandas DataFrame (Database style and MultiIndex)
         """
         t_df = pd.DataFrame()
-        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            x = np.array(self.metric_per_estimator_dataset[perm[0]])
-            y = np.array(self.metric_per_estimator_dataset[perm[1]])
+            x = np.array(self.metrics_per_estimator_dataset[perm[0]])
+            y = np.array(self.metrics_per_estimator_dataset[perm[1]])
             t_stat, p_val = ttest_ind(x, y)
 
             t_test = {
-                'estimator_1': perm[0],
-                'estimator_2': perm[1],
-                't_stat': t_stat,
-                'p_val': p_val
+                "estimator_1": perm[0],
+                "estimator_2": perm[1],
+                "t_stat": t_stat,
+                "p_val": p_val
             }
 
             t_df = t_df.append(t_test, ignore_index=True)
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
-        index = t_df['estimator_1'].unique()
-        values_names = ['t_stat', 'p_val']
+        index = t_df["estimator_1"].unique()
+        values_names = ["t_stat", "p_val"]
         col_idx = pd.MultiIndex.from_product([index, values_names])
         values_reshaped = values.reshape(len(index), len(values_names) * len(index))
 
@@ -188,21 +188,21 @@ class Evaluator:
             pandas DataFrame (Database style), pivot table)
         """
         sign_df = pd.DataFrame()
-        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
         for perm in perms:
-            x = np.array(self.metric_per_estimator_dataset[perm[0]])
-            y = np.array(self.metric_per_estimator_dataset[perm[1]])
+            x = np.array(self.metrics_per_estimator_dataset[perm[0]])
+            y = np.array(self.metrics_per_estimator_dataset[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
             p_val = stats.binom_test(signs, n)
             sign_test = {
-                'estimator_1': perm[0],
-                'estimator_2': perm[1],
-                'p_val': p_val
+                "estimator_1": perm[0],
+                "estimator_2": perm[1],
+                "p_val": p_val
             }
 
             sign_df = sign_df.append(sign_test, ignore_index=True)
-            sign_df_pivot = sign_df.pivot(index='estimator_1', columns='estimator_2', values='p_val')
+            sign_df_pivot = sign_df.pivot(index="estimator_1", columns="estimator_2", values="p_val")
 
         return sign_df, sign_df_pivot
 
@@ -222,25 +222,25 @@ class Evaluator:
             Database style and MultiIndex
         """
         ranksum_df = pd.DataFrame()
-        perms = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            comb = perm[0] + ' - ' + perm[1]
-            x = self.metric_per_estimator_dataset[perm[0]]
-            y = self.metric_per_estimator_dataset[perm[1]]
+            comb = perm[0] + " - " + perm[1]
+            x = self.metrics_per_estimator_dataset[perm[0]]
+            y = self.metrics_per_estimator_dataset[perm[1]]
             t_stat, p_val = ranksums(x, y)
             ranksum = {
-                'estimator_1': perm[0],
-                'estimator_2': perm[1],
-                't_stat': t_stat,
-                'p_val': p_val
+                "estimator_1": perm[0],
+                "estimator_2": perm[1],
+                "t_stat": t_stat,
+                "p_val": p_val
             }
             ranksum_df = ranksum_df.append(ranksum, ignore_index=True)
             values = np.append(values, t_stat)
             values = np.append(values, p_val)
 
-        index = ranksum_df['estimator_1'].unique()
-        values_names = ['t_stat', 'p_val']
+        index = ranksum_df["estimator_1"].unique()
+        values_names = ["t_stat", "p_val"]
         col_idx = pd.MultiIndex.from_product([index, values_names])
         values_reshaped = values.reshape(len(index), len(values_names) * len(index))
 
@@ -265,14 +265,14 @@ class Evaluator:
         DataFrame 
             MultiIndex DataFrame
         """
-        df_t_test, _ = self.t_test(self.metric_per_estimator_dataset)
-        idx_estim_1 = df_t_test['estimator_1'].unique()
-        idx_estim_2 = df_t_test['estimator_2'].unique()
+        df_t_test, _ = self.t_test(self.metrics_per_estimator_dataset)
+        idx_estim_1 = df_t_test["estimator_1"].unique()
+        idx_estim_2 = df_t_test["estimator_2"].unique()
         estim_1 = len(idx_estim_1)
         estim_2 = len(idx_estim_2)
         critical_value = alpha / (estim_1 * estim_2)
 
-        bonfer_test = df_t_test['p_val'] <= critical_value
+        bonfer_test = df_t_test["p_val"] <= critical_value
 
         bonfer_test_reshaped = bonfer_test.values.reshape(estim_1, estim_2)
 
@@ -297,26 +297,26 @@ class Evaluator:
         """
         wilcoxon_df = pd.DataFrame()
         values = np.array([])
-        prod = itertools.product(self.metric_per_estimator_dataset.keys(), repeat=2)
+        prod = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
         for p in prod:
             estim_1 = p[0]
             estim_2 = p[1]
-            w, p_val = stats.wilcoxon(self.metric_per_estimator_dataset[p[0]],
-                                      self.metric_per_estimator_dataset[p[1]])
+            w, p_val = stats.wilcoxon(self.metrics_per_estimator_dataset[p[0]],
+                                      self.metrics_per_estimator_dataset[p[1]])
 
             w_test = {
-                'estimator_1': estim_1,
-                'estimator_2': estim_2,
-                'statistic': w,
-                'p_val': p_val
+                "estimator_1": estim_1,
+                "estimator_2": estim_2,
+                "statistic": w,
+                "p_val": p_val
             }
 
             wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
             values = np.append(values, w)
             values = np.append(values, p_val)
 
-        index = wilcoxon_df['estimator_1'].unique()
-        values_names = ['statistic', 'p_val']
+        index = wilcoxon_df["estimator_1"].unique()
+        values_names = ["statistic", "p_val"]
         col_idx = pd.MultiIndex.from_product([index, values_names])
         values_reshaped = values.reshape(len(index), len(values_names) * len(index))
 
@@ -347,9 +347,9 @@ class Evaluator:
         https://stackoverflow.com/questions/2921847/what-does-the-star-operator-mean/2921893#2921893
         """
         friedman_test = stats.friedmanchisquare(
-            *[self.metric_per_estimator_dataset[k] for k in self.metric_per_estimator_dataset.keys()])
+            *[self.metrics_per_estimator_dataset[k] for k in self.metrics_per_estimator_dataset.keys()])
         values = [friedman_test[0], friedman_test[1]]
-        values_df = pd.DataFrame([values], columns=['statistic', 'p_value'])
+        values_df = pd.DataFrame([values], columns=["statistic", "p_value"])
 
         return friedman_test, values_df
 
@@ -369,9 +369,9 @@ class Evaluator:
             Results of te Nemenyi test
         """
 
-        strategy_dict = pd.DataFrame(self.metric_per_estimator_dataset)
-        strategy_dict = strategy_dict.melt(var_name='groups', value_name='values')
-        nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col='values', group_col='groups')
+        strategy_dict = pd.DataFrame(self.metrics_per_estimator_dataset)
+        strategy_dict = strategy_dict.melt(var_name="groups", value_name="values")
+        nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
 
     def _metrics_to_dataframe(self, metrics):
@@ -396,19 +396,18 @@ class Evaluator:
         df = pd.DataFrame(metrics)
 
         # unpivot the data
-        df = df.melt(var_name='dts', value_name='values')
-        df['classifier'] = df.apply(lambda raw: raw.values[1][0], axis=1)
-        df['loss'] = df.apply(lambda raw: raw.values[1][1], axis=1)
-        df['std_error'] = df.apply(lambda raw: raw.values[1][2], axis=1)
-        df = df.drop('values', axis=1)
-        # create multilevel index dataframe
-        dts = df['dts'].unique()
-        estimators_list = df['classifier'].unique()
-        score = df['loss'].values
-        std = df['std_error'].values
+        df = df.melt(var_name="dts", value_name="values")
+        df["strategy"] = df.apply(lambda raw: raw.values[1][0], axis=1)
+        df["mean"] = df.apply(lambda raw: raw.values[1][1], axis=1)
+        df["stderr"] = df.apply(lambda raw: raw.values[1][2], axis=1)
+        df = df.drop("values", axis=1)
 
-        df = df.drop('dts', axis=1)
-        df = df.drop('classifier', axis=1)
+        # create multilevel index dataframe
+        dts = df["dts"].unique()
+        estimators_list = df["strategy"].unique()
+
+        df = df.drop("dts", axis=1)
+        df = df.drop("strategy", axis=1)
 
         df.index = pd.MultiIndex.from_product([dts, estimators_list])
 
@@ -460,9 +459,9 @@ class MetricCalculator:
             self._metrics_per_estimator[strategy_name] = [loss]
 
         # evaluate per dataset
-        avg_score, std_score = self._metric.calculate_per_dataset(y_true=y_true, y_pred=y_pred)
+        mean, stderr = self._metric.calculate_per_dataset(y_true=y_true, y_pred=y_pred)
 
-        self._metrics_per_dataset_per_estimator[dataset_name].append([strategy_name, avg_score, std_score])
+        self._metrics_per_dataset_per_estimator[dataset_name].append([strategy_name, mean, stderr])
 
     def get_metrics(self):
         """

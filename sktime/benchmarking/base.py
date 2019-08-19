@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 __author__ = ["Markus Löning", "Viktor Kazakov"]
-__all__ = ["BaseDataset", "BaseResults", "BaseResultsHDD"]
+__all__ = ["BaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
 from joblib import dump
@@ -67,12 +67,12 @@ class BaseResults:
         NotImplementedError()
 
 
-class BaseResultsHDD(BaseResults):
+class HDDBaseResults(BaseResults):
 
     def __init__(self, predictions_path, fitted_strategies_path=None):
         self._predictions_path = predictions_path
         self._fitted_strategies_path = predictions_path if fitted_strategies_path is None else fitted_strategies_path
-        super(BaseResultsHDD, self).__init__()
+        super(HDDBaseResults, self).__init__()
 
     @property
     def fitted_strategies_path(self):
