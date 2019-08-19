@@ -70,9 +70,9 @@ def test_accuracy():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    strategy_dict, losses_df = analyse.evaluate(metric=Accuracy())
+    losses_df = analyse.evaluate(metric=Accuracy())
 
-    testing_loss = losses_df['loss'].iloc[0]
+    testing_loss = losses_df['mean'].iloc[0]
     true_loss = 1 - 0.15384615384615385
 
     np.testing.assert_equal(true_loss, testing_loss)
@@ -99,14 +99,14 @@ def test_stat():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    strategy_dict, losses_df = analyse.evaluate(metric=Accuracy())
+    losses_df = analyse.evaluate(metric=Accuracy())
 
-    ranks = analyse.ranks(strategy_dict)
+    ranks = analyse.ranks()
     pf_rank = ranks.loc['ProximityForest'][0]  # 1
     fc_rank = ranks.loc['TimeSeriesForestClassifier'][0]  # 2
     rank_array = [pf_rank, fc_rank]
     rank_array_test = [1, 2]
-    sign_test, sign_test_df = analyse.sign_test(strategy_dict)
+    _, sign_test_df = analyse.sign_test()
 
     sign_array = [
         [sign_test_df['ProximityForest'][0], sign_test_df['ProximityForest'][1]],

@@ -126,7 +126,7 @@ class Evaluator:
         if not isinstance(ascending, bool):
             raise ValueError("Variable ascending needs to be boolean")
 
-        df = pd.DataFrame(self.metrics_per_estimator_dataset)
+        df = pd.DataFrame(self.metrics_per_estimator)
         ranked = df.rank(axis=1, ascending=ascending)
         mean_r = pd.DataFrame(ranked.mean(axis=0))
         mean_r.columns = ["avg_rank"]
@@ -188,10 +188,10 @@ class Evaluator:
             pandas DataFrame (Database style), pivot table)
         """
         sign_df = pd.DataFrame()
-        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(self.metrics_per_estimator.keys(), repeat=2)
         for perm in perms:
-            x = np.array(self.metrics_per_estimator_dataset[perm[0]])
-            y = np.array(self.metrics_per_estimator_dataset[perm[1]])
+            x = np.array(self.metrics_per_estimator[perm[0]])
+            y = np.array(self.metrics_per_estimator[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
             p_val = stats.binom_test(signs, n)
