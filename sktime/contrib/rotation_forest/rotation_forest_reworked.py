@@ -210,11 +210,11 @@ class RotationForestClassifier(BaseClassifier):
         return subsets
 
     def _random_instance_subset(self, y, n_instances, classes=None):
-        """Helper function to select subset of instances (with replacements) conditional on random subset of classes"""
+        """Select subset of instances (with replacements) conditional on random subset of classes"""
         # get random state object
         rng = self._rng
 
-        # get random subset by class
+        # get random subset of classes if not given
         if classes is None:
             n_classes = rng.randint(1, len(self.classes_) + 1)
             classes = rng.choice(self.classes_, size=n_classes, replace=False)
