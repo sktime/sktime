@@ -2,6 +2,7 @@ __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 from sktime.highlevel.tasks import TSCTask, TSRTask
+from sklearn.base import clone
 
 
 class Orchestrator:
@@ -10,7 +11,7 @@ class Orchestrator:
     """
 
     def __init__(self, tasks, datasets, strategies, cv, results):
-
+        # validate datasets and tasks
         self._validate_tasks_and_datasets(tasks, datasets)
         self.tasks = tasks
         self.datasets = datasets
@@ -22,15 +23,30 @@ class Orchestrator:
         self.cv = cv
         self.results = results
 
+        # progress trackers
+        self.n_strategies = len(strategies)
+        self.n_datasets = len(datasets)
+        self._strategy_counter = 0
+        self._dataset_counter = 0
+
     def _iter(self):
         """Iterator for orchestration"""
-        # TODO skip data loading if all strategies are skipped in case all results already exist and all overwrite
-        #  options are set to False
-
         for task, dataset in zip(self.tasks, self.datasets):
-            data = dataset.load()  # load data into memory from dataset hook
+            # update counters
+            self._strategy_counter = 0
+            self._dataset_counter += 1
+
+            # load data into memory from dataset hook
+            data = dataset.load()
+
             for strategy in self.strategies:
+                self._strategy_counter += 1  # update counter
+
                 for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data)):
+
+                    # for each fold, clone strategy to avoid updating already fitted strategies
+                    strategy = clone(strategy)
+
                     yield task, dataset, data, strategy, cv_fold, train_idx, test_idx
 
     def fit(self, overwrite_fitted_strategies=False, verbose=False):
@@ -41,13 +57,13 @@ class Orchestrator:
             # skip strategy, if overwrite is set to False and fitted strategy already exists
             if not overwrite_fitted_strategies and self.results.check_fitted_strategy_exists(
                     strategy, data.dataset_name):
+                print(f"Skipping strategy: {strategy.name} on CV-fold: {cv_fold} of dataset: {dataset.name}")
                 continue
 
             # else fit and save fitted strategy
             else:
                 train = data.iloc[train_idx]
-                if verbose:
-                    print(f"Fitting strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
+                self._print_progress(dataset.name, strategy.name, cv_fold, "train", "fit", verbose)
                 strategy.fit(task, train)
                 self.results.save_fitted_strategy(strategy=strategy,
                                                   dataset_name=data.dataset_name,
@@ -77,16 +93,16 @@ class Orchestrator:
 
             # check which results already exist
             train_pred_exist = self.results.check_predictions_exist(strategy.name, dataset.name,
-                                                                    cv_fold, train_or_test='train')
+                                                                    cv_fold, train_or_test="train")
             test_pred_exist = self.results.check_predictions_exist(strategy.name, dataset.name,
-                                                                   cv_fold, train_or_test='test')
+                                                                   cv_fold, train_or_test="test")
             fitted_stategy_exists = self.results.check_fitted_strategy_exists(strategy.name, dataset.name,
                                                                               cv_fold)
 
             # skip if overwrite is set to False for both predictions and strategies and all results exist
             if not overwrite_predictions and test_pred_exist and (train_pred_exist or not predict_on_train) and \
                     not overwrite_fitted_strategies and (fitted_stategy_exists or not save_fitted_strategies):
-                print(f"Skipping strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
+                print(f"Skipping strategy: {strategy.name} on CV-fold: {cv_fold} of dataset: {dataset.name}")
                 continue
 
             # split data into training and test sets
@@ -94,8 +110,8 @@ class Orchestrator:
             test = data.iloc[test_idx]
 
             # fit strategy
-            if verbose:
-                print(f"Fitting strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
+            self._print_progress(dataset.name, strategy.name, cv_fold, "train", "fit", verbose)
+            strategy = clone(strategy)
             strategy.fit(task, train)
 
             # save fitted strategy if save fitted strategies is set to True and overwrite is set to True or the
@@ -106,9 +122,6 @@ class Orchestrator:
             # optionally, predict on training set if predict on train is set to True and and overwrite is set to True
             # or the predicted values do not already exist
             if predict_on_train and (overwrite_predictions or not train_pred_exist):
-                if verbose:
-                    print(f"Predict strategy {strategy.name} on CV-fold {cv_fold} of the training set of dataset"
-                          f" {dataset.name}")
                 y_true = train.loc[:, task.target]
                 y_pred = strategy.predict(train)
                 y_proba = self._predict_proba_one(strategy, task, train, y_true, y_pred)
@@ -119,12 +132,10 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
-                                              train_or_test='train')
+                                              train_or_test="train")
 
             # predict on test set if overwrite predictions is set to True or predictions do not already exist
             if overwrite_predictions or not test_pred_exist:
-                if verbose:
-                    print(f"Predict strategy {strategy.name} on CV-fold {cv_fold} of dataset {dataset.name}")
                 y_true = test.loc[:, task.target]
                 y_pred = strategy.predict(test)
                 y_proba = self._predict_proba_one(strategy, task, test, y_true, y_pred)
@@ -135,7 +146,7 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
-                                              train_or_test='test')
+                                              train_or_test="test")
 
         # save results as master file
         self.results.save()
@@ -213,3 +224,19 @@ class Orchestrator:
         # check if all tasks are of the same type
         if not all(isinstance(task, type(tasks[0])) for task in tasks):
             raise ValueError("Not all tasks are of the same type")
+
+    def _print_progress(self, dataset_name, strategy_name, cv_fold, train_or_test, fit_or_predict, verbose):
+        """Helper function to print progress"""
+
+        fit_or_predict = fit_or_predict.capitalize()
+        on_train = " (training set)" if train_or_test == "train" and fit_or_predict == "predict" else ""
+
+        n_folds = self.cv.get_n_folds() - 1
+
+        if verbose:
+            print(
+                f"strategy: {self._strategy_counter}/{self.n_strategies} - {strategy_name} "
+                f"on CV-fold: {cv_fold}/{n_folds} "
+                f"of dataset: {self._dataset_counter}/{self.n_datasets} - {dataset_name}{on_train}"
+            )
+
