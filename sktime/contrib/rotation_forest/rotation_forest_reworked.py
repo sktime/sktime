@@ -1,20 +1,21 @@
 __author__ = ["Markus Löning"]
 __all__ = ["RotationForestClassifier"]
 
+from itertools import islice
 from warnings import warn
 
 import numpy as np
 from sklearn.base import clone
 from sklearn.decomposition import PCA
-from sklearn.ensemble.forest import ForestClassifier
 from sklearn.exceptions import DataConversionWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array, check_random_state, check_is_fitted
-from itertools import islice
+
+from sktime.classifiers.base import BaseClassifier
 
 
-class RotationForestClassifier(ForestClassifier):
+class RotationForestClassifier(BaseClassifier):
     """Rotation Forest Classifier
 
     Parameters
@@ -48,6 +49,7 @@ class RotationForestClassifier(ForestClassifier):
     Java reference implementation:
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/weka/classifiers/meta/RotationForest.java
     """
+
     def __init__(self,
                  n_estimators=200,
                  min_columns_subset=3,
@@ -55,11 +57,6 @@ class RotationForestClassifier(ForestClassifier):
                  p_instance_subset=0.75,
                  random_state=None,
                  verbose=0):
-
-        super(RotationForestClassifier, self).__init__(
-            base_estimator=DecisionTreeClassifier(),
-            n_estimators=n_estimators
-        )
 
         # settable parameters
         self.verbose = verbose
@@ -72,7 +69,8 @@ class RotationForestClassifier(ForestClassifier):
         # get random state object
         self._rng = check_random_state(self.random_state)
 
-        # fixed parameters
+        # certain checks in fit depend on the transformer being pca, the estimator should be more
+        # easily substitutable
         self.base_transformer = PCA(random_state=random_state)
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
@@ -121,9 +119,9 @@ class RotationForestClassifier(ForestClassifier):
 
             # randomly split columns into disjoint subsets
             columns = np.arange(self.n_columns_)
-            self.column_subsets_[i] = self._get_random_column_subsets(columns,
-                                                                      min_length=self.min_columns_subset,
-                                                                      max_length=self.max_columns_subset)
+            self.column_subsets_[i] = self._random_column_subsets(columns,
+                                                                  min_length=self.min_columns_subset,
+                                                                  max_length=self.max_columns_subset)
 
             # check if there are at least as many samples as columns in subset for PCA,
             # as n_components will be min(n_samples, n_columns), otherwise throws error
@@ -139,19 +137,38 @@ class RotationForestClassifier(ForestClassifier):
 
             for column_subset in self.column_subsets_[i]:
                 # select random subset of instances by classes
-                instance_subset = self._get_random_instance_subset_by_classes(y)
+                classes, instance_subset = self._random_instance_subset(y, n_instances=self.n_instances_in_subset_)
 
-                # fit transformer on subset of instances and columns
-                transformer = clone(self.base_transformer)
-                transformer.fit(X_norm[instance_subset, column_subset])
+                # try to fit transformer on subset of instances and columns, if it fails, add more instances and try
+                # again
+                n_fails = 0  # keep track of number of time it fails
+                while True:
+                    transformer = clone(self.base_transformer)
+
+                    # ignore error state on PCA because we account for it if it fails
+                    with np.errstate(divide='ignore', invalid='ignore'):
+                        transformer.fit(X_norm[instance_subset, column_subset])
+
+                    # if fitting pca failed, add random samples and try fitting again
+                    if np.any(np.isnan(transformer.explained_variance_ratio_)) or np.any(np.isinf(
+                            transformer.explained_variance_ratio_)):
+                        n_fails += 1
+                        _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes)
+                        instance_subset = np.vstack([instance_subset, new_instance_subset])
+
+                        # raise error after 10 failed tries
+                        if n_fails == 10:
+                            raise ValueError(f"Cannot fit PCA on subset, repeatedly added more random instances "
+                                             f"to subset but keeps failing")
+
+                    # otherwise continue
+                    else:
+                        break
+
                 self.transformers_[i].append(transformer)
 
                 # transform on subset of columns but all instances
                 Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
-
-                # check transformation
-                if np.all(np.isnan(transformer.explained_variance_ratio_)):
-                    raise ValueError()
 
             # fit estimator on transformed data
             estimator = clone(self.base_estimator)
@@ -161,20 +178,20 @@ class RotationForestClassifier(ForestClassifier):
         self._is_fitted = True
         return self
 
-    def _get_random_column_subsets(self, columns, min_length, max_length):
-        """Helper function to randomly select column subsets, possibly of different sizes"""
+    def _random_column_subsets(self, columns, min_length, max_length):
+        """Helper function to randomly select subsets of columns"""
         # get random state object
         rng = self._rng
 
         # shuffle columns
         rng.shuffle(columns)
 
-        # if length is not random, use available function to split into equally sized arrays
+        # if length is not variable, use available function to split into equally sized arrays
         if min_length == max_length:
             n_subsets = int(np.ceil(self.n_columns_ / max_length))
             return np.array_split(columns, n_subsets)
 
-        # otherwise iterate through columns, selecting random number of columns within bounds
+        # otherwise iterate through columns, selecting uniformly random number of columns within bounds
         subsets = []
         it = iter(columns)  # iterator over columns
         while True:
@@ -192,21 +209,22 @@ class RotationForestClassifier(ForestClassifier):
 
         return subsets
 
-    def _get_random_instance_subset_by_classes(self, y):
-        """Helper function to select bootstrap subset of instances for given random subset of classes"""
+    def _random_instance_subset(self, y, n_instances, classes=None):
+        """Helper function to select subset of instances (with replacements) conditional on random subset of classes"""
         # get random state object
         rng = self._rng
 
         # get random subset by class
-        n_classes = rng.randint(1, len(self.classes_) + 1)
-        classes = rng.choice(self.classes_, size=n_classes, replace=False)
+        if classes is None:
+            n_classes = rng.randint(1, len(self.classes_) + 1)
+            classes = rng.choice(self.classes_, size=n_classes, replace=False)
 
         # get instances for selected classes
         isin_classes = np.where(np.isin(y, classes))[0]
 
         # randomly select bootstrap subset of instances for selected classes
-        instance_subset = rng.choice(isin_classes, size=self.n_instances_in_subset_, replace=True)
-        return instance_subset[:, None]
+        instance_subset = rng.choice(isin_classes, size=n_instances, replace=True)
+        return classes, instance_subset[:, None]
 
     def _normalise_X(self, X):
         """Helper function to normalise X using the z-score standardisation"""
@@ -246,3 +264,42 @@ class RotationForestClassifier(ForestClassifier):
         all_proba = np.sum(all_proba, axis=0) / len(self.estimators_)
 
         return all_proba
+
+    def predict(self, X):
+        """Predict class for X.
+
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+
+        Returns
+        -------
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
+            The predicted classes.
+        """
+        proba = self.predict_proba(X)
+
+        if self.n_outputs_ == 1:
+            return self.classes_.take(np.argmax(proba, axis=1), axis=0)
+
+        else:
+            n_samples = proba[0].shape[0]
+            # all dtypes should be the same, so just take the first
+            class_type = self.classes_[0].dtype
+            predictions = np.empty((n_samples, self.n_outputs_),
+                                   dtype=class_type)
+
+            for k in range(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
+                                                                    axis=1),
+                                                          axis=0)
+
+            return predictions
