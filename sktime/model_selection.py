@@ -272,6 +272,9 @@ class PresplitFilesCV:
         test = idx[data.index == 'test']
         yield train, test
 
+    def get_n_folds(self):
+        return 1
+
 
 class SingleSplit:
     """
@@ -338,3 +341,6 @@ class SingleSplit:
                                random_state=self._random_state,
                                shuffle=self._shuffle,
                                stratify=self._stratify)
+
+    def get_n_folds(self):
+        return 1

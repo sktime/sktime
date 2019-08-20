@@ -6,6 +6,7 @@ __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 import os
 from joblib import dump
 from joblib import load
+from warnings import warn
 
 
 class BaseDataset:
@@ -86,6 +87,11 @@ class HDDBaseResults(BaseResults):
     def __init__(self, predictions_path, fitted_strategies_path=None):
         self._predictions_path = predictions_path
         self._fitted_strategies_path = predictions_path if fitted_strategies_path is None else fitted_strategies_path
+
+        # validate paths
+        self._validate_path(self._predictions_path)
+        self._validate_path(self._fitted_strategies_path)
+
         super(HDDBaseResults, self).__init__()
 
     @property
@@ -110,6 +116,20 @@ class HDDBaseResults(BaseResults):
             self.strategy_names = list(set(self.strategy_names + results.strategy_names))
             self.dataset_names = list(set(self.dataset_names + results.dataset_names))
             dump(self, file)
+
+    @staticmethod
+    def _validate_path(path):
+        """Helper function to validate paths"""
+        # check if path already exists
+        if os.path.exists(path):
+            if not os.path.isdir(path):
+                raise ValueError("path already exists and is not a directory")
+
+            elif os.path.isfile(os.path.join(path, "results.pickle")):
+                warn("results master file found in path, results will be updated")
+
+            elif len([file for file in os.listdir(path) if not file.startswith(".")]) > 0:
+                warn("path already exists and is not empty")
 
 
 class BaseMetric(ABC):
