@@ -106,7 +106,7 @@ class HDDResults(HDDBaseResults):
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
         """Load saved (fitted) strategy"""
         path = self._make_file_path(strategy_name, dataset_name, cv_fold)
-        # TODO if we use strategy specific saving function, how do we know how to load them? check file endings?
+        # TODO if we use strategy specific saving function, how do we remember how to load them? check file endings?
         raise NotImplementedError()
 
     def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold):

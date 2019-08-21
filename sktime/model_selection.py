@@ -240,10 +240,10 @@ class PresplitFilesCV:
     is provided in separate files.
     """
 
-    def __init__(self, check_input=True):
-        self.check_input = check_input
+    def __init__(self, cv=None):
+        self.cv = cv
 
-    def split(self, data):
+    def split(self, data, y=None):
         """
         Split the data according to the train/test index.
 
@@ -258,23 +258,31 @@ class PresplitFilesCV:
         test : ndarray
             Test indices
         """
-        # Input checks.
-        if self.check_input:
-            if not isinstance(data, pd.DataFrame):
-                raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
-            if not np.all(data.index.unique().isin(['train', 'test'])):
-                raise ValueError('Train-test split not properly defined in '
-                                 'index of passed pandas DataFrame')
+        # check input
+        if not isinstance(data, pd.DataFrame):
+            raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
+        if not np.all(data.index.unique().isin(['train', 'test'])):
+            raise ValueError('Train-test split not properly defined in '
+                             'index of passed pandas DataFrame')
 
+        # this is a bit of a hack, PresplitFilesCV would need to talk to the data loader during orchestration,
+        # but since this is not possible with sklearn's interface, we load both files separately, combined them
+        # keep the training and test split in the index of the combined dataframe, and split them here again
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
         train = idx[data.index == 'train']
         test = idx[data.index == 'test']
         yield train, test
 
-    @staticmethod
-    def get_n_folds():
-        return 1
+        # if additionally a cv iterator is provided, yield the predefined split first, then reshuffle and apply cv,
+        # note that test sets may overlap with the presplit file test set
+        if self.cv is not None:
+            for train, test in self.cv.split(idx, y=y):
+                yield train, test
+
+    def get_n_splits(self):
+        n_splits = 1 if self.cv is None else 1 + self.cv.get_n_splits()
+        return n_splits
 
 
 class SingleSplit:
@@ -319,7 +327,7 @@ class SingleSplit:
         self._shuffle = shuffle
         self._stratify = stratify
 
-    def split(self, data):
+    def split(self, data, y=None):
         """
         Paramters
         ---------
@@ -344,5 +352,5 @@ class SingleSplit:
                                stratify=self._stratify)
 
     @staticmethod
-    def get_n_folds():
+    def get_n_splits():
         return 1
