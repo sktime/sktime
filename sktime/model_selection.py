@@ -266,13 +266,14 @@ class PresplitFilesCV:
                 raise ValueError('Train-test split not properly defined in '
                                  'index of passed pandas DataFrame')
 
-        n = data.shape[0]
-        idx = np.arange(n)
+        n_instances = data.shape[0]
+        idx = np.arange(n_instances)
         train = idx[data.index == 'train']
         test = idx[data.index == 'test']
         yield train, test
 
-    def get_n_folds(self):
+    @staticmethod
+    def get_n_folds():
         return 1
 
 
@@ -332,8 +333,8 @@ class SingleSplit:
         """
         if not isinstance(data, pd.DataFrame):
             raise ValueError('Data must be provided as a pandas DataFrame')
-        num_samples = data.shape[0]
-        idx = np.arange(num_samples)
+        n_instances = data.shape[0]
+        idx = np.arange(n_instances)
 
         yield train_test_split(idx,
                                test_size=self._test_size,
@@ -342,5 +343,6 @@ class SingleSplit:
                                shuffle=self._shuffle,
                                stratify=self._stratify)
 
-    def get_n_folds(self):
+    @staticmethod
+    def get_n_folds():
         return 1
