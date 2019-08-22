@@ -82,9 +82,9 @@ class RotationForestClassifier(BaseClassifier):
         self.classes_ = None
         self.n_outputs_ = None
         self.n_instances_ = None
-        self.n_instances_in_subset_ = None
         self.n_columns_ = None
         self.column_subsets_ = {}
+        self.n_instances_in_subset_ = None
 
     def fit(self, X, y, **fit_kwargs):
         # check inputs
@@ -125,25 +125,30 @@ class RotationForestClassifier(BaseClassifier):
                                                                   min_length=self.min_columns_subset,
                                                                   max_length=self.max_columns_subset)
 
-            # check if there are at least as many samples as columns in subset for PCA,
-            # as n_components will be min(n_samples, n_columns), otherwise throws error
-            # when assigning transformed data
-            max_columns_in_subset = np.max([len(subset) for subset in self.column_subsets_[i]])
-            if self.n_instances_in_subset_ < max_columns_in_subset:
-                raise ValueError("There are fewer instances than columns in random subsets, "
-                                 "hence PCA cannot compute components for all columns, please "
-                                 "reduce `max_columns_subset` or increase `p_instance_subset`")
-
             # initialise list of transformers
             self.transformers_[i] = []
 
             for column_subset in self.column_subsets_[i]:
                 # select random subset of instances by classes
-                classes, instance_subset = self._random_instance_subset(y, n_instances=self.n_instances_in_subset_)
+                classes, instance_subset = self._random_instance_subset(y, n_instances=self.n_instances_in_subset_,
+                                                                        bootstrap=self.bootstrap_instance_subset)
+
+                # check if there are at least as many samples as columns in subset for PCA,
+                # as n_components will be min(n_samples, n_columns), otherwise throws error
+                # when assigning transformed data
+                if len(instance_subset) < len(column_subset):
+                    if self.verbose:
+                        warn("There are fewer instances than columns in random subsets, "
+                             "hence PCA cannot compute components for all columns, randomly added"
+                             "more bootstrapped samples, to avoid this, please "
+                             "reduce `max_columns_subset` or increase `p_instance_subset`")
+                    _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
+                                                                          bootstrap=True)
+                    instance_subset = np.vstack([instance_subset, new_instance_subset])
 
                 # try to fit transformer on subset of instances and columns, if it fails, add more instances and try
                 # again
-                n_fails = 0  # keep track of number of time it fails
+                n_attemps = 0  # keep track of number of time it fails
                 while True:
                     transformer = clone(self.base_transformer)
 
@@ -154,12 +159,16 @@ class RotationForestClassifier(BaseClassifier):
                     # if fitting pca failed, add random samples and try fitting again
                     if np.any(np.isnan(transformer.explained_variance_ratio_)) or np.any(np.isinf(
                             transformer.explained_variance_ratio_)):
-                        n_fails += 1
-                        _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes)
+                        if self.verbose:
+                            warn("PCA failed to fit on subset, randomly adding more bootstrapped samples and try to "
+                                 "refit")
+                        n_attemps += 1
+                        _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
+                                                                              bootstrap=True)
                         instance_subset = np.vstack([instance_subset, new_instance_subset])
 
                         # raise error after 10 failed tries
-                        if n_fails == 10:
+                        if n_attemps == 10:
                             raise ValueError(f"Cannot fit PCA on subset, repeatedly added more random instances "
                                              f"to subset but keeps failing")
 
@@ -211,7 +220,7 @@ class RotationForestClassifier(BaseClassifier):
 
         return subsets
 
-    def _random_instance_subset(self, y, n_instances, classes=None):
+    def _random_instance_subset(self, y, n_instances, classes=None, bootstrap=False):
         """Select subset of instances (with replacements) conditional on random subset of classes"""
         # get random state object
         rng = self._rng
@@ -226,11 +235,11 @@ class RotationForestClassifier(BaseClassifier):
 
         # if no bootstrap sample is taken (sampling with replacement), n_instances cannot be larger than number of
         # instances in selected classes
-        if not self.bootstrap_instance_subset:
+        if not bootstrap:
             n_instances = np.minimum(n_instances, len(isin_classes))
 
         # randomly select bootstrap subset of instances for selected classes
-        instance_subset = rng.choice(isin_classes, size=n_instances, replace=self.bootstrap_instance_subset)
+        instance_subset = rng.choice(isin_classes, size=n_instances, replace=bootstrap)
         return classes, instance_subset[:, None]
 
     def _normalise_X(self, X):
