@@ -53,6 +53,7 @@ orchestrator.fit_predict(save_fitted_strategies=False)
 evaluator = Evaluator(resultRAM)
 
 losses_df = evaluator.evaluate(metric=Accuracy())
+print(evaluator.ranks())
 print(losses_df)
 # losses_df['Accuacy'] = 1- losses_df['loss']
 # print(losses_df)
