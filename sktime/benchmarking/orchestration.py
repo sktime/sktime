@@ -3,7 +3,7 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 from sktime.highlevel.tasks import TSCTask, TSRTask
 from sklearn.base import clone
-
+from datetime import datetime
 
 class Orchestrator:
     """
@@ -116,7 +116,9 @@ class Orchestrator:
 
             # fit strategy
             self._print_progress(dataset.name, strategy.name, cv_fold, "train", "fit", verbose)
+            begin_timestamp = datetime.timestamp(datetime.now())
             strategy.fit(task, train)
+            end_timestamp = datetime.timestamp(datetime.now())
 
             # save fitted strategy if save fitted strategies is set to True and overwrite is set to True or the
             # fitted strategy does not already exist
@@ -136,6 +138,8 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
+                                              begin_timestamp=begin_timestamp,
+                                              end_timestamp=end_timestamp,
                                               train_or_test="train")
 
             # predict on test set if overwrite predictions is set to True or predictions do not already exist
@@ -150,6 +154,8 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
+                                              begin_timestamp=begin_timestamp,
+                                              end_timestamp=end_timestamp,
                                               train_or_test="test")
 
         # save results as master file
