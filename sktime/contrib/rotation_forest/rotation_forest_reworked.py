@@ -55,6 +55,7 @@ class RotationForestClassifier(BaseClassifier):
                  min_columns_subset=3,
                  max_columns_subset=3,
                  p_instance_subset=0.75,
+                 bootstrap_instance_subset=False,
                  random_state=None,
                  verbose=0):
 
@@ -65,6 +66,7 @@ class RotationForestClassifier(BaseClassifier):
         self.p_instance_subset = p_instance_subset
         self.min_columns_subset = min_columns_subset
         self.max_columns_subset = max_columns_subset
+        self.bootstrap_instance_subset = bootstrap_instance_subset
 
         # get random state object
         self._rng = check_random_state(self.random_state)
@@ -222,8 +224,13 @@ class RotationForestClassifier(BaseClassifier):
         # get instances for selected classes
         isin_classes = np.where(np.isin(y, classes))[0]
 
+        # if no bootstrap sample is taken (sampling with replacement), n_instances cannot be larger than number of
+        # instances in selected classes
+        if not self.bootstrap_instance_subset:
+            n_instances = np.minimum(n_instances, len(isin_classes))
+
         # randomly select bootstrap subset of instances for selected classes
-        instance_subset = rng.choice(isin_classes, size=n_instances, replace=True)
+        instance_subset = rng.choice(isin_classes, size=n_instances, replace=self.bootstrap_instance_subset)
         return classes, instance_subset[:, None]
 
     def _normalise_X(self, X):
