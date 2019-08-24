@@ -1,8 +1,11 @@
+__author__ = ["Viktor Kazakov", "Markus Löning"]
+
 import numpy as np
+from sklearn.metrics import accuracy_score
 
 from sktime.benchmarking.data import RAMDataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import Accuracy
+from sktime.benchmarking.metrics import PointWiseMetric
 from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import RAMResults
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
@@ -70,11 +73,10 @@ def test_accuracy():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    losses_df = analyse.evaluate(metric=Accuracy())
+    losses_df = analyse.evaluate(metric=PointWiseMetric(func=accuracy_score, name="accuracy"))
 
-    testing_loss = losses_df['mean'].iloc[0]
+    testing_loss = losses_df['accuracy_mean'].iloc[0]
     true_loss = 1 - 0.15384615384615385
-
     np.testing.assert_equal(true_loss, testing_loss)
 
 
@@ -99,9 +101,10 @@ def test_stat():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    losses_df = analyse.evaluate(metric=Accuracy())
+    metric = PointWiseMetric(func=accuracy_score, name="accuracy")
+    losses_df = analyse.evaluate(metric=metric)
 
-    ranks = analyse.ranks()
+    ranks = analyse.rank(ascending=True)
     pf_rank = ranks.loc['ProximityForest'][0]  # 1
     fc_rank = ranks.loc['TimeSeriesForestClassifier'][0]  # 2
     rank_array = [pf_rank, fc_rank]

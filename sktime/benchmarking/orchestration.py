@@ -1,8 +1,9 @@
 __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
-from sktime.highlevel.tasks import TSCTask, TSRTask
 from sklearn.base import clone
+
+from sktime.highlevel.tasks import TSCTask, TSRTask
 
 
 class Orchestrator:
@@ -48,7 +49,6 @@ class Orchestrator:
                 self._strategy_counter += 1  # update counter
 
                 for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data, y)):
-
                     # for each fold, clone strategy to avoid updating already fitted strategies
                     strategy = clone(strategy)
 
@@ -233,7 +233,6 @@ class Orchestrator:
         """Helper function to print progress"""
 
         if verbose:
-
             fit_or_predict = fit_or_predict.capitalize()
             on_train = " (training set)" if train_or_test == "train" and fit_or_predict == "predict" else ""
 
@@ -244,4 +243,3 @@ class Orchestrator:
                 f"on CV-fold: {cv_fold}/{n_splits} "
                 f"of dataset: {self._dataset_counter}/{self.n_datasets} - {dataset_name}{on_train}"
             )
-

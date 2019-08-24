@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 __author__ = ["Markus Löning", "Viktor Kazakov"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
@@ -43,29 +41,30 @@ class BaseResults:
         # assigned during fitting of orchestration
         self.strategy_names = []
         self.dataset_names = []
+        self.cv_folds = []
 
-    def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
-                         train_or_test="test", cv_fold=0):
+    def save_predictions(self, strategy_name, dataset_name, y_true, y_pred, y_proba, index, cv_fold=0,
+                         train_or_test="test"):
         raise NotImplementedError()
 
-    def load_predictions(self, train_or_test="test", cv_fold=0):
+    def load_predictions(self, cv_fold=0, train_or_test="test"):
         """Loads predictions for all datasets and strategies iteratively"""
         raise NotImplementedError()
 
-    def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test="test"):
+    def check_predictions_exist(self, strategy, dataset_name, cv_fold=0, train_or_test="test"):
         raise NotImplementedError()
 
-    def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
+    def save_fitted_strategy(self, strategy, dataset_name, cv_fold=0):
         raise NotImplementedError()
 
-    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
+    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold=0):
         """Load fitted strategies for all datasets and strategies iteratively"""
         raise NotImplementedError()
 
-    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold):
+    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold=0):
         raise NotImplementedError()
 
-    def _append_names(self, strategy_name, dataset_name):
+    def _append_key(self, strategy_name, dataset_name, cv_fold):
         """Append names of datasets and strategies to results objects during orchestration"""
         if strategy_name not in self.strategy_names:
             self.strategy_names.append(strategy_name)
@@ -73,34 +72,42 @@ class BaseResults:
         if dataset_name not in self.dataset_names:
             self.dataset_names.append(dataset_name)
 
+        if cv_fold not in self.cv_folds:
+            self.cv_folds.append(cv_fold)
+
+    def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
+        raise NotImplementedError()
+
     def __repr__(self):
         class_name = self.__class__.__name__
-        return f"{class_name}(strategies={self.strategy_names}, datasets={self.dataset_names})"
+        return f"{class_name}(strategies={self.strategy_names}, datasets={self.dataset_names}, " \
+               f"cv_folds={self.cv_folds})"
 
     def save(self):
         """Save results object as master file"""
         NotImplementedError()
 
+    def _iter(self):
+        """Iterate over registry of results object"""
+        for strategy_name in self.strategy_names:
+            for dataset_name in self.dataset_names:
+                yield strategy_name, dataset_name
+
 
 class HDDBaseResults(BaseResults):
 
-    def __init__(self, predictions_path, fitted_strategies_path=None):
-        self._predictions_path = predictions_path
-        self._fitted_strategies_path = predictions_path if fitted_strategies_path is None else fitted_strategies_path
-
+    def __init__(self, path):
         # validate paths
-        self._validate_path(self._predictions_path)
-        self._validate_path(self._fitted_strategies_path)
+        self._validate_path(path)
+
+        # set path
+        self._path = path
 
         super(HDDBaseResults, self).__init__()
 
     @property
-    def fitted_strategies_path(self):
-        return self._fitted_strategies_path
-
-    @property
     def path(self):
-        return self._predictions_path
+        return self._path
 
     def save(self):
         """Save results object as master file"""
@@ -126,49 +133,10 @@ class HDDBaseResults(BaseResults):
                 raise ValueError("path already exists and is not a directory")
 
             elif os.path.isfile(os.path.join(path, "results.pickle")):
-                warn("results master file found in path, results will be updated")
+                warn(f"Existing results file found in given path: {path}. "
+                     f"Results file will be updated")
 
             elif len([file for file in os.listdir(path) if not file.startswith(".")]) > 0:
                 warn("path already exists and is not empty")
 
 
-class BaseMetric(ABC):
-
-    def __init__(self):
-        self.name = self.__class__.__name__
-
-    @abstractmethod
-    def calculate(self, y_true, y_pred):
-        """
-        Main method for performing the calculations.
-
-        Parameters
-        ----------
-        y_true: array
-            True dataset labels.
-        y_pred: array
-            predicted labels.
-
-        Returns
-        -------
-        float
-            Returns the result of the metric.
-        """
-
-    @abstractmethod
-    def calculate_per_dataset(self, y_true, y_pred):
-        """
-        Calculates the loss per dataset
-
-        Parameters
-        ----------
-        y_true: array
-            True dataset labels.
-        y_pred: array:
-            predicted labels.
-
-        Returns
-        -------
-        float
-            Returns the result of the metric.
-        """
