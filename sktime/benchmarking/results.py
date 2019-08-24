@@ -35,13 +35,11 @@ class RAMResults(BaseResults):
         self.results = {}
         super(RAMResults, self).__init__()
 
-    def save_predictions(self, y_true, y_pred, y_proba, index, begin_timestamp, end_timestamp, strategy_name=None, dataset_name=None,
+    def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
                          train_or_test="test", cv_fold=0):
         key = f"{strategy_name}_{dataset_name}_{train_or_test}_{cv_fold}"
         predictions = np.column_stack([index, y_true, y_pred])
-        self.results[key] = {'predictions': predictions, 
-                             'begin_timestamp': begin_timestamp,
-                             'end_timestamp': end_timestamp}
+        self.results[key] = predictions
         self._append_names(strategy_name, dataset_name)
 
     def load_predictions(self, train_or_test="test", cv_fold=0):
@@ -50,7 +48,7 @@ class RAMResults(BaseResults):
         for dataset_name in self.dataset_names:
             for strategy_name in self.strategy_names:
                 key = f"{strategy_name}_{dataset_name}_{train_or_test}_{cv_fold}"
-                predictions = self.results[key]['predictions']
+                predictions = self.results[key]
                 index = predictions[:, 0]
                 y_true = predictions[:, 1]
                 y_pred = predictions[:, 2]
