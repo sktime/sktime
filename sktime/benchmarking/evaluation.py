@@ -1,4 +1,4 @@
-__author__ = ["Viktor Kazakov", "Markus Löning"]
+__author__ = ["Viktor Kazakov", "Markus Löning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
 import itertools
@@ -62,12 +62,13 @@ class Evaluator:
         """
 
         # check input
-        if isinstance(cv_fold, int):
+        if isinstance(cv_fold, int) and cv_fold >= 0:
             cv_folds = [cv_fold]  # if single fold, make iterable
         elif cv_fold == "all":
             cv_folds = self.results.cv_folds
         else:
-            raise ValueError(f"`cv_fold` must be either positive integer (>=0) or 'all', but found: {type(cv_fold)}")
+            raise ValueError(f"`cv_fold` must be either positive integer (>=0) or 'all', "
+                             f"but found: {type(cv_fold)}")
 
         # load all predictions
         for cv_fold in cv_folds:
@@ -146,8 +147,7 @@ class Evaluator:
                   .groupby("strategy")
                   .mean()
                   .rename(columns={column: f"{metric_name}_mean_rank"})
-                  .reset_index()
-                  )
+                  .reset_index())
         return ranked
 
     def t_test(self, metric_name=None):
@@ -349,15 +349,142 @@ class Evaluator:
         nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
 
+    def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
+        """Plot critical difference diagrams
+        
+        References:
+        -----------
+        original implementation by Aaron Bostrom, modified by Markus Löning
+        """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        column = self._get_column_name(metric_name, suffix="mean")
+        data = (self.metrics_by_strategy_dataset
+                .copy()
+                .loc[:, ["dataset", "strategy", column]]
+                .pivot(index="strategy", columns="dataset", values=column)
+                .values
+        )
+
+        n_strategies, n_datasets = data.shape  # [N,k] = size(s); correct
+        labels = self.results.strategy_names
+
+        r = np.argsort(data, axis=0)
+        S = np.sort(data, axis=0)
+        idx = n_strategies * np.tile(np.arange(n_datasets), (n_strategies, 1)).T + r.T
+        R = np.asfarray(np.tile(np.arange(n_strategies) + 1, (n_datasets, 1)))
+        S = S.T
+
+        for i in range(n_datasets):
+            for j in range(n_strategies):
+                index = S[i, j] == S[i, :]
+                R[i, index] = np.mean(R[i, index], dtype=np.float64)
+
+        r = np.asfarray(r)
+        r.T.flat[idx] = R
+        r = r.T
+
+        if alpha == 0.01:
+            qalpha = [0.000, 2.576, 2.913, 3.113, 3.255, 3.364, 3.452, 3.526, 3.590, 3.646, 3.696, 3.741, 3.781, 3.818,
+                      3.853, 3.884, 3.914, 3.941, 3.967, 3.992, 4.015, 4.037, 4.057, 4.077, 4.096, 4.114, 4.132, 4.148,
+                      4.164, 4.179, 4.194, 4.208, 4.222, 4.236, 4.249, 4.261, 4.273, 4.285, 4.296, 4.307, 4.318, 4.329,
+                      4.339, 4.349, 4.359, 4.368, 4.378, 4.387, 4.395, 4.404, 4.412, 4.420, 4.428, 4.435, 4.442, 4.449,
+                      4.456]
+        elif alpha == 0.05:
+            qalpha = [0.000, 1.960, 2.344, 2.569, 2.728, 2.850, 2.948, 3.031, 3.102, 3.164, 3.219, 3.268, 3.313, 3.354,
+                      3.391, 3.426, 3.458, 3.489, 3.517, 3.544, 3.569, 3.593, 3.616, 3.637, 3.658, 3.678, 3.696, 3.714,
+                      3.732, 3.749, 3.765, 3.780, 3.795, 3.810, 3.824, 3.837, 3.850, 3.863, 3.876, 3.888, 3.899, 3.911,
+                      3.922, 3.933, 3.943, 3.954, 3.964, 3.973, 3.983, 3.992, 4.001, 4.009, 4.017, 4.025, 4.032, 4.040,
+                      4.046]
+        elif alpha == 0.1:
+            qalpha = [0.000, 1.645, 2.052, 2.291, 2.460, 2.589, 2.693, 2.780, 2.855, 2.920, 2.978, 3.030, 3.077, 3.120,
+                      3.159, 3.196, 3.230, 3.261, 3.291, 3.319, 3.346, 3.371, 3.394, 3.417, 3.439, 3.459, 3.479, 3.498,
+                      3.516, 3.533, 3.550, 3.567, 3.582, 3.597, 3.612, 3.626, 3.640, 3.653, 3.666, 3.679, 3.691, 3.703,
+                      3.714, 3.726, 3.737, 3.747, 3.758, 3.768, 3.778, 3.788, 3.797, 3.806, 3.814, 3.823, 3.831, 3.838,
+                      3.846]
+        else:
+            raise Exception("alpha must be 0.01, 0.05 or 0.1")
+
+        cd = qalpha[n_strategies - 1] * np.sqrt(n_strategies * (n_strategies + 1) / (6 * n_datasets))
+
+        # set up plot
+        fig, ax = plt.subplots(1)
+        ax.set_xlim(-0.5, 1.5)
+        ax.set_ylim(0, 140)
+        ax.set_axis_off()
+
+        tics = np.tile(np.array(np.arange(n_strategies)) / (n_strategies - 1), (3, 1))
+        plt.plot(tics.flatten("F"), np.tile([100, 105, 100], (1, n_strategies)).flatten(),
+                 linewidth=2, color="black")
+        tics = np.tile(
+            (np.array(range(0, n_strategies - 1)) / (n_strategies - 1)) + 0.5 / (n_strategies - 1), (3, 1))
+        plt.plot(tics.flatten("F"), np.tile([100, 102.5, 100], (1, n_strategies - 1)).flatten(),
+                 linewidth=1, color="black")
+        plt.plot([0, 0, 0, cd / (n_strategies - 1), cd / (n_strategies - 1), cd / (n_strategies - 1)],
+                 [127, 123, 125, 125, 123, 127], linewidth=1,
+                 color="black")
+        plt.text(0.5 * cd / (n_strategies - 1), 130, "CD", fontsize=12, horizontalalignment="center")
+
+        for i in range(n_strategies):
+            plt.text(i / (n_strategies - 1), 110, str(n_strategies - i), fontsize=12, horizontalalignment="center");
+
+        # compute average ranks
+        r = np.mean(r, axis=0)
+        idx = np.argsort(r, axis=0)
+        r = np.sort(r, axis=0)
+
+        # compute statistically similar cliques
+        clique = np.tile(r, (n_strategies, 1)) - np.tile(np.vstack(r.T), (1, n_strategies))
+        clique[clique < 0] = np.inf
+        clique = clique < cd
+
+        for i in range(n_strategies - 1, 0, -1):
+            if np.all(clique[i - 1, clique[i, :]] == clique[i, clique[i, :]]):
+                clique[i, :] = 0
+
+        n = np.sum(clique, 1)
+        clique = clique[n > 1, :]
+        n = np.size(clique, 0)
+
+        for i in range(np.int(np.ceil(n_strategies / 2))):
+            plt.plot([(n_strategies - r[i]) / (n_strategies - 1), (n_strategies - r[i]) / (n_strategies - 1), 1.2],
+                     [100, 100 - 5 * (n + 1) - 10 * (i + 1), 100 - 5 * (n + 1) - 10 * (i + 1)], color="black")
+            plt.text(1.2, 100 - 5 * (n + 1) - 10 * (i + 1) + 2, "%.2f" % r[i], fontsize=10, horizontalalignment="right")
+            plt.text(1.25, 100 - 5 * (n + 1) - 10 * (i + 1), labels[idx[i]], fontsize=12, verticalalignment="center",
+                     horizontalalignment="left")
+
+        # labels displayed on the left
+        for i in range(np.int(np.ceil(n_strategies / 2)), n_strategies):
+            plt.plot([(n_strategies - r[i]) / (n_strategies - 1), (n_strategies - r[i]) / (n_strategies - 1), -0.2],
+                     [100, 100 - 5 * (n + 1) - 10 * (n_strategies - i), 100 - 5 * (n + 1) - 10 * (n_strategies - i)],
+                     color="black")
+            plt.text(-0.2, 100 - 5 * (n + 1) - 10 * (n_strategies - i) + 2, "%.2f" % r[i], fontsize=10,
+                     horizontalalignment="left")
+            plt.text(-0.25, 100 - 5 * (n + 1) - 10 * (n_strategies - i), labels[idx[i]], fontsize=12,
+                     verticalalignment="center", horizontalalignment="right")
+
+        # group cliques of statistically similar classifiers
+        for i in range(np.size(clique, 0)):
+            R = r[clique[i, :]]
+            plt.plot([
+                ((n_strategies - np.min(R)) / (n_strategies - 1)) + 0.015,
+                ((n_strategies - np.max(R)) / (n_strategies - 1)) - 0.015
+            ], [100 - 5 * (i + 1), 100 - 5 * (i + 1)], linewidth=6, color="black")
+        plt.show()
+        return fig, ax
+
     def _get_column_name(self, metric_name, suffix="mean"):
+        """Helper function to get column name in computed metrics dataframe"""
         return f"{metric_name}_{suffix}"
 
     def _check_is_evaluated(self):
+        """Check if evaluator has evaluated any metrics"""
         if len(self._metric_names) == 0:
             raise NotEvaluatedError("This evaluator has not evaluated any metric yet. Please call "
                                     "'evaluate' with the appropriate arguments before using this method.")
 
     def _validate_metric_name(self, metric_name):
+        """Check if metric has already been evaluated"""
         if metric_name is None:
             metric_name = self._metric_names[-1]  # if None, use the last evaluated metric
 
@@ -372,12 +499,12 @@ class Evaluator:
         # TODO deprecate in favor of new pandas data frame based data representation
         column = f"{metric_name}_mean"
         df = self.metrics_by_strategy_dataset.loc[:, ["strategy", "dataset", column]].set_index("strategy")
-        losses_per_estimator = {}
+        d = {}
         for strategy in df.index:
             val = df.loc[strategy, column].tolist()
             val = [val] if not isinstance(val, list) else val
-            losses_per_estimator[strategy] = val
-        return losses_per_estimator
+            d[strategy] = val
+        return d
 
     def _get_metrics_per_estimator(self, metric_name):
         """Helper function to get old format back, to be deprecated"""
