@@ -1,19 +1,9 @@
 __all__ = ["PointWiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
-from abc import ABC, abstractmethod
-
 import numpy as np
 
-
-class BaseMetric(ABC):
-
-    def __init__(self, name):
-        self.name = name
-
-    @abstractmethod
-    def compute(self, y_true, y_pred):
-        """Main method for performing the calculations."""
+from sktime.benchmarking.base import BaseMetric
 
 
 class PointWiseMetric(BaseMetric):
@@ -72,8 +62,8 @@ class AggregateMetric(BaseMetric):
         n_instances = len(y_true)
         index = np.arange(n_instances)
 
-        # get jackknife samples
-        jack_idx = self._jackknife_resampling(index)
+        # get jackknife samples of index
+        jack_idx = np.asarray(self._jackknife_resampling(index), dtype=np.int)
 
         # compute pointwise metrics on jackknife samples
         jack_pointwise_metric = np.array([self.func(y_true[idx], y_pred[idx]) for idx in jack_idx])
@@ -90,9 +80,9 @@ class AggregateMetric(BaseMetric):
         ----------
         .. [1] Efron and Stein, (1981), "The jackknife estimate of variance.
         """
-        n = x.shape[0]
+        n_instances = x.shape[0]
         # np.sqrt((((n - 1) / n) * np.sum((x - x.mean()) ** 2)))
-        return np.sqrt(n - 1) * np.std(x)
+        return np.sqrt(n_instances - 1) * np.std(x)
 
     @staticmethod
     def _jackknife_resampling(x):
@@ -122,13 +112,15 @@ class AggregateMetric(BaseMetric):
         .. [1] code from http://docs.astropy.org/en/stable/_modules/astropy/stats/jackknife.html
         """
 
-        n = x.shape[0]
-        if n <= 0:
+        n_instances = x.shape[0]
+        if n_instances <= 0:
             raise ValueError("x must contain at least one measurement.")
 
-        resamples = np.empty([n, n - 1])
+        # preallocate array
+        resamples = np.empty([n_instances, n_instances - 1])
 
-        for i in range(n):
+        # jackknife resampling
+        for i in range(n_instances):
             resamples[i] = np.delete(x, i)
 
         return resamples

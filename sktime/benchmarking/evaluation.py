@@ -34,18 +34,25 @@ class Evaluator:
         self._metrics_by_strategy = pd.DataFrame(columns=["strategy"])
 
         # keep track of metric names
-        self.metric_names = []
+        self._metric_names = []
+
+    @property
+    def metric_names(self):
+        return self._metric_names
 
     @property
     def metrics(self):
+        self._check_is_evaluated()
         return self._metrics
 
     @property
     def metrics_by_strategy(self):
+        self._check_is_evaluated()
         return self._metrics_by_strategy
 
     @property
     def metrics_by_strategy_dataset(self):
+        self._check_is_evaluated()
         return self._metrics_by_strategy_dataset
 
     def evaluate(self, metric, train_or_test="test", cv_fold="all"):
@@ -88,29 +95,29 @@ class Evaluator:
 
         # update metrics dataframe with computed metrics
         metrics = pd.DataFrame(self._metric_dicts)
-        self._metrics = self.metrics.merge(metrics, how="outer")
+        self._metrics = self._metrics.merge(metrics, how="outer")
 
         # aggregate results
         # aggregate over cv folds
-        metrics_by_strategy_dataset = self.metrics.groupby(["dataset", "strategy"], as_index=False).agg(np.mean).drop(
+        metrics_by_strategy_dataset = self._metrics.groupby(["dataset", "strategy"], as_index=False).agg(np.mean).drop(
             columns="cv_fold")
-        self._metrics_by_strategy_dataset = self.metrics_by_strategy_dataset.merge(metrics_by_strategy_dataset,
+        self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(metrics_by_strategy_dataset,
                                                                                    how="outer")
-
         # aggregate over cv folds and datasets
         metrics_by_strategy = metrics_by_strategy_dataset.groupby(["strategy"], as_index=False).agg(np.mean)
-        self._metrics_by_strategy = self.metrics_by_strategy.merge(metrics_by_strategy, how="outer")
+        self._metrics_by_strategy = self._metrics_by_strategy.merge(metrics_by_strategy, how="outer")
 
         # append metric names
-        self.metric_names.append(metric.name)
+        self._metric_names.append(metric.name)
 
         # return aggregated results
-        return self.metrics_by_strategy
+        return self._metrics_by_strategy
 
     def plot_boxplots(self, metric_name=None, **kwargs):
         """Box plot of metric"""
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
-        column = self._get_column_name(metric_name)
+        column = self._get_column_name(metric_name, suffix="mean")
 
         fig, ax = plt.subplots(1)
         self.metrics_by_strategy_dataset.boxplot(by="strategy", column=column, grid=False, ax=ax, **kwargs)
@@ -123,11 +130,12 @@ class Evaluator:
         """
         Calculates the average ranks based on the performance of each estimator on each dataset
         """
+        self._check_is_evaluated()
         if not isinstance(ascending, bool):
             raise ValueError(f"`ascending` must be boolean, but found: {type(ascending)}")
 
         metric_name = self._validate_metric_name(metric_name)
-        column = self._get_column_name(metric_name)
+        column = self._get_column_name(metric_name, suffix="mean")
 
         ranked = (self.metrics_by_strategy_dataset
                   .loc[:, ["dataset", "strategy", column]]
@@ -145,6 +153,7 @@ class Evaluator:
         """
         Runs t-test on all possible combinations between the estimators.
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -183,6 +192,7 @@ class Evaluator:
         `<https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.binom_test.html>`_
         for details about the scipy implementation.
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -212,6 +222,7 @@ class Evaluator:
         The test counts the number of observations that are greater, smaller and equal to the mean
         `<http://en.wikipedia.org/wiki/Wilcoxon_rank-sum_test>`_.
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -219,7 +230,6 @@ class Evaluator:
         perms = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            comb = perm[0] + " - " + perm[1]
             x = metrics_per_estimator_dataset[perm[0]]
             y = metrics_per_estimator_dataset[perm[1]]
             t_stat, p_val = ranksums(x, y)
@@ -247,8 +257,8 @@ class Evaluator:
         correction used to counteract multiple comparissons
         https://en.wikipedia.org/wiki/Bonferroni_correction
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
-        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
         df_t_test, _ = self.t_test(metric_name=metric_name)
         idx_estim_1 = df_t_test["estimator_1"].unique()
@@ -271,6 +281,7 @@ class Evaluator:
         Tests whether two  related paired samples come from the same distribution. 
         In particular, it tests whether the distribution of the differences x-y is symmetric about zero
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -311,7 +322,7 @@ class Evaluator:
         Implementation used:
         `scipy.stats <https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.stats.friedmanchisquare.html>`_.
         """
-
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -328,6 +339,7 @@ class Evaluator:
         For more information see `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
         Implementation used `scikit-posthocs <https://github.com/maximtrp/scikit-posthocs>`_.
         """
+        self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
@@ -339,15 +351,16 @@ class Evaluator:
     def _get_column_name(self, metric_name, suffix="mean"):
         return f"{metric_name}_{suffix}"
 
-    def _validate_metric_name(self, metric_name):
-        if len(self.metric_names) == 0:
+    def _check_is_evaluated(self):
+        if len(self._metric_names) == 0:
             raise NotEvaluatedError("This evaluator has not evaluated any metric yet. Please call "
                                     "'evaluate' with the appropriate arguments before using this method.")
 
+    def _validate_metric_name(self, metric_name):
         if metric_name is None:
-            metric_name = self.metric_names[-1]  # if None, use the last evaluated metric
+            metric_name = self._metric_names[-1]  # if None, use the last evaluated metric
 
-        if metric_name not in self.metric_names:
+        if metric_name not in self._metric_names:
             raise ValueError(f"{metric_name} has not been evaluated yet. Please call "
                              f"'evaluate' with the appropriate arguments first")
 

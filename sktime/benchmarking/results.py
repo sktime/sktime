@@ -7,27 +7,7 @@ import numpy as np
 import pandas as pd
 from joblib import load
 
-from sktime.benchmarking.base import BaseResults, HDDBaseResults
-
-
-class _PredictionsWrapper:
-    """Single result class to ensure consistency for return object when loading results"""
-
-    def __init__(self, strategy_name, dataset_name, index, y_true, y_pred, y_proba=None):
-        # check input format
-        if not all(isinstance(array, np.ndarray) for array in [y_true, y_pred]):
-            raise ValueError(f"Prediction results have to stored as numpy arrays, "
-                             f"but found: {[type(array) for array in [y_true, y_pred]]}")
-        if not all(isinstance(name, str) for name in [strategy_name, dataset_name]):
-            raise ValueError(f"Names must be strings, but found: "
-                             f"{[type(name) for name in [strategy_name, dataset_name]]}")
-
-        self.strategy_name = strategy_name
-        self.dataset_name = dataset_name
-        self.index = index
-        self.y_true = y_true
-        self.y_pred = y_pred
-        self.y_proba = y_proba
+from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
 
 class RAMResults(BaseResults):
