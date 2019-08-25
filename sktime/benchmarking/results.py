@@ -1,32 +1,13 @@
-__all__ = ["HDDResults", "RAMResults", "UEAResults"]
+__all__ = ["HDDResults", "RAMResults"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import os
 
 import numpy as np
 import pandas as pd
+from joblib import load
 
-from sktime.benchmarking.base import BaseResults, HDDBaseResults
-
-
-class _ResultWrapper:
-    """Single result class to ensure consistency for return object when loading results"""
-
-    def __init__(self, strategy_name, dataset_name, index, y_true, y_pred, y_proba=None):
-        # check input format
-        if not all(isinstance(array, np.ndarray) for array in [y_true, y_pred]):
-            raise ValueError(f"Prediction results have to stored as numpy arrays, "
-                             f"but found: {[type(array) for array in [y_true, y_pred]]}")
-        if not all(isinstance(name, str) for name in [strategy_name, dataset_name]):
-            raise ValueError(f"Names must be strings, but found: "
-                             f"{[type(name) for name in [strategy_name, dataset_name]]}")
-
-        self.strategy_name = strategy_name
-        self.dataset_name = dataset_name
-        self.index = index
-        self.y_true = y_true
-        self.y_pred = y_pred
-        self.y_proba = y_proba
+from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
 
 class RAMResults(BaseResults):
@@ -35,99 +16,97 @@ class RAMResults(BaseResults):
         self.results = {}
         super(RAMResults, self).__init__()
 
-    def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
-                         train_or_test="test", cv_fold=0):
-        key = f"{strategy_name}_{dataset_name}_{train_or_test}_{cv_fold}"
-        predictions = np.column_stack([index, y_true, y_pred])
-        self.results[key] = predictions
-        self._append_names(strategy_name, dataset_name)
+    def save_predictions(self, strategy_name, dataset_name, y_true, y_pred, y_proba, index, cv_fold=0,
+                         train_or_test="test"):
+        key = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test)
+        index = np.asarray(index)
+        y_true = np.asarray(y_true)
+        y_pred = np.asarray(y_pred)
+        y_proba = np.asarray(y_proba)
+        self.results[key] = _PredictionsWrapper(strategy_name, dataset_name, index, y_true, y_pred, y_proba)
+        self._append_key(strategy_name, dataset_name, cv_fold)
 
-    def load_predictions(self, train_or_test="test", cv_fold=0):
+    def load_predictions(self, cv_fold=0, train_or_test="test"):
         """Loads predictions for all datasets and strategies iteratively"""
-        # TODO y_proba is currently ignored
-        for dataset_name in self.dataset_names:
-            for strategy_name in self.strategy_names:
-                key = f"{strategy_name}_{dataset_name}_{train_or_test}_{cv_fold}"
-                predictions = self.results[key]
-                index = predictions[:, 0]
-                y_true = predictions[:, 1]
-                y_pred = predictions[:, 2]
-                yield _ResultWrapper(strategy_name, dataset_name, index, y_true, y_pred)
+        for strategy_name, dataset_name in self._iter():
+            key = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test)
+            yield self.results[key]
 
-    def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test="test"):
-        # for in-memory results, always false
+    def check_predictions_exist(self, strategy, dataset_name, cv_fold=0, train_or_test="test"):
+        # for in-memory results, always false, results are always overwritten
         return False
 
-    def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
+    def save_fitted_strategy(self, strategy, dataset_name, cv_fold=0):
         raise NotImplementedError()
 
-    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
+    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold=0):
         raise NotImplementedError()
 
-    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold, train_or_test="test"):
-        # for in-memory results, always false
+    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold=0, train_or_test="test"):
+        # for in-memory results, always false, results are always overwritten
         return False
 
     def save(self):
-        # for in-memory results are currently not saved
+        # in-memory results are currently not persisted (i.e saved to the disk)
         pass
+
+    def _generate_key(self, strategy_name, dataset_name, cv_fold=0, train_or_test="test"):
+        """Function to get paths for files, this basically encapsulate the storage logic of the class"""
+        return f"{strategy_name}_{dataset_name}_{train_or_test}_{str(cv_fold)}"
 
 
 class HDDResults(HDDBaseResults):
 
-    def save_predictions(self, y_true, y_pred, y_proba, index, strategy_name=None, dataset_name=None,
-                         train_or_test="test", cv_fold=0):
+    def save_predictions(self, strategy_name, dataset_name, y_true, y_pred, y_proba, index, cv_fold=0,
+                         train_or_test="test"):
         """Save predictions"""
         # TODO y_proba is currently ignored
-        path = self._make_file_path(self.path, strategy_name, dataset_name, cv_fold, train_or_test) + ".csv"
+        key = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test) + ".csv"
         results = pd.DataFrame({"index": index, "y_true": y_true, "y_pred": y_pred})
-        results.to_csv(path, index=False, header=True)
-        self._append_names(strategy_name, dataset_name)
+        results.to_csv(key, index=False, header=True)
+        self._append_key(strategy_name, dataset_name, cv_fold)
 
-    def load_predictions(self, train_or_test="test", cv_fold=0):
+    def load_predictions(self, cv_fold=0, train_or_test="test"):
         """Load saved predictions"""
 
-        for strategy_name in self.strategy_names:
-            for dataset_name in self.dataset_names:
-                path = self._make_file_path(self.path, strategy_name, dataset_name, cv_fold, train_or_test) + ".csv"
-                results = pd.read_csv(path, header=0)
-                index = results.loc[:, "index"].values
-                y_true = results.loc[:, "y_true"].values
-                y_pred = results.loc[:, "y_pred"].values
-                yield _ResultWrapper(strategy_name, dataset_name, index, y_true, y_pred)
+        for strategy_name, dataset_name in self._iter():
+            key = self._generate_key(strategy_name, dataset_name, cv_fold=0, train_or_test=train_or_test) + ".csv"
+            results = pd.read_csv(key, header=0)
+            index = results.loc[:, "index"].values
+            y_true = results.loc[:, "y_true"].values
+            y_pred = results.loc[:, "y_pred"].values
+            yield _PredictionsWrapper(strategy_name, dataset_name, index, y_true, y_pred)
 
-    def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
+    def save_fitted_strategy(self, strategy, dataset_name, cv_fold=0):
         """Save fitted strategy"""
-        path = self._make_file_path(self.fitted_strategies_path, strategy.name, dataset_name, cv_fold,
-                                    train_or_test="train") + ".pickle"
+        path = self._generate_key(strategy.name, dataset_name, cv_fold=0, train_or_test="train") + ".pickle"
         strategy.save(path)
-        self._append_names(strategy.name, dataset_name)
+        self._append_key(strategy.name, dataset_name, cv_fold=0)
 
-    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
+    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold=0):
         """Load saved (fitted) strategy"""
-        path = self._make_file_path(strategy_name, dataset_name, cv_fold)
-        # TODO if we use strategy specific saving function, how do we know how to load them? check file endings?
-        raise NotImplementedError()
+        for strategy_name, dataset_name in self._iter():
+            key = self._generate_key(strategy_name, dataset_name) + ".pickle"
+            # TODO if we use strategy specific saving function, how do we remember how to load them? check file endings?
+            return load(key)
 
-    def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold):
-        path = self._make_file_path(self.fitted_strategies_path, strategy_name,
-                                    dataset_name, cv_fold, train_or_test="train") + ".pickle"
+    def check_fitted_strategy_exists(self, strategy_name, dataset_name, cv_fold=0):
+        path = self._generate_key(strategy_name, dataset_name, cv_fold=0, train_or_test="train") + ".pickle"
         if os.path.isfile(path):
             return True
         else:
             return False
 
-    def check_predictions_exist(self, strategy_name, dataset_name, cv_fold, train_or_test="test"):
-        path = self._make_file_path(self.path, strategy_name, dataset_name, cv_fold, train_or_test) + ".csv"
+    def check_predictions_exist(self, strategy_name, dataset_name, cv_fold=0, train_or_test="test"):
+        path = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test) + ".csv"
         if os.path.isfile(path):
             return True
         else:
             return False
 
-    @staticmethod
-    def _make_file_path(path, strategy_name, dataset_name, cv_fold=0, train_or_test="test"):
+    def _generate_key(self, strategy_name, dataset_name, cv_fold=0, train_or_test="test"):
         """Function to get paths for files, this basically encapsulate the storage logic of the class"""
-        filepath = os.path.join(path, strategy_name, dataset_name)
+        filepath = os.path.join(self.path, strategy_name, dataset_name)
         if not os.path.exists(filepath):
             # recursively create directory including intermediate-level folders
             os.makedirs(filepath)
@@ -135,5 +114,3 @@ class HDDResults(HDDBaseResults):
         return os.path.join(filepath, filename)
 
 
-class UEAResults(HDDBaseResults):
-    pass

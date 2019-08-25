@@ -1,8 +1,9 @@
 __all__ = ["Orchestrator"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
-from sktime.highlevel.tasks import TSCTask, TSRTask
 from sklearn.base import clone
+
+from sktime.highlevel.tasks import TSCTask, TSRTask
 
 
 class Orchestrator:
@@ -31,6 +32,8 @@ class Orchestrator:
 
     def _iter(self):
         """Iterator for orchestration"""
+        # TODO: check if datasets are skipped entirely because predictions already exists before loading data,
+        #  maybe do a dry-run first to find out which datasets to skip?
         for task, dataset in zip(self.tasks, self.datasets):
             # update counters
             self._strategy_counter = 0
@@ -39,11 +42,13 @@ class Orchestrator:
             # load data into memory from dataset hook
             data = dataset.load()
 
+            # get target in case stratified cross-validation is used
+            y = data[task.target]
+
             for strategy in self.strategies:
                 self._strategy_counter += 1  # update counter
 
-                for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data)):
-
+                for cv_fold, (train_idx, test_idx) in enumerate(self.cv.split(data, y)):
                     # for each fold, clone strategy to avoid updating already fitted strategies
                     strategy = clone(strategy)
 
@@ -111,7 +116,6 @@ class Orchestrator:
 
             # fit strategy
             self._print_progress(dataset.name, strategy.name, cv_fold, "train", "fit", verbose)
-            strategy = clone(strategy)
             strategy.fit(task, train)
 
             # save fitted strategy if save fitted strategies is set to True and overwrite is set to True or the
@@ -228,15 +232,14 @@ class Orchestrator:
     def _print_progress(self, dataset_name, strategy_name, cv_fold, train_or_test, fit_or_predict, verbose):
         """Helper function to print progress"""
 
-        fit_or_predict = fit_or_predict.capitalize()
-        on_train = " (training set)" if train_or_test == "train" and fit_or_predict == "predict" else ""
-
-        n_folds = self.cv.get_n_folds() - 1
-
         if verbose:
+            fit_or_predict = fit_or_predict.capitalize()
+            on_train = " (training set)" if train_or_test == "train" and fit_or_predict == "predict" else ""
+
+            n_splits = self.cv.get_n_splits() - 1  # zero indexing
+
             print(
                 f"strategy: {self._strategy_counter}/{self.n_strategies} - {strategy_name} "
-                f"on CV-fold: {cv_fold}/{n_folds} "
+                f"on CV-fold: {cv_fold}/{n_splits} "
                 f"of dataset: {self._dataset_counter}/{self.n_datasets} - {dataset_name}{on_train}"
             )
-

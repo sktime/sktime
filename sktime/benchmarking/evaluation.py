@@ -1,7 +1,6 @@
 __author__ = ["Viktor Kazakov", "Markus Löning"]
-__all__ = ["Evaluator", "MetricCalculator"]
+__all__ = ["Evaluator"]
 
-import collections
 import itertools
 
 import matplotlib.pyplot as plt
@@ -13,145 +12,158 @@ from scipy.stats import ranksums
 from scipy.stats import ttest_ind
 
 from sktime.benchmarking.base import BaseResults
+from sktime.utils.exceptions import NotEvaluatedError
+
+plt.style.use("seaborn-ticks")
 
 
 class Evaluator:
     """
     Analyze results of machine learning experiments.
-
-    Parameters
-    ----------
-    result : sktime result object
-        class for storing the results
     """
 
     def __init__(self, results):
         if not isinstance(results, BaseResults):
-            raise ValueError(f"results must inherit from BaseResults")
+            raise ValueError(f"`results` must inherit from BaseResults")
         self.results = results
-        self.metrics_per_estimator = None
-        self.metrics_per_estimator_dataset = None
+        self._metric_dicts = []
 
-    def evaluate(self, metric, train_or_test="test", cv_fold=0):
-        """
-        Calculates the average prediction error per estimator as well as the prediction error achieved by each estimator on individual datasets.
+        # preallocate dataframe for metrics
+        self._metrics = pd.DataFrame(columns=["dataset", "strategy", "cv_fold"])
+        self._metrics_by_strategy_dataset = pd.DataFrame(columns=["dataset", "strategy"])
+        self._metrics_by_strategy = pd.DataFrame(columns=["strategy"])
 
-        Parameters
-        -----------
-        metric : `sktime.analyse_results.scores`
-            Error function 
-        Returns
-        -------
-        pickle of pandas DataFrame
-            ``estimator_avg_error`` represents the average error and standard deviation achieved by each estimator. ``estimator_avg_error_per_dataset`` represents the average error and standard deviation achieved by each estimator on each dataset.
+        # keep track of metric names
+        self._metric_names = []
+
+    @property
+    def metric_names(self):
+        return self._metric_names
+
+    @property
+    def metrics(self):
+        self._check_is_evaluated()
+        return self._metrics
+
+    @property
+    def metrics_by_strategy(self):
+        self._check_is_evaluated()
+        return self._metrics_by_strategy
+
+    @property
+    def metrics_by_strategy_dataset(self):
+        self._check_is_evaluated()
+        return self._metrics_by_strategy_dataset
+
+    def evaluate(self, metric, train_or_test="test", cv_fold="all"):
         """
+        Calculates the average prediction error per estimator as well as the prediction error achieved by each
+        estimator on individual datasets.
+        """
+
+        # check input
+        if isinstance(cv_fold, int):
+            cv_folds = [cv_fold]  # if single fold, make iterable
+        elif cv_fold == "all":
+            cv_folds = self.results.cv_folds
+        else:
+            raise ValueError(f"`cv_fold` must be either positive integer (>=0) or 'all', but found: {type(cv_fold)}")
+
         # load all predictions
-        calculator = MetricCalculator(metric)
-        for result in self.results.load_predictions(train_or_test=train_or_test, cv_fold=cv_fold):
-            # unpack result object
-            strategy_name = result.strategy_name
-            dataset_name = result.dataset_name
-            index = result.index
-            y_true = result.y_true
-            y_pred = result.y_pred
-            y_proba = result.y_proba
-            calculator.compute_metric(y_true, y_pred, dataset_name, strategy_name)
+        for cv_fold in cv_folds:
+            for result in self.results.load_predictions(train_or_test=train_or_test, cv_fold=cv_fold):
+                # unwrap result object
+                strategy_name = result.strategy_name
+                dataset_name = result.dataset_name
+                index = result.index
+                y_true = result.y_true
+                y_pred = result.y_pred
+                y_proba = result.y_proba
 
-        self.metrics_per_estimator, self.metrics_per_estimator_dataset = calculator.get_metrics()
-        return self._metrics_to_dataframe(self.metrics_per_estimator_dataset)
+                # compute metric
+                mean, stderr = metric.compute(y_true, y_pred)
 
-    def mean_and_stderr(self):
-        """
-        Calculates simple average and standard error.
+                # store results
+                metric_dict = {
+                    "dataset": dataset_name,
+                    "strategy": strategy_name,
+                    "cv_fold": cv_fold,
+                    self._get_column_name(metric.name, suffix="mean"): mean,
+                    self._get_column_name(metric.name, suffix="stderr"): stderr
+                }
+                self._metric_dicts.append(metric_dict)
 
-        Paramteters
-        -----------
-        scores_dict : dictionary
-            Dictionary with estimators (keys) and corresponding prediction accuracies on different datasets.
-        
-        Returns
-        -------
-        pandas DataFrame
-            result with average score and standard error
-        """
-        result = {}
-        for k in self.metrics_per_estimator.keys():
-            average = np.average(self.metrics_per_estimator[k])
-            n = len(self.metrics_per_estimator[k])
-            std_error = np.std(self.metrics_per_estimator[k]) / np.sqrt(n)
-            result[k] = [average, std_error]
+        # update metrics dataframe with computed metrics
+        metrics = pd.DataFrame(self._metric_dicts)
+        self._metrics = self._metrics.merge(metrics, how="outer")
 
-        res_df = pd.DataFrame.from_dict(result, orient="index")
-        res_df.columns = ["mean", "stderr"]
-        res_df = res_df.sort_values(["mean", "stderr"], ascending=[1, 1])
+        # aggregate results
+        # aggregate over cv folds
+        metrics_by_strategy_dataset = self._metrics.groupby(["dataset", "strategy"], as_index=False).agg(np.mean).drop(
+            columns="cv_fold")
+        self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(metrics_by_strategy_dataset,
+                                                                                   how="outer")
+        # aggregate over cv folds and datasets
+        metrics_by_strategy = metrics_by_strategy_dataset.groupby(["strategy"], as_index=False).agg(np.mean)
+        self._metrics_by_strategy = self._metrics_by_strategy.merge(metrics_by_strategy, how="outer")
 
-        return res_df
+        # append metric names
+        self._metric_names.append(metric.name)
 
-    def plot_boxcharts(self):
-        data = []
-        labels = []
-        avg_error = []
-        for e in self.metrics_per_estimator.keys():
-            data.append(self.metrics_per_estimator[e])
-            avg_error.append(np.mean(self.metrics_per_estimator[e]))
-            labels.append(e)
-        # sort data and labels based on avg_error
-        idx_sort = np.array(avg_error).argsort()
-        data = [data[i] for i in idx_sort]
-        labels = [labels[i] for i in idx_sort]
-        # plot the results
-        fig, ax = plt.subplots()
-        ax.boxplot(data)
-        ax.set_xticklabels(labels, rotation=90)
+        # return aggregated results
+        return self._metrics_by_strategy
+
+    def plot_boxplots(self, metric_name=None, **kwargs):
+        """Box plot of metric"""
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        column = self._get_column_name(metric_name, suffix="mean")
+
+        fig, ax = plt.subplots(1)
+        self.metrics_by_strategy_dataset.boxplot(by="strategy", column=column, grid=False, ax=ax, **kwargs)
+        ax.set(title=f"{metric_name} by strategy", xlabel="strategies", ylabel=metric_name)
+        fig.suptitle(None)
         plt.tight_layout()
+        return fig, ax
 
-        return fig
-
-    def ranks(self, ascending=True):
+    def rank(self, metric_name=None, ascending=False):
         """
         Calculates the average ranks based on the performance of each estimator on each dataset
-
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
-        ascending: boolean
-            Rank the values in ascending (True) or descending (False) order
-
-        Returns
-        -------
-        DataFrame
-            Returns the mean peformance rank for each estimator
         """
+        self._check_is_evaluated()
         if not isinstance(ascending, bool):
-            raise ValueError("Variable ascending needs to be boolean")
+            raise ValueError(f"`ascending` must be boolean, but found: {type(ascending)}")
 
-        df = pd.DataFrame(self.metrics_per_estimator)
-        ranked = df.rank(axis=1, ascending=ascending)
-        mean_r = pd.DataFrame(ranked.mean(axis=0))
-        mean_r.columns = ["avg_rank"]
-        mean_r = mean_r.sort_values("avg_rank", ascending=ascending)
-        return mean_r
+        metric_name = self._validate_metric_name(metric_name)
+        column = self._get_column_name(metric_name, suffix="mean")
 
-    def t_test(self):
+        ranked = (self.metrics_by_strategy_dataset
+                  .loc[:, ["dataset", "strategy", column]]
+                  .set_index("strategy")
+                  .groupby("dataset")
+                  .rank(ascending=ascending)
+                  .reset_index()
+                  .groupby("strategy")
+                  .mean()
+                  .rename(columns={column: f"{metric_name}_mean_rank"})
+                  .reset_index()
+                  )
+        return ranked
+
+    def t_test(self, metric_name=None):
         """
         Runs t-test on all possible combinations between the estimators.
-
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
-        Returns
-        -------
-        tuple 
-            pandas DataFrame (Database style and MultiIndex)
         """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
+
         t_df = pd.DataFrame()
-        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            x = np.array(self.metrics_per_estimator_dataset[perm[0]])
-            y = np.array(self.metrics_per_estimator_dataset[perm[1]])
+            x = np.array(metrics_per_estimator_dataset[perm[0]])
+            y = np.array(metrics_per_estimator_dataset[perm[1]])
             t_stat, p_val = ttest_ind(x, y)
 
             t_test = {
@@ -174,24 +186,23 @@ class Evaluator:
 
         return t_df, values_df_multiindex
 
-    def sign_test(self):
+    def sign_test(self, metric_name=None):
         """
-        Non-parametric test for test for consistent differences between pairs of observations. See `<https://en.wikipedia.org/wiki/Sign_test>`_ for details about the test and `<https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.binom_test.html>`_ for details about the scipy implementation.
+        Non-parametric test for test for consistent differences between pairs of observations.
+        See `<https://en.wikipedia.org/wiki/Sign_test>`_ for details about the test and
+        `<https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.stats.binom_test.html>`_
+        for details about the scipy implementation.
+        """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
-        Returns
-        -------
-        tuple of dataframes 
-            pandas DataFrame (Database style), pivot table)
-        """
         sign_df = pd.DataFrame()
-        perms = itertools.product(self.metrics_per_estimator.keys(), repeat=2)
+        perms = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
+
         for perm in perms:
-            x = np.array(self.metrics_per_estimator[perm[0]])
-            y = np.array(self.metrics_per_estimator[perm[1]])
+            x = np.array(metrics_per_estimator_dataset[perm[0]])
+            y = np.array(metrics_per_estimator_dataset[perm[1]])
             signs = np.sum([i[0] > i[1] for i in zip(x, y)])
             n = len(x)
             p_val = stats.binom_test(signs, n)
@@ -206,28 +217,22 @@ class Evaluator:
 
         return sign_df, sign_df_pivot
 
-    def ranksum_test(self):
+    def ranksum_test(self, metric_name=None):
         """
         Non-parametric test for testing consistent differences between pairs of obeservations.
         The test counts the number of observations that are greater, smaller and equal to the mean
         `<http://en.wikipedia.org/wiki/Wilcoxon_rank-sum_test>`_.
-
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
-        Returns
-        -------
-        tuple of pandas DataFrame 
-            Database style and MultiIndex
         """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
+
         ranksum_df = pd.DataFrame()
-        perms = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
+        perms = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
         values = np.array([])
         for perm in perms:
-            comb = perm[0] + " - " + perm[1]
-            x = self.metrics_per_estimator_dataset[perm[0]]
-            y = self.metrics_per_estimator_dataset[perm[1]]
+            x = metrics_per_estimator_dataset[perm[0]]
+            y = metrics_per_estimator_dataset[perm[1]]
             t_stat, p_val = ranksums(x, y)
             ranksum = {
                 "estimator_1": perm[0],
@@ -248,24 +253,15 @@ class Evaluator:
 
         return ranksum_df, values_df_multiindex
 
-    def t_test_with_bonferroni_correction(self, alpha=0.05):
+    def t_test_with_bonferroni_correction(self, metric_name=None, alpha=0.05):
         """
         correction used to counteract multiple comparissons
         https://en.wikipedia.org/wiki/Bonferroni_correction
-
-        
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            dictionay with keys `names of estimators` and values `errors achieved by estimators on test datasets`.
-        alpha: float
-            confidence level.
-        Returns
-        -------
-        DataFrame 
-            MultiIndex DataFrame
         """
-        df_t_test, _ = self.t_test(self.metrics_per_estimator_dataset)
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+
+        df_t_test, _ = self.t_test(metric_name=metric_name)
         idx_estim_1 = df_t_test["estimator_1"].unique()
         idx_estim_2 = df_t_test["estimator_2"].unique()
         estim_1 = len(idx_estim_1)
@@ -280,29 +276,24 @@ class Evaluator:
 
         return bonfer_df
 
-    def wilcoxon_test(self):
+    def wilcoxon_test(self, metric_name=None):
         """http://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
         `Wilcoxon signed-rank test <https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test>`_.
         Tests whether two  related paired samples come from the same distribution. 
         In particular, it tests whether the distribution of the differences x-y is symmetric about zero
-
-        Parameters
-        ----------
-        strategy_dict: dictionary
-            Dictionary with errors on test sets achieved by estimators.
-        Returns
-        -------
-        tuple 
-            pandas DataFrame (Database style and MultiIndex)
         """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
+
         wilcoxon_df = pd.DataFrame()
         values = np.array([])
-        prod = itertools.product(self.metrics_per_estimator_dataset.keys(), repeat=2)
+        prod = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
         for p in prod:
             estim_1 = p[0]
             estim_2 = p[1]
-            w, p_val = stats.wilcoxon(self.metrics_per_estimator_dataset[p[0]],
-                                      self.metrics_per_estimator_dataset[p[1]])
+            w, p_val = stats.wilcoxon(metrics_per_estimator_dataset[p[0]],
+                                      metrics_per_estimator_dataset[p[1]])
 
             w_test = {
                 "estimator_1": estim_1,
@@ -324,156 +315,82 @@ class Evaluator:
 
         return wilcoxon_df, values_df_multiindex
 
-    def friedman_test(self):
+    def friedman_test(self, metric_name=None):
         """
         The Friedman test is a non-parametric statistical test used to detect differences 
         in treatments across multiple test attempts. The procedure involves ranking each row (or block) together, 
         then considering the values of ranks by columns.
-        Implementation used: `scipy.stats <https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.stats.friedmanchisquare.html>`_. 
-        
-        Parameters
-        ----------
-        strategy_dict : dict
-            Dictionary with errors on test sets achieved by estimators.
-        Returns
-        -------
-        tuple 
-            dictionary, pandas DataFrame.
-        
+        Implementation used:
+        `scipy.stats <https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.stats.friedmanchisquare.html>`_.
         """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
-        """
-        use the * operator to unpack a sequence
-        https://stackoverflow.com/questions/2921847/what-does-the-star-operator-mean/2921893#2921893
-        """
         friedman_test = stats.friedmanchisquare(
-            *[self.metrics_per_estimator_dataset[k] for k in self.metrics_per_estimator_dataset.keys()])
+            *[metrics_per_estimator_dataset[k] for k in metrics_per_estimator_dataset.keys()])
         values = [friedman_test[0], friedman_test[1]]
         values_df = pd.DataFrame([values], columns=["statistic", "p_value"])
 
         return friedman_test, values_df
 
-    def nemenyi(self):
+    def nemenyi(self, metric_name=None):
         """
         Post-hoc test run if the `friedman_test` reveals statistical significance.
         For more information see `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
         Implementation used `scikit-posthocs <https://github.com/maximtrp/scikit-posthocs>`_.
-        
-        Parameters
-        ----------
-        strategy_dict : dict
-            Dictionary with errors on test sets achieved by estimators.
-        Returns
-        -------
-        pandas DataFrame
-            Results of te Nemenyi test
         """
+        self._check_is_evaluated()
+        metric_name = self._validate_metric_name(metric_name)
+        metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
-        strategy_dict = pd.DataFrame(self.metrics_per_estimator_dataset)
+        strategy_dict = pd.DataFrame(metrics_per_estimator_dataset)
         strategy_dict = strategy_dict.melt(var_name="groups", value_name="values")
         nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
 
-    def _metrics_to_dataframe(self, metrics):
-        """
-        Reformats the output of the dictionary returned by the
-        :func:`mlaut.analyze_results.metrics.metrics.get_metrics` to a
-        pandas DataFrame. This method can only be applied to reformat
-        the output produced by :func:`sktime.experiments.metrics.evaluate_per_dataset`.
+    def _get_column_name(self, metric_name, suffix="mean"):
+        return f"{metric_name}_{suffix}"
 
-        Parameters
-        ----------
-        metrics : dict
-            Dictionary returned by the :func:`sktime.experiments.metrics.metrics.get_metrics`
-            generated by :func:`sktime.experiments.metrics.metrics.evaluate_per_dataset`
+    def _check_is_evaluated(self):
+        if len(self._metric_names) == 0:
+            raise NotEvaluatedError("This evaluator has not evaluated any metric yet. Please call "
+                                    "'evaluate' with the appropriate arguments before using this method.")
 
-        Returns
-        -------
-        dataframe
-            Multiindex dataframe with the metrics
-        """
+    def _validate_metric_name(self, metric_name):
+        if metric_name is None:
+            metric_name = self._metric_names[-1]  # if None, use the last evaluated metric
 
-        df = pd.DataFrame(metrics)
+        if metric_name not in self._metric_names:
+            raise ValueError(f"{metric_name} has not been evaluated yet. Please call "
+                             f"'evaluate' with the appropriate arguments first")
 
-        # unpivot the data
-        df = df.melt(var_name="dts", value_name="values")
-        df["strategy"] = df.apply(lambda raw: raw.values[1][0], axis=1)
-        df["mean"] = df.apply(lambda raw: raw.values[1][1], axis=1)
-        df["stderr"] = df.apply(lambda raw: raw.values[1][2], axis=1)
-        df = df.drop("values", axis=1)
+        return metric_name
 
-        # create multilevel index dataframe
-        dts = df["dts"].unique()
-        estimators_list = df["strategy"].unique()
+    def _get_metrics_per_estimator_dataset(self, metric_name):
+        """Helper function to get old format back, to be deprecated"""
+        # TODO deprecate in favor of new pandas data frame based data representation
+        column = f"{metric_name}_mean"
+        df = self.metrics_by_strategy_dataset.loc[:, ["strategy", "dataset", column]].set_index("strategy")
+        losses_per_estimator = {}
+        for strategy in df.index:
+            val = df.loc[strategy, column].tolist()
+            val = [val] if not isinstance(val, list) else val
+            losses_per_estimator[strategy] = val
+        return losses_per_estimator
 
-        df = df.drop("dts", axis=1)
-        df = df.drop("strategy", axis=1)
-
-        df.index = pd.MultiIndex.from_product([dts, estimators_list])
-
-        return df
-
-
-class MetricCalculator:
-    """
-    Calculates prediction metrics on test datasets achieved by the trained estimators. When the class is instantiated it creates a dictionary that stores the metrics.
-
-    Parameters
-    ----------
-    metric: `mlaut.analyze_results.scores` object
-        score function that will be used for the estimation. Must be `mlaut.analyze_results.scores` object.
-    estimators : `array of mlaut estimators`
-        Array of estimators on which the results will be compared.
-    exact_match : bool
-        If `True` when predictions for all estimators in the estimators array is not available no evaluation is performed on the remaining estimators.
-    """
-
-    def __init__(self, metric):
-
-        self._metrics = collections.defaultdict(list)
-        self._metric = metric
-        self._metrics_per_estimator = collections.defaultdict(list)
-        self._metrics_per_dataset_per_estimator = collections.defaultdict(list)
-
-    def compute_metric(self, y_pred, y_true, dataset_name, strategy_name):
-        """
-        Calculates the loss metrics.
-
-        Parameters
-        ----------
-        y_pred : numpy array
-            Predictions of trained estimators in the form
-        y_true : numpy array
-            true labels of test dataset.
-        dataset_name : str
-            Name of the dataset
-        dataset_name : str
-            Name of the strategy
-        """
-
-        # evaluates error per estimator
-        loss = self._metric.calculate(y_true, y_pred)
-        if strategy_name in self._metrics_per_estimator:
-            self._metrics_per_estimator[strategy_name].append(loss)
-        else:
-            self._metrics_per_estimator[strategy_name] = [loss]
-
-        # evaluate per dataset
-        mean, stderr = self._metric.calculate_per_dataset(y_true=y_true, y_pred=y_pred)
-
-        self._metrics_per_dataset_per_estimator[dataset_name].append([strategy_name, mean, stderr])
-
-    def get_metrics(self):
-        """
-        When the metrics class is instantiated a dictionary that holds all metrics is created and
-        appended every time the evaluate() method is run. This method returns this dictionary with
-        the metrics.
-
-        Returns
-        -------
-        tuple
-            errors_per_estimator (dictionary), errors_per_dataset_per_estimator (dictionary),
-        errors_per_dataset_per_estimator_df (pandas DataFrame): Returns dictionaries with the
-        errors achieved by each estimator and errors achieved by each estimator on each of the datasets.  ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` return the same results but the first object is a dictionary and the second one a pandas DataFrame. ``errors_per_dataset_per_estimator`` and ``errors_per_dataset_per_estimator_df`` contain both the mean error and deviation.
-        """
-        return self._metrics_per_estimator, self._metrics_per_dataset_per_estimator
+    def _get_metrics_per_estimator(self, metric_name):
+        """Helper function to get old format back, to be deprecated"""
+        # TODO deprecate in favor of new pandas data frame based data representation
+        df = self.metrics_by_strategy_dataset.loc[:, ["strategy", "dataset", f"{metric_name}_mean",
+                                                      f"{metric_name}_stderr"]]
+        d = {}
+        for dataset in df.dataset.unique():
+            l = []
+            for strategy in df.strategy.unique():
+                row = df.loc[(df.strategy == strategy) & (df.dataset == dataset), :]
+                m = row["accuracy_mean"].values[0]
+                s = row["accuracy_stderr"].values[0]
+                l.append([strategy, m, s])
+            d[dataset] = l
+        return d
