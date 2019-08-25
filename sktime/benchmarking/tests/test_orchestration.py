@@ -2,15 +2,17 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import numpy as np
 import pytest
+from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, zero_one_loss, average_precision_score
+from sklearn.metrics import accuracy_score, zero_one_loss, precision_score, f1_score
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.model_selection import cross_val_score
+from sklearn.naive_bayes import GaussianNB
 
 from sktime.benchmarking.data import RAMDataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import PointWiseMetric, CompositeMetric
+from sktime.benchmarking.metrics import PairwiseMetric, CompositeMetric
 from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import RAMResults
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
@@ -23,8 +25,8 @@ from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
 
 
-# specify strategies
 def make_reduction_pipeline(estimator):
+    """Helper function to use tabular estimators in time series setting"""
     pipeline = Pipeline([
         ("transform", Tabulariser()),
         ("clf", estimator)
@@ -32,8 +34,9 @@ def make_reduction_pipeline(estimator):
     return pipeline
 
 
+# simple test of orchestration and metric evaluation
 @pytest.mark.parametrize("data_loader", [load_gunpoint, load_arrow_head])
-def test_orchestration(data_loader):
+def test_automated_orchestration_vs_manual(data_loader):
     data = data_loader()
 
     dataset = RAMDataset(dataset=data, name="data")
@@ -41,7 +44,7 @@ def test_orchestration(data_loader):
 
     # create strategies
     # clf = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
-    clf = make_reduction_pipeline(RandomForestClassifier(n_estimators=1, random_state=1))
+    clf = make_reduction_pipeline(RandomForestClassifier(n_estimators=2, random_state=1))
     strategy = TSCStrategy(clf)
 
     # result backend
@@ -69,10 +72,16 @@ def test_orchestration(data_loader):
     np.testing.assert_array_equal(actual, expected)
 
 
+# extensive tests of orchestration and metric evaluation against sklearn
 @pytest.mark.parametrize("data_loader", [load_gunpoint, load_arrow_head])
-@pytest.mark.parametrize("cv", [SingleSplit, KFold])
-@pytest.mark.parametrize("metric", [accuracy_score, zero_one_loss])
-def test_against_sklearn(data_loader, cv, metric):
+@pytest.mark.parametrize("cv", [SingleSplit, KFold, StratifiedKFold])
+@pytest.mark.parametrize("metric", [accuracy_score, zero_one_loss, precision_score, f1_score])
+@pytest.mark.parametrize("estimator", [
+    RandomForestClassifier(n_estimators=2, random_state=1),
+    DummyClassifier(random_state=1),
+    GaussianNB()
+])
+def test_mean_metrics_against_sklearn(data_loader, cv, metric, estimator):
     data = data_loader()
     cv = cv(random_state=1)
 
@@ -81,7 +90,7 @@ def test_against_sklearn(data_loader, cv, metric):
     task = TSCTask(target="class_val")
 
     # create strategies
-    clf = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
+    clf = make_reduction_pipeline(estimator)
     strategy = TSCStrategy(clf)
 
     # result backend
@@ -95,11 +104,13 @@ def test_against_sklearn(data_loader, cv, metric):
 
     analyse = Evaluator(results)
 
-    # create metric for evaluation
+    # create metric classes for evaluation and set metric kwargs
     if metric in [accuracy_score, zero_one_loss]:
-        metric_cls = PointWiseMetric(func=metric, name="metric")
-    elif metric in [average_precision_score]:
-        metric_cls = CompositeMetric(func=metric, name="metric")
+        kwargs = {}  # empty kwargs for simple pairwise metrics
+        metric_cls = PairwiseMetric(func=metric, name="metric")
+    elif metric in [precision_score, f1_score]:
+        kwargs = {"average": "macro"}  # set kwargs for composite metrics
+        metric_cls = CompositeMetric(func=metric, name="metric", **kwargs)
     else:
         raise ValueError()
     metrics = analyse.evaluate(metric=metric_cls)
@@ -109,12 +120,14 @@ def test_against_sklearn(data_loader, cv, metric):
     X = data.loc[:, task.features]
     y = data.loc[:, task.target]
     expected = np.mean(cross_val_score(clf, X, y,
-                                       scoring=make_scorer(metric),
+                                       scoring=make_scorer(metric, **kwargs),
                                        cv=cv))
 
-    np.testing.assert_equal(actual, expected)
+    # compare results
+    np.testing.assert_array_equal(actual, expected)
 
 
+# simple test of sign test and ranks
 def test_stat():
     data = load_gunpoint()
     dataset = RAMDataset(dataset=data, name="gunpoint")
@@ -136,8 +149,8 @@ def test_stat():
     orchestrator.fit_predict(save_fitted_strategies=False)
 
     analyse = Evaluator(results)
-    metric = PointWiseMetric(func=accuracy_score, name="accuracy")
-    losses_df = analyse.evaluate(metric=metric)
+    metric = PairwiseMetric(func=accuracy_score, name="accuracy")
+    _ = analyse.evaluate(metric=metric)
 
     ranks = analyse.rank(ascending=True)
     pf_rank = ranks.loc["ProximityForest"][0]  # 1

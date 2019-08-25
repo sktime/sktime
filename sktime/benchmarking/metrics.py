@@ -1,4 +1,4 @@
-__all__ = ["PointWiseMetric", "CompositeMetric"]
+__all__ = ["PairwiseMetric", "CompositeMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import numpy as np
@@ -6,12 +6,12 @@ import numpy as np
 from sktime.benchmarking.base import BaseMetric
 
 
-class PointWiseMetric(BaseMetric):
+class PairwiseMetric(BaseMetric):
 
-    def __init__(self, func, name=None):
+    def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
         self.func = func
-        super(PointWiseMetric, self).__init__(name=name)
+        super(PairwiseMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
         # compute mean
@@ -27,7 +27,7 @@ class PointWiseMetric(BaseMetric):
 
 class CompositeMetric(BaseMetric):
 
-    def __init__(self, func, method="jackknife", name=None):
+    def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ["jackknife"]
         if method not in allowed_methods:
             raise NotImplementedError(f"Provided method is not implemented yet. "
@@ -37,7 +37,7 @@ class CompositeMetric(BaseMetric):
         name = func.__name__ if name is None else name
         self.func = func
 
-        super(CompositeMetric, self).__init__(name=name)
+        super(CompositeMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error
@@ -56,17 +56,18 @@ class CompositeMetric(BaseMetric):
         .. [4] Jackknife resampling <https://en.wikipedia.org/wiki/Jackknife_resampling>
         """
         # compute aggregate metric
-        mean = self.func(y_true, y_pred)
+        mean = self.func(y_true, y_pred, **self.kwargs)
 
         # compute stderr based on jackknifed pointwise metrics
         n_instances = len(y_true)
         index = np.arange(n_instances)
 
         # get jackknife samples of index
-        jack_idx = np.asarray(self._jackknife_resampling(index), dtype=np.int)
+        jack_idx = self._jackknife_resampling(index)
 
         # compute pointwise metrics on jackknife samples
-        jack_pointwise_metric = np.array([self.func(y_true[idx], y_pred[idx]) for idx in jack_idx])
+        jack_pointwise_metric = np.array([self.func(y_true[idx], y_pred[idx], **self.kwargs)
+                                          for idx in jack_idx])
 
         # compute standard error over jackknifed pointwise metrics
         jack_stderr = self._compute_jackknife_stderr(jack_pointwise_metric)
@@ -109,15 +110,13 @@ class CompositeMetric(BaseMetric):
 
         References
         ----------
-        .. [1] code from http://docs.astropy.org/en/stable/_modules/astropy/stats/jackknife.html
+        .. [1] modified version of http://docs.astropy.org/en/stable/_modules/astropy/stats/jackknife.html
         """
-
         n_instances = x.shape[0]
-        if n_instances <= 0:
-            raise ValueError("x must contain at least one measurement.")
 
         # preallocate array
-        resamples = np.empty([n_instances, n_instances - 1])
+        dtype = x.dtype
+        resamples = np.empty([n_instances, n_instances - 1], dtype=dtype)
 
         # jackknife resampling
         for i in range(n_instances):
