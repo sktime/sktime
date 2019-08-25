@@ -38,6 +38,13 @@ class HDDBaseDataset(BaseDataset):
     def path(self):
         return self._path
 
+    @staticmethod
+    def _validate_path(path):
+        """Helper function to validate paths"""
+        # check if path already exists
+        if not os.path.exists(path):
+            raise ValueError(f"No dataset found at path: {path}")
+
 
 class BaseResults:
 
@@ -172,4 +179,4 @@ class BaseMetric(ABC):
 
     @abstractmethod
     def compute(self, y_true, y_pred):
-        """Main method for performing the calculations."""
+        """Compute mean and standard error of metric"""
