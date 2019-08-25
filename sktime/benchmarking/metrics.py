@@ -1,4 +1,4 @@
-__all__ = ["PointWiseMetric", "AggregateMetric"]
+__all__ = ["PointWiseMetric", "CompositeMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import numpy as np
@@ -25,7 +25,7 @@ class PointWiseMetric(BaseMetric):
         return mean, stderr
 
 
-class AggregateMetric(BaseMetric):
+class CompositeMetric(BaseMetric):
 
     def __init__(self, func, method="jackknife", name=None):
         allowed_methods = ["jackknife"]
@@ -37,7 +37,7 @@ class AggregateMetric(BaseMetric):
         name = func.__name__ if name is None else name
         self.func = func
 
-        super(AggregateMetric, self).__init__(name=name)
+        super(CompositeMetric, self).__init__(name=name)
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error

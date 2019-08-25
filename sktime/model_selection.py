@@ -243,7 +243,7 @@ class PresplitFilesCV:
     def __init__(self, cv=None):
         self.cv = cv
 
-    def split(self, data, y=None):
+    def split(self, data, y=None, groups=None):
         """
         Split the data according to the train/test index.
 
@@ -327,7 +327,7 @@ class SingleSplit:
         self._shuffle = shuffle
         self._stratify = stratify
 
-    def split(self, data, y=None):
+    def split(self, data, y=None, groups=None):
         """
         Paramters
         ---------
