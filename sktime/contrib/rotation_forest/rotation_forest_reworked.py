@@ -8,9 +8,10 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.decomposition import PCA
 from sklearn.exceptions import DataConversionWarning
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import Normalizer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array, check_random_state, check_is_fitted
+from sklearn.feature_selection import VarianceThreshold
 
 from sktime.classifiers.base import BaseClassifier
 
@@ -71,10 +72,14 @@ class RotationForestClassifier(BaseClassifier):
         # get random state object
         self._rng = check_random_state(self.random_state)
 
-        # certain checks in fit depend on the transformer being pca, the estimator should be more
-        # easily substitutable
-        self.base_transformer = PCA(random_state=random_state)
-        self.base_estimator = DecisionTreeClassifier(random_state=random_state)
+        # note that certain checks in fit depend on the transformer being pca,
+        # the estimator should be more easily substitutable
+        self.transformer = PCA(random_state=random_state)
+        self.estimator = DecisionTreeClassifier(random_state=random_state)
+
+        # other options for the scaler are StandardScaler(with_mean=True, with_std=True)
+        # and MinMaxScaler()
+        self.scaler = Normalizer()
 
         # defined in fit
         self.estimators_ = []
@@ -110,8 +115,8 @@ class RotationForestClassifier(BaseClassifier):
         # compute number of instances and columns to be considered in each random subset
         self.n_instances_in_subset_ = int(self.n_instances_ * self.p_instance_subset)
 
-        # Z-normalise the data
-        X_norm = self._normalise_X(X)
+        # preprocess the data
+        X_norm = self._preprocess_X(X)
 
         # preallocate matrix for transformed data
         Xt = np.zeros((self.n_instances_, self.n_columns_))
@@ -121,8 +126,7 @@ class RotationForestClassifier(BaseClassifier):
 
             # randomly split columns into disjoint subsets
             columns = np.arange(self.n_columns_)
-            self.column_subsets_[i] = self._random_column_subsets(columns,
-                                                                  min_length=self.min_columns_subset,
+            self.column_subsets_[i] = self._random_column_subsets(columns, min_length=self.min_columns_subset,
                                                                   max_length=self.max_columns_subset)
 
             # initialise list of transformers
@@ -148,9 +152,9 @@ class RotationForestClassifier(BaseClassifier):
 
                 # try to fit transformer on subset of instances and columns, if it fails, add more instances and try
                 # again
-                n_attemps = 0  # keep track of number of time it fails
+                n_attempts = 0  # keep track of number of time it fails
                 while True:
-                    transformer = clone(self.base_transformer)
+                    transformer = clone(self.transformer)
 
                     # ignore error state on PCA because we account for it if it fails
                     with np.errstate(divide='ignore', invalid='ignore'):
@@ -162,17 +166,17 @@ class RotationForestClassifier(BaseClassifier):
                         if self.verbose:
                             warn("PCA failed to fit on subset, randomly adding more bootstrapped samples and try to "
                                  "refit")
-                        n_attemps += 1
+                        n_attempts += 1
                         _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
                                                                               bootstrap=True)
                         instance_subset = np.vstack([instance_subset, new_instance_subset])
 
                         # raise error after 10 failed tries
-                        if n_attemps == 10:
+                        if n_attempts == 10:
                             raise ValueError(f"Cannot fit PCA on subset, repeatedly added more random instances "
                                              f"to subset but keeps failing")
 
-                    # otherwise continue
+                    # otherwise break while-loop and continue
                     else:
                         break
 
@@ -182,7 +186,7 @@ class RotationForestClassifier(BaseClassifier):
                 Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
 
             # fit estimator on transformed data
-            estimator = clone(self.base_estimator)
+            estimator = clone(self.estimator)
             estimator.fit(Xt, y)
             self.estimators_.append(estimator)
 
@@ -242,11 +246,16 @@ class RotationForestClassifier(BaseClassifier):
         instance_subset = rng.choice(isin_classes, size=n_instances, replace=bootstrap)
         return classes, instance_subset[:, None]
 
-    def _normalise_X(self, X):
-        """Helper function to normalise X using the z-score standardisation"""
-        # Xt = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-        scaler = StandardScaler(with_mean=True, with_std=True)
-        Xt = scaler.fit_transform(X)
+    def _preprocess_X(self, X):
+        """Helper function to preprocess X including removal of constant columns and
+         scaling"""
+        # remove constant columns
+        remover = VarianceThreshold(threshold=0)
+        Xt = remover.fit_transform(X)
+
+        # scale columns
+        scaler = clone(self.scaler)
+        Xt = scaler.fit_transform(Xt)
         return Xt
 
     def predict_proba(self, X):
@@ -256,8 +265,8 @@ class RotationForestClassifier(BaseClassifier):
         # check input
         X = check_array(X)
 
-        # normalise data
-        X_norm = self._normalise_X(X)
+        # preprocess data
+        X_norm = self._preprocess_X(X)
 
         # TODO parallelize
         all_proba = []
