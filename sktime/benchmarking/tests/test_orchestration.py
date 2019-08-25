@@ -134,9 +134,9 @@ def test_stat():
     task = TSCTask(target="class_val")
 
     fc = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
-    strategy_fc = TSCStrategy(fc)
+    strategy_fc = TSCStrategy(fc, name="tsf")
     pf = ProximityForest(n_trees=1, random_state=1)
-    strategy_pf = TSCStrategy(pf)
+    strategy_pf = TSCStrategy(pf, name="pf")
 
     # result backend
     results = RAMResults()
@@ -153,15 +153,15 @@ def test_stat():
     _ = analyse.evaluate(metric=metric)
 
     ranks = analyse.rank(ascending=True)
-    pf_rank = ranks.loc["ProximityForest"][0]  # 1
-    fc_rank = ranks.loc["TimeSeriesForestClassifier"][0]  # 2
+    pf_rank = ranks.loc[ranks.strategy == "pf", "accuracy_mean_rank"].item()  # 1
+    fc_rank = ranks.loc[ranks.strategy == "tsf", "accuracy_mean_rank"].item()  # 2
     rank_array = [pf_rank, fc_rank]
     rank_array_test = [1, 2]
     _, sign_test_df = analyse.sign_test()
 
     sign_array = [
-        [sign_test_df["ProximityForest"][0], sign_test_df["ProximityForest"][1]],
-        [sign_test_df["TimeSeriesForestClassifier"][0], sign_test_df["TimeSeriesForestClassifier"][1]]
+        [sign_test_df["pf"][0], sign_test_df["pf"][1]],
+        [sign_test_df["tsf"][0], sign_test_df["tsf"][1]]
     ]
     sign_array_test = [[1, 1], [1, 1]]
     np.testing.assert_equal([rank_array, sign_array], [rank_array_test, sign_array_test])
