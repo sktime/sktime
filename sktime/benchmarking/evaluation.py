@@ -146,6 +146,7 @@ class Evaluator:
                   .groupby("strategy")
                   .mean()
                   .rename(columns={column: f"{metric_name}_mean_rank"})
+                  .reset_index()
                   )
         return ranked
 
@@ -367,7 +368,8 @@ class Evaluator:
         return metric_name
 
     def _get_metrics_per_estimator_dataset(self, metric_name):
-        """Helper function to get old format back"""
+        """Helper function to get old format back, to be deprecated"""
+        # TODO deprecate in favor of new pandas data frame based data representation
         column = f"{metric_name}_mean"
         df = self.metrics_by_strategy_dataset.loc[:, ["strategy", "dataset", column]].set_index("strategy")
         losses_per_estimator = {}
@@ -378,6 +380,8 @@ class Evaluator:
         return losses_per_estimator
 
     def _get_metrics_per_estimator(self, metric_name):
+        """Helper function to get old format back, to be deprecated"""
+        # TODO deprecate in favor of new pandas data frame based data representation
         df = self.metrics_by_strategy_dataset.loc[:, ["strategy", "dataset", f"{metric_name}_mean",
                                                       f"{metric_name}_stderr"]]
         d = {}
