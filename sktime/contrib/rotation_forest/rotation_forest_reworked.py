@@ -8,24 +8,16 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.decomposition import PCA
 from sklearn.exceptions import DataConversionWarning
+from sklearn.feature_selection import VarianceThreshold
 from sklearn.preprocessing import Normalizer
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_X_y, check_array, check_random_state, check_is_fitted
-from sklearn.feature_selection import VarianceThreshold
 
 from sktime.classifiers.base import BaseClassifier
 
 
 class RotationForestClassifier(BaseClassifier):
     """Rotation Forest Classifier
-
-    Parameters
-    ----------
-    n_estimators :
-    n_column_subsets
-    p_instance_subset
-    random_state
-    verbose
 
     References
     ----------
@@ -58,7 +50,7 @@ class RotationForestClassifier(BaseClassifier):
                  p_instance_subset=0.75,
                  bootstrap_instance_subset=False,
                  random_state=None,
-                 verbose=0):
+                 verbose=True):
 
         # settable parameters
         self.verbose = verbose
@@ -76,10 +68,6 @@ class RotationForestClassifier(BaseClassifier):
         # the estimator should be more easily substitutable
         self.transformer = PCA(random_state=random_state)
         self.estimator = DecisionTreeClassifier(random_state=random_state)
-
-        # other options for the scaler are StandardScaler(with_mean=True, with_std=True)
-        # and MinMaxScaler()
-        self.scaler = Normalizer()
 
         # defined in fit
         self.estimators_ = []
@@ -144,7 +132,7 @@ class RotationForestClassifier(BaseClassifier):
                     if self.verbose:
                         warn("There are fewer instances than columns in random subsets, "
                              "hence PCA cannot compute components for all columns, randomly added"
-                             "more bootstrapped samples, to avoid this, please "
+                             "more bootstrapped instances. To avoid this, please "
                              "reduce `max_columns_subset` or increase `p_instance_subset`")
                     _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
                                                                           bootstrap=True)
@@ -164,8 +152,8 @@ class RotationForestClassifier(BaseClassifier):
                     if np.any(np.isnan(transformer.explained_variance_ratio_)) or np.any(np.isinf(
                             transformer.explained_variance_ratio_)):
                         if self.verbose:
-                            warn("PCA failed to fit on subset, randomly adding more bootstrapped samples and try to "
-                                 "refit")
+                            warn("PCA failed to fit on subset, randomly adding more bootstrapped "
+                                 "instances and try to refit")
                         n_attempts += 1
                         _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
                                                                               bootstrap=True)
@@ -180,6 +168,7 @@ class RotationForestClassifier(BaseClassifier):
                     else:
                         break
 
+                # append fitted transformer
                 self.transformers_[i].append(transformer)
 
                 # transform on subset of columns but all instances
@@ -188,6 +177,8 @@ class RotationForestClassifier(BaseClassifier):
             # fit estimator on transformed data
             estimator = clone(self.estimator)
             estimator.fit(Xt, y)
+
+            # append fitted estimator
             self.estimators_.append(estimator)
 
         self._is_fitted = True
@@ -206,7 +197,8 @@ class RotationForestClassifier(BaseClassifier):
             n_subsets = int(np.ceil(self.n_columns_ / max_length))
             return np.array_split(columns, n_subsets)
 
-        # otherwise iterate through columns, selecting uniformly random number of columns within bounds
+        # otherwise iterate through columns, selecting uniformly random number of columns within
+        # given bounds for each subset
         subsets = []
         it = iter(columns)  # iterator over columns
         while True:
@@ -249,12 +241,14 @@ class RotationForestClassifier(BaseClassifier):
     def _preprocess_X(self, X):
         """Helper function to preprocess X including removal of constant columns and
          scaling"""
-        # remove constant columns
+        # remove zero-variance/constant columns
         remover = VarianceThreshold(threshold=0)
         Xt = remover.fit_transform(X)
 
         # scale columns
-        scaler = clone(self.scaler)
+        # other options for the scaler are StandardScaler(with_mean=True, with_std=True)
+        # and MinMaxScaler()
+        scaler = Normalizer()
         Xt = scaler.fit_transform(Xt)
         return Xt
 
@@ -326,5 +320,4 @@ class RotationForestClassifier(BaseClassifier):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
                                                                     axis=1),
                                                           axis=0)
-
             return predictions
