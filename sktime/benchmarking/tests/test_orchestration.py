@@ -1,20 +1,21 @@
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
+import os
+
 import numpy as np
 import pytest
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, zero_one_loss, precision_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_val_score
-from sklearn.naive_bayes import GaussianNB
 
-from sktime.benchmarking.data import RAMDataset
+from sktime.benchmarking.data import RAMDataset, UEADataset
 from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric, CompositeMetric
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import RAMResults
+from sktime.benchmarking.results import RAMResults, HDDResults
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
 from sktime.classifiers.distance_based.proximity_forest import ProximityForest
 from sktime.datasets import load_gunpoint, load_arrow_head
@@ -23,6 +24,11 @@ from sktime.highlevel.tasks import TSCTask
 from sktime.model_selection import SingleSplit
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
+
+# get data path for testing dataset loading from hard drive
+import sktime
+REPOPATH = os.path.dirname(sktime.__file__)
+DATAPATH = os.path.join(REPOPATH, "datasets/data/")
 
 
 def make_reduction_pipeline(estimator):
@@ -56,7 +62,7 @@ def test_automated_orchestration_vs_manual(data_loader):
                                 results=results)
 
     orchestrator.fit_predict(save_fitted_strategies=False)
-    result = next(results.load_predictions())  # get only first item of iterator
+    result = next(results.load_predictions(cv_fold=0, train_or_test="test"))  # get only first item of iterator
     actual = result.y_pred
 
     # expected output
@@ -73,20 +79,29 @@ def test_automated_orchestration_vs_manual(data_loader):
 
 
 # extensive tests of orchestration and metric evaluation against sklearn
-@pytest.mark.parametrize("data_loader", [load_gunpoint, load_arrow_head])
-@pytest.mark.parametrize("cv", [SingleSplit, KFold, StratifiedKFold])
-@pytest.mark.parametrize("metric", [accuracy_score, zero_one_loss, precision_score, f1_score])
-@pytest.mark.parametrize("estimator", [
-    RandomForestClassifier(n_estimators=2, random_state=1),
-    DummyClassifier(random_state=1),
-    GaussianNB()
+@pytest.mark.parametrize("dataset", [
+    RAMDataset(dataset=load_arrow_head(), name="ArrowHead"),
+    UEADataset(path=DATAPATH, name="GunPoint", target_name="class_val"),
 ])
-def test_mean_metrics_against_sklearn(data_loader, cv, metric, estimator):
-    data = data_loader()
+@pytest.mark.parametrize("cv", [
+    SingleSplit,
+    StratifiedKFold
+])
+@pytest.mark.parametrize("metric_func", [
+    accuracy_score,  # pairwise metric
+    f1_score  # composite metric
+])
+@pytest.mark.parametrize("results_cls", [
+    RAMResults,
+    HDDResults
+])
+@pytest.mark.parametrize("estimator", [
+    DummyClassifier(random_state=1),
+    RandomForestClassifier(n_estimators=2, random_state=1),
+])
+def test_single_dataset_single_strategy_against_sklearn(dataset, cv, metric_func, estimator, results_cls, tmpdir):
+    # set up orchestration
     cv = cv(random_state=1)
-
-    # setup orchestration
-    dataset = RAMDataset(dataset=data, name="data")
     task = TSCTask(target="class_val")
 
     # create strategies
@@ -94,7 +109,16 @@ def test_mean_metrics_against_sklearn(data_loader, cv, metric, estimator):
     strategy = TSCStrategy(clf)
 
     # result backend
-    results = RAMResults()
+    if results_cls in [HDDResults]:
+        # for hard drive results, create temporary directory using pytest's tmpdir fixture
+        tempdir = tmpdir.mkdir("results/")
+        path = tempdir.dirpath()
+        results = results_cls(path=path)
+    elif results_cls in [RAMResults]:
+        results = results_cls()
+    else:
+        raise ValueError()
+
     orchestrator = Orchestrator(datasets=[dataset],
                                 tasks=[task],
                                 strategies=[strategy],
@@ -102,26 +126,27 @@ def test_mean_metrics_against_sklearn(data_loader, cv, metric, estimator):
                                 results=results)
     orchestrator.fit_predict(save_fitted_strategies=False)
 
-    analyse = Evaluator(results)
+    evaluator = Evaluator(results)
 
     # create metric classes for evaluation and set metric kwargs
-    if metric in [accuracy_score, zero_one_loss]:
+    if metric_func in [accuracy_score]:
         kwargs = {}  # empty kwargs for simple pairwise metrics
-        metric_cls = PairwiseMetric(func=metric, name="metric")
-    elif metric in [precision_score, f1_score]:
+        metric = PairwiseMetric(func=metric_func, name="metric")
+    elif metric_func in [f1_score]:
         kwargs = {"average": "macro"}  # set kwargs for composite metrics
-        metric_cls = CompositeMetric(func=metric, name="metric", **kwargs)
+        metric = CompositeMetric(func=metric_func, name="metric", **kwargs)
     else:
         raise ValueError()
-    metrics = analyse.evaluate(metric=metric_cls)
+
+    metrics = evaluator.evaluate(metric=metric)
     actual = metrics["metric_mean"].iloc[0]
 
     # compare against sklearn cross_val_score
+    data = dataset.load()  # load data
     X = data.loc[:, task.features]
     y = data.loc[:, task.target]
-    expected = np.mean(cross_val_score(clf, X, y,
-                                       scoring=make_scorer(metric, **kwargs),
-                                       cv=cv))
+    expected = cross_val_score(clf, X, y, scoring=make_scorer(metric_func, **kwargs),
+                               cv=cv).mean()
 
     # compare results
     np.testing.assert_array_equal(actual, expected)

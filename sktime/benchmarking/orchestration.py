@@ -23,6 +23,7 @@ class Orchestrator:
 
         self.cv = cv
         self.results = results
+        self.results.cv = cv
 
         # progress trackers
         self.n_strategies = len(strategies)

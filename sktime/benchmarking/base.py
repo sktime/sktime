@@ -52,30 +52,30 @@ class BaseResults:
         # assigned during fitting of orchestration
         self.strategy_names = []
         self.dataset_names = []
-        self.cv_folds = []
+        self.cv = None
 
-    def save_predictions(self, strategy_name, dataset_name, y_true, y_pred, y_proba, index, cv_fold=0,
-                         train_or_test="test"):
+    def save_predictions(self, strategy_name, dataset_name, y_true, y_pred, y_proba, index, cv_fold,
+                         train_or_test):
         raise NotImplementedError()
 
-    def load_predictions(self, cv_fold=0, train_or_test="test"):
+    def load_predictions(self, cv_fold, train_or_test):
         """Loads predictions for all datasets and strategies iteratively"""
         raise NotImplementedError()
 
-    def check_predictions_exist(self, strategy, dataset_name, cv_fold=0, train_or_test="test"):
+    def check_predictions_exist(self, strategy, dataset_name, cv_fold, train_or_test):
         raise NotImplementedError()
 
-    def save_fitted_strategy(self, strategy, dataset_name, cv_fold=0):
+    def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
         raise NotImplementedError()
 
-    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold=0):
+    def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
         """Load fitted strategies for all datasets and strategies iteratively"""
         raise NotImplementedError()
 
-    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold=0):
+    def check_fitted_strategy_exists(self, strategy, dataset_name, cv_fold):
         raise NotImplementedError()
 
-    def _append_key(self, strategy_name, dataset_name, cv_fold):
+    def _append_key(self, strategy_name, dataset_name):
         """Append names of datasets and strategies to results objects during orchestration"""
         if strategy_name not in self.strategy_names:
             self.strategy_names.append(strategy_name)
@@ -83,16 +83,13 @@ class BaseResults:
         if dataset_name not in self.dataset_names:
             self.dataset_names.append(dataset_name)
 
-        if cv_fold not in self.cv_folds:
-            self.cv_folds.append(cv_fold)
-
     def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
         raise NotImplementedError()
 
     def __repr__(self):
         class_name = self.__class__.__name__
         return f"{class_name}(strategies={self.strategy_names}, datasets={self.dataset_names}, " \
-               f"cv_folds={self.cv_folds})"
+               f"cv_folds={self.cv.get_n_splits()})"
 
     def save(self):
         """Save results object as master file"""
@@ -128,7 +125,7 @@ class HDDBaseResults(BaseResults):
         if not os.path.isfile(file):
             dump(self, file)
 
-        # if file already exists, update file adding new datasets and strategies
+        # if file already exists, update file adding new datasets, strategies and/or cv_folds
         else:
             results = load(file)
             self.strategy_names = list(set(self.strategy_names + results.strategy_names))
