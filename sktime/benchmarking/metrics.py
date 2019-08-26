@@ -28,7 +28,7 @@ class PairwiseMetric(BaseMetric):
 class CompositeMetric(BaseMetric):
 
     def __init__(self, func, method="jackknife", name=None, **kwargs):
-        allowed_methods = ["jackknife"]
+        allowed_methods = ("jackknife",)
         if method not in allowed_methods:
             raise NotImplementedError(f"Provided method is not implemented yet. "
                                       f"Currently only: {allowed_methods} are implemented")
