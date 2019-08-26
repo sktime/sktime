@@ -23,6 +23,8 @@ class Orchestrator:
 
         self.cv = cv
         self.results = results
+
+        # attach cv iterator to results object
         self.results.cv = cv
 
         # progress trackers
