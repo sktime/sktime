@@ -12,11 +12,11 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe
 class UEADataset(HDDBaseDataset):
 
     def __init__(self, path, name, suffix_train="_TRAIN",
-                 suffix_test="_TEST", fmt=".ts", target="target"):
+                 suffix_test="_TEST", fmt=".ts", target_name="target"):
 
         super(UEADataset, self).__init__(path, name)
 
-        self.target = target
+        self._target_name = target_name
         self._suffix_train = suffix_train
         self._suffix_test = suffix_test
         self._fmt = fmt
@@ -41,8 +41,8 @@ class UEADataset(HDDBaseDataset):
         data_test = pd.concat([X_test, pd.Series(y_test)], axis=1)
 
         # rename target variable
-        data_train.rename(columns={data_train.columns[-1]: self.target}, inplace=True)
-        data_test.rename(columns={data_test.columns[-1]: self.target}, inplace=True)
+        data_train.rename(columns={data_train.columns[-1]: self._target_name}, inplace=True)
+        data_test.rename(columns={data_test.columns[-1]: self._target_name}, inplace=True)
 
         # concatenate the two dataframes, keeping training and test split in index, necessary for later optional CV
         data = pd.concat([data_train, data_test], axis=0, keys=["train", "test"]).reset_index(level=1, drop=True)

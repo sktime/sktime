@@ -65,14 +65,16 @@ class Evaluator:
         if isinstance(cv_fold, int) and cv_fold >= 0:
             cv_folds = [cv_fold]  # if single fold, make iterable
         elif cv_fold == "all":
-            cv_folds = self.results.cv_folds
+            cv_folds = np.arange(self.results.cv.get_n_splits())
+            if len(cv_folds) == 0:
+                raise ValueError()
         else:
             raise ValueError(f"`cv_fold` must be either positive integer (>=0) or 'all', "
                              f"but found: {type(cv_fold)}")
 
         # load all predictions
         for cv_fold in cv_folds:
-            for result in self.results.load_predictions(train_or_test=train_or_test, cv_fold=cv_fold):
+            for result in self.results.load_predictions(cv_fold=cv_fold, train_or_test=train_or_test):
                 # unwrap result object
                 strategy_name = result.strategy_name
                 dataset_name = result.dataset_name
@@ -103,7 +105,7 @@ class Evaluator:
         metrics_by_strategy_dataset = self._metrics.groupby(["dataset", "strategy"], as_index=False).agg(np.mean).drop(
             columns="cv_fold")
         self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(metrics_by_strategy_dataset,
-                                                                                   how="outer")
+                                                                                    how="outer")
         # aggregate over cv folds and datasets
         metrics_by_strategy = metrics_by_strategy_dataset.groupby(["strategy"], as_index=False).agg(np.mean)
         self._metrics_by_strategy = self._metrics_by_strategy.merge(metrics_by_strategy, how="outer")
@@ -279,7 +281,7 @@ class Evaluator:
     def wilcoxon_test(self, metric_name=None):
         """http://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test
         `Wilcoxon signed-rank test <https://en.wikipedia.org/wiki/Wilcoxon_signed-rank_test>`_.
-        Tests whether two  related paired samples come from the same distribution. 
+        Tests whether two  related paired samples come from the same distribution.
         In particular, it tests whether the distribution of the differences x-y is symmetric about zero
         """
         self._check_is_evaluated()
@@ -317,8 +319,8 @@ class Evaluator:
 
     def friedman_test(self, metric_name=None):
         """
-        The Friedman test is a non-parametric statistical test used to detect differences 
-        in treatments across multiple test attempts. The procedure involves ranking each row (or block) together, 
+        The Friedman test is a non-parametric statistical test used to detect differences
+        in treatments across multiple test attempts. The procedure involves ranking each row (or block) together,
         then considering the values of ranks by columns.
         Implementation used:
         `scipy.stats <https://docs.scipy.org/doc/scipy-0.15.1/reference/generated/scipy.stats.friedmanchisquare.html>`_.
@@ -351,7 +353,7 @@ class Evaluator:
 
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
         """Plot critical difference diagrams
-        
+
         References:
         -----------
         original implementation by Aaron Bostrom, modified by Markus Löning
@@ -364,7 +366,7 @@ class Evaluator:
                 .loc[:, ["dataset", "strategy", column]]
                 .pivot(index="strategy", columns="dataset", values=column)
                 .values
-        )
+                )
 
         n_strategies, n_datasets = data.shape  # [N,k] = size(s); correct
         labels = self.results.strategy_names
@@ -426,7 +428,7 @@ class Evaluator:
         plt.text(0.5 * cd / (n_strategies - 1), 130, "CD", fontsize=12, horizontalalignment="center")
 
         for i in range(n_strategies):
-            plt.text(i / (n_strategies - 1), 110, str(n_strategies - i), fontsize=12, horizontalalignment="center");
+            plt.text(i / (n_strategies - 1), 110, str(n_strategies - i), fontsize=12, horizontalalignment="center")
 
         # compute average ranks
         r = np.mean(r, axis=0)

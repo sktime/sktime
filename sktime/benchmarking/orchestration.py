@@ -24,6 +24,9 @@ class Orchestrator:
         self.cv = cv
         self.results = results
 
+        # attach cv iterator to results object
+        self.results.cv = cv
+
         # progress trackers
         self.n_strategies = len(strategies)
         self.n_datasets = len(datasets)
