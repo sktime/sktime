@@ -49,6 +49,7 @@ class RotationForestClassifier(BaseClassifier):
                  max_columns_subset=3,
                  p_instance_subset=0.75,
                  bootstrap_instance_subset=False,
+                 explained_variance_threshold=0.95,
                  random_state=None,
                  verbose=True):
 
@@ -60,13 +61,15 @@ class RotationForestClassifier(BaseClassifier):
         self.min_columns_subset = min_columns_subset
         self.max_columns_subset = max_columns_subset
         self.bootstrap_instance_subset = bootstrap_instance_subset
+        self.explained_variance_threshold = explained_variance_threshold
 
         # get random state object
         self._rng = check_random_state(self.random_state)
 
         # note that certain checks in fit depend on the transformer being pca,
         # the estimator should be more easily substitutable
-        self.transformer = PCA(random_state=random_state)
+        self.transformer = PCA(n_components=self.explained_variance_threshold, svd_solver="full",
+                               random_state=random_state)
         self.estimator = DecisionTreeClassifier(random_state=random_state)
 
         # defined in fit
@@ -76,8 +79,10 @@ class RotationForestClassifier(BaseClassifier):
         self.n_outputs_ = None
         self.n_instances_ = None
         self.n_columns_ = None
-        self.column_subsets_ = {}
+        self.column_subsets_ = []
         self.n_instances_in_subset_ = None
+        self.transformed_columns_ = {}
+        self.n_transformed_columns = np.zeros(self.n_estimators, dtype=np.int)
 
     def fit(self, X, y, **fit_kwargs):
         # check inputs
@@ -95,84 +100,38 @@ class RotationForestClassifier(BaseClassifier):
             # [:, np.newaxis] that does not.
             y = np.reshape(y, (-1, 1))
 
+        # preprocess the data
+        X_norm = self._preprocess_X(X)
+
         # get input shapes
-        self.n_instances_, self.n_columns_ = X.shape
+        self.n_instances_, self.n_columns_ = X_norm.shape
         self.classes_ = np.unique(y)
         self.n_outputs_ = y.shape[1]
 
         # compute number of instances and columns to be considered in each random subset
         self.n_instances_in_subset_ = int(self.n_instances_ * self.p_instance_subset)
 
-        # preprocess the data
-        X_norm = self._preprocess_X(X)
+        # generate random column subsets
+        self.column_subsets_ = [self._random_column_subsets(min_length=self.min_columns_subset,
+                                                            max_length=self.max_columns_subset)
+                                for _ in range(self.n_estimators)]
 
-        # preallocate matrix for transformed data
-        Xt = np.zeros((self.n_instances_, self.n_columns_))
-
+        # transform data, fit estimators
         # TODO: parallelize
         for i in range(self.n_estimators):
 
-            # randomly split columns into disjoint subsets
-            columns = np.arange(self.n_columns_)
-            self.column_subsets_[i] = self._random_column_subsets(columns, min_length=self.min_columns_subset,
-                                                                  max_length=self.max_columns_subset)
+            # fit transformers
+            self._fit_transformers(X_norm, y, i)
 
-            # initialise list of transformers
-            self.transformers_[i] = []
+            # preallocate matrix for transformed data
+            Xt = np.zeros((self.n_instances_, self.n_transformed_columns[i]))
 
-            for column_subset in self.column_subsets_[i]:
-                # select random subset of instances by classes
-                classes, instance_subset = self._random_instance_subset(y, n_instances=self.n_instances_in_subset_,
-                                                                        bootstrap=self.bootstrap_instance_subset)
-
-                # check if there are at least as many samples as columns in subset for PCA,
-                # as n_components will be min(n_samples, n_columns), otherwise throws error
-                # when assigning transformed data
-                if len(instance_subset) < len(column_subset):
-                    if self.verbose:
-                        warn("There are fewer instances than columns in random subsets, "
-                             "hence PCA cannot compute components for all columns, randomly added"
-                             "more bootstrapped instances. To avoid this, please "
-                             "reduce `max_columns_subset` or increase `p_instance_subset`")
-                    _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
-                                                                          bootstrap=True)
-                    instance_subset = np.vstack([instance_subset, new_instance_subset])
-
-                # try to fit transformer on subset of instances and columns, if it fails, add more instances and try
-                # again
-                n_attempts = 0  # keep track of number of time it fails
-                while True:
-                    transformer = clone(self.transformer)
-
-                    # ignore error state on PCA because we account for it if it fails
-                    with np.errstate(divide='ignore', invalid='ignore'):
-                        transformer.fit(X_norm[instance_subset, column_subset])
-
-                    # if fitting pca failed, add random samples and try fitting again
-                    if np.any(np.isnan(transformer.explained_variance_ratio_)) or np.any(np.isinf(
-                            transformer.explained_variance_ratio_)):
-                        if self.verbose:
-                            warn("PCA failed to fit on subset, randomly adding more bootstrapped "
-                                 "instances and try to refit")
-                        n_attempts += 1
-                        _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
-                                                                              bootstrap=True)
-                        instance_subset = np.vstack([instance_subset, new_instance_subset])
-
-                        # raise error after 10 failed tries
-                        if n_attempts == 10:
-                            raise ValueError(f"Cannot fit PCA on subset, repeatedly added more random instances "
-                                             f"to subset but keeps failing")
-
-                    # otherwise break while-loop and continue
-                    else:
-                        break
-
-                # append fitted transformer
-                self.transformers_[i].append(transformer)
+            for transformer, column_subset, transformed_columns in zip(self.transformers_[i],
+                                                                       self.column_subsets_[i],
+                                                                       self.transformed_columns_[i]):
 
                 # transform on subset of columns but all instances
-                Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
+                Xt[:, transformed_columns] = transformer.transform(X_norm[:, column_subset])
 
             # fit estimator on transformed data
             estimator = clone(self.estimator)
@@ -184,12 +143,82 @@ class RotationForestClassifier(BaseClassifier):
         self._is_fitted = True
         return self
 
-    def _random_column_subsets(self, columns, min_length, max_length):
+    def _fit_transformers(self, X, y, i):
+        """Fit transformers"""
+
+        # initialise output containers
+        self.transformers_[i] = []  # list of transformers
+        self.transformed_columns_[i] = []  # list of transformed columns indexes
+        start = 0  # start of column indexing for transformed columns
+
+        for j, column_subset in enumerate(self.column_subsets_[i]):
+
+            # select random subset of instances by classes
+            classes, instance_subset = self._random_instance_subset(y, n_instances=self.n_instances_in_subset_,
+                                                                    bootstrap=self.bootstrap_instance_subset)
+
+            # check if there are at least as many samples as columns in subset for PCA,
+            # as n_components will be min(n_samples, n_columns), otherwise throws error
+            # when assigning transformed data
+            if len(instance_subset) < len(column_subset):
+                if self.verbose:
+                    warn("There are fewer instances than columns in random subsets, "
+                         "hence PCA cannot compute components for all columns, randomly added"
+                         "more bootstrapped instances. To avoid this, please "
+                         "reduce `max_columns_subset` or increase `p_instance_subset`")
+                _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
+                                                                      bootstrap=True)
+                instance_subset = np.vstack([instance_subset, new_instance_subset])
+
+            # try to fit transformer on subset of instances and columns, if it fails, add more instances and try
+            # again
+            n_attempts = 0  # keep track of number of time it fails
+            while True:
+                transformer = clone(self.transformer)
+
+                # ignore error state on PCA because we account for it if it fails
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    transformer.fit(X[instance_subset, column_subset])
+
+                # if fitting pca failed, add random samples and try fitting again
+                if np.any(np.isnan(transformer.explained_variance_ratio_)) or np.any(np.isinf(
+                        transformer.explained_variance_ratio_)):
+                    if self.verbose:
+                        warn("PCA failed to fit on subset, randomly adding more bootstrapped "
+                             "instances and try to refit")
+                    n_attempts += 1
+                    _, new_instance_subset = self._random_instance_subset(y, n_instances=10, classes=classes,
+                                                                          bootstrap=True)
+                    instance_subset = np.vstack([instance_subset, new_instance_subset])
+
+                    # raise error after 10 failed tries
+                    if n_attempts == 10:
+                        raise ValueError(f"Cannot fit PCA on subset, repeatedly added more random instances "
+                                         f"to subset but keeps failing")
+
+                # otherwise break while-loop and continue
+                else:
+                    break
+
+            # append fitted transformer
+            self.transformers_[i].append(transformer)
+
+            # get transformed columns index
+            n_components = transformer.n_components_
+            transformed_columns = np.arange(start, start + n_components)
+            self.transformed_columns_[i].append(transformed_columns)
+            start += n_components
+
+            # get total column number for each estimator
+            self.n_transformed_columns[i] += n_components
+
+    def _random_column_subsets(self, min_length, max_length):
         """Helper function to randomly select subsets of columns"""
         # get random state object
         rng = self._rng
 
         # shuffle columns
+        columns = np.arange(self.n_columns_)
         rng.shuffle(columns)
 
         # if length is not variable, use available function to split into equally sized arrays
@@ -239,14 +268,12 @@ class RotationForestClassifier(BaseClassifier):
         return classes, instance_subset[:, None]
 
     def _preprocess_X(self, X):
-        """Helper function to preprocess X including removal of constant columns and
-         scaling"""
+        """Preprocess X including removal of constant columns and scaling"""
         # remove zero-variance/constant columns
         remover = VarianceThreshold(threshold=0)
         Xt = remover.fit_transform(X)
 
-        # scale columns
-        # other options for the scaler are StandardScaler(with_mean=True, with_std=True)
+        # scale columns, other options for the scaler are StandardScaler(with_mean=True, with_std=True)
         # and MinMaxScaler()
         scaler = Normalizer()
         Xt = scaler.fit_transform(Xt)
@@ -262,18 +289,22 @@ class RotationForestClassifier(BaseClassifier):
         # preprocess data
         X_norm = self._preprocess_X(X)
 
+        # number of instances
+        n_instances = X_norm.shape[0]
+
         # TODO parallelize
         all_proba = []
         for i, estimator in enumerate(self.estimators_):
 
-            # transform data using fitted transformers
-            Xt = np.zeros(X_norm.shape)
-            for j, column_subset in enumerate(self.column_subsets_[i]):
-                # get fitted transformer
-                transformer = self.transformers_[i][j]
+            # preallocate array for transformed columns
+            Xt = np.zeros((n_instances, self.n_transformed_columns[i]))
 
-                # transform data
-                Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
+            # transform data using fitted transformers
+            for transformer, column_subset, transformed_columns in zip(self.transformers_[i],
+                                                                       self.column_subsets_[i],
+                                                                       self.transformed_columns_[i]):
+                # transform on subset of columns but all instances
+                Xt[:, transformed_columns] = transformer.transform(X_norm[:, column_subset])
 
             # predict on transformed data
             proba = estimator.predict_proba(Xt)
