@@ -1,4 +1,4 @@
-__all__ = ["PairwiseMetric", "CompositeMetric"]
+__all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 import numpy as np
@@ -17,7 +17,7 @@ class PairwiseMetric(BaseMetric):
         # compute mean
         mean = self.func(y_true, y_pred)
 
-        # compute stderr based on pointwise metrics
+        # compute stderr based on pairwise metrics
         n_instances = len(y_true)
         pointwise_metrics = np.array([self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)])
         stderr = np.std(pointwise_metrics) / np.sqrt(n_instances - 1)  # sample standard error of the mean
@@ -25,7 +25,7 @@ class PairwiseMetric(BaseMetric):
         return mean, stderr
 
 
-class CompositeMetric(BaseMetric):
+class AggregateMetric(BaseMetric):
 
     def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ("jackknife",)
@@ -37,7 +37,7 @@ class CompositeMetric(BaseMetric):
         name = func.__name__ if name is None else name
         self.func = func
 
-        super(CompositeMetric, self).__init__(name=name, **kwargs)
+        super(AggregateMetric, self).__init__(name=name, **kwargs)
 
     def compute(self, y_true, y_pred):
         """Compute metric and standard error
@@ -58,18 +58,18 @@ class CompositeMetric(BaseMetric):
         # compute aggregate metric
         mean = self.func(y_true, y_pred, **self.kwargs)
 
-        # compute stderr based on jackknifed pointwise metrics
+        # compute stderr based on jackknifed metrics
         n_instances = len(y_true)
         index = np.arange(n_instances)
 
         # get jackknife samples of index
         jack_idx = self._jackknife_resampling(index)
 
-        # compute pointwise metrics on jackknife samples
+        # compute metrics on jackknife samples
         jack_pointwise_metric = np.array([self.func(y_true[idx], y_pred[idx], **self.kwargs)
                                           for idx in jack_idx])
 
-        # compute standard error over jackknifed pointwise metrics
+        # compute standard error over jackknifed metrics
         jack_stderr = self._compute_jackknife_stderr(jack_pointwise_metric)
         return mean, jack_stderr
 

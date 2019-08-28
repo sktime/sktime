@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_score
 
 from sktime.benchmarking.data import RAMDataset, UEADataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import PairwiseMetric, CompositeMetric
+from sktime.benchmarking.metrics import PairwiseMetric, AggregateMetric
 from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import RAMResults, HDDResults
 from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
@@ -134,7 +134,7 @@ def test_single_dataset_single_strategy_against_sklearn(dataset, cv, metric_func
         metric = PairwiseMetric(func=metric_func, name="metric")
     elif metric_func in [f1_score]:
         kwargs = {"average": "macro"}  # set kwargs for composite metrics
-        metric = CompositeMetric(func=metric_func, name="metric", **kwargs)
+        metric = AggregateMetric(func=metric_func, name="metric", **kwargs)
     else:
         raise ValueError()
 
