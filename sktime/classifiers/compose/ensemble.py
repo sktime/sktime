@@ -203,6 +203,17 @@ class TimeSeriesForestClassifier(ForestClassifier):
         elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
             raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
 
+        # Assign values, even though passed on to base estimator below, necessary here for cloning
+        self.criterion = criterion
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
+        self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
+        
         # Rename estimator params according to name in pipeline.
         estimator = base_estimator.steps[-1][0]
         estimator_params = {
