@@ -2,14 +2,14 @@ import os
 from sklearn.metrics import accuracy_score as acc
 
 
-def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
-                                y_pred, split='TEST', resample_seed=0, y_proba=None, second_line="N/A"):
+def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
+                                predicted_class_vals, split='TEST', resample_seed=0, actual_probas=None, second_line="N/A"):
 
-    if len(y_true) != len(y_pred):
+    if len(actual_class_vals) != len(predicted_class_vals):
         raise IndexError("The number of predicted class values is not the same as the number of actual class values")
 
     try:
-        os.makedirs(str(path) + "/" + str(strategy_name) + "/Predictions/" + str(dataset_name) + "/")
+        os.makedirs(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/")
     except os.error:
         pass  # raises os.error if path already exists
 
@@ -20,14 +20,14 @@ def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    file = open(str(path) + "/" + str(strategy_name) + "/Predictions/" + str(dataset_name) +
-                "/" + str(train_or_test) +"Fold" + str(resample_seed) +".csv", "w")
+    file = open(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) +
+                "/"+str(train_or_test)+"Fold"+str(resample_seed)+".csv", "w")
 
-    correct = acc(y_true, y_pred)
+    correct = acc(actual_class_vals, predicted_class_vals)
 
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    file.write(str(strategy_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n")
+    file.write(str(classifier_name)+"," + str(dataset_name) + ","+str(train_or_test)+"\n")
 
     # the second line of the output is free form and classifier-specific; usually this will record info
     # such as build time, paramater options used, any constituent model names for ensembles, etc.
@@ -49,11 +49,11 @@ def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
     #
     # if predict_proba data IS NOT provided for case i:
     #   actual_class_val[i], predicted_class_val[i]
-    for i in range(0, len(y_pred)):
-        file.write(str(y_true[i]) + "," + str(y_pred[i]))
-        if y_proba is not None:
+    for i in range(0, len(predicted_class_vals)):
+        file.write(str(actual_class_vals[i]) + "," + str(predicted_class_vals[i]))
+        if actual_probas is not None:
             file.write(",")
-            for j in y_proba[i]:
+            for j in actual_probas[i]:
                 file.write("," + str(j))
             file.write("\n") #TODO BUG new line is written only if the probas are provided!!!!
 
@@ -75,13 +75,13 @@ if __name__ == "__main__":
     ]
 
     write_results_to_uea_format(
-        path="../exampleResults",
-        strategy_name="dummy_classifier",
+        output_path="../exampleResults",
+        classifier_name="dummy_classifier",
         dataset_name="banana_point",
-        y_true=actual,
-        y_pred=preds,
+        actual_class_vals=actual,
+        predicted_class_vals=preds,
         split='TEST',
         resample_seed=0,
-        y_proba=probas,
+        actual_probas=probas,
         second_line="buildTime=100000,num_dummy_things=2"
     )
