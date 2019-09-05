@@ -183,17 +183,17 @@ class RandomIntervalSpectralForest(ForestClassifier):
                 raise TypeError(
                     "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         rows,cols=X.shape
-        #HERE Do transform againnum_att
-        n_samps, n_columns = X.shape
+        #HERE Do transform again
+        n_cases, n_columns = X.shape
         if n_columns != self.series_length:
             raise TypeError(" ERROR number of attributes in the train does not match that in the test data")
         sums = np.zeros((X.shape[0],self.n_classes), dtype=np.float64)
 
         for i in range(0, self.n_trees):
-            acf_x = np.empty(shape=(n_samps, self.lags[i]))
+            acf_x = np.empty(shape=(n_cases, self.lags[i]))
             ps_len=(self.intervals[i][1] - self.intervals[i][0]) / 2
-            ps_x = np.empty(shape=(n_samps,int(ps_len)))
-            for j in range(0, n_samps):
+            ps_x = np.empty(shape=(n_cases,int(ps_len)))
+            for j in range(0, n_cases):
                 acf_x[j] = acf(X[j, self.intervals[i][0]:self.intervals[i][1]], self.lags[i])
                 ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x=np.concatenate((acf_x,ps_x),axis=1)
@@ -222,28 +222,27 @@ def acf(x, max_lag):
     length=len(x)
     for lag in range(1, max_lag + 1):
 # Could just do it ourselves ... TO TEST
-#        s1=np.sum(x[:-lag])
-#        ss1=np.sum(np.square(x[:-lag]))
-#        s2=np.sum(x[lag:])
-#        ss2=np.sum(np.square(x[lag:]))
-#        s1=s1/(length-lag)
-#        s2 = s2 / (length - lag)
-#        y[lag-1] = np.sum((x[:-lag]-s1)*(x[lag:]-s2))
-#        y[lag - 1] = y[lag - 1]/ (length - lag)
-#        v1 = ss1/(length - lag)-s1*s1
-#        v2 = ss2/(length-lag)-s2*s2
-#        print(v1)
-#        print(v2)
-#        if v1 <= 0.000000001 and v2 <= 0.000000001: # Both zero variance, so must be 100% correlated
-#            y[lag - 1]=1
-#        elif v1 <= 0.000000001 or v2 <= 0.000000001: # One zero variance the other not
-#            y[lag - 1] = 0
-#        else:
-#            y[lag - 1] = y[lag - 1]/(math.sqrt(v1)*math.sqrt(v2))
-        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
-        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
-            y[lag-1]=0
+        s1=np.sum(x[:-lag])
+        ss1=np.sum(np.square(x[:-lag]))
+        s2=np.sum(x[lag:])
+        ss2=np.sum(np.square(x[lag:]))
+        s1=s1/(length-lag)
+        s2 = s2 / (length - lag)
+        y[lag-1] = np.sum((x[:-lag]-s1)*(x[lag:]-s2))
+        y[lag - 1] = y[lag - 1]/ (length - lag)
+        v1 = ss1/(length - lag)-s1*s1
+        v2 = ss2/(length-lag)-s2*s2
+        if v1 <= 0.000000001 and v2 <= 0.000000001: # Both zero variance, so must be 100% correlated
+            y[lag - 1]=1
+        elif v1 <= 0.000000001 or v2 <= 0.000000001: # One zero variance the other not
+            y[lag - 1] = 0
+        else:
+            y[lag - 1] = y[lag - 1]/(math.sqrt(v1)*math.sqrt(v2))
     return np.array(y)
+
+#        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
+#        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
+#            y[lag-1]=0
 
 
 def matrix_acf(x, num_cases, max_lag):
