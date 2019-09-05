@@ -315,6 +315,8 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
               + ' time: ' + str(test_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         second = str(classifier.get_params())
+        second.replace('\n',' ').replace('\r',' ')
+
         third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
@@ -330,7 +332,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
         print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' train acc: ' + str(train_acc)
               + ' time: ' + str(train_time))
         second = str(classifier.get_params())
-        second.replace('\n',' ')
+        second.replace('\n',' ').replace('\r',' ')
         third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
