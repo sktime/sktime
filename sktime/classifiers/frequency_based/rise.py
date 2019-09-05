@@ -222,27 +222,27 @@ def acf(x, max_lag):
     length=len(x)
     for lag in range(1, max_lag + 1):
 # Could just do it ourselves ... TO TEST
-        s1=np.sum(x[:-lag])
-        ss1=np.sum(np.square(x[:-lag]))
-        s2=np.sum(x[lag:])
-        ss2=np.sum(np.square(x[lag:]))
-        s1=s1/(length-lag)
-        s2 = s2 / (length - lag)
-        y[lag-1] = np.sum((x[:-lag]-s1)*(x[lag:]-s2))
-        y[lag - 1] = y[lag - 1]/ (length - lag)
-        v1 = ss1/(length - lag)-s1*s1
-        v2 = ss2/(length-lag)-s2*s2
+#        s1=np.sum(x[:-lag])
+#        ss1=np.sum(np.square(x[:-lag]))
+#        s2=np.sum(x[lag:])
+#        ss2=np.sum(np.square(x[lag:]))
+#        s1=s1/(length-lag)
+#        s2 = s2 / (length - lag)
+#        y[lag-1] = np.sum((x[:-lag]-s1)*(x[lag:]-s2))
+#        y[lag - 1] = y[lag - 1]/ (length - lag)
+#        v1 = ss1/(length - lag)-s1*s1
+#        v2 = ss2/(length-lag)-s2*s2
 #        print(v1)
 #        print(v2)
-        if v1 <= 0.000000001 and v2 <= 0.000000001: # Both zero variance, so must be 100% correlated
-            y[lag - 1]=1
-        elif v1 <= 0.000000001 or v2 <= 0.000000001: # One zero variance the other not
-            y[lag - 1] = 0
-        else:
-            y[lag - 1] = y[lag - 1]/(math.sqrt(v1)*math.sqrt(v2))
-#        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
-#        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
-#            y[lag-1]=0
+#        if v1 <= 0.000000001 and v2 <= 0.000000001: # Both zero variance, so must be 100% correlated
+#            y[lag - 1]=1
+#        elif v1 <= 0.000000001 or v2 <= 0.000000001: # One zero variance the other not
+#            y[lag - 1] = 0
+#        else:
+#            y[lag - 1] = y[lag - 1]/(math.sqrt(v1)*math.sqrt(v2))
+        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
+        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
+            y[lag-1]=0
     return np.array(y)
 
 

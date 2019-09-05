@@ -172,8 +172,8 @@ def rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
-        rise = fb.RandomIntervalSpectralForest(n_trees=10)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
+        rise = fb.RandomIntervalSpectralForest(n_trees=100)
+        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
                            classifier=rise,dataset=dataset, train_file=False)
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
@@ -185,8 +185,8 @@ def rise_benchmarking():
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        rise = TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=10)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
+        rise = TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
+        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
                        classifier=rise, dataset=dataset, train_file=False)
 
 
