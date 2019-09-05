@@ -62,7 +62,6 @@ benchmark_datasets = [
     "Fish",
     "FreezerRegularTrain",
     "FreezerSmallTrain",
-    "Fungi",
     "Ham",
     "Haptics",
     "Herring",
@@ -90,7 +89,6 @@ benchmark_datasets = [
     "PigAirwayPressure",
     "PigArtPressure",
     "PigCVP",
-    "PLAID",
     "Plane",
     "PowerCons",
     "ProximalPhalanxOutlineCorrect",
@@ -102,7 +100,6 @@ benchmark_datasets = [
     "SemgHandGenderCh2",
     "SemgHandMovementCh2",
     "SemgHandSubjectCh2",
-    "ShakeGestureWiimoteZ",
     "ShapeletSim",
     "SmallKitchenAppliances",
     "SmoothSubspace",
@@ -188,7 +185,7 @@ def rise_benchmarking():
                        classifier=rise, dataset=dataset, train_file=False)
 
 def boss_benchmarking():
-    for i in range(int(len(benchmark_datasets)/3), int(2*len(benchmark_datasets)/3)):
+    for i in range(int(2*len(benchmark_datasets)/3), int(len(benchmark_datasets))):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         boss = db.BOSSEnsemble(max_ensemble_size=10)
