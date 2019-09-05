@@ -69,8 +69,6 @@ univariate_datasets = [
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
     "ArrowHead",
-    "Coffee",
-    "Adiac",
     "Beef",
     "BeetleFly",
     "BirdChicken",
@@ -80,6 +78,7 @@ univariate_datasets = [
     "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
+    "Coffee",
     "Computers",
     "CricketX",
     "CricketY",
@@ -250,7 +249,7 @@ def set_classifier(cls, resampleId):
         return 'UNKNOWN CLASSIFIER'
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_file=False):
+def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -267,7 +266,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
-    cls_name = cls_name.upper()
+
     build_test = True
     if not overwrite:
         full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
@@ -286,12 +285,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    if resample !=0:
+    if resampleID !=0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resample, shuffle=True,
+                                                                       random_state=resampleID, shuffle=True,
                                                                        stratify=allLabels)
 
 
@@ -299,7 +298,8 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(cls_name, resampleID)
+    if classifier is None:
+        classifier = set_classifier(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
