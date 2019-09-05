@@ -5,25 +5,23 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-import sktime.classifiers.interval_based.tsf as ib
-import sktime.classifiers.frequency_based.rise as fb
-import sktime.contrib.experiments as exp
 import numpy as np
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.tree import DecisionTreeClassifier
+from statsmodels.tsa.stattools import acf
 
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import ColumnTransformer
 from sktime.transformers.compose import Tabulariser
-
 from sktime.pipeline import Pipeline
 from sktime.pipeline import FeatureUnion
-
 from sktime.classifiers.compose import TimeSeriesForestClassifier
 from sktime.utils.time_series import time_series_slope
-
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.tree import DecisionTreeClassifier
-from statsmodels.tsa.stattools import acf
+import sktime.classifiers.interval_based.tsf as ib
+import sktime.classifiers.frequency_based.rise as fb
+import sktime.classifiers.dictionary_based.boss as db
+import sktime.contrib.experiments as exp
 
 #method 1
 
@@ -134,6 +132,18 @@ benchmark_datasets = [
 data_dir = "Z:/ArchiveData/Univariate_ts/"
 results_dir="Z:/Benchmarking/"
 
+def acf_coefs(x, maxlag=100):
+    x = np.asarray(x).ravel()
+    nlags = np.minimum(len(x) - 1, maxlag)
+    return acf(x, nlags=nlags).ravel()
+
+def powerspectrum(x, **kwargs):
+    x = np.asarray(x).ravel()
+    fft = np.fft.fft(x)
+    ps = fft.real * fft.real + fft.imag * fft.imag
+    return ps[:ps.shape[0] // 2].ravel()
+
+
 def tsf_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
@@ -156,18 +166,6 @@ def tsf_benchmarking():
         exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
                        classifier=tsf, dataset=dataset, train_file=False)
 
-
-def acf_coefs(x, maxlag=100):
-    x = np.asarray(x).ravel()
-    nlags = np.minimum(len(x) - 1, maxlag)
-    return acf(x, nlags=nlags).ravel()
-
-def powerspectrum(x, **kwargs):
-    x = np.asarray(x).ravel()
-    fft = np.fft.fft(x)
-    ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[:ps.shape[0] // 2].ravel()
-
 def rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
@@ -189,8 +187,17 @@ def rise_benchmarking():
         exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
                        classifier=rise, dataset=dataset, train_file=False)
 
+def boss_benchmarking():
+    for i in range(0, len(benchmark_datasets)):
+        dataset = benchmark_datasets[i]
+        print(str(i)+" problem = "+dataset)
+        boss = db.BOSSEnsemble(max_ensemble_size=10)
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonBOSS",
+                           classifier=boss,dataset=dataset, train_file=False)
+
 
 
 if __name__ == "__main__":
 #    tsf_benchmarking()
-    rise_benchmarking()
+#    rise_benchmarking()
+    boss_benchmarking()
