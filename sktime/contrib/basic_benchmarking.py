@@ -150,7 +150,7 @@ def tsf_benchmarking():
         base_estimator = Pipeline(steps)
         tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
                                          n_estimators=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
+        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
                        classifier=tsf, dataset=dataset, train_file=False)
 
 
