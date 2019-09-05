@@ -188,7 +188,7 @@ def rise_benchmarking():
                        classifier=rise, dataset=dataset, train_file=False)
 
 def boss_benchmarking():
-    for i in range(0, len(benchmark_datasets)):
+    for i in range(int(len(benchmark_datasets)/3), int(2*len(benchmark_datasets)/3)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         boss = db.BOSSEnsemble(max_ensemble_size=10)
