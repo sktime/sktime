@@ -19,13 +19,14 @@ IF not done before,
 4) conda init bash
 5) conda create -n sktime
 6) conda activate sktime
-7) conda install setuptools scipy cython numpy pandas scikit-learn
+7) conda install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
 8) export PYTHONPATH=$(pwd)
 9) python <FULLPATH>setup.py install
 10) python <FULLPATH>setup.py build_ext -i
 
 then run sktime.sh script
 
+NOTE: do
 """
 
 import os
@@ -39,6 +40,7 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
@@ -482,7 +484,7 @@ if __name__ == "__main__":
         dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "BOSS"
+        classifier = "TSF"
         resample = 0
         for i in range(0, len(univariate_datasets)):
             dataset = univariate_datasets[i]

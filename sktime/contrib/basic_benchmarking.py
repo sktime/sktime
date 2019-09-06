@@ -123,7 +123,7 @@ benchmark_datasets = [
     "WordSynonyms",
     "Worms",
     "WormsTwoClass",
-    "Yoga",
+    "Yoga"
 ]
 
 data_dir = "Z:/ArchiveData/Univariate_ts/"
@@ -160,7 +160,7 @@ def tsf_benchmarking():
         base_estimator = Pipeline(steps)
         tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
                                          n_estimators=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
                        classifier=tsf, dataset=dataset, train_file=False)
 
 def rise_benchmarking():
@@ -195,6 +195,6 @@ def boss_benchmarking():
 
 
 if __name__ == "__main__":
-#    tsf_benchmarking()
+    tsf_benchmarking()
 #    rise_benchmarking()
-    boss_benchmarking()
+#    boss_benchmarking()
