@@ -19,10 +19,11 @@ IF not done before,
 4) conda init bash
 5) conda create -n sktime
 6) conda activate sktime
-7) conda install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-8) export PYTHONPATH=$(pwd)
-9) python <FULLPATH>setup.py install
-10) python <FULLPATH>setup.py build_ext -i
+7) conda install pip
+8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
+9) export PYTHONPATH=$(pwd)
+10) python <FULLPATH>setup.py install
+11) python <FULLPATH>setup.py build_ext -i
 
 then run sktime.sh script
 
@@ -320,8 +321,13 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
             second="Para info too long!"
         else:
             second = str(classifier.get_params())
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+
         print(second)
-        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+
+        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
     if train_file:
@@ -339,7 +345,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
             second="Para info too long!"
         else:
             second = str(classifier.get_params())
-        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
 
