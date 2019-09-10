@@ -44,6 +44,9 @@ from sklearn import preprocessing
 
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.tree import DecisionTreeClassifier
+from statsmodels.tsa.stattools import acf
 
 import sktime.classifiers.compose.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
@@ -53,6 +56,11 @@ import sktime.classifiers.distance_based.elastic_ensemble as dist
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.transformers.compose import Tabulariser
+from sktime.pipeline import Pipeline
+from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
@@ -243,13 +251,39 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1)
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
-    elif cls.lower() == 'tsf_markus':
+    elif cls.lower() == 'tsfcomposite':
+        #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
+    elif cls.lower() == 'risecomposite':
+        steps = [
+            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            ('transform', FeatureUnion([
+                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+            ])),
+            ('tabularise', Tabulariser()),
+            ('clf', DecisionTreeClassifier())
+        ]
+        base_estimator = Pipeline(steps)
+        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
         return 'UNKNOWN CLASSIFIER'
+
+
+def acf_coefs(x, maxlag=100):
+    x = np.asarray(x).ravel()
+    nlags = np.minimum(len(x) - 1, maxlag)
+    return acf(x, nlags=nlags).ravel()
+
+
+def powerspectrum(x, **kwargs):
+    x = np.asarray(x).ravel()
+    fft = np.fft.fft(x)
+    ps = fft.real * fft.real + fft.imag * fft.imag
+    return ps[:ps.shape[0] // 2].ravel()
 
 
 def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):

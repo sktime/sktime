@@ -221,7 +221,7 @@ def acf(x, max_lag):
     y = np.zeros(max_lag)
     length=len(x)
     for lag in range(1, max_lag + 1):
-# Could just do it ourselves ... TO TEST
+# Do it ourselves to avoid zero variance warnings
         s1=np.sum(x[:-lag])
         ss1=np.sum(np.square(x[:-lag]))
         s2=np.sum(x[lag:])
