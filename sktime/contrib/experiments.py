@@ -64,7 +64,7 @@ from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java, 
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
@@ -80,6 +80,7 @@ univariate_datasets = [
     "AllGestureWiimoteY",
     "AllGestureWiimoteZ",
     "ArrowHead",
+    "Coffee",
     "Beef",
     "BeetleFly",
     "BirdChicken",
@@ -535,4 +536,3 @@ if __name__ == "__main__":
 #            print(" problem = "+dataset)
             tf=False
             run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
-
