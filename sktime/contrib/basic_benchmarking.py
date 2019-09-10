@@ -62,7 +62,6 @@ benchmark_datasets = [
     "Fish",
     "FreezerRegularTrain",
     "FreezerSmallTrain",
-    "Fungi",
     "Ham",
     "Haptics",
     "Herring",
@@ -90,7 +89,6 @@ benchmark_datasets = [
     "PigAirwayPressure",
     "PigArtPressure",
     "PigCVP",
-    "PLAID",
     "Plane",
     "PowerCons",
     "ProximalPhalanxOutlineCorrect",
@@ -102,7 +100,6 @@ benchmark_datasets = [
     "SemgHandGenderCh2",
     "SemgHandMovementCh2",
     "SemgHandSubjectCh2",
-    "ShakeGestureWiimoteZ",
     "ShapeletSim",
     "SmallKitchenAppliances",
     "SmoothSubspace",
@@ -188,11 +185,11 @@ def rise_benchmarking():
                        classifier=rise, dataset=dataset, train_file=False)
 
 def boss_benchmarking():
-    for i in range(0, len(benchmark_datasets)):
+    for i in range(len(benchmark_datasets)-10, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
-        print(str(i)+" problem = "+dataset)
+        print(str(i)+" problem = "+dataset+" writing to "+results_dir+"BOSS/")
         boss = db.BOSSEnsemble(max_ensemble_size=10)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonBOSS",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"BOSS/", cls_name="PythonBOSS",
                            classifier=boss,dataset=dataset, train_file=False)
 
 
