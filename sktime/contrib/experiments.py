@@ -19,10 +19,11 @@ IF not done before,
 4) conda init bash
 5) conda create -n sktime
 6) conda activate sktime
-7) conda install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-8) export PYTHONPATH=$(pwd)
-9) python <FULLPATH>setup.py install
-10) python <FULLPATH>setup.py build_ext -i
+7) conda install pip
+8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
+9) export PYTHONPATH=$(pwd)
+10) python <FULLPATH>setup.py install
+11) python <FULLPATH>setup.py build_ext -i
 
 then run sktime.sh script
 
@@ -43,6 +44,9 @@ from sklearn import preprocessing
 
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.tree import DecisionTreeClassifier
+from statsmodels.tsa.stattools import acf
 
 import sktime.classifiers.compose.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
@@ -52,6 +56,11 @@ import sktime.classifiers.distance_based.elastic_ensemble as dist
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.transformers.compose import Tabulariser
+from sktime.pipeline import Pipeline
+from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
@@ -242,13 +251,39 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1)
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
-    elif cls.lower() == 'tsf_markus':
+    elif cls.lower() == 'tsfcomposite':
+        #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
+    elif cls.lower() == 'risecomposite':
+        steps = [
+            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            ('transform', FeatureUnion([
+                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+            ])),
+            ('tabularise', Tabulariser()),
+            ('clf', DecisionTreeClassifier())
+        ]
+        base_estimator = Pipeline(steps)
+        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
         return 'UNKNOWN CLASSIFIER'
+
+
+def acf_coefs(x, maxlag=100):
+    x = np.asarray(x).ravel()
+    nlags = np.minimum(len(x) - 1, maxlag)
+    return acf(x, nlags=nlags).ravel()
+
+
+def powerspectrum(x, **kwargs):
+    x = np.asarray(x).ravel()
+    fft = np.fft.fft(x)
+    ps = fft.real * fft.real + fft.imag * fft.imag
+    return ps[:ps.shape[0] // 2].ravel()
 
 
 def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
@@ -320,8 +355,13 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
             second="Para info too long!"
         else:
             second = str(classifier.get_params())
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+
         print(second)
-        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+
+        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
     if train_file:
@@ -339,7 +379,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
             second="Para info too long!"
         else:
             second = str(classifier.get_params())
-        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
 

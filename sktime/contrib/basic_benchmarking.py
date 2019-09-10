@@ -195,6 +195,6 @@ def boss_benchmarking():
 
 
 if __name__ == "__main__":
-    tsf_benchmarking()
+#    tsf_benchmarking()
 #    rise_benchmarking()
-#    boss_benchmarking()
+    boss_benchmarking()
