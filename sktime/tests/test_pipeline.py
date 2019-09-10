@@ -23,7 +23,7 @@ X_test.columns = ['ts', 'ts_copy']
 def test_FeatureUnion_pipeline():
     # pipeline with segmentation plus multiple feature extraction
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals=3, check_input=False)),
+        ('segment', RandomIntervalSegmenter(n_intervals=3)),
         ('transform', FeatureUnion([
             ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
             ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
@@ -68,7 +68,7 @@ def test_Pipeline_random_state():
     X_test, y_test = load_gunpoint("TEST", return_X_y=True)
 
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals='sqrt', check_input=False)),
+        ('segment', RandomIntervalSegmenter(n_intervals=3)),
         ('extract', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
         ('clf', DecisionTreeClassifier())
     ]
@@ -81,31 +81,6 @@ def test_Pipeline_random_state():
         pipe.fit(X_train, y_train)
         y_pred = pipe.predict(X_test)
         np.testing.assert_array_equal(y_pred_first, y_pred)
-
-
-def test_Pipeline_check_input():
-    steps = [('transform', RandomIntervalFeatureExtractor(features=[np.mean]))]
-    pipe = Pipeline(steps)
-
-    # Check that pipe is initiated without check_input set to True
-    assert pipe.check_input is True
-    assert pipe.get_params()['check_input'] is True
-
-    # Check that all components are initiated with check_input set to True
-    for step in pipe.steps:
-        assert step[1].check_input is True
-        assert step[1].get_params()['check_input'] is True
-
-    # Check that if random state is set, it's set to itself and all its random components
-    ci = False
-    pipe.set_params(**{'check_input': ci})
-
-    assert pipe.check_input == ci
-    assert pipe.get_params()['check_input'] == ci
-
-    for step in pipe.steps:
-        assert step[1].check_input == ci
-        assert step[1].get_params()['check_input'] == ci
 
 
 def test_FeatureUnion():

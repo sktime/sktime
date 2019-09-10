@@ -145,3 +145,9 @@ dask-worker-space
 build_doc_site/
 
 envs/
+sktime/contrib/distance_based/tempy.py
+sktime/contrib/nothing_to_see_here.py
+sktime/distances/elastic_cython.html
+sktime/distances/elastic_cython.html
+*.html
+sktime/distances/elastic_cython.html

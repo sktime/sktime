@@ -47,6 +47,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
     min_interval    : int, minimum width of an interval, optional (default = 16)
     acf_lag         : int, maximum number of autocorellation terms to use (default =100)
     acf_min_values  : int, never use fewer than this number of terms to fnd a correlation (default =4)
+
     Attributes
     ----------
     n_classes    : int, extracted from the data
@@ -58,7 +59,7 @@ class RandomIntervalSpectralForest(ForestClassifier):
     """
 
     def __init__(self,
-                 n_trees=500,
+                 n_trees=200,
                  random_state=None,
                  min_interval=16,
                  acf_lag=100,
@@ -145,12 +146,12 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Find predictions for all cases in X. Built on top of predict_proba
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts] or a data frame.
+        X : array-like or sparse matrix of shape = [n_instances, n_columns] or a data frame.
         If a Pandas data frame is passed,
 
         Returns
         -------
-        output : array of shape = [n_samples]
+        output : array of shape = [n_instances]
         """
 
         probs=self.predict_proba(X)
@@ -161,17 +162,17 @@ class RandomIntervalSpectralForest(ForestClassifier):
         Find probability estimates for each class for all cases in X.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed,
 
         Local variables
         ----------
         n_samps     : int, number of cases to classify
-        num_atts    : int, number of attributes in X, must match _num_atts determined in fit
+        n_columns    : int, number of attributes in X, must match _num_atts determined in fit
 
         Returns
         -------
-        output : array of shape = [n_samples, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
@@ -182,17 +183,17 @@ class RandomIntervalSpectralForest(ForestClassifier):
                 raise TypeError(
                     "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
         rows,cols=X.shape
-        #HERE Do transform againnum_att
-        n_samps, num_atts = X.shape
-        if num_atts != self.series_length:
+        #HERE Do transform again
+        n_cases, n_columns = X.shape
+        if n_columns != self.series_length:
             raise TypeError(" ERROR number of attributes in the train does not match that in the test data")
         sums = np.zeros((X.shape[0],self.n_classes), dtype=np.float64)
 
         for i in range(0, self.n_trees):
-            acf_x = np.empty(shape=(n_samps, self.lags[i]))
+            acf_x = np.empty(shape=(n_cases, self.lags[i]))
             ps_len=(self.intervals[i][1] - self.intervals[i][0]) / 2
-            ps_x = np.empty(shape=(n_samps,int(ps_len)))
-            for j in range(0, n_samps):
+            ps_x = np.empty(shape=(n_cases,int(ps_len)))
+            for j in range(0, n_cases):
                 acf_x[j] = acf(X[j, self.intervals[i][0]:self.intervals[i][1]], self.lags[i])
                 ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x=np.concatenate((acf_x,ps_x),axis=1)
@@ -220,7 +221,7 @@ def acf(x, max_lag):
     y = np.zeros(max_lag)
     length=len(x)
     for lag in range(1, max_lag + 1):
-# Could just do it ourselves ... TO TEST
+# Do it ourselves to avoid zero variance warnings
         s1=np.sum(x[:-lag])
         ss1=np.sum(np.square(x[:-lag]))
         s2=np.sum(x[lag:])
@@ -231,18 +232,17 @@ def acf(x, max_lag):
         y[lag - 1] = y[lag - 1]/ (length - lag)
         v1 = ss1/(length - lag)-s1*s1
         v2 = ss2/(length-lag)-s2*s2
-#        print(v1)
-#        print(v2)
         if v1 <= 0.000000001 and v2 <= 0.000000001: # Both zero variance, so must be 100% correlated
             y[lag - 1]=1
         elif v1 <= 0.000000001 or v2 <= 0.000000001: # One zero variance the other not
             y[lag - 1] = 0
         else:
             y[lag - 1] = y[lag - 1]/(math.sqrt(v1)*math.sqrt(v2))
+    return np.array(y)
+
 #        y[lag - 1] = np.corrcoef(x[lag:], x[:-lag])[0][1]
 #        if np.isnan(y[lag - 1]) or np.isinf(y[lag-1]):
 #            y[lag-1]=0
-    return np.array(y)
 
 
 def matrix_acf(x, num_cases, max_lag):

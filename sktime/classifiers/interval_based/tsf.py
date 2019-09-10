@@ -95,7 +95,7 @@ class TimeSeriesForest(ForestClassifier):
         self : object
          """
         if isinstance(X, pd.DataFrame):
-            if X.columns > 1:
+            if X.shape[1] > 1:
                 raise TypeError("TSF cannot handle multivariate problems yet")
             elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
@@ -133,6 +133,7 @@ class TimeSeriesForest(ForestClassifier):
             tree.fit(transformed_x, y)
             self.classifiers.append(tree)
         return self
+
 
     def predict(self, X):
         """
@@ -172,7 +173,7 @@ class TimeSeriesForest(ForestClassifier):
         output : array of shape = [n_test_instances, num_classes] of probabilities
         """
         if isinstance(X, pd.DataFrame):
-            if X.columns > 1:
+            if X.shape[1] > 1:
                 raise TypeError("TSF cannot handle multivariate problems yet")
             elif isinstance(X.iloc[0,0], pd.Series):
                 X = np.asarray([a.values for a in X.iloc[:,0]])
@@ -212,6 +213,7 @@ class TimeSeriesForest(ForestClassifier):
         x = np.arange(Y.shape[1]) + 1
         slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / ((x * x).mean() - x.mean() ** 2)
         return slope
+
 
 
 if __name__ == "__main__":
