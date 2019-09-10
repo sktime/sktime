@@ -57,6 +57,7 @@ class BOSSEnsemble(BaseEstimator):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
+    n_parameter_samples     : if search is randomised, number of parameter combos to try
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
@@ -81,7 +82,7 @@ class BOSSEnsemble(BaseEstimator):
 
     def __init__(self,
                  randomised_ensemble=False,
-                 ensemble_size=250,
+                 n_parameter_samples=250,
                  random_state=None,
                  threshold=0.92,
                  max_ensemble_size=500,
@@ -100,7 +101,7 @@ class BOSSEnsemble(BaseEstimator):
             max_ensemble_size = 50
 
         self.randomised_ensemble = randomised_ensemble
-        self.ensemble_size = ensemble_size
+        self.n_parameter_samples = n_parameter_samples
         self.random_state = random_state
         random.seed(random_state)
         self.threshold = threshold
@@ -176,9 +177,9 @@ class BOSSEnsemble(BaseEstimator):
             lowest_acc_idx = 0
 
             if self.time_limit > 0:
-                self.ensemble_size = 0
+                self.n_parameter_samples = 0
 
-            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(
+            while (train_time < self.time_limit or num_classifiers < self.n_parameter_samples) and len(
                     possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 
