@@ -1,10 +1,10 @@
 from sklearn.model_selection import GridSearchCV
 from sklearn.base import BaseEstimator
 
-from sktime.classifiers.time_series_neighbors import KNeighborsTimeSeriesClassifier
+from sktime.classifiers.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
 from sktime.pipeline import Pipeline
-from sktime.transformers.SAX import SAX
+from sktime.transformers.dictionary_based.SAX import SAX
 
 
 class BagOfPatterns(BaseEstimator):

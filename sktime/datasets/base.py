@@ -45,7 +45,7 @@ def _load_dataset(name, split, return_X_y):
 
     # Return appropriately
     if return_X_y:
-        return (X, y)
+        return X, y
     else:
         X['class_val'] = pd.Series(y)
         return X
@@ -133,6 +133,49 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
+def load_japanese_vowels(split='TRAIN', return_X_y=False):
+    """
+        Loads the JapaneseVowels time series classification problem and returns X and y.
+
+        Parameters
+        ----------
+        split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+            Whether to load the train or test partition of the problem. By default it loads the train split.
+        return_X_y: bool, optional (default=False)
+            If True, returns (features, target) separately instead of a single dataframe with columns for
+            features and the target.
+
+        Returns
+        -------
+        X: pandas DataFrame with m rows and c columns
+            The time series data for the problem with m cases and c dimensions
+        y: numpy array
+            The class labels for each case in X
+
+        Details
+        -------
+        Dimensionality:     multivariate, 12
+        Series length:      29
+        Train cases:        270
+        Test cases:         370
+        Number of classes:  9
+
+        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying the vowels 'a' and 'e'. A '12-degree
+        linear prediction analysis' is applied to the raw recordings to obtain time-series with 12 dimensions, a
+        originally a length between 7 and 29. In this dataset, instances have been padded to the longest length,
+        29. The classification task is to predict the speaker. Therefore, each instance is a transformed utterance,
+        12*29 values with a single class label attached, [1...9]. The given training set is comprised of 30
+        utterances for each speaker, however the test set has a varied distribution based on external factors of
+        timing and experimenal availability, between 24 and 88 instances per speaker. Reference: M. Kudo, J. Toyama
+        and M. Shimbo. (1999). "Multidimensional Curve Classification Using Passing-Through Regions". Pattern
+        Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
+
+        Dataset details: http://timeseriesclassification.com/description.php?Dataset=JapaneseVowels
+    """
+
+    name = 'JapaneseVowels'
+    return _load_dataset(name, split, return_X_y)
+
 def load_arrow_head(split='TRAIN', return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
@@ -219,7 +262,7 @@ def load_basic_motions(split='TRAIN', return_X_y=False):
 
 def load_shampoo_sales(return_y_as_dataframe=False):
     """
-    Load the shampoo sales univariate time series forecasting dataset.
+    Load the shampoo sales univariate time series dataset for forecasting.
 
     Parameters
     ----------
@@ -254,7 +297,12 @@ def load_shampoo_sales(return_y_as_dataframe=False):
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
-    data.index = pd.PeriodIndex(data.index, freq='M')
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='M')
+    data = data.reset_index(drop=True)
+
     if return_y_as_dataframe:
         # return nested pandas DataFrame with a single row and column
         return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
@@ -265,8 +313,7 @@ def load_shampoo_sales(return_y_as_dataframe=False):
 
 def load_longley(return_X_y=False, return_y_as_dataframe=False):
     """
-    Load the Longley dataset for forecasting with exogenous variables.
-
+    Load the Longley multivariate time series dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
@@ -323,7 +370,11 @@ def load_longley(return_X_y=False, return_y_as_dataframe=False):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data = data.set_index('YEAR')
-    data.index = pd.PeriodIndex(data.index, freq='Y')
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
 
     # Get target series
     yname = 'TOTEMP'
@@ -343,3 +394,62 @@ def load_longley(return_X_y=False, return_y_as_dataframe=False):
     else:
         X[yname] = y
         return X
+
+
+def load_lynx(return_y_as_dataframe=False):
+    """
+    Load the lynx univariate time series dataset for forecasting.
+
+    Parameters
+    ----------
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.s
+        - If False, returns target series as pandas.Series.
+
+    Returns
+    -------
+    y : pandas Series/DataFrame
+        Lynx sales dataset
+
+    Details
+    -------
+    The annual numbers of lynx trappings for 1821–1934 in Canada. This time-series records the number of skins of predators (lynx) that were
+    collected over several years by the Hudson's Bay Company. The dataset was
+    taken from Brockwell & Davis (1991) and appears to be the series
+    considered by Campbell & Walker (1977).
+
+    Dimensionality:     univariate
+    Series length:      114
+    Frequency:          Yearly
+    Number of cases:    1
+
+    Notes
+    -----
+    This data shows aperiodic, cyclical patterns, as opposed to periodic, seasonal patterns.
+
+    References
+    ----------
+    ..[1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S Language. Wadsworth & Brooks/Cole.
+
+    ..[2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical work on the Mackenzie River series of
+    annual Canadian lynx trappings for the years 1821–1934 and a new analysis. Journal of the Royal Statistical Society
+    series A, 140, 411–431.
+    """
+
+    name = 'Lynx'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
+
+    if return_y_as_dataframe:
+        # return nested pandas DataFrame with a single row and column
+        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
+    else:
+        # return nested pandas Series with a single row
+        return pd.Series([data.iloc[:, 0]], name=name)

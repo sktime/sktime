@@ -145,3 +145,5 @@ dask-worker-space
 build_doc_site/
 
 envs/
+sktime/contrib/distance_based/tempy.py
+sktime/contrib/nothing_to_see_here.py

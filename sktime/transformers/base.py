@@ -1,7 +1,7 @@
-"""
-Base estimator for transformers
-"""
 from sklearn.base import BaseEstimator
+
+__all__ = ["BaseTransformer"]
+__author__ = ["Markus Löning", "Sajay Ganesh"]
 
 
 class BaseTransformer(BaseEstimator):

@@ -1,3 +1,33 @@
+""" experiments.py: method to run experiments as an alternative to orchestration.
+
+Note ProximityForest and ElasticEnsemble use cython implementations of the distance measures. You need a c++ compiler for this.
+These are notes mainly for me.
+On  windows:
+The easiest way to install visual studio. Then, from an anaconda prompt, change to the sktime dir, then
+python setup.py install
+python setup.py build_ext -i
+(may not be necessary with pipinstall).
+
+on the cluster
+copy source over then as above,
+enter interactive mode, got to sktime root
+IF not done before,
+
+1) >interactive
+2) change dir to sktime
+3) module add python/anaconda/2019.3/3.7
+4) conda init bash
+5) conda create -n sktime
+6) conda activate sktime
+7) conda install setuptools scipy cython numpy pandas scikit-learn
+8) export PYTHONPATH=$(pwd)
+9) python <FULLPATH>setup.py install
+10) python <FULLPATH>setup.py build_ext -i
+
+then run sktime.sh script
+
+"""
+
 import os
 
 os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
@@ -12,11 +42,13 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 
-import sktime.classifiers.ensemble as ensemble
-import sktime.dictionary_based.boss as db
+import sktime.classifiers.compose.ensemble as ensemble
+import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
-from sktime.classifiers.proximity import ProximityForest
+import sktime.classifiers.distance_based.elastic_ensemble as dist
+import sktime.classifiers.distance_based.proximity_forest as pf
+import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 __author__ = "Anthony Bagnall"
@@ -30,54 +62,79 @@ Will have both low level version and high level orchestration version soon.
 """
 
 
-datasets = [
-    "GunPoint",
-    "ItalyPowerDemand",
+univariate_datasets = [
+    "ACSF1",
+    "Adiac",
+    "AllGestureWiimoteX",
+    "AllGestureWiimoteY",
+    "AllGestureWiimoteZ",
     "ArrowHead",
     "Coffee",
-    "Adiac",
     "Beef",
     "BeetleFly",
     "BirdChicken",
+    "BME",
     "Car",
     "CBF",
+    "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
     "Computers",
     "CricketX",
     "CricketY",
     "CricketZ",
+    "Crop",
     "DiatomSizeReduction",
     "DistalPhalanxOutlineCorrect",
     "DistalPhalanxOutlineAgeGroup",
     "DistalPhalanxTW",
+    "DodgerLoopDay",
+    "DodgerLoopGame",
+    "DodgerLoopWeekend",
     "Earthquakes",
     "ECG200",
     "ECG5000",
     "ECGFiveDays",
-#    "ElectricDevices",
+    "ElectricDevices",
+    "EOGHorizontalSignal",
+    "EOGVerticalSignal",
+    "EthanolLevel",
     "FaceAll",
     "FaceFour",
     "FacesUCR",
     "FiftyWords",
     "Fish",
-#    "FordA",
-#    "FordB",
+    "FordA",
+    "FordB",
+    "FreezerRegularTrain",
+    "FreezerSmallTrain",
+    "Fungi",
+    "GestureMidAirD1",
+    "GestureMidAirD2",
+    "GestureMidAirD3",
+    "GesturePebbleZ1",
+    "GesturePebbleZ2",
     "Ham",
-#    "HandOutlines",
+    "HandOutlines",
     "Haptics",
     "Herring",
     "InlineSkate",
+    "InsectEPGRegularTrain",
+    "InsectEPGSmallTrain",
     "InsectWingbeatSound",
+    "ItalyPowerDemand",
     "LargeKitchenAppliances",
     "Lightning2",
     "Lightning7",
     "Mallat",
     "Meat",
     "MedicalImages",
+    "MelbournePedestrian",
     "MiddlePhalanxOutlineCorrect",
     "MiddlePhalanxOutlineAgeGroup",
     "MiddlePhalanxTW",
+    "MixedShapesRegularTrain",
+    "MixedShapesSmallTrain",
     "MoteStrain",
     "NonInvasiveFetalECGThorax1",
     "NonInvasiveFetalECGThorax2",
@@ -85,18 +142,30 @@ datasets = [
     "OSULeaf",
     "PhalangesOutlinesCorrect",
     "Phoneme",
+    "PickupGestureWiimoteZ",
+    "PigAirwayPressure",
+    "PigArtPressure",
+    "PigCVP",
+    "PLAID",
     "Plane",
+    "PowerCons",
     "ProximalPhalanxOutlineCorrect",
     "ProximalPhalanxOutlineAgeGroup",
     "ProximalPhalanxTW",
     "RefrigerationDevices",
+    "Rock",
     "ScreenType",
+    "SemgHandGenderCh2",
+    "SemgHandMovementCh2",
+    "SemgHandSubjectCh2",
+    "ShakeGestureWiimoteZ",
     "ShapeletSim",
     "ShapesAll",
     "SmallKitchenAppliances",
+    "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-#    "StarlightCurves",
+    "StarlightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",
@@ -106,10 +175,11 @@ datasets = [
     "Trace",
     "TwoLeadECG",
     "TwoPatterns",
+    "UMD",
+    "UWaveGestureLibraryAll",
     "UWaveGestureLibraryX",
     "UWaveGestureLibraryY",
     "UWaveGestureLibraryZ",
-    "UWaveGestureLibraryAll",
     "Wafer",
     "Wine",
     "WordSynonyms",
@@ -118,7 +188,38 @@ datasets = [
     "Yoga",
 ]
 
-
+multivariate_datasets = [
+        "ArticularyWordRecognition",
+        "AtrialFibrillation",
+        "BasicMotions",
+        "CharacterTrajectories",
+        "Cricket",
+        "DuckDuckGeese",
+        "EigenWorms",
+        "Epilepsy",
+        "EthanolConcentration",
+        "ERing",
+        "FaceDetection",
+        "FingerMovements",
+        "HandMovementDirection",
+        "Handwriting",
+        "Heartbeat",
+        "InsectWingbeat",
+        "JapaneseVowels",
+        "Libras",
+        "LSST",
+        "MotorImagery",
+        "NATOPS",
+        "PenDigits",
+        "PEMS-SF",
+        "PhonemeSpectra",
+        "RacketSports",
+        "SelfRegulationSCP1",
+        "SelfRegulationSCP2",
+        "SpokenArabicDigits",
+        "StandWalkJump",
+        "UWaveGestureLibrary"
+]
 
 
 def set_classifier(cls, resampleId):
@@ -131,16 +232,18 @@ def set_classifier(cls, resampleId):
 
     """
     if cls.lower() == 'pf':
-        return ProximityForest(rand = resampleId)
-    if cls == 'RISE' or cls == 'rise':
+        return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls == 'TSF' or cls == 'tsf':
+    elif  cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
-    elif  cls == 'BOSS' or cls == 'boss':
+    elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
-#    elif classifier == 'EE' or classifier == 'ElasticEnsemble':
-#        return dist.ElasticEnsemble()
-    elif cls == 'TSF_Markus':
+    elif cls.lower() == 'st':
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1)
+    elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
+        return dist.ElasticEnsemble()
+    elif cls.lower() == 'tsf_markus':
         return ensemble.TimeSeriesForestClassifier()
     else:
         return 'UNKNOWN CLASSIFIER'
@@ -307,13 +410,48 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     file.close()
 
 
+def test_loading():
 
+    #test multivariate
+    #Test univariate
+    for i in range(0, len(univariate_datasets)):
+        data_dir="E:/tsc_ts/"
+        dataset = univariate_datasets[i]
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        print("Loaded "+dataset+" in position "+str(i))
+        print("Train X shape :")
+        print(trainX.shape)
+        print("Train Y shape :")
+        print(trainY.shape)
+        print("Test X shape :")
+        print(testX.shape)
+        print("Test Y shape :")
+        print(testY.shape)
+    for i in range(16, len(multivariate_datasets)):
+        data_dir="E:/mtsc_ts/"
+        dataset = multivariate_datasets[i]
+        print("Loading "+dataset+" in position "+str(i)+".......")
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        print("Loaded "+dataset)
+        print("Train X shape :")
+        print(trainX.shape)
+        print("Train Y shape :")
+        print(trainY.shape)
+        print("Test X shape :")
+        print(testX.shape)
+        print("Test Y shape :")
+        print(testY.shape)
 
 if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-    print('experimenting...')
+
+#    test_loading()
+#    sys.exit()
+#    print('experimenting...')
 #Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1: #cluster run, this is fragile
         print(sys.argv)
@@ -326,15 +464,22 @@ if __name__ == "__main__":
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
-        data_dir = "/scratch/datasets/"
-        results_dir = "/scratch/results"
-#        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
-#        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "PF"
+#        data_dir = "/scratch/univariate_datasets/"
+#        results_dir = "/scratch/results"
+        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "E:/Temp/"
+#        results_dir = "Z:/Results/sktime Bakeoff/"
+        dataset = "ItalyPowerDemand"
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        classifier = "BOSS"
         resample = 0
-        # for i in range(0, len(datasets)):
-        #     dataset = datasets[i]
-        dataset = "GunPoint"
-        tf=True
-        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
+        for i in range(0, len(univariate_datasets)):
+            dataset = univariate_datasets[i]
+#            print(i)
+#            print(" problem = "+dataset)
+            tf=False
+            run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
 

@@ -1,5 +1,12 @@
 import numpy as np
 
+__author__ = "Jason Lines"
+"""
+python versions of distance functions. These are fearful slow, and the cython ones should be used
+these are in sktime.distances.elastic
+
+        """
+
 
 def dtw_distance(first, second, **kwargs):
 

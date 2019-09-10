@@ -57,7 +57,7 @@ fit
 ~~~
 The fit function takes `X` and `y` as inputs.
 It should perform input checks if and only if the regressor is constructed with `check_inputs=True`.
-Input checks can be performed using `check_ts_X_y(X,y)`.
+Input checks can be performed using `validate_X_y(X,y)`.
 The fit function, after performing the fitting operation if any, should set the is_setted flag `self.is_fitted_=True`.
 It should return `self`, which is the regressor itself.
 
@@ -65,7 +65,7 @@ predict
 ~~~~~~~~
 The predict function takes only `X`.
 It should always check for validity of inputs.
-Input checks can be performed using `check_ts_array(X)`.
+Input checks can be performed using `validate_X(X)`.
 It should check if the regressor is already fit using `check_is_fitted(self, 'is_fitted_')`
 The predict function, should make predictions and return these predictions.
 
@@ -76,10 +76,10 @@ The following is an example regressor
 .. code-block:: python
 
     # use relative imports for sub-packages and modules of sktime
-    from ..utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+    from ..utils.validation import validate_X_y, validate_X, check_is_fitted
     from .base import BaseRegressor
 
-    class MyRegresor(BaseRegressor):
+    class MyRegressor(BaseRegressor):
         """docstring here using numpy syntax
         """
         def __init__(self, check_inputs=True, param1=value1, param2=value2):
@@ -90,7 +90,7 @@ The following is an example regressor
             """docstring here using numpy syntax
             """
             if self.check_inputs:
-                X, y = check_ts_X_y(X, y)
+                validate_X_y(X, y)
             # perform fitting here
             ...
             # set completion flag
@@ -101,7 +101,7 @@ The following is an example regressor
         def predict(self, X):
             """docstring here using numpy syntax
             """
-            X = check_ts_array(X)
+            validate_X(X)
             check_is_fitted(self, 'is_fitted_')
             # predict here
             result = ...
@@ -120,7 +120,7 @@ fit
 ~~~
 The fit function takes `X` and `y` as inputs.
 It should perform input checks if and only if the classifier is constructed with `check_inputs=True`.
-Input checks can be performed using `check_ts_X_y(X,y)`.
+Input checks can be performed using `validate_X_y(X,y)`.
 The fit function, after performing the fitting operation if any, should set the is_setted flag `self.is_fitted_=True`.
 It should return `self`, which is the classifier itself.
 
@@ -128,7 +128,7 @@ predict
 ~~~~~~~~
 The predict function takes only `X`.
 It should always check for validity of inputs.
-Input checks can be performed using `check_ts_array(X)`.
+Input checks can be performed using `validate_X(X)`.
 It should check if the classifier is already fit using `check_is_fitted(self, 'is_fitted_')`
 The predict function, should make predictions and return these predictions.
 
@@ -136,7 +136,7 @@ predict_proba (optional)
 ~~~~~~~~~~~~~~~~~~~~~~~~
 The predict_proba function takes only `X`.
 It should always check for validity of inputs.
-Input checks can be performed using `check_ts_array(X)`.
+Input checks can be performed using `validate_X(X)`.
 It should check if the classifier is already fit using `check_is_fitted(self, 'is_fitted_')`
 The predict_proba function, should make predictions and return these prediction probabilities for each classes.
 
@@ -147,7 +147,7 @@ The following is an example classifier
 .. code-block:: python
 
     # use relative imports for sub-packages and modules of sktime
-    from ..utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+    from ..utils.validation import validate_X_y, validate_X, check_is_fitted
     from .base import BaseClassifier
 
     class MyClassifier(BaseClassifier):
@@ -161,7 +161,7 @@ The following is an example classifier
             """docstring here using numpy syntax
             """
             if self.check_inputs:
-                X, y = check_ts_X_y(X, y)
+                validate_X_y(X, y)
             # perform fitting here
             ...
             # set completion flag
@@ -172,7 +172,7 @@ The following is an example classifier
         def predict(self, X):
             """docstring here using numpy syntax
             """
-            X = check_ts_array(X)
+            validate_X(X)
             check_is_fitted(self, 'is_fitted_')
             # predict here
             result = ...
@@ -200,7 +200,7 @@ fit
 The fit function takes `X` and `y` as inputs.
 `y` is a dummy input and should always take the default value None.
 It should perform input checks if and only if the transformer is constructed with `check_inputs=True`.
-Input checks can be performed using `check_ts_array(X)`.
+Input checks can be performed using `validate_X(X)`.
 The fit function, after performing the fitting operation if any, should set the is_setted flag `self.is_fitted_=True`.
 It should return `self`, which is the transformer itself.
 
@@ -208,7 +208,7 @@ transform
 ~~~~~~~~~
 The transform function takes only `X`.
 It should perform input checks if and only if the transformer is constructed with `check_inputs=True`.
-Input checks can be performed using `check_ts_array(X)`.
+Input checks can be performed using `validate_X(X)`.
 It should check if the transformer is already fit using `check_is_fitted(self, 'is_fitted_')`
 The transform function, should return the appropriately transformed data.
 
@@ -219,7 +219,7 @@ The following is an example transformer
 .. code-block:: python
 
     # use relative imports for sub-packages and modules of sktime
-    from ..utils.validation import check_ts_X_y, check_ts_array, check_is_fitted
+    from ..utils.validation import validate_X_y, validate_X, check_is_fitted
     from .base import BaseTransformer
 
     class MyTransformer(BaseTransformer):
@@ -233,7 +233,7 @@ The following is an example transformer
             """docstring here using numpy syntax
             """
             if self.check_inputs:
-                X = check_ts_array(X)
+                validate_X(X)
             # perform fitting here
             ...
             # set completion flag
@@ -245,7 +245,7 @@ The following is an example transformer
             """docstring here using numpy syntax
             """
             if self.check_inputs:
-                X = check_ts_array(X)
+                validate_X(X)
             check_is_fitted(self, 'is_fitted_')
             # transform the input here
             result = ...
