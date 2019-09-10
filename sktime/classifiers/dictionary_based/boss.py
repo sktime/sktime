@@ -57,6 +57,7 @@ class BOSSEnsemble(BaseEstimator):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
+    n_parameter_samples     : if search is randomised, number of parameter combos to try
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
