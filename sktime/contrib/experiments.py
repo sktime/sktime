@@ -245,6 +245,10 @@ def set_classifier(cls, resampleId):
     """
     if cls.lower() == 'pf':
         return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'pt':
+        return pf.ProximityTree(random_state = resampleId)
+    elif cls.lower() == 'ps':
+        return pf.ProximityStump(random_state = resampleId)
     elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls.lower() == 'tsf':
