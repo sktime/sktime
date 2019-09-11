@@ -896,8 +896,9 @@ class ProximityTree(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
         self.classes_ = self.label_encoder.classes_
         self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
@@ -923,6 +924,7 @@ class ProximityTree(BaseClassifier):
                         max_depth=self.max_depth,
                         n_jobs=self.n_jobs
                     )
+                    sub_tree.label_encoder = self.label_encoder
                     sub_tree.depth = self.depth + 1
                     self.branches[index] = sub_tree
                     sub_X = self.stump.X_branches[index]
@@ -951,18 +953,20 @@ class ProximityTree(BaseClassifier):
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
         distribution = np.zeros((X.shape[0], n_classes))
+        assert n_classes == 3
         for index in range(len(self.branches)):
             indices = np.argwhere(closest_exemplar_indices == index)
             if indices.shape[0] > 0:
                 indices = np.ravel(indices)
                 sub_tree = self.branches[index]
                 if sub_tree is None:
-                    sub_distribution = np.zeros(n_classes)
+                    sub_distribution = np.zeros((1, n_classes))
                     class_label = self.stump.y_exemplar[index]
-                    sub_distribution[class_label] = 1
+                    sub_distribution[0][class_label] = 1
                 else:
                     sub_X = X.iloc[indices, :]
                     sub_distribution = sub_tree.predict_proba(sub_X)
+                assert sub_distribution.shape[1] == n_classes
                 np.add.at(distribution, indices, sub_distribution)
         normalize(distribution, copy=False, norm='l1')
         return distribution
