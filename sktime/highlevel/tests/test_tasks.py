@@ -1,3 +1,5 @@
+__author__ = "Markus Löning"
+
 import pytest
 from pytest import raises
 
@@ -7,8 +9,6 @@ from sktime.highlevel.tasks import BaseTask
 from sktime.highlevel.tasks import TSCTask
 from sktime.highlevel.tasks import TSRTask
 from sktime.highlevel.tasks import ForecastingTask
-
-__author__ = "Markus Löning"
 
 TASKS = (TSCTask, TSRTask, ForecastingTask)
 
@@ -27,7 +27,7 @@ def test_readonly_attributes(attr):
 
 
 # Test read-only forecasting horizon attribute of forecasting task
-@pytest.mark.parametrize("fh", [None, [1], [1, 2, 3]])
+@pytest.mark.parametrize("fh", [[1], [1, 2, 3]])
 def test_readonly_fh(fh):
     task = ForecastingTask(target='ShampooSales', metadata=shampoo_sales)
     with raises(AttributeError):

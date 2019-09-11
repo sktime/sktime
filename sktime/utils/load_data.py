@@ -169,30 +169,20 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
     line_num = 0
 
     # Parse the file
-
-    with open(full_file_path_and_name, 'r') as file:
+    # print(full_file_path_and_name)
+    with open(full_file_path_and_name, 'r',encoding='utf-8') as file:
         for line in file:
-
             # Strip white space from start/end of line and change to lowercase for use below
-
             line = line.strip().lower()
-
             # Empty lines are valid at any point in a file
-
             if line:
-
                 # Check if this line contains metadata
                 # Please note that even though metadata is stored in this function it is not currently published externally
-
                 if line.startswith("@problemname"):
-
                     # Check that the data has not started
-
                     if data_started:
                         raise TsFileParseException("metadata must come before data")
-
                     # Check that the associated value is valid
-
                     tokens = line.split(' ')
                     token_len = len(tokens)
 
@@ -571,7 +561,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
                         # All dimensions should be included for all series, even if they are empty
 
                         if this_line_num_dimensions != num_dimensions:
-                            raise TsFileParseException("inconsistent number of dimensions")
+                            raise TsFileParseException("inconsistent number of dimensions. Expecting "+str(num_dimensions)+ " but have read "+str(this_line_num_dimensions))
 
                         # Process the data for each dimension
 

@@ -39,16 +39,16 @@ class BOSSEnsemble(BaseEstimator):
     }
     Overview: Input n series length m
     BOSS performs a gird search over a set of parameter values, evaluating each with a LOOCV. If then retains
-    all ensemble members within 92% of the best. There are three primary parameters: 
+    all ensemble members within 92% of the best. There are three primary parameters:
             alpha: alphabet size
             w: window length
             l: word length.
-    for any combination, a single BOSS slides a window length w along the series. The w length window is shortened to 
-    an l length word through taking a Fourier transform and keeping the first l/2 complex coefficients. These l 
-    coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each 
-    series is formed and stored. fit involves finding n histograms. 
+    for any combination, a single BOSS slides a window length w along the series. The w length window is shortened to
+    an l length word through taking a Fourier transform and keeping the first l/2 complex coefficients. These l
+    coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each
+    series is formed and stored. fit involves finding n histograms.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.  
+    predict uses 1 nearest neighbour with a bespoke distance function.
 
     For the Java version, see
     https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
@@ -57,31 +57,32 @@ class BOSSEnsemble(BaseEstimator):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
-    random_ensemble_size    : int, if randomising, generate this number of base classifiers
+    n_parameter_samples     : if search is randomised, number of parameter combos to try
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
-    wordLengths             : list of int, search space for word lengths (default =100)
     alphabet_size           : range of alphabet sizes to try (default to single value, 4)
-    max_win_len_prop        : maximum window length as a proportion of series length (default =1),
-    time_limit              : time contract to limit build time (default=0, no limit)
+    max_win_len_prop        : maximum window length as a proportion of series length (default =1)
+    time_limit              : time contract to limit build time in minutes (default=0, no limit)
     word_lengths            : search range for word lengths (default =[16, 14, 12, 10, 8])
     alphabet_size           : range of alphabet size to search for (default, a single value a=4),
-    min_window              : minu=imum window size, (default=10_,
-    norm_options            : search space for normalise, not normalise (default [True, False]_
+    min_window              : minimum window size, (default=10),
+    norm_options            : search space for normalise, not normalise (default [True, False])
 
     Attributes
     ----------
-    n_classes    : extracted from the data
-    num_atts       : extracted from the data
-    classifiers    : array of DecisionTree classifiers
-    intervals      : stores indexes of the start and end points for all classifiers
+    n_classes               : extracted from the data
+    n_instances             : extracted from the data
+    n_classifiers           : The final number of classifiers used (<=max_ensemble_size)
+    series_length           : length of all series (assumed equal)
+    classifiers             : array of DecisionTree classifiers
+    weights                 : weight of each classifier in the ensemble
 
     """
 
     def __init__(self,
                  randomised_ensemble=False,
-                 ensemble_size=100,
+                 n_parameter_samples=250,
                  random_state=None,
                  threshold=0.92,
                  max_ensemble_size=500,
@@ -96,15 +97,17 @@ class BOSSEnsemble(BaseEstimator):
             word_lengths = [16, 14, 12, 10, 8]
         if norm_options is None:
             norm_options = [True, False]
+        if randomised_ensemble and max_ensemble_size == 500:
+            max_ensemble_size = 50
 
         self.randomised_ensemble = randomised_ensemble
-        self.ensemble_size = ensemble_size
+        self.n_parameter_samples = n_parameter_samples
         self.random_state = random_state
         random.seed(random_state)
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
-        self.time_limit = time_limit
+        self.time_limit = time_limit*6e+10
 
         self.seed = 0
         self.classifiers = []
@@ -161,7 +164,7 @@ class BOSSEnsemble(BaseEstimator):
         if win_inc < 1:
             win_inc = 1
 
-        # RBOSS
+        # cBOSS
         if self.randomised_ensemble:
             random.seed(self.seed)
 
@@ -174,9 +177,9 @@ class BOSSEnsemble(BaseEstimator):
             lowest_acc_idx = 0
 
             if self.time_limit > 0:
-                self.ensemble_size = 0
+                self.n_parameter_samples = 0
 
-            while (train_time < self.time_limit or num_classifiers < self.ensemble_size) and len(
+            while (train_time < self.time_limit or num_classifiers < self.n_parameter_samples) and len(
                     possible_parameters) > 0:
                 parameters = possible_parameters.pop(random.randint(0, len(possible_parameters) - 1))
 

@@ -14,11 +14,10 @@ __author__ = "Markus Löning"
 FORECASTERS = (DummyForecaster, ExpSmoothingForecaster, ARIMAForecaster)
 
 # forecast horizons
-FHS = (None, [1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
+FHS = ([1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
 
 # load test data
 y = load_shampoo_sales()
-
 
 # test default forecasters output for different forecasters horizons
 @pytest.mark.parametrize("fh", FHS)

@@ -5,7 +5,8 @@ from sklearn.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
-from sktime.utils.validation.supervised import validate_X
+from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.data_container import get_time_index
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -19,13 +20,11 @@ class IntervalSegmenter(BaseTransformer):
         - If int, intervals are generated.
         - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving intervals, the first column giving start points,
         and the second column giving end points of intervals
-        - If list of np.ndarrays, there is one array for each column.
     """
 
-    def __init__(self, intervals=None, check_input=True):
+    def __init__(self, intervals=None):
         self.intervals = intervals
-        self.check_input = check_input
-        self.input_indexes_ = []  # list of time-series indexes of each column
+        self._time_index = []
         self.input_shape_ = ()
 
     def fit(self, X, y=None):
@@ -44,29 +43,22 @@ class IntervalSegmenter(BaseTransformer):
         self : an instance of self.
         """
 
-        if self.check_input:
-            validate_X(X)
+        validate_X(X)
+        check_X_is_univariate(X)
 
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
-        # TODO generalise to columns with series of unequal length
-        self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
-                               else np.arange(X.iloc[0, c].shape[0]) for c in range(self.input_shape_[1])]
+        self._time_index = get_time_index(X)
 
         if isinstance(self.intervals, np.ndarray):
-            self.intervals_ = [self.intervals]
-
-        if (isinstance(self.intervals, list) and (len(self.intervals) == self.input_shape_[1])
-                and np.all([isinstance(intervals, np.ndarray) for intervals in self.intervals])):
             self.intervals_ = self.intervals
 
         elif np.issubdtype(self.intervals, np.integer):
-            self.intervals_ = [np.array_split(self.input_indexes_[c], self.intervals)
-                               for c in range(self.input_shape_[1])]
+            self.intervals_ = np.array_split(self._time_index, self.intervals)
 
         else:
-            raise ValueError(f"`intervals` must be either an integer, a single array or list of arrays with "
+            raise ValueError(f"Intervals must be either an integer, a single array with "
                              f"start and end points, but found: {self.intervals}")
 
         return self
@@ -88,38 +80,33 @@ class IntervalSegmenter(BaseTransformer):
         """
 
         # Check inputs.
-        if self.check_input:
-            # Check is fit had been called
-            check_is_fitted(self, 'intervals_')
+        check_is_fitted(self, 'intervals_')
+        validate_X(X)
 
-            validate_X(X)
-
-            # Check that the input is of the same shape as the one passed
-            # during fit.
-            if (X.shape[1] if X.ndim == 2 else 1) != self.input_shape_[1]:
-                raise ValueError('Number of columns of input is different from what was seen'
-                                 'in `fit`')
-            # Input validation
-            if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
-                                                                                         self.input_indexes_)]):
-                raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
+        # Check that the input is of the same shape as the one passed
+        # during fit.
+        if X.shape[1] != self.input_shape_[1]:
+            raise ValueError('Number of columns of input is different from what was seen'
+                             'in `fit`')
+        # # Input validation
+        # if not all([np.array_equal(fit_idx, trans_idx)
+        #             for trans_idx, fit_idx in zip(check_equal_index(X), self._time_index)]):
+        #     raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
 
         # Segment into intervals.
+        # TODO generalise to non-equal-index cases
         intervals = []
-        self.colnames_ = []
-        for c, (colname, col) in enumerate(X.items()):
-
-            # Tabularize each column assuming series have equal indexes in any given column.
-            # TODO generalise to non-equal-index cases
-            arr = tabularize(col, return_array=True)
-            for start, end in self.intervals_[c]:
-                interval = arr[:, start:end]
-                intervals.append(interval)
-                self.colnames_.append(f'{colname}_{start}_{end}')
+        colname = X.columns[0]
+        colnames = []
+        arr = tabularize(X, return_array=True)  # Tabularise assuming series have equal indexes in any given column
+        for start, end in self.intervals_:
+            interval = arr[:, start:end]
+            intervals.append(interval)
+            colnames.append(f"{colname}_{start}_{end}")
 
         # Return nested pandas DataFrame.
         Xt = pd.DataFrame(concat_nested_arrays(intervals, return_arrays=True))
-        Xt.columns = self.colnames_
+        Xt.columns = colnames
         return Xt
 
 
@@ -148,19 +135,22 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    check_input : bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
     """
 
-    def __init__(self, n_intervals='sqrt', min_length=None, random_state=None, check_input=True):
+    def __init__(self, n_intervals='sqrt', min_length=2, random_state=None):
 
-        self.min_length = 1 if min_length is None else min_length
+        if not isinstance(min_length, int):
+            raise ValueError(f"Min_lenght must be an integer, but found: "
+                             f"{type(min_length)}")
+        if min_length < 1:
+            raise ValueError(f"Min_lenght must be an positive integer (>= 1), "
+                             f"but found: {min_length}")
+
+        self.min_length = min_length
         self.n_intervals = n_intervals
         self.random_state = random_state
 
-        super(RandomIntervalSegmenter, self).__init__(check_input=check_input)
+        super(RandomIntervalSegmenter, self).__init__()
 
     @property
     def random_state(self):
@@ -194,25 +184,22 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             This estimator
         """
 
-        if self.check_input:
-            validate_X(X)
+        validate_X(X)
 
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
         # TODO generalise to columns with series of unequal length
-        self.input_indexes_ = [X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index')
-                               else np.arange(X.iloc[0, c].shape[0]) for c in range(self.input_shape_[1])]
+        self._time_index = get_time_index(X)
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
         #  or rely on ColumnTransformer?
         if self.n_intervals == 'random':
-            self.intervals_ = [self._rand_intervals_rand_n(self.input_indexes_[c])
-                               for c in range(self.input_shape_[1])]
+            self.intervals_ = self._rand_intervals_rand_n(self._time_index)
         else:
-            self.intervals_ = [self._rand_intervals_fixed_n(self.input_indexes_[c], n=self.n_intervals)
-                               for c in range(self.input_shape_[1])]
+            self.intervals_ = self._rand_intervals_fixed_n(self._time_index, n_intervals=self.n_intervals)
+
         return self
 
     def _rand_intervals_rand_n(self, x):
@@ -248,7 +235,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
                 ends.append(end)
         return np.column_stack([starts, ends])
 
-    def _rand_intervals_fixed_n(self, x, n):
+    def _rand_intervals_fixed_n(self, x, n_intervals):
         """
         Compute a fixed number (n) of intervals from index (x) with
         random starting points and lengths. Intervals may overlap and may not be unique.
@@ -257,7 +244,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         ----------
         x : array_like, shape = [n_observations]
             Array containing the time-series index.
-        n : 'sqrt', 'log', float or int
+        n_intervals : 'sqrt', 'log', float or int
 
         Returns
         -------
@@ -265,27 +252,27 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             2d array containing start and end points of intervals
         """
 
-        m = len(x)
+        len_series = len(x)
         # compute number of random intervals relative to series length (m)
         # TODO use smarter dispatch at construction to avoid evaluating if-statements here each time function is called
-        if np.issubdtype(type(n), np.integer) and (n >= 1):
+        if np.issubdtype(type(n_intervals), np.integer) and (n_intervals >= 1):
             pass
-        elif n == 'sqrt':
-            n = int(np.sqrt(m))
-        elif n == 'log':
-            n = int(np.log(m))
-        elif np.issubdtype(type(n), np.floating) and (n > 0) and (n <= 1):
-            n = int(m * n)
+        elif n_intervals == 'sqrt':
+            n_intervals = int(np.sqrt(len_series))
+        elif n_intervals == 'log':
+            n_intervals = int(np.log(len_series))
+        elif np.issubdtype(type(n_intervals), np.floating) and (n_intervals > 0) and (n_intervals <= 1):
+            n_intervals = int(len_series * n_intervals)
         else:
             raise ValueError(f'Number of intervals must be either "random", "sqrt", a positive integer, or a float '
-                             f'value between 0 and 1, but found {n}.')
+                             f'value between 0 and 1, but found {n_intervals}.')
 
         # make sure there is at least one interval
-        n = np.maximum(1, n)
+        n_intervals = np.maximum(1, n_intervals)
 
-        starts = self._rng.randint(m - self.min_length + 1, size=n)
-        if n == 1:
+        starts = self._rng.randint(len_series - self.min_length + 1, size=n_intervals)
+        if n_intervals == 1:
             starts = [starts]  # make it an iterable
 
-        ends = [start + self._rng.randint(self.min_length, m - start + 1) for start in starts]
+        ends = [start + self._rng.randint(self.min_length, len_series - start + 1) for start in starts]
         return np.column_stack([starts, ends])

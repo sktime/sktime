@@ -233,6 +233,9 @@ class ReducedRegressionForecaster(BaseForecaster):
             raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit, "
                              f"as one estimator is fit for each step ahead forecast of the forecasting horizon")
 
+        if fh is not None:
+            fh = validate_fh(fh)
+
         # Make interface compatible with estimators that only take y and no X
         kwargs = {} if X is None else {'X': X}
 

@@ -239,7 +239,7 @@ class ForecastingTask(BaseTask):
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, target, fh=None, features=None, metadata=None):
+    def __init__(self, target, fh=1, features=None, metadata=None):
         self._case = "Forecasting"
         self._fh = validate_fh(fh)
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)

@@ -3,11 +3,6 @@
 This module has meta-transformers that is build using the pre-existing
 transformers as building blocks.
 """
-
-from sktime.utils.validation.supervised import validate_X
-from sktime.utils.data_container import tabularize
-from sklearn.compose import ColumnTransformer
-
 import numpy as np
 import pandas as pd
 from scipy import sparse
@@ -15,9 +10,12 @@ from sklearn.compose import ColumnTransformer as skColumnTransformer
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
+from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
 from sktime.utils.validation.forecasting import check_is_fitted_in_transform
+from sktime.utils.validation.supervised import validate_X
 
+__author__ = ["Markus Löning", "Sajay Ganesh"]
 __all__ = ['ColumnTransformer',
            'RowwiseTransformer',
            'Tabularizer',
@@ -195,28 +193,31 @@ class RowwiseTransformer(BaseTransformer):
         validate_X(X)
 
         # fitting - this transformer needs no fitting
-        self.is_fitted_ = True
+        self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
+        """Apply the `fit_transform()` method of the transformer on each row.
         """
-        Apply the `fit_transform()` method of the per-row transformer repeatedly
-        on each row.
+        func = self.transformer.fit_transform
+        return self._apply_rowwise(func, X, y)
 
-        Parameters
-        ----------
-        X : 1D array-like, pandas Series, shape (n_samples, 1)
-            The training input samples. Shoould not be a DataFrame.
-
-        Returns
-        -------
-        T : 1D array-like, pandas Series, shape (n_samples, ...)
-            The transformed data
+    def inverse_transform(self, X, y=None):
+        """Apply the `fit_transform()` method of the transformer on each row.
         """
-        # check the validity of input
+        if not hasattr(self.transformer, 'inverse_transform'):
+            raise AttributeError("Transformer does not have an inverse transform method")
+
+        func = self.transformer.inverse_transform
+        return self._apply_rowwise(func, X, y)
+
+    def _apply_rowwise(self, func, X, y=None):
+        """Helper function to apply transform or inverse_transform function on each row of data container"""
+        check_is_fitted(self, '_is_fitted')
         validate_X(X)
-        check_is_fitted(self, 'is_fitted_')
 
+        # 1st attempt: apply, relatively fast but not robust
+        # try and except, but sometimes breaks in other cases than excepted ValueError
         # Works on single column, but on multiple columns only if columns have equal-length series.
         # try:
         #     Xt = X.apply(self.transformer.fit_transform)
@@ -227,10 +228,35 @@ class RowwiseTransformer(BaseTransformer):
         #         Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform)) for _, col in X.items()], axis=1)
         #     else:
         #         raise
-        Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform))
-                        for _, col in X.items()], axis=1)
 
+        # 2nd attempt: apply but iterate over columns, still relatively fast but still not very robust
+        # but column is not 2d and thus breaks if transformer expects 2d input
+        try:
+            Xt = pd.concat([pd.Series(col.apply(func))
+                            for _, col in X.items()], axis=1)
+
+        # 3rd attempt: explicit for-loops, most robust but very slow
+        except:
+            cols_t = []
+            for c in range(X.shape[1]):  # loop over columns
+                col = X.iloc[:, c]
+                rows_t = []
+                for row in col:  # loop over rows in each column
+                    row_2d = pd.DataFrame(row)  # convert into 2d dataframe
+                    row_t = func(row_2d).ravel()  # apply transform
+                    rows_t.append(row_t)  # append transformed rows
+                cols_t.append(rows_t)  # append transformed columns
+
+            # if series-to-series transform, flatten transformed series
+            Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
+
+            # tabularise/unnest series-to-primitive transforms
+            xt = Xt.iloc[0, 0]
+            if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
+                Xt = tabularize(Xt)
         return Xt
+
+
 
 
 class Tabularizer(BaseTransformer):
