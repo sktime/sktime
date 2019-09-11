@@ -275,7 +275,7 @@ def set_classifier(cls, resampleId):
         base_estimator = Pipeline(steps)
         return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
-        return 'UNKNOWN CLASSIFIER'
+        raise Exception('UNKNOWN CLASSIFIER')
 
 
 def acf_coefs(x, maxlag=100):
