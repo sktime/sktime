@@ -953,7 +953,6 @@ class ProximityTree(BaseClassifier):
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
         distribution = np.zeros((X.shape[0], n_classes))
-        assert n_classes == 3
         for index in range(len(self.branches)):
             indices = np.argwhere(closest_exemplar_indices == index)
             if indices.shape[0] > 0:
