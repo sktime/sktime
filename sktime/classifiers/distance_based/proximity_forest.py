@@ -730,10 +730,12 @@ class ProximityStump(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -899,8 +901,9 @@ class ProximityTree(BaseClassifier):
         if self.label_encoder == None:
             self.label_encoder = LabelEncoder()
             self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -1107,10 +1110,12 @@ class ProximityForest(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)
