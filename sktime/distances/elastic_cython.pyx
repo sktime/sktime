@@ -12,6 +12,9 @@ np.import_array()
 from libc.float cimport DBL_MAX
 from libc.math cimport exp, sqrt, fabs
 
+# __all__ = ['dtw_distance', 'wdtw_distance', 'ddtw_distance', 'wddtw_distance', 'lcss_distance', 'erp_distance', 'msm_distance', 'twe_distance']
+
+
 cdef inline double min_c(double a, double b): return a if a <= b else b
 cdef inline int max_c_int(int a, int b): return a if a >= b else b
 cdef inline int min_c_int(int a, int b): return a if a <= b else b
@@ -245,7 +248,6 @@ def lcss_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y, in
 
     return 1 - (max_val / m)
 
-#cython: boundscheck=False, wraparound=False, nonecheck=False
 def twe_distance(np.ndarray[double, ndim=2] ta, np.ndarray[double, ndim=2] tb, double penalty = 1,
                  double stiffness = 1):
     cdef int dim = ta.shape[1] - 1
