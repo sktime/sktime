@@ -12,7 +12,7 @@ def run_classifier_on_dataset(classifier, dataset_loader,
     X_train, y_train = dataset_loader(split='TRAIN', return_X_y=True)
     X_test, y_test = dataset_loader(split='TEST', return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
-    print(indices)
+    # print(indices)
     X_train = X_train.iloc[indices]
     y_train = y_train[indices]
     X_test = X_test.iloc[indices]
