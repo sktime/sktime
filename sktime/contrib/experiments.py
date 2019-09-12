@@ -19,13 +19,15 @@ IF not done before,
 4) conda init bash
 5) conda create -n sktime
 6) conda activate sktime
-7) conda install setuptools scipy cython numpy pandas scikit-learn
-8) export PYTHONPATH=$(pwd)
-9) python <FULLPATH>setup.py install
-10) python <FULLPATH>setup.py build_ext -i
+7) conda install pip
+8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
+9) export PYTHONPATH=$(pwd)
+10) python <FULLPATH>setup.py install
+11) python <FULLPATH>setup.py build_ext -i
 
 then run sktime.sh script
 
+NOTE: do
 """
 
 import os
@@ -39,8 +41,12 @@ import time
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.tree import DecisionTreeClassifier
+from statsmodels.tsa.stattools import acf
 
 import sktime.classifiers.compose.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
@@ -50,10 +56,15 @@ import sktime.classifiers.distance_based.elastic_ensemble as dist
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.transformers.compose import Tabulariser
+from sktime.pipeline import Pipeline
+from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java, 
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
@@ -79,6 +90,7 @@ univariate_datasets = [
     "Chinatown",
     "ChlorineConcentration",
     "CinCECGTorso",
+    "Coffee",
     "Computers",
     "CricketX",
     "CricketY",
@@ -240,16 +252,42 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1)
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
-    elif cls.lower() == 'tsf_markus':
+    elif cls.lower() == 'tsfcomposite':
+        #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
+    elif cls.lower() == 'risecomposite':
+        steps = [
+            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            ('transform', FeatureUnion([
+                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+            ])),
+            ('tabularise', Tabulariser()),
+            ('clf', DecisionTreeClassifier())
+        ]
+        base_estimator = Pipeline(steps)
+        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
         return 'UNKNOWN CLASSIFIER'
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, overwrite=False, format=".ts", train_file=False):
+def acf_coefs(x, maxlag=100):
+    x = np.asarray(x).ravel()
+    nlags = np.minimum(len(x) - 1, maxlag)
+    return acf(x, nlags=nlags).ravel()
+
+
+def powerspectrum(x, **kwargs):
+    x = np.asarray(x).ravel()
+    fft = np.fft.fft(x)
+    ps = fft.real * fft.real + fft.imag * fft.imag
+    return ps[:ps.shape[0] // 2].ravel()
+
+
+def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -266,7 +304,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
-    cls_name = cls_name.upper()
+
     build_test = True
     if not overwrite:
         full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
@@ -285,12 +323,12 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    if resample !=0:
+    if resampleID !=0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
         train_size = len(trainY) / (len(trainY) + len(testY))
         trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resample, shuffle=True,
+                                                                       random_state=resampleID, shuffle=True,
                                                                        stratify=allLabels)
 
 
@@ -298,7 +336,8 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
-    classifier = set_classifier(cls_name, resampleID)
+    if classifier is None:
+        classifier = set_classifier(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
@@ -313,8 +352,17 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' test acc: ' + str(ac)
               + ' time: ' + str(test_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
-        second = str(classifier.get_params())
-        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))+ "," + str(classifier.classes_)
+        if "Composite" in cls_name:
+            second="Para info too long!"
+        else:
+            second = str(classifier.get_params())
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+
+        print(second)
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+
+        third = str(ac)+","+str(build_time)+","+str(test_time)+",-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
     if train_file:
@@ -328,8 +376,14 @@ def run_experiment(problem_path, results_path, cls_name, dataset, resampleID=0, 
         train_acc = accuracy_score(trainY,train_preds)
         print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' train acc: ' + str(train_acc)
               + ' time: ' + str(train_time))
-        second = str(classifier.get_params())
-        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_)) + "," + str(classifier.classes_)
+        if "Composite" in cls_name:
+            second="Para info too long!"
+        else:
+            second = str(classifier.get_params())
+        second.replace('\n',' ')
+        second.replace('\r',' ')
+        temp=np.array_repr(classifier.classes_).replace('\n', '')
+        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_))
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
 
@@ -379,7 +433,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     file.write("\n")
 
     # the second line of the output is free form and classifier-specific; usually this will record info
-    # such as build time, parameter options used, any constituent model names for ensembles, etc.
+    # such as parameter options used, any constituent model names for ensembles, etc.
     file.write(str(second_line)+"\n")
 
     # the third line of the file is the accuracy (should be between 0 and 1 inclusive). If this is a train
@@ -474,7 +528,7 @@ if __name__ == "__main__":
         dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "BOSS"
+        classifier = "TSF"
         resample = 0
         for i in range(0, len(univariate_datasets)):
             dataset = univariate_datasets[i]
@@ -482,4 +536,3 @@ if __name__ == "__main__":
 #            print(" problem = "+dataset)
             tf=False
             run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
-
