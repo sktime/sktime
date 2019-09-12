@@ -1,0 +1,75 @@
+# AppVeyor.com is a Continuous Integration service to build and run tests under
+# Windows
+
+# adapted from https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
+# https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
+
+environment:
+
+  matrix:
+    # For Python versions available on Appveyor, see
+    # https://www.appveyor.com/docs/windows-images-software/#pytho
+
+    - PYTHON: "C:\\Python36-x64"
+    - PYTHON: "C:\\Python36"
+    - PYTHON: "C:\\Python37-x64"
+    - PYTHON: "C:\\Python37"
+
+matrix:
+  # Because we only have a single worker, we don't want to waste precious
+  # appveyor CI time and make other PRs wait for repeated failures in a failing
+  # PR. The following option cancels pending jobs in a given PR after the first
+  # job failure in that specific PR.
+
+  fast_finish: true
+
+install:
+  # If there is a newer build queued for the same PR, cancel this one.
+  # The AppVeyor 'rollout builds' option is supposed to serve the same
+  # purpose but is problematic because it tends to cancel builds pushed
+  # directly to master instead of just PR builds.
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+        throw "There are newer queued builds for this pull request, failing early." }
+
+  # Install the build and runtime dependencies of the project
+  - "%PYTHON%\\python.exe -m pip install -U pip"
+  - "%PYTHON%\\python.exe -m pip install --timeout=60 -r build_tools/appveyor/requirements.txt"
+  - "%PYTHON%\\python.exe setup.py bdist_wheel bdist_wininst"
+  - ps: "ls dist"
+
+  # Install the generated wheel package to test it
+  - "pip install --pre --no-index --find-links dist/ sktime"
+
+  # If there is a newer build queued for the same PR, cancel this one.
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+      https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+      Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+      throw "There are newer queued builds for this pull request, failing early." }
+
+build: false
+
+test_script:
+  # Put your test command here
+  - mkdir "../test_folder"
+  - cd "../test_folder"
+  - "pytest sktime"
+
+  # Move back to the project folder
+  - cd "../sktime"
+
+#after_test:
+#  # Wheels are already build when installing
+#  - "%PYTHON%\\python.exe setup.py bdist_wheel"
+
+artifacts:
+  # bdist_wheel puts your built wheel in the dist directory
+  - path: dist\*
+
+#on_success:
+#  You can use this step to upload your artifacts to a public website.
+#  See Appveyor's documentation for more details. Or you can simply
+#  access your wheels from the Appveyor "artifacts" tab for your build.

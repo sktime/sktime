@@ -1,0 +1,10 @@
+numpy
+scipy
+scikit-learn
+pandas
+joblib
+cython
+pytest
+wheel
+scikit-posthocs
+statsmodels
