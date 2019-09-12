@@ -3,8 +3,8 @@ scipy
 scikit-learn
 pandas
 joblib
+scikit-posthocs
+statsmodels
 cython
 pytest
 wheel
-scikit-posthocs
-statsmodels
