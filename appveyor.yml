@@ -5,15 +5,20 @@
 # https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
 environment:
+  global:
+    # SDK v7.0 MSVC Express 2008's SetEnv.cmd script will fail if the
+    # /E:ON and /V:ON options are not enabled in the batch script interpreter
+    # See: https://stackoverflow.com/a/13751649/163740
+    CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
 
   matrix:
     # For Python versions available on Appveyor, see
     # https://www.appveyor.com/docs/windows-images-software/#pytho
 
     - PYTHON: "C:\\Python37-x64"
-      # PYTHON_VERSION: "3.7.0"
-      # PYTHON_ARCH: "64"
-      # CHECK_WARNINGS: "true"
+      PYTHON_VERSION: "3.7.0"
+      PYTHON_ARCH: "64"
+      CHECK_WARNINGS: "true"
 
 matrix:
   # Because we only have a single worker, we don't want to waste precious
