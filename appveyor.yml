@@ -77,7 +77,7 @@ test_script:
         } else {
             $env:PYTEST_ARGS = ""
         }
-  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sklearn"
+  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime"
   # Move back to the project folder
   - cd "../sktime"
 
