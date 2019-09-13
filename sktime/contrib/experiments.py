@@ -32,11 +32,6 @@ NOTE: do
 
 import os
 
-import sktime.classifiers.proximity
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, FullDtwKnn, EdKnn, \
-    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn, EigDtwSvm, TriSvm, PolySvm, KL2Svm, HellSvm
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
-    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -50,15 +45,8 @@ from sklearn import preprocessing
 
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
-import sktime.classifiers.ensemble as ensemble
-import sktime.contrib.dictionary_based.boss_ensemble as db
-import sktime.contrib.frequency_based.rise as fb
-import sktime.contrib.interval_based.tsf as ib
 from sktime.utils.load_data import load_ts
 import argparse
-from sktime.transformers.kernels import DtwSvm, WdtwSvm, DdtwSvm, WddtwSvm, MsmSvm, LcssSvm, ErpSvm, TweSvm, WdtwKnn, \
-    MsmKnn, LcssKnn, ErpKnn, TweKnn, DdtwKnn, WddtwKnn, FullDtwKnn, EdKnn, \
-    EdSvm, FullDtwSvm, FullDdtwSvm, FullDdtwKnn, DtwKnn
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
@@ -76,6 +64,7 @@ from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import Tabulariser
 from sktime.pipeline import Pipeline
 from sktime.pipeline import FeatureUnion
+from sktime.classifiers.distance_based.proximity_forest import ProximityForest, ProximityStump, ProximityTree
 
 __author__ = "Anthony Bagnall"
 
@@ -87,6 +76,7 @@ and automatically compared to the results generated in java
 Will have both low level version and high level orchestration version soon.
 """
 
+from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm
 
 univariate_datasets = [
     "ACSF1",
@@ -249,7 +239,7 @@ multivariate_datasets = [
 ]
 
 
-def set_classifier(cls, resampleId):
+def set_classifier(cls, resampleId, verbose = 0):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So,
     for example, if
@@ -260,147 +250,147 @@ def set_classifier(cls, resampleId):
 
     """
     cls = cls.lower()
-    if cls == 'tri_svm':
-        return TriSvm(random_state=resampleId,
-                         verbosity=verbosity,
-                         n_jobs=-1)
-    if cls == 'poly_svm':
-        return PolySvm(random_state=resampleId,
-                         verbosity=verbosity,
-                         n_jobs=-1)
-
-    if cls == 'kl2_svm':
-        return KL2Svm(random_state=resampleId,
-                         verbosity=verbosity,
-                         n_jobs=-1)
-
-    if cls == 'hell_svm':
-        return HellSvm(random_state=resampleId,
-                         verbosity=verbosity,
-                         n_jobs=1)
-
-    if cls == 'eig_dtw_svm':
-        return EigDtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'dtw_knn':
-        return DtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'ed_knn':
-        return EdKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'fdtw_knn':
-        return FullDtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'fddtw_knn':
-        return FullDdtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'ed_svm':
-        return EdSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'fdtw_svm':
-        return FullDtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'fddtw_svm':
-        return FullDdtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'wdtw_knn':
-        return WdtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'ddtw_knn':
-        return DdtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'wddtw_knn':
-        return WddtwKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'msm_knn':
-        return MsmKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'lcss_knn':
-        return LcssKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'erp_knn':
-        return ErpKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'twe_knn':
-        return TweKnn(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
     if cls == 'dtw_svm':
-        return DtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'wdtw_svm':
-        return WdtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'ddtw_svm':
-        return DdtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'wddtw_svm':
-        return WddtwSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'msm_svm':
-        return MsmSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'lcss_svm':
-        return LcssSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'erp_svm':
-        return ErpSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
-    if cls == 'twe_svm':
-        return TweSvm(random_state = resampleId,
-                      verbosity = verbosity,
-                      n_jobs = -1)
+        return build_dtw_svm(random_state = resampleId, verbose = verbose)
+    # if cls == 'tri_svm':
+    #
+    #     # return TriSvm(random_state=resampleId,
+    #     #                  verbosity=verbosity,
+    #     #                  n_jobs=-1)
+    # if cls == 'poly_svm':
+    #     return PolySvm(random_state=resampleId,
+    #                      verbosity=verbosity,
+    #                      n_jobs=-1)
+    #
+    # if cls == 'kl2_svm':
+    #     return KL2Svm(random_state=resampleId,
+    #                      verbosity=verbosity,
+    #                      n_jobs=-1)
+    #
+    # if cls == 'hell_svm':
+    #     return HellSvm(random_state=resampleId,
+    #                      verbosity=verbosity,
+    #                      n_jobs=1)
+    #
+    # if cls == 'eig_dtw_svm':
+    #     return EigDtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'dtw_knn':
+    #     return DtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'ed_knn':
+    #     return EdKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'fdtw_knn':
+    #     return FullDtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'fddtw_knn':
+    #     return FullDdtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'ed_svm':
+    #     return EdSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'fdtw_svm':
+    #     return FullDtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'fddtw_svm':
+    #     return FullDdtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'wdtw_knn':
+    #     return WdtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'ddtw_knn':
+    #     return DdtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'wddtw_knn':
+    #     return WddtwKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'msm_knn':
+    #     return MsmKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'lcss_knn':
+    #     return LcssKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'erp_knn':
+    #     return ErpKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'twe_knn':
+    #     return TweKnn(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'dtw_svm':
+    #     return DtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'wdtw_svm':
+    #     return WdtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'ddtw_svm':
+    #     return DdtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'wddtw_svm':
+    #     return WddtwSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'msm_svm':
+    #     return MsmSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'lcss_svm':
+    #     return LcssSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'erp_svm':
+    #     return ErpSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
+    # if cls == 'twe_svm':
+    #     return TweSvm(random_state = resampleId,
+    #                   verbosity = verbosity,
+    #                   n_jobs = -1)
     if cls == 'pt' or cls == 'proximity_tree':
-        return sktime.classifiers.proximity.ProximityTree(
+        return ProximityTree(
                 random_state = resampleId,
-                verbosity = verbosity,
+                verbosity = verbose,
                 )
     if cls == 'pf' or cls == 'proximity_forest':
-        return sktime.classifiers.proximity.ProximityForest(
+        return ProximityForest(
                 random_state = resampleId,
-                verbosity = verbosity,
+                verbosity = verbose,
                 )
     if cls == 'ps' or cls == 'proximity_stump':
-        return sktime.classifiers.proximity.ProximityStump(
+        return ProximityStump(
                 random_state = resampleId,
-                verbosity = verbosity,
+                verbosity = verbose,
                 n_jobs = -1
                 )
-    if cls == 'rise':
-    if cls.lower() == 'pf':
+    elif cls.lower() == 'pf':
         return pf.ProximityForest(random_state = resampleId)
-    elif cls.lower() == 'rise':
+    elif cls == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif cls == 'tsf':
-    elif  cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
     elif cls == 'boss':
-    elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
     # elif classifier == 'elasticensemble':
     #     return dist.ElasticEnsemble()
-    elif cls == 'tsf_markus':
+    # elif cls == 'tsf_markus':
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
@@ -424,8 +414,6 @@ def set_classifier(cls, resampleId):
         raise Exception('Unknown classifier: ' + str(cls))
 
 
-def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, resample_seed,
-                   overwrite_results = False, verbosity = 0, format = ".ts", estimate_train = False):
 def acf_coefs(x, maxlag=100):
     x = np.asarray(x).ravel()
     nlags = np.minimum(len(x) - 1, maxlag)
@@ -439,7 +427,8 @@ def powerspectrum(x, **kwargs):
     return ps[:ps.shape[0] // 2].ravel()
 
 
-def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
+def run_experiment(problem_path, results_dir_path, classifier_name, dataset_name, classifier=None, resample_seed=0,
+                   overwrite_results=False, format=".ts", estimate_train=False, verbose = 0):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
@@ -462,6 +451,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     :return:
     """
     classifier_name = classifier_name.upper()
+    resampleID = resample_seed
+    cls_name = classifier_name
+    results_path = results_dir_path
+    train_file = estimate_train
 
     build_test = True
     if not overwrite_results:
@@ -496,7 +489,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     if classifier is None:
-        classifier = set_classifier(cls_name, resampleID)
+        classifier = set_classifier(cls_name, resampleID, verbose)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
@@ -533,7 +526,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
         else:
             train_probs = cross_val_predict(classifier, X = trainX, y = trainY, cv = 10, method = 'predict_proba')
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = classifier.classes_[np.argmax(train_probs, axis = 1)]
+        train_preds = le.classes_[np.argmax(train_probs, axis = 1)]
         train_acc = accuracy_score(trainY, train_preds)
         print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' train acc: ' + str(
             train_acc)
@@ -691,16 +684,14 @@ if __name__ == "__main__":
         #     run_experiment(**args)
         run_experiment(**args)
     else:  # Local run
-        data_dir = "/scratch/datasets/"
-        results_dir = "/scratch/results"
-        #        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
-        #        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        classifier = "PS"
-        resample = 3
+        data_dir = "/home/vte14wgu/Projects/datasets/Univariate2018/"
+        results_dir = "results"
+        classifier = "dtw_svm"
+        resample = 0
         # for i in range(0, len(datasets)):
         #     dataset = datasets[i]
-        dataset = "Beef"
+        dataset = "Coffee"
         tf = False
-        run_experiment(overwrite_results = True, datasets_dir_path = data_dir, results_dir_path = results_dir,
+        run_experiment(overwrite_results = True, problem_path = data_dir, results_dir_path = results_dir,
                        classifier_name = classifier, dataset_name = dataset, resample_seed = resample,
-                       estimate_train = tf)
+                       estimate_train = tf, verbose = 10)
