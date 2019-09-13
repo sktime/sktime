@@ -76,7 +76,13 @@ and automatically compared to the results generated in java
 Will have both low level version and high level orchestration version soon.
 """
 
-from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm
+from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm, build_ed_svm, build_dtw_rbf_svm, \
+    build_dtw_rbf_svm, build_full_dtw_svm, build_full_dtw_rbf_svm, build_ed_1nn, build_full_dtw_1nn, build_dtw_1nn, \
+    build_ed_rbf_svm, build_lcss_1nn, build_lcss_svm, build_lcss_rbf_svm, build_erp_1nn, build_erp_svm, \
+    build_erp_rbf_svm, build_msm_1nn, build_msm_svm, build_msm_rbf_svm, build_twed_1nn, build_twed_svm, \
+    build_twed_rbf_svm, build_tri_rbf_svm, build_poly_rbf_svm, build_kl2_rbf_svm, build_hell_rbf_svm, \
+    build_eig_zero_svm, build_eig_abs_svm, build_eig_min_svm, build_tri_rbf_1nn, build_poly_rbf_1nn, build_kl2_rbf_1nn, \
+    build_hell_rbf_1nn, build_eig_zero_1nn, build_eig_abs_1nn, build_eig_min_1nn
 
 univariate_datasets = [
     "ACSF1",
@@ -239,7 +245,7 @@ multivariate_datasets = [
 ]
 
 
-def set_classifier(cls, resampleId, verbose = 0):
+def set_classifier(cls, resampleId, verbose = 0, **kwargs):
     """
     Basic way of determining the classifier to build. To differentiate settings just and another elif. So,
     for example, if
@@ -250,131 +256,89 @@ def set_classifier(cls, resampleId, verbose = 0):
 
     """
     cls = cls.lower()
-    if cls == 'dtw_svm':
-        return build_dtw_svm(random_state = resampleId, verbose = verbose)
-    # if cls == 'tri_svm':
-    #
-    #     # return TriSvm(random_state=resampleId,
-    #     #                  verbosity=verbosity,
-    #     #                  n_jobs=-1)
-    # if cls == 'poly_svm':
-    #     return PolySvm(random_state=resampleId,
-    #                      verbosity=verbosity,
-    #                      n_jobs=-1)
-    #
-    # if cls == 'kl2_svm':
-    #     return KL2Svm(random_state=resampleId,
-    #                      verbosity=verbosity,
-    #                      n_jobs=-1)
-    #
-    # if cls == 'hell_svm':
-    #     return HellSvm(random_state=resampleId,
-    #                      verbosity=verbosity,
-    #                      n_jobs=1)
-    #
-    # if cls == 'eig_dtw_svm':
-    #     return EigDtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'dtw_knn':
-    #     return DtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'ed_knn':
-    #     return EdKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'fdtw_knn':
-    #     return FullDtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'fddtw_knn':
-    #     return FullDdtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'ed_svm':
-    #     return EdSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'fdtw_svm':
-    #     return FullDtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'fddtw_svm':
-    #     return FullDdtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'wdtw_knn':
-    #     return WdtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'ddtw_knn':
-    #     return DdtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'wddtw_knn':
-    #     return WddtwKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'msm_knn':
-    #     return MsmKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'lcss_knn':
-    #     return LcssKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'erp_knn':
-    #     return ErpKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'twe_knn':
-    #     return TweKnn(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'dtw_svm':
-    #     return DtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'wdtw_svm':
-    #     return WdtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'ddtw_svm':
-    #     return DdtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'wddtw_svm':
-    #     return WddtwSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'msm_svm':
-    #     return MsmSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'lcss_svm':
-    #     return LcssSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'erp_svm':
-    #     return ErpSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    # if cls == 'twe_svm':
-    #     return TweSvm(random_state = resampleId,
-    #                   verbosity = verbosity,
-    #                   n_jobs = -1)
-    if cls == 'pt' or cls == 'proximity_tree':
+    if False:
+        pass
+    elif cls == 'ed_1nn':
+        return build_ed_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_svm':
+        return build_ed_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_rbf_svm':
+        return build_ed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_1nn':
+        return build_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_svm':
+        return build_dtw_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_rbf_svm':
+        return build_dtw_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_1nn':
+        return build_full_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_svm':
+        return build_full_dtw_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_rbf_svm':
+        return build_full_dtw_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_1nn':
+        return build_lcss_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_svm':
+        return build_lcss_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_rbf_svm':
+        return build_lcss_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_1nn':
+        return build_erp_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_svm':
+        return build_erp_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_rbf_svm':
+        return build_erp_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_1nn':
+        return build_msm_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_svm':
+        return build_msm_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_rbf_svm':
+        return build_msm_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_1nn':
+        return build_twed_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_svm':
+        return build_twed_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_rbf_svm':
+        return build_twed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_svm':
+        return build_tri_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_svm':
+        return build_poly_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_svm':
+        return build_kl2_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_svm':
+        return build_hell_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_zero_svm':
+        return build_eig_zero_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_abs_svm':
+        return build_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_min_svm':
+        return build_eig_min_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_1nn':
+        return build_tri_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_1nn':
+        return build_poly_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_1nn':
+        return build_kl2_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_1nn':
+        return build_hell_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_zero_1nn':
+        return build_eig_zero_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_abs_1nn':
+        return build_eig_abs_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'eig_min_1nn':
+        return build_eig_min_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'pt' or cls == 'proximity_tree':
         return ProximityTree(
                 random_state = resampleId,
                 verbosity = verbose,
                 )
-    if cls == 'pf' or cls == 'proximity_forest':
+    elif cls == 'pf' or cls == 'proximity_forest':
         return ProximityForest(
                 random_state = resampleId,
                 verbosity = verbose,
                 )
-    if cls == 'ps' or cls == 'proximity_stump':
+    elif cls == 'ps' or cls == 'proximity_stump':
         return ProximityStump(
                 random_state = resampleId,
                 verbosity = verbose,
