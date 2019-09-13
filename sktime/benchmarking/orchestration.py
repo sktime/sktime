@@ -93,7 +93,7 @@ class Orchestrator:
         if overwrite_fitted_strategies and not save_fitted_strategies:
             raise ValueError(f"Can only overwrite fitted strategies "
                              f"if fitted strategies are saved, but found: "
-                             f"overwrite_fitted_strategies={overwrite_fitted_strategies} and"
+                             f"overwrite_fitted_strategies={overwrite_fitted_strategies} and "
                              f"save_fitted_strategies={save_fitted_strategies}")
 
         # fitting and prediction
