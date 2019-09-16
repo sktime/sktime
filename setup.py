@@ -13,8 +13,6 @@ import shutil
 import traceback
 from pkg_resources import parse_version
 
-from setuptools import find_packages
-
 NUMPY_MIN_VERSION = "1.16.0"
 SCIPY_MIN_VERSION = "1.2.0"
 JOBLIB_MIN_VERSION = "0.11"
@@ -22,13 +20,6 @@ PANDAS_MIN_VERSION = "0.23.0"
 SKLEARN_MIN_VERSION = "0.21.0"
 STATSMODELS_MIN_VERSION = "0.9.0"
 SCIKIT_POSTHOCS_MIN_VERSION = "0.5.0"
-
-
-# try:
-#     from Cython.Build import cythonize
-# except ModuleNotFoundError as e:
-#     raise ModuleNotFoundError("No module named 'cython'. Please install "
-#                               "cython first using `pip install cython`.")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
