@@ -245,6 +245,10 @@ def set_classifier(cls, resampleId):
     """
     if cls.lower() == 'pf':
         return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'pt':
+        return pf.ProximityTree(random_state = resampleId)
+    elif cls.lower() == 'ps':
+        return pf.ProximityStump(random_state = resampleId)
     elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls.lower() == 'tsf':
@@ -271,7 +275,7 @@ def set_classifier(cls, resampleId):
         base_estimator = Pipeline(steps)
         return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
-        return 'UNKNOWN CLASSIFIER'
+        raise Exception('UNKNOWN CLASSIFIER')
 
 
 def acf_coefs(x, maxlag=100):
