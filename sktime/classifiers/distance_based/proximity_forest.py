@@ -260,7 +260,7 @@ def get_one_exemplar_per_class(X, y, random_state):
     ----
     Parameters
     ----
-    X : array-like or sparse matrix of shape = [n_samps, n_atts]
+X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
     y : array-like, shape = [n_samples] or [n_samples, n_outputs]
         The class labels.
