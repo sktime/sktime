@@ -20,6 +20,7 @@ def configuration(parent_package='', top_path=None):
     # submodules which do not have their own setup.py
     # we must manually add sub-submodules & tests
     config.add_subpackage('benchmarking')
+    config.add_subpackage('benchmarking/tests')
     config.add_subpackage('classifiers')
     config.add_subpackage('contrib')
     config.add_subpackage('datasets')
