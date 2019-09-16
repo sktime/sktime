@@ -113,8 +113,8 @@ class Kl2Kernel(PairwiseKernel):  # rbf
         self.degree = degree
 
     def _distance(self, s1, s2):  # todo unpack missing might cause issues
-        coef1, residuals1, rank, singular_values, rcond = np.polyfit(range(len(s1)), s1, full = True, deg = degree)
-        coef2, residuals2, rank, singular_values, rcond = np.polyfit(range(len(s2)), s2, full = True, deg = degree)
+        coef1, residuals1, rank, singular_values, rcond = np.polyfit(range(len(s1)), s1, full = True, deg = self.degree)
+        coef2, residuals2, rank, singular_values, rcond = np.polyfit(range(len(s2)), s2, full = True, deg = self.degree)
         means1 = np.polyval(np.polyfit(s1, range(len(s1)), deg = self.degree), range(len(s1)))
         means2 = np.polyval(np.polyfit(s2, range(len(s2)), deg = self.degree), range(len(s2)))
         samples1 = np.random.normal(0, np.sqrt(residuals1), len(means1))
@@ -137,9 +137,18 @@ class HellKernel(PairwiseKernel):  # rbf
         means2 = np.polyval(np.polyfit(s2, range(len(s2)), deg = self.degree), range(len(s2)))
         samples1 = np.random.normal(0, np.sqrt(residuals1), len(means1))
         samples1 = samples1 + means1
+        min1 = np.min(samples1)
+        if min1 < 0:
+            samples1 = np.add(samples1, -min1)
         samples2 = np.random.normal(0, np.sqrt(residuals2), len(means2))
         samples2 = samples2 + means2
-        dist = np.sqrt(np.sum((np.sqrt(samples1) - np.sqrt(samples2)) ** 2)) / np.sqrt(2)
+        min2 = np.min(samples2)
+        if min2 < 0:
+            samples2 = np.add(samples2, -min2)
+        sqrt1 = np.sqrt(samples1)
+        sqrt2 = np.sqrt(samples2)
+        sqrt_tot = np.sum((sqrt1 - sqrt2) ** 2)
+        dist = np.sqrt(sqrt_tot) / np.sqrt(2)
         return dist
 
 
@@ -368,7 +377,7 @@ class ErpKernel(PairwiseKernel):
     def _distance(self, s1, s2):
         s1 = np.reshape(s1, (s1.shape[0], 1))
         s2 = np.reshape(s2, (s2.shape[0], 1))
-        return erp_distance(s1, s2, delta = self.g, dim_to_use = self.dim_to_use,
+        return erp_distance(s1, s2, g = self.g, dim_to_use = self.dim_to_use,
                             epsilon = self.band_size)
 
 
@@ -395,13 +404,13 @@ class TwedKernel(PairwiseKernel):
 
     def __init__(self, penalty = 1, stiffness = 1):
         super().__init__()
-        self.delta = penalty
-        self.epsilon = stiffness
+        self.penalty = penalty
+        self.stiffness = stiffness
 
     def _distance(self, s1, s2):
         s1 = np.reshape(s1, (s1.shape[0], 1))
         s2 = np.reshape(s2, (s2.shape[0], 1))
-        return twe_distance(s1, s2, delta = self.delta, epsilon = self.epsilon)
+        return twe_distance(s1, s2, penalty = self.penalty, stiffness = self.stiffness)
 
 
 def twe_parameter_space_getter(X, y):
