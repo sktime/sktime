@@ -146,8 +146,8 @@ def tsf_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         tsf = ib.TimeSeriesForest(n_trees=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSF",
-                           classifier=tsf,dataset=dataset, train_file=False)
+        exp.run_experiment(overwrite=False, datasets_dir_path=data_dir, results_path=results_dir, cls_name="PythonTSF",
+                           classifier=tsf, dataset=dataset, train_file=False)
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
             ('transform', FeatureUnion([
@@ -160,16 +160,16 @@ def tsf_benchmarking():
         base_estimator = Pipeline(steps)
         tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
                                          n_estimators=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
-                       classifier=tsf, dataset=dataset, train_file=False)
+        exp.run_experiment(overwrite=False, datasets_dir_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
+                           classifier=tsf, dataset=dataset, train_file=False)
 
 def rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         rise = fb.RandomIntervalSpectralForest(n_trees=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
-                           classifier=rise,dataset=dataset, train_file=False)
+        exp.run_experiment(overwrite=True, datasets_dir_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
+                           classifier=rise, dataset=dataset, train_file=False)
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
             ('transform', FeatureUnion([
@@ -181,16 +181,16 @@ def rise_benchmarking():
         ]
         base_estimator = Pipeline(steps)
         rise = TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
-                       classifier=rise, dataset=dataset, train_file=False)
+        exp.run_experiment(overwrite=True, datasets_dir_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
+                           classifier=rise, dataset=dataset, train_file=False)
 
 def boss_benchmarking():
     for i in range(0, int(len(benchmark_datasets))):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset+ " writing to "+ results_dir)
         boss = db.BOSSEnsemble(max_ensemble_size=10)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonBOSS",
-                           classifier=boss,dataset=dataset, train_file=False)
+        exp.run_experiment(overwrite=False, datasets_dir_path=data_dir, results_path=results_dir, cls_name="PythonBOSS",
+                           classifier=boss, dataset=dataset, train_file=False)
 
 
 

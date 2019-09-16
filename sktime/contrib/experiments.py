@@ -15,15 +15,21 @@ IF not done before,
 
 1) >interactive
 2) change dir to sktime
-3) module add python/anaconda/2019.3/3.7
-4) conda init bash
-5) conda create -n sktime
-6) conda activate sktime
-7) conda install pip
-8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-9) export PYTHONPATH=$(pwd)
-10) python <FULLPATH>setup.py install
-11) python <FULLPATH>setup.py build_ext -i
+cd /gpfs/home/vte14wgu/sktime-kernels
+module add python/anaconda/2019.3/3.7
+source /gpfs/software/python/anaconda/2019.3/3.7/etc/profile.d/conda.sh
+bash -c "conda init bash"
+conda create -y -n sktime-kernels
+conda activate sktime-kernels
+conda install -y pip
+yes | pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
+pip install .
+export PYTHONPATH=$(pwd)
+python $(pwd)/setup.py install
+python $(pwd)/setup.py build_ext -i
+
+bash sktime_kernels.sh
+
 
 then run sktime.sh script
 
@@ -51,20 +57,20 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-import sktime.classifiers.compose.ensemble as ensemble
-import sktime.classifiers.dictionary_based.boss as db
-import sktime.classifiers.frequency_based.rise as fb
-import sktime.classifiers.interval_based.tsf as ib
-import sktime.classifiers.distance_based.elastic_ensemble as dist
-import sktime.classifiers.distance_based.proximity_forest as pf
-import sktime.classifiers.shapelet_based.stc as st
+# import sktime.classifiers.compose.ensemble as ensemble
+# import sktime.classifiers.dictionary_based.boss as db
+# import sktime.classifiers.frequency_based.rise as fb
+# import sktime.classifiers.interval_based.tsf as ib
+# import sktime.classifiers.distance_based.elastic_ensemble as dist
+# import sktime.classifiers.distance_based.proximity_forest as pf
+# import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformers.compose import RowwiseTransformer
-from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.transformers.compose import Tabulariser
-from sktime.pipeline import Pipeline
-from sktime.pipeline import FeatureUnion
-from sktime.classifiers.distance_based.proximity_forest import ProximityForest, ProximityStump, ProximityTree
+# from sktime.transformers.compose import RowwiseTransformer
+# from sktime.transformers.segment import RandomIntervalSegmenter
+# from sktime.transformers.compose import Tabulariser
+# from sktime.pipeline import Pipeline
+# from sktime.pipeline import FeatureUnion
+# from sktime.classifiers.distance_based.proximity_forest import ProximityForest, ProximityStump, ProximityTree
 
 __author__ = "Anthony Bagnall"
 
@@ -328,52 +334,52 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
         return build_eig_abs_1nn(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'eig_min_1nn':
         return build_eig_min_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'pt' or cls == 'proximity_tree':
-        return ProximityTree(
-                random_state = resampleId,
-                verbosity = verbose,
-                )
-    elif cls == 'pf' or cls == 'proximity_forest':
-        return ProximityForest(
-                random_state = resampleId,
-                verbosity = verbose,
-                )
-    elif cls == 'ps' or cls == 'proximity_stump':
-        return ProximityStump(
-                random_state = resampleId,
-                verbosity = verbose,
-                n_jobs = -1
-                )
-    elif cls.lower() == 'pf':
-        return pf.ProximityForest(random_state = resampleId)
-    elif cls == 'rise':
-        return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif cls == 'tsf':
-        return ib.TimeSeriesForest(random_state = resampleId)
-    elif cls == 'boss':
-        return db.BOSSEnsemble()
-    # elif classifier == 'elasticensemble':
+    # elif cls == 'pt' or cls == 'proximity_tree':
+    #     return ProximityTree(
+    #             random_state = resampleId,
+    #             verbosity = verbose,
+    #             )
+    # elif cls == 'pf' or cls == 'proximity_forest':
+    #     return ProximityForest(
+    #             random_state = resampleId,
+    #             verbosity = verbose,
+    #             )
+    # elif cls == 'ps' or cls == 'proximity_stump':
+    #     return ProximityStump(
+    #             random_state = resampleId,
+    #             verbosity = verbose,
+    #             n_jobs = -1
+    #             )
+    # elif cls.lower() == 'pf':
+    #     return pf.ProximityForest(random_state = resampleId)
+    # elif cls == 'rise':
+    #     return fb.RandomIntervalSpectralForest(random_state = resampleId)
+    # elif cls == 'tsf':
+    #     return ib.TimeSeriesForest(random_state = resampleId)
+    # elif cls == 'boss':
+    #     return db.BOSSEnsemble()
+    # # elif classifier == 'elasticensemble':
+    # #     return dist.ElasticEnsemble()
+    # # elif cls == 'tsf_markus':
+    # elif cls.lower() == 'st':
+    #     return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+    # elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
     #     return dist.ElasticEnsemble()
-    # elif cls == 'tsf_markus':
-    elif cls.lower() == 'st':
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
-        return dist.ElasticEnsemble()
-    elif cls.lower() == 'tsfcomposite':
-        #It defaults to TSF
-        return ensemble.TimeSeriesForestClassifier()
-    elif cls.lower() == 'risecomposite':
-        steps = [
-            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-            ('transform', FeatureUnion([
-                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
-                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
-            ])),
-            ('tabularise', Tabulariser()),
-            ('clf', DecisionTreeClassifier())
-        ]
-        base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
+    # elif cls.lower() == 'tsfcomposite':
+    #     #It defaults to TSF
+    #     return ensemble.TimeSeriesForestClassifier()
+    # elif cls.lower() == 'risecomposite':
+    #     steps = [
+    #         ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+    #         ('transform', FeatureUnion([
+    #             ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+    #             ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+    #         ])),
+    #         ('tabularise', Tabulariser()),
+    #         ('clf', DecisionTreeClassifier())
+    #     ]
+    #     base_estimator = Pipeline(steps)
+    #     return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
         raise Exception('Unknown classifier: ' + str(cls))
 
@@ -391,7 +397,7 @@ def powerspectrum(x, **kwargs):
     return ps[:ps.shape[0] // 2].ravel()
 
 
-def run_experiment(problem_path, results_dir_path, classifier_name, dataset_name, classifier=None, resample_seed=0,
+def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, classifier=None, resample_seed=0,
                    overwrite_results=False, format=".ts", estimate_train=False, verbose = 0):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
@@ -419,6 +425,7 @@ def run_experiment(problem_path, results_dir_path, classifier_name, dataset_name
     cls_name = classifier_name
     results_path = results_dir_path
     train_file = estimate_train
+    dataset = dataset_name
 
     build_test = True
     if not overwrite_results:
@@ -438,8 +445,8 @@ def run_experiment(problem_path, results_dir_path, classifier_name, dataset_name
             return
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
-    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
-    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+    trainX, trainY = load_ts(datasets_dir_path + dataset + '/' + dataset + '_TRAIN' + format)
+    testX, testY = load_ts(datasets_dir_path + dataset + '/' + dataset + '_TEST' + format)
     if resampleID !=0:
         allLabels = np.concatenate((trainY, testY), axis = None)
         allData = pd.concat([trainX, testX])
@@ -629,15 +636,16 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
+    print(sys.argv)
     print('experimenting...')
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         parser = argparse.ArgumentParser(description = 'Run experiments locally or on the cluster')
         parser.add_argument('datasets_dir_path', help = "path to dir containing datasets / problems")
         parser.add_argument('dataset_name', help = "name of the dataset")
+        parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
         parser.add_argument('classifier_name', help = "name of the classifier")
         parser.add_argument('results_dir_path', help = "path to results dir")
-        parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
-        parser.add_argument('-v', '--verbosity', help = "verbosity of output", type = int, nargs = '?', default = 0)
+        parser.add_argument('-v', '--verbose', help = "verbosity of output", type = int, nargs = '?', default = 0)
         parser.add_argument('-o', '--overwrite_results', help = "overwrite existing results", action = 'store_true')
         parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
                             action = 'store_true')
@@ -648,7 +656,7 @@ if __name__ == "__main__":
         #     run_experiment(**args)
         run_experiment(**args)
     else:  # Local run
-        data_dir = "/home/vte14wgu/Projects/datasets/Univariate2018/"
+        data_dir = "/home/goaslter/Projects/datasets/Univariate2018/"
         results_dir = "results"
         classifier = "dtw_svm"
         resample = 0
@@ -656,6 +664,6 @@ if __name__ == "__main__":
         #     dataset = datasets[i]
         dataset = "Coffee"
         tf = False
-        run_experiment(overwrite_results = True, problem_path = data_dir, results_dir_path = results_dir,
+        run_experiment(overwrite_results = True, datasets_dir_path= data_dir, results_dir_path = results_dir,
                        classifier_name = classifier, dataset_name = dataset, resample_seed = resample,
                        estimate_train = tf, verbose = 10)
