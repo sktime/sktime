@@ -9,6 +9,7 @@
 
 # License: 3-clause BSD
 
+# exit the script if any statement returns a non-true return value
 set -e
 
 # print test environment
@@ -28,11 +29,6 @@ run_tests() {
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sktime"
     fi
-
-    if [[ -n "$CHECK_WARNINGS" ]]; then
-        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
-    fi
-
     set -x  # print executed commands to the terminal
 
     $TEST_CMD sktime
