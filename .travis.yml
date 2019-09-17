@@ -14,7 +14,7 @@ cache:
   - $HOME/.cache/pip
   - $HOME/.ccache
 
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -25,10 +25,10 @@ env:
     - PYTHON_VERSION="3.7" NUMPY_VERSION="1.16" SCIPY_VERSION="1.2" SKLEARN_VERSION="0.21" JOBLIB_VERSION="0.11"
       CYTHON_VERSION="0.29" PANDAS_VERSION="0.23" STATSMODELS_VERSION="0.9" SCIKIT_POSTHOCS_VERSION="0.5.0"
 
-matrix:
-    # platforms and package environments to test
-    include:
-        - os: osx
+#matrix:
+#    # platforms and package environments to test
+#    include:
+#        - os: osx
 
 install:
     # install conda environment and build package
