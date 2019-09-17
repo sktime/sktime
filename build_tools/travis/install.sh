@@ -77,7 +77,6 @@ make_conda() {
     pip install nbsphinx
 }
 
-
 TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             cython=$CYTHON_VERSION scikit-learn=$SKLEARN_VERSION \
