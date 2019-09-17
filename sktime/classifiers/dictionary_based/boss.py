@@ -51,7 +51,7 @@ class BOSSEnsemble(BaseEstimator):
     predict uses 1 nearest neighbour with a bespoke distance function.
 
     For the Java version, see
-    https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/timeseriesweka/classifiers/dictionary_based/BOSS.java
 
 
     Parameters

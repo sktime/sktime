@@ -260,7 +260,7 @@ def get_one_exemplar_per_class(X, y, random_state):
     ----
     Parameters
     ----
-    X : array-like or sparse matrix of shape = [n_samps, num_atts]
+    X : array-like or sparse matrix of shape = [n_instances, n_columns]
             The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
     y : array-like, shape = [n_samples] or [n_samples, n_outputs]
         The class labels.
@@ -730,10 +730,12 @@ class ProximityStump(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -790,7 +792,7 @@ class ProximityStump(BaseClassifier):
             whether to check the X parameter
         Returns
         -------
-        output : array of shape = [n_instances, num_classes] of probabilities
+        output : array of shape = [n_instances, n_classes] of probabilities
         """
         if input_checks: validate_X(X)
         X = dataset_properties.negative_dataframe_indices(X)
@@ -841,7 +843,8 @@ class ProximityTree(BaseClassifier):
                  is_leaf=pure,
                  verbosity=0,
                  n_jobs=1,
-                 find_stump=best_of_n_stumps(5),
+                 n_stump_evaluations=5,
+                 find_stump=None,
                  ):
         """
         build a Proximity Tree object
@@ -856,8 +859,10 @@ class ProximityTree(BaseClassifier):
         :param verbosity: number reflecting the verbosity of logging
         :param n_jobs: number of parallel threads to use while building
         :param find_stump: method to find the best split of data / stump at a node
+        :param n_stump_evaluations: number of stump evaluations to do if find_stump method is None
         """
         self.verbosity = verbosity
+        self.n_stump_evaluations = n_stump_evaluations
         self.find_stump = find_stump
         self.max_depth = max_depth
         self.get_distance_measure = distance_measure
@@ -895,11 +900,15 @@ class ProximityTree(BaseClassifier):
         if input_checks: validate_X_y(X, y)
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
+        if self.find_stump is None:
+            self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure(self)
@@ -923,6 +932,7 @@ class ProximityTree(BaseClassifier):
                         max_depth=self.max_depth,
                         n_jobs=self.n_jobs
                     )
+                    sub_tree.label_encoder = self.label_encoder
                     sub_tree.depth = self.depth + 1
                     self.branches[index] = sub_tree
                     sub_X = self.stump.X_branches[index]
@@ -957,12 +967,13 @@ class ProximityTree(BaseClassifier):
                 indices = np.ravel(indices)
                 sub_tree = self.branches[index]
                 if sub_tree is None:
-                    sub_distribution = np.zeros(n_classes)
+                    sub_distribution = np.zeros((1, n_classes))
                     class_label = self.stump.y_exemplar[index]
-                    sub_distribution[class_label] = 1
+                    sub_distribution[0][class_label] = 1
                 else:
                     sub_X = X.iloc[indices, :]
                     sub_distribution = sub_tree.predict_proba(sub_X)
+                assert sub_distribution.shape[1] == n_classes
                 np.add.at(distribution, indices, sub_distribution)
         normalize(distribution, copy=False, norm='l1')
         return distribution
@@ -1017,7 +1028,8 @@ class ProximityForest(BaseClassifier):
                  max_depth = np.math.inf,
                  is_leaf=pure,
                  n_jobs=1,
-                 find_stump=best_of_n_stumps(5),
+                 n_stump_evaluations=5,
+                 find_stump=None,
                  setup_distance_measure_getter=setup_all_distance_measure_getter,
                  ):
         """
@@ -1033,6 +1045,7 @@ class ProximityForest(BaseClassifier):
         :param verbosity: number reflecting the verbosity of logging
         :param n_jobs: number of parallel threads to use while building
         :param find_stump: method to find the best split of data / stump at a node
+        :param n_stump_evaluations: number of stump evaluations to do if find_stump method is None
         :param n_trees: number of trees to construct
         """
         self.is_leaf = is_leaf
@@ -1043,6 +1056,7 @@ class ProximityForest(BaseClassifier):
         self.random_state = random_state
         self.n_trees = n_trees
         self.n_jobs = n_jobs
+        self.n_stump_evaluations = n_stump_evaluations
         self.get_distance_measure = get_distance_measure
         self.setup_distance_measure_getter = setup_distance_measure_getter
         self.distance_measure = distance_measure
@@ -1082,6 +1096,7 @@ class ProximityForest(BaseClassifier):
             is_leaf=self.is_leaf,
             n_jobs=1,
             find_stump=self.find_stump,
+            n_stump_evaluations=self.n_stump_evaluations
         )
         tree.fit(X, y)
         return tree
@@ -1104,10 +1119,12 @@ class ProximityForest(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        self.label_encoder = LabelEncoder()
-        self.label_encoder.fit(y)
+        if self.label_encoder == None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.y = y
         self.classes_ = self.label_encoder.classes_
-        self.y = self.label_encoder.transform(y)
         if self.distance_measure is None:
             if self.get_distance_measure is None:
                 self.get_distance_measure = self.setup_distance_measure_getter(self)

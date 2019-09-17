@@ -580,6 +580,37 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
     #     ]
     #     base_estimator = Pipeline(steps)
     #     return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
+    if cls.lower() == 'pf':
+        return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'pt':
+        return pf.ProximityTree(random_state = resampleId)
+    elif cls.lower() == 'ps':
+        return pf.ProximityStump(random_state = resampleId)
+    elif cls.lower() == 'rise':
+        return fb.RandomIntervalSpectralForest(random_state = resampleId)
+    elif  cls.lower() == 'tsf':
+        return ib.TimeSeriesForest(random_state = resampleId)
+    elif cls.lower() == 'boss':
+        return db.BOSSEnsemble()
+    elif cls.lower() == 'st':
+        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+    elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
+        return dist.ElasticEnsemble()
+    elif cls.lower() == 'tsfcomposite':
+        #It defaults to TSF
+        return ensemble.TimeSeriesForestClassifier()
+    elif cls.lower() == 'risecomposite':
+        steps = [
+            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            ('transform', FeatureUnion([
+                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+            ])),
+            ('tabularise', Tabulariser()),
+            ('clf', DecisionTreeClassifier())
+        ]
+        base_estimator = Pipeline(steps)
+        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
         raise Exception('Unknown classifier: ' + str(cls))
 
