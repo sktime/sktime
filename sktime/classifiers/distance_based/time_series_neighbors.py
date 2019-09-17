@@ -1,3 +1,10 @@
+""" KNN time series classification built on sklearn KNeighborsClassifier
+
+"""
+
+__author__ = "Jason Lines"
+__all__ = ["KNeighborsTimeSeriesClassifier"]
+
 from scipy import stats
 from sklearn.utils.extmath import weighted_mode
 from sklearn.neighbors.classification import KNeighborsClassifier
@@ -13,7 +20,7 @@ from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import Parallel, delayed, effective_n_jobs
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.exceptions import DataConversionWarning
-from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance
+from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance, twe_distance
 from sklearn.utils.validation import check_array
 from sklearn.neighbors.base import _check_weights, _get_weights
 import pandas as pd
@@ -47,6 +54,17 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             method has been temporarily disabled (and then re-enabled). It is unclear how to fix this issue without either
             writing a new classifier from scratch or changing the scikit-learn implementation. TO-DO: find permanent
             resolution to this issue (raise as an issue on sklearn GitHub?)
+
+
+    Parameters
+    ----------
+    n_neighbors     : int, set k for knn (default =1)
+    weights         : mechanism for weighting a vote: 'uniform', 'distance' or a callable function: default ==' uniform'
+    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’, ‘kd_tree’, ‘brute’}: default = 'brute'
+    metric          : distance measure for time series: {'dtw','ddtw','wdtw','lcss','erp','msm','twe'}: default ='dtw'
+    metric_params   : dictionary for metric parameters: default = None
+    dim_to_use      :   TO REMOVE
+
     """
     def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute', metric='dtw', metric_params=None, dim_to_use=0, **kwargs):
 
@@ -64,6 +82,8 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric = erp_distance
         elif metric == 'msm':
             metric = msm_distance
+        elif metric == 'twe':
+            metric = twe_distance
         else:
             if type(metric) is str:
                 raise ValueError("Unrecognised distance measure: "+metric+". Allowed values are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
