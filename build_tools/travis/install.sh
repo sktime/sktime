@@ -89,9 +89,6 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage codecov
 fi
 
-# Print environment
-conda list -n testenv
-
 # Build sktime in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
 python setup.py develop  # invokes build_ext -i to compile files
