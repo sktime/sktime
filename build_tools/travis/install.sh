@@ -54,9 +54,14 @@ make_conda() {
     if [ $TRAVIS_OS_NAME = "osx" ]
 	  then
 		fname=Miniconda3-latest-MacOSX-x86_64.sh
+
+		# Install the OpenMP library using brew
+		brew install libomp
+
 	  else
 		fname=Miniconda3-latest-Linux-x86_64.sh
 	  fi
+
     wget https://repo.continuum.io/miniconda/$fname \
         -O miniconda.sh
     MINICONDA_PATH=$HOME/miniconda
