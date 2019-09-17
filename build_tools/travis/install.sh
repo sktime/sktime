@@ -41,23 +41,22 @@ then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
+
+    # Install the OpenMP library using brew
+		brew install libomp
 fi
 
 make_conda() {
 	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
-    # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
+    # If Travvis has language=generic (e.g. for macOS), deactivate does not exist. `|| :` will pass.
     deactivate || :
 
     # Install miniconda
     if [ $TRAVIS_OS_NAME = "osx" ]
 	  then
 		fname=Miniconda3-latest-MacOSX-x86_64.sh
-
-		# Install the OpenMP library using brew
-		brew install libomp
-
 	  else
 		fname=Miniconda3-latest-Linux-x86_64.sh
 	  fi
@@ -88,7 +87,6 @@ TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
             pandas=$PANDAS_VERSION statsmodels=$STATSMODELS_VERSION \
             sphinx jupyter"
 make_conda $TO_INSTALL
-
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage codecov
