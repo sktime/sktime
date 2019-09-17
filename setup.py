@@ -66,7 +66,7 @@ INSTALL_REQUIRES = (
     'scikit-posthocs>={}'.format(SCIKIT_POSTHOCS_MIN_VERSION),
     'statsmodels>={}'.format(STATSMODELS_MIN_VERSION)
 )
-CLASSIFIERS = (
+CLASSIFIERS = [
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
     'License :: OSI Approved',
@@ -79,7 +79,7 @@ CLASSIFIERS = (
     'Operating System :: MacOS',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7'
-)
+]
 EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
@@ -105,6 +105,7 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
+    import setuptools
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
