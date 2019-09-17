@@ -24,10 +24,13 @@ env:
     - PYTHON_VERSION="3.7" NUMPY_VERSION="1.16" SCIPY_VERSION="1.2" SKLEARN_VERSION="0.21" JOBLIB_VERSION="0.13"
       CYTHON_VERSION="0.29" PANDAS_VERSION="0.23" STATSMODELS_VERSION="0.9" SCIKIT_POSTHOCS_VERSION="0.5.0"
 
-#matrix:
-#    # platforms and package environments to test
-#    include:
-#        - os: osx
+matrix:
+    # platforms and package environments to test
+    include:
+      - os: linux
+        python: 3.6
+      - os: osx
+        language: generic
 
 install:
     # install conda environment and build package
