@@ -8,10 +8,10 @@ branches:
 
 language: python
 
-#cache:
-#  apt: true
-#  directories:
-#  - $HOME/.cache/pip
+cache:
+  apt: true
+  directories:
+  - $HOME/.cache/pip
 #  - $HOME/.ccache
 
 dist: trusty
@@ -40,6 +40,9 @@ script:
 
 after_success:
     # generate website content
+    - pwd
+    - ls ..
+    - ls
     - cd ../documentation
     - make html
 
