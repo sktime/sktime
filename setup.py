@@ -7,10 +7,11 @@ import codecs
 import os
 import platform
 import re
-import sys
-from distutils.command.clean import clean as Clean
 import shutil
+import sys
 import traceback
+from distutils.command.clean import clean as Clean
+
 from pkg_resources import parse_version
 
 NUMPY_MIN_VERSION = "1.16.0"
@@ -104,7 +105,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
@@ -155,6 +155,7 @@ cmdclass = {'clean': CleanCommand}
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
+
     class build_ext_subclass(build_ext):
 
         def build_extensions(self):
@@ -168,6 +169,7 @@ try:
                     e.extra_link_args += openmp_flag
 
             build_ext.build_extensions(self)
+
 
     cmdclass['build_ext'] = build_ext_subclass
 
@@ -231,7 +233,6 @@ def setup_package():
         version=VERSION,
         long_description=LONG_DESCRIPTION,
         classifiers=CLASSIFIERS,
-        # packages=find_packages(),
         cmdclass=cmdclass,
         python_requires=">=3.6",
         install_requires=INSTALL_REQUIRES,
@@ -289,4 +290,3 @@ def setup_package():
 
 if __name__ == "__main__":
     setup_package()
-
