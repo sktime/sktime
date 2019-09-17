@@ -9,10 +9,9 @@ branches:
 language: python
 
 cache:
-  apt: true
   directories:
   - $HOME/.cache/pip
-#  - $HOME/.ccache
+  - $HOME/.ccache
 
 dist: trusty
 
@@ -40,10 +39,7 @@ script:
 
 after_success:
     # generate website content
-    - pwd
-    - ls ..
-    - ls
-    - cd ../documentation
+    - cd documentation
     - make html
 
 deploy:
