@@ -110,6 +110,6 @@ setup(name=DISTNAME,
       extras_require=EXTRAS_REQUIRE,
       ext_modules=cythonize(
           ["sktime/distances/elastic_cython.pyx"],
-          annotate=True),
+          annotate=False),
       include_dirs=[np.get_include()]
       )
