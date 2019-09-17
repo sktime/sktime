@@ -53,8 +53,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict, train_test_split
 from sktime.utils.load_data import load_ts
 import argparse
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
 # import sktime.classifiers.compose.ensemble as ensemble
@@ -83,12 +81,34 @@ Will have both low level version and high level orchestration version soon.
 """
 
 from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm, build_ed_svm, build_dtw_rbf_svm, \
-    build_dtw_rbf_svm, build_full_dtw_svm, build_full_dtw_rbf_svm, build_ed_1nn, build_full_dtw_1nn, build_dtw_1nn, \
+    build_full_dtw_svm, build_full_dtw_rbf_svm, build_ed_1nn, build_full_dtw_1nn, build_dtw_1nn, \
     build_ed_rbf_svm, build_lcss_1nn, build_lcss_svm, build_lcss_rbf_svm, build_erp_1nn, build_erp_svm, \
     build_erp_rbf_svm, build_msm_1nn, build_msm_svm, build_msm_rbf_svm, build_twed_1nn, build_twed_svm, \
     build_twed_rbf_svm, build_tri_rbf_svm, build_poly_rbf_svm, build_kl2_rbf_svm, build_hell_rbf_svm, \
     build_eig_zero_svm, build_eig_abs_svm, build_eig_min_svm, build_tri_rbf_1nn, build_poly_rbf_1nn, build_kl2_rbf_1nn, \
-    build_hell_rbf_1nn, build_eig_zero_1nn, build_eig_abs_1nn, build_eig_min_1nn
+    build_hell_rbf_1nn, build_ed_eig_abs_svm, \
+    build_twed_1nn_eig_abs, build_ed_1nn_eig_zero, build_ed_svm_eig_zero, build_ed_rbf_svm_eig_zero, \
+    build_dtw_1nn_eig_zero, build_dtw_svm_eig_zero, build_dtw_rbf_svm_eig_zero, build_full_dtw_1nn_eig_zero, \
+    build_full_dtw_svm_eig_zero, build_full_dtw_rbf_svm_eig_zero, build_lcss_1nn_eig_zero, build_lcss_svm_eig_zero, \
+    build_lcss_rbf_svm_eig_zero, build_erp_1nn_eig_zero, build_erp_svm_eig_zero, build_erp_rbf_svm_eig_zero, \
+    build_msm_1nn_eig_zero, build_msm_svm_eig_zero, build_msm_rbf_svm_eig_zero, build_twed_1nn_eig_zero, \
+    build_twed_svm_eig_zero, build_twed_rbf_svm_eig_zero, build_tri_rbf_svm_eig_zero, build_poly_rbf_svm_eig_zero, \
+    build_kl2_rbf_svm_eig_zero, build_hell_rbf_svm_eig_zero, build_tri_rbf_1nn_eig_zero, build_poly_rbf_1nn_eig_zero, \
+    build_kl2_rbf_1nn_eig_zero, build_hell_rbf_1nn_eig_zero, build_ed_1nn_eig_min, build_ed_svm_eig_min, \
+    build_ed_rbf_svm_eig_min, build_dtw_1nn_eig_min, build_dtw_svm_eig_min, build_dtw_rbf_svm_eig_min, \
+    build_full_dtw_1nn_eig_min, build_full_dtw_svm_eig_min, build_full_dtw_rbf_svm_eig_min, build_lcss_1nn_eig_min, \
+    build_lcss_svm_eig_min, build_lcss_rbf_svm_eig_min, build_erp_1nn_eig_min, build_erp_svm_eig_min, \
+    build_erp_rbf_svm_eig_min, build_msm_1nn_eig_min, build_msm_svm_eig_min, build_msm_rbf_svm_eig_min, \
+    build_twed_1nn_eig_min, build_twed_svm_eig_min, build_twed_rbf_svm_eig_min, build_tri_rbf_svm_eig_min, \
+    build_poly_rbf_svm_eig_min, build_kl2_rbf_svm_eig_min, build_hell_rbf_svm_eig_min, build_tri_rbf_1nn_eig_min, \
+    build_poly_rbf_1nn_eig_min, build_kl2_rbf_1nn_eig_min, build_hell_rbf_1nn_eig_min, build_ed_1nn_eig_abs, \
+    build_ed_svm_eig_abs, build_ed_rbf_svm_eig_abs, build_dtw_1nn_eig_abs, build_dtw_svm_eig_abs, \
+    build_dtw_rbf_svm_eig_abs, build_full_dtw_1nn_eig_abs, build_full_dtw_svm_eig_abs, build_full_dtw_rbf_svm_eig_abs, \
+    build_lcss_1nn_eig_abs, build_lcss_svm_eig_abs, build_lcss_rbf_svm_eig_abs, build_erp_1nn_eig_abs, \
+    build_erp_svm_eig_abs, build_erp_rbf_svm_eig_abs, build_msm_1nn_eig_abs, build_msm_svm_eig_abs, \
+    build_msm_rbf_svm_eig_abs, build_twed_svm_eig_abs, build_twed_rbf_svm_eig_abs, build_tri_rbf_svm_eig_abs, \
+    build_poly_rbf_svm_eig_abs, build_kl2_rbf_svm_eig_abs, build_hell_rbf_svm_eig_abs, build_tri_rbf_1nn_eig_abs, \
+    build_poly_rbf_1nn_eig_abs, build_kl2_rbf_1nn_eig_abs, build_hell_rbf_1nn_eig_abs
 
 univariate_datasets = [
     "ACSF1",
@@ -270,6 +290,8 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
         return build_ed_svm(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'ed_rbf_svm':
         return build_ed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_eig_abs_svm':
+        return build_ed_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'dtw_1nn':
         return build_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'dtw_svm':
@@ -328,12 +350,190 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
         return build_kl2_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'hell_rbf_1nn':
         return build_hell_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_zero_1nn':
-        return build_eig_zero_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_abs_1nn':
-        return build_eig_abs_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_min_1nn':
-        return build_eig_min_1nn(random_state = resampleId, verbose = verbose, **kwargs)
+
+
+    elif cls == 'ed_1nn_eig_zero':
+        return build_ed_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_svm_eig_zero':
+        return build_ed_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_rbf_svm_eig_zero':
+        return build_ed_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_1nn_eig_zero':
+        return build_dtw_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_svm_eig_zero':
+        return build_dtw_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_rbf_svm_eig_zero':
+        return build_dtw_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_1nn_eig_zero':
+        return build_full_dtw_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_svm_eig_zero':
+        return build_full_dtw_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_rbf_svm_eig_zero':
+        return build_full_dtw_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_1nn_eig_zero':
+        return build_lcss_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_svm_eig_zero':
+        return build_lcss_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_rbf_svm_eig_zero':
+        return build_lcss_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_1nn_eig_zero':
+        return build_erp_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_svm_eig_zero':
+        return build_erp_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_rbf_svm_eig_zero':
+        return build_erp_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_1nn_eig_zero':
+        return build_msm_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_svm_eig_zero':
+        return build_msm_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_rbf_svm_eig_zero':
+        return build_msm_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_1nn_eig_zero':
+        return build_twed_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_svm_eig_zero':
+        return build_twed_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_rbf_svm_eig_zero':
+        return build_twed_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_svm_eig_zero':
+        return build_tri_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_svm_eig_zero':
+        return build_poly_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_svm_eig_zero':
+        return build_kl2_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_svm_eig_zero':
+        return build_hell_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_1nn_eig_zero':
+        return build_tri_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_1nn_eig_zero':
+        return build_poly_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_1nn_eig_zero':
+        return build_kl2_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_1nn_eig_zero':
+        return build_hell_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
+
+
+
+    elif cls == 'ed_1nn_eig_min':
+        return build_ed_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_svm_eig_min':
+        return build_ed_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_rbf_svm_eig_min':
+        return build_ed_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_1nn_eig_min':
+        return build_dtw_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_svm_eig_min':
+        return build_dtw_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_rbf_svm_eig_min':
+        return build_dtw_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_1nn_eig_min':
+        return build_full_dtw_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_svm_eig_min':
+        return build_full_dtw_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_rbf_svm_eig_min':
+        return build_full_dtw_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_1nn_eig_min':
+        return build_lcss_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_svm_eig_min':
+        return build_lcss_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_rbf_svm_eig_min':
+        return build_lcss_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_1nn_eig_min':
+        return build_erp_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_svm_eig_min':
+        return build_erp_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_rbf_svm_eig_min':
+        return build_erp_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_1nn_eig_min':
+        return build_msm_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_svm_eig_min':
+        return build_msm_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_rbf_svm_eig_min':
+        return build_msm_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_1nn_eig_min':
+        return build_twed_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_svm_eig_min':
+        return build_twed_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_rbf_svm_eig_min':
+        return build_twed_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_svm_eig_min':
+        return build_tri_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_svm_eig_min':
+        return build_poly_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_svm_eig_min':
+        return build_kl2_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_svm_eig_min':
+        return build_hell_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_1nn_eig_min':
+        return build_tri_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_1nn_eig_min':
+        return build_poly_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_1nn_eig_min':
+        return build_kl2_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_1nn_eig_min':
+        return build_hell_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
+
+
+
+    elif cls == 'ed_1nn_eig_abs':
+        return build_ed_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_svm_eig_abs':
+        return build_ed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'ed_rbf_svm_eig_abs':
+        return build_ed_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_1nn_eig_abs':
+        return build_dtw_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_svm_eig_abs':
+        return build_dtw_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'dtw_rbf_svm_eig_abs':
+        return build_dtw_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_1nn_eig_abs':
+        return build_full_dtw_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_svm_eig_abs':
+        return build_full_dtw_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'full_dtw_rbf_svm_eig_abs':
+        return build_full_dtw_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_1nn_eig_abs':
+        return build_lcss_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_svm_eig_abs':
+        return build_lcss_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'lcss_rbf_svm_eig_abs':
+        return build_lcss_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_1nn_eig_abs':
+        return build_erp_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_svm_eig_abs':
+        return build_erp_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'erp_rbf_svm_eig_abs':
+        return build_erp_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_1nn_eig_abs':
+        return build_msm_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_svm_eig_abs':
+        return build_msm_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'msm_rbf_svm_eig_abs':
+        return build_msm_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_1nn_eig_abs':
+        return build_twed_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_svm_eig_abs':
+        return build_twed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'twed_rbf_svm_eig_abs':
+        return build_twed_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_svm_eig_abs':
+        return build_tri_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_svm_eig_abs':
+        return build_poly_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_svm_eig_abs':
+        return build_kl2_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_svm_eig_abs':
+        return build_hell_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'tri_rbf_1nn_eig_abs':
+        return build_tri_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'poly_rbf_1nn_eig_abs':
+        return build_poly_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'kl2_rbf_1nn_eig_abs':
+        return build_kl2_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+    elif cls == 'hell_rbf_1nn_eig_abs':
+        return build_hell_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
+
+
     # elif cls == 'pt' or cls == 'proximity_tree':
     #     return ProximityTree(
     #             random_state = resampleId,

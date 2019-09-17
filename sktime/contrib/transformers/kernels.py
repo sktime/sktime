@@ -235,12 +235,19 @@ class EigKernel(BaseTransformer):
 
 
 class ParametersFromDatasetWrapper(BaseEstimator):
-    def __init__(self, cv, parameters_getter):
+    def __init__(self, cv, parameters_getter, label_encoder = None):
         self.cv = cv
         self.parameters_getter = parameters_getter
         self.parameters = None
+        self.classes_ = None
+        self.label_encoder = label_encoder
 
     def fit(self, X, y):
+        if self.label_encoder is None:
+            self.label_encoder = LabelEncoder()
+            self.label_encoder.fit(y)
+            y = self.label_encoder.transform(y)
+        self.classes_ = self.label_encoder.classes_
         current_parameters = {}
         if not (isinstance(self.cv, sklearn.model_selection.GridSearchCV) or isinstance(self.cv,
                                                                                         sklearn.model_selection.RandomizedSearchCV)):
