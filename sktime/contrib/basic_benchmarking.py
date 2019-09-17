@@ -207,10 +207,10 @@ def elastic_distance_benchmarking():
         dataset = distance_test[i]
         print(str(i)+" problem = "+dataset+ " writing to "+ results_dir+"/DTW/")
         dtw=dist.KNeighborsTimeSeriesClassifier(metric="dtw")
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"/DTW/", cls_name="PythonDTW",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"/DistanceNN/", cls_name="PythonDTW",
                            classifier=dtw,dataset=dataset, train_file=False)
         twe=dist.KNeighborsTimeSeriesClassifier(metric="dtw")
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"/DTW/", cls_name="PythonTWE",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"/DistanceNN/", cls_name="PythonTWE",
                            classifier=twe,dataset=dataset, train_file=False)
 
 
