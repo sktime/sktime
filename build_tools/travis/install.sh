@@ -70,6 +70,7 @@ make_conda() {
 
     # Install packages not available via conda
     pip install scikit-posthocs==$SCIKIT_POSTHOCS_VERSION
+    pip install joblib==$JOBLIB_VERSION
 
     # Add packages for website generation
     pip install sphinx_rtd_theme
@@ -81,7 +82,7 @@ TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             cython=$CYTHON_VERSION scikit-learn=$SKLEARN_VERSION \
             pandas=$PANDAS_VERSION statsmodels=$STATSMODELS_VERSION \
-            joblib=$JOBLIB_VERSION sphinx jupyter"
+            sphinx jupyter"
 make_conda $TO_INSTALL
 
 
