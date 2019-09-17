@@ -705,6 +705,7 @@ def build_kl2_rbf_svm(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -731,6 +732,7 @@ def build_hell_rbf_svm(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -1409,6 +1411,7 @@ def build_kl2_rbf_1nn(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
 
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -1435,7 +1438,7 @@ def build_hell_rbf_1nn(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
-
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
                                                        cv_params,
@@ -2138,6 +2141,7 @@ def build_kl2_rbf_svm_eig_min(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -2165,6 +2169,7 @@ def build_hell_rbf_svm_eig_min(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -2868,6 +2873,7 @@ def build_kl2_rbf_1nn_eig_min(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
 
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -2895,7 +2901,7 @@ def build_hell_rbf_1nn_eig_min(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
-
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
                                                        cv_params,
@@ -3598,6 +3604,7 @@ def build_kl2_rbf_svm_eig_abs(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -3625,6 +3632,7 @@ def build_hell_rbf_svm_eig_abs(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -4328,6 +4336,7 @@ def build_kl2_rbf_1nn_eig_abs(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
 
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -4355,7 +4364,7 @@ def build_hell_rbf_1nn_eig_abs(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
-
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
                                                        cv_params,
@@ -5033,6 +5042,7 @@ def build_kl2_rbf_svm_eig_zero(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -5059,6 +5069,7 @@ def build_hell_rbf_svm_eig_zero(
         ('svm', SVC(probability=True, kernel='precomputed')),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low = 1, high = 10 + 1),
         'svm__C': scipy.stats.expon(scale=100)
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -5737,6 +5748,7 @@ def build_kl2_rbf_1nn_eig_zero(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
 
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
@@ -5763,6 +5775,7 @@ def build_hell_rbf_1nn_eig_zero(
         ('1nn', KNeighborsClassifier(n_neighbors=1)),
     ])
     cv_params = {
+        'd__degree': scipy.stats.randint(low=1, high=10 + 1),
 
     }
     model = sklearn.model_selection.RandomizedSearchCV(pipe,
