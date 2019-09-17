@@ -6,15 +6,15 @@ branches:
         - master
         - dev
 
-sudo: false
-
-# language: python
+language: python
 
 cache:
   apt: true
   directories:
   - $HOME/.cache/pip
   - $HOME/.ccache
+
+dist: trusty
 
 env:
   global:
@@ -28,8 +28,6 @@ env:
 matrix:
     # platforms and package environments to test
     include:
-        - os: linux
-          dist: trusty
         - os: osx
 
 install:
