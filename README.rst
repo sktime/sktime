@@ -101,6 +101,23 @@ Development road map
 5. Automated benchmarking functionality including orchestration of experiments and post-hoc evaluation methods, based on the `mlaut <https://github.com/alan-turing-institute/mlaut/>`__ design.
 
 
+How to cite sktime
+------------------
+
+If you use sktime in a scientific publication, we would appreciate citations to the following paper:
+
+* `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines: “sktime: A Unified Interface for Machine Learning with Time Series”, 2019; arXiv:1909.07872 <http://arxiv.org/abs/1909.07872>`_
+
+Bibtex entry::
+
+    @misc{sktime,
+          author = {Markus Löning and Anthony Bagnall and Sajaysurya Ganesh and Viktor Kazakov
+          and Jason Lines and Franz J. Király},
+          title = {sktime: A Unified Interface for Machine Learning with Time Series},
+          year = {2019},
+          eprint = {arXiv:1909.07872},
+    }
+
 Contributors
 ------------
 Former and current active contributors are as follows.
