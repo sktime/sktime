@@ -42,8 +42,12 @@ then
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
-    # Install the OpenMP library using brew
+    # Install the OpenMP library
 		brew install libomp
+
+		# Install ccache manually for macOS environments
+		brew install ccache
+		export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 
 make_conda() {
