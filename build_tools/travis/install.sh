@@ -87,8 +87,14 @@ make_conda() {
     pip install joblib==$JOBLIB_VERSION
 
     # Add packages for website generation
-    pip install sphinx_rtd_theme
-    pip install nbsphinx
+    # pip install sphinx_rtd_theme
+    # pip install nbsphinx
+
+    if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TRAVIS_BRANCH" == "master" ]
+    then
+      pip install sphinx_rtd_theme
+      pip install nbsphinx
+    fi
 }
 
 TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
@@ -98,7 +104,8 @@ TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
             sphinx jupyter"
 make_conda $TO_INSTALL
 
-if [[ "$COVERAGE" == "true" ]]; then
+if [ "$COVERAGE" == "true" ]
+then
     pip install coverage codecov
 fi
 

@@ -33,20 +33,13 @@ matrix:
         language: generic
 
 install:
-    # install conda environment and build package
-    - source build_tools/travis/install.sh
+    - source build_tools/travis/install.sh  # build environment
 
 script:
-    # run unit tests
-    - bash build_tools/travis/test_script.sh
+    - bash build_tools/travis/test_script.sh  # run unit tests
 
 after_success:
-    # generate website content
-#    - test $TRAVIS_BRANCH = "master" &&
-#      cd documentation
-#      make html
-    - cd documentation
-    - make html
+    - source build_tools/travis/after_success.sh
 
 deploy:
     # on master branch, deploy website and upload compiled files to Github
