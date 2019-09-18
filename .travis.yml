@@ -8,12 +8,12 @@ branches:
 
 language: python
 
-cache:
-  directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
+#cache:
+#  directories:
+#  - $HOME/.cache/pip
+#  - $HOME/.ccache
 
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -42,6 +42,7 @@ script:
 
 after_success:
     # generate website content
+    - ls 
     - cd documentation
     - make html
 
