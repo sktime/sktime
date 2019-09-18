@@ -16,6 +16,12 @@
 
 set -e
 
+if [ $TRAVIS_OS_NAME = "macos" ]
+then
+  # Install jq for travis_fastfail.sh script
+  brew install jq
+fi
+
 # Fail fast
 build_tools/travis/travis_fastfail.sh
 

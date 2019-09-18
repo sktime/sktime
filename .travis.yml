@@ -8,10 +8,10 @@ branches:
 
 language: python
 
-#cache:
-#  directories:
-#  - $HOME/.cache/pip
-#  - $HOME/.ccache
+cache:
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.ccache
 
 dist: xenial
 
