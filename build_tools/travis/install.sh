@@ -115,3 +115,5 @@ fi
 
 # fast fail
 build_tools/travis/travis_fastfail.sh
+
+set +e

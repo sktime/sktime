@@ -42,7 +42,9 @@ script:
 
 after_success:
     # generate website content
-    - ls 
+#    - test $TRAVIS_BRANCH = "master" &&
+#      cd documentation
+#      make html
     - cd documentation
     - make html
 
