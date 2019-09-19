@@ -89,3 +89,16 @@ artifacts:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
+
+# upload artifacts to Github releases
+deploy:
+  - provider: GitHub
+    description: 'appveyor draft release'
+    auth_token:
+      secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
+    artifact: /.*\.whl/            # upload all wheel packages to release assets
+    draft: true
+    on:
+      branch: appveyor
+#      branch: master                 # release from master branch only
+#      APPVEYOR_REPO_TAG: true
