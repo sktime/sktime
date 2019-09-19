@@ -112,12 +112,13 @@ fi
 # Build sktime in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
 python setup.py develop  # invokes build_ext -i to compile files
+ls dist  # list build artifacts
 
+# Useful for debugging how ccache is used
 if [ $TRAVIS_OS_NAME = "linux" ]
 then
 	ccache --show-stats
 fi
-# Useful for debugging how ccache is used
 # cat $CCACHE_LOGFILE
 
 # fast fail
