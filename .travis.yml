@@ -54,9 +54,12 @@ deploy:
       api_key: $GITHUB_TOKEN
       skip_cleanup: true  # skip clean up which would delete build artifacts
       draft: true
+      file_glob: true  # enable wildcards in file
+      file: dist/*  # files to upload
       on:
-          branch: master
-          tags: true
+          branch: appveyor
+#          branch: master
+#          tags: true
 
 
 

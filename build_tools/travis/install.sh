@@ -80,6 +80,8 @@ make_conda() {
 
     # Set up test environment
     conda create -n testenv --yes $TO_INSTALL
+
+    # Activate environment
     source activate testenv
 
     # Install packages not available via conda
@@ -94,25 +96,32 @@ make_conda() {
     then
       pip install sphinx_rtd_theme
       pip install nbsphinx
+      pip install sphinx
+      pip install jupyter
     fi
 }
 
-TO_INSTALL="python=$PYTHON_VERSION pip pytest pytest-cov \
+TO_INSTALL="python=$PYTHON_VERSION pip pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             cython=$CYTHON_VERSION scikit-learn=$SKLEARN_VERSION \
             pandas=$PANDAS_VERSION statsmodels=$STATSMODELS_VERSION \
-            sphinx jupyter"
+            wheel"
 make_conda $TO_INSTALL
 
 if [ "$COVERAGE" == "true" ]
 then
-    pip install coverage codecov
+    pip install coverage codecov pytest-cov
 fi
 
 # Build sktime in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
-python setup.py develop  # invokes build_ext -i to compile files
+
+# python setup.py develop  # invokes build_ext -i to compile files
+python setup.py bdist_wheel
 ls dist  # list build artifacts
+
+# Install from built wheels
+pip install --pre --no-index --find-links dist/ sktime
 
 # Useful for debugging how ccache is used
 if [ $TRAVIS_OS_NAME = "linux" ]
