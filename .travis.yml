@@ -5,6 +5,7 @@ branches:
     only:
         - master
         - dev
+        - appveyor
 
 language: python
 
