@@ -5,7 +5,6 @@ branches:
     only:
         - master
         - dev
-        - appveyor
 
 language: python
 
@@ -58,9 +57,5 @@ deploy:
       file_glob: true  # enable wildcards in file
       file: dist/*  # files to upload
       on:
-          branch: appveyor
-#          branch: master
-#          tags: true
-
-
-
+          branch: master
+          tags: true
