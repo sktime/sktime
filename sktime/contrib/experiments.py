@@ -53,6 +53,7 @@ import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
 import sktime.classifiers.distance_based.elastic_ensemble as dist
+import sktime.classifiers.distance_based.time_series_neighbors as nn
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
@@ -64,7 +65,7 @@ from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java,
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
@@ -257,6 +258,8 @@ def set_classifier(cls, resampleId):
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+    elif cls.lower() == 'dtwcv':
+        return nn.KNeighborsTimeSeriesClassifier(metric="dtwcv")
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
     elif cls.lower() == 'tsfcomposite':
