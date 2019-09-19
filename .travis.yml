@@ -46,13 +46,13 @@ deploy:
     - provider: pages
       skip-cleanup: true
       local_dir: "./documentation/build_doc_site/html"
-      github-token: $GITHUB_TOKEN  # Generated in the settings page of your repository, as a secure variable
+      github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
       keep-history: false
       on:
           branch: master
     - provider: releases
       api_key: $GITHUB_TOKEN
-      skip_cleanup: true
+      skip_cleanup: true  # skip clean up which would delete build artifacts
       draft: true
       on:
           branch: master
