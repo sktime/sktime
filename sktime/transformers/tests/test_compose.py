@@ -72,7 +72,7 @@ def test_ColumnTransformer_pipeline():
     steps = [
         ('extract', column_transformer),
         ('tabularise', Tabulariser()),
-        ('classify', RandomForestClassifier(n_estimators=2))]
+        ('classify', RandomForestClassifier(n_estimators=2, random_state=1))]
     model = Pipeline(steps=steps)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
