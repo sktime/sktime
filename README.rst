@@ -1,9 +1,18 @@
-.. image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
-    :target: https://travis-ci.com/alan-turing-institute/sktime   
-.. image:: https://badge.fury.io/py/sktime.svg
-    :target: https://badge.fury.io/py/sktime
-.. image:: https://badges.gitter.im/sktime/community.svg
-    :target: https://gitter.im/sktime/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+.. -*- mode: rst -*-
+
+|travis|_ |appveyor|_ |pypi|_ |gitter|_
+
+.. |travis| image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
+.. _travis: https://travis-ci.com/alan-turing-institute/sktime
+
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/3bs0rpe1id1ots8c/branch/master?svg=true
+.. _appveyor: https://ci.appveyor.com/project/mloning/sktime
+
+.. |pypi| image:: https://badge.fury.io/py/sktime.svg
+.. _pypi: https://badge.fury.io/py/sktime
+
+.. |gitter| image:: https://badges.gitter.im/sktime/community.svg
+.. _gitter: https://gitter.im/sktime/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
 
 sktime
 ======

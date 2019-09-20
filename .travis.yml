@@ -1,66 +1,61 @@
-# whitelist the following branches for building
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/.travis.yml
+
+# use travis only on the following branches for building
 branches:
     only:
         - master
         - dev
 
-dist: trusty
-sudo: false
-
 language: python
 
 cache:
-    directories:
-        - $HOME/.cache/pip
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.ccache
+
+dist: xenial
+
+env:
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/sktime
+    - OMP_NUM_THREADS=4
+    - OPENBLAS_NUM_THREADS=4
+    - PYTHON_VERSION="3.7" NUMPY_VERSION="1.16" SCIPY_VERSION="1.2" SKLEARN_VERSION="0.21" JOBLIB_VERSION="0.13"
+      CYTHON_VERSION="0.29" PANDAS_VERSION="0.23" STATSMODELS_VERSION="0.9" SCIKIT_POSTHOCS_VERSION="0.5.0"
 
 matrix:
+    # platforms and package environments to test
     include:
-        # add more combinations here as per requirement
-        - env: PYTHON_VERSION="3.7" NUMPY_VERSION="1.15" SCIPY_VERSION="1.1"
-               SKLEARN_VERSION="0.20" PANDAS_VERSION="0.24" STATSMODELS_VERSION="0.9"
+      - os: linux
+        python: 3.6
+      - os: osx
+        language: generic
 
 install:
-    # install miniconda
-    - deactivate
-    - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-    - MINICONDA_PATH=/home/travis/miniconda
-    - chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-    - export PATH=$MINICONDA_PATH/bin:$PATH
-    - conda update --yes conda
-    # create the testing environment
-    - conda create -n testenv --yes python=$PYTHON_VERSION pip
-    - source activate testenv
-    - conda install -n testenv --yes numpy==$NUMPY_VERSION scipy==$SCIPY_VERSION scikit-learn==$SKLEARN_VERSION pandas==$PANDAS_VERSION statsmodels==$STATSMODELS_VERSION cython nose pytest pytest-cov sphinx jupyter
-    - pip install sphinx_rtd_theme
-    - pip install scikit-posthocs
-    - pip install nbsphinx
-    - pip install joblib
-    - python setup.py build_ext -i
+    - source build_tools/travis/install.sh  # build environment
 
 script:
-    - mkdir for_test
-    - cd for_test
-    - pytest -v --cov=sktime --pyargs ../sktime --cov-report html
+    - bash build_tools/travis/test_script.sh  # run unit tests
 
 after_success:
-    - cd ../documentation
-    - make html
+    - source build_tools/travis/after_success.sh
 
 deploy:
+    # on master branch, deploy website and upload compiled files to Github
     - provider: pages
       skip-cleanup: true
       local_dir: "./documentation/build_doc_site/html"
-      github-token: $GITHUB_TOKEN  # Generated in the settings page of your repository, as a secure variable
+      github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
       keep-history: false
       on:
           branch: master
     - provider: releases
       api_key: $GITHUB_TOKEN
-      skip_cleanup: true
+      skip_cleanup: true  # skip clean up which would delete build artifacts
       draft: true
+      file_glob: true  # enable wildcards in file
+      file: dist/*  # files to upload
       on:
           branch: master
           tags: true
-
-
-

@@ -1,4 +1,6 @@
 include *.rst
+recursive-include documentation *
 recursive-include examples *
-recursive-include sktime *.c *.h *.pyx *.pxd *.pxi
+recursive-include sktime *.c *.h *.pyx *.pxd *.pxi *.tp
 recursive-include sktime/datasets *.csv *.csv.gz *.arff *.arff.gz *.txt *.ts
+include LICENSE
