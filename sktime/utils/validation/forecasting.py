@@ -241,4 +241,4 @@ def check_consistent_time_indices(x, y):
     """
 
     if not x.index.equals(y.index):
-        raise ValueError(f"Found input variables with inconsistent indices")
+        raise ValueError(f"Found input variables with inconsistent time indices")

@@ -43,11 +43,12 @@ class RollingWindowSplit:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, window_length=None, fh=None):
+    def __init__(self, window_length, fh=None):
         # TODO input checks
         if window_length is not None:
-            if not np.issubdtype(type(window_length), np.integer):
-                raise ValueError(f"Window length must be an integer, but found: {type(window_length)}")
+            if not isinstance(window_length, int):
+                raise ValueError(f"Window length must be an integer, "
+                                 f"but found: {type(window_length)}")
 
         self.window_length = window_length
         self.fh = validate_fh(fh)
@@ -74,28 +75,28 @@ class RollingWindowSplit:
         """
 
         # Input checks.
-        if not isinstance(data, np.ndarray) and (data.ndim == 1):
+        if not (isinstance(data, np.ndarray) and data.ndim == 1):
             raise ValueError(f"Passed data has to be 1-d numpy array, but found data of type: {type(data)} with "
                              f"{data.ndim} dimensions")
 
-        n_obs = data.shape[0]
+        n_timepoints = data.shape[0]
         max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
 
         # Set default window length to sqrt of series length
-        self.window_length_ = int(np.sqrt(n_obs)) if self.window_length is None else self.window_length
+        self.window_length_ = int(np.sqrt(n_timepoints)) if self.window_length is None else self.window_length
 
-        if (self.window_length_ + max_fh) > n_obs:
+        if (self.window_length_ + max_fh) > n_timepoints:
             raise ValueError("Window length and forecast horizon cannot be longer than data")
 
         # Iterate over windows
         start = self.window_length_
-        stop = n_obs - max_fh + 1
+        stop = n_timepoints - max_fh + 1
         self.n_splits_ = stop - start
 
         for window in range(start, stop):
-            features = data[window - self.window_length_:window]
-            targets = data[window + self.fh - 1]
-            yield features, targets
+            inputs = data[window - self.window_length_:window]
+            outputs = data[window + self.fh - 1]
+            yield inputs, outputs
 
     def get_n_splits(self):
         """

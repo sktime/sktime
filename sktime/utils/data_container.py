@@ -58,8 +58,19 @@ def select_times(X, times):
         pandas DataFrame in nested format containing only selected times
     """
     # TODO currently we loose the time index, need to add it back to Xt after slicing in time
-    Xt = detabularise(tabularise(X).iloc[:, times])
-    Xt.columns = X.columns
+
+    if isinstance(X, pd.DataFrame):
+        Xt = detabularise(tabularise(X).iloc[:, times])
+        Xt.columns = X.columns
+
+    elif isinstance(X, pd.Series):
+        time_index = get_time_index(X)[times]
+        Xt = X.iloc[0].iloc[times]
+        Xt = pd.Series([pd.Series(Xt, index=time_index)])
+
+    else:
+        raise ValueError(f"Expected input is pandas DataFrame or Series, "
+                         f"but found: {type(X)}")
     return Xt
 
 
@@ -153,13 +164,13 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
 
     container = np.array if return_arrays else pd.Series
 
-    n_samples, n_obs = X.shape
+    n_instances, n_timepoints = X.shape
 
     if time_index is None:
-        time_index = np.arange(n_obs)
+        time_index = np.arange(n_timepoints)
     kwargs = {'index': time_index}
 
-    Xt = pd.DataFrame(pd.Series([container(X.iloc[i, :].values, **kwargs) for i in range(n_samples)]))
+    Xt = pd.DataFrame(pd.Series([container(X.iloc[i, :].values, **kwargs) for i in range(n_instances)]))
 
     if index is not None:
          Xt.index = index
