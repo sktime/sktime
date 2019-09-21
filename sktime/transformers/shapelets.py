@@ -83,6 +83,7 @@ class ShapeletTransform(BaseTransformer):
         self.remove_self_similar = remove_self_similar
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
+        self.is_fitted_ = False
 
     def fit(self, X, y=None):
         """A method to fit the shapelet transform to a specified X and y
@@ -99,7 +100,7 @@ class ShapeletTransform(BaseTransformer):
         self : FullShapeletTransform
             This estimator
         """
-        if self.time_limit <= 0:
+        if type(self) is ContractedShapeletTransform and self.time_limit <= 0:
             raise ValueError("Error: time limit cannot be equal to or less than 0")
 
         X_lens = np.array([len(X.iloc[r,0]) for r in range(len(X))]) # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
@@ -368,6 +369,13 @@ class ShapeletTransform(BaseTransformer):
 
         # final sort so that all shapelets from all classes are in descending order of information gain
         self.shapelets.sort(key=lambda x:x.info_gain, reverse=True)
+        self.is_fitted_ = True
+
+        # warn the user if fit did not produce any valid shapelets
+        if len(self.shapelets) == 0:
+            warnings.warn("No valid shapelets were extracted from this dataset and calling the transform method "
+                          "will raise an Exception. Please re-fit the transform with other data and/or "
+                          "parameter options.")
 
     @staticmethod
     def remove_self_similar_shapelets(shapelet_list):
@@ -424,8 +432,10 @@ class ShapeletTransform(BaseTransformer):
         output : pandas DataFrame
             The transformed dataframe in tabular format.
         """
-        if self.shapelets is None:
-            raise Exception("Fit not called yet or no shapelets were generated")
+        if self.is_fitted_ is False:
+            raise Exception("fit has not been called . Please call fit before using the transform method.")
+        elif len(self.shapelets) == 0:
+            raise Exception("No shapelets were extracted in fit that exceeded the minimum information gain threshold. Please retry with other data and/or parameter settings.")
 
         X = np.array([[X.iloc[r, c].values for c in range(len(X.columns))] for r in range(len(X))])  # may need to pad with nans here for uneq length, look at later
 

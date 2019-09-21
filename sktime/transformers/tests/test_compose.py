@@ -4,7 +4,6 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.pipeline import Pipeline
-from sktime.tests.test_pipeline import X_train, y_train, X_test, y_test
 from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
 from sktime.datasets import load_gunpoint, load_basic_motions
 from sktime.utils.data_container import tabularise
@@ -50,6 +49,16 @@ def test_rowwise_transformer_sklearn_transfomer():
     np.testing.assert_almost_equal(Xt.iloc[0, 0].std(), 1, decimal=2)
 
 
+def test_rowwise_transformer_transform_inverse_transform():
+    X, y = load_gunpoint(return_X_y=True)
+    t = RowwiseTransformer(StandardScaler())
+    Xt = t.fit_transform(X)
+    Xit = t.inverse_transform(Xt)
+    assert Xit.shape == X.shape
+    assert isinstance(Xit.iloc[0, 0], (pd.Series, np.ndarray))  # check series-to-series transforms
+    np.testing.assert_array_almost_equal(tabularise(X).values, tabularise(Xit).values, decimal=5)
+
+
 def test_ColumnTransformer_pipeline():
     X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
     X_test, y_test = load_basic_motions("TEST", return_X_y=True)
@@ -63,7 +72,7 @@ def test_ColumnTransformer_pipeline():
     steps = [
         ('extract', column_transformer),
         ('tabularise', Tabulariser()),
-        ('classify', RandomForestClassifier(n_estimators=2))]
+        ('classify', RandomForestClassifier(n_estimators=2, random_state=1))]
     model = Pipeline(steps=steps)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)

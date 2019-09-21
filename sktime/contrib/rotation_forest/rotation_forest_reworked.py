@@ -26,7 +26,7 @@ class RotationForestClassifier(ForestClassifier):
 
     References
     ----------
-     @article{Rodriguez2006,
+    @article{Rodriguez2006,
         author = {Juan J. Rodriguez and Ludmila I. Kuncheva and Carlos J. Alonso},
         journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
         number = {10},
@@ -36,10 +36,16 @@ class RotationForestClassifier(ForestClassifier):
         year = {2006},
         ISSN = {0162-8828},
         URL = {http://doi.ieeecomputersociety.org/10.1109/TPAMI.2006.211}
-     }
+    }
+    @article{bagnall2018rotation,
+      title={Is rotation forest the best classifier for problems with continuous features?},
+      author={Bagnall, A and Bostrom, Aaron and Cawley, G and Flynn, Michael and Large, James and Lines, Jason},
+      journal={arXiv preprint arXiv:1809.06705},
+      year={2018}
+    }
 
-     Java reference implementation:
-     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/weka/classifiers/meta/RotationForest.java
+    Java reference implementation:
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/weka/classifiers/meta/RotationForest.java
     """
     def __init__(self,
                  n_estimators=200,
