@@ -16,44 +16,58 @@ import numpy as np
 from scipy.stats import rankdata
 from sklearn.base import clone
 from sklearn.exceptions import FitFailedWarning
+from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv, ParameterGrid
 from sklearn.model_selection._validation import _aggregate_score_dicts
-from sklearn.utils import _message_with_time
+from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.validation import check_is_fitted
 
-from sktime.forecasters.base import BaseForecaster
-from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.data_container import select_times, get_time_index
 from sktime.utils.validation.forecasting import validate_fh, validate_y_X
 
 
-def _score(forecaster, fh, y_test, scorer):
+def _score(estimator, fh, y_test, scorer):
     """Compute the score(s) of an estimator on a given test set.
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
-    # scores = scorer(forecaster, X_test, y_test)
-    y_pred = forecaster.predict(fh)
-    scores = scorer["score"](y_test.iloc[0], y_pred)
+    # if isinstance(scorer, dict):
+    #     # will cache method calls if needed. scorer() returns a dict
+    #     scorer = _MultimetricScorer(**scorer)
+    # if y_test is None:
+    #     scores = scorer(estimator, X_test)
+    # else:
+    #     scores = scorer(estimator, X_test, y_test)
+    y_pred = estimator.predict(fh=fh)
+    scores = {name: func(y_test.iloc[0], y_pred) for name, func in scorer.items()}
 
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
-
-    if hasattr(scores, 'item'):
-        with suppress(ValueError):
-            # e.g. unwrap memmapped scalars
-            scores = scores.item()
-    if not isinstance(scores, numbers.Number):
-        raise ValueError(error_msg % (scores, type(scores), scorer))
-
+    if isinstance(scores, dict):
+        for name, score in scores.items():
+            if hasattr(score, 'item'):
+                with suppress(ValueError):
+                    # e.g. unwrap memmapped scalars
+                    score = score.item()
+            if not isinstance(score, numbers.Number):
+                raise ValueError(error_msg % (score, type(score), name))
+            scores[name] = score
+    else:  # scalar
+        if hasattr(scores, 'item'):
+            with suppress(ValueError):
+                # e.g. unwrap memmapped scalars
+                scores = scores.item()
+        if not isinstance(scores, numbers.Number):
+            raise ValueError(error_msg % (scores, type(scores), scorer))
     return scores
 
 
-def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
+def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
                    parameters, fit_params, X=None,
                    return_parameters=False,
                    return_n_test_timepoints=False,
                    return_times=False,
-                   return_forecaster=False,
+                   return_estimator=False,
                    error_score=np.nan):
     if verbose > 1:
         if parameters is None:
@@ -68,7 +82,7 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
 
     train_scores = {}
     if parameters is not None:
-        forecaster.set_params(**parameters)
+        estimator.set_params(**parameters)
 
     start_time = time.time()
 
@@ -76,7 +90,7 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
     y_test = select_times(y, test)
 
     try:
-        forecaster.fit(y_train, **fit_params)
+        estimator.fit(y_train, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
@@ -93,7 +107,7 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
                 test_scores = error_score
                 # if return_train_score:
                 #     train_scores = error_score
-            warnings.warn("forecaster fit failed. The score on this train-test"
+            warnings.warn("estimator fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
                           (error_score, format_exception_only(type(e), e)[0]),
@@ -105,7 +119,7 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(forecaster, fh, y_test, scorer)
+        test_scores = _score(estimator, fh, y_test, scorer)
         score_time = time.time() - start_time - fit_time
 
     # if verbose > 1:
@@ -120,20 +134,21 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
-    if return_forecaster:
-        ret.append(forecaster)
+    if return_estimator:
+        ret.append(estimator)
     return ret
 
 
-class GridSearchCVForecaster(BaseForecaster):
+class GridSearchCVForecaster:
 
-    def __init__(self, forecaster, param_grid, cv, scoring=None, verbose=0, check_input=True):
-        self.forecaster = forecaster
+    def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0, check_input=True):
+        self.estimator = estimator
         self.param_grid = param_grid
         self.cv = cv
-        self.scoring = scoring if scoring is not None else smape_loss
+        self.refit = refit
+        self.scoring = scoring
         self.verbose = verbose
-        super(GridSearchCVForecaster, self).__init__(check_input=check_input)
+        self.check_input = check_input
 
     def fit(self, y, fh=None, X=None, **fit_params):
 
@@ -148,18 +163,38 @@ class GridSearchCVForecaster(BaseForecaster):
         self._time_index = get_time_index(y)
 
         # Make interface compatible with estimators that only take y and no X
-        kwargs = {} if X is None else {'X': X}
-
         if X is not None:
             raise NotImplementedError("Exogeneous variables not supported yet")
+        # kwargs = {} if X is None else {'X': X}
 
-        forecaster = self.forecaster
         cv = check_cv(self.cv)
         time_index = self._time_index.values
 
-        base_forecaster = clone(self.forecaster)
+        base_estimator = clone(self.estimator)
 
+        # scorers, self.multimetric_ = _check_multimetric_scoring(
+        #     self.estimator, scoring=self.scoring)
         scorers = {"score": self.scoring}
+        refit_metric = "score"
+
+        # if self.multimetric_:
+        #     if self.refit is not False and (
+        #             not isinstance(self.refit, str) or
+        #             # This will work for both dict / list (tuple)
+        #             self.refit not in scorers) and not callable(self.refit):
+        #         raise ValueError("For multi-metric scoring, the parameter "
+        #                          "refit must be set to a scorer key or a "
+        #                          "callable to refit an estimator with the "
+        #                          "best parameter setting on the whole "
+        #                          "data and make the best_* attributes "
+        #                          "available for that metric. If this is "
+        #                          "not needed, refit should be set to "
+        #                          "False explicitly. %r was passed."
+        #                          % self.refit)
+        #     else:
+        #         refit_metric = self.refit
+        # else:
+        #     refit_metric = 'score'
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
@@ -188,7 +223,7 @@ class GridSearchCVForecaster(BaseForecaster):
             out = []
             for parameters, (train, test) in product(candidate_params, cv.split(time_index)):
                 r = _fit_and_score(
-                    clone(base_forecaster),
+                    clone(base_estimator),
                     y,
                     fh,
                     X=X,
@@ -221,6 +256,28 @@ class GridSearchCVForecaster(BaseForecaster):
             return results
 
         self._run_search(evaluate_candidates)
+
+        if self.refit:
+            self.best_index_ = results["rank_test_%s"
+                                       % refit_metric].argmin()
+            self.best_score_ = results["mean_test_%s" % refit_metric][
+                self.best_index_]
+            self.best_params_ = results["params"][self.best_index_]
+
+            self.best_estimator_ = clone(base_estimator).set_params(
+                **self.best_params_)
+            refit_start_time = time.time()
+            self.best_estimator_.fit(y, fh, **fit_params)
+            refit_end_time = time.time()
+            self.refit_time_ = refit_end_time - refit_start_time
+
+        # Store the only scorer not as a dict for single metric evaluation
+        self.scorer_ = scorers['score']
+
+        self.cv_results_ = results
+        self.n_splits_ = cv.get_n_splits()
+
+        return self
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
@@ -299,5 +356,65 @@ class GridSearchCVForecaster(BaseForecaster):
 
         return results
 
-    def _predict(self, fh=None, X=None):
-        pass
+    def _check_is_fitted(self, method_name):
+        if not self.refit:
+            raise NotFittedError('This %s instance was initialized '
+                                 'with refit=False. %s is '
+                                 'available only after refitting on the best '
+                                 'parameters. You can refit an estimator '
+                                 'manually using the ``best_params_`` '
+                                 'attribute'
+                                 % (type(self).__name__, method_name))
+        else:
+            check_is_fitted(self, "best_estimator_")
+
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    def predict(self, fh=None):
+        """Call predict on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``predict``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._check_is_fitted('predict')
+        return self.best_estimator_.predict(fh=fh)
+
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    def transform(self, X):
+        """Call transform on the estimator with the best found parameters.
+
+        Only available if the underlying estimator supports ``transform`` and
+        ``refit=True``.
+
+        Parameters
+        ----------
+        X : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._check_is_fitted('transform')
+        return self.best_estimator_.transform(X)
+
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    def inverse_transform(self, Xt):
+        """Call inverse_transform on the estimator with the best found params.
+
+        Only available if the underlying estimator implements
+        ``inverse_transform`` and ``refit=True``.
+
+        Parameters
+        ----------
+        Xt : indexable, length n_samples
+            Must fulfill the input assumptions of the
+            underlying estimator.
+
+        """
+        self._check_is_fitted('inverse_transform')
+        return self.best_estimator_.inverse_transform(Xt)
