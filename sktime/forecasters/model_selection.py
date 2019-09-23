@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/model_selection/_search.py
 __author__ = "Markus Löning"
 
 import numbers
@@ -80,7 +81,6 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     # Fit params
     fit_params = fit_params if fit_params is not None else {}
 
-    train_scores = {}
     if parameters is not None:
         estimator.set_params(**parameters)
 
@@ -90,7 +90,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     y_test = select_times(y, test)
 
     try:
-        estimator.fit(y_train, **fit_params)
+        estimator.fit(y_train, fh=fh, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
@@ -139,7 +139,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     return ret
 
 
-class GridSearchCVForecaster:
+class ForecastingGridSearchCV:
 
     def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0, check_input=True):
         self.estimator = estimator
@@ -257,15 +257,16 @@ class GridSearchCVForecaster:
 
         self._run_search(evaluate_candidates)
 
-        if self.refit:
-            self.best_index_ = results["rank_test_%s"
-                                       % refit_metric].argmin()
-            self.best_score_ = results["mean_test_%s" % refit_metric][
-                self.best_index_]
-            self.best_params_ = results["params"][self.best_index_]
+        self.best_index_ = results["rank_test_%s"
+                                   % refit_metric].argmin()
+        self.best_score_ = results["mean_test_%s" % refit_metric][
+            self.best_index_]
+        self.best_params_ = results["params"][self.best_index_]
 
-            self.best_estimator_ = clone(base_estimator).set_params(
-                **self.best_params_)
+        self.best_estimator_ = clone(base_estimator).set_params(
+            **self.best_params_)
+
+        if self.refit:
             refit_start_time = time.time()
             self.best_estimator_.fit(y, fh, **fit_params)
             refit_end_time = time.time()
@@ -418,3 +419,118 @@ class GridSearchCVForecaster:
         """
         self._check_is_fitted('inverse_transform')
         return self.best_estimator_.inverse_transform(Xt)
+
+    def score(self, y, fh, X=None):
+        """Returns the score on the given data, if the estimator has been refit.
+
+        This uses the score defined by ``scoring`` where provided, and the
+        ``best_estimator_.score`` method otherwise.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
+
+        Returns
+        -------
+        score : float
+        """
+        self._check_is_fitted('score')
+        if self.scorer_ is None:
+            raise ValueError("No score function explicitly defined, "
+                             "and the estimator doesn't provide one %s"
+                             % self.best_estimator_)
+        score = self.scorer_
+        y_pred = self.best_estimator_.predict(fh, X=X)
+        return score(y, y_pred)
+
+
+class RollingWindowSplit:
+    """Rolling window iterator that allows to split time series index into two windows,
+    one containing observations used as feature data and one containing observations used as
+    target data to be predicted. The target window has the length of the given forecasting horizon.
+
+    Parameters
+    ----------
+    window_length : int, optional (default is sqrt of time series length)
+        Length of rolling window
+    fh : array-like  or int, optional, (default=None)
+        Single step ahead or array of steps ahead to forecast.
+    """
+
+    def __init__(self, window_length, fh=None):
+        # TODO input checks
+        if window_length is not None:
+            if not isinstance(window_length, int):
+                raise ValueError(f"Window length must be an integer, "
+                                 f"but found: {type(window_length)}")
+
+        self.window_length = window_length
+        self.fh = validate_fh(fh)
+
+        # Attributes updated in split
+        self.n_splits_ = None
+        self.window_length_ = None
+
+    def split(self, data):
+        """
+        Split data using rolling window.
+
+        Parameters
+        ----------
+        data : ndarray
+            1-dimensional array of time series index to split.
+
+        Yields
+        ------
+        features : ndarray
+            The indices of the feature window
+        targets : ndarray
+            The indices of the target window
+        """
+
+        # Input checks.
+        if not (isinstance(data, np.ndarray) and data.ndim == 1):
+            raise ValueError(f"Passed data has to be 1-d numpy array, but found data of type: {type(data)} with "
+                             f"{data.ndim} dimensions")
+
+        n_timepoints = data.shape[0]
+        max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
+
+        # Set default window length to sqrt of series length
+        if self.window_length is None:
+            window_length = np.int(np.sqrt(n_timepoints))
+        else:
+            window_length = self.window_length
+
+        if (window_length + max_fh) > n_timepoints:
+            raise ValueError("window_length + fh must be shorter than length of input series")
+
+        self.window_length_ = window_length
+
+        # Iterate over windows
+        start = window_length
+        stop = n_timepoints - max_fh + 1
+        self.n_splits_ = stop - start
+
+        for window in range(start, stop):
+            inputs = data[window - window_length:window]
+            outputs = data[window + self.fh - 1]
+            yield inputs, outputs
+
+    def get_n_splits(self):
+        """
+        Return number of splits.
+        """
+        return self.n_splits_
+
+    def get_window_length(self):
+        """
+        Return the window length.
+        """
+        return self.window_length_

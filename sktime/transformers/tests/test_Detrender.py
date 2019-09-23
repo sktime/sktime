@@ -25,7 +25,7 @@ def test_transform_inverse_transform_equivalence(order):
 def test_transform_inverse_transform_equivalence(n_samples, order):
     # generate data
     n_obs = 100
-    X = generate_time_series_data_with_trend(n_samples=n_samples, n_obs=n_obs, order=order)
+    X = generate_time_series_data_with_trend(n_instances=n_samples, n_timepoints=n_obs, order=order)
 
     # split data for testing
     cutoff = n_obs - (n_obs // 4)

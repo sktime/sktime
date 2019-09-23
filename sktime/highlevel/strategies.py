@@ -15,7 +15,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 
-from sktime.utils.time_series import RollingWindowSplit
+from sktime.forecasters.model_selection import RollingWindowSplit
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.time_series import RollingWindowSplit
 from sktime.classifiers.base import BaseClassifier

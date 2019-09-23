@@ -257,8 +257,6 @@ class RowwiseTransformer(BaseTransformer):
         return Xt
 
 
-
-
 class Tabularizer(BaseTransformer):
     """
     A transformer that turns time series/panel data into tabular data.

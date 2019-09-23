@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.utils import check_array
 
+from sktime.forecasters.model_selection import RollingWindowSplit
 from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 
@@ -28,87 +29,6 @@ def time_series_slope(y):
         x = np.arange(len_series)  # time index
         x_mean = (len_series - 1) / 2  # faster than x.mean()
         return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
-
-
-class RollingWindowSplit:
-    """Rolling window iterator that allows to split time series index into two windows,
-    one containing observations used as feature data and one containing observations used as
-    target data to be predicted. The target window has the length of the given forecasting horizon.
-
-    Parameters
-    ----------
-    window_length : int, optional (default is sqrt of time series length)
-        Length of rolling window
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
-    """
-
-    def __init__(self, window_length, fh=None):
-        # TODO input checks
-        if window_length is not None:
-            if not isinstance(window_length, int):
-                raise ValueError(f"Window length must be an integer, "
-                                 f"but found: {type(window_length)}")
-
-        self.window_length = window_length
-        self.fh = validate_fh(fh)
-
-        # Attributes updated in split
-        self.n_splits_ = None
-        self.window_length_ = None
-
-    def split(self, data):
-        """
-        Split data using rolling window.
-
-        Parameters
-        ----------
-        data : ndarray
-            1-dimensional array of time series index to split.
-
-        Yields
-        ------
-        features : ndarray
-            The indices of the feature window
-        targets : ndarray
-            The indices of the target window
-        """
-
-        # Input checks.
-        if not (isinstance(data, np.ndarray) and data.ndim == 1):
-            raise ValueError(f"Passed data has to be 1-d numpy array, but found data of type: {type(data)} with "
-                             f"{data.ndim} dimensions")
-
-        n_timepoints = data.shape[0]
-        max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
-
-        # Set default window length to sqrt of series length
-        self.window_length_ = int(np.sqrt(n_timepoints)) if self.window_length is None else self.window_length
-
-        if (self.window_length_ + max_fh) > n_timepoints:
-            raise ValueError("Window length and forecast horizon cannot be longer than data")
-
-        # Iterate over windows
-        start = self.window_length_
-        stop = n_timepoints - max_fh + 1
-        self.n_splits_ = stop - start
-
-        for window in range(start, stop):
-            inputs = data[window - self.window_length_:window]
-            outputs = data[window + self.fh - 1]
-            yield inputs, outputs
-
-    def get_n_splits(self):
-        """
-        Return number of splits.
-        """
-        return self.n_splits_
-
-    def get_window_length(self):
-        """
-        Return the window length.
-        """
-        return self.window_length_
 
 
 def fit_trend(x, order=0):

@@ -4,7 +4,7 @@ from sklearn.dummy import DummyRegressor
 import pytest
 
 from sktime.forecasters import ARIMAForecaster
-from sktime.forecasters.compose import TransformedTargetForecaster, ReducedRegressionForecaster
+from sktime.forecasters.compose import TransformedTargetForecaster, ReducedTimeSeriesRegressionForecaster
 from sktime.transformers.forecasting import Deseasonaliser, Detrender
 from sktime.datasets import load_shampoo_sales
 from sktime.utils.validation.forecasting import check_consistent_time_indices
@@ -55,9 +55,9 @@ tsr = Pipeline([  # time series regressor
 ])
 
 @pytest.mark.parametrize("window_length", [3, 5, 7])
-@pytest.mark.parametrize("dynamic", [True, False])
+@pytest.mark.parametrize("recursive", [True, False])
 @pytest.mark.parametrize("fh", [np.array([1]), np.array([1, 2]), np.array([5, 6])])
-def test_ReducedForecastingRegressor(window_length, dynamic, fh):
+def test_ReducedForecastingRegressor(window_length, recursive, fh):
     # define setting
     # forecasting horizon
     len_fh = len(fh)
@@ -67,9 +67,9 @@ def test_ReducedForecastingRegressor(window_length, dynamic, fh):
     train = pd.Series([y.iloc[0].iloc[:-len_fh]])
     test = pd.Series([y.iloc[0].iloc[-len_fh:]])
 
-    forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
-    # check if error is raised when dynamic is set to true but fh is not specified
-    if not dynamic:
+    forecaster = ReducedTimeSeriesRegressionForecaster(tsr, window_length=window_length, recursive=recursive)
+    # check if error is raised when recursive is set to true but fh is not specified
+    if not recursive:
         with pytest.raises(ValueError):
             forecaster.fit(train)
 
@@ -79,9 +79,9 @@ def test_ReducedForecastingRegressor(window_length, dynamic, fh):
 
 
 @pytest.mark.parametrize("window_length", [3, 5, 7])
-@pytest.mark.parametrize("dynamic", [True, False])
+@pytest.mark.parametrize("recursive", [True, False])
 @pytest.mark.parametrize("fh", [np.array([1]), np.array([1, 2]), np.array([5, 6])])
-def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_length, dynamic, fh):
+def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_length, recursive, fh):
     # define setting
     # forecasting horizon
     len_fh = len(fh)
@@ -91,15 +91,15 @@ def test_ReducedForecastingRegressor_with_TransformedTargetRegressor(window_leng
     train = pd.Series([y.iloc[0].iloc[:-len_fh]])
     test = pd.Series([y.iloc[0].iloc[-len_fh:]])
 
-    forecaster = ReducedRegressionForecaster(tsr, window_length=window_length, dynamic=dynamic)
+    forecaster = ReducedTimeSeriesRegressionForecaster(tsr, window_length=window_length, recursive=recursive)
     transformer = Pipeline([
         ('deseasonalise', Deseasonaliser(sp=12)),
         ('detrend', Detrender(order=1))
     ])
     m = TransformedTargetForecaster(forecaster, transformer)
 
-    # check if error is raised when dynamic is set to true but fh is not specified
-    if not dynamic:
+    # check if error is raised when recursive is set to true but fh is not specified
+    if not recursive:
         with pytest.raises(ValueError):
             m.fit(train)
 

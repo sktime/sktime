@@ -9,6 +9,7 @@ from sktime.pipeline import FeatureUnion, Pipeline
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.classifiers.distance_based import KNeighborsTimeSeriesClassifier as KNNTSC
+from sktime.classifiers.compose import TimeSeriesForestClassifier
 from sktime.datasets import load_basic_motions
 from sktime.classifiers.dictionary_based import BOSSEnsemble
 from sktime.classifiers.compose import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
@@ -64,12 +65,11 @@ def test_heterogenous_pipeline_column_ensmbler():
         [
             ("RandomIntervalTree", clf1, [0]),
             ("KNN4", KNNTSC(n_neighbors=1), [4]),
-            ("BOSSEnsemble1 ", BOSSEnsemble(n_parameter_samples=3), [1]),
+            ("TimeSeriesForestClassifier1 ", BOSSEnsemble(n_parameter_samples=3), [1]),
             ("KNN2", KNNTSC(n_neighbors=1), [2]),
-            ("BOSSEnsemble3", BOSSEnsemble(n_parameter_samples=3), [3]),
+            ("TimeSeriesForestClassifier3", BOSSEnsemble(n_parameter_samples=3), [3]),
         ]
     )
-
     ct.fit(X_train, y_train)
     ct.score(X_test, y_test)
 

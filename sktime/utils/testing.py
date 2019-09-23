@@ -17,25 +17,29 @@ def generate_polynomial_series(n, order, coefs=None):
     return x.ravel()
 
 
-def generate_time_series_data_with_trend(n_samples=1, n_obs=100, order=0, coefs=None):
+def generate_time_series_data_with_trend(n_instances=1, n_timepoints=100, order=0, coefs=None, noise=False):
     """Helper function to generate time series/panel data with polynomial trend"""
     samples = []
-    for i in range(n_samples):
-        s = generate_polynomial_series(n_obs, order=order, coefs=coefs)
+    for i in range(n_instances):
+        s = generate_polynomial_series(n_timepoints, order=order, coefs=coefs)
 
-        index = np.arange(n_obs)
+        if noise:
+            s = s + np.random.normal(size=n_timepoints)
+
+        index = np.arange(n_timepoints)
         y = pd.Series(s, index=index)
+
         samples.append(y)
 
     X = pd.DataFrame(samples)
-    assert X.shape == (n_samples, n_obs)
+    assert X.shape == (n_instances, n_timepoints)
     return detabularise(X)
 
 
 def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100, order=0, sp=1, model='additive'):
     """Helper function to generate time series/panel data with polynomial trend and seasonal component"""
     if sp == 1:
-        return generate_time_series_data_with_trend(n_samples=n_samples, n_obs=n_obs, order=order)
+        return generate_time_series_data_with_trend(n_instances=n_samples, n_timepoints=n_obs, order=order)
 
     samples = []
     for i in range(n_samples):

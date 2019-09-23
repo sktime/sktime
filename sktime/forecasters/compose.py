@@ -4,13 +4,13 @@ from sklearn.base import clone
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.time_series import RollingWindowSplit
+from sktime.forecasters.model_selection import RollingWindowSplit
 from sktime.forecasters.base import BaseForecaster
 
 __author__ = "Markus Löning"
 __all__ = ["EnsembleForecaster",
            "TransformedTargetForecaster",
-           "ReducedRegressionForecaster"]
+           "ReducedTimeSeriesRegressionForecaster"]
 
 
 class EnsembleForecaster(BaseForecaster):
@@ -182,7 +182,7 @@ class TransformedTargetForecaster(BaseForecaster):
         return y_pred_it.iloc[0]
 
 
-class ReducedRegressionForecaster(BaseForecaster):
+class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
     """
     Forecasting to time series regression reduction strategy.
 
@@ -195,17 +195,18 @@ class ReducedRegressionForecaster(BaseForecaster):
         Time series regressor.
     window_length : int, optional (default=None)
         Window length of rolling window approach.
-    dynamic : bool, optional (default=False)
+    recursive : bool, optional (default=False)
         - If True, estimator is fitted for one-step ahead forecasts and only one-step ahead forecasts are made using
         extending the last window of the training data with already made forecasts.
         - If False, one estimator is fitted for each step-ahead forecast and only the last window is used for making
         forecasts.
     """
 
-    def __init__(self, estimator, window_length=None, dynamic=False):
+    def __init__(self, estimator, window_length=None, recursive=False, check_input=True):
         self.estimator = estimator
         self.window_length = window_length
-        self.dynamic = dynamic
+        self.recursive = recursive
+        super(ReducedTimeSeriesRegressionForecaster, self).__init__(check_input=check_input)
 
     def fit(self, y, fh=None, X=None):
         """Fit forecaster.
@@ -229,7 +230,7 @@ class ReducedRegressionForecaster(BaseForecaster):
         self : returns an instance of self.
         """
         # validate forecasting horizon
-        if fh is None and not self.dynamic:
+        if fh is None and not self.recursive:
             raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit, "
                              f"as one estimator is fit for each step of the forecasting horizon")
 
@@ -255,10 +256,10 @@ class ReducedRegressionForecaster(BaseForecaster):
         yt = self._prepare_y(y)
 
         # Transform using rolling window
-        X, Y = self._transform(yt, fh)
+        X, Y = self.transform(yt, fh)
 
         # Fitting
-        if self.dynamic:
+        if self.recursive:
             # Fit single estimator for one-step ahead forecast
             y = Y.ravel()  # convert into one-dimensional array
             estimator = clone(self.estimator)
@@ -282,16 +283,18 @@ class ReducedRegressionForecaster(BaseForecaster):
         self._last_window = yt.iloc[-self.window_length_:]
         return self
 
-    def _transform(self, y, fh):
+    def transform(self, y, fh):
         """Helper function to transform data using rolling window approach"""
 
         # Set up window roller
         # For dynamic prediction, models are only trained on one-step ahead forecast
-        fh = np.array([1]) if self.dynamic else fh
+        fh = np.array([1]) if self.recursive else fh
         self.rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
 
         # get numeric time index
-        time_index = np.arange(len(y))
+        time_index = y.index.values
+        if not np.issubdtype(time_index.dtype, np.dtype(int).type):
+            raise NotImplementedError("Non-numeric time indices are not supported yet")
 
         # Transform target series into tabular format using rolling window splits
         xs = []
@@ -303,8 +306,8 @@ class ReducedRegressionForecaster(BaseForecaster):
             ys.append(yi)
 
         # Construct nested pandas DataFrame for X
-        X = pd.DataFrame(pd.Series([xi for xi in np.array(xs)]))
-        Y = np.array([np.array(yi) for yi in ys])
+        X = pd.DataFrame(pd.Series([np.asarray(xi) for xi in xs]))
+        Y = np.array([np.asarray(yi) for yi in ys])
         return X, Y
 
     def predict(self, fh=None, X=None):
@@ -323,7 +326,7 @@ class ReducedRegressionForecaster(BaseForecaster):
 
         # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
         # only the last window and using one fitted estimator for each step ahead forecast
-        if self.dynamic:
+        if self.recursive:
             # Roll last window using previous one-step ahead forecasts
             for i in range(len_fh):
                 y_pred[i] = self.estimators_.predict(x_test)
