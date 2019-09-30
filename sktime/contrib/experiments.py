@@ -52,7 +52,13 @@ import sktime.classifiers.compose.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
+<<<<<<< HEAD
+import sktime.classifiers.distance_based.elastic_ensemble as ee
+import sktime.classifiers.distance_based.time_series_neighbors as dist
+=======
 import sktime.classifiers.distance_based.elastic_ensemble as dist
+import sktime.classifiers.distance_based.time_series_neighbors as nn
+>>>>>>> dev
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
@@ -64,7 +70,7 @@ from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism use in Java,
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
@@ -245,6 +251,10 @@ def set_classifier(cls, resampleId):
     """
     if cls.lower() == 'pf':
         return pf.ProximityForest(random_state = resampleId)
+    elif cls.lower() == 'pt':
+        return pf.ProximityTree(random_state = resampleId)
+    elif cls.lower() == 'ps':
+        return pf.ProximityStump(random_state = resampleId)
     elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
     elif  cls.lower() == 'tsf':
@@ -253,8 +263,12 @@ def set_classifier(cls, resampleId):
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+    elif cls.lower() == 'dtwcv':
+        return nn.KNeighborsTimeSeriesClassifier(metric="dtwcv")
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
-        return dist.ElasticEnsemble()
+        return ee.ElasticEnsemble()
+    elif cls.lower() == 'dtw' or cls.lower() == 'dynamictimewarping':
+        return dist.KNeighborsTimeSeriesClassifier(metric="dtw")
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
@@ -271,7 +285,7 @@ def set_classifier(cls, resampleId):
         base_estimator = Pipeline(steps)
         return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
-        return 'UNKNOWN CLASSIFIER'
+        raise Exception('UNKNOWN CLASSIFIER')
 
 
 def acf_coefs(x, maxlag=100):
@@ -525,14 +539,17 @@ if __name__ == "__main__":
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "ItalyPowerDemand"
+        dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "TSF"
+        classifier = "DTW"
         resample = 0
-        for i in range(0, len(univariate_datasets)):
+        tf = False
+        run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
+               resampleID=resample, train_file=tf)
+        for i in range(13, len(univariate_datasets)):
             dataset = univariate_datasets[i]
 #            print(i)
-#            print(" problem = "+dataset)
+            print(i+" problem = "+dataset)
             tf=False
             run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
