@@ -143,7 +143,7 @@ def powerspectrum(x, **kwargs):
 
 
 def tsf_benchmarking():
-    for i in range(0, len(benchmark_datasets)/2):
+    for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         tsf = ib.TimeSeriesForest(n_trees=100)
@@ -159,10 +159,10 @@ def tsf_benchmarking():
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
-                                         n_estimators=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
-                       classifier=tsf, dataset=dataset, train_file=False)
+#        tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
+#                                         n_estimators=100)
+ #       exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFComposite",
+ #                      classifier=tsf, dataset=dataset, train_file=False)
 
 def rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
@@ -217,7 +217,7 @@ def elastic_distance_benchmarking():
 
 
 if __name__ == "__main__":
-#    tsf_benchmarking()
+    tsf_benchmarking()
 #    rise_benchmarking()
 #    boss_benchmarking()
-    elastic_distance_benchmarking()
+#    elastic_distance_benchmarking()

@@ -152,8 +152,6 @@ class TimeSeriesForest(ForestClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
-#Optional whether to use voting or probability votes
-
         proba=self.predict_proba(X)
         return [self.classes_[np.argmax(prob)] for prob in proba]
 
@@ -198,8 +196,12 @@ class TimeSeriesForest(ForestClassifier):
                 transformed_x[3*j+1]=std_dev
                 transformed_x[3*j+2]=slope
             transformed_x=transformed_x.T
-            sums += self.classifiers[i].predict_proba(transformed_x)
-
+            if self.vote_ensemble:
+                predictions= self.classifiers[i].predict(transformed_x)
+                for i in range(0,len(predictions)):
+                    sums[i,predictions[i]]+=1
+            else:
+                sums += self.classifiers[i].predict_proba(transformed_x)
         output = sums / (np.ones(self.n_classes) * self.n_estimators)
         return output
 
