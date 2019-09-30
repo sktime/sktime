@@ -146,8 +146,8 @@ def tsf_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
-        tsf = ib.TimeSeriesForest(n_trees=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSF",
+        tsf = ib.TimeSeriesForest(n_trees=100, vote_ensemble=False)
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSFNoVote",
                            classifier=tsf,dataset=dataset, train_file=False)
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
