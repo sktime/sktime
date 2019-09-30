@@ -48,11 +48,11 @@ class TimeSeriesForest(ForestClassifier):
     n_trees         : int, ensemble size, optional (default = 200)
     random_state    : int, seed for random, optional (default to no seed, I think!)
     min_interval    : int, minimum width of an interval, optional (default to 3)
+    vote_ensemble   : boolean, whether to combine predictions of base classifiers or probabilities
 
     Attributes
     ----------
     n_classes    : int, extracted from the data
-    num_atts       : int, extracted from the data
     n_intervals  : int, sqrt(num_atts)
     classifiers    : array of shape = [n_trees] of DecisionTree classifiers
     intervals      : array of shape = [n_trees][n_intervals][2] stores indexes of all start and end points for all classifiers
@@ -63,7 +63,8 @@ class TimeSeriesForest(ForestClassifier):
     def __init__(self,
                  random_state = None,
                  min_interval=3,
-                 n_trees = 200
+                 n_trees = 200,
+                 vote_ensemble=True
                  ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
@@ -73,7 +74,9 @@ class TimeSeriesForest(ForestClassifier):
         random.seed(random_state)
         self.n_trees=n_trees
         self.min_interval=min_interval
-# The following set in method fit
+        self.vote_ensemble = vote_ensemble;
+
+    # The following set in method fit
         self.n_classes = 0
         self.series_length = 0
         self.n_intervals = 0
@@ -149,6 +152,7 @@ class TimeSeriesForest(ForestClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
+#Optional whether to use voting or probability votes
 
         proba=self.predict_proba(X)
         return [self.classes_[np.argmax(prob)] for prob in proba]

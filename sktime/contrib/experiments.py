@@ -52,15 +52,15 @@ import sktime.classifiers.compose.ensemble as ensemble
 import sktime.classifiers.dictionary_based.boss as db
 import sktime.classifiers.frequency_based.rise as fb
 import sktime.classifiers.interval_based.tsf as ib
-<<<<<<< HEAD
 import sktime.classifiers.distance_based.elastic_ensemble as ee
 import sktime.classifiers.distance_based.time_series_neighbors as dist
-=======
 import sktime.classifiers.distance_based.elastic_ensemble as dist
 import sktime.classifiers.distance_based.time_series_neighbors as nn
->>>>>>> dev
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
+import sktime.contrib.rotation_forest.rotation_forest_dev as rf1
+import sktime.contrib.rotation_forest.rotation_forest_reworked as rf2
+
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
@@ -269,6 +269,10 @@ def set_classifier(cls, resampleId):
         return ee.ElasticEnsemble()
     elif cls.lower() == 'dtw' or cls.lower() == 'dynamictimewarping':
         return dist.KNeighborsTimeSeriesClassifier(metric="dtw")
+    elif cls.lower() == 'rf1' or cls.lower() == 'rotation_forest1':
+        return rf1.RotationForest(n_estimators=50)
+    elif cls.lower() == 'rf2' or cls.lower() == 'rotation_forest2':
+        return rf2.RotationForestClassifier(n_estimators=50)
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
@@ -542,7 +546,7 @@ if __name__ == "__main__":
         dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "DTW"
+        classifier = "RF2"
         resample = 0
         tf = False
         run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
