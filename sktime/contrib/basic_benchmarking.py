@@ -142,7 +142,7 @@ def powerspectrum(x, **kwargs):
 
 
 def tsf_benchmarking():
-    for i in range(0, len(benchmark_datasets)):
+    for i in range(0, len(benchmark_datasets)/2):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         tsf = ib.TimeSeriesForest(n_trees=100)
@@ -168,10 +168,10 @@ def rise_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
         rise = fb.RandomIntervalSpectralForest(n_trees=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
                            classifier=rise,dataset=dataset, train_file=False)
         steps = [
-            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=16)),
             ('transform', FeatureUnion([
                 ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
                 ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
@@ -181,15 +181,15 @@ def rise_benchmarking():
         ]
         base_estimator = Pipeline(steps)
         rise = TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISEComposite",
                        classifier=rise, dataset=dataset, train_file=False)
 
 def boss_benchmarking():
-    for i in range(0, int(len(benchmark_datasets))):
+    for i in range(43, int(2*len(benchmark_datasets)/3)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset+ " writing to "+ results_dir+"/BOSS/")
         boss = db.BOSSEnsemble()
-        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"/BOSS/", cls_name="PythonBOSS",
+        exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir+"BOSS/", cls_name="PythonBOSS",
                            classifier=boss,dataset=dataset, train_file=False)
 
 
