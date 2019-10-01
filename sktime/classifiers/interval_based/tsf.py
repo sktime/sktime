@@ -63,7 +63,7 @@ class TimeSeriesForest(ForestClassifier):
     def __init__(self,
                  random_state = None,
                  min_interval=3,
-                 n_trees = 200,
+                 n_trees = 500,
                  vote_ensemble=True
                  ):
         super(TimeSeriesForest, self).__init__(
