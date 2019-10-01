@@ -368,17 +368,24 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
         if train_file == False and build_test ==False:
             return
 
-    # TO DO: Automatically differentiate between problem types, currently only works with .ts
-    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
-    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    if resampleID !=0:
-        # allLabels = np.concatenate((trainY, testY), axis = None)
-        # allData = pd.concat([trainX, testX])
-        # train_size = len(trainY) / (len(trainY) + len(testY))
-        # trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-        #                                                                random_state=resampleID, shuffle=True,
-        #                                                                stratify=allLabels)
-        trainX, trainY, testX, testY = stratified_resample(trainX, trainY, testX, testY, resampleID)
+    #Different cases: if resample files are present, use them
+    file_name1= problem_path + dataset + '/' + dataset + str(resampleID) + '_TRAIN' + format
+    file_name2= problem_path + dataset + '/' + dataset + str(resampleID) + '_TEST' + format
+    if os.path.isfile(file_name1) and os.path.isfile(file_name2):
+        trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + str(resampleID) + '_TRAIN' + format)
+        testX, testY = load_ts(problem_path + dataset + '/' + dataset + str(resampleID) + '_TEST' + format)
+        print("LOADING RESAMPLE FROM FILE")
+    else: #Resample : CODE TO CHANGE: George implementing stratification by train distribution
+        trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
+        testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+        if resampleID !=0:
+            # allLabels = np.concatenate((trainY, testY), axis = None)
+            # allData = pd.concat([trainX, testX])
+            # train_size = len(trainY) / (len(trainY) + len(testY))
+            # trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
+            #                                                                random_state=resampleID, shuffle=True,
+            #                                                                stratify=allLabels)
+            trainX, trainY, testX, testY = stratified_resample(trainX, trainY, testX, testY, resampleID)
 
 
     le = preprocessing.LabelEncoder()
