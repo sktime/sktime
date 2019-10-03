@@ -157,6 +157,8 @@ class NegToZero(BaseTransformer):
         super().__init__()
 
     def transform(self, X, y = None):
+        indices = np.argwhere(X < 0)
+        print(indices)
         kernel = np.where(X > 0, X, 0)
         return kernel
 
@@ -166,6 +168,8 @@ class NegToAbs(BaseTransformer):
         super().__init__()
 
     def transform(self, X, y = None):
+        indices = np.argwhere(X < 0)
+        print(indices)
         kernel = np.where(X > 0, X, np.abs(X))
         return kernel
 
@@ -175,6 +179,8 @@ class NegToMin(BaseTransformer):
         super().__init__()
 
     def transform(self, X, y = None):
+        indices = np.argwhere(X < 0)
+        print(indices)
         min = np.min(X)
         result = X - min
         return result
