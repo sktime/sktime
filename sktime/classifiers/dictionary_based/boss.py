@@ -39,42 +39,45 @@ class BOSSEnsemble(BaseEstimator):
     }
     Overview: Input n series length m
     BOSS performs a gird search over a set of parameter values, evaluating each with a LOOCV. If then retains
-    all ensemble members within 92% of the best. There are three primary parameters: 
+    all ensemble members within 92% of the best. There are three primary parameters:
             alpha: alphabet size
             w: window length
             l: word length.
-    for any combination, a single BOSS slides a window length w along the series. The w length window is shortened to 
-    an l length word through taking a Fourier transform and keeping the first l/2 complex coefficients. These l 
-    coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each 
-    series is formed and stored. fit involves finding n histograms. 
+    for any combination, a single BOSS slides a window length w along the series. The w length window is shortened to
+    an l length word through taking a Fourier transform and keeping the first l/2 complex coefficients. These l
+    coefficents are then discretised into alpha possible values, to form a word length l. A histogram of words for each
+    series is formed and stored. fit involves finding n histograms.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.  
+    predict uses 1 nearest neighbour with a bespoke distance function.
 
     For the Java version, see
-    https://github.com/TonyBagnall/uea-tsc/blob/master/src/main/java/timeseriesweka/classifiers/BOSS.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/timeseriesweka/classifiers/dictionary_based/BOSS.java
 
 
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
-    n_parameter_samples    : int, if randomising, generate this number of base classifiers (default=250)
+    n_parameter_samples     : int, if search is randomised, number of parameter combos to try
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
-    max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
-    word_lengths             : list of int, search space for word lengths (default =100)
+    max_ensemble_size       : int or None, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
     alphabet_size           : range of alphabet sizes to try (default to single value, 4)
     max_win_len_prop        : maximum window length as a proportion of series length (default =1)
     time_limit              : time contract to limit build time in minutes (default=0, no limit)
     word_lengths            : search range for word lengths (default =[16, 14, 12, 10, 8])
-    alphabet_size           : range of alphabet size to search for (default, a single value a=4)
-    min_window              : minu=imum window size, (default=10)
+    alphabet_size           : range of alphabet size to search for (default, a single value a=4),
+    min_window              : minimum window size, (default=10),
     norm_options            : search space for normalise, not normalise (default [True, False])
 
     Attributes
     ----------
-    n_classes    : extracted from the data
-    num_atts       : extracted from the data
-    classifiers    : array of BOSSIndividual classifiers
+    n_classes               : extracted from the data
+    n_instances             : extracted from the data
+    n_classifiers           : The final number of classifiers used (<=max_ensemble_size)
+    series_length           : length of all series (assumed equal)
+    classifiers             : array of DecisionTree classifiers
+    weights                 : weight of each classifier in the ensemble
+
     """
 
     def __init__(self,

@@ -134,6 +134,7 @@ class TimeSeriesForest(ForestClassifier):
             self.classifiers.append(tree)
         return self
 
+
     def predict(self, X):
         """
         Find predictions for all cases in X. Built on top of predict_proba
@@ -212,6 +213,7 @@ class TimeSeriesForest(ForestClassifier):
         x = np.arange(Y.shape[1]) + 1
         slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / ((x * x).mean() - x.mean() ** 2)
         return slope
+
 
 
 if __name__ == "__main__":
