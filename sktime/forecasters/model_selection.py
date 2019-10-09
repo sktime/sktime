@@ -159,6 +159,9 @@ class ForecastingGridSearchCV:
         if fh is not None:
             fh = validate_fh(fh)
 
+        # validate cross-validator
+        cv = check_cv(self.cv)
+
         # Keep index for predicting where forecasters horizon will be relative to y seen in fit
         self._time_index = get_time_index(y)
 
@@ -167,7 +170,6 @@ class ForecastingGridSearchCV:
             raise NotImplementedError("Exogeneous variables not supported yet")
         # kwargs = {} if X is None else {'X': X}
 
-        cv = check_cv(self.cv)
         time_index = self._time_index.values
 
         base_estimator = clone(self.estimator)
@@ -463,7 +465,7 @@ class RollingWindowSplit:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, window_length, fh=None):
+    def __init__(self, window_length, fh=1):
         # TODO input checks
         if window_length is not None:
             if not isinstance(window_length, int):
@@ -505,8 +507,10 @@ class RollingWindowSplit:
         # Set default window length to sqrt of series length
         if self.window_length is None:
             window_length = np.int(np.sqrt(n_timepoints))
-        else:
+        elif isinstance(self.window_length, int):
             window_length = self.window_length
+        elif isinstance(self.window_length, float):
+            window_length = self.window_length * n_timepoints
 
         if (window_length + max_fh) > n_timepoints:
             raise ValueError("window_length + fh must be shorter than length of input series")

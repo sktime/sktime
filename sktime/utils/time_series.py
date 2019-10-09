@@ -5,8 +5,77 @@ from sktime.forecasters.model_selection import RollingWindowSplit
 from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 
+def get_n_intervals(n_timepoints, n_intervals="sqrt"):
+    """
+    Compute number of intervals for given length of time series
+
+    Parameters
+    ----------
+    n_timepoints : int
+    n_intervals : {int, float, str, callable}
+
+    Returns
+    -------
+    n_intervals : int
+        Computed number of intervals
+    """
+    # check n_timepoints
+    if not isinstance(n_timepoints, int):
+        raise ValueError(f"n_timepoints must be an integer, but found: {type(n_timepoints)}")
+    if not n_timepoints >= 1:
+        raise ValueError(f"n_timepoints must be >= 1, but found: {n_timepoints}")
+
+    # compute number of splits
+    allowed_strings = ("sqrt", "log")
+
+    # TODO add callables/functions as input args
+    # integer
+    if isinstance(n_intervals, int):
+
+        if not n_intervals <= n_timepoints:
+            raise ValueError(f"n_intervals must be smaller than n_timepoints, but found: "
+                             f"n_intervals={n_intervals} and n_timepoints={n_timepoints}")
+
+        if n_intervals < 1:
+            raise ValueError(f"n_intervals must be >= 1, but found: {n_intervals}")
+
+        n_intervals_ = n_intervals
+
+    # function
+    elif callable(n_intervals):
+        n_intervals_ = n_intervals(n_timepoints)
+
+    # string
+    elif isinstance(n_intervals, str):
+        if not n_intervals in allowed_strings:
+            raise ValueError(f"n_intervals must be in {allowed_strings}, but found: {n_intervals}")
+
+        str_func_map = {
+            "sqrt": np.sqrt,
+            "log": np.log
+        }
+        func = str_func_map[n_intervals]
+        n_intervals_ = func(n_timepoints)
+
+    # float
+    elif isinstance(n_intervals, float):
+        if not (0 < n_intervals <= 1):
+            raise ValueError(f"n_intervals must be > 0 and <= 1, but found: {n_intervals}")
+
+        n_intervals_ = n_intervals * n_timepoints
+
+    else:
+        raise ValueError(f'Number of intervals must be either one of the allowed string options in '
+                         f'{{allowed_strings}}, an integer or a float number, but found: {n_intervals}')
+
+    # make sure n_intervals is an integer and there is at least one interval
+    n_intervals_ = np.maximum(1, np.int(n_intervals_))
+    return n_intervals_
+
+
 def time_series_slope(y):
-    """Compute slope of time series (y) using ordinary least squares.
+    """
+    Compute slope of time series (y) using ordinary least squares.
 
     Parameters
     ----------

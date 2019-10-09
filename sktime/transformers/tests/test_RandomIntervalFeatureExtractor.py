@@ -14,12 +14,12 @@ import pytest
 
 # Test output format and dimensions.
 @pytest.mark.parametrize("n_instances", [1, 3])
-@pytest.mark.parametrize("len_series", [2, 3])
+@pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, 'log', 'sqrt', 'random'])
 @pytest.mark.parametrize("features", [[np.mean], [np.mean, np.median],
                                       [np.mean, np.median, np.mean]])
-def test_output_format_dim(n_instances, len_series, n_intervals, features):
-    X = generate_df_from_array(np.ones(len_series), n_rows=n_instances, n_cols=1)
+def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
+    X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
     n_rows, n_cols = X.shape
     trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
     Xt = trans.fit_transform(X)
@@ -58,10 +58,10 @@ def test_random_state():
 
 # Check specific results
 @pytest.mark.parametrize("n_instances", [1, 3])
-@pytest.mark.parametrize("len_series", [2, 3])
+@pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, 'log', 'sqrt', 'random'])
-def test_results(n_instances, len_series, n_intervals):
-    x = np.random.normal(size=len_series)
+def test_results(n_instances, n_timepoints, n_intervals):
+    x = np.random.normal(size=n_timepoints)
     X = generate_df_from_array(x, n_rows=n_instances, n_cols=1)
     trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
                                            features=[np.mean, np.std, time_series_slope])
