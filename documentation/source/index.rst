@@ -12,10 +12,10 @@ Welcome to sktime's documentation!
    :maxdepth: 1
    :caption: Contents:
 
-   autogen/sktime
+   installation
    examples
    extension
-
+   autogen/sktime
 
 Indices and tables
 ==================
