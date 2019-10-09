@@ -96,6 +96,8 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric = twe_distance
         elif metric == 'mpdist':
             metric = mpdist
+        # When mpdist is used, the subsequence length (parameter m) must be set
+        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError("Unrecognised distance measure: "+metric+". Allowed values are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
