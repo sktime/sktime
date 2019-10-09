@@ -2,7 +2,17 @@ import numpy as np
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
 
-class MatrixProfile(BaseTransformer):    
+class MatrixProfile(BaseTransformer):
+    """
+        Takes as input a time series dataset and returns the matrix profile and
+        index profile for each time series of the dataset.
+
+        Example of use:
+        # mp, ip = MatrixProfile().transform(X, m)
+        where X, the dataset, and m, the desired subsequence length to be used,
+        are the inputs and mp and ip, both ndarrays with the matrix profile and
+        the index profile, respectively, of each time series, are the outputs.
+    """
 
     def sliding_dot_products(q, t, q_len, t_len):
         """
@@ -104,8 +114,6 @@ class MatrixProfile(BaseTransformer):
                 ip: numpy.array
                     Array with the indexes of the nearest neighbors of each subsequence.
         """
-
-
 
         # Initialization
         min_value = float("inf")
