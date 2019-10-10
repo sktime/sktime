@@ -186,7 +186,66 @@ class NegToMin(BaseTransformer):
         return result
 
 
+
+
+
+
 class EigKernel(BaseTransformer):
+    def __init__(self, transformer = NegToZero()):
+        super().__init__()
+        self.transformer = transformer
+        self.X_train_ = None
+
+    def transform(self, X, y = None):
+        if X.shape[0] != X.shape[1]:
+            eigen_values, eigen_vectors = np.linalg.eig(self.X_train_)
+        else:
+            eigen_values, eigen_vectors = np.linalg.eig(X)
+        eigen_values = np.real(eigen_values)
+        eigen_vectors = np.real(eigen_vectors)
+        # ------ mod eig values
+        if len(eigen_values[eigen_values < 0]) > 0:
+            eigen_values = self.transformer.transform(eigen_values)
+        diag = np.diag(eigen_values)
+        trans_eigen_vectors = np.transpose(eigen_vectors)
+        regularized = np.matmul(np.matmul(eigen_vectors, diag), trans_eigen_vectors)
+        if X.shape[0] != X.shape[1]:
+            P = np.matmul(regularized, np.linalg.pinv(self.X_train_))
+            return np.matmul(X, P)
+        else:
+            return regularized
+        # old version
+        # if X.shape[0]==X.shape[1]:
+        #     eigen_values, eigen_vectors = np.linalg.eig(X)
+        #     eigen_values = np.real(eigen_values)
+        #     eigen_vectors = np.real(eigen_vectors)
+        #     # ------ mod eig values
+        #     if len(eigen_values[eigen_values < 0]) > 0:
+        #         eigen_values = self.transform_eigen_values(eigen_values)
+        #     diag = np.diag(eigen_values)
+        #     inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+        #     result = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        #     return result
+        # if X.shape[0]!=X.shape[1]:
+        #     eigen_values, eigen_vectors = np.linalg.eig(self.X_train_)
+        #     eigen_values = np.real(eigen_values)
+        #     eigen_vectors = np.real(eigen_vectors)
+        #     # ------ mod eig values
+        #     if len(eigen_values[eigen_values < 0]) > 0:
+        #         eigen_values = self.transform_eigen_values(eigen_values)
+        #     diag = np.diag(eigen_values)
+        #     inv_eigen_vectors = np.linalg.pinv(eigen_vectors)
+        #     regularized = np.matmul(np.matmul(eigen_vectors, diag), inv_eigen_vectors)
+        #     P = np.matmul(regularized,np.linalg.pinv(self.X_train_))
+        #     return np.matmul(X,P)
+
+    def fit(self, X, y = None, **fit_params):
+        self.X_train_ = X
+        return self
+
+
+
+class EigKernel_inverse_factorization(BaseTransformer):
     def __init__(self, transformer = NegToZero()):
         super().__init__()
         self.transformer = transformer
@@ -391,7 +450,7 @@ class ErpKernel(PairwiseKernel):
         s1 = np.reshape(s1, (s1.shape[0], 1))
         s2 = np.reshape(s2, (s2.shape[0], 1))
         return erp_distance(s1, s2, g = self.g, dim_to_use = self.dim_to_use,
-                            epsilon = self.band_size)
+                            band_size = self.band_size)
 
 
 def erp_parameter_space_getter(X, y):

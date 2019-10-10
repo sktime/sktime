@@ -80,14 +80,14 @@ and automatically compared to the results generated in java
 
 Will have both low level version and high level orchestration version soon.
 """
-
+#build_eig_zero_svm, build_eig_abs_svm, build_eig_min_svm,
 from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm, build_ed_svm, build_dtw_rbf_svm, \
     build_full_dtw_svm, build_full_dtw_rbf_svm, build_ed_1nn, build_full_dtw_1nn, build_dtw_1nn, \
     build_ed_rbf_svm, build_lcss_1nn, build_lcss_svm, build_lcss_rbf_svm, build_erp_1nn, build_erp_svm, \
     build_erp_rbf_svm, build_msm_1nn, build_msm_svm, build_msm_rbf_svm, build_twed_1nn, build_twed_svm, \
     build_twed_rbf_svm, build_tri_rbf_svm, build_poly_rbf_svm, build_kl2_rbf_svm, build_hell_rbf_svm, \
-    build_eig_zero_svm, build_eig_abs_svm, build_eig_min_svm, build_tri_rbf_1nn, build_poly_rbf_1nn, build_kl2_rbf_1nn, \
-    build_hell_rbf_1nn, build_ed_eig_abs_svm, \
+    build_tri_rbf_1nn, build_poly_rbf_1nn, build_kl2_rbf_1nn, \
+    build_hell_rbf_1nn, \
     build_twed_1nn_eig_abs, build_ed_1nn_eig_zero, build_ed_svm_eig_zero, build_ed_rbf_svm_eig_zero, \
     build_dtw_1nn_eig_zero, build_dtw_svm_eig_zero, build_dtw_rbf_svm_eig_zero, build_full_dtw_1nn_eig_zero, \
     build_full_dtw_svm_eig_zero, build_full_dtw_rbf_svm_eig_zero, build_lcss_1nn_eig_zero, build_lcss_svm_eig_zero, \
@@ -292,7 +292,7 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
     elif cls == 'ed_rbf_svm':
         return build_ed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'ed_eig_abs_svm':
-        return build_ed_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
+        return build_ed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'dtw_1nn':
         return build_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'dtw_svm':
@@ -337,12 +337,12 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
         return build_kl2_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'hell_rbf_svm':
         return build_hell_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_zero_svm':
-        return build_eig_zero_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_abs_svm':
-        return build_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'eig_min_svm':
-        return build_eig_min_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    #elif cls == 'eig_zero_svm':
+    #    return build_eig_zero_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    #elif cls == 'eig_abs_svm':
+    #    return build_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
+    #elif cls == 'eig_min_svm':
+    #    return build_eig_min_svm(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'tri_rbf_1nn':
         return build_tri_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
     elif cls == 'poly_rbf_1nn':
