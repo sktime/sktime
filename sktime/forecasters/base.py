@@ -135,6 +135,10 @@ class BaseForecaster(BaseEstimator):
         if self.check_input:
             validate_y(y)
 
+        # Set fh if not provided
+        if fh is None:
+            fh = np.arange(1, len(y.iloc[0]) + 1)
+
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
         kwargs = {} if X is None else {'X': X}
