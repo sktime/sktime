@@ -245,7 +245,7 @@ class EigKernel(BaseTransformer):
 
 
 
-class EigKernel_inverse_factorization(BaseTransformer):
+class EigKernelInverseFactorisation(BaseTransformer):
     def __init__(self, transformer = NegToZero()):
         super().__init__()
         self.transformer = transformer
