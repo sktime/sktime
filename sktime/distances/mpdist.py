@@ -95,8 +95,8 @@ def stomp_ab(ts1, ts2, m):
                 Array with the index of the nearest neighbor of ts1 in ts2.
     """
 
-    len1 = ts1.size
-    len2 = ts2.size
+    len1 = len(ts1)
+    len2 = len(ts2)
 
     ts1 = ts1.flatten()
     ts2 = ts2.flatten()
@@ -158,8 +158,8 @@ def mpdist(ts1, ts2, m):
                 Distance between the two time series.
     """
 
-    len1 = ts1.size
-    len2 = ts2.size
+    len1 = len(ts1)
+    len2 = len(ts2)
 
     threshold = 0.05
     mp_ab, ip_ab = stomp_ab(ts1, ts2, m) # compute the AB matrix profile
