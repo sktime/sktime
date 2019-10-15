@@ -25,6 +25,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from sktime.utils.data_container import select_times, get_time_index
 from sktime.utils.validation.forecasting import validate_fh, validate_y_X
+from sktime.utils.time_series import get_n_intervals
 
 
 def _score(estimator, fh, y_test, scorer):
@@ -465,12 +466,7 @@ class RollingWindowSplit:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, window_length, fh=1):
-        # TODO input checks
-        if window_length is not None:
-            if not isinstance(window_length, int):
-                raise ValueError(f"Window length must be an integer, "
-                                 f"but found: {type(window_length)}")
+    def __init__(self, window_length="log", fh=1):
 
         self.window_length = window_length
         self.fh = validate_fh(fh)
@@ -498,24 +494,14 @@ class RollingWindowSplit:
 
         # Input checks.
         if not (isinstance(data, np.ndarray) and data.ndim == 1):
-            raise ValueError(f"Passed data has to be 1-d numpy array, but found data of type: {type(data)} with "
-                             f"{data.ndim} dimensions")
+            raise ValueError(f"Passed data has to be 1-d numpy array, but found "
+                             f"data of type: {type(data)} with {data.ndim} dimensions")
 
         n_timepoints = data.shape[0]
         max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
 
         # Set default window length to sqrt of series length
-        if self.window_length is None:
-            window_length = np.int(np.sqrt(n_timepoints))
-        elif isinstance(self.window_length, int):
-            window_length = self.window_length
-        elif isinstance(self.window_length, float):
-            window_length = self.window_length * n_timepoints
-
-        if (window_length + max_fh) > n_timepoints:
-            raise ValueError("window_length + fh must be shorter than length of input series")
-
-        self.window_length_ = window_length
+        window_length = get_n_intervals(n_timepoints, self.window_length)
 
         # Iterate over windows
         start = window_length

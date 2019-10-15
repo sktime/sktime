@@ -7,7 +7,7 @@ from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 def get_n_intervals(n_timepoints, n_intervals="sqrt"):
     """
-    Compute number of intervals for given length of time series
+    Compute number of intervals for given number of time points
 
     Parameters
     ----------
@@ -31,14 +31,11 @@ def get_n_intervals(n_timepoints, n_intervals="sqrt"):
     # TODO add callables/functions as input args
     # integer
     if isinstance(n_intervals, int):
-
         if not n_intervals <= n_timepoints:
             raise ValueError(f"n_intervals must be smaller than n_timepoints, but found: "
                              f"n_intervals={n_intervals} and n_timepoints={n_timepoints}")
-
         if n_intervals < 1:
             raise ValueError(f"n_intervals must be >= 1, but found: {n_intervals}")
-
         n_intervals_ = n_intervals
 
     # function
@@ -49,7 +46,6 @@ def get_n_intervals(n_timepoints, n_intervals="sqrt"):
     elif isinstance(n_intervals, str):
         if not n_intervals in allowed_strings:
             raise ValueError(f"n_intervals must be in {allowed_strings}, but found: {n_intervals}")
-
         str_func_map = {
             "sqrt": np.sqrt,
             "log": np.log
@@ -61,7 +57,6 @@ def get_n_intervals(n_timepoints, n_intervals="sqrt"):
     elif isinstance(n_intervals, float):
         if not (0 < n_intervals <= 1):
             raise ValueError(f"n_intervals must be > 0 and <= 1, but found: {n_intervals}")
-
         n_intervals_ = n_intervals * n_timepoints
 
     else:
