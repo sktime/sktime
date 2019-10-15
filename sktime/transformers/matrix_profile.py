@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
