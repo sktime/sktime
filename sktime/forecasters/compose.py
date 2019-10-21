@@ -237,17 +237,6 @@ class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
         if fh is not None:
             fh = validate_fh(fh)
 
-        # Make interface compatible with estimators that only take y and no X
-        kwargs = {} if X is None else {'X': X}
-
-        # Internal fit.
-        self._fit(y, fh=fh, **kwargs)
-        self._is_fitted = True
-        return self
-
-    def _fit(self, y, X=None, fh=None):
-        """Internal fit.
-        """
         if X is not None:
             # TODO concatenate exogeneous variables X to rolled window matrix X below
             raise NotImplementedError()
@@ -261,6 +250,7 @@ class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
         # Fitting
         if self.recursive:
             # Fit single estimator for one-step ahead forecast
+            # which is then used iteratively when predicting
             y = Y.ravel()  # convert into one-dimensional array
             estimator = clone(self.estimator)
             estimator.fit(X, y)
@@ -281,6 +271,7 @@ class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
         # Save the last window-length number of observations for predicting
         self.window_length_ = self.rw.get_window_length()
         self._last_window = yt.iloc[-self.window_length_:]
+        self._is_fitted = True
         return self
 
     def transform(self, y, fh):

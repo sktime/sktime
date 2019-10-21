@@ -1,9 +1,6 @@
-#!/usr/bin/env python3 -u
-# coding: utf-8
-
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/model_selection/_search.py
 __author__ = "Markus Löning"
-
+__all__ = ["ForecastingGridSearchCV", "RollingWindowSplit"]
 import numbers
 import time
 import warnings
@@ -25,7 +22,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from sktime.utils.data_container import select_times, get_time_index
 from sktime.utils.validation.forecasting import validate_fh, validate_y_X
-from sktime.utils.time_series import get_n_intervals
+from sktime.utils.time_series import compute_n_intervals
 
 
 def _score(estimator, fh, y_test, scorer):
@@ -501,7 +498,7 @@ class RollingWindowSplit:
         max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
 
         # Set default window length to sqrt of series length
-        window_length = get_n_intervals(n_timepoints, self.window_length)
+        window_length = compute_n_intervals(n_timepoints, self.window_length)
 
         # Iterate over windows
         start = window_length
@@ -524,3 +521,39 @@ class RollingWindowSplit:
         Return the window length.
         """
         return self.window_length_
+
+
+def split_into_tabular_train_test(x, window_length=None, fh=None, test_size=1):
+    """Helper function to split single time series into tabular train and
+    test sets using rolling window approach"""
+
+    # validate forecasting horizon
+    fh = validate_fh(fh)
+
+    # get time series index
+    index = np.arange(len(x))
+
+    # set up rolling window iterator
+    rw = RollingWindowSplit(window_length=window_length, fh=fh)
+
+    # slice time series into windows
+    xs = []
+    ys = []
+    for input, output in rw.split(index):
+        xt = x[input]
+        yt = x[output]
+        xs.append(xt)
+        ys.append(yt)
+
+    # stack windows into tabular array
+    x = np.array(xs)
+    y = np.array(ys)
+
+    # split into train and test set
+    x_train = x[:-test_size, :]
+    y_train = y[:-test_size, :]
+
+    x_test = x[-test_size:, :]
+    y_test = y[-test_size:, :]
+
+    return x_train, y_train, x_test, y_test

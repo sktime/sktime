@@ -7,7 +7,7 @@ from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 from sktime.utils.data_container import get_time_index
-from sktime.utils.time_series import get_n_intervals
+from sktime.utils.time_series import compute_n_intervals
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -256,7 +256,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         n_timepoints = len(x)
         # compute number of random intervals relative to series length (m)
         # TODO use smarter dispatch at construction to avoid evaluating if-statements here each time function is called
-        n_intervals = get_n_intervals(n_timepoints, n_intervals=n_intervals)
+        n_intervals = compute_n_intervals(n_timepoints, n_intervals=n_intervals)
 
         # get start and end points of intervals
         starts = self._rng.randint(n_timepoints - self.min_length + 1, size=n_intervals)
