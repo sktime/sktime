@@ -9,5 +9,5 @@ Tutorials
    examples/shapelet_transform.ipynb
    examples/plateau_finder.ipynb
    examples/multivariate_time_series_classification.ipynb
-   examples/experiment_orchestration.ipynb
+   examples/benchmarking.ipynb
    examples/forecasting.ipynb
