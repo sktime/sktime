@@ -8,8 +8,8 @@
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
 .. _appveyor: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
 
-.. |pypi| image:: https://badge.fury.io/py/sktime.svg
-.. _pypi: https://badge.fury.io/py/sktime
+.. |pypi| image:: https://img.shields.io/pypi/v/sktime
+.. _pypi: https://img.shields.io/pypi/v/sktime
 
 .. |gitter| image:: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
 .. _gitter: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
