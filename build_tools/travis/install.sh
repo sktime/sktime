@@ -20,6 +20,7 @@ if [ $TRAVIS_OS_NAME = "macos" ]
 then
   # Install jq for travis_fastfail.sh script
   brew install jq
+  brew install pandoc
 fi
 
 # Fail fast

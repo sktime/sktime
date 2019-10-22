@@ -22,18 +22,19 @@ from sklearn.utils import Parallel, delayed, effective_n_jobs
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.exceptions import DataConversionWarning
 from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance, twe_distance
+from sktime.distances.mpdist import mpdist
 from sklearn.utils.validation import check_array
 from sklearn.neighbors.base import _check_weights, _get_weights
 import pandas as pd
 
 """
-Please note that many aspects of this class are taken from scikit-learn's KNeighborsTimeSeriesClassifier 
+Please note that many aspects of this class are taken from scikit-learn's KNeighborsTimeSeriesClassifier
 class with necessary changes to enable use with time series classification data and distance measures.
 
-TO-DO: add a utility method to set keyword args for distance measure parameters (e.g. handle the parameter 
-name(s) that are passed as metric_params automatically, depending on what distance measure is used in the 
-classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow long-format specification for 
-non-standard/user-defined measures 
+TO-DO: add a utility method to set keyword args for distance measure parameters (e.g. handle the parameter
+name(s) that are passed as metric_params automatically, depending on what distance measure is used in the
+classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow long-format specification for
+non-standard/user-defined measures
 e.g. set_distance_params(measure_type=None, param_values_to_set=None, param_names=None)
 
 """
@@ -93,6 +94,10 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric = msm_distance
         elif metric == 'twe':
             metric = twe_distance
+        elif metric == 'mpdist':
+            metric = mpdist
+        # When mpdist is used, the subsequence length (parameter m) must be set
+        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError("Unrecognised distance measure: "+metric+". Allowed values are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
@@ -473,4 +478,3 @@ def _check_array_ts(array, accept_sparse=False, accept_large_sparse=True,
                     ensure_2d=True, allow_nd=True, ensure_min_samples=1,
                     ensure_min_features=1, warn_on_dtype=False, estimator=None):
     return array
-

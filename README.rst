@@ -2,7 +2,7 @@
 
 |travis|_ |appveyor|_ |pypi|_ |gitter|_
 
-.. |travis| image:: https://travis-ci.com/alan-turing-institute/sktime.svg?token=kTo6WTfr4f458q1WzPCH&branch=master
+.. |travis| image:: https://img.shields.io/travis/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
 
 .. |appveyor| image:: https://ci.appveyor.com/api/projects/status/3bs0rpe1id1ots8c/branch/master?svg=true
@@ -12,7 +12,7 @@
 .. _pypi: https://badge.fury.io/py/sktime
 
 .. |gitter| image:: https://badges.gitter.im/sktime/community.svg
-.. _gitter: https://gitter.im/sktime/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+.. _gitter: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
 
 sktime
 ======
@@ -56,6 +56,13 @@ To install the development version, follow these steps:
 You currently may have to install :code:`numpy` and :code:`Cython` first using: :code:`pip install numpy`
 and :code:`pip install Cython`.
 
+
+Documentation
+-------------
+The full API documentation and an introduction can be found `here <https://alan-turing-institute.github.io/sktime/>`__.
+Tutorial notebooks for currently stable functionality are in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder.
+
+
 Overview
 --------
 
@@ -84,12 +91,6 @@ The sktime high-level interface aims to create a unified interface for these dif
 
 * :code:`Task` object that encapsulates meta-data from a dataset and the necessary information about the particular supervised learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
 * :code:`Strategy` objects that wrap low-level estimators and allows to use :code:`fit` and :code:`predict` methods using data and a task object.
-
-
-Documentation
--------------
-The full API documentation and an introduction can be found `here <https://alan-turing-institute.github.io/sktime/>`__.
-Tutorial notebooks for currently stable functionality are in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder.
 
 
 Development road map

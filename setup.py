@@ -3,6 +3,7 @@
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/d2476fb679f05e80c56e8b151ff0f6d7a470e4ae/setup.py#L20
 
+import setuptools # need this due to versioning of setuptools vs distutils, see https://stackoverflow.com/questions/21136266/typeerror-dist-must-be-a-distribution-instance
 import codecs
 import os
 import platform

@@ -38,10 +38,9 @@ NOTE: do
 
 import os
 
-
-os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
-os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
-os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
+os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
+os.environ["NUMEXPR_NUM_THREADS"] = "1" # must be done before numpy import!!
+os.environ["OMP_NUM_THREADS"] = "1" # must be done before numpy import!!
 
 import sys
 import time
@@ -64,12 +63,11 @@ import sktime.classifiers.distance_based.time_series_neighbors as nn
 import sktime.classifiers.distance_based.proximity_forest as pf
 import sktime.classifiers.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-# from sktime.transformers.compose import RowwiseTransformer
-# from sktime.transformers.segment import RandomIntervalSegmenter
-# from sktime.transformers.compose import Tabulariser
-# from sktime.pipeline import Pipeline
-# from sktime.pipeline import FeatureUnion
-# from sktime.classifiers.distance_based.proximity_forest import ProximityForest, ProximityStump, ProximityTree
+from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.transformers.compose import Tabulariser
+from sktime.pipeline import Pipeline
+from sktime.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
@@ -80,36 +78,7 @@ and automatically compared to the results generated in java
 
 Will have both low level version and high level orchestration version soon.
 """
-#build_eig_zero_svm, build_eig_abs_svm, build_eig_min_svm,
-from sktime.contrib.distance_based.kernel_classifiers import build_dtw_svm, build_ed_svm, build_dtw_rbf_svm, \
-    build_full_dtw_svm, build_full_dtw_rbf_svm, build_ed_1nn, build_full_dtw_1nn, build_dtw_1nn, \
-    build_ed_rbf_svm, build_lcss_1nn, build_lcss_svm, build_lcss_rbf_svm, build_erp_1nn, build_erp_svm, \
-    build_erp_rbf_svm, build_msm_1nn, build_msm_svm, build_msm_rbf_svm, build_twed_1nn, build_twed_svm, \
-    build_twed_rbf_svm, build_tri_rbf_svm, build_poly_rbf_svm, build_kl2_rbf_svm, build_hell_rbf_svm, \
-    build_tri_rbf_1nn, build_poly_rbf_1nn, build_kl2_rbf_1nn, \
-    build_hell_rbf_1nn, \
-    build_twed_1nn_eig_abs, build_ed_1nn_eig_zero, build_ed_svm_eig_zero, build_ed_rbf_svm_eig_zero, \
-    build_dtw_1nn_eig_zero, build_dtw_svm_eig_zero, build_dtw_rbf_svm_eig_zero, build_full_dtw_1nn_eig_zero, \
-    build_full_dtw_svm_eig_zero, build_full_dtw_rbf_svm_eig_zero, build_lcss_1nn_eig_zero, build_lcss_svm_eig_zero, \
-    build_lcss_rbf_svm_eig_zero, build_erp_1nn_eig_zero, build_erp_svm_eig_zero, build_erp_rbf_svm_eig_zero, \
-    build_msm_1nn_eig_zero, build_msm_svm_eig_zero, build_msm_rbf_svm_eig_zero, build_twed_1nn_eig_zero, \
-    build_twed_svm_eig_zero, build_twed_rbf_svm_eig_zero, build_tri_rbf_svm_eig_zero, build_poly_rbf_svm_eig_zero, \
-    build_kl2_rbf_svm_eig_zero, build_hell_rbf_svm_eig_zero, build_tri_rbf_1nn_eig_zero, build_poly_rbf_1nn_eig_zero, \
-    build_kl2_rbf_1nn_eig_zero, build_hell_rbf_1nn_eig_zero, build_ed_1nn_eig_min, build_ed_svm_eig_min, \
-    build_ed_rbf_svm_eig_min, build_dtw_1nn_eig_min, build_dtw_svm_eig_min, build_dtw_rbf_svm_eig_min, \
-    build_full_dtw_1nn_eig_min, build_full_dtw_svm_eig_min, build_full_dtw_rbf_svm_eig_min, build_lcss_1nn_eig_min, \
-    build_lcss_svm_eig_min, build_lcss_rbf_svm_eig_min, build_erp_1nn_eig_min, build_erp_svm_eig_min, \
-    build_erp_rbf_svm_eig_min, build_msm_1nn_eig_min, build_msm_svm_eig_min, build_msm_rbf_svm_eig_min, \
-    build_twed_1nn_eig_min, build_twed_svm_eig_min, build_twed_rbf_svm_eig_min, build_tri_rbf_svm_eig_min, \
-    build_poly_rbf_svm_eig_min, build_kl2_rbf_svm_eig_min, build_hell_rbf_svm_eig_min, build_tri_rbf_1nn_eig_min, \
-    build_poly_rbf_1nn_eig_min, build_kl2_rbf_1nn_eig_min, build_hell_rbf_1nn_eig_min, build_ed_1nn_eig_abs, \
-    build_ed_svm_eig_abs, build_ed_rbf_svm_eig_abs, build_dtw_1nn_eig_abs, build_dtw_svm_eig_abs, \
-    build_dtw_rbf_svm_eig_abs, build_full_dtw_1nn_eig_abs, build_full_dtw_svm_eig_abs, build_full_dtw_rbf_svm_eig_abs, \
-    build_lcss_1nn_eig_abs, build_lcss_svm_eig_abs, build_lcss_rbf_svm_eig_abs, build_erp_1nn_eig_abs, \
-    build_erp_svm_eig_abs, build_erp_rbf_svm_eig_abs, build_msm_1nn_eig_abs, build_msm_svm_eig_abs, \
-    build_msm_rbf_svm_eig_abs, build_twed_svm_eig_abs, build_twed_rbf_svm_eig_abs, build_tri_rbf_svm_eig_abs, \
-    build_poly_rbf_svm_eig_abs, build_kl2_rbf_svm_eig_abs, build_hell_rbf_svm_eig_abs, build_tri_rbf_1nn_eig_abs, \
-    build_poly_rbf_1nn_eig_abs, build_kl2_rbf_1nn_eig_abs, build_hell_rbf_1nn_eig_abs
+
 
 univariate_datasets = [
     "ACSF1",
@@ -272,315 +241,15 @@ multivariate_datasets = [
 ]
 
 
-def set_classifier(cls, resampleId, verbose = 0, **kwargs):
+def set_classifier(cls, resampleId):
     """
-    Basic way of determining the classifier to build. To differentiate settings just and another elif. So,
-    for example, if
+    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
     you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
     This may well get superceded, it is just how e have always done it
     :param cls: String indicating which classifier you want
     :return: A classifier.
 
     """
-    cls = cls.lower()
-    if False:
-        pass
-    elif cls == 'ed_1nn':
-        return build_ed_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_svm':
-        return build_ed_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_rbf_svm':
-        return build_ed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_eig_abs_svm':
-        return build_ed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_1nn':
-        return build_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_svm':
-        return build_dtw_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_rbf_svm':
-        return build_dtw_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_1nn':
-        return build_full_dtw_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_svm':
-        return build_full_dtw_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_rbf_svm':
-        return build_full_dtw_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_1nn':
-        return build_lcss_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_svm':
-        return build_lcss_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_rbf_svm':
-        return build_lcss_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_1nn':
-        return build_erp_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_svm':
-        return build_erp_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_rbf_svm':
-        return build_erp_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_1nn':
-        return build_msm_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_svm':
-        return build_msm_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_rbf_svm':
-        return build_msm_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_1nn':
-        return build_twed_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_svm':
-        return build_twed_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_rbf_svm':
-        return build_twed_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_svm':
-        return build_tri_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_svm':
-        return build_poly_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_svm':
-        return build_kl2_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_svm':
-        return build_hell_rbf_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    #elif cls == 'eig_zero_svm':
-    #    return build_eig_zero_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    #elif cls == 'eig_abs_svm':
-    #    return build_eig_abs_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    #elif cls == 'eig_min_svm':
-    #    return build_eig_min_svm(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_1nn':
-        return build_tri_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_1nn':
-        return build_poly_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_1nn':
-        return build_kl2_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_1nn':
-        return build_hell_rbf_1nn(random_state = resampleId, verbose = verbose, **kwargs)
-
-
-    elif cls == 'ed_1nn_eig_zero':
-        return build_ed_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_svm_eig_zero':
-        return build_ed_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_rbf_svm_eig_zero':
-        return build_ed_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_1nn_eig_zero':
-        return build_dtw_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_svm_eig_zero':
-        return build_dtw_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_rbf_svm_eig_zero':
-        return build_dtw_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_1nn_eig_zero':
-        return build_full_dtw_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_svm_eig_zero':
-        return build_full_dtw_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_rbf_svm_eig_zero':
-        return build_full_dtw_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_1nn_eig_zero':
-        return build_lcss_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_svm_eig_zero':
-        return build_lcss_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_rbf_svm_eig_zero':
-        return build_lcss_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_1nn_eig_zero':
-        return build_erp_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_svm_eig_zero':
-        return build_erp_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_rbf_svm_eig_zero':
-        return build_erp_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_1nn_eig_zero':
-        return build_msm_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_svm_eig_zero':
-        return build_msm_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_rbf_svm_eig_zero':
-        return build_msm_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_1nn_eig_zero':
-        return build_twed_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_svm_eig_zero':
-        return build_twed_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_rbf_svm_eig_zero':
-        return build_twed_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_svm_eig_zero':
-        return build_tri_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_svm_eig_zero':
-        return build_poly_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_svm_eig_zero':
-        return build_kl2_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_svm_eig_zero':
-        return build_hell_rbf_svm_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_1nn_eig_zero':
-        return build_tri_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_1nn_eig_zero':
-        return build_poly_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_1nn_eig_zero':
-        return build_kl2_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_1nn_eig_zero':
-        return build_hell_rbf_1nn_eig_zero(random_state = resampleId, verbose = verbose, **kwargs)
-
-
-
-    elif cls == 'ed_1nn_eig_min':
-        return build_ed_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_svm_eig_min':
-        return build_ed_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_rbf_svm_eig_min':
-        return build_ed_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_1nn_eig_min':
-        return build_dtw_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_svm_eig_min':
-        return build_dtw_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_rbf_svm_eig_min':
-        return build_dtw_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_1nn_eig_min':
-        return build_full_dtw_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_svm_eig_min':
-        return build_full_dtw_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_rbf_svm_eig_min':
-        return build_full_dtw_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_1nn_eig_min':
-        return build_lcss_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_svm_eig_min':
-        return build_lcss_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_rbf_svm_eig_min':
-        return build_lcss_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_1nn_eig_min':
-        return build_erp_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_svm_eig_min':
-        return build_erp_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_rbf_svm_eig_min':
-        return build_erp_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_1nn_eig_min':
-        return build_msm_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_svm_eig_min':
-        return build_msm_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_rbf_svm_eig_min':
-        return build_msm_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_1nn_eig_min':
-        return build_twed_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_svm_eig_min':
-        return build_twed_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_rbf_svm_eig_min':
-        return build_twed_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_svm_eig_min':
-        return build_tri_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_svm_eig_min':
-        return build_poly_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_svm_eig_min':
-        return build_kl2_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_svm_eig_min':
-        return build_hell_rbf_svm_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_1nn_eig_min':
-        return build_tri_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_1nn_eig_min':
-        return build_poly_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_1nn_eig_min':
-        return build_kl2_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_1nn_eig_min':
-        return build_hell_rbf_1nn_eig_min(random_state = resampleId, verbose = verbose, **kwargs)
-
-
-
-    elif cls == 'ed_1nn_eig_abs':
-        return build_ed_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_svm_eig_abs':
-        return build_ed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'ed_rbf_svm_eig_abs':
-        return build_ed_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_1nn_eig_abs':
-        return build_dtw_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_svm_eig_abs':
-        return build_dtw_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'dtw_rbf_svm_eig_abs':
-        return build_dtw_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_1nn_eig_abs':
-        return build_full_dtw_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_svm_eig_abs':
-        return build_full_dtw_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'full_dtw_rbf_svm_eig_abs':
-        return build_full_dtw_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_1nn_eig_abs':
-        return build_lcss_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_svm_eig_abs':
-        return build_lcss_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'lcss_rbf_svm_eig_abs':
-        return build_lcss_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_1nn_eig_abs':
-        return build_erp_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_svm_eig_abs':
-        return build_erp_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'erp_rbf_svm_eig_abs':
-        return build_erp_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_1nn_eig_abs':
-        return build_msm_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_svm_eig_abs':
-        return build_msm_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'msm_rbf_svm_eig_abs':
-        return build_msm_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_1nn_eig_abs':
-        return build_twed_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_svm_eig_abs':
-        return build_twed_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'twed_rbf_svm_eig_abs':
-        return build_twed_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_svm_eig_abs':
-        return build_tri_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_svm_eig_abs':
-        return build_poly_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_svm_eig_abs':
-        return build_kl2_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_svm_eig_abs':
-        return build_hell_rbf_svm_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'tri_rbf_1nn_eig_abs':
-        return build_tri_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'poly_rbf_1nn_eig_abs':
-        return build_poly_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'kl2_rbf_1nn_eig_abs':
-        return build_kl2_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-    elif cls == 'hell_rbf_1nn_eig_abs':
-        return build_hell_rbf_1nn_eig_abs(random_state = resampleId, verbose = verbose, **kwargs)
-
-
-    # elif cls == 'pt' or cls == 'proximity_tree':
-    #     return ProximityTree(
-    #             random_state = resampleId,
-    #             verbosity = verbose,
-    #             )
-    # elif cls == 'pf' or cls == 'proximity_forest':
-    #     return ProximityForest(
-    #             random_state = resampleId,
-    #             verbosity = verbose,
-    #             )
-    # elif cls == 'ps' or cls == 'proximity_stump':
-    #     return ProximityStump(
-    #             random_state = resampleId,
-    #             verbosity = verbose,
-    #             n_jobs = -1
-    #             )
-    # elif cls.lower() == 'pf':
-    #     return pf.ProximityForest(random_state = resampleId)
-    # elif cls == 'rise':
-    #     return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    # elif cls == 'tsf':
-    #     return ib.TimeSeriesForest(random_state = resampleId)
-    # elif cls == 'boss':
-    #     return db.BOSSEnsemble()
-    # # elif classifier == 'elasticensemble':
-    # #     return dist.ElasticEnsemble()
-    # # elif cls == 'tsf_markus':
-    # elif cls.lower() == 'st':
-    #     return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
-    # elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
-    #     return dist.ElasticEnsemble()
-    # elif cls.lower() == 'tsfcomposite':
-    #     #It defaults to TSF
-    #     return ensemble.TimeSeriesForestClassifier()
-    # elif cls.lower() == 'risecomposite':
-    #     steps = [
-    #         ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-    #         ('transform', FeatureUnion([
-    #             ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
-    #             ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
-    #         ])),
-    #         ('tabularise', Tabulariser()),
-    #         ('clf', DecisionTreeClassifier())
-    #     ]
-    #     base_estimator = Pipeline(steps)
-    #     return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     if cls.lower() == 'pf':
         return pf.ProximityForest(random_state = resampleId)
     elif cls.lower() == 'pt':
@@ -615,7 +284,7 @@ def set_classifier(cls, resampleId, verbose = 0, **kwargs):
         base_estimator = Pipeline(steps)
         return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
     else:
-        raise Exception('Unknown classifier: ' + str(cls))
+        raise Exception('UNKNOWN CLASSIFIER')
 
 
 def acf_coefs(x, maxlag=100):
@@ -630,85 +299,117 @@ def powerspectrum(x, **kwargs):
     ps = fft.real * fft.real + fft.imag * fft.imag
     return ps[:ps.shape[0] // 2].ravel()
 
+def stratified_resample(X_train, y_train, X_test, y_test, random_state):
+    all_labels = np.concatenate((y_train, y_test), axis = None)
+    all_data = pd.concat([X_train, X_test])
+    random_state = sklearn.utils.check_random_state(random_state)
+    # count class occurrences
+    unique_train, counts_train = np.unique(y_train, return_counts=True)
+    unique_test, counts_test = np.unique(y_test, return_counts=True)
+    assert list(unique_train) == list(unique_test) # haven't built functionality to deal with classes that exist in
+    # test but not in train
+    # prepare outputs
+    X_train = pd.DataFrame()
+    y_train = np.array([])
+    X_test = pd.DataFrame()
+    y_test = np.array([])
+    # for each class
+    for label_index in range(0, len(unique_train)):
+        # derive how many instances of this class from the counts
+        num_instances = counts_train[label_index]
+        # get the indices of all instances with this class label
+        label = unique_train[label_index]
+        indices = np.where(all_labels == label)[0]
+        # shuffle them
+        random_state.shuffle(indices)
+        # take the first lot of instances for train, remainder for test
+        train_indices = indices[0 : num_instances]
+        test_indices = indices[num_instances :]
+        del indices # just to make sure it's not used!
+        # extract data from corresponding indices
+        train_instances = all_data.iloc[train_indices, :]
+        test_instances = all_data.iloc[test_indices, :]
+        train_labels = all_labels[train_indices]
+        test_labels = all_labels[test_indices]
+        # concat onto current data from previous loop iterations
+        X_train = pd.concat([X_train, train_instances])
+        X_test = pd.concat([X_test, test_instances])
+        y_train = np.concatenate([y_train, train_labels], axis = None)
+        y_test = np.concatenate([y_test, test_labels], axis = None)
+    # get the counts of the new train and test resample
+    unique_train_new, counts_train_new = np.unique(y_train, return_counts=True)
+    unique_test_new, counts_test_new = np.unique(y_test, return_counts=True)
+    # make sure they match the original distribution of data
+    assert list(counts_train_new) == list(counts_train)
+    assert list(counts_test_new) == list(counts_test)
+    return X_train, y_train, X_test, y_test
 
-def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset_name, classifier=None, resample_seed=0,
-                   overwrite_results=False, format=".ts", estimate_train=False, verbose = 0):
+
+def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
     """
     Method to run a basic experiment and write the results to files called testFold<resampleID>.csv and, if required,
     trainFold<resampleID>.csv.
-    :param datasets_dir_path: Location of problem files, full path.
-    :param results_dir_path: Location of where to write results. Any required directories will be created
-    :param classifier_name: determines which classifier to use, as defined in set_classifier. This assumes
-    predict_proba is
+    :param problem_path: Location of problem files, full path.
+    :param results_path: Location of where to write results. Any required directories will be created
+    :param cls_name: determines which classifier to use, as defined in set_classifier. This assumes predict_proba is
     implemented, to avoid predicting twice. May break some classifiers though
-    :param dataset_name: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format,
-    same for "_TEST"
-    :param resample_seed: Seed for resampling. If set to 0, the default train/test split from file is used. Also used
-    in
-    output file name.
-    :param overwrite_results: if set to False, this will only build results if there is not a result file already
-    present. If
+    :param dataset: Name of problem. Files must be  <problem_path>/<dataset>/<dataset>+"_TRAIN"+format, same for "_TEST"
+    :param resampleID: Seed for resampling. If set to 0, the default train/test split from file is used. Also used in output file name.
+    :param overwrite: if set to False, this will only build results if there is not a result file already present. If
     True, it will overwrite anything already there
     :param format: Valid formats are ".ts", ".arff" and ".long". For more info on format, see
     https://github.com/alan-turing-institute/sktime/blob/master/examples/Loading%20Data%20Examples.ipynb
-    :param estimate_train: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
+    :param train_file: whether to generate train files or not. If true, it performs a 10xCV on the train and saves
     :return:
     """
-    classifier_name = classifier_name.upper()
-    resampleID = resample_seed
-    cls_name = classifier_name
-    results_path = results_dir_path
-    train_file = estimate_train
-    dataset = dataset_name
 
     build_test = True
-    if not overwrite_results:
-        full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(
-            dataset_name) + "/testFold" + str(resample_seed) + ".csv"
+    if not overwrite:
+        full_path = str(results_path)+"/"+str(cls_name)+"/Predictions/" + str(dataset) +"/testFold"+str(resampleID)+".csv"
         if os.path.exists(full_path):
-            print(full_path + " Already exists and overwrite set to false, not building Test")
-            build_test = False
-        if estimate_train:
-            full_path = str(results_dir_path) + "/" + str(classifier_name) + "/Predictions/" + str(
-                dataset_name) + "/trainFold" + str(
-                    resample_seed) + ".csv"
+            print(full_path+" Already exists and overwrite set to false, not building Test")
+            build_test=False
+        if train_file:
+            full_path = str(results_path) + "/" + str(cls_name) + "/Predictions/" + str(dataset) + "/trainFold" + str(
+                resampleID) + ".csv"
             if os.path.exists(full_path):
                 print(full_path + " Already exists and overwrite set to false, not building Train")
-                estimate_train = False
-        if estimate_train == False and build_test == False:
+                train_file = False
+        if train_file == False and build_test ==False:
             return
 
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
-    trainX, trainY = load_ts(datasets_dir_path + dataset + '/' + dataset + '_TRAIN' + format)
-    testX, testY = load_ts(datasets_dir_path + dataset + '/' + dataset + '_TEST' + format)
+    trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
+    testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
     if resampleID !=0:
-        allLabels = np.concatenate((trainY, testY), axis = None)
-        allData = pd.concat([trainX, testX])
-        train_size = len(trainY) / (len(trainY) + len(testY))
-        trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resampleID, shuffle=True,
-                                                                       stratify=allLabels)
+        # allLabels = np.concatenate((trainY, testY), axis = None)
+        # allData = pd.concat([trainX, testX])
+        # train_size = len(trainY) / (len(trainY) + len(testY))
+        # trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
+        #                                                                random_state=resampleID, shuffle=True,
+        #                                                                stratify=allLabels)
+        trainX, trainY, testX, testY = stratified_resample(trainX, trainY, testX, testY, resampleID)
+
 
     le = preprocessing.LabelEncoder()
     le.fit(trainY)
     trainY = le.transform(trainY)
     testY = le.transform(testY)
     if classifier is None:
-        classifier = set_classifier(cls_name, resampleID, verbose)
+        classifier = set_classifier(cls_name, resampleID)
     print(cls_name + " on " + dataset + " resample number " + str(resampleID))
     if build_test:
         # TO DO : use sklearn CV
         start = int(round(time.time() * 1000))
-        classifier.fit(trainX, trainY)
-        build_time = int(round(time.time() * 1000)) - start
-        start = int(round(time.time() * 1000))
+        classifier.fit(trainX,trainY)
+        build_time = int(round(time.time() * 1000))-start
+        start =  int(round(time.time() * 1000))
         probs = classifier.predict_proba(testX)
-        preds = classifier.classes_[np.argmax(probs, axis = 1)]
-        test_time = int(round(time.time() * 1000)) - start
+        preds = classifier.classes_[np.argmax(probs, axis=1)]
+        test_time = int(round(time.time() * 1000))-start
         ac = accuracy_score(testY, preds)
-        print(
-            classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' test acc: ' + str(ac)
-            + ' test time: ' + str(test_time) + ' build time: ' + str(build_time))
+        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' test acc: ' + str(ac)
+              + ' time: ' + str(test_time))
         #        print(str(classifier.findEnsembleTrainAcc(trainX, trainY)))
         if "Composite" in cls_name:
             second="Para info too long!"
@@ -725,16 +426,14 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
     if train_file:
         start = int(round(time.time() * 1000))
-        if build_test and hasattr(classifier, "get_train_probs"):  # Normally Can only do this if test has been built
-            # ... well not necessarily true, but will do for now
+        if build_test and hasattr(classifier,"get_train_probs"):    #Normally Can only do this if test has been built ... well not necessarily true, but will do for now
             train_probs = classifier.get_train_probs(trainX)
         else:
-            train_probs = cross_val_predict(classifier, X = trainX, y = trainY, cv = 10, method = 'predict_proba')
+            train_probs = cross_val_predict(classifier, X=trainX, y=trainY, cv=10, method='predict_proba')
         train_time = int(round(time.time() * 1000)) - start
-        train_preds = le.classes_[np.argmax(train_probs, axis = 1)]
-        train_acc = accuracy_score(trainY, train_preds)
-        print(classifier_name + " on " + dataset_name + " resample number " + str(resample_seed) + ' train acc: ' + str(
-            train_acc)
+        train_preds = classifier.classes_[np.argmax(train_probs, axis=1)]
+        train_acc = accuracy_score(trainY,train_preds)
+        print(cls_name + " on " + dataset + " resample number " + str(resampleID) + ' train acc: ' + str(train_acc)
               + ' time: ' + str(train_time))
         if "Composite" in cls_name:
             second="Para info too long!"
@@ -749,8 +448,7 @@ def run_experiment(datasets_dir_path, results_dir_path, classifier_name, dataset
 
 
 def write_results_to_uea_format(output_path, classifier_name, dataset_name, actual_class_vals,
-                                predicted_class_vals, split = 'TEST', resample_seed = 0, actual_probas = None,
-                                second_line = "No Parameter Info", third_line = "N/A", class_labels = None):
+                                predicted_class_vals, split='TEST', resample_seed=0, actual_probas=None, second_line="No Parameter Info",third_line="N/A",class_labels=None):
     """
     This is very alpha and I will probably completely change the structure once train fold is sorted, as that internally
     does all this I think!
@@ -773,11 +471,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
         raise IndexError("The number of predicted class values is not the same as the number of actual class values")
 
     try:
-        os.makedirs(str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/")
-        os.chmod(str(output_path), 0o777)
-        os.chmod(str(output_path) + "/" + str(classifier_name), 0o777)
-        os.chmod(str(output_path) + "/" + str(classifier_name) + "/Predictions", 0o777)
-        os.chmod(str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name), 0o777)
+        os.makedirs(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) + "/")
     except os.error:
         pass  # raises os.error if path already exists
 
@@ -788,16 +482,13 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     else:
         raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    filepath = str(output_path) + "/" + str(classifier_name) + "/Predictions/" + str(dataset_name) + "/" + str(
-            train_or_test) + "Fold" + str(resample_seed) + ".csv"
-    file = open(filepath, "w")
+    file = open(str(output_path)+"/"+str(classifier_name)+"/Predictions/" + str(dataset_name) +
+                "/"+str(train_or_test)+"Fold"+str(resample_seed)+".csv", "w")
 
-    # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has
-    # line three "+third_line)
+    # print(classifier_name+" on "+dataset_name+" for resample "+str(resample_seed)+"   "+train_or_test+" data has line three "+third_line)
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>,<Class Labels>
-    file.write(str(dataset_name) + "," + str(classifier_name) + "," + str(train_or_test) + "," + str(
-        resample_seed) + ",MILLISECONDS,PREDICTIONS, Generated by experiments.py")
+    file.write(str(dataset_name) + ","+str(classifier_name)+"," + str(train_or_test)+","+str(resample_seed)+",MILLISECONDS,PREDICTIONS, Generated by experiments.py")
     file.write("\n")
 
     # the second line of the output is free form and classifier-specific; usually this will record info
@@ -810,6 +501,7 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
     # of the estimator on the test data (likely trained on the training data for a-priori parameter optimisation)
     file.write(str(third_line))
     file.write("\n")
+
 
     # from line 4 onwards each line should include the actual and predicted class labels (comma-separated). If
     # present, for each case, the probabilities of predicting every class value for this case should also be
@@ -830,7 +522,6 @@ def write_results_to_uea_format(output_path, classifier_name, dataset_name, actu
 
     file.close()
 
-    os.chmod(filepath, 0o777)
 
 def test_loading():
 
@@ -870,34 +561,38 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-    print(sys.argv)
-    print('experimenting...')
-    if sys.argv.__len__() > 1:  # cluster run, this is fragile
-        parser = argparse.ArgumentParser(description = 'Run experiments locally or on the cluster')
-        parser.add_argument('datasets_dir_path', help = "path to dir containing datasets / problems")
-        parser.add_argument('dataset_name', help = "name of the dataset")
-        parser.add_argument('resample_seed', help = "seed for generating random numbers", type = int)
-        parser.add_argument('classifier_name', help = "name of the classifier")
-        parser.add_argument('results_dir_path', help = "path to results dir")
-        parser.add_argument('-v', '--verbose', help = "verbosity of output", type = int, nargs = '?', default = 0)
-        parser.add_argument('-o', '--overwrite_results', help = "overwrite existing results", action = 'store_true')
-        parser.add_argument('-t', '--estimate_train', help = "produce an estimate of the train set",
-                            action = 'store_true')
-        args = vars(parser.parse_args())
-        print(args)
-        # for i in range(0, 30):
-        #     args['resample_seed'] = i
-        #     run_experiment(**args)
-        run_experiment(**args)
-    else:  # Local run
-        data_dir = "/home/goaslter/Projects/datasets/Univariate2018/"
-        results_dir = "results"
-        classifier = "dtw_svm"
-        resample = 0
-        # for i in range(0, len(datasets)):
-        #     dataset = datasets[i]
-        dataset = "Coffee"
-        tf = False
-        run_experiment(overwrite_results = True, datasets_dir_path= data_dir, results_dir_path = results_dir,
-                       classifier_name = classifier, dataset_name = dataset, resample_seed = resample,
-                       estimate_train = tf, verbose = 10)
+
+#    test_loading()
+#    sys.exit()
+#    print('experimenting...')
+#Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset} -f=\$LSB_JOBINDEX
+    if sys.argv.__len__() > 1: #cluster run, this is fragile
+        print(sys.argv)
+        data_dir = sys.argv[1]
+        results_dir = sys.argv[2]
+        classifier =  sys.argv[3]
+        dataset = sys.argv[4]
+        resample = int(sys.argv[5])-1
+        tf=(str(sys.argv[6]) == 'True')
+        run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
+                       resampleID=resample,train_file=tf)
+    else : #Local run
+#        data_dir = "/scratch/univariate_datasets/"
+#        results_dir = "/scratch/results"
+        data_dir = "/bench/datasets/Univariate2018/"
+        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        # data_dir = "Z:/ArchiveData/Univariate_ts/"
+        # results_dir = "E:/Temp/"
+#        results_dir = "Z:/Results/sktime Bakeoff/"
+        dataset = "ItalyPowerDemand"
+        trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
+        testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
+        classifier = "TSF"
+        resample = 1
+#         for i in range(0, len(univariate_datasets)):
+#             dataset = univariate_datasets[i]
+# #            print(i)
+# #            print(" problem = "+dataset)
+        tf=False
+        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
+                       dataset=dataset, resampleID=resample,train_file=tf)
