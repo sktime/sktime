@@ -16,11 +16,12 @@
 
 set -e
 
-if [ $TRAVIS_OS_NAME = "macos" ]
-then
-  # Install jq for travis_fastfail.sh script
-  brew install jq
-fi
+# instead of manually installing, use addons functions in .travis.yml config file
+#if [ $TRAVIS_OS_NAME = "macos" ]
+#then
+#  # Install jq for travis_fastfail.sh script
+#  brew install jq
+#fi
 
 # Fail fast
 build_tools/travis/travis_fastfail.sh
@@ -49,10 +50,10 @@ then
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
     # Install the OpenMP library
-		brew install libomp
+    #	brew install libomp
 
 		# Install ccache manually for macOS environments
-		brew install ccache
+		# brew install ccache
 		export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 

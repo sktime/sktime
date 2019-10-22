@@ -32,6 +32,14 @@ matrix:
       - os: osx
         language: generic
 
+addons:
+  homebrew:
+    packages:
+      - ccache
+      - libomp
+      - jq
+      - pandoc
+
 install:
     - source build_tools/travis/install.sh  # build environment
 

@@ -25,7 +25,7 @@ fi
 if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TRAVIS_BRANCH" == "master" ]
 then
   # install pandoc to generate html versions of Jupyter notebooks
-  brew install pandoc
+  # brew install pandoc
 
   cd documentation
   make html
