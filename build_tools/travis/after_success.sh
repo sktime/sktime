@@ -7,9 +7,10 @@
 
 # License: 3-clause BSD
 
-set -e
+#set -e
 
-if [[ "$COVERAGE" == "true" ]]; then
+if [[ "$COVERAGE" == "true" ]];
+then
     # Need to run codecov from a git checkout, so we copy .coverage
     # from TEST_DIR where pytest has been run
     cp $TEST_DIR/.coverage $TRAVIS_BUILD_DIR
@@ -22,14 +23,15 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 # Build website on master branch
-if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TRAVIS_BRANCH" == "master" ]
+if [[ "$TRAVIS_OS_NAME" == "osx" ]] && [[ "$TRAVIS_BRANCH" == "master" ]];
 then
   # install pandoc to generate html versions of Jupyter notebooks
   # brew installs specified in .travis.yml
   # brew install pandoc
 
-  cd documentation
+  # cd into documentation folder 
+  cd documentation ||
   make html
 fi
 
-set +e
+#set +e
