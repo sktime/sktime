@@ -57,10 +57,10 @@ class BOSSEnsemble(BaseEstimator):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the ensemble members rather than cross validate (default=False)
-    n_parameter_samples     : if search is randomised, number of parameter combos to try
+    n_parameter_samples     : int, if search is randomised, number of parameter combos to try
     random_state            : int or None, seed for random, integer, optional (default to no seed)
     threshold               : double [0,1]. retain all classifiers within threshold% of the best one, optional (default =0.92)
-    max_ensemble_size       : int, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
+    max_ensemble_size       : int or None, retain a maximum number of classifiers, even if within threshold, optional (default = 500)
     alphabet_size           : range of alphabet sizes to try (default to single value, 4)
     max_win_len_prop        : maximum window length as a proportion of series length (default =1)
     time_limit              : time contract to limit build time in minutes (default=0, no limit)
@@ -85,7 +85,7 @@ class BOSSEnsemble(BaseEstimator):
                  n_parameter_samples=250,
                  random_state=None,
                  threshold=0.92,
-                 max_ensemble_size=500,
+                 max_ensemble_size=None,
                  max_win_len_prop=1,
                  time_limit=0,
                  word_lengths=None,
@@ -97,8 +97,12 @@ class BOSSEnsemble(BaseEstimator):
             word_lengths = [16, 14, 12, 10, 8]
         if norm_options is None:
             norm_options = [True, False]
-        if randomised_ensemble and max_ensemble_size == 500:
-            max_ensemble_size = 50
+
+        if max_ensemble_size is None:
+            if randomised_ensemble:
+                max_ensemble_size = 50
+            else:
+                max_ensemble_size = 500
 
         self.randomised_ensemble = randomised_ensemble
         self.n_parameter_samples = n_parameter_samples
@@ -300,12 +304,12 @@ class BOSSEnsemble(BaseEstimator):
     def get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = (np.ones(self.n_classes) * self.n_classifiers)
+        divisor = (np.ones(self.n_classes) * np.sum(self.weights))
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
-            for n in range(len(self.classifiers)):
-                sums[self.class_dictionary.get(self.classifiers[n].train_predict(i), -1)] += 1
+            for n, clf in enumerate(self.classifiers):
+                sums[self.class_dictionary.get(clf.train_predict(i), -1)] += self.weights[n]
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -321,8 +325,8 @@ class BOSSEnsemble(BaseEstimator):
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
-            for n in range(len(self.classifiers)):
-                sums[self.class_dictionary.get(self.classifiers[n].train_predict(i), -1)] += 1
+            for n, clf in enumerate(self.classifiers):
+                sums[self.class_dictionary.get(clf.train_predict(i), -1)] += self.weights[n]
 
             dists = sums / (np.ones(self.n_classes) * self.n_classifiers)
             c = dists.argmax()
