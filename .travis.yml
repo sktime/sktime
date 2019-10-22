@@ -39,6 +39,7 @@ addons:
       - libomp
       - jq
       - pandoc
+    update: true
 
 install:
     - source build_tools/travis/install.sh  # build environment
