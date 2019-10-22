@@ -2,16 +2,16 @@
 
 |travis|_ |appveyor|_ |pypi|_ |gitter|_
 
-.. |travis| image:: https://img.shields.io/travis/alan-turing-institute/sktime/master?logo=travis
-.. _travis: https://travis-ci.com/alan-turing-institute/sktime
+.. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
+.. _travis: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/3bs0rpe1id1ots8c/branch/master?svg=true
-.. _appveyor: https://ci.appveyor.com/project/mloning/sktime
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
+.. _appveyor: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
 
-.. |pypi| image:: https://badge.fury.io/py/sktime.svg
-.. _pypi: https://badge.fury.io/py/sktime
+.. |pypi| image:: https://img.shields.io/pypi/v/sktime
+.. _pypi: https://img.shields.io/pypi/v/sktime
 
-.. |gitter| image:: https://badges.gitter.im/sktime/community.svg
+.. |gitter| image:: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
 .. _gitter: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
 
 sktime
