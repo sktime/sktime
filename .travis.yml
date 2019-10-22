@@ -33,6 +33,8 @@ matrix:
         language: generic
 
 addons:
+  # travis recommends to specify any additional necessary packages here,
+  # rather than manually installing them in the install script
   homebrew:
     packages:
       - ccache

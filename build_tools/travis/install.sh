@@ -16,8 +16,8 @@
 
 set -e
 
-# instead of manually installing, use addons functions in .travis.yml config file
-#if [ $TRAVIS_OS_NAME = "macos" ]
+# brew installs specified in .travis.yml
+# if [ $TRAVIS_OS_NAME = "macos" ]
 #then
 #  # Install jq for travis_fastfail.sh script
 #  brew install jq
@@ -50,9 +50,11 @@ then
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
 
     # Install the OpenMP library
+    # brew installs specified in .travis.yml
     #	brew install libomp
 
 		# Install ccache manually for macOS environments
+		# brew installs specified in .travis.yml
 		# brew install ccache
 		export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
