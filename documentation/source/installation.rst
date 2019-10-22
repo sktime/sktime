@@ -10,10 +10,11 @@ But note that the package is actively being developed and currently not feature 
 
 Development version
 -------------------
-The installation instruction below are adapted from `scikit-learn's installation instructions <https://scikit-learn
+The installation instruction below are adapted from scikit-learn's advanced `installation instructions
+<https://scikit-learn
 .org/stable/developers/advanced_installation.html>`_.
 
-To install the development version, follow these steps:
+To install the development version of sktime, follow these steps:
 
 1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
 2. Move into the root directory of the repository: :code:`cd sktime`
