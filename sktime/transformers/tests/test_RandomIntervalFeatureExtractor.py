@@ -58,19 +58,28 @@ def test_random_state():
 
 # Check specific results
 @pytest.mark.parametrize("n_instances", [1, 3])
-@pytest.mark.parametrize("len_series", [2, 3])
+@pytest.mark.parametrize("len_series", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, 'log', 'sqrt', 'random'])
 def test_results(n_instances, len_series, n_intervals):
     x = np.random.normal(size=len_series)
     X = generate_df_from_array(x, n_rows=n_instances, n_cols=1)
-    trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
+    t = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
                                            features=[np.mean, np.std, time_series_slope])
-    Xt = trans.fit_transform(X)
+    Xt = t.fit_transform(X)
     # Check results
-    for s, e in trans.intervals_:
-        assert np.all(Xt.filter(like=f'_{s}_{e}_mean') == np.mean(x[s:e]))
-        assert np.all(Xt.filter(like=f'_{s}_{e}_std') == np.std(x[s:e]))
-        assert np.all(Xt.filter(like=f'_{s}_{e}_time_series_slope') == time_series_slope(x[s:e]))
+    intervals = t.intervals_
+    for start, end in intervals:
+        expected_mean = np.mean(x[start:end])
+        expected_std = np.std(x[start:end])
+        expected_slope = time_series_slope(x[start:end])
+
+        actual_means = Xt.filter(like=f'*_{start}_{end}_mean').values
+        actual_stds = Xt.filter(like=f'_{start}_{end}_std').values
+        actual_slopes = Xt.filter(like=f'_{start}_{end}_time_series_slope').values
+
+        assert np.all(actual_means == expected_mean)
+        assert np.all(actual_stds == expected_std)
+        assert np.all(actual_slopes == expected_slope)
 
 
 # Test against equivalent pipelines.
