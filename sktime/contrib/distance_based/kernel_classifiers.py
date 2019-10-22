@@ -41,9 +41,9 @@ from sklearn.neighbors import KNeighborsClassifier
 
 
 def build_ed_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -68,9 +68,9 @@ def build_ed_svm(
 
 
 def build_dtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -95,9 +95,9 @@ def build_dtw_svm(
 
 
 def build_full_dtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -122,9 +122,9 @@ def build_full_dtw_svm(
 
 
 def build_ddtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -150,9 +150,9 @@ def build_ddtw_svm(
 
 
 def build_full_ddtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -178,9 +178,9 @@ def build_full_ddtw_svm(
 
 
 def build_wdtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -205,9 +205,9 @@ def build_wdtw_svm(
 
 
 def build_wddtw_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -233,9 +233,9 @@ def build_wddtw_svm(
 
 
 def build_lcss_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -260,9 +260,9 @@ def build_lcss_svm(
 
 
 def build_erp_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -287,9 +287,9 @@ def build_erp_svm(
 
 
 def build_msm_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -314,9 +314,9 @@ def build_msm_svm(
 
 
 def build_twed_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -341,9 +341,9 @@ def build_twed_svm(
 
 
 def build_ed_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -368,9 +368,9 @@ def build_ed_rbf_svm(
 
 
 def build_dtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -395,9 +395,9 @@ def build_dtw_rbf_svm(
 
 
 def build_full_dtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -422,9 +422,9 @@ def build_full_dtw_rbf_svm(
 
 
 def build_ddtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -450,9 +450,9 @@ def build_ddtw_rbf_svm(
 
 
 def build_full_ddtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -478,9 +478,9 @@ def build_full_ddtw_rbf_svm(
 
 
 def build_wdtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -505,9 +505,9 @@ def build_wdtw_rbf_svm(
 
 
 def build_wddtw_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -533,9 +533,9 @@ def build_wddtw_rbf_svm(
 
 
 def build_lcss_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -560,9 +560,9 @@ def build_lcss_rbf_svm(
 
 
 def build_erp_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -587,9 +587,9 @@ def build_erp_rbf_svm(
 
 
 def build_msm_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -614,9 +614,9 @@ def build_msm_rbf_svm(
 
 
 def build_twed_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -641,9 +641,9 @@ def build_twed_rbf_svm(
 
 
 def build_tri_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -667,9 +667,9 @@ def build_tri_rbf_svm(
 
 
 def build_poly_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -695,9 +695,9 @@ def build_poly_rbf_svm(
 
 
 def build_kl2_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -722,9 +722,9 @@ def build_kl2_rbf_svm(
 
 
 def build_hell_rbf_svm(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -749,9 +749,9 @@ def build_hell_rbf_svm(
 
 
 def build_ed_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -776,9 +776,9 @@ def build_ed_1nn(
 
 
 def build_dtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -803,9 +803,9 @@ def build_dtw_1nn(
 
 
 def build_full_dtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -830,9 +830,9 @@ def build_full_dtw_1nn(
 
 
 def build_ddtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -858,9 +858,9 @@ def build_ddtw_1nn(
 
 
 def build_full_ddtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -886,9 +886,9 @@ def build_full_ddtw_1nn(
 
 
 def build_wdtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -913,9 +913,9 @@ def build_wdtw_1nn(
 
 
 def build_wddtw_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -941,9 +941,9 @@ def build_wddtw_1nn(
 
 
 def build_lcss_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -968,9 +968,9 @@ def build_lcss_1nn(
 
 
 def build_erp_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -995,9 +995,9 @@ def build_erp_1nn(
 
 
 def build_msm_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1022,9 +1022,9 @@ def build_msm_1nn(
 
 
 def build_twed_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1049,9 +1049,9 @@ def build_twed_1nn(
 
 
 def build_ed_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1076,9 +1076,9 @@ def build_ed_rbf_1nn(
 
 
 def build_dtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1103,9 +1103,9 @@ def build_dtw_rbf_1nn(
 
 
 def build_full_dtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1130,9 +1130,9 @@ def build_full_dtw_rbf_1nn(
 
 
 def build_ddtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1158,9 +1158,9 @@ def build_ddtw_rbf_1nn(
 
 
 def build_full_ddtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1186,9 +1186,9 @@ def build_full_ddtw_rbf_1nn(
 
 
 def build_wdtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1213,9 +1213,9 @@ def build_wdtw_rbf_1nn(
 
 
 def build_wddtw_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1241,9 +1241,9 @@ def build_wddtw_rbf_1nn(
 
 
 def build_lcss_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1268,9 +1268,9 @@ def build_lcss_rbf_1nn(
 
 
 def build_erp_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1295,9 +1295,9 @@ def build_erp_rbf_1nn(
 
 
 def build_msm_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1322,9 +1322,9 @@ def build_msm_rbf_1nn(
 
 
 def build_twed_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1349,9 +1349,9 @@ def build_twed_rbf_1nn(
 
 
 def build_tri_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1375,9 +1375,9 @@ def build_tri_rbf_1nn(
 
 
 def build_poly_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1402,9 +1402,9 @@ def build_poly_rbf_1nn(
 
 
 def build_kl2_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1429,9 +1429,9 @@ def build_kl2_rbf_1nn(
 
 
 def build_hell_rbf_1nn(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1455,9 +1455,9 @@ def build_hell_rbf_1nn(
 
 
 def build_ed_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1483,9 +1483,9 @@ def build_ed_svm_eig_min(
 
 
 def build_dtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1511,9 +1511,9 @@ def build_dtw_svm_eig_min(
 
 
 def build_full_dtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1539,9 +1539,9 @@ def build_full_dtw_svm_eig_min(
 
 
 def build_ddtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1568,9 +1568,9 @@ def build_ddtw_svm_eig_min(
 
 
 def build_full_ddtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1597,9 +1597,9 @@ def build_full_ddtw_svm_eig_min(
 
 
 def build_wdtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1625,9 +1625,9 @@ def build_wdtw_svm_eig_min(
 
 
 def build_wddtw_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1654,9 +1654,9 @@ def build_wddtw_svm_eig_min(
 
 
 def build_lcss_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1682,9 +1682,9 @@ def build_lcss_svm_eig_min(
 
 
 def build_erp_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1710,9 +1710,9 @@ def build_erp_svm_eig_min(
 
 
 def build_msm_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1738,9 +1738,9 @@ def build_msm_svm_eig_min(
 
 
 def build_twed_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1766,9 +1766,9 @@ def build_twed_svm_eig_min(
 
 
 def build_ed_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1794,9 +1794,9 @@ def build_ed_rbf_svm_eig_min(
 
 
 def build_dtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1822,9 +1822,9 @@ def build_dtw_rbf_svm_eig_min(
 
 
 def build_full_dtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1850,9 +1850,9 @@ def build_full_dtw_rbf_svm_eig_min(
 
 
 def build_ddtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1879,9 +1879,9 @@ def build_ddtw_rbf_svm_eig_min(
 
 
 def build_full_ddtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1908,9 +1908,9 @@ def build_full_ddtw_rbf_svm_eig_min(
 
 
 def build_wdtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1936,9 +1936,9 @@ def build_wdtw_rbf_svm_eig_min(
 
 
 def build_wddtw_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1965,9 +1965,9 @@ def build_wddtw_rbf_svm_eig_min(
 
 
 def build_lcss_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -1993,9 +1993,9 @@ def build_lcss_rbf_svm_eig_min(
 
 
 def build_erp_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2021,9 +2021,9 @@ def build_erp_rbf_svm_eig_min(
 
 
 def build_msm_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2049,9 +2049,9 @@ def build_msm_rbf_svm_eig_min(
 
 
 def build_twed_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2077,9 +2077,9 @@ def build_twed_rbf_svm_eig_min(
 
 
 def build_tri_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2104,9 +2104,9 @@ def build_tri_rbf_svm_eig_min(
 
 
 def build_poly_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2133,9 +2133,9 @@ def build_poly_rbf_svm_eig_min(
 
 
 def build_kl2_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2161,9 +2161,9 @@ def build_kl2_rbf_svm_eig_min(
 
 
 def build_hell_rbf_svm_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2189,9 +2189,9 @@ def build_hell_rbf_svm_eig_min(
 
 
 def build_ed_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2217,9 +2217,9 @@ def build_ed_1nn_eig_min(
 
 
 def build_dtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2245,9 +2245,9 @@ def build_dtw_1nn_eig_min(
 
 
 def build_full_dtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2273,9 +2273,9 @@ def build_full_dtw_1nn_eig_min(
 
 
 def build_ddtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2302,9 +2302,9 @@ def build_ddtw_1nn_eig_min(
 
 
 def build_full_ddtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2331,9 +2331,9 @@ def build_full_ddtw_1nn_eig_min(
 
 
 def build_wdtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2359,9 +2359,9 @@ def build_wdtw_1nn_eig_min(
 
 
 def build_wddtw_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2388,9 +2388,9 @@ def build_wddtw_1nn_eig_min(
 
 
 def build_lcss_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2416,9 +2416,9 @@ def build_lcss_1nn_eig_min(
 
 
 def build_erp_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2444,9 +2444,9 @@ def build_erp_1nn_eig_min(
 
 
 def build_msm_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2472,9 +2472,9 @@ def build_msm_1nn_eig_min(
 
 
 def build_twed_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2500,9 +2500,9 @@ def build_twed_1nn_eig_min(
 
 
 def build_ed_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2528,9 +2528,9 @@ def build_ed_rbf_1nn_eig_min(
 
 
 def build_dtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2556,9 +2556,9 @@ def build_dtw_rbf_1nn_eig_min(
 
 
 def build_full_dtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2584,9 +2584,9 @@ def build_full_dtw_rbf_1nn_eig_min(
 
 
 def build_ddtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2613,9 +2613,9 @@ def build_ddtw_rbf_1nn_eig_min(
 
 
 def build_full_ddtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2642,9 +2642,9 @@ def build_full_ddtw_rbf_1nn_eig_min(
 
 
 def build_wdtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2670,9 +2670,9 @@ def build_wdtw_rbf_1nn_eig_min(
 
 
 def build_wddtw_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2699,9 +2699,9 @@ def build_wddtw_rbf_1nn_eig_min(
 
 
 def build_lcss_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2727,9 +2727,9 @@ def build_lcss_rbf_1nn_eig_min(
 
 
 def build_erp_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2755,9 +2755,9 @@ def build_erp_rbf_1nn_eig_min(
 
 
 def build_msm_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2783,9 +2783,9 @@ def build_msm_rbf_1nn_eig_min(
 
 
 def build_twed_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2811,9 +2811,9 @@ def build_twed_rbf_1nn_eig_min(
 
 
 def build_tri_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2838,9 +2838,9 @@ def build_tri_rbf_1nn_eig_min(
 
 
 def build_poly_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2866,9 +2866,9 @@ def build_poly_rbf_1nn_eig_min(
 
 
 def build_kl2_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2894,9 +2894,9 @@ def build_kl2_rbf_1nn_eig_min(
 
 
 def build_hell_rbf_1nn_eig_min(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2921,9 +2921,9 @@ def build_hell_rbf_1nn_eig_min(
 
 
 def build_ed_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2949,9 +2949,9 @@ def build_ed_svm_eig_abs(
 
 
 def build_dtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -2977,9 +2977,9 @@ def build_dtw_svm_eig_abs(
 
 
 def build_full_dtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3005,9 +3005,9 @@ def build_full_dtw_svm_eig_abs(
 
 
 def build_ddtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3034,9 +3034,9 @@ def build_ddtw_svm_eig_abs(
 
 
 def build_full_ddtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3063,9 +3063,9 @@ def build_full_ddtw_svm_eig_abs(
 
 
 def build_wdtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3091,9 +3091,9 @@ def build_wdtw_svm_eig_abs(
 
 
 def build_wddtw_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3120,9 +3120,9 @@ def build_wddtw_svm_eig_abs(
 
 
 def build_lcss_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3148,9 +3148,9 @@ def build_lcss_svm_eig_abs(
 
 
 def build_erp_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3176,9 +3176,9 @@ def build_erp_svm_eig_abs(
 
 
 def build_msm_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3204,9 +3204,9 @@ def build_msm_svm_eig_abs(
 
 
 def build_twed_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3232,9 +3232,9 @@ def build_twed_svm_eig_abs(
 
 
 def build_ed_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3260,9 +3260,9 @@ def build_ed_rbf_svm_eig_abs(
 
 
 def build_dtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3288,9 +3288,9 @@ def build_dtw_rbf_svm_eig_abs(
 
 
 def build_full_dtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3316,9 +3316,9 @@ def build_full_dtw_rbf_svm_eig_abs(
 
 
 def build_ddtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3345,9 +3345,9 @@ def build_ddtw_rbf_svm_eig_abs(
 
 
 def build_full_ddtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3374,9 +3374,9 @@ def build_full_ddtw_rbf_svm_eig_abs(
 
 
 def build_wdtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3402,9 +3402,9 @@ def build_wdtw_rbf_svm_eig_abs(
 
 
 def build_wddtw_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3431,9 +3431,9 @@ def build_wddtw_rbf_svm_eig_abs(
 
 
 def build_lcss_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3459,9 +3459,9 @@ def build_lcss_rbf_svm_eig_abs(
 
 
 def build_erp_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3487,9 +3487,9 @@ def build_erp_rbf_svm_eig_abs(
 
 
 def build_msm_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3515,9 +3515,9 @@ def build_msm_rbf_svm_eig_abs(
 
 
 def build_twed_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3543,9 +3543,9 @@ def build_twed_rbf_svm_eig_abs(
 
 
 def build_tri_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3570,9 +3570,9 @@ def build_tri_rbf_svm_eig_abs(
 
 
 def build_poly_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3599,9 +3599,9 @@ def build_poly_rbf_svm_eig_abs(
 
 
 def build_kl2_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3627,9 +3627,9 @@ def build_kl2_rbf_svm_eig_abs(
 
 
 def build_hell_rbf_svm_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3655,9 +3655,9 @@ def build_hell_rbf_svm_eig_abs(
 
 
 def build_ed_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3683,9 +3683,9 @@ def build_ed_1nn_eig_abs(
 
 
 def build_dtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3711,9 +3711,9 @@ def build_dtw_1nn_eig_abs(
 
 
 def build_full_dtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3739,9 +3739,9 @@ def build_full_dtw_1nn_eig_abs(
 
 
 def build_ddtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3768,9 +3768,9 @@ def build_ddtw_1nn_eig_abs(
 
 
 def build_full_ddtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3797,9 +3797,9 @@ def build_full_ddtw_1nn_eig_abs(
 
 
 def build_wdtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3825,9 +3825,9 @@ def build_wdtw_1nn_eig_abs(
 
 
 def build_wddtw_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3854,9 +3854,9 @@ def build_wddtw_1nn_eig_abs(
 
 
 def build_lcss_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3882,9 +3882,9 @@ def build_lcss_1nn_eig_abs(
 
 
 def build_erp_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3910,9 +3910,9 @@ def build_erp_1nn_eig_abs(
 
 
 def build_msm_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3938,9 +3938,9 @@ def build_msm_1nn_eig_abs(
 
 
 def build_twed_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3966,9 +3966,9 @@ def build_twed_1nn_eig_abs(
 
 
 def build_ed_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -3994,9 +3994,9 @@ def build_ed_rbf_1nn_eig_abs(
 
 
 def build_dtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4022,9 +4022,9 @@ def build_dtw_rbf_1nn_eig_abs(
 
 
 def build_full_dtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4050,9 +4050,9 @@ def build_full_dtw_rbf_1nn_eig_abs(
 
 
 def build_ddtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4079,9 +4079,9 @@ def build_ddtw_rbf_1nn_eig_abs(
 
 
 def build_full_ddtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4108,9 +4108,9 @@ def build_full_ddtw_rbf_1nn_eig_abs(
 
 
 def build_wdtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4136,9 +4136,9 @@ def build_wdtw_rbf_1nn_eig_abs(
 
 
 def build_wddtw_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4165,9 +4165,9 @@ def build_wddtw_rbf_1nn_eig_abs(
 
 
 def build_lcss_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4193,9 +4193,9 @@ def build_lcss_rbf_1nn_eig_abs(
 
 
 def build_erp_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4221,9 +4221,9 @@ def build_erp_rbf_1nn_eig_abs(
 
 
 def build_msm_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4249,9 +4249,9 @@ def build_msm_rbf_1nn_eig_abs(
 
 
 def build_twed_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4277,9 +4277,9 @@ def build_twed_rbf_1nn_eig_abs(
 
 
 def build_tri_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4304,9 +4304,9 @@ def build_tri_rbf_1nn_eig_abs(
 
 
 def build_poly_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4332,9 +4332,9 @@ def build_poly_rbf_1nn_eig_abs(
 
 
 def build_kl2_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4360,9 +4360,9 @@ def build_kl2_rbf_1nn_eig_abs(
 
 
 def build_hell_rbf_1nn_eig_abs(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4386,9 +4386,9 @@ def build_hell_rbf_1nn_eig_abs(
     return model
 
 def build_ed_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4413,9 +4413,9 @@ def build_ed_svm_eig_zero(
     return classifier
 
 def build_dtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4440,9 +4440,9 @@ def build_dtw_svm_eig_zero(
     return classifier
 
 def build_full_dtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4467,9 +4467,9 @@ def build_full_dtw_svm_eig_zero(
     return classifier
 
 def build_ddtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4495,9 +4495,9 @@ def build_ddtw_svm_eig_zero(
     return classifier
 
 def build_full_ddtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4523,9 +4523,9 @@ def build_full_ddtw_svm_eig_zero(
     return classifier
 
 def build_wdtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4550,9 +4550,9 @@ def build_wdtw_svm_eig_zero(
     return classifier
 
 def build_wddtw_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4578,9 +4578,9 @@ def build_wddtw_svm_eig_zero(
     return classifier
 
 def build_lcss_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4605,9 +4605,9 @@ def build_lcss_svm_eig_zero(
     return classifier
 
 def build_erp_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4632,9 +4632,9 @@ def build_erp_svm_eig_zero(
     return classifier
 
 def build_msm_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4659,9 +4659,9 @@ def build_msm_svm_eig_zero(
     return classifier
 
 def build_twed_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4686,9 +4686,9 @@ def build_twed_svm_eig_zero(
     return classifier
 
 def build_ed_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4713,9 +4713,9 @@ def build_ed_rbf_svm_eig_zero(
     return classifier
 
 def build_dtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4740,9 +4740,9 @@ def build_dtw_rbf_svm_eig_zero(
     return classifier
 
 def build_full_dtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4767,9 +4767,9 @@ def build_full_dtw_rbf_svm_eig_zero(
     return classifier
 
 def build_ddtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4795,9 +4795,9 @@ def build_ddtw_rbf_svm_eig_zero(
     return classifier
 
 def build_full_ddtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4823,9 +4823,9 @@ def build_full_ddtw_rbf_svm_eig_zero(
     return classifier
 
 def build_wdtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4850,9 +4850,9 @@ def build_wdtw_rbf_svm_eig_zero(
     return classifier
 
 def build_wddtw_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4878,9 +4878,9 @@ def build_wddtw_rbf_svm_eig_zero(
     return classifier
 
 def build_lcss_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4905,9 +4905,9 @@ def build_lcss_rbf_svm_eig_zero(
     return classifier
 
 def build_erp_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4932,9 +4932,9 @@ def build_erp_rbf_svm_eig_zero(
     return classifier
 
 def build_msm_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4959,9 +4959,9 @@ def build_msm_rbf_svm_eig_zero(
     return classifier
 
 def build_twed_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -4986,9 +4986,9 @@ def build_twed_rbf_svm_eig_zero(
     return classifier
 
 def build_tri_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5012,9 +5012,9 @@ def build_tri_rbf_svm_eig_zero(
     return model
 
 def build_poly_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5040,9 +5040,9 @@ def build_poly_rbf_svm_eig_zero(
     return model
 
 def build_kl2_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5067,9 +5067,9 @@ def build_kl2_rbf_svm_eig_zero(
     return model
 
 def build_hell_rbf_svm_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5094,9 +5094,9 @@ def build_hell_rbf_svm_eig_zero(
     return model
 
 def build_ed_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5121,9 +5121,9 @@ def build_ed_1nn_eig_zero(
     return classifier
 
 def build_dtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5148,9 +5148,9 @@ def build_dtw_1nn_eig_zero(
     return classifier
 
 def build_full_dtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5175,9 +5175,9 @@ def build_full_dtw_1nn_eig_zero(
     return classifier
 
 def build_ddtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5203,9 +5203,9 @@ def build_ddtw_1nn_eig_zero(
     return classifier
 
 def build_full_ddtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5231,9 +5231,9 @@ def build_full_ddtw_1nn_eig_zero(
     return classifier
 
 def build_wdtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5258,9 +5258,9 @@ def build_wdtw_1nn_eig_zero(
     return classifier
 
 def build_wddtw_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5286,9 +5286,9 @@ def build_wddtw_1nn_eig_zero(
     return classifier
 
 def build_lcss_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5313,9 +5313,9 @@ def build_lcss_1nn_eig_zero(
     return classifier
 
 def build_erp_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5340,9 +5340,9 @@ def build_erp_1nn_eig_zero(
     return classifier
 
 def build_msm_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5367,9 +5367,9 @@ def build_msm_1nn_eig_zero(
     return classifier
 
 def build_twed_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5394,9 +5394,9 @@ def build_twed_1nn_eig_zero(
     return classifier
 
 def build_ed_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5421,9 +5421,9 @@ def build_ed_rbf_1nn_eig_zero(
     return classifier
 
 def build_dtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5448,9 +5448,9 @@ def build_dtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_full_dtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5475,9 +5475,9 @@ def build_full_dtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_ddtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5503,9 +5503,9 @@ def build_ddtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_full_ddtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5531,9 +5531,9 @@ def build_full_ddtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_wdtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5558,9 +5558,9 @@ def build_wdtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_wddtw_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5586,9 +5586,9 @@ def build_wddtw_rbf_1nn_eig_zero(
     return classifier
 
 def build_lcss_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5613,9 +5613,9 @@ def build_lcss_rbf_1nn_eig_zero(
     return classifier
 
 def build_erp_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5640,9 +5640,9 @@ def build_erp_rbf_1nn_eig_zero(
     return classifier
 
 def build_msm_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5667,9 +5667,9 @@ def build_msm_rbf_1nn_eig_zero(
     return classifier
 
 def build_twed_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5694,9 +5694,9 @@ def build_twed_rbf_1nn_eig_zero(
     return classifier
 
 def build_tri_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5720,9 +5720,9 @@ def build_tri_rbf_1nn_eig_zero(
     return model
 
 def build_poly_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5747,9 +5747,9 @@ def build_poly_rbf_1nn_eig_zero(
     return model
 
 def build_kl2_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
@@ -5774,9 +5774,9 @@ def build_kl2_rbf_1nn_eig_zero(
     return model
 
 def build_hell_rbf_1nn_eig_zero(
-        cv=10,
+        cv=5,
         n_jobs=1,
-        n_iter=100,
+        n_iter=30,
         verbose=0,
         random_state=0):
     pipe = sklearn.pipeline.Pipeline([
