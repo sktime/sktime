@@ -15,7 +15,7 @@ from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
 
-NUMPY_MIN_VERSION = "1.16.0"
+NUMPY_MIN_VERSION = "1.17.0"
 SCIPY_MIN_VERSION = "1.2.0"
 JOBLIB_MIN_VERSION = "0.13"
 PANDAS_MIN_VERSION = "0.23.0"
