@@ -22,8 +22,11 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 # Build website on master branch
-if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TRAVIS_BRANCH" == "master" ]
+if [ "$TRAVIS_OS_NAME" == "osx" ] && [ "$TRAVIS_BRANCH" == "master" ]
 then
+  # install pandoc to generate html versions of Jupyter notebooks
+  brew install pandoc
+
   cd documentation
   make html
 fi
