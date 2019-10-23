@@ -14,7 +14,6 @@ def validate_y_X(y, X):
     y : pandas Series or numpy ndarray
     X : pandas DataFrame
 
-<<<<<<< HEAD:sktime/utils/validation/forecasting.py
     Returns
     -------
     None
