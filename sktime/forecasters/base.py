@@ -39,7 +39,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -77,7 +77,7 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -115,7 +115,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=[1])
+        fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
@@ -134,6 +134,10 @@ class BaseForecaster(BaseEstimator):
         # only check y here, X and fh will be checked during predict
         if self.check_input:
             validate_y(y)
+
+        # Set fh if not provided
+        if fh is None:
+            fh = np.arange(1, len(y.iloc[0]) + 1)
 
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
@@ -269,7 +273,7 @@ class BaseSingleSeriesForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
 

@@ -38,7 +38,7 @@ class EnsembleForecaster(BaseForecaster):
         self.fitted_estimators_ = []
         super(EnsembleForecaster, self).__init__(check_input=check_input)
 
-    def fit(self, y, fh=None, X=None):
+    def fit(self, y, fh=1, X=None):
         """
         Internal fit.
 
@@ -60,6 +60,9 @@ class EnsembleForecaster(BaseForecaster):
         # validate forecasting horizon
         fh = validate_fh(fh)
 
+        # Clear previously fitted estimators
+        self.fitted_estimators_ = []
+
         for _, estimator in self.estimators:
             # TODO implement set/get params interface
             # estimator.set_params(**{"check_input": False})
@@ -67,7 +70,7 @@ class EnsembleForecaster(BaseForecaster):
             self.fitted_estimators_.append(fitted_estimator)
         return self
 
-    def predict(self, fh=None, X=None):
+    def predict(self, fh=1, X=None):
         """
         Internal predict using fitted estimator.
 
