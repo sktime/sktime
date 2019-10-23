@@ -60,6 +60,9 @@ class EnsembleForecaster(BaseForecaster):
         # validate forecasting horizon
         fh = validate_fh(fh)
 
+        # Clear previously fitted estimators
+        self.fitted_estimators_ = []
+
         for _, estimator in self.estimators:
             # TODO implement set/get params interface
             # estimator.set_params(**{"check_input": False})
