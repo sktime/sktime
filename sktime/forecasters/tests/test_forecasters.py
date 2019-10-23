@@ -63,8 +63,7 @@ def test_set_params(forecaster, params):
 
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize("forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", FHS)
-def test_score(forecaster, fh):
+def test_score(forecaster):
     m = forecaster()
     train = pd.Series([y.iloc[0].iloc[:30]])
     test = pd.Series([y.iloc[0].iloc[30:]])
