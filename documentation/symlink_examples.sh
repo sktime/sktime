@@ -9,9 +9,6 @@ rm source/examples/*
 # cd into website folder
 cd source/examples/ || return
 
-# select all examples files
-FILES=../../../examples/
-
 # create symbolic links in website folder
 ln -s ../../../examples/* .
 
