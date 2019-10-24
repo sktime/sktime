@@ -15,7 +15,7 @@
 .. _gitter: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
+.. _binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
 
 sktime
 ======
