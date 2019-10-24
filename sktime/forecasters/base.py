@@ -1,3 +1,6 @@
+__all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
+__author__ = ['Markus Löning']
+
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -9,10 +12,6 @@ from sktime.utils.validation.forecasting import validate_X
 from sktime.utils.validation.forecasting import validate_y
 from sktime.utils.validation.forecasting import validate_y_X
 from sktime.utils.data_container import get_time_index, tabularise
-
-
-__all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
-__author__ = ['Markus Löning']
 
 
 class BaseForecaster(BaseEstimator):
@@ -32,7 +31,7 @@ class BaseForecaster(BaseEstimator):
         self._time_index = None
         self._is_fitted = False
 
-    def fit(self, y, fh=None, X=None):
+    def fit(self, y, fh=1, X=None):
         """
         Fit forecaster.
 
@@ -40,7 +39,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -58,7 +57,8 @@ class BaseForecaster(BaseEstimator):
             validate_y_X(y, X)
 
         # validate forecasting horizon
-        fh = validate_fh(fh)
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # Keep index for predicting where forecasters horizon will be relative to y seen in fit
         self._time_index = get_time_index(y)
@@ -71,13 +71,13 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None):
+    def predict(self, fh=1, X=None):
         """
         Predict using fitted estimator.
 
         Parameters
         ----------
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -98,7 +98,8 @@ class BaseForecaster(BaseEstimator):
             validate_X(X)
 
         # validate forecasters horizon
-        fh = validate_fh(fh)
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
@@ -114,7 +115,7 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=[1])
+        fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables. If provided, these
@@ -133,6 +134,10 @@ class BaseForecaster(BaseEstimator):
         # only check y here, X and fh will be checked during predict
         if self.check_input:
             validate_y(y)
+
+        # Set fh if not provided
+        if fh is None:
+            fh = np.arange(1, len(y.iloc[0]) + 1)
 
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
@@ -268,7 +273,7 @@ class BaseSingleSeriesForecaster(BaseForecaster):
 
         Parameters
         ----------
-        fh : array-like, optional (default=None)
+        fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
 

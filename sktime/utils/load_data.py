@@ -442,7 +442,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
                         # All dimensions should be included for all series, even if they are empty
 
                         if this_line_num_dimensions != num_dimensions:
-                            raise TsFileParseException("inconsistent number of dimensions")
+                            raise TsFileParseException("inconsistent number of dimensions. Expecting "+str(num_dimensions)+ " but have read "+str(this_line_num_dimensions))
 
                         # Process the data for each dimension
 

@@ -1,3 +1,10 @@
+""" KNN time series classification built on sklearn KNeighborsClassifier
+
+"""
+
+__author__ = "Jason Lines"
+__all__ = ["KNeighborsTimeSeriesClassifier"]
+
 from scipy import stats
 from sklearn.utils.extmath import weighted_mode
 from sklearn.neighbors.classification import KNeighborsClassifier
@@ -7,25 +14,27 @@ import warnings
 import numpy as np
 from scipy.sparse import issparse
 from sklearn.metrics import pairwise_distances_chunked
+from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.utils import gen_even_slices
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils import Parallel, delayed, effective_n_jobs
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.exceptions import DataConversionWarning
-from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance
+from sktime.distances.elastic_cython import dtw_distance, wdtw_distance, ddtw_distance, wddtw_distance, lcss_distance, erp_distance, msm_distance, twe_distance
+from sktime.distances.mpdist import mpdist
 from sklearn.utils.validation import check_array
 from sklearn.neighbors.base import _check_weights, _get_weights
 import pandas as pd
 
 """
-Please note that many aspects of this class are taken from scikit-learn's KNeighborsTimeSeriesClassifier 
+Please note that many aspects of this class are taken from scikit-learn's KNeighborsTimeSeriesClassifier
 class with necessary changes to enable use with time series classification data and distance measures.
 
-TO-DO: add a utility method to set keyword args for distance measure parameters (e.g. handle the parameter 
-name(s) that are passed as metric_params automatically, depending on what distance measure is used in the 
-classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow long-format specification for 
-non-standard/user-defined measures 
+TO-DO: add a utility method to set keyword args for distance measure parameters (e.g. handle the parameter
+name(s) that are passed as metric_params automatically, depending on what distance measure is used in the
+classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow long-format specification for
+non-standard/user-defined measures
 e.g. set_distance_params(measure_type=None, param_values_to_set=None, param_names=None)
 
 """
@@ -47,11 +56,30 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             method has been temporarily disabled (and then re-enabled). It is unclear how to fix this issue without either
             writing a new classifier from scratch or changing the scikit-learn implementation. TO-DO: find permanent
             resolution to this issue (raise as an issue on sklearn GitHub?)
+
+
+    Parameters
+    ----------
+    n_neighbors     : int, set k for knn (default =1)
+    weights         : mechanism for weighting a vote: 'uniform', 'distance' or a callable function: default ==' uniform'
+    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’, ‘kd_tree’, ‘brute’}: default = 'brute'
+    metric          : distance measure for time series: {'dtw','ddtw','wdtw','lcss','erp','msm','twe'}: default ='dtw'
+    metric_params   : dictionary for metric parameters: default = None
+
     """
-    def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute', metric='dtw', metric_params=None, dim_to_use=0, **kwargs):
+    def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute', metric='dtw', metric_params=None, **kwargs):
+
+        self._cv_for_params = False
 
         if metric == 'dtw':
             metric = dtw_distance
+        elif metric == 'dtwcv':  # special case to force loocv grid search cv in training
+            if metric_params is not None:
+                warnings.warn("Warning: measure parameters have been specified for dtwcv. "
+                                     "These will be ignored and parameter values will be found using LOOCV.")
+            metric = dtw_distance
+            self._cv_for_params = True
+            self._param_matrix = {'metric_params': [{'w': x / 100} for x in range(0, 100)]}
         elif metric == 'ddtw':
             metric = ddtw_distance
         elif metric == 'wdtw':
@@ -64,6 +92,12 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric = erp_distance
         elif metric == 'msm':
             metric = msm_distance
+        elif metric == 'twe':
+            metric = twe_distance
+        elif metric == 'mpdist':
+            metric = mpdist
+        # When mpdist is used, the subsequence length (parameter m) must be set
+        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError("Unrecognised distance measure: "+metric+". Allowed values are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
@@ -76,7 +110,6 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             metric_params=metric_params,
             **kwargs)
         self.weights = _check_weights(weights)
-        self.dim_to_use = dim_to_use
 
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
@@ -90,7 +123,19 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
             Target values of shape = [n_samples]
 
         """
-        X = check_data_sktime_tsc(X, self.dim_to_use)
+        X = check_data_sktime_tsc(X)
+
+        # if internal cv is desired, the relevant flag forces a grid search to evaluate the possible values,
+        # find the best, and then set this classifier's params to match
+        if self._cv_for_params:
+            grid = GridSearchCV(
+                estimator=KNeighborsTimeSeriesClassifier(metric=self.metric, n_neighbors=1, algorithm="brute"),
+                param_grid=self._param_matrix,
+                cv=LeaveOneOut(),
+                scoring='accuracy'
+            )
+            grid.fit(X, y)
+            self.metric_params = grid.best_params_['metric_params']
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -174,7 +219,7 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
                [2]]...)
 
         """
-        check_data_sktime_tsc(X, dim_to_use=self.dim_to_use)
+        check_data_sktime_tsc(X)
         check_is_fitted(self, "_fit_method")
 
         if n_neighbors is None:
@@ -298,7 +343,7 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
-        X = check_data_sktime_tsc(X, dim_to_use=self.dim_to_use)
+        X = check_data_sktime_tsc(X)
         temp = check_array.__code__
         check_array.__code__ = _check_array_ts.__code__
         neigh_dist, neigh_ind = self.kneighbors(X)
@@ -388,7 +433,7 @@ class KNeighborsTimeSeriesClassifier(KNeighborsClassifier):
         return probabilities
 
 
-def check_data_sktime_tsc(X, dim_to_use=0):
+def check_data_sktime_tsc(X):
     """ A utility method to check the input of a TSC KNN classifier. The data must either be in
 
             a)  the standard sktime format (pandas dataframe with n rows and d columns for n cases with d dimesions)
@@ -417,7 +462,9 @@ def check_data_sktime_tsc(X, dim_to_use=0):
 
     """
     if type(X) is pd.DataFrame:
-        X = np.array([np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, dim_to_use]])
+        if X.shape[1] > 1:
+            raise TypeError("This classifier currently only supports univariate time series")
+        X = np.array([np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
     elif type(X) == np.ndarray:
         try:
             num_cases, num_readings, n_dimensions = X.shape

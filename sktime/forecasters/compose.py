@@ -38,7 +38,7 @@ class EnsembleForecaster(BaseForecaster):
         self.fitted_estimators_ = []
         super(EnsembleForecaster, self).__init__(check_input=check_input)
 
-    def fit(self, y, fh=None, X=None):
+    def fit(self, y, fh=1, X=None):
         """
         Internal fit.
 
@@ -60,6 +60,9 @@ class EnsembleForecaster(BaseForecaster):
         # validate forecasting horizon
         fh = validate_fh(fh)
 
+        # Clear previously fitted estimators
+        self.fitted_estimators_ = []
+
         for _, estimator in self.estimators:
             # TODO implement set/get params interface
             # estimator.set_params(**{"check_input": False})
@@ -67,7 +70,7 @@ class EnsembleForecaster(BaseForecaster):
             self.fitted_estimators_.append(fitted_estimator)
         return self
 
-    def predict(self, fh=None, X=None):
+    def predict(self, fh=1, X=None):
         """
         Internal predict using fitted estimator.
 
@@ -232,6 +235,9 @@ class ReducedRegressionForecaster(BaseForecaster):
         if fh is None and not self.dynamic:
             raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit, "
                              f"as one estimator is fit for each step ahead forecast of the forecasting horizon")
+
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # Make interface compatible with estimators that only take y and no X
         kwargs = {} if X is None else {'X': X}

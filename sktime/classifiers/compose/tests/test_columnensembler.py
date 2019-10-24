@@ -64,9 +64,9 @@ def test_heterogenous_pipeline_column_ensmbler():
         [
             ("RandomIntervalTree", clf1, [0]),
             ("KNN4", KNNTSC(n_neighbors=1), [4]),
-            ("BOSSEnsemble1 ", BOSSEnsemble(ensemble_size=3), [1]),
+            ("BOSSEnsemble1 ", BOSSEnsemble(n_parameter_samples=3), [1]),
             ("KNN2", KNNTSC(n_neighbors=1), [2]),
-            ("BOSSEnsemble3", BOSSEnsemble(ensemble_size=3), [3]),
+            ("BOSSEnsemble3", BOSSEnsemble(n_parameter_samples=3), [3]),
         ]
     )
 

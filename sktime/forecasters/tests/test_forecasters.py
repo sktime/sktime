@@ -20,7 +20,7 @@ FORECASTER_PARAMS = {DummyForecaster: {"strategy": "last"},
                      ARIMAForecaster: {"order": (1, 1, 0)}}
 
 # forecast horizons
-FHS = (None, [1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
+FHS = ([1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
 
 # load test data
 y = load_shampoo_sales()
@@ -50,12 +50,12 @@ def test_fhs(forecaster, fh):
 @pytest.mark.parametrize("forecaster, params", FORECASTER_PARAMS.items())
 def test_set_params(forecaster, params):
     m = forecaster(**params)
-    m.fit(y)
+    m.fit(y, fh=1)
     expected = m.predict()
 
     m = forecaster()
     m.set_params(**params)
-    m.fit(y)
+    m.fit(y, fh=1)
     y_pred = m.predict()
 
     assert_array_equal(y_pred, expected)
@@ -63,8 +63,7 @@ def test_set_params(forecaster, params):
 
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize("forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", FHS)
-def test_score(forecaster, fh):
+def test_score(forecaster):
     m = forecaster()
     train = pd.Series([y.iloc[0].iloc[:30]])
     test = pd.Series([y.iloc[0].iloc[30:]])
