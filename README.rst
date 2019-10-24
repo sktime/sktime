@@ -59,6 +59,7 @@ Overview
 sktime extends the standard scikit-learn API to handle modular workflows for time series and panel data.
 The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification or forecasting.
 To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
+
 Currently, the package implements:
 
 * Various state-of-the-art algorithms for time series classification and regression,
@@ -83,7 +84,7 @@ Development road map
 
 1. Development of a time series annotation framework, including segmentation and outlier detection,
 2. Integration of supervised/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
-3. Unsupervised methods including time series clustering based on the already implemented time series distance measures,
+3. Unsupervised methods including time series clustering,
 4. Design and implementation of a specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
 5. Development of a probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
 
@@ -96,7 +97,10 @@ We are actively looking for contributors. Please contact @fkiraly or @jasonlines
 paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
 or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
 
-Contributors to the API design and project management include:
+Please take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `contributing guidelines <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
+
+
+Former and current contributors to the API design and project management include:
 
 * API design: Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Franz Király, Jason Lines, Markus Löning
 * Project management: Anthony Bagnall, Franz Király, Jason Lines, Markus Löning
