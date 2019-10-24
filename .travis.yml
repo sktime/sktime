@@ -13,11 +13,13 @@ cache:
   - $HOME/.cache/pip
   - $HOME/.ccache
 
-dist: xenial
+dist: trusty
 
 env:
   global:
     # Directory where tests are run from
+    - TRAVIS_DEPLOY_BRANCH="dev"
+    - TRAVIS_DEPLOY_OS_NAME="linux"
     - TEST_DIR=/tmp/sktime
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
@@ -52,6 +54,9 @@ script:
 after_success:
     - source build_tools/travis/after_success.sh
 
+#before_deploy:
+#- cd $TRAVIS_BUILD_DIR
+
 deploy:
     # on master branch, deploy website and upload compiled files to Github
     - provider: pages
@@ -60,8 +65,8 @@ deploy:
       github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
       keep-history: false
       on:
-          branch: master
-          condition: $TRAVIS_OS_NAME = "osx"  # deploy only on macOS build
+          branch: $TRAVIS_DEPLOY_BRANCH
+          condition: $TRAVIS_OS_NAME = $TRAVIS_DEPLOY_OS_NAME  # deploy only on macOS build
     - provider: releases
       api_key: $GITHUB_TOKEN
       skip_cleanup: true  # skip clean up which would delete build artifacts
@@ -69,4 +74,4 @@ deploy:
       file_glob: true  # enable wildcards in file
       file: dist/*  # files to upload
       on:
-          branch: master
+          branch: $TRAVIS_DEPLOY_BRANCH
