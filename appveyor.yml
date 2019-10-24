@@ -99,4 +99,4 @@ deploy:
     artifact: /.*\.whl/            # upload all wheel packages to release assets
     draft: true
     on:
-      APPVEYOR_REPO_TAG: true       # release on tags only (mutually exclusive with branch)
+      branch: master       # release on master branch only
