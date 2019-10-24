@@ -97,8 +97,7 @@ We are actively looking for contributors. Please contact @fkiraly or @jasonlines
 paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
 or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
 
-Please take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `contributing guidelines <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
-
+Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `contributing guidelines <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
 
 Former and current contributors to the API design and project management include:
 
