@@ -61,6 +61,8 @@ deploy:
       keep-history: false
       on:
           branch: master
+          tags: true
+          condition: $TRAVIS_OS_NAME = "osx"  # deploy only on macOS build
     - provider: releases
       api_key: $GITHUB_TOKEN
       skip_cleanup: true  # skip clean up which would delete build artifacts
@@ -69,4 +71,5 @@ deploy:
       file: dist/*  # files to upload
       on:
           branch: master
-          tags: true
+          tags: true  # deploy only on tagged commits
+          condition: $TRAVIS_OS_NAME = "osx"  # deploy only on macOS build
