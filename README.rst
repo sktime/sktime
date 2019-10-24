@@ -31,7 +31,7 @@ time series. sktime currently supports:
 For deep learning methods, we have a separate extension package:
 `sktime-dl <https://github.com/uea-machine-learning/sktime-dl>`__.
 
-sktime is under active development and we are looking for contributors_. You can find our development roadmap_ below.
+sktime is under active development and we are looking for contributors. You can find our development road map below.
 
 
 Installation
@@ -77,8 +77,6 @@ In particular, we introduce:
 * Strategy objects that wrap estimators and allow to call fit and predict methods using data and a task object.
 
 
-.. _roadmap:
-
 Development road map
 --------------------
 
@@ -88,8 +86,6 @@ Development road map
 4. Design and implementation of a specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
 5. Development of a probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
 
-
-.. _contributors:
 
 Contributions
 -------------
