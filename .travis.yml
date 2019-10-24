@@ -72,4 +72,3 @@ deploy:
       on:
           branch: master
           tags: true  # deploy only on tagged commits
-          condition: $TRAVIS_OS_NAME = "osx"  # deploy only on macOS build
