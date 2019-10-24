@@ -29,6 +29,12 @@ then
   # brew installs specified in .travis.yml
   # brew install pandoc
 
+  # Add packages for website generation
+  pip install sphinx_rtd_theme
+  pip install nbsphinx
+  pip install sphinx
+  pip install jupyter
+
   # cd into documentation folder 
   cd documentation ||
   make html

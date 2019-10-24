@@ -90,18 +90,6 @@ make_conda() {
     # Install packages not available via conda
     pip install scikit-posthocs==$SCIKIT_POSTHOCS_VERSION
     pip install joblib==$JOBLIB_VERSION
-
-    # Add packages for website generation
-    # pip install sphinx_rtd_theme
-    # pip install nbsphinx
-
-    if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$TRAVIS_BRANCH" == "master" ]
-    then
-      pip install sphinx_rtd_theme
-      pip install nbsphinx
-      pip install sphinx
-      pip install jupyter
-    fi
 }
 
 TO_INSTALL="python=$PYTHON_VERSION pip pytest \
