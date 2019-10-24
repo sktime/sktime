@@ -36,7 +36,7 @@ then
   pip install jupyter
 
   # cd into documentation folder 
-  cd documentation ||
+  cd documentation || :
   make html
 fi
 
