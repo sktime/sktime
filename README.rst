@@ -3,19 +3,20 @@
 |travis|_ |appveyor|_ |pypi|_ |gitter|_ |Binder|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
-.. _travis: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
+.. _travis: https://travis-ci.com/alan-turing-institute/sktime
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
-.. _appveyor: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
+.. _appveyor: https://ci.appveyor.com/project/mloning/sktime
 
 .. |pypi| image:: https://img.shields.io/pypi/v/sktime
-.. _pypi: https://img.shields.io/pypi/v/sktime
+.. _pypi: https://pypi.org/project/sktime/
 
 .. |gitter| image:: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
-.. _gitter: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
+.. _gitter: https://gitter.im/sktime/community
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
+
 
 sktime
 ======
