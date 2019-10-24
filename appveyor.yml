@@ -49,7 +49,7 @@ install:
   - "pip --version"
 
   # Install the build and runtime dependencies of the project.
-  - "%CMD_IN_ENV% pip install --timeout=60 --trusted-host 28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com -r build_tools/appveyor/requirements.txt"
+  - "%CMD_IN_ENV% pip install --timeout=60 --trusted-host 28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com -r requirements.txt"
   - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst"
   - ps: "ls dist"
 
