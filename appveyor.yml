@@ -93,7 +93,7 @@ artifacts:
 # upload artifacts to Github releases
 deploy:
   - provider: GitHub
-    description: 'appveyor draft release'
+    description: 'Appveyor build artifacts'
     auth_token:
       secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
     artifact: /.*\.whl/            # upload all wheel packages to release assets

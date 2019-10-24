@@ -18,7 +18,7 @@ dist: xenial
 env:
   global:
     # Directory where tests are run from
-    - TRAVIS_DEPLOY_BRANCH="dev"  # branch on which to deploy build artifacts and website
+    - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
     - TRAVIS_DEPLOY_OS_NAME="osx"  # os on which to deploy website
     - TEST_DIR=/tmp/sktime
     - OMP_NUM_THREADS=4
