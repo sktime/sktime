@@ -60,7 +60,7 @@ class PCATransformer(BaseTransformer):
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_samples, 1]
-            Nested dataframe with time-series in cells.
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
