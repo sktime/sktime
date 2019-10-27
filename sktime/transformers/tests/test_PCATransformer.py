@@ -29,7 +29,8 @@ def test_bad_input_args(bad_components):
                                     {'iterated_power': 10},
                                     {'random_state': 42}])
 def test_pca_kwargs(kwargs):
-    X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    np.random.seed(42)
+    X = detabularize(pd.DataFrame(data=np.random.randn(10, 5)))
     pca = PCATransformer(n_components=1, **kwargs)
     pca.fit_transform(X)
 
@@ -46,8 +47,6 @@ def test_early_trans_fail():
 # Test output format and dimensions.
 @pytest.mark.parametrize(
     "n_instances,len_series,n_components", [
-        (1,  2, 1),
-        (1, 10, 1),
         (5,  2, 1),
         (5, 10, 1),
         (5, 10, 3),
@@ -89,7 +88,8 @@ def test_pca_results(n_components):
 # Check output indices (row indices and columns the same, time indices start from 0)
 @pytest.mark.parametrize("n_components", [1, 5, None])
 def test_indices(n_components):
-    X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    np.random.seed(42)
+    X = detabularize(pd.DataFrame(data=np.random.randn(10, 5)))
     X.columns = pd.CategoricalIndex(['col_0'])
     X.index = pd.Int64Index([i+10 for i in range(10)])
 
