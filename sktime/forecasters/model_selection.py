@@ -139,19 +139,17 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
 
 class ForecastingGridSearchCV:
 
-    def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0, check_input=True):
+    def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0):
         self.estimator = estimator
         self.param_grid = param_grid
         self.cv = cv
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
-        self.check_input = check_input
 
     def fit(self, y, fh=None, X=None, **fit_params):
-
-        if self.check_input:
-            validate_y_X(y, X)
+        # check inputs
+        validate_y_X(y, X)
 
         # validate forecasting horizon
         if fh is not None:
@@ -463,8 +461,7 @@ class RollingWindowSplit:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, window_length="log", fh=1):
-
+    def __init__(self, fh, window_length="log"):
         self.window_length = window_length
         self.fh = validate_fh(fh)
 
@@ -499,6 +496,7 @@ class RollingWindowSplit:
 
         # Set default window length to sqrt of series length
         window_length = compute_n_intervals(n_timepoints, self.window_length)
+        self.window_length_ = window_length
 
         # Iterate over windows
         start = window_length

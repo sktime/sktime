@@ -45,9 +45,6 @@ class ARIMAForecaster(BaseUpdateableForecaster):
     enforce_invertibility : boolean, optional
         Whether or not to transform the MA parameters to enforce invertibility
         in the moving average component of the model. Default is True.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     method : str, optional (default='lbfgs')
         The method determines which solver from scipy.optimize is used, and it can be chosen from
         among the following strings:
@@ -64,13 +61,10 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         arguments that the basin-hopping solver supports.
     maxiter : int, optional (default=1000)
         The maximum number of iterations to perfom in fitting the likelihood to the data.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
     def __init__(self, order=(1, 0, 0), seasonal_order=(0, 0, 0, 0), trend='n', enforce_stationarity=True,
-                 enforce_invertibility=True, maxiter=1000, method='lbfgs', check_input=True, disp=0):
+                 enforce_invertibility=True, maxiter=1000, method='lbfgs', disp=0):
         # TODO add more constructor/fit options from statsmodels
 
         # Input checks.
@@ -85,7 +79,7 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         self.enforce_invertibility = enforce_invertibility
         self.maxiter = maxiter
         self.disp = disp
-        super(ARIMAForecaster, self).__init__(check_input=check_input)
+        super(ARIMAForecaster, self).__init__()
 
     def _fit(self, y, fh=None, X=None):
         """
@@ -263,9 +257,6 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         that the average residual is equal to zero.
     use_basinhopping : bool, optional
         Using Basin Hopping optimizer to find optimal values
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
 
     References
     ----------
@@ -275,7 +266,7 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
 
     def __init__(self, trend=None, damped=False, seasonal=None, seasonal_periods=None, smoothing_level=None,
                  smoothing_slope=None, smoothing_seasonal=None, damping_slope=None, optimized=True,
-                 use_boxcox=False, remove_bias=False, use_basinhopping=False, check_input=True):
+                 use_boxcox=False, remove_bias=False, use_basinhopping=False):
         # Model params
         self.trend = trend
         self.damped = damped
@@ -291,7 +282,7 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         self.use_boxcox = use_boxcox
         self.remove_bias = remove_bias
         self.use_basinhopping = use_basinhopping
-        super(ExpSmoothingForecaster, self).__init__(check_input=check_input)
+        super(ExpSmoothingForecaster, self).__init__()
 
     def _fit(self, y, fh=None):
         """
@@ -333,12 +324,9 @@ class DummyForecaster(BaseForecaster):
         Naive forecasters strategy
     sp : int
         Seasonal periodicity
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
-    def __init__(self, strategy='last', sp=None, check_input=True):
+    def __init__(self, strategy='last', sp=None):
 
         # TODO add constant strategy
         allowed_strategies = ('mean', 'last', 'linear', 'seasonal_last')
@@ -353,7 +341,7 @@ class DummyForecaster(BaseForecaster):
         self.sp = validate_sp(sp)
         self.strategy = strategy
         self._y_pred = None
-        super(DummyForecaster, self).__init__(check_input=check_input)
+        super(DummyForecaster, self).__init__()
 
     def _fit(self, y, fh=None):
         """

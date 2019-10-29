@@ -1,6 +1,8 @@
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
-__author__ = ['Markus Löning']
+__author__ = ["Markus Löning"]
 
+
+from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -17,21 +19,15 @@ from sktime.utils.data_container import get_time_index, tabularise
 class BaseForecaster(BaseEstimator):
     """
     Base class for forecasters.
-
-    Parameters
-    ----------
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
     _estimator_type = "forecaster"
 
-    def __init__(self, check_input=True):
-        self.check_input = check_input
-        self._time_index = None
+    def __init__(self):
+        self._time_index = None  # forecasters need to keep track of time index of target series
         self._is_fitted = False
+        self._fh = None
 
-    def fit(self, y, fh=1, X=None):
+    def fit(self, y, fh=None, X=None):
         """
         Fit forecaster.
 
@@ -39,26 +35,22 @@ class BaseForecaster(BaseEstimator):
         ----------
         y : pandas.Series
             Target time series to which to fit the forecaster.
-        fh : int or array-like, optional (default=1)
-            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
-            i.e. np.array([1])
+        fh : int or array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that
-            if an ``ARIMA`` is fit on exogenous features, it must also be provided
-            exogenous features for making predictions.
+            An optional 2-d dataframe of exogenous variables.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        if self.check_input:
-            validate_y_X(y, X)
+        # check input
+        validate_y_X(y, X)
 
-        # validate forecasting horizon
+        # validate forecasting horizon if passed
         if fh is not None:
             fh = validate_fh(fh)
+            self._fh = fh
 
         # Keep index for predicting where forecasters horizon will be relative to y seen in fit
         self._time_index = get_time_index(y)
@@ -71,7 +63,11 @@ class BaseForecaster(BaseEstimator):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=1, X=None):
+    def _fit(self, fh=None, **kwargs):
+        """Internal fit implemented by specific forecasters"""
+        raise NotImplementedError()
+
+    def predict(self, fh=None, X=None):
         """
         Predict using fitted estimator.
 
@@ -81,25 +77,34 @@ class BaseForecaster(BaseEstimator):
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that if
-            provided, the forecaster must also have been fitted on the exogenous
-            features.
+            An optional 2-d dataframe of exogenous variables.
 
         Returns
         -------
         Predictions : pandas.Series, shape=(len(fh),)
             Returns series of predicted values.
         """
+        # check input
         check_is_fitted(self, '_is_fitted')
-
-        if self.check_input:
-            validate_X(X)
+        validate_X(X)
 
         # validate forecasters horizon
-        if fh is not None:
+        # if no fh is passed to predict, check if it was passed to fit; if so, use it; otherwise raise error
+        if fh is None:
+            if self._fh is not None:
+                fh = self._fh
+            else:
+                raise ValueError("Forecasting horizon (fh) must be passed to `fit` or `predict`")
+
+        # if fh is passed to predict, check if fh was also passed to fit; if so, check if they are the same; if not,
+        # raise warning
+        else:
             fh = validate_fh(fh)
+            if self._fh is not None:
+                if not np.array_equal(fh, self._fh):
+                    warn("The forecasting horizon (fh) passed to `predict` is different "
+                         "from the fh passed to `fit`")
+            self._fh = fh  # set fh if not passed in fit; otherwise overwrite fh passed to fit
 
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
@@ -107,7 +112,12 @@ class BaseForecaster(BaseEstimator):
         # estimator specific implementation of fit method
         return self._predict(fh=fh, **kwargs)
 
-    def score(self, y, fh=None, X=None, sample_weight=None):
+    def _predict(self, fh=None, **kwargs):
+        """Internal predict implemented by specific forecasters.
+        """
+        raise NotImplementedError()
+
+    def score(self, y, fh=None, X=None):
         """
         Returns the root mean squared error on the given forecast horizon.
 
@@ -118,13 +128,7 @@ class BaseForecaster(BaseEstimator):
         fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that
-            if an ``ARIMA`` is fit on exogenous features, it must also be provided
-            exogenous features for making predictions.
-        sample_weight : array-like, shape = [n_observations], optional
-            Sample weights.
+            An optional 2-d dataframe of exogenous variables.
 
         Returns
         -------
@@ -132,12 +136,7 @@ class BaseForecaster(BaseEstimator):
             Mean squared error of self.predict(fh=fh, X=X) with respect to y.
         """
         # only check y here, X and fh will be checked during predict
-        if self.check_input:
-            validate_y(y)
-
-        # Set fh if not provided
-        if fh is None:
-            fh = np.arange(1, len(y.iloc[0]) + 1)
+        validate_y(y)
 
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
@@ -152,7 +151,7 @@ class BaseForecaster(BaseEstimator):
             raise ValueError(f"Index of passed time series `y` does not match index of predicted time series; "
                              f"make sure the forecasters horizon `fh` matches the time index of `y`")
 
-        return np.sqrt(mean_squared_error(y_true, y_pred, sample_weight=sample_weight))
+        return np.sqrt(mean_squared_error(y_true, y_pred))
 
     @staticmethod
     def _get_y_index(y):
@@ -208,17 +207,10 @@ class BaseUpdateableForecaster(BaseForecaster):
     # TODO should that be a mixin class instead?
     """
     Base class for forecasters with update functionality.
-
-    Parameters
-    ----------
-    check_input : bool, optional
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
-        Default is True.
     """
 
-    def __init__(self, check_input=True):
-        super(BaseUpdateableForecaster, self).__init__(check_input=check_input)
+    def __init__(self):
+        super(BaseUpdateableForecaster, self).__init__()
         self._is_updated = False
 
     def update(self, y, X=None):
@@ -241,10 +233,10 @@ class BaseUpdateableForecaster(BaseForecaster):
         -------
         self : An instance of self
         """
+        # check inputs
         check_is_fitted(self, '_is_fitted')
-        if self.check_input:
-            validate_y_X(y, X)
-            self._validate_y_update(y)
+        validate_y_X(y, X)
+        self._validate_y_update(y)
 
         self._update(y, X=X)
         self._is_updated = True
