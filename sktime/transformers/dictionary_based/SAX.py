@@ -2,12 +2,12 @@ import sys
 
 import numpy as np
 import pandas as pd
-import sktime.transformers.shapelets as shapelets
+import scipy.stats
+
 from sktime.transformers.dictionary_based.PAA import PAA
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.base import BaseTransformer
 #    TO DO: verify this returned pandas is consistent with sktime definition. Timestamps?
-#    TO DO: remove the call to normalize in shapelets, which should move to utils
 
 
 class SAX(BaseTransformer):
@@ -106,7 +106,7 @@ class SAX(BaseTransformer):
             num_windows_per_inst = self.num_atts - self.window_size + 1
             split = np.array(X[i, np.arange(self.window_size)[None, :] + np.arange(num_windows_per_inst)[:, None]])
 
-            split = shapelets.RandomShapeletTransform.zscore(split, axis=None)  # move to utils or create new method?
+            split = scipy.stats.zscore(split, axis=1)
 
             paa = PAA(num_intervals=self.word_length)
             patterns = paa.fit_transform(split)
@@ -199,24 +199,34 @@ class BitWord:
         return word_list
 
     @staticmethod
+    def word_list(word, length):
+        # list of input integers to obtain current word
+        word_list = []
+        shift = 32 - (length * 2)
+
+        for i in range(length-1, -1, -1):
+            word_list.append(BitWord.right_shift(word << shift, 32 - 2))
+            shift += 2
+
+        return word_list
+
+    @staticmethod
     def right_shift(left, right):
         return (left % 0x100000000) >> right
 
 
 if __name__ == "__main__":
-    testPath="C:\\Users\\ajb\\Dropbox\\Data\\TSCProblems\\Chinatown\\Chinatown_TRAIN.ts"
+    testPath="Z:\\ArchiveData\\Univariate_ts\\Chinatown\\Chinatown_TRAIN.ts"
     train_x, train_y =  load_ts(testPath)
 
     print("Correctness testing for SAX using Chinatown")
-#    print("First case used for testing")
-#    print(train_x.iloc[0,0])
-    p = SAX(window_size=24, alphabet_size=2,word_length=4,save_words=False)
-    print("Test 1: window_size =0, result should be single series for each")
-    x2=p.transform(train_x)
+    print("First case used for testing")
+    print(train_x.iloc[0,0])
+    p = SAX(window_size=0, alphabet_size=4,word_length=8,save_words=False)
+    print("Test 1: window_size =0, result should be single word for each series")
+    x2 = p.transform(train_x)
     print("Correct single series SAX for case 1: = b,a,a,b,d,d,d,b")
     print("Transform mean case 1: =")
-    dict=x2.iloc[0,0]
-    print(dict)
-#    for x in p.words:
-#        print(x)
+    word = BitWord.word_list(x2.iloc[0, 0].keys()[0], 8)
+    print(word)
 

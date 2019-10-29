@@ -3,6 +3,7 @@
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/d2476fb679f05e80c56e8b151ff0f6d7a470e4ae/setup.py#L20
 
+import setuptools # need this due to versioning of setuptools vs distutils, see https://stackoverflow.com/questions/21136266/typeerror-dist-must-be-a-distribution-instance
 import codecs
 import os
 import platform
@@ -14,7 +15,7 @@ from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
 
-NUMPY_MIN_VERSION = "1.16.0"
+NUMPY_MIN_VERSION = "1.17.0"
 SCIPY_MIN_VERSION = "1.2.0"
 JOBLIB_MIN_VERSION = "0.13"
 PANDAS_MIN_VERSION = "0.23.0"

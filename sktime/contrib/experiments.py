@@ -32,6 +32,9 @@ NOTE: do
 
 import os
 
+import sklearn.preprocessing
+import sklearn.utils
+
 os.environ["MKL_NUM_THREADS"] = "1" # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1" # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1" # must be done before numpy import!!
@@ -293,6 +296,51 @@ def powerspectrum(x, **kwargs):
     ps = fft.real * fft.real + fft.imag * fft.imag
     return ps[:ps.shape[0] // 2].ravel()
 
+def stratified_resample(X_train, y_train, X_test, y_test, random_state):
+    all_labels = np.concatenate((y_train, y_test), axis = None)
+    all_data = pd.concat([X_train, X_test])
+    random_state = sklearn.utils.check_random_state(random_state)
+    # count class occurrences
+    unique_train, counts_train = np.unique(y_train, return_counts=True)
+    unique_test, counts_test = np.unique(y_test, return_counts=True)
+    assert list(unique_train) == list(unique_test) # haven't built functionality to deal with classes that exist in
+    # test but not in train
+    # prepare outputs
+    X_train = pd.DataFrame()
+    y_train = np.array([])
+    X_test = pd.DataFrame()
+    y_test = np.array([])
+    # for each class
+    for label_index in range(0, len(unique_train)):
+        # derive how many instances of this class from the counts
+        num_instances = counts_train[label_index]
+        # get the indices of all instances with this class label
+        label = unique_train[label_index]
+        indices = np.where(all_labels == label)[0]
+        # shuffle them
+        random_state.shuffle(indices)
+        # take the first lot of instances for train, remainder for test
+        train_indices = indices[0 : num_instances]
+        test_indices = indices[num_instances :]
+        del indices # just to make sure it's not used!
+        # extract data from corresponding indices
+        train_instances = all_data.iloc[train_indices, :]
+        test_instances = all_data.iloc[test_indices, :]
+        train_labels = all_labels[train_indices]
+        test_labels = all_labels[test_indices]
+        # concat onto current data from previous loop iterations
+        X_train = pd.concat([X_train, train_instances])
+        X_test = pd.concat([X_test, test_instances])
+        y_train = np.concatenate([y_train, train_labels], axis = None)
+        y_test = np.concatenate([y_test, test_labels], axis = None)
+    # get the counts of the new train and test resample
+    unique_train_new, counts_train_new = np.unique(y_train, return_counts=True)
+    unique_test_new, counts_test_new = np.unique(y_test, return_counts=True)
+    # make sure they match the original distribution of data
+    assert list(counts_train_new) == list(counts_train)
+    assert list(counts_test_new) == list(counts_test)
+    return X_train, y_train, X_test, y_test
+
 
 def run_experiment(problem_path, results_path, cls_name, dataset, classifier=None, resampleID=0, overwrite=False, format=".ts", train_file=False):
     """
@@ -331,12 +379,13 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
     if resampleID !=0:
-        allLabels = np.concatenate((trainY, testY), axis = None)
-        allData = pd.concat([trainX, testX])
-        train_size = len(trainY) / (len(trainY) + len(testY))
-        trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
-                                                                       random_state=resampleID, shuffle=True,
-                                                                       stratify=allLabels)
+        # allLabels = np.concatenate((trainY, testY), axis = None)
+        # allData = pd.concat([trainX, testX])
+        # train_size = len(trainY) / (len(trainY) + len(testY))
+        # trainX, testX, trainY, testY = train_test_split(allData, allLabels, train_size=train_size,
+        #                                                                random_state=resampleID, shuffle=True,
+        #                                                                stratify=allLabels)
+        trainX, trainY, testX, testY = stratified_resample(trainX, trainY, testX, testY, resampleID)
 
 
     le = preprocessing.LabelEncoder()
@@ -527,19 +576,20 @@ if __name__ == "__main__":
     else : #Local run
 #        data_dir = "/scratch/univariate_datasets/"
 #        results_dir = "/scratch/results"
-        data_dir = "C:/Users/ajb/Dropbox/Turing Project/ExampleDataSets/"
+        data_dir = "/bench/datasets/Univariate2018/"
         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "E:/Temp/"
+        # data_dir = "Z:/ArchiveData/Univariate_ts/"
+        # results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
         dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
         classifier = "TSF"
-        resample = 0
-        for i in range(0, len(univariate_datasets)):
-            dataset = univariate_datasets[i]
-#            print(i)
-#            print(" problem = "+dataset)
-            tf=False
-            run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset, resampleID=resample,train_file=tf)
+        resample = 1
+#         for i in range(0, len(univariate_datasets)):
+#             dataset = univariate_datasets[i]
+# #            print(i)
+# #            print(" problem = "+dataset)
+        tf=False
+        run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
+                       dataset=dataset, resampleID=resample,train_file=tf)
