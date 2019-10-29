@@ -46,7 +46,6 @@ class PCATransformer(BaseTransformer):
 
         validate_X(X)
         check_X_is_univariate(X)
-        check_equal_index(X)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
