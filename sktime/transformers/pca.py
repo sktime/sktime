@@ -1,3 +1,6 @@
+__author__ = "Patrick Rockenschaub"
+__all__ = "PCATransformer"
+
 import pandas as pd
 
 from sklearn.utils.validation import check_is_fitted
