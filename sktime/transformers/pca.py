@@ -25,7 +25,6 @@ class PCATransformer(BaseTransformer):
 
     def __init__(self, n_components=None, **kwargs):
         self.pca = PCA(n_components, **kwargs)
-        self.input_dim_ = None
 
     def fit(self, X, y=None):
         """
@@ -43,12 +42,10 @@ class PCATransformer(BaseTransformer):
 
         validate_X(X)
         check_X_is_univariate(X)
-        check_equal_index(X)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
         Xtab = tabularise(X)
-        self.input_dim_ = Xtab.shape[1]
         self.pca.fit(Xtab)
 
         return self
@@ -73,17 +70,9 @@ class PCATransformer(BaseTransformer):
         check_is_fitted(self.pca, 'n_components_')
         validate_X(X)
         check_X_is_univariate(X)
-        check_equal_index(X)
-
-        # Check that the input is of the same shape as the one passed
-        # during fit.
-        Xtab = tabularise(X)
-
-        if Xtab.shape[1] != self.input_dim_:
-            raise ValueError('Number of time points of input is different from what was seen'
-                             'in `fit`')
 
         # Transform X using the fitted PCA
+        Xtab = tabularise(X)
         Xpca = pd.DataFrame(data=self.pca.transform(Xtab),
                             index=Xtab.index,
                             columns=Xtab.columns[:self.pca.n_components_])
