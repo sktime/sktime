@@ -69,7 +69,6 @@ class PCATransformer(BaseTransformer):
           column. Time indices of the original column are replaced with 0:(n_components - 1).
         """
 
-        # Check inputs.
         check_is_fitted(self.pca, 'n_components_')
         validate_X(X)
         check_X_is_univariate(X)
