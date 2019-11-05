@@ -1,6 +1,8 @@
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/model_selection/_search.py
+
 __author__ = "Markus Löning"
 __all__ = ["ForecastingGridSearchCV", "RollingWindowSplit"]
+
 import numbers
 import time
 import warnings
@@ -20,9 +22,10 @@ from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
 
-from sktime.utils.data_container import select_times, get_time_index
-from sktime.utils.validation.forecasting import validate_fh, validate_y_X
+from sktime.utils.validation.forecasting import check_integer_time_index
+from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.time_series import compute_n_intervals
+from sktime.forecasters.base import BaseForecaster
 
 
 def _score(estimator, fh, y_test, scorer):
@@ -38,7 +41,7 @@ def _score(estimator, fh, y_test, scorer):
     # else:
     #     scores = scorer(estimator, X_test, y_test)
     y_pred = estimator.predict(fh=fh)
-    scores = {name: func(y_test.iloc[0], y_pred) for name, func in scorer.items()}
+    scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
 
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
@@ -84,11 +87,11 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
 
     start_time = time.time()
 
-    y_train = select_times(y, train)
-    y_test = select_times(y, test)
+    y_train = y.iloc[train]
+    y_test = y.iloc[test]
 
     try:
-        estimator.fit(y_train, fh=fh, **fit_params)
+        estimator.fit(y_train, fh=fh, X=X, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
@@ -137,7 +140,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     return ret
 
 
-class ForecastingGridSearchCV:
+class ForecastingGridSearchCV(BaseForecaster):
 
     def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0):
         self.estimator = estimator
@@ -146,27 +149,16 @@ class ForecastingGridSearchCV:
         self.refit = refit
         self.scoring = scoring
         self.verbose = verbose
+        super(ForecastingGridSearchCV, self).__init__()
 
-    def fit(self, y, fh=None, X=None, **fit_params):
-        # check inputs
-        validate_y_X(y, X)
-
-        # validate forecasting horizon
-        if fh is not None:
-            fh = validate_fh(fh)
+    def _fit(self, y, fh=None, X=None, **fit_params):
+        """Internal fit"""
 
         # validate cross-validator
         cv = check_cv(self.cv)
 
-        # Keep index for predicting where forecasters horizon will be relative to y seen in fit
-        self._time_index = get_time_index(y)
-
-        # Make interface compatible with estimators that only take y and no X
-        if X is not None:
-            raise NotImplementedError("Exogeneous variables not supported yet")
-        # kwargs = {} if X is None else {'X': X}
-
-        time_index = self._time_index.values
+        # get integer time index
+        time_index = check_integer_time_index(self._time_index)
 
         base_estimator = clone(self.estimator)
 
@@ -261,8 +253,7 @@ class ForecastingGridSearchCV:
             self.best_index_]
         self.best_params_ = results["params"][self.best_index_]
 
-        self.best_estimator_ = clone(base_estimator).set_params(
-            **self.best_params_)
+        self.best_estimator_ = clone(base_estimator).set_params(**self.best_params_)
 
         if self.refit:
             refit_start_time = time.time()
@@ -368,41 +359,21 @@ class ForecastingGridSearchCV:
             check_is_fitted(self, "best_estimator_")
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def predict(self, fh=None):
+    def _predict(self, fh=None, X=None):
         """Call predict on the estimator with the best found parameters.
-
-        Only available if ``refit=True`` and the underlying estimator supports
-        ``predict``.
-
-        Parameters
-        ----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
         """
         self._check_is_fitted('predict')
-        return self.best_estimator_.predict(fh=fh)
+        return self.best_estimator_.predict(fh=fh, X=X)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def transform(self, X):
+    def transform(self, y):
         """Call transform on the estimator with the best found parameters.
-
-        Only available if the underlying estimator supports ``transform`` and
-        ``refit=True``.
-
-        Parameters
-        ----------
-        X : indexable, length n_samples
-            Must fulfill the input assumptions of the
-            underlying estimator.
-
         """
         self._check_is_fitted('transform')
-        return self.best_estimator_.transform(X)
+        return self.best_estimator_.transform(y)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
-    def inverse_transform(self, Xt):
+    def inverse_transform(self, y):
         """Call inverse_transform on the estimator with the best found params.
 
         Only available if the underlying estimator implements
@@ -410,15 +381,15 @@ class ForecastingGridSearchCV:
 
         Parameters
         ----------
-        Xt : indexable, length n_samples
+        y : indexable, length n_samples
             Must fulfill the input assumptions of the
             underlying estimator.
 
         """
         self._check_is_fitted('inverse_transform')
-        return self.best_estimator_.inverse_transform(Xt)
+        return self.best_estimator_.inverse_transform(y)
 
-    def score(self, y, fh, X=None):
+    def score(self, y_true, fh=None, X=None):
         """Returns the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
@@ -430,7 +401,7 @@ class ForecastingGridSearchCV:
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        y_true : array-like, shape = [n_samples] or [n_samples, n_output], optional
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
@@ -445,7 +416,7 @@ class ForecastingGridSearchCV:
                              % self.best_estimator_)
         score = self.scorer_
         y_pred = self.best_estimator_.predict(fh, X=X)
-        return score(y, y_pred)
+        return score(y_true, y_pred)
 
 
 class RollingWindowSplit:
@@ -555,3 +526,15 @@ def split_into_tabular_train_test(x, window_length=None, fh=None, test_size=1):
     y_test = y[-test_size:, :]
 
     return x_train, y_train, x_test, y_test
+
+
+def temporal_train_test_split(y, fh):
+    """Split single time series into train and test at given forecasting horizon"""
+    fh = validate_fh(fh)
+    fh_max = np.max(fh)
+    fh_idx = fh - 1  # zero indexing
+
+    y_train = y.iloc[:-fh_max]
+    y_test = y.iloc[-fh_max:].iloc[fh_idx]
+
+    return y_train, y_test

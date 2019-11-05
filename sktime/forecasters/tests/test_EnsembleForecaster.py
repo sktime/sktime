@@ -15,7 +15,7 @@ __author__ = "Markus Löning"
 FORECASTERS = (DummyForecaster, ExpSmoothingForecaster, ARIMAForecaster)
 
 # forecast horizons
-FHS = (None, [1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5))
+FHS = (np.array([1]), np.array([1, 3]), np.arange(1, 5))
 
 # load test data
 y = load_shampoo_sales()
@@ -28,24 +28,13 @@ def test_EnsembleForecaster_fhs(fh):
         ('last', DummyForecaster(strategy='last'))
     ]
     m = EnsembleForecaster(estimators=estimators)
-
-    if fh is None:
-        # Fit and predict with default fh
-        m.fit(y)
-        y_pred = m.predict()
-
-        # for further checks, set fh to default
-        fh = validate_fh(1)
-    else:
-        # Validate fh and then fit/predict
-        fh = validate_fh(fh)
-        m.fit(y, fh=fh)
-        y_pred = m.predict(fh=fh)
+    m.fit(y, fh=fh)
+    y_pred = m.predict()
 
     # test length of output
     assert len(y_pred) == len(fh)
 
     # test index
-    assert_array_equal(y_pred.index.values, y.iloc[0].index[-1] + fh)
+    assert_array_equal(y_pred.index.values, y.index[-1] + fh)
 
 

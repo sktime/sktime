@@ -103,7 +103,6 @@ class ARIMAForecaster(BaseUpdateableForecaster):
         self : returns an instance of self.
         """
         # unnest series
-        y = self._prepare_y(y)
         X = self._prepare_X(X)
 
         # fit estimator
@@ -142,7 +141,6 @@ class ARIMAForecaster(BaseUpdateableForecaster):
 
         # unnest series
         # unnest series
-        y = self._prepare_y(y)
         X = self._prepare_X(X)
 
         # Update estimator.
@@ -299,9 +297,6 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
         self : returns an instance of self.
         """
 
-        # Unnest series.
-        y = y.iloc[0]
-
         # Fit forecaster.
         self.estimator = ExponentialSmoothing(y, trend=self.trend, damped=self.damped, seasonal=self.seasonal,
                                               seasonal_periods=self.seasonal_periods)
@@ -362,9 +357,6 @@ class DummyForecaster(BaseForecaster):
         if fh is None:
             raise ValueError(f"{self.__class__.__name__} requires to specify the forecasting horizon in `fit`")
 
-        # Unnest series
-        y = self._prepare_y(y)
-
         # Convert step-ahead prediction horizon into zero-based index
         self._fh = fh
         len_fh = len(fh)
@@ -416,16 +408,8 @@ class DummyForecaster(BaseForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-
-        # if fh is not None:
-        #     fh = validate_fh(fh)
-        #     if not np.array_equal(self._fh, fh):
-        #         raise ValueError(f"The forecasting horizon cannot be changed after setting it in `fit`, "
-        #                          f"re-run `fit` with new forecasting horizon")
-
         y_pred = self._y_pred
 
         # return as series and add index
-        time_index = self._time_index[-1] + self._fh
-        y_pred = pd.Series(y_pred, index=time_index)
-        return y_pred
+        time_index = self._time_index[-1] + fh
+        return pd.Series(y_pred, index=time_index)

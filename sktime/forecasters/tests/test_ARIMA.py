@@ -5,6 +5,7 @@ import pandas as pd
 from sktime.forecasters import ARIMAForecaster
 from sktime.datasets import load_shampoo_sales
 from sktime.datasets import load_longley
+from sktime.forecasters.model_selection import temporal_train_test_split
 
 __author__ = "Markus Löning"
 
@@ -17,13 +18,7 @@ FHS = ([1], np.arange(1, 5))
 @pytest.mark.parametrize("fh", FHS)
 def test_ARIMAForecaster_univariate(fh):
     y = load_shampoo_sales()
-
-    max_fh = np.max(fh)
-    m = len(y.iloc[0])
-    cutoff = m - max_fh
-
-    y_train = pd.Series([y.iloc[0].iloc[:cutoff]])
-    y_test = pd.Series([y.iloc[0].iloc[cutoff:]])
+    y_train, y_test = temporal_train_test_split(y, fh)
 
     m = ARIMAForecaster()
     m.fit(y_train)
@@ -37,12 +32,11 @@ def test_ARIMAForecaster_multivariate(fh):
     X, y = load_longley(return_X_y=True)
 
     #  get data in required format
-    max_fh = np.max(fh)
-    m = len(y.iloc[0])
-    cutoff = m - max_fh
+    y_train, y_test = temporal_train_test_split(y, fh)
 
-    y_train = pd.Series([y.iloc[0].iloc[:cutoff]])
-    y_test = pd.Series([y.iloc[0].iloc[cutoff:]])
+    max_fh = np.max(fh)
+    m = len(y)
+    cutoff = m - max_fh
     X_train = pd.DataFrame([pd.Series([X.iloc[0, i].iloc[:cutoff]])
                             for i in range(X.shape[1])]).T
     X_train.columns = X.columns

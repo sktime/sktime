@@ -4,8 +4,7 @@ __all__ = [
     "time_series_slope",
     "fit_trend",
     "remove_trend",
-    "add_trend",
-    "split_into_tabular_train_test"
+    "add_trend"
 ]
 
 import numpy as np
@@ -28,7 +27,7 @@ def compute_n_intervals(n_timepoints, n_intervals="sqrt"):
     n_intervals : int
         Computed number of intervals
     """
-    # check n_timepoints
+    # check input: n_timepoints
     if not isinstance(n_timepoints, int):
         raise ValueError(f"n_timepoints must be an integer, but found: {type(n_timepoints)}")
     if not n_timepoints >= 1:
@@ -37,7 +36,6 @@ def compute_n_intervals(n_timepoints, n_intervals="sqrt"):
     # compute number of splits
     allowed_strings = ("sqrt", "log")
 
-    # TODO add callables/functions as input args
     # integer
     if isinstance(n_intervals, int):
         if not n_intervals <= n_timepoints:

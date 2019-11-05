@@ -13,7 +13,7 @@ from sktime.highlevel.tasks import ForecastingTask
 TASKS = (TSCTask, TSRTask, ForecastingTask)
 
 gunpoint = load_gunpoint(return_X_y=False)
-shampoo_sales = load_shampoo_sales(return_y_as_dataframe=True)
+shampoo_sales = load_shampoo_sales()
 
 BASE_READONLY_ATTRS = ("target", "features", "metadata")
 
@@ -29,7 +29,7 @@ def test_readonly_attributes(attr):
 # Test read-only forecasting horizon attribute of forecasting task
 @pytest.mark.parametrize("fh", [[1], [1, 2, 3]])
 def test_readonly_fh(fh):
-    task = ForecastingTask(target='ShampooSales', metadata=shampoo_sales)
+    task = ForecastingTask(target='ShampooSales')
     with raises(AttributeError):
         task.fh = None
 
@@ -58,8 +58,4 @@ def check_set_metadata(task, target, metadata):
 @pytest.mark.parametrize("task", [TSRTask, TSCTask])
 def test_set_metadata_supervised(task):
     check_set_metadata(task, 'class_val', gunpoint)
-
-
-def test_set_metadata_forecasting():
-    check_set_metadata(ForecastingTask, 'ShampooSales', shampoo_sales)
 

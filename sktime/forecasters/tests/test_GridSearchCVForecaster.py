@@ -4,7 +4,6 @@
 __author__ = "Markus Löning"
 
 import numpy as np
-import pandas as pd
 import pytest
 from sklearn.linear_model import LinearRegression
 
@@ -14,7 +13,7 @@ from sktime.forecasters.model_selection import ForecastingGridSearchCV, RollingW
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
-from sktime.utils.testing import generate_time_series_data_with_trend
+from sktime.datasets import load_shampoo_sales
 
 
 @pytest.mark.parametrize("fh", [
@@ -22,16 +21,15 @@ from sktime.utils.testing import generate_time_series_data_with_trend
     np.arange(2, 4)
 ])
 def test_ForecastingGridSearchCV_best_params(fh):
-    y = generate_time_series_data_with_trend(n_instances=1, n_timepoints=30, order=1, noise=True)
-    y = y.iloc[0]
+    y = load_shampoo_sales()
 
-    estimator = Pipeline([
+    ts_regressor = Pipeline([
         ("tabularise", Tabulariser()),
         ("regress", LinearRegression())
     ])
 
-    f = ReducedTimeSeriesRegressionForecaster(estimator=estimator)
-    param_grid = {"window_length": [1, 3, 5]}
+    f = ReducedTimeSeriesRegressionForecaster(ts_regressor=ts_regressor)
+    param_grid = {"window_length": [3, 5, 7]}
     cv = RollingWindowSplit(window_length=10, fh=fh)
     scoring = smape_loss
 
@@ -42,7 +40,6 @@ def test_ForecastingGridSearchCV_best_params(fh):
     actual_best_param = gscv.best_params_["window_length"]
 
     # manual grid-search cv
-    y = y.iloc[0]
     params = param_grid["window_length"]
     expected_scores = np.zeros(len(params))
     for i, param in enumerate(params):
@@ -50,7 +47,7 @@ def test_ForecastingGridSearchCV_best_params(fh):
 
         scores = []
         for train, test in cv.split(y.index.values):
-            y_train = pd.Series([y[train]])
+            y_train = y[train]
             y_test = y[test]
             f.fit(y_train, fh=fh)
             y_pred = f.predict(fh=fh)
@@ -68,8 +65,7 @@ def test_ForecastingGridSearchCV_best_params(fh):
     np.arange(2, 4)
 ])
 def test_ForecastingGridSearchCV_predict(fh):
-    y = generate_time_series_data_with_trend(n_instances=1, n_timepoints=30, order=1, noise=True)
-    y = y.iloc[0]
+    y = load_shampoo_sales()
 
     f = DummyForecaster(strategy="last")
     param_grid = {"strategy": ["last", "mean"]}

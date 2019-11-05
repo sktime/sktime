@@ -53,7 +53,7 @@ class BaseForecaster(BaseEstimator):
             self._fh = fh
 
         # Keep index for predicting where forecasters horizon will be relative to y seen in fit
-        self._time_index = get_time_index(y)
+        self._time_index = y.index
 
         # Make interface compatible with estimators that only take y and no X
         kwargs = {} if X is None else {'X': X}
@@ -88,7 +88,7 @@ class BaseForecaster(BaseEstimator):
         check_is_fitted(self, '_is_fitted')
         validate_X(X)
 
-        # validate forecasters horizon
+        # validate forecasting horizon
         # if no fh is passed to predict, check if it was passed to fit; if so, use it; otherwise raise error
         if fh is None:
             if self._fh is not None:
@@ -104,7 +104,7 @@ class BaseForecaster(BaseEstimator):
                 if not np.array_equal(fh, self._fh):
                     warn("The forecasting horizon (fh) passed to `predict` is different "
                          "from the fh passed to `fit`")
-            self._fh = fh  # set fh if not passed in fit; otherwise overwrite fh passed to fit
+            self._fh = fh  # use passed fh; overwrites fh if it was passed to fit already
 
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
@@ -117,7 +117,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError()
 
-    def score(self, y, fh=None, X=None):
+    def score(self, y_true, fh=None, X=None):
         """
         Returns the root mean squared error on the given forecast horizon.
 
@@ -136,20 +136,17 @@ class BaseForecaster(BaseEstimator):
             Mean squared error of self.predict(fh=fh, X=X) with respect to y.
         """
         # only check y here, X and fh will be checked during predict
-        validate_y(y)
+        validate_y(y_true)
 
         # Predict y_pred
         # pass exogenous variable to predict only if given, as some forecasters may not accept X in predict
         kwargs = {} if X is None else {'X': X}
         y_pred = self.predict(fh=fh, **kwargs)
 
-        # Unnest y_true
-        y_true = self._prepare_y(y)
-
         # Check if passed true time series coincides with forecast horizon of predicted values
         if not y_true.index.equals(y_pred.index):
-            raise ValueError(f"Index of passed time series `y` does not match index of predicted time series; "
-                             f"make sure the forecasters horizon `fh` matches the time index of `y`")
+            raise ValueError(f"Index of passed time series `y_true` does not match index of predicted time series; "
+                             f"make sure the forecasters horizon `fh` matches the time index of `y_true`")
 
         return np.sqrt(mean_squared_error(y_true, y_pred))
 
@@ -186,21 +183,6 @@ class BaseForecaster(BaseEstimator):
             Xt = tabularise(X).values.T
 
         return Xt
-
-    @staticmethod
-    def _prepare_y(y):
-        """Helper function to prepare y as required by `statsmodels` estimators.
-
-        Parameters
-        ----------
-        y : pandas.Series, shape = [1,]
-            Nested series with series of shape [n_obs,] in first cell
-
-        Returns
-        -------
-        yt : pandas Series, shape=[n_obs,]
-        """
-        return y.iloc[0]
 
 
 class BaseUpdateableForecaster(BaseForecaster):
@@ -248,10 +230,9 @@ class BaseUpdateableForecaster(BaseForecaster):
         """
         # TODO add input checks for X when updating
         # TODO add additional input checks for update data, i.e. that update data is newer than data seen in fit
-        y = y.iloc[0]
-        y_idx = y.index if hasattr(y, 'index') else pd.RangeIndex(len(y))
-        if not isinstance(y_idx, type(self._time_index)):
-            raise ValueError('Passed y does not match the initial y used for fitting')
+        if not isinstance(y.index, type(self._time_index)):
+            raise ValueError("The time index of the target series (y) does not match"
+                             " the time index of y seen in `fit`")
 
 
 class BaseSingleSeriesForecaster(BaseForecaster):

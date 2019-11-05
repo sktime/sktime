@@ -4,21 +4,21 @@ import pandas as pd
 from sktime.datasets import load_longley
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasters import ARIMAForecaster
-from sktime.forecasters import DummyForecaster
 from sktime.highlevel.strategies import ForecastingStrategy
 from sktime.highlevel.tasks import ForecastingTask
 
-forecaster = DummyForecaster()
+forecaster = ARIMAForecaster()
 
 
 # Test forecasting strategy
 def test_univariate():
-    shampoo = load_shampoo_sales(return_y_as_dataframe=True)
-    train = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[:30]]), columns=shampoo.columns)
-    test = pd.DataFrame(pd.Series([shampoo.iloc[0, 0].iloc[30:]]), columns=shampoo.columns)
-
+    y = load_shampoo_sales()
     target = "ShampooSales"
-    fh = np.arange(len(test[target].iloc[0])) + 1
+    y.name = target
+    train = pd.DataFrame(pd.Series([y.iloc[:30]]), columns=[target])
+    test = pd.DataFrame(pd.Series([y.iloc[30:]]), columns=[target])
+
+    fh = np.arange(len(test.loc[:, target].iloc[0])) + 1
     task = ForecastingTask(target=target, fh=fh, metadata=train)
 
     s = ForecastingStrategy(estimator=forecaster)

@@ -11,8 +11,10 @@ __all__ = ["load_gunpoint",
            "load_arrow_head",
            "load_italy_power_demand",
            "load_basic_motions",
+           "load_japanese_vowels",
            "load_shampoo_sales",
-           "load_longley"]
+           "load_longley",
+           "load_lynx"]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
@@ -21,10 +23,9 @@ MODULE = os.path.dirname(__file__)
 
 
 # time series classification data sets
-
 def _load_dataset(name, split, return_X_y):
     """
-    Helper function to load datasets.
+    Helper function to load time series classification datasets.
     """
 
     if split in ["TRAIN", "TEST"]:
@@ -176,6 +177,7 @@ def load_japanese_vowels(split='TRAIN', return_X_y=False):
     name = 'JapaneseVowels'
     return _load_dataset(name, split, return_X_y)
 
+
 def load_arrow_head(split='TRAIN', return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
@@ -259,17 +261,9 @@ def load_basic_motions(split='TRAIN', return_X_y=False):
 
 
 # forecasting data sets
-
-def load_shampoo_sales(return_y_as_dataframe=False):
+def load_shampoo_sales():
     """
     Load the shampoo sales univariate time series dataset for forecasting.
-
-    Parameters
-    ----------
-    return_y_as_dataframe: bool, optional (default=False)
-        Whether to return target series as series or dataframe, useful for high-level interface.
-        - If True, returns target series as pandas.DataFrame.s
-        - If False, returns target series as pandas.Series.
 
     Returns
     -------
@@ -289,38 +283,29 @@ def load_shampoo_sales(return_y_as_dataframe=False):
 
     References
     ----------
-    ..[1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
+    .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
         John Wiley & Sons: New York. Chapter 3.
     """
 
     name = 'ShampooSales'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0)
+    data = pd.read_csv(path, index_col=0, squeeze=True)
 
     # change period index to simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='M')
     data = data.reset_index(drop=True)
-
-    if return_y_as_dataframe:
-        # return nested pandas DataFrame with a single row and column
-        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
-    else:
-        # return nested pandas Series with a single row
-        return pd.Series([data.iloc[:, 0]], name=name)
+    data.name = name
+    return data
 
 
-def load_longley(return_X_y=False, return_y_as_dataframe=False):
+def load_longley(return_X_y=False):
     """
     Load the Longley multivariate time series dataset for forecasting with exogenous variables.
 
     Parameters
     ----------
-    return_y_as_dataframe: bool, optional (default=False)
-        Whether to return target series as series or dataframe, useful for high-level interface.
-        - If True, returns target series as pandas.DataFrame.s
-        - If False, returns target series as pandas.Series.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a single dataframe with columns for
         features and the target.
@@ -354,17 +339,11 @@ def load_longley(return_X_y=False, return_y_as_dataframe=False):
 
     References
     ----------
-    ..[1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
+    .. [1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
         Electronic Comptuer from the Point of View of the User."  Journal of
         the American Statistical Association.  62.319, 819-41.
         (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
     """
-
-    if return_y_as_dataframe and not return_X_y:
-        raise ValueError("`return_y_as_dataframe` can only be set to True if `return_X_y` is True, "
-                         "otherwise y is given as a column in the returned dataframe and "
-                         "cannot be returned as a separate dataframe.")
-
     name = 'Longley'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
@@ -381,31 +360,21 @@ def load_longley(return_X_y=False, return_y_as_dataframe=False):
     y = data.pop(yname)
     y = pd.Series([y], name=yname)
 
-    # Get feature series
+    # Get exogeneous series
     X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
     X.columns = data.columns
 
     if return_X_y:
-        if return_y_as_dataframe:
-            y = pd.DataFrame(pd.Series([pd.Series(y.squeeze())]), columns=[yname])
-            return X, y
-        else:
-            return X, y
+        y = y.iloc[0]
+        return X, y
     else:
         X[yname] = y
         return X
 
 
-def load_lynx(return_y_as_dataframe=False):
+def load_lynx():
     """
     Load the lynx univariate time series dataset for forecasting.
-
-    Parameters
-    ----------
-    return_y_as_dataframe: bool, optional (default=False)
-        Whether to return target series as series or dataframe, useful for high-level interface.
-        - If True, returns target series as pandas.DataFrame.s
-        - If False, returns target series as pandas.Series.
 
     Returns
     -------
@@ -414,8 +383,8 @@ def load_lynx(return_y_as_dataframe=False):
 
     Details
     -------
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This time-series records the number of skins of predators (lynx) that were
-    collected over several years by the Hudson's Bay Company. The dataset was
+    The annual numbers of lynx trappings for 1821–1934 in Canada. This time-series records the number of skins of
+    predators (lynx) that were collected over several years by the Hudson's Bay Company. The dataset was
     taken from Brockwell & Davis (1991) and appears to be the series
     considered by Campbell & Walker (1977).
 
@@ -430,9 +399,9 @@ def load_lynx(return_y_as_dataframe=False):
 
     References
     ----------
-    ..[1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S Language. Wadsworth & Brooks/Cole.
+    .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S Language. Wadsworth & Brooks/Cole.
 
-    ..[2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical work on the Mackenzie River series of
+    .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical work on the Mackenzie River series of
     annual Canadian lynx trappings for the years 1821–1934 and a new analysis. Journal of the Royal Statistical Society
     series A, 140, 411–431.
     """
@@ -440,16 +409,12 @@ def load_lynx(return_y_as_dataframe=False):
     name = 'Lynx'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0)
+    data = pd.read_csv(path, index_col=0, squeeze=True)
 
     # change period index to simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
+    data.name = name
+    return data
 
-    if return_y_as_dataframe:
-        # return nested pandas DataFrame with a single row and column
-        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
-    else:
-        # return nested pandas Series with a single row
-        return pd.Series([data.iloc[:, 0]], name=name)
