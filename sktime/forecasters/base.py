@@ -13,7 +13,7 @@ from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_X
 from sktime.utils.validation.forecasting import validate_y
 from sktime.utils.validation.forecasting import validate_y_X
-from sktime.utils.data_container import get_time_index, tabularise
+from sktime.utils.data_container import tabularise
 
 
 class BaseForecaster(BaseEstimator):
@@ -37,7 +37,7 @@ class BaseForecaster(BaseEstimator):
             Target time series to which to fit the forecaster.
         fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+        X : pandas.DataFrame, shape=[n_instances, n_columns], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
 
         Returns

@@ -198,9 +198,9 @@ class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
         # input checks
         # this forecaster requires the forecasting horizon already in fit
         if fh is None and not self.recursive:
-            raise ValueError(f"If recursive is set to False, the forecasting horizon (fh) "
-                             f"must be specified in fit, as one estimator is fit for each "
-                             f"step of the forecasting horizon")
+            raise ValueError(f"If `recursive` is set to False, the forecasting horizon (`fh`) "
+                             f"must be specified in fit. This is because one estimator will be "
+                             f"fit for each step of the forecasting horizon.")
 
         if X is not None:
             # TODO concatenate exogeneous variables X to rolled window matrix X below

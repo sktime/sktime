@@ -1,6 +1,6 @@
 __author__ = ["Markus Löning"]
 __all__ = [
-    "compute_n_intervals",
+    "compute_relative_to_n_timepoints",
     "time_series_slope",
     "fit_trend",
     "remove_trend",
@@ -13,62 +13,67 @@ from sklearn.utils import check_array
 from sktime.utils.validation.forecasting import validate_fh, validate_time_index
 
 
-def compute_n_intervals(n_timepoints, n_intervals="sqrt"):
+def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     """
-    Compute number of intervals for given number of time points
+    Get number of intervals from number of time points for various allowed input arguments.
+    Helpful to compute number of intervals relative to time series length, e.g. using floats or functions.
 
     Parameters
     ----------
     n_timepoints : int
-    n_intervals : {int, float, str, callable}
+    n : {int, float, str, callable}
 
     Returns
     -------
-    n_intervals : int
+    n_intervals_ : int
         Computed number of intervals
     """
     # check input: n_timepoints
-    if not isinstance(n_timepoints, int):
-        raise ValueError(f"n_timepoints must be an integer, but found: {type(n_timepoints)}")
+    if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
+        raise ValueError(f"`n_timepoints` must be an integer, but found: {type(n_timepoints)}")
     if not n_timepoints >= 1:
-        raise ValueError(f"n_timepoints must be >= 1, but found: {n_timepoints}")
+        raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
 
     # compute number of splits
-    allowed_strings = ("sqrt", "log")
+    allowed_strings = ["sqrt", "log"]
 
     # integer
-    if isinstance(n_intervals, int):
-        if not n_intervals <= n_timepoints:
-            raise ValueError(f"n_intervals must be smaller than n_timepoints, but found: "
-                             f"n_intervals={n_intervals} and n_timepoints={n_timepoints}")
-        if n_intervals < 1:
-            raise ValueError(f"n_intervals must be >= 1, but found: {n_intervals}")
-        n_intervals_ = n_intervals
+    if np.issubdtype(type(n), np.dtype(int).type):
+        if not n <= n_timepoints:
+            raise ValueError(f"If `n_intervals` is an integer, it must be smaller "
+                             f"than `n_timepoints`, but found:  `n_intervals`={n} "
+                             f"and `n_timepoints`={n_timepoints}")
+        if n < 1:
+            raise ValueError(f"If `n_intervals` is an integer, "
+                             f"`n_intervals` must be >= 1, but found: {n}")
+        n_intervals_ = n
 
     # function
-    elif callable(n_intervals):
-        n_intervals_ = n_intervals(n_timepoints)
+    elif callable(n):
+        n_intervals_ = n(n_timepoints)
 
     # string
-    elif isinstance(n_intervals, str):
-        if not n_intervals in allowed_strings:
-            raise ValueError(f"n_intervals must be in {allowed_strings}, but found: {n_intervals}")
+    elif isinstance(n, str):
+        if n not in allowed_strings:
+            raise ValueError(f"If `n_intervals` is a string, `n_intervals` must be "
+                             f"in {allowed_strings}, but found: {n}")
         str_func_map = {
             "sqrt": np.sqrt,
             "log": np.log
         }
-        func = str_func_map[n_intervals]
+        func = str_func_map[n]
         n_intervals_ = func(n_timepoints)
 
     # float
-    elif isinstance(n_intervals, float):
-        if not (0 < n_intervals <= 1):
-            raise ValueError(f"n_intervals must be > 0 and <= 1, but found: {n_intervals}")
-        n_intervals_ = n_intervals * n_timepoints
+    elif isinstance(n, float):
+        if not (0 < n <= 1):
+            raise ValueError(f"If `n_intervals` is a float, `n_intervals` must be > 0 "
+                             f"and <= 1, but found: {n}")
+        n_intervals_ = n * n_timepoints
 
     else:
-        raise ValueError(f'Number of intervals must be either one of the allowed string options in '
-                         f'{{allowed_strings}}, an integer or a float number, but found: {n_intervals}')
+        raise ValueError(f"`n_intervals` must be either one of the allowed string options in "
+                         f"{allowed_strings}, an integer or a float number.")
 
     # make sure n_intervals is an integer and there is at least one interval
     n_intervals_ = np.maximum(1, np.int(n_intervals_))

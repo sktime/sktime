@@ -21,15 +21,15 @@ from sklearn.model_selection import check_cv, ParameterGrid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.validation import check_is_fitted
-
+from sktime.performance_metrics.forecasting import smape_score
 from sktime.utils.validation.forecasting import check_integer_time_index
 from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.time_series import compute_n_intervals
+from sktime.utils.time_series import compute_relative_to_n_timepoints
 from sktime.forecasters.base import BaseForecaster
 
 
-def _score(estimator, fh, y_test, scorer):
-    """Compute the score(s) of an estimator on a given test set.
+def _score(forecaster, fh, y_test, scorer):
+    """Compute the score(s) of an forecaster on a given test set.
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
@@ -37,10 +37,10 @@ def _score(estimator, fh, y_test, scorer):
     #     # will cache method calls if needed. scorer() returns a dict
     #     scorer = _MultimetricScorer(**scorer)
     # if y_test is None:
-    #     scores = scorer(estimator, X_test)
+    #     scores = scorer(forecaster, X_test)
     # else:
-    #     scores = scorer(estimator, X_test, y_test)
-    y_pred = estimator.predict(fh=fh)
+    #     scores = scorer(forecaster, X_test, y_test)
+    y_pred = forecaster.predict(fh=fh)
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
 
     error_msg = ("scoring must return a number, got %s (%s) "
@@ -64,12 +64,12 @@ def _score(estimator, fh, y_test, scorer):
     return scores
 
 
-def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
+def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
                    parameters, fit_params, X=None,
                    return_parameters=False,
                    return_n_test_timepoints=False,
                    return_times=False,
-                   return_estimator=False,
+                   return_forecaster=False,
                    error_score=np.nan):
     if verbose > 1:
         if parameters is None:
@@ -83,7 +83,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     fit_params = fit_params if fit_params is not None else {}
 
     if parameters is not None:
-        estimator.set_params(**parameters)
+        forecaster.set_params(**parameters)
 
     start_time = time.time()
 
@@ -91,7 +91,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
     y_test = y.iloc[test]
 
     try:
-        estimator.fit(y_train, fh=fh, X=X, **fit_params)
+        forecaster.fit(y_train, fh=fh, X=X, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
@@ -108,7 +108,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
                 test_scores = error_score
                 # if return_train_score:
                 #     train_scores = error_score
-            warnings.warn("estimator fit failed. The score on this train-test"
+            warnings.warn("forecaster fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
                           (error_score, format_exception_only(type(e), e)[0]),
@@ -120,7 +120,7 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, fh, y_test, scorer)
+        test_scores = _score(forecaster, fh, y_test, scorer)
         score_time = time.time() - start_time - fit_time
 
     # if verbose > 1:
@@ -135,19 +135,19 @@ def _fit_and_score(estimator, y, fh, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
-    if return_estimator:
-        ret.append(estimator)
+    if return_forecaster:
+        ret.append(forecaster)
     return ret
 
 
 class ForecastingGridSearchCV(BaseForecaster):
 
-    def __init__(self, estimator, param_grid, cv, refit=False, scoring=None, verbose=0):
-        self.estimator = estimator
+    def __init__(self, forecaster, param_grid, cv, refit=False, scoring=None, verbose=0):
+        self.forecaster = forecaster
         self.param_grid = param_grid
         self.cv = cv
         self.refit = refit
-        self.scoring = scoring
+        self.scoring = scoring if scoring is not None else smape_score
         self.verbose = verbose
         super(ForecastingGridSearchCV, self).__init__()
 
@@ -160,10 +160,10 @@ class ForecastingGridSearchCV(BaseForecaster):
         # get integer time index
         time_index = check_integer_time_index(self._time_index)
 
-        base_estimator = clone(self.estimator)
+        base_forecaster = clone(self.forecaster)
 
         # scorers, self.multimetric_ = _check_multimetric_scoring(
-        #     self.estimator, scoring=self.scoring)
+        #     self.forecaster, scoring=self.scoring)
         scorers = {"score": self.scoring}
         refit_metric = "score"
 
@@ -174,7 +174,7 @@ class ForecastingGridSearchCV(BaseForecaster):
         #             self.refit not in scorers) and not callable(self.refit):
         #         raise ValueError("For multi-metric scoring, the parameter "
         #                          "refit must be set to a scorer key or a "
-        #                          "callable to refit an estimator with the "
+        #                          "callable to refit an forecaster with the "
         #                          "best parameter setting on the whole "
         #                          "data and make the best_* attributes "
         #                          "available for that metric. If this is "
@@ -213,7 +213,7 @@ class ForecastingGridSearchCV(BaseForecaster):
             out = []
             for parameters, (train, test) in product(candidate_params, cv.split(time_index)):
                 r = _fit_and_score(
-                    clone(base_estimator),
+                    clone(base_forecaster),
                     y,
                     fh,
                     X=X,
@@ -253,11 +253,11 @@ class ForecastingGridSearchCV(BaseForecaster):
             self.best_index_]
         self.best_params_ = results["params"][self.best_index_]
 
-        self.best_estimator_ = clone(base_estimator).set_params(**self.best_params_)
+        self.best_forecaster_ = clone(base_forecaster).set_params(**self.best_params_)
 
         if self.refit:
             refit_start_time = time.time()
-            self.best_estimator_.fit(y, fh, **fit_params)
+            self.best_forecaster_.fit(y, fh=fh, **fit_params)
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
@@ -351,49 +351,49 @@ class ForecastingGridSearchCV(BaseForecaster):
             raise NotFittedError('This %s instance was initialized '
                                  'with refit=False. %s is '
                                  'available only after refitting on the best '
-                                 'parameters. You can refit an estimator '
+                                 'parameters. You can refit an forecaster '
                                  'manually using the ``best_params_`` '
                                  'attribute'
                                  % (type(self).__name__, method_name))
         else:
-            check_is_fitted(self, "best_estimator_")
+            check_is_fitted(self, "best_forecaster_")
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_forecaster_', 'forecaster'))
     def _predict(self, fh=None, X=None):
-        """Call predict on the estimator with the best found parameters.
+        """Call predict on the forecaster with the best found parameters.
         """
         self._check_is_fitted('predict')
-        return self.best_estimator_.predict(fh=fh, X=X)
+        return self.best_forecaster_.predict(fh=fh, X=X)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_forecaster_', 'forecaster'))
     def transform(self, y):
-        """Call transform on the estimator with the best found parameters.
+        """Call transform on the forecaster with the best found parameters.
         """
         self._check_is_fitted('transform')
-        return self.best_estimator_.transform(y)
+        return self.best_forecaster_.transform(y)
 
-    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    @if_delegate_has_method(delegate=('best_forecaster_', 'forecaster'))
     def inverse_transform(self, y):
-        """Call inverse_transform on the estimator with the best found params.
+        """Call inverse_transform on the forecaster with the best found params.
 
-        Only available if the underlying estimator implements
+        Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
 
         Parameters
         ----------
         y : indexable, length n_samples
             Must fulfill the input assumptions of the
-            underlying estimator.
+            underlying forecaster.
 
         """
         self._check_is_fitted('inverse_transform')
-        return self.best_estimator_.inverse_transform(y)
+        return self.best_forecaster_.inverse_transform(y)
 
     def score(self, y_true, fh=None, X=None):
-        """Returns the score on the given data, if the estimator has been refit.
+        """Returns the score on the given data, if the forecaster has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
-        ``best_estimator_.score`` method otherwise.
+        ``best_forecaster_.score`` method otherwise.
 
         Parameters
         ----------
@@ -412,10 +412,10 @@ class ForecastingGridSearchCV(BaseForecaster):
         self._check_is_fitted('score')
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
-                             "and the estimator doesn't provide one %s"
-                             % self.best_estimator_)
+                             "and the forecaster doesn't provide one %s"
+                             % self.best_forecaster_)
         score = self.scorer_
-        y_pred = self.best_estimator_.predict(fh, X=X)
+        y_pred = self.best_forecaster_.predict(fh, X=X)
         return score(y_true, y_pred)
 
 
@@ -432,63 +432,93 @@ class RollingWindowSplit:
         Single step ahead or array of steps ahead to forecast.
     """
 
-    def __init__(self, fh, window_length="log"):
-        self.window_length = window_length
+    def __init__(self, fh, window_length=None, n_splits=None):
+        # check input
         self.fh = validate_fh(fh)
 
-        # Attributes updated in split
+        # either window_length or n_splits must be specified, but not both
+        if ((window_length is None) and (n_splits is None)) \
+                or ((window_length is not None) and (n_splits is not None)):
+            raise ValueError("Either `window_length` or `n_splits` must be specified but not both.")
+        self.window_length = window_length
+        self.n_splits = n_splits
+
+        # computed when calling split
         self.n_splits_ = None
         self.window_length_ = None
 
-    def split(self, data):
+    def split(self, y):
         """
         Split data using rolling window.
 
         Parameters
         ----------
-        data : ndarray
+        y : ndarray
             1-dimensional array of time series index to split.
 
         Yields
         ------
-        features : ndarray
+        y_input : ndarray, shape=(window_length,)
             The indices of the feature window
-        targets : ndarray
+        y_output : ndarray, shape=(len(fh),)
             The indices of the target window
         """
 
-        # Input checks.
-        if not (isinstance(data, np.ndarray) and data.ndim == 1):
-            raise ValueError(f"Passed data has to be 1-d numpy array, but found "
-                             f"data of type: {type(data)} with {data.ndim} dimensions")
+        # check input
+        if not isinstance(y, np.ndarray):
+            raise ValueError(f"`y` has to be numpy array, but found: {type(y)}")
+        if y.ndim != 1:
+            raise ValueError(f"`y` has to be 1d array")
 
-        n_timepoints = data.shape[0]
-        max_fh = self.fh[-1]  # furthest step ahead, assume fh is sorted
+        n_timepoints = len(y)
+        fh_max = self.fh[-1]  # furthest step ahead, assume fh is sorted
+        last_window_end = n_timepoints - fh_max + 1
 
-        # Set default window length to sqrt of series length
-        window_length = compute_n_intervals(n_timepoints, self.window_length)
+        # compute missing window_length/n_splits depending on what was passed in the constructor;
+        # window_length/n_splits can be specified relative to length of passed time series y using functions,
+        # floats or kwargs, so first compute the actual value, before computing the missing value
+        if self.window_length is not None:
+            window_length = compute_relative_to_n_timepoints(n_timepoints, self.window_length)
+            n_splits = last_window_end - window_length
+        else:
+            n_splits = compute_relative_to_n_timepoints(n_timepoints, self.n_splits)
+            window_length = last_window_end - n_splits
+
+        self.n_splits_ = n_splits
         self.window_length_ = window_length
 
-        # Iterate over windows
-        start = window_length
-        stop = n_timepoints - max_fh + 1
-        self.n_splits_ = stop - start
+        # check if computed values are feasible given n_timepoints
+        if window_length + fh_max > n_timepoints:
+            raise ValueError(f"`window_length` + `max(fh)` must be smaller than "
+                             f"the number of time points in `y`, but found: "
+                             f"{window_length} + {fh_max} > {n_timepoints}")
 
-        for window in range(start, stop):
-            inputs = data[window - window_length:window]
-            outputs = data[window + self.fh - 1]
-            yield inputs, outputs
+        # iterate over windows
+        start = window_length
+        for window in range(start, last_window_end):
+            y_input = y[window - window_length:window]
+            y_output = y[window + self.fh - 1]
+            yield y_input, y_output
 
     def get_n_splits(self):
         """
         Return number of splits.
         """
-        return self.n_splits_
+        if self.n_splits_ is None:
+            raise ValueError(f"`n_splits_` is only available after calling `split`. "
+                             f"This is because it depends on the number of time points of the "
+                             f"time series `y` which is passed to split.")
+        else:
+            return self.n_splits_
 
     def get_window_length(self):
         """
         Return the window length.
         """
+        if self.window_length_ is None:
+            raise ValueError(f"`window_length_` is only available after calling `split`. "
+                             f"This is because it depends on the number of time points of the "
+                             f"time series `y` which is passed to split.")
         return self.window_length_
 
 
