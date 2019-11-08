@@ -100,7 +100,7 @@ class ShapeletTransform(BaseTransformer):
         self : FullShapeletTransform
             This estimator
         """
-        if type(self) is ContractedShapeletTransform and self.time_limit <= 0:
+        if type(self) is ContractedShapeletTransform and self.time_limit_in_mins <= 0:
             raise ValueError("Error: time limit cannot be equal to or less than 0")
 
         X_lens = np.array([len(X.iloc[r,0]) for r in range(len(X))]) # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
@@ -313,13 +313,13 @@ class ShapeletTransform(BaseTransformer):
                         shapelet_heaps_by_class[this_class_val].pop()
 
                 # Takes into account the use of the MAX shapelet calculation time to not exceed the time_limit (not exact, but likely a good guess).
-                if hasattr(self,'time_limit') and self.time_limit > 0:
+                if hasattr(self,'time_limit_in_mins') and self.time_limit_in_mins > 0:
                     time_now = time_taken()
                     time_this_shapelet = (time_now - time_last_shapelet)
                     if time_this_shapelet > max_time_calc_shapelet:
                         max_time_calc_shapelet = time_this_shapelet
                     time_last_shapelet = time_now
-                    if (time_now + max_time_calc_shapelet) > self.time_limit:
+                    if (time_now + max_time_calc_shapelet) > self.time_limit_in_mins * 60:
                         if self.verbose > 0:
                             print("No more time available! It's been {0:02d}:{1:02}".format(int(round(time_now / 60, 3)), int((round(time_now / 60, 3) - int(round(time_now / 60, 3))) * 60)))
                         time_finished = True
@@ -327,18 +327,18 @@ class ShapeletTransform(BaseTransformer):
                     else:
                         if self.verbose > 0:
                             if candidate_rejected is False:
-                                print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
-                                                                                            int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+                                print("Candidate finished. {0:02d}:{1:02} remaining".format(int(round(self.time_limit_in_mins - time_now / 60, 3)),
+                                                                                            int((round(self.time_limit_in_mins - time_now / 60, 3) - int(round(self.time_limit_in_mins - time_now / 60, 3))) * 60)))
                             else:
-                                print("Candidate rejected. {0:02d}:{1:02} remaining".format(int(round((self.time_limit - time_now) / 60, 3)),
-                                                                                            int((round((self.time_limit - time_now) / 60, 3) - int(round((self.time_limit - time_now) / 60, 3))) * 60)))
+                                print("Candidate rejected. {0:02d}:{1:02} remaining".format(int(round(self.time_limit_in_mins - time_now / 60, 3)),
+                                                                                            int((round(self.time_limit_in_mins - time_now / 60, 3) - int(round(self.time_limit_in_mins - time_now / 60, 3))) * 60)))
 
             # stopping condition: in case of iterative transform (i.e. num_cases_to_sample have been visited)
             #                     in case of contracted transform (i.e. time limit has been reached)
             case_idx += 1
 
             if case_idx >= num_series_to_visit:
-                if hasattr(self,'time_limit') and time_finished is not True:
+                if hasattr(self,'time_limit_in_mins') and time_finished is not True:
                     case_idx = 0
             elif case_idx >= num_series_to_visit or time_finished:
                 if self.verbose > 0:
@@ -676,17 +676,14 @@ class ContractedShapeletTransform(ShapeletTransform):
             remove_self_similar = True
     ):
 
-        self.min_shapelet_length = min_shapelet_length
-        self.max_shapelet_length = max_shapelet_length
-        self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
         self.num_candidates_to_sample_per_case = num_candidates_to_sample_per_case
-        self.time_limit = time_limit_in_mins*60
-        self.random_state = random_state
-        self.verbose = verbose
-        self.remove_self_similar = remove_self_similar
+        self.time_limit_in_mins = time_limit_in_mins
 
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
+
+        super().__init__(min_shapelet_length, max_shapelet_length, max_shapelets_to_store_per_class, random_state,
+                         verbose, remove_self_similar)
 
 
 class RandomEnumerationShapeletTransform(ShapeletTransform):
