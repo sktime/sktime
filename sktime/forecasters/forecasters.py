@@ -432,7 +432,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         self._is_seasonal = seasonality_test(y, freq=self.deseasonaliser.sp)
         if self._is_seasonal:
-            y = self.deseasonaliser.fit_transform(orig_y.to_frame()).iloc[:, 0]
+            y = self.deseasonaliser.fit_transform(orig_y.to_frame()).iloc[0, 0]
 
         # Find theta lines.
 
@@ -441,9 +441,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self.smoothing_level_ = self._fitted_estimator.params['smoothing_level']
 
         # Drift calculated through least squares regression.
-        display(y.to_frame())
         coefs = fit_trend(y.values.reshape(1, -1), order=1)
-        self.drift_ = coefs[0, -1]
+        self.drift_ = coefs[0, 1]
 
         return self
 
@@ -475,7 +474,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         if self._is_seasonal:
             # Reseasonalise.
-            y_pred = self.deseasonaliser.inverse_transform(y_pred)
+            y_pred_nested = pd.DataFrame(pd.Series([y_pred]))
+            y_pred = self.deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
 
         return y_pred
 
