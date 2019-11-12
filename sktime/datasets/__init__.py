@@ -6,4 +6,4 @@ from .base import load_basic_motions
 from .base import load_shampoo_sales
 from .base import load_longley
 from .base import load_lynx
-
+from .base import load_airline

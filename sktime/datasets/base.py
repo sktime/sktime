@@ -7,12 +7,15 @@ import pandas as pd
 
 from ..utils.load_data import load_from_tsfile_to_dataframe
 
-__all__ = ["load_gunpoint",
-           "load_arrow_head",
-           "load_italy_power_demand",
-           "load_basic_motions",
-           "load_shampoo_sales",
-           "load_longley"]
+__all__ = [
+    "load_airline",
+    "load_gunpoint",
+    "load_arrow_head",
+    "load_italy_power_demand",
+    "load_basic_motions",
+    "load_shampoo_sales",
+    "load_longley"
+]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
@@ -438,6 +441,61 @@ def load_lynx(return_y_as_dataframe=False):
     """
 
     name = 'Lynx'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0)
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
+
+    if return_y_as_dataframe:
+        # return nested pandas DataFrame with a single row and column
+        return pd.DataFrame(pd.Series([pd.Series(data.squeeze())]), columns=[name])
+    else:
+        # return nested pandas Series with a single row
+        return pd.Series([data.iloc[:, 0]], name=name)
+
+
+def load_airline(return_y_as_dataframe=False):
+    """
+    Load the airline univariate time series dataset for forecasting.
+
+    Parameters
+    ----------
+    return_y_as_dataframe: bool, optional (default=False)
+        Whether to return target series as series or dataframe, useful for high-level interface.
+        - If True, returns target series as pandas.DataFrame.
+        - If False, returns target series as pandas.Series.
+
+    Returns
+    -------
+    y : pandas Series/DataFrame
+        Lynx sales dataset
+
+    Details
+    -------
+    The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960.
+
+    Dimensionality:     univariate
+    Series length:      144
+    Frequency:          Monthly
+    Number of cases:    1
+
+    Notes
+    -----
+    This data shows an increasing trend, non-constant (increasing) variance
+    and periodic, seasonal patterns.
+
+    References
+    ----------
+    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
+          Analysis, Forecasting and Control. Third Edition. Holden-Day.
+          Series G.
+    """
+
+    name = 'Airline'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)

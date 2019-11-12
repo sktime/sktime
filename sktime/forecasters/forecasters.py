@@ -4,13 +4,22 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 # SARIMAX is better maintained and offers the same functionality as standard ARIMA class
 # https://github.com/statsmodels/statsmodels/issues/3884
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.forecasters.base import BaseForecaster
 from sktime.forecasters.base import BaseSingleSeriesForecaster
 from sktime.forecasters.base import BaseUpdateableForecaster
+from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.validation.forecasting import validate_sp, validate_fh
+from sktime.utils.seasonality import seasonality_test
+from sktime.utils.time_series import fit_trend
 
-__all__ = ["ARIMAForecaster", "ExpSmoothingForecaster", "DummyForecaster"]
+__all__ = [
+    "ARIMAForecaster",
+    "ExpSmoothingForecaster",
+    "DummyForecaster",
+    "ThetaForecaster"
+]
 __author__ = ['Markus Löning']
 
 
@@ -321,6 +330,154 @@ class ExpSmoothingForecaster(BaseSingleSeriesForecaster):
                                                     use_boxcox=self.use_boxcox, remove_bias=self.remove_bias,
                                                     use_basinhopping=self.use_basinhopping)
         return self
+
+
+class ThetaForecaster(ExpSmoothingForecaster):
+    """
+    Theta method of forecasting.
+
+    The theta method as defined in [1]_ is equivalent to simple exponential
+    smoothing (SES) with drift. This is demonstrated in [2]_.
+
+    The series is tested for seasonality using the test outlined in A&N. If
+    deemed seasonal, the series is seasonally adjusted using a classical
+    multiplicative decomposition before applying the theta method. The
+    resulting forecasts are then reseasonalized.
+
+    Prediction intervals are computed using the underlying state space model.
+
+    Parameters
+    ----------
+
+    smoothing_level : float, optional
+        The alpha value of the simple exponential smoothing, if the value
+        is set then this will be used, otherwise it will be estimated from the
+        data.
+
+    deseasonaliser : :class:`sktime.transformers.Deseasonaliser`
+        The transformer to use for seasonal adjustments.
+
+    check_input : bool, optional (default=True)
+        - If True, input are checked.
+        - If False, input are not checked and assumed correct. Use with caution.
+
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficiently large problems. ``None``
+        means 1 unless in a :obj:`joblib.parallel_backend` context. ``-1``
+        means using all processors.
+
+    Attributes
+    ----------
+
+    smoothing_level_ : float
+        The estimated alpha value of the SES fit.
+
+    drift_ : float
+        The estimated drift of the fitted model.
+
+    se_ : float
+        The standard error of the predictions. Used to calculate prediction
+        intervals.
+
+    References
+    ----------
+
+    .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
+           decomposition approach to forecasting. International Journal of
+           Forecasting 16, 521-530, 2000.
+           <https://www.sciencedirect.com/science/article/pii/S0169207000000662>`_
+
+    .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
+           International J. Forecasting, 19, 287-290, 2003.
+           <https://www.sciencedirect.com/science/article/pii/S0169207001001431>`_
+    """
+
+    def __init__(self, smoothing_level=None,
+                 deseasonaliser=Deseasonaliser(model='multiplicative'),
+                 check_input=True, n_jobs=None):
+        self.n_jobs = n_jobs
+
+        self.smoothing_level = smoothing_level
+        self.deseasonaliser = deseasonaliser
+
+        super(ThetaForecaster, self).__init__(
+            smoothing_level=smoothing_level,
+            check_input=check_input
+        )
+
+    def _fit(self, y, fh=None):
+        """
+        Internal fit.
+
+        Parameters
+        ----------
+
+        y : pandas.Series
+            Target time series to which to fit the forecaster.
+        fh : array-like, optional (default=[1])
+            The forecasters horizon with the steps ahead to to predict.
+
+        Returns
+        -------
+
+        self : returns an instance of self.
+        """
+
+        # Unnest series.
+        orig_y = y
+        y = self._prepare_y(y)
+
+        self._n_obs = len(y)
+
+        self._is_seasonal = seasonality_test(y, freq=self.deseasonaliser.sp)
+        if self._is_seasonal:
+            y = self.deseasonaliser.fit_transform(orig_y.to_frame()).iloc[:, 0]
+
+        # Find theta lines.
+
+        # Theta lines are just SES + drift.
+        super()._fit(orig_y, fh=fh)
+        self.smoothing_level_ = self._fitted_estimator.params['smoothing_level']
+
+        # Drift calculated through least squares regression.
+        display(y.to_frame())
+        coefs = fit_trend(y.values.reshape(1, -1), order=1)
+        self.drift_ = coefs[0, -1]
+
+        return self
+
+    def _predict(self, fh=None):
+        """
+        Internal predict.
+
+        Parameters
+        ----------
+
+        fh : array-like
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast, i.e. np.array([1]).
+
+        Returns
+        -------
+
+        y_pred : pandas.Series
+            Returns series of predicted values.
+        """
+
+        check_is_fitted(self, '_n_obs')
+        check_is_fitted(self, 'smoothing_level_')
+        check_is_fitted(self, 'drift_')
+
+        y_pred = super()._predict(fh=fh)
+        y_pred += self.drift_ * (fh + (1 - (1 - self.smoothing_level_) ** self._n_obs) /
+                                      self.smoothing_level_)
+
+        if self._is_seasonal:
+            # Reseasonalise.
+            y_pred = self.deseasonaliser.inverse_transform(y_pred)
+
+        return y_pred
 
 
 class DummyForecaster(BaseForecaster):
