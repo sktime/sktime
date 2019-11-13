@@ -394,7 +394,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
     """
 
     def __init__(self, smoothing_level=None,
-                 deseasonaliser=Deseasonaliser(model='multiplicative'),
+                 deseasonaliser=Deseasonaliser(model="multiplicative"),
                  check_input=True, n_jobs=None):
         self.n_jobs = n_jobs
 
@@ -428,8 +428,6 @@ class ThetaForecaster(ExpSmoothingForecaster):
         orig_y = y
         y = self._prepare_y(y)
 
-        self._n_obs = len(y)
-
         self._is_seasonal = seasonality_test(y, freq=self.deseasonaliser.sp)
         if self._is_seasonal:
             y = self.deseasonaliser.fit_transform(orig_y.to_frame()).iloc[0, 0]
@@ -438,11 +436,11 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         # Theta lines are just SES + drift.
         super()._fit(orig_y, fh=fh)
-        self.smoothing_level_ = self._fitted_estimator.params['smoothing_level']
+        self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
 
         # Drift calculated through least squares regression.
         coefs = fit_trend(y.values.reshape(1, -1), order=1)
-        self.drift_ = coefs[0, 1]
+        self.drift_ = coefs[0, 0] / 2
 
         return self
 
@@ -464,13 +462,19 @@ class ThetaForecaster(ExpSmoothingForecaster):
             Returns series of predicted values.
         """
 
-        check_is_fitted(self, '_n_obs')
-        check_is_fitted(self, 'smoothing_level_')
-        check_is_fitted(self, 'drift_')
+        check_is_fitted(self, "_time_index")
+        check_is_fitted(self, "smoothing_level_")
+        check_is_fitted(self, "drift_")
 
+        orig_fh = fh
         y_pred = super()._predict(fh=fh)
-        y_pred += self.drift_ * (fh + (1 - (1 - self.smoothing_level_) ** self._n_obs) /
-                                      self.smoothing_level_)
+
+        n_obs = len(self._time_index)
+
+        y_pred += self.drift_ * (
+            orig_fh +
+            (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
+        )
 
         if self._is_seasonal:
             # Reseasonalise.
