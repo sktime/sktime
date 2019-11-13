@@ -1,21 +1,21 @@
-import pandas as pd
-import numpy as np
-from sklearn.base import clone
-from sklearn.utils.validation import check_is_fitted
-
-from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.time_series import RollingWindowSplit
-from sktime.forecasters.base import BaseForecaster
-
 __author__ = "Markus Löning"
 __all__ = ["EnsembleForecaster",
            "TransformedTargetForecaster",
-           "ReducedRegressionForecaster"]
+           "ReducedTimeSeriesRegressionForecaster"]
+
+
+import pandas as pd
+import numpy as np
+from sklearn.base import clone
+from sktime.utils.validation.forecasting import check_integer_time_index
+from sktime.utils.validation.forecasting import validate_fh
+from sktime.forecasters.model_selection import RollingWindowSplit
+from sktime.forecasters.base import BaseForecaster
 
 
 class EnsembleForecaster(BaseForecaster):
     """
-    Ensemble of forecasters.
+    Meta-estimator for ensembling forecasters.
 
     Parameters
     ----------
@@ -24,21 +24,18 @@ class EnsembleForecaster(BaseForecaster):
     weights : array-like, shape = [n_estimators], optional (default=None)
         Sequence of weights (float or int) to weight the occurrences of predicted values before averaging.
         Uses uniform weights if None.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
     # TODO: experimental, major functionality not implemented (input checks, params interface, exogenous variables)
 
-    def __init__(self, estimators=None, weights=None, check_input=True):
+    def __init__(self, estimators=None, weights=None):
         # TODO add input checks
         self.estimators = estimators
         self.weights = weights
         self.fitted_estimators_ = []
-        super(EnsembleForecaster, self).__init__(check_input=check_input)
+        super(EnsembleForecaster, self).__init__()
 
-    def fit(self, y, fh=1, X=None):
+    def _fit(self, y, fh=None, X=None):
         """
         Internal fit.
 
@@ -47,30 +44,22 @@ class EnsembleForecaster(BaseForecaster):
         y : pandas.Series
             Target time series to which to fit the forecaster.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that
-            if an ``ARIMA`` is fit on exogenous features, it must also be provided
-            exogenous features for making predictions.
+            An optional 2-d dataframe of exogenous variables.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        # validate forecasting horizon
-        fh = validate_fh(fh)
-
         # Clear previously fitted estimators
         self.fitted_estimators_ = []
 
         for _, estimator in self.estimators:
             # TODO implement set/get params interface
-            # estimator.set_params(**{"check_input": False})
             fitted_estimator = estimator.fit(y, fh=fh, X=X)
             self.fitted_estimators_.append(fitted_estimator)
         return self
 
-    def predict(self, fh=1, X=None):
+    def _predict(self, fh=None, X=None):
         """
         Internal predict using fitted estimator.
 
@@ -80,11 +69,7 @@ class EnsembleForecaster(BaseForecaster):
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that if
-            provided, the forecaster must also have been fitted on the exogenous
-            features.
+            An optional 2-d dataframe of exogenous variables.
 
         Returns
         -------
@@ -92,10 +77,6 @@ class EnsembleForecaster(BaseForecaster):
             Returns series of predicted values.
         """
         # TODO pass X only to estimators where the predict method accepts X, currenlty X is ignored
-
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        fh = validate_fh(fh)
-        fh_idx = fh - np.min(fh)
 
         # Iterate over estimators
         y_preds = np.zeros((len(self.fitted_estimators_), len(fh)))
@@ -126,177 +107,154 @@ class EnsembleForecaster(BaseForecaster):
 
 
 class TransformedTargetForecaster(BaseForecaster):
-    """Meta-estimator to forecast on a transformed target."""
+    """Meta-estimator for forecasting transformed time series."""
 
     # TODO add check inverse method after fitting transformer
 
     def __init__(self, forecaster, transformer):
         self.forecaster = forecaster
         self.transformer = transformer
+        super(TransformedTargetForecaster, self).__init__()
 
-    def _transform(self, y):
+    def transform(self, y):
         # transformers are designed to modify X which is 2-dimensional, we
         # need to modify y accordingly.
-        y = pd.DataFrame(y) if isinstance(y, pd.Series) else y
+        y = pd.DataFrame(pd.Series([y]))
 
         self.transformer_ = clone(self.transformer)
         yt = self.transformer_.fit_transform(y)
 
         # restore 1d target
-        yt = yt.iloc[:, 0]
+        yt = yt.iloc[0, 0]
         return yt
 
-    def _inverse_transform(self, y):
-        # transformers are designed to modify X which is 2-dimensional, we
+    def inverse_transform(self, y):
+        # transformers are designed to modify nested X which is 2-dimensional, we
         # need to modify y accordingly.
-        y = pd.DataFrame(y) if isinstance(y, pd.Series) else y
+        y = pd.DataFrame(pd.Series([y]))
         yit = self.transformer_.inverse_transform(y)
 
         # restore 1d target
-        yit = yit.iloc[:, 0]
+        yit = yit.iloc[0, 0]
         return yit
 
-    def fit(self, y, fh=None, X=None):
-        """Fit"""
+    def _fit(self, y, fh=None, X=None):
+        """Internal fit"""
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
         self._input_shape = y.ndim
 
         # transform data
-        yt = self._transform(y)
+        yt = self.transform(y)
 
         # fit forecaster using transformed target data
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(yt, fh=fh, X=X)
         return self
 
-    def predict(self, fh=None, X=None):
+    def _predict(self, fh=None, X=None):
         """Predict"""
-        check_is_fitted(self, "forecaster_")
         y_pred = self.forecaster_.predict(fh=fh, X=X)
 
-        # return to nested format
-        y_pred = pd.Series([y_pred])
-
         # compute inverse transform
-        y_pred_it = self._inverse_transform(y_pred)
+        y_pred_it = self.inverse_transform(y_pred)
 
         # return unnested format
-        return y_pred_it.iloc[0]
+        return y_pred_it
 
 
-class ReducedRegressionForecaster(BaseForecaster):
+class ReducedTimeSeriesRegressionForecaster(BaseForecaster):
     """
-    Forecasting to time series regression reduction strategy.
+    Meta-estimator for forecasting by reduction to time series regression.
 
     Strategy to reduce a forecasters problem to a time series regression
     problem using a rolling window approach
 
     Parameters
     ----------
-    estimator : an estimator
-        Time series regressor.
+    ts_regressor : a time series regressor
     window_length : int, optional (default=None)
         Window length of rolling window approach.
-    dynamic : bool, optional (default=False)
+    recursive : bool, optional (default=False)
         - If True, estimator is fitted for one-step ahead forecasts and only one-step ahead forecasts are made using
         extending the last window of the training data with already made forecasts.
         - If False, one estimator is fitted for each step-ahead forecast and only the last window is used for making
         forecasts.
     """
 
-    def __init__(self, estimator, window_length=None, dynamic=False):
-        self.estimator = estimator
+    def __init__(self, ts_regressor, window_length=None, recursive=False):
+        self.ts_regressor = ts_regressor
         self.window_length = window_length
-        self.dynamic = dynamic
+        self.recursive = recursive
+        self.rw = None
+        self.estimators_ = []
+        super(ReducedTimeSeriesRegressionForecaster, self).__init__()
 
-    def fit(self, y, fh=None, X=None):
-        """Fit forecaster.
+    def _fit(self, y, fh=None, X=None):
+        """Internal fit.
 
-        Parameters
-        ----------
-        y : pandas.Series
-            Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
-            i.e. np.array([1])
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that
-            if an ``ARIMA`` is fit on exogenous features, it must also be provided
-            exogenous features for making predictions.
-
-        Returns
-        -------
         self : returns an instance of self.
         """
-        # validate forecasting horizon
-        if fh is None and not self.dynamic:
-            raise ValueError(f"If dynamic is set to False, forecasting horizon (fh) has to be specified in fit, "
-                             f"as one estimator is fit for each step ahead forecast of the forecasting horizon")
+        # input checks
+        # this forecaster requires the forecasting horizon already in fit
+        if fh is None and not self.recursive:
+            raise ValueError(f"If `recursive` is set to False, the forecasting horizon (`fh`) "
+                             f"must be specified in fit. This is because one estimator will be "
+                             f"fit for each step of the forecasting horizon.")
 
-        if fh is not None:
-            fh = validate_fh(fh)
-
-        # Make interface compatible with estimators that only take y and no X
-        kwargs = {} if X is None else {'X': X}
-
-        # Internal fit.
-        self._fit(y, fh=fh, **kwargs)
-        self._is_fitted = True
-        return self
-
-    def _fit(self, y, X=None, fh=None):
-        """Internal fit.
-        """
         if X is not None:
             # TODO concatenate exogeneous variables X to rolled window matrix X below
             raise NotImplementedError()
 
-        # Unnest series
-        yt = self._prepare_y(y)
+        # reset list of fitted estimators
+        self.estimators_ = []
 
-        # Transform using rolling window
-        X, Y = self._transform(yt, fh)
+        # Transform input time series using rolling window tabularisation
+        Xs, Ys = self.transform(y, fh)
 
-        # Fitting
-        if self.dynamic:
-            # Fit single estimator for one-step ahead forecast
-            y = Y.ravel()  # convert into one-dimensional array
-            estimator = clone(self.estimator)
-            estimator.fit(X, y)
-            self.estimators_ = estimator
+        # Fitting of recursive strategy: fit single estimator for one-step ahead forecast
+        # which is then used iteratively in prediction
+        if self.recursive:
+            ys = pd.Series(Ys.ravel())  # convert into one-dimensional array
+            estimator = clone(self.ts_regressor)
+            estimator.fit(Xs, ys)
+            self.estimators_.append(estimator)
 
+        # Fitting of non-recursive strategy: fitting one estimator for each step-ahead forecast
         else:
-            # Fit one estimator for each step-ahead forecast
-            self.estimators_ = []
-            len_fh = len(fh)
-
             # Iterate over estimators/forecast horizon
-            for i in range(len_fh):
-                estimator = clone(self.estimator)
-                y = pd.Series(Y[:, i])
-                estimator.fit(X, y)
+            for i in range(len(fh)):
+                estimator = clone(self.ts_regressor)
+                ys = pd.Series(Ys[:, i])
+                estimator.fit(Xs, ys)
                 self.estimators_.append(estimator)
 
-        # Save the last window-length number of observations for predicting
+        # Store the last window-length number of observations for prediction
         self.window_length_ = self.rw.get_window_length()
-        self._last_window = yt.iloc[-self.window_length_:]
+        self._last_window = y.iloc[-self.window_length_:]
         return self
 
-    def _transform(self, y, fh):
-        """Helper function to transform data using rolling window approach"""
+    def transform(self, y, fh=None):
+        """Transform data using rolling window approach"""
+        # check input
+        if fh is not None:
+            fh = validate_fh(fh)
 
         # Set up window roller
-        # For dynamic prediction, models are only trained on one-step ahead forecast
-        fh = np.array([1]) if self.dynamic else fh
-        self.rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
+        # for recursive reduction strategy, the forecaster are fitted on
+        # one-step ahead forecast and then recursively applied to make
+        # forecasts for the whole forecasting horizon
+        if self.recursive:
+            rw_fh = np.array([1])
+        else:
+            rw_fh = fh
+        self.rw = RollingWindowSplit(window_length=self.window_length, fh=rw_fh)
 
-        # get numeric time index
-        time_index = np.arange(len(y))
+        # get integer time index
+        time_index = check_integer_time_index(self._time_index)
 
-        # Transform target series into tabular format using rolling window splits
+        # Transform target series into tabular format using
+        # rolling window tabularisation
         xs = []
         ys = []
         for feature_window, target_window in self.rw.split(time_index):
@@ -305,45 +263,45 @@ class ReducedRegressionForecaster(BaseForecaster):
             xs.append(xi)
             ys.append(yi)
 
-        # Construct nested pandas DataFrame for X
-        X = pd.DataFrame(pd.Series([xi for xi in np.array(xs)]))
-        Y = np.array([np.array(yi) for yi in ys])
+        # Put into nested dataframe format for time series regression
+        X = pd.DataFrame(pd.Series([np.asarray(xi) for xi in xs]))
+        Y = np.array([np.asarray(yi) for yi in ys])
         return X, Y
 
-    def predict(self, fh=None, X=None):
+    def _predict(self, fh=None, X=None):
 
+        # check input
         if X is not None:
-            # TODO handle exog data
             raise NotImplementedError()
 
-        # get forecasting horizon
-        fh = validate_fh(fh)
+        # use last window as new input data for time series regressors to make forecasts
+        y_last = pd.DataFrame(pd.Series([self._last_window]))
+
+        # preallocate array for forecasted values
         len_fh = len(fh)
+        y_pred = np.zeros(len_fh)
 
-        # use last window as test data for prediction
-        x_test = pd.DataFrame(pd.Series([self._last_window]))
-        y_pred = np.zeros(len(fh))
-
-        # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
-        # only the last window and using one fitted estimator for each step ahead forecast
-        if self.dynamic:
-            # Roll last window using previous one-step ahead forecasts
+        # forecasts can be either recursive or non-recursive;
+        # for recursive forecasts, we make one-step ahead forecasts, and when making multi-step forecasts,
+        # we use previously forecasted values to forecast the next step ahead;
+        # for non-recursive forecasts, we use the last window of the training series and
+        # fit one estimator for each step of the forecasting horizon
+        if self.recursive:
+            estimator = self.estimators_[0]
             for i in range(len_fh):
-                y_pred[i] = self.estimators_.predict(x_test)
+                y_pred[i] = estimator.predict(y_last)
 
                 # append prediction to last window and roll window
-                x_test = np.append(x_test.iloc[0, 0].values, y_pred[i])[-self.window_length_:]
-
+                y_last = np.append(y_last.iloc[0, 0].values, y_pred[i])[-self.window_length_:]
                 # put data into required nested format
-                x_test = pd.DataFrame(pd.Series([pd.Series(x_test)]))
+                y_last = pd.DataFrame(pd.Series([pd.Series(y_last)]))
 
+        # Iterate over estimators/forecast horizon
         else:
-            # Iterate over estimators/forecast horizon
-            # Any fh is ignored if specified
             for i, estimator in enumerate(self.estimators_):
-                y_pred[i] = estimator.predict(x_test)
+                y_pred[i] = estimator.predict(y_last)
 
-        # Add name and forecast index
+        # Add name and forecasting time index to forecasted series
         index = self._last_window.index[-1] + fh
         name = self._last_window.name
 

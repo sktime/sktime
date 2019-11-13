@@ -186,12 +186,11 @@ class Detrender(BaseTransformer):
         and no checks are performed. Use with caution.
     """
 
-    def __init__(self, order=0, check_input=True):
+    def __init__(self, order=0):
 
         if not (isinstance(order, int) and (order >= 0)):
             raise ValueError(f"order must be a positive integer, but found: {type(order)}")
         self.order = order
-        self.check_input = check_input
         self._time_index = None
         self._input_shape = None
 
@@ -209,9 +208,8 @@ class Detrender(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and one column for each generated interval.
         """
 
-        if self.check_input:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        check_X_is_univariate(X)
+        validate_X(X)
 
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns")
@@ -223,7 +221,7 @@ class Detrender(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, :1])
+        Xs = tabulariser.transform(X)
 
         # fit polynomial trend
         self.coefs_ = fit_trend(Xs, order=self.order)
@@ -251,10 +249,8 @@ class Detrender(BaseTransformer):
         """
 
         check_is_fitted_in_transform(self, 'coefs_')
-
-        if self.check_input:
-            if not isinstance(X, pd.DataFrame):
-                raise ValueError(f"Input must be pandas DataFrame, but found: {type(X)}")
+        check_X_is_univariate(X)
+        validate_X(X)
 
         if X.shape[1] > 1:
             raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
@@ -269,7 +265,7 @@ class Detrender(BaseTransformer):
 
         # convert into tabular format
         tabulariser = Tabulariser()
-        Xs = tabulariser.transform(X.iloc[:, :1])
+        Xs = tabulariser.transform(X)
 
         # add trend at given time series index
         Xit = add_trend(Xs, coefs=self.coefs_, time_index=time_index)

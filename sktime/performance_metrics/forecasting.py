@@ -2,13 +2,13 @@ import numpy as np
 from sktime.utils.validation.forecasting import check_consistent_time_indices, validate_time_index
 
 __author__ = ['Markus Löning']
-__all__ = ["mase_loss", "smape_loss"]
+__all__ = ["mase_score", "smape_score"]
 
 # for reference implementations, see https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
 
 
-def mase_loss(y_true, y_pred, y_train, sp=1):
-    """Mean absolute scaled error
+def mase_score(y_true, y_pred, y_train, sp=1):
+    """Negative mean absolute scaled error
 
     Parameters
     ----------
@@ -46,11 +46,11 @@ def mase_loss(y_true, y_pred, y_train, sp=1):
     # mean absolute error of naive seasonal prediction
     mae_naive = np.mean(np.abs(y_train[sp:] - y_pred_naive))
 
-    return np.mean(np.abs(y_true - y_pred)) / mae_naive
+    return -np.mean(np.abs(y_true - y_pred)) / mae_naive
 
 
-def smape_loss(y_true, y_pred):
-    """Symmetric mean absolute percentage error
+def smape_score(y_true, y_pred):
+    """Negative symmetric mean absolute percentage error
 
     Parameters
     ----------
@@ -68,4 +68,4 @@ def smape_loss(y_true, y_pred):
 
     nominator = np.abs(y_true - y_pred)
     denominator = np.abs(y_true) + np.abs(y_pred)
-    return 2 * np.mean(nominator / denominator)
+    return -2 * np.mean(nominator / denominator)

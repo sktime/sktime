@@ -10,9 +10,7 @@ But note that the package is actively being developed and currently not feature 
 
 Development version
 -------------------
-The installation instruction below are adapted from scikit-learn's advanced `installation instructions
-<https://scikit-learn
-.org/stable/developers/advanced_installation.html>`_.
+The installation instruction below are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
 
 To install the development version of sktime, follow these steps:
 
@@ -63,6 +61,9 @@ If you want to build a stable version, you can ``git checkout <VERSION>``
 to get the code for that particular version, or download an zip archive of
 the version from github. To see which versions are available, run ``git tag``.
 
+Building from source
+~~~~~~~~~~~~~~~~~~~~
+
 Once you have all the build requirements installed (see below for details),
 you can build and install the package in the following way.
 
@@ -92,7 +93,7 @@ builds the extension in place and creates a link to the development directory
 
 
 Mac OSX
-~~~~~~~
+*******
 
 The default C compiler, Apple-clang, on Mac OSX does not directly support
 OpenMP. The first solution to build sktime is to install another C
@@ -117,7 +118,7 @@ Then you need to set the following environment variables::
 Finally you can build the package using the standard command.
 
 FreeBSD
-~~~~~~~
+*******
 
 The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
 include OpenMP support. You need to install the `openmp` library from packages
@@ -141,10 +142,10 @@ the base system and these steps will not be necessary.
 
 
 Installing build dependencies
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Linux
-~~~~~
+*****
 
 Installing from source without conda requires you to have installed the
 sktime runtime dependencies, Python development headers and a working
@@ -174,7 +175,7 @@ On Red Hat and clones (e.g. CentOS), install the dependencies using::
     <https://docs.scipy.org/doc/scipy/reference/building/linux.html>`_.
 
 Windows
-~~~~~~~
+*******
 
 To build sktime on Windows you need a working C/C++ compiler in
 addition to numpy, scipy and setuptools.

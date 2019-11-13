@@ -47,17 +47,6 @@ def validate_y(y):
     if not isinstance(y, pd.Series):
         raise ValueError(f'y must be a pandas Series, but found: {type(y)}')
 
-    # Check if single row
-    if not y.shape[0] == 1:
-        raise ValueError(f'y must consist of a pandas Series with a single row, '
-                         f'but found: {y.shape[0]} rows')
-
-    # Check if contained time series is either pandas series or numpy array
-    s = y.iloc[0]
-    if not isinstance(s, (np.ndarray, pd.Series)):
-        raise ValueError(f'y must contain a pandas Series or numpy array, '
-                         f'but found: {type(s)}.')
-
 
 def validate_X(X):
     """Validate input data.
@@ -139,7 +128,7 @@ def validate_fh(fh):
 
     # Check single integer
     if np.issubdtype(type(fh), np.integer):
-        return np.array([fh], dtype=np.int)
+        fh = [fh]  # make iterable
 
     # Check array-like input
     elif isinstance(fh, list):
@@ -166,7 +155,12 @@ def validate_fh(fh):
         raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
                          f"integer, but found: {type(fh)}")
 
-    return np.asarray(np.sort(fh), dtype=np.int)
+    # check fh contains only non-zero positive values
+    fh_sorted = np.sort(fh)
+    if fh_sorted[0] <= 0:
+        raise ValueError(f"fh must contain only positive values (> 0), but found: {fh}")
+
+    return np.asarray(fh_sorted, dtype=np.int)
 
 
 def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
@@ -240,4 +234,11 @@ def check_consistent_time_indices(x, y):
     """
 
     if not x.index.equals(y.index):
-        raise ValueError(f"Found input variables with inconsistent indices")
+        raise ValueError(f"Found input variables with inconsistent time indices")
+
+
+def check_integer_time_index(time_index):
+    if not np.issubdtype(time_index.dtype, np.dtype(int).type):
+        raise NotImplementedError("Non-integer time indices are not supported yet")
+
+    return time_index.values

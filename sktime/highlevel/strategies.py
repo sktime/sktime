@@ -1,12 +1,11 @@
 """
 Unified high-level interface for various time series related learning strategies.
 """
+__all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy"]
+__author__ = ['Markus Löning', 'Sajay Ganesh']
 
-import numpy as np
 import pandas as pd
 from joblib import dump, load
-import os
-from sklearn.base import clone
 from sklearn.base import BaseEstimator
 from sklearn.base import _pprint
 from sklearn.base import ClassifierMixin
@@ -14,23 +13,14 @@ from sklearn.base import RegressorMixin
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-
-from sktime.utils.time_series import RollingWindowSplit
-from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.time_series import RollingWindowSplit
 from sktime.classifiers.base import BaseClassifier
 from sktime.forecasters.base import BaseForecaster
 from sktime.regressors.base import BaseRegressor
 
-
-__all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy", "Forecasting2TSRReductionStrategy"]
-__author__ = ['Markus Löning', 'Sajay Ganesh']
-
-
 # TODO implement task-strategy-estimator compatibility lookup registry using strategy traits
 REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)
 CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
-FORECASTER_TYPES = (BaseForecaster, )
+FORECASTER_TYPES = (BaseForecaster,)
 ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 
 CASES = ("TSR", "TSC", "Forecasting")
@@ -316,7 +306,7 @@ class ForecastingStrategy(BaseStrategy):
         self : an instance of self
         """
 
-        y = data[self._task.target]
+        y = data[self._task.target].iloc[0]
         fh = self._task.fh
 
         if len(self._task.features) > 0:
@@ -393,166 +383,3 @@ class ForecastingStrategy(BaseStrategy):
             kwargs = {}
 
         return self.estimator.predict(fh=fh, **kwargs)  # forecaster specific implementation
-
-
-class Forecasting2TSRReductionStrategy(BaseStrategy):
-    """
-    Forecasting to time series regression reduction strategy.
-
-    Strategy to reduce a forecasters problem to a time series regression
-    problem using a rolling window approach
-
-    Parameters
-    ----------
-    estimator : an estimator
-        Time series regressor.
-    window_length : int, optional (default=None)
-        Window length of rolling window approach.
-    dynamic : bool, optional (default=False)
-        - If True, estimator is fitted for one-step ahead forecasts and only one-step ahead forecasts are made using
-        extending the last window of the training data with already made forecasts.
-        - If False, one estimator is fitted for each step-ahead forecast and only the last window is used for making
-        forecasts.
-    name : str, optional (default=None)
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
-    """
-    def __init__(self, estimator, window_length=None, dynamic=False, name=None, check_input=True):
-        self._case = "Forecasting"
-        self._traits = {"required_estimator_type": REGRESSOR_TYPES}
-        super(Forecasting2TSRReductionStrategy, self).__init__(estimator, name=name, check_input=check_input)
-
-        # TODO what's a good default for window length? sqrt(len(data))?
-        self.window_length = window_length
-        self.dynamic = dynamic
-
-    def _fit(self, data):
-        """
-        Internal fit.
-
-        Parameters
-        ----------
-        data : pandas.DataFrame
-            Input data
-
-        Returns
-        -------
-        self : an instance of self
-        """
-
-        # Select target and feature variables
-        y = data[self._task.target]
-        if len(self._task.features) > 0:
-            X = data[self._task.features]
-            # TODO how to handle exogenous variables
-            raise NotImplementedError()
-
-        # Set up window roller
-        # For dynamic prediction, models are only trained on one-step ahead forecast
-        fh = 1 if self.dynamic else self._task.fh
-        fh = validate_fh(fh)
-        n_fh = len(fh)
-
-        self.rw = RollingWindowSplit(window_length=self.window_length, fh=fh)
-
-        # Unnest target series
-        yt = y.iloc[0]
-        index = np.arange(len(yt))
-
-        # Transform target series into tabular format using rolling window splits
-        xs = []
-        ys = []
-        for feature_window, target_window in self.rw.split(index):
-            x = yt[feature_window]
-            y = yt[target_window]
-            xs.append(x)
-            ys.append(y)
-
-        # Construct nested pandas DataFrame for X
-        X = pd.DataFrame(pd.Series([x for x in np.array(xs)]))
-        Y = np.array([np.array(y) for y in ys])
-
-        # Fitting
-        if self.dynamic:
-            # Fit estimator for one-step ahead forecast
-            y = Y.ravel()  # convert into one-dimensional array
-            estimator = clone(self.estimator)
-            estimator.fit(X, y)
-            self.estimator_ = estimator
-
-        else:
-            # Fit one estimator for each step-ahead forecast
-            self.estimators = []
-            self.estimators_ = []
-
-            n_fh = len(fh)
-
-            # Clone estimators
-            self.estimators = [clone(self.estimator) for _ in range(n_fh)]
-
-            # Iterate over estimators/forecast horizon
-            for estimator, y in zip(self.estimators, Y.T):
-                y = pd.Series(y)
-                estimator.fit(X, y)
-                self.estimators_.append(estimator)
-
-        # Save the last window-length number of observations for predicting
-        self.window_length_ = self.rw.get_window_length()
-        self._last_window = yt.iloc[-self.window_length_:]
-
-        return self
-
-    def predict(self, data=None):
-        """
-        Predict.
-
-        Parameters
-        ----------
-        data : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables. If provided, these
-            variables are used as additional features in the regression
-            operation. This should not include a constant or trend. Note that if
-            provided, the forecaster must also have been fitted on the exogenous
-            features.
-
-        Returns
-        -------
-        y_pred : pandas.Series
-            Series of predicted values.
-        """
-        if data is not None:
-            # TODO handle exog data
-            raise NotImplementedError()
-
-        # get forecasting horizon
-        fh = self._task.fh
-        n_fh = len(fh)
-
-        # use last window as test data for prediction
-        x_test = pd.DataFrame(pd.Series([self._last_window]))
-        y_pred = np.zeros(len(fh))
-
-        # prediction can be either dynamic making only one-step ahead forecasts using previous forecasts or static using
-        # only the last window and using one fitted estimator for each step ahead forecast
-        if self.dynamic:
-            # Roll/extend last window using previous one-step ahead forecasts
-            for i in range(n_fh):
-                y_pred[i] = self.estimator_.predict(x_test)
-
-                # append prediction to last window and update x
-                x_test = np.append(x_test.iloc[0, 0].values, y_pred[i])[-self.window_length_:]
-
-                # put data into required format
-                x_test = pd.DataFrame(pd.Series([pd.Series(x_test)]))
-
-        else:
-            # Iterate over estimators/forecast horizon
-            for i, estimator in enumerate(self.estimators_):
-                y_pred[i] = estimator.predict(x_test)
-
-        # Add name and forecast index
-        index = self._last_window.index[-1] + fh
-        name = self._last_window.name
-
-        return pd.Series(y_pred, name=name, index=index)

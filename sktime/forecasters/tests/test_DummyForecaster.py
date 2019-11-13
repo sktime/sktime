@@ -18,7 +18,7 @@ y = load_shampoo_sales()
 # TODO add test for linear strategy
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 @pytest.mark.parametrize("fh", FHS)
-@pytest.mark.parametrize("strategy, expected", [("mean", y.iloc[0].mean()), ("last", y.iloc[0].iloc[-1])])
+@pytest.mark.parametrize("strategy, expected", [("mean", y.mean()), ("last", y.iloc[-1])])
 def test_DummyForecaster_strategies(fh, strategy, expected):
     m = DummyForecaster(strategy=strategy)
     m.fit(y, fh=fh)
