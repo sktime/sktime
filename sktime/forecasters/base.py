@@ -151,7 +151,7 @@ class BaseForecaster(BaseEstimator):
         pred = self._predict(fh=fh, **kwargs)
 
         if levels is not None:
-            if isinstance(levels, (int, float)):
+            if isinstance(levels, (np.integer, np.float)):
                 level = levels
                 errs = self.prediction_errors(fh=fh, conf_lvl=level)
             else:
@@ -284,7 +284,7 @@ class BaseForecaster(BaseEstimator):
         if conf_lvls is not None:
             # Plot prediction intervals if available.
             try:
-                if isinstance(conf_lvls, (int, float)):
+                if isinstance(conf_lvls, (np.integer, np.float)):
                     conf_lvls = [conf_lvls]
 
                 col = y_hat_line.get_color()

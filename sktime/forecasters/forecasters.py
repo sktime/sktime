@@ -11,7 +11,7 @@ from sktime.forecasters.base import BaseSingleSeriesForecaster
 from sktime.forecasters.base import BaseUpdateableForecaster
 from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.confidence import zscore
-from sktime.utils.validation.forecasting import validate_sp, validate_fh
+from sktime.utils.validation.forecasting import validate_sp
 from sktime.utils.seasonality import seasonality_test
 from sktime.utils.time_series import fit_trend
 
