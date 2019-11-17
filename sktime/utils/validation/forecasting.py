@@ -219,6 +219,29 @@ def validate_time_index(time_index):
     return np.asarray(time_index)
 
 
+def check_conf_level(level):
+    """
+    Check that a confidence level is valid.
+
+    Confidence levels should lie in the open interval (0, 1).
+
+    Parameters
+    ----------
+
+    level : float
+
+    Raises
+    ------
+
+    ValueError
+        If level is outside the range (0, 1).
+    """
+
+    if not 0 < level < 1:
+        raise ValueError(
+            f"Confidence level must lie in open interval (0, 1): got {level}"
+        )
+
 def check_consistent_time_indices(x, y):
     """Check that x and y have consistent indices.
 

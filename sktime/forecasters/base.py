@@ -9,11 +9,16 @@ from sklearn.base import BaseEstimator
 from sklearn.metrics import mean_squared_error
 from sklearn.utils.validation import check_is_fitted
 
+from sktime.utils.validation.forecasting import check_conf_level
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_X
 from sktime.utils.validation.forecasting import validate_y
 from sktime.utils.validation.forecasting import validate_y_X
 from sktime.utils.data_container import tabularise
+
+
+# Default confidence level for prediction intervals.
+DEFAULT_CLVL = 0.95
 
 
 class BaseForecaster(BaseEstimator):
@@ -67,37 +72,22 @@ class BaseForecaster(BaseEstimator):
         """Internal fit implemented by specific forecasters"""
         raise NotImplementedError()
 
-    def predict(self, fh=None, X=None):
+    def _prepare_fh(self, fh):
         """
-        Predict using fitted estimator.
-
-        Parameters
-        ----------
-        fh : int or array-like, optional (default=1)
-            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
-            i.e. np.array([1])
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
-            An optional 2-d dataframe of exogenous variables.
-
-        Returns
-        -------
-        Predictions : pandas.Series, shape=(len(fh),)
-            Returns series of predicted values.
+        Shared code for preparing the forecasting horizon for fit, predict and
+        predict_intervals.
         """
-        # check input
-        check_is_fitted(self, '_is_fitted')
-        validate_X(X)
-
         # validate forecasting horizon
-        # if no fh is passed to predict, check if it was passed to fit; if so, use it; otherwise raise error
+        # if no fh is passed to predict, check if it was passed to fit; if so, use it;
+        # otherwise raise error
         if fh is None:
             if self._fh is not None:
                 fh = self._fh
             else:
                 raise ValueError("Forecasting horizon (fh) must be passed to `fit` or `predict`")
 
-        # if fh is passed to predict, check if fh was also passed to fit; if so, check if they are the same; if not,
-        # raise warning
+        # if fh is passed to predict, check if fh was also passed to fit; if so, check
+        # if they are the same; if not, raise warning
         else:
             fh = validate_fh(fh)
             if self._fh is not None:
@@ -106,16 +96,180 @@ class BaseForecaster(BaseEstimator):
                          "from the fh passed to `fit`")
             self._fh = fh  # use passed fh; overwrites fh if it was passed to fit already
 
+        return fh
+
+    def predict(
+        self,
+        fh=None,
+        X=None,
+        alpha=DEFAULT_CLVL,
+        levels=None,
+        **kwargs
+    ):
+        """
+        Predict using fitted estimator.
+
+        Parameters
+        ----------
+
+        fh : int or array-like, optional (default=1)
+            The forecasters horizon with the steps ahead to to predict. Default is
+            one-step ahead forecast, i.e. np.array([1])
+
+        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+            An optional 2-d dataframe of exogenous variables.
+
+        alpha : float, optional
+            The alpha level to use for prediction intervals. Has no effect if
+            :param:`with_intervals` is False.
+
+        levels : float or list-like, optional
+            A confidence level expressed as a fraction to provide prediction errors
+            for. If this is set, the return value will be a tuple of (predictions,
+            prediction_errors). A list of multiple confidence levels may be provided
+            which will return a list of prediction errors as the second item in the
+            tuple. See :meth:`.predict_errors` for more info on prediction errors.
+
+        kwargs : keyword arguments
+            Any other options that may be taken by the forecaster's :meth:`_predict`
+            method.
+
+        Returns
+        -------
+
+        predictions : pandas.Series, shape=(len(fh),)
+            series of predicted values.
+
+        (predictions, prediction_errors)
+            If confidence level(s) were supplied.
+        """
+        # check input
+        check_is_fitted(self, '_is_fitted')
+        validate_X(X)
+
+        fh = self._prepare_fh(fh)
+
         # make interface compatible with estimators that only take y
         kwargs = {} if X is None else {'X': X}
 
         # estimator specific implementation of fit method
-        return self._predict(fh=fh, **kwargs)
+        pred = self._predict(fh=fh, **kwargs)
+
+        if levels is not None:
+            if isinstance(levels, (int, float)):
+                level = levels
+                errs = [self.predict_errors(fh=fh, conf_lvl=level)]
+            else:
+                errs = [self.predict_errors(fh=fh, conf_lvl=level) for level in levels]
+
+            return pred, errs
+
+        return pred
 
     def _predict(self, fh=None, **kwargs):
         """Internal predict implemented by specific forecasters.
         """
         raise NotImplementedError()
+
+    def predict_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
+        """
+        Calculate the prediction errors for the given forecast horizon.
+
+        Prediction intervals may be calculated by adding/subtracting these errors from
+        the predictions for the same forecast horizon.
+
+        Parameters
+        ----------
+
+        fh : int or array-like, optional (default=1)
+            The forecast horizon with the steps ahead to calculate intervals for.
+            Default is one-step ahead forecast.
+
+        alpha : float
+            The confidence level to use for the errors. Must be within the open
+            interval (0.0, 1.0).
+        """
+        check_conf_level(conf_lvl)
+        fh = self._prepare_fh(fh)
+
+        return self._predict_errors(fh=fh, conf_lvl=conf_lvl)
+
+    def _predict_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
+        raise NotImplementedError()
+
+    def plot(
+        self,
+        *,
+        y_train=None,
+        y_true=None,
+        fh=None,
+        conf_lvls=(0.95, 0.8),
+        fig=None,
+        ax=None,
+        **kwargs,
+    ):
+        """
+        """
+
+        y_hat = self.predict(fh=fh, **kwargs)
+        y_hat.name = f"Forecast ($h = {len(fh)}$)"
+
+        # Import dynamically to avoid creating matplotlib dependencies.
+        import matplotlib.pyplot as plt
+        from matplotlib.offsetbox import AnchoredText
+        from matplotlib.patches import Patch
+
+        if ax is None:
+            if fig is None:
+                fig = plt.figure()
+            ax = fig.gca()
+
+        if y_train is not None:
+            y_train.plot(ax=ax)
+
+        if y_true is not None:
+            y_true.plot(ax=ax)
+
+        y_hat.plot(ax=ax, ls="--")
+        y_hat_line = ax.get_lines()[-1]
+
+        try:
+            score = self.score(y_true=y_true, fh=fh, X=kwargs.get("X"))
+            text_box = AnchoredText(f"Score = ${score:.3f}$", frameon=True, loc=4)
+            ax.add_artist(text_box)
+        except ValueError:
+            # Cannot calculate score if y_true and fh indices don't align.
+            pass
+
+        axhandles, axlabels = ax.get_legend_handles_labels()
+        if conf_lvls is not None:
+            # Plot prediction intervals if available.
+            try:
+                if isinstance(conf_lvls, (int, float)):
+                    conf_lvls = [conf_lvls]
+
+                col = y_hat_line.get_color()
+                alphas = np.linspace(0.15, 0.65, num=len(conf_lvls), endpoint=False)
+                # Plot widest intervals first.
+                conf_lvls = list(reversed(sorted(conf_lvls)))
+
+                for alpha, lvl in zip(alphas, conf_lvls):
+                    err = self.predict_errors(fh=fh, conf_lvl=lvl)
+                    ax.fill_between(
+                        y_hat.index, y_hat+err, y_hat-err, fc=col, alpha=alpha, lw=0
+                    )
+                    axhandles.append(Patch(fc=col, alpha=alpha, ec=col))
+                    axlabels.append(f"{round(lvl*100)}% conf")
+
+            except NotImplementedError:
+                pass
+
+        ax.legend(handles=axhandles, labels=axlabels)
+
+        if fig is not None:
+            fig.tight_layout()
+
+        return ax
 
     def score(self, y_true, fh=None, X=None):
         """

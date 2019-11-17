@@ -6,10 +6,11 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 # https://github.com/statsmodels/statsmodels/issues/3884
 from sklearn.utils.validation import check_is_fitted
 
-from sktime.forecasters.base import BaseForecaster
+from sktime.forecasters.base import BaseForecaster, DEFAULT_CLVL
 from sktime.forecasters.base import BaseSingleSeriesForecaster
 from sktime.forecasters.base import BaseUpdateableForecaster
 from sktime.transformers.forecasting import Deseasonaliser
+from sktime.utils.confidence import zscore
 from sktime.utils.validation.forecasting import validate_sp, validate_fh
 from sktime.utils.seasonality import seasonality_test
 from sktime.utils.time_series import fit_trend
@@ -496,6 +497,15 @@ class ThetaForecaster(ExpSmoothingForecaster):
             y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
 
         return y_pred
+
+    def _predict_errors(self, fh, conf_lvl=DEFAULT_CLVL):
+        n_obs = len(self._time_index)
+        self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_obs - 1))
+        sem = self.sigma_ * np.sqrt(fh * self.smoothing_level_ ** 2 + 1)
+
+        z = zscore(conf_lvl)
+
+        return z * sem
 
 
 class DummyForecaster(BaseForecaster):
