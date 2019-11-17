@@ -274,9 +274,9 @@ class BaseForecaster(BaseEstimator):
 
         if score:
             try:
-                score = self.score(y_true=y_true, fh=fh, X=kwargs.get("X"))
+                y_score = self.score(y_true=y_true, fh=fh, X=kwargs.get("X"))
                 text_box = AnchoredText(
-                    f"Score = ${score:.3f}$", frameon=True, loc=score
+                    f"Score = ${y_score:.3f}$", frameon=True, loc=score
                 )
                 ax.add_artist(text_box)
             except ValueError:
