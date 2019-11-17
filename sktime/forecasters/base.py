@@ -200,15 +200,54 @@ class BaseForecaster(BaseEstimator):
     def plot(
         self,
         *,
-        y_train=None,
-        y_true=None,
         fh=None,
         conf_lvls=(0.95, 0.8),
+        y_train=None,
+        y_true=None,
         fig=None,
         ax=None,
+        score='lower right',
         **kwargs,
     ):
         """
+        Plot a forecast.
+
+        Parameters
+        ----------
+
+        fh : int or array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+
+        conf_lvls : float or array-like, optional (default=(0.95, 0.8))
+            A confidence level or list of confidence levels to plot prediction
+            intervals for.
+
+        y_train : :class:`pandas.Series`, optional
+            The original training data to plot alongside the forecast.
+
+        y_true : :class:`pandas.Series`
+            The actual data to compare to the forecast for in-sample forecasts
+            ("nowcasts").
+
+        fig : :class:`matplotlib.figure.Figure`, optional
+            A figure to plot the graphic on.
+
+        ax : :class:`matplotlib.axes.Axes`, optional
+            The axis on which to plot the graphic. If not provided, a new one
+            will be created.
+
+        score : str, optional (default="lower right")
+            Where to draw a text box showing the score of the forecast if possible.
+            If set to None, no score will be displayed.
+
+        kwargs
+            Additional keyword arguments to pass to :meth:`.predict`.
+
+        Returns
+        -------
+
+        ax : :class:`matplotlib.axes.Axes`
+            The axis on which the graphic was drawn.
         """
 
         y_hat = self.predict(fh=fh, **kwargs)
@@ -233,13 +272,16 @@ class BaseForecaster(BaseEstimator):
         y_hat.plot(ax=ax, ls="--")
         y_hat_line = ax.get_lines()[-1]
 
-        try:
-            score = self.score(y_true=y_true, fh=fh, X=kwargs.get("X"))
-            text_box = AnchoredText(f"Score = ${score:.3f}$", frameon=True, loc=4)
-            ax.add_artist(text_box)
-        except ValueError:
-            # Cannot calculate score if y_true and fh indices don't align.
-            pass
+        if score:
+            try:
+                score = self.score(y_true=y_true, fh=fh, X=kwargs.get("X"))
+                text_box = AnchoredText(
+                    f"Score = ${score:.3f}$", frameon=True, loc=score
+                )
+                ax.add_artist(text_box)
+            except ValueError:
+                # Cannot calculate score if y_true and fh indices don't align.
+                pass
 
         axhandles, axlabels = ax.get_legend_handles_labels()
         if conf_lvls is not None:
@@ -277,8 +319,8 @@ class BaseForecaster(BaseEstimator):
 
         Parameters
         ----------
-        y : pandas.Series
-            Target time series to which to fit the forecaster.
+        y_true : pandas.Series
+            Target time series to which to compare the forecasts.
         fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
