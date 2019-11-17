@@ -498,14 +498,18 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return y_pred
 
-    def _predict_errors(self, fh, conf_lvl=DEFAULT_CLVL):
+    def _prediction_errors(self, fh, conf_lvl=DEFAULT_CLVL):
         n_obs = len(self._time_index)
         self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_obs - 1))
         sem = self.sigma_ * np.sqrt(fh * self.smoothing_level_ ** 2 + 1)
 
         z = zscore(conf_lvl)
 
-        return z * sem
+        # Adjust forecasters horizon to time index seen in fit, (assume sorted
+        # forecasters horizon)
+        fh = len(self._time_index) - 1 + fh
+
+        return pd.Series(index=fh, data=z*sem)
 
 
 class DummyForecaster(BaseForecaster):

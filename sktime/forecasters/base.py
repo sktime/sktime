@@ -102,7 +102,6 @@ class BaseForecaster(BaseEstimator):
         self,
         fh=None,
         X=None,
-        alpha=DEFAULT_CLVL,
         levels=None,
         **kwargs
     ):
@@ -119,16 +118,12 @@ class BaseForecaster(BaseEstimator):
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
 
-        alpha : float, optional
-            The alpha level to use for prediction intervals. Has no effect if
-            :param:`with_intervals` is False.
-
         levels : float or list-like, optional
             A confidence level expressed as a fraction to provide prediction errors
             for. If this is set, the return value will be a tuple of (predictions,
             prediction_errors). A list of multiple confidence levels may be provided
             which will return a list of prediction errors as the second item in the
-            tuple. See :meth:`.predict_errors` for more info on prediction errors.
+            tuple. See :meth:`.prediction_errors` for more info on prediction errors.
 
         kwargs : keyword arguments
             Any other options that may be taken by the forecaster's :meth:`_predict`
@@ -158,9 +153,11 @@ class BaseForecaster(BaseEstimator):
         if levels is not None:
             if isinstance(levels, (int, float)):
                 level = levels
-                errs = [self.predict_errors(fh=fh, conf_lvl=level)]
+                errs = self.prediction_errors(fh=fh, conf_lvl=level)
             else:
-                errs = [self.predict_errors(fh=fh, conf_lvl=level) for level in levels]
+                errs = [
+                    self.prediction_errors(fh=fh, conf_lvl=level) for level in levels
+                ]
 
             return pred, errs
 
@@ -171,7 +168,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError()
 
-    def predict_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
+    def prediction_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
         """
         Calculate the prediction errors for the given forecast horizon.
 
@@ -185,16 +182,16 @@ class BaseForecaster(BaseEstimator):
             The forecast horizon with the steps ahead to calculate intervals for.
             Default is one-step ahead forecast.
 
-        alpha : float
+        conf_lvl : float
             The confidence level to use for the errors. Must be within the open
             interval (0.0, 1.0).
         """
         check_conf_level(conf_lvl)
         fh = self._prepare_fh(fh)
 
-        return self._predict_errors(fh=fh, conf_lvl=conf_lvl)
+        return self._prediction_errors(fh=fh, conf_lvl=conf_lvl)
 
-    def _predict_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
+    def _prediction_errors(self, fh=None, conf_lvl=DEFAULT_CLVL):
         raise NotImplementedError()
 
     def plot(
@@ -296,7 +293,7 @@ class BaseForecaster(BaseEstimator):
                 conf_lvls = list(reversed(sorted(conf_lvls)))
 
                 for alpha, lvl in zip(alphas, conf_lvls):
-                    err = self.predict_errors(fh=fh, conf_lvl=lvl)
+                    err = self.prediction_errors(fh=fh, conf_lvl=lvl)
                     ax.fill_between(
                         y_hat.index, y_hat+err, y_hat-err, fc=col, alpha=alpha, lw=0
                     )
