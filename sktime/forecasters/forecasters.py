@@ -430,9 +430,6 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self : returns an instance of self.
         """
 
-        # Unnest series.
-        orig_y = y
-
         if self._deseasonaliser.sp == 1:
             self._is_seasonal = False
         else:
@@ -499,6 +496,9 @@ class ThetaForecaster(ExpSmoothingForecaster):
         return y_pred
 
     def _prediction_errors(self, fh, conf_lvl=DEFAULT_CLVL):
+        check_is_fitted(self, "_time_index")
+        check_is_fitted(self, "smoothing_level_")
+
         n_obs = len(self._time_index)
         self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_obs - 1))
         sem = self.sigma_ * np.sqrt(fh * self.smoothing_level_ ** 2 + 1)
