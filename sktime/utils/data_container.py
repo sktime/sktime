@@ -228,3 +228,18 @@ def get_time_index(X):
     time_index = Xs.index if hasattr(Xs, 'index') else pd.RangeIndex(Xs.shape[0])
 
     return time_index
+
+def dataframe_to_numpy(X, a = None, b = None):
+    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (num_examples, num_dimensions, time_series_length).
+
+    Parameters
+    ----------
+    X : pandas DataFrame, input
+    a : int, first row (optional, default None)
+    b : int, last row (optional, default None)
+
+    Returns
+    -------
+    NumPy ndarray, converted NumPy ndarray
+    """
+    return np.stack(X.iloc[a:b].applymap(lambda cell : cell.to_numpy()).apply(lambda row : np.stack(row), axis = 1).to_numpy())

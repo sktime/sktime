@@ -2,7 +2,11 @@ from numba import njit, prange
 import numpy as np
 import pandas as pd
 
-from .base import BaseTransformer
+from sklearn.utils.validation import check_is_fitted, check_random_state
+
+from sktime.transformers.base import BaseTransformer
+from sktime.utils.data_container import dataframe_to_numpy
+from sktime.utils.validation.supervised import validate_X
 
 __author__ = "Angus Dempster"
 __all__ = ["ROCKET"]
@@ -21,25 +25,16 @@ class Rocket(BaseTransformer):
 
     Parameters
     ----------
-    input_length : int, length of input time series
-    num_kernels  : int, number of random convolutional kernels
-    num_channels : int, number of channels for multivariate time series (default 1)
+    num_kernels : int, number of random convolutional kernels
+    seed        : int, random seed (optional, default None)
     """
 
-    def __init__(self,  input_length, num_kernels, num_channels = 1):
-        self.input_length = input_length
+    def __init__(self, num_kernels, seed = None):
         self.num_kernels = num_kernels
-        self.num_channels = num_channels
-        self.kernels = _generate_kernels(input_length, num_kernels, num_channels)
+        self.seed = seed
 
-    def fit(self, X, y = None):
-        return self
-
-    def fit_transform(self, X, y = None):
-        return self.fit(X).transform(X)
-
-    def transform(self, X):
-        """Transforms input time series using random convolutional kernels.
+    def fit(self, X):
+        """Infers time series length and number of channels / dimensions (for multivariate time series) from input pandas DataFrame, and generates random kernels.
 
         Parameters
         ----------
@@ -47,16 +42,39 @@ class Rocket(BaseTransformer):
 
         Returns
         -------
+        self
+        """
+        validate_X(X)
+        _, self.num_channels = X.shape
+        input_length = X.applymap(lambda series : series.size).max().max()
+        self.kernels = _generate_kernels(input_length, self.num_kernels, self.num_channels, self.seed)
+        self._is_fitted = True
+        return self
+
+    def transform(self, X, normalise = True):
+        """Transforms input time series using random convolutional kernels.
+
+        Parameters
+        ----------
+        X         : pandas DataFrame, input time series (sktime format)
+        normalise : boolean, whether or not to normalise the input time series per instance (default True)
+
+        Returns
+        -------
         pandas DataFrame, transformed features
         """
-        return pd.DataFrame(_apply_kernels(self._to_numpy(X), self.kernels))
+        check_is_fitted(self, "_is_fitted")
+        validate_X(X)
+        _X = dataframe_to_numpy(X)
+        if normalise:
+            _X = (_X - _X.mean(axis = -1, keepdims = True)) / (_X.std(axis = -1, keepdims = True) + 1e-8)
+        return pd.DataFrame(_apply_kernels(_X, self.kernels))
 
-    @staticmethod
-    def _to_numpy(X, a = None, b = None):
-        return np.stack(X.iloc[a:b].applymap(lambda cell : cell.to_numpy()).apply(lambda row : np.stack(row), axis = 1).to_numpy())
+@njit("Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],int32[:]))(int64,int64,int64,optional(int64))")
+def _generate_kernels(input_length, num_kernels, num_channels, seed):
 
-@njit("Tuple((float32[:],int32[:],float32[:],int32[:],int32[:],int32[:],int32[:]))(int64,int64,int64)")
-def _generate_kernels(input_length, num_kernels, num_channels):
+    if seed is not None:
+        np.random.seed(seed)
 
     candidate_lengths = np.array((7, 9, 11), dtype = np.int32)
     lengths = np.random.choice(candidate_lengths, num_kernels)
@@ -68,8 +86,8 @@ def _generate_kernels(input_length, num_kernels, num_channels):
 
     channel_indices = np.zeros(num_channel_indices.sum(), dtype = np.int32)
 
-    weights = np.zeros(np.int32(np.dot(lengths.astype(np.float32), num_channel_indices.astype(np.float32))), dtype = np.float32)
-    biases = np.zeros(num_kernels, dtype = np.float32)
+    weights = np.zeros(np.int32(np.dot(lengths.astype(np.float64), num_channel_indices.astype(np.float64))), dtype = np.float64)
+    biases = np.zeros(num_kernels, dtype = np.float64)
     dilations = np.zeros(num_kernels, dtype = np.int32)
     paddings = np.zeros(num_kernels, dtype = np.int32)
 
@@ -78,31 +96,31 @@ def _generate_kernels(input_length, num_kernels, num_channels):
 
     for i in range(num_kernels):
 
-        l = lengths[i]
-        n = num_channel_indices[i]
+        _length = lengths[i]
+        _num_channel_indices = num_channel_indices[i]
 
-        _weights = np.random.normal(0, 1, n * l)
+        _weights = np.random.normal(0, 1, _num_channel_indices * _length)
 
-        b1 = a1 + (n * l)
-        b2 = a2 + n
+        b1 = a1 + (_num_channel_indices * _length)
+        b2 = a2 + _num_channel_indices
 
-        a3 = 0
-        for j in range(n):
-            b3 = a3 + l
+        a3 = 0 # for weights (per channel)
+        for j in range(_num_channel_indices):
+            b3 = a3 + _length
             _weights[a3:b3] = _weights[a3:b3] - _weights[a3:b3].mean()
             a3 = b3
 
         weights[a1:b1] = _weights
 
-        channel_indices[a2:b2] = np.random.choice(np.arange(0, num_channels), n, replace = False)
+        channel_indices[a2:b2] = np.random.choice(np.arange(0, num_channels), _num_channel_indices, replace = False)
 
         biases[i] = np.random.uniform(-1, 1)
 
-        dilation = 2 ** np.random.uniform(0, np.log2((input_length - 1) / (l - 1)))
+        dilation = 2 ** np.random.uniform(0, np.log2((input_length - 1) / (_length - 1)))
         dilation = np.int32(dilation)
         dilations[i] = dilation
 
-        padding = ((l - 1) * dilation) // 2 if np.random.randint(2) == 1 else 0
+        padding = ((_length - 1) * dilation) // 2 if np.random.randint(2) == 1 else 0
         paddings[i] = padding
 
         a1 = b1
@@ -111,33 +129,30 @@ def _generate_kernels(input_length, num_kernels, num_channels):
     return weights, lengths, biases, dilations, paddings, num_channel_indices, channel_indices
 
 @njit(fastmath = True)
-def _apply_kernel(X, weights, length, bias, dilation, padding, num_channel_indices, channel_indices):
+def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
 
-    # zero padding
-    if padding > 0:
-        _num_channels, _input_length = X.shape
-        _X = np.zeros((_num_channels, _input_length + (2 * padding)))
-        _X[:, padding:(padding + _input_length)] = X
-        X = _X
+    input_length = len(X)
 
-    num_channels, input_length = X.shape
-
-    output_length = input_length - ((length - 1) * dilation)
+    output_length = (input_length + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
     _max = np.NINF
 
-    for i in range(output_length):
+    end = (input_length + padding) - ((length - 1) * dilation)
+
+    for i in range(-padding, end):
 
         _sum = bias
 
+        index = i
+
         for j in range(length):
 
-            dilation_j = dilation * j
+            if index > -1 and index < input_length:
 
-            for k in range(num_channel_indices):
+                _sum = _sum + weights[j] * X[index]
 
-                _sum += weights[k, j] * X[channel_indices[k], i + dilation_j]
+            index = index + dilation
 
         if _sum > _max:
             _max = _sum
@@ -147,32 +162,78 @@ def _apply_kernel(X, weights, length, bias, dilation, padding, num_channel_indic
 
     return _ppv / output_length, _max
 
-@njit("float32[:,:](float64[:,:,:],Tuple((float32[::1],int32[:],float32[:],int32[:],int32[:],int32[:],int32[:])))", parallel = True, fastmath = True)
+@njit(fastmath = True)
+def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding, num_channel_indices, channel_indices):
+
+    num_channels, input_length = X.shape
+
+    output_length = (input_length + (2 * padding)) - ((length - 1) * dilation)
+
+    _ppv = 0
+    _max = np.NINF
+
+    end = (input_length + padding) - ((length - 1) * dilation)
+
+    for i in range(-padding, end):
+
+        _sum = bias
+
+        index = i
+
+        for j in range(length):
+
+            if index > -1 and index < input_length:
+
+                for k in range(num_channel_indices):
+
+                    _sum = _sum + weights[k, j] * X[channel_indices[k], index]
+
+            index = index + dilation
+
+        if _sum > _max:
+            _max = _sum
+
+        if _sum > 0:
+            _ppv += 1
+
+    return _ppv / output_length, _max
+
+@njit("float64[:,:](float64[:,:,:],Tuple((float64[::1],int32[:],float64[:],int32[:],int32[:],int32[:],int32[:])))", parallel = True, fastmath = True)
 def _apply_kernels(X, kernels):
 
     weights, lengths, biases, dilations, paddings, num_channel_indices, channel_indices = kernels
 
-    num_examples = len(X)
+    num_examples, num_channels, _ = X.shape
     num_kernels = len(lengths)
 
-    _X = np.zeros((num_examples, num_kernels * 2), dtype = np.float32) # 2 features per kernel
+    _X = np.zeros((num_examples, num_kernels * 2), dtype = np.float64) # 2 features per kernel
 
     for i in prange(num_examples):
 
         a1 = 0 # for weights
         a2 = 0 # for channel_indices
+        a3 = 0 # for features
 
         for j in range(num_kernels):
 
-            b1 = a1 + (num_channel_indices[j] * lengths[j])
+            b1 = a1 + num_channel_indices[j] * lengths[j]
             b2 = a2 + num_channel_indices[j]
+            b3 = a3 + 2
 
-            _weights = weights[a1:b1].reshape((num_channel_indices[j], lengths[j]))
+            if num_channel_indices[j] == 1:
 
-            _X[i, (j * 2):((j * 2) + 2)] = \
-            _apply_kernel(X[i], _weights, lengths[j], biases[j], dilations[j], paddings[j], num_channel_indices[j], channel_indices[a2:b2])
+                _X[i, a3:b3] = \
+                _apply_kernel_univariate(X[i, channel_indices[a2]], weights[a1:b1], lengths[j], biases[j], dilations[j], paddings[j])
+
+            else:
+
+                _weights = weights[a1:b1].reshape((num_channel_indices[j], lengths[j]))
+
+                _X[i, a3:b3] = \
+                _apply_kernel_multivariate(X[i], _weights, lengths[j], biases[j], dilations[j], paddings[j], num_channel_indices[j], channel_indices[a2:b2])
 
             a1 = b1
             a2 = b2
+            a3 = b3
 
     return _X
