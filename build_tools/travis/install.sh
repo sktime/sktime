@@ -82,7 +82,7 @@ make_conda() {
     conda update --yes conda
 
     # Set up test environment
-    conda create -n testenv --yes $TO_INSTALL
+    conda create -n testenv -c conda-forge --yes $TO_INSTALL
 
     # Activate environment
     source activate testenv
