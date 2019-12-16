@@ -1,5 +1,5 @@
 __all__ = ["BaseForecaster", "BaseSingleSeriesForecaster", "BaseUpdateableForecaster"]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "big-o@github"]
 
 
 from warnings import warn

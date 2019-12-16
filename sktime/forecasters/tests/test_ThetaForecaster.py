@@ -6,6 +6,9 @@ from sktime.datasets import load_airline
 from sktime.forecasters.model_selection import temporal_train_test_split
 
 
+__author__ = "big-o@github"
+
+
 # forecast horizons
 FHS = ([1], np.arange(1, 5), np.arange(1, 20))
 

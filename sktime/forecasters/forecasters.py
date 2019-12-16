@@ -21,7 +21,7 @@ __all__ = [
     "DummyForecaster",
     "ThetaForecaster"
 ]
-__author__ = ['Markus Löning']
+__author__ = ['Markus Löning', 'big-o@github']
 
 
 class ARIMAForecaster(BaseUpdateableForecaster):

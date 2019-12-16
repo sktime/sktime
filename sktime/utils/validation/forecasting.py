@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning", "big-o@github"]
 __all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh"]
 
 
