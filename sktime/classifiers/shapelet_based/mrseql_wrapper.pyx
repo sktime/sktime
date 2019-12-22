@@ -161,20 +161,9 @@ class MrSEQLClassifier(BaseClassifier):
         # store fitted sfa for later transformation
         self.sfas = {}
 
-#    def mode(self, seql_mode='clf'):
-#        self.seql_mode = seql_mode
-#        return self
-
-    # either sax or sfa or both
-#    def symbol_representations(self, symr=['sax']):
-#        self.symbolic_methods = symr
-#        return self
 
     def __is_multiclass(self):
-        if not self.classes_:
-            print('Data not fitted yet')
-        else:
-            return self.classes_ > 2
+        return len(self.classes_) > 2
 
     # change arbitrary binary labels to -1, 1 labels as SEQL can only work with -1, 1
     def __to_tmp_labels(self, y):
@@ -228,11 +217,10 @@ class MrSEQLClassifier(BaseClassifier):
         models = []
         for rep in mr_seqs:
             m = PySEQL()
-            #print(rep)
             m.learn(rep, labels)
             models.append(m)
         return models
-            #self.seql_models.append(pseql)
+
 
     def __fit_multiclass_problem(self, mr_seqs, labels):
         # one versus all
@@ -247,7 +235,7 @@ class MrSEQLClassifier(BaseClassifier):
     def __to_feature_space(self, mr_seqs):
         full_fm = []
 
-        if len(self.classes_) > 2:
+        if self.__is_multiclass():
             for ova_models in self.seql_models:
                 for rep, model in zip(mr_seqs, ova_models):
                     seq_features = model.get_sequence_features(True)
@@ -295,7 +283,7 @@ class MrSEQLClassifier(BaseClassifier):
 
         self.classes_ = np.unique(y) #because sklearn also uses np.unique
 
-        if len(self.classes_) > 2: #one versus all
+        if self.__is_multiclass(): #one versus all
             self.seql_models = self.__fit_multiclass_problem(mr_seqs, y)
         else:
             temp_labels = self.__to_tmp_labels(y)
@@ -326,7 +314,7 @@ class MrSEQLClassifier(BaseClassifier):
 
 
 
-        if len(self.classes_) > 2: # multiclass
+        if self.__is_multiclass():
             scores = np.zeros((len(X), len(self.classes_)))
 
             for li, ova_models in enumerate(self.seql_models):
@@ -361,9 +349,6 @@ class MrSEQLClassifier(BaseClassifier):
         proba = self.predict_proba(X, False)
         return np.array([self.classes_[np.argmax(prob)] for prob in proba])
 
-    # to use custom symbolic representation
-    # def fit_symbolic_representations(self, ts_rep):
-    #     print('Do nothing.')
 
     def get_configuration(self):
         return self.config
@@ -373,7 +358,7 @@ class MrSEQLClassifier(BaseClassifier):
     # each value represents the importanceness
     def map_sax_model(self, ts):
         weighted_ts = np.zeros(len(ts))
-        if len(self.classes_) > 2:
+        if self.__is_multiclass():
             print('Do nothing')
         else:
             for cfg,m in zip(self.config, self.seql_models):
