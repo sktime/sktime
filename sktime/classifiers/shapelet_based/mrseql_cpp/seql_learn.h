@@ -14,10 +14,10 @@
 #include <string>
 #include <map>
 #include <set>
-#include "sys/time.h"
+// #include "sys/time.h" # not working with VSC++
 #include <list>
 #include "SNode.h"
-#include <unistd.h>
+// #include <unistd.h>
 //using namespace std;
 
 
@@ -112,9 +112,9 @@ private:
     bool traversal_strategy;
 
     // Profiling variables.
-    struct timeval t;
-    struct timeval t_origin;
-    struct timeval t_start_iter;
+    // struct timeval t;
+    // struct timeval t_origin;
+    // struct timeval t_start_iter;
     //long double LDBL_MAX = numeric_limits<long double>::max();
 
     // lines ignored by SEQL learner

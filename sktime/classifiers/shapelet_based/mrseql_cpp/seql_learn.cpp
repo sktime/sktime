@@ -46,9 +46,9 @@
 #include <iterator>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
+// #include <unistd.h>
 #include "common.h"
-#include "sys/time.h"
+// #include "sys/time.h"
 #include <list>
 #include "SNode.h"
 #include "seql_learn.h"
@@ -967,9 +967,9 @@ SeqLearner::rule_t SeqLearner::findBestNgram(rule_t& rule ,std::vector <SNode*>&
 	if (verbosity >= 2) {
 		cout << "\nfound best ngram! ";
 		cout << "\nrule.gradient: " << rule.gradient;
-		gettimeofday(&t, NULL);
-		cout << " (per iter: " << t.tv_sec - t_start_iter.tv_sec << " seconds; " << (t.tv_sec - t_start_iter.tv_sec) / 60.0 << " minutes; total time:"
-				<< (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes)";
+		// gettimeofday(&t, NULL);
+		// cout << " (per iter: " << t.tv_sec - t_start_iter.tv_sec << " seconds; " << (t.tv_sec - t_start_iter.tv_sec) / 60.0 << " minutes; total time:"
+		// 		<< (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes)";
 	}
 	return rule;
 };
@@ -1003,7 +1003,7 @@ int SeqLearner::run (const char *in,
 	alpha = _l1vsl2_regularizer;
 	verbosity = _verbosity;
 
-	gettimeofday(&t_origin, NULL);
+	// gettimeofday(&t_origin, NULL);
 
 	// TODO setup ofstream in properway
 	std::ofstream os (out);
@@ -1040,7 +1040,7 @@ int SeqLearner::run (const char *in,
 
 	// Loop for number of given optimization iterations.
 	for (unsigned int itr = 0; itr < maxitr; ++itr) {
-		gettimeofday(&t_start_iter, NULL);
+		// gettimeofday(&t_start_iter, NULL);
 
 		// Search in the feature space for the Ngram with the best absolute gradient value
 		findBestNgram(rule, old_space, new_space, seed);
@@ -1143,13 +1143,13 @@ int SeqLearner::run (const char *in,
 
 	} //end optimization iterations.
 
-	gettimeofday(&t, NULL);
+	// gettimeofday(&t, NULL);
 	if (verbosity >= 1) {
 		if ( C != 0 ) {
 			cout << "\nend penalty_term: " << C * (alpha * sum_abs_betas + (1 - alpha) * 0.5 * sum_squared_betas);
 		}
 		cout << "\nend loss + penalty_term: " << loss;
-		cout << "\n\ntotal time: " << t.tv_sec - t_origin.tv_sec << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes\n ";
+		// cout << "\n\ntotal time: " << t.tv_sec - t_origin.tv_sec << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes\n ";
 	}
 	return 1;
 } //end run().
@@ -1181,7 +1181,7 @@ int SeqLearner::run_internal (
 	alpha = _l1vsl2_regularizer;
 	verbosity = _verbosity;
 
-	gettimeofday(&t_origin, NULL);
+	// gettimeofday(&t_origin, NULL);
 
 	setup_internal();
 
@@ -1216,7 +1216,7 @@ int SeqLearner::run_internal (
 
 	// Loop for number of given optimization iterations.
 	for (unsigned int itr = 0; itr < maxitr; ++itr) {
-		gettimeofday(&t_start_iter, NULL);
+		// gettimeofday(&t_start_iter, NULL);
 
 		// Search in the feature space for the Ngram with the best absolute gradient value
 		findBestNgram(rule, old_space, new_space, seed);
@@ -1329,13 +1329,13 @@ int SeqLearner::run_internal (
 
 	} //end optimization iterations.
 
-	gettimeofday(&t, NULL);
+	// gettimeofday(&t, NULL);
 	if (verbosity >= 1) {
 		if ( C != 0 ) {
 			cout << "\nend penalty_term: " << C * (alpha * sum_abs_betas + (1 - alpha) * 0.5 * sum_squared_betas);
 		}
 		cout << "\nend loss + penalty_term: " << loss;
-		cout << "\n\ntotal time: " << t.tv_sec - t_origin.tv_sec << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes\n ";
+		// cout << "\n\ntotal time: " << t.tv_sec - t_origin.tv_sec << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes\n ";
 	}
 
 
@@ -1425,11 +1425,11 @@ void SeqLearner::prepareInvertedIndex (std::map<string, SNode>& seed) {
 		}
 	} //end for docid.
 
-	gettimeofday(&t, NULL);
-	if (verbosity >= 1) {
-		cout << " ( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
-		cout.flush();
-	}
+	// gettimeofday(&t, NULL);
+	// if (verbosity >= 1) {
+		// cout << " ( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
+		// cout.flush();
+	// }
 };
 
 void SeqLearner::deleteUndersupportedUnigrams(std::map<string, SNode>& seed){
@@ -1453,10 +1453,10 @@ void SeqLearner::deleteUndersupportedUnigrams(std::map<string, SNode>& seed){
 		cout << "\n>>> NO UNIGRAM LEFT\nMaybe adjust the minsup parameter";
 		exit(1);
 	};
-	gettimeofday(&t, NULL);
+	// gettimeofday(&t, NULL);
 	if (verbosity >= 1) {
 		cout << "\n# distinct unigrams: " << single_node_minsup_cache.size();
-		cout << " ( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
+		// cout << " ( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
 		cout.flush();
 	}
 };
@@ -1538,11 +1538,11 @@ bool SeqLearner::setup(const char *in, const char *out, std::ofstream& os){
 		std::cerr << "FATAL: Cannot open input file: " << in << std::endl;
 		return false;
 	}
-	gettimeofday(&t, NULL);
-	if (verbosity > 0){
-		cout << "( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
-		cout.flush();
-	}
+	// gettimeofday(&t, NULL);
+	// if (verbosity > 0){
+		// cout << "( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
+	//	cout.flush();
+	// }
 
 	if (! os) {
 		std::cerr << "FATAL: Cannot open output file: " << out << std::endl;
@@ -1572,11 +1572,11 @@ bool SeqLearner::setup(const char *in, const char *out, std::ofstream& os){
 
 bool SeqLearner::setup_internal(){
 
-	gettimeofday(&t, NULL);
-	if (verbosity > 0){
-		cout << "( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
-		cout.flush();
-	}
+	// gettimeofday(&t, NULL);
+	// if (verbosity > 0){
+	// 	cout << "( " << (t.tv_sec - t_origin.tv_sec) << " seconds; " << (t.tv_sec - t_origin.tv_sec) / 60.0 << " minutes )";
+	// 	cout.flush();
+	// }
 
 
 
@@ -1598,5 +1598,3 @@ bool SeqLearner::setup_internal(){
 
 	return true;
 }
-
-

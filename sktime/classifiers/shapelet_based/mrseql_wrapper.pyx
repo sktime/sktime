@@ -3,6 +3,7 @@ from libcpp cimport bool
 from libcpp.vector cimport vector
 
 import numpy as np
+import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 from sktime.transformers.dictionary_based.SFA import SFA
@@ -107,33 +108,67 @@ cdef class PySEQL:
 
 
 ######################### Mr-SEQL (main class) #########################
+''' Time Series Classification with multiple symbolic representations and SEQL (Mr-SEQL)
 
+ @article{mrseql,
+ author = {Nguyen, Thach and Gsponer, Severin and Ilie, Iulia and O'reilly, Martin and Ifrim, Georgiana},
+ title = {Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations},
+ journal = {Data Mining and Knowledge Discovery},
+ volume = {33},
+ number = {4},
+ year = {2019},
+ }
+
+
+Overview: Mr-SEQL is a time series classifier that learn from multiple symbolic representations of multiple resolutions and multiple domains.
+Currently, Mr-SEQL supports both SAX and SFA representations.
+
+Parameters
+----------
+seql_mode       : str, either 'clf' or 'fs'. In the 'clf', Mr-SEQL mode trains an ensemble of SEQL models while in the 'fs' mode it uses SEQL to select features for training a logistic regression model.
+symrep          : list or tuple, should contains only 'sax' or 'sfa' or both. The symbolic representations to be used to transform the input time series.
+symrep_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
+
+'''
 class MrSEQLClassifier(BaseClassifier):
-    def __init__(self):
 
-        self.config = [] # configuration for symbolic transformation
-        self.symbolic_methods = ['sax'] # default methods if configuration not predefined
+
+    def __init__(self, seql_mode='clf', symrep=['sax'], symrepconfig=None):
+
+        self.symbolic_methods = symrep
+
+        if seql_mode in ('fs','clf'):
+            self.seql_mode = seql_mode
+        else:
+            raise ValueError('seql_mode should be either clf or fs.')
+
+        if symrepconfig is None:
+            self.config = [] # http://effbot.org/zone/default-values.htm
+        else:
+            self.config = symrepconfig
+
         #self.label_dict = {} # for translating labels since seql only accept [1.-1] as labels
         self.seql_models = [] # seql models
-        
+
         # all the unique labels in the data
         # in case of binary data the first one is always the negative class
-        self.classes_ = [] 
+        self.classes_ = []
 
-        self.seql_mode = 'clf' # 'fs' or 'clf'
 
-        self.clf = None
 
-        # store fitted sfa
+        self.clf = None # scikit-learn model
+
+        # store fitted sfa for later transformation
         self.sfas = {}
-    def mode(self, seql_mode='clf'):
-        self.seql_mode = seql_mode
-        return self
+
+#    def mode(self, seql_mode='clf'):
+#        self.seql_mode = seql_mode
+#        return self
 
     # either sax or sfa or both
-    def symbol_representations(self, symr=['sax']):
-        self.symbolic_methods = symr
-        return self
+#    def symbol_representations(self, symr=['sax']):
+#        self.symbolic_methods = symr
+#        return self
 
     def __is_multiclass(self):
         if not self.classes_:
@@ -143,7 +178,7 @@ class MrSEQLClassifier(BaseClassifier):
 
     # change arbitrary binary labels to -1, 1 labels as SEQL can only work with -1, 1
     def __to_tmp_labels(self, y):
-        return [1 if l == self.classes_[1] else -1 for l in y] 
+        return [1 if l == self.classes_[1] else -1 for l in y]
 
 
     def __transform_time_series(self, ts_x):
@@ -237,9 +272,23 @@ class MrSEQLClassifier(BaseClassifier):
         full_fm = np.hstack(full_fm)
         return full_fm
 
-
+    '''
+    Check if X input is correct.
+    From dictionary_based/boss.py
+    '''
+    def __X_check(self,X):
+        if isinstance(X, pd.DataFrame):
+            if X.shape[1] > 1:
+                raise TypeError("Mr-SEQL cannot handle multivariate problems yet")
+            elif isinstance(X.iloc[0, 0], pd.Series):
+                X = np.asarray([a.values for a in X.iloc[:, 0]])
+            else:
+                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects.")
+        return X
 
     def fit(self, X, y, input_checks=True):
+
+        X = self.__X_check(X)
 
         # transform time series to multiple symbolic representations
         mr_seqs = self.__transform_time_series(X)
@@ -257,8 +306,8 @@ class MrSEQLClassifier(BaseClassifier):
         # then fit the new data to a logistic regression model
         if self.seql_mode == 'fs':
             train_x = self.__to_feature_space(mr_seqs)
-            self.clf = LogisticRegression(solver='newton-cg',multi_class = 'multinomial', class_weight='balanced').fit(train_x, y)        
-            self.classes_ = self.clf.classes_ # shouldn't matter    
+            self.clf = LogisticRegression(solver='newton-cg',multi_class = 'multinomial', class_weight='balanced').fit(train_x, y)
+            self.classes_ = self.clf.classes_ # shouldn't matter
 
     def __compute_proba(self, score):
         # if score < -8000:
@@ -267,15 +316,17 @@ class MrSEQLClassifier(BaseClassifier):
         return 1.0 / (1.0 + np.exp(-score))
 
     def predict_proba(self, X, input_checks=True):
+        if input_checks:
+            X = self.__X_check(X)
         mr_seqs = self.__transform_time_series(X)
 
         if self.seql_mode == 'fs':
             test_x = self.__to_feature_space(mr_seqs)
             return self.clf.predict_proba(test_x) # TODO: Check if sklearn clf store labels in the same order
 
-        
-       
-        if len(self.classes_) > 2: # multiclass            
+
+
+        if len(self.classes_) > 2: # multiclass
             scores = np.zeros((len(X), len(self.classes_)))
 
             for li, ova_models in enumerate(self.seql_models):
@@ -285,27 +336,29 @@ class MrSEQLClassifier(BaseClassifier):
 
             proba = self.__compute_proba(scores)
             proba /= proba.sum(axis=1).reshape((proba.shape[0], -1)) # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
-            
+
             return proba
 
-            
+
 
 
         else: # binary
-            scores = np.zeros(len(X)) 
+            scores = np.zeros(len(X))
             for rep, model in zip(mr_seqs, self.seql_models):
                 for c,seq in enumerate(rep):
                     scores[c] = scores[c] + model.classify(seq)
             positive_proba = self.__compute_proba(scores)
             return np.vstack([1 - positive_proba, positive_proba]).T # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
-            
-        
 
-            
+
+
+
 
 
     def predict(self, X, input_checks=True):
-        proba = self.predict_proba(X)
+        if input_checks:
+            X = self.__X_check(X)
+        proba = self.predict_proba(X, False)
         return np.array([self.classes_[np.argmax(prob)] for prob in proba])
 
     # to use custom symbolic representation

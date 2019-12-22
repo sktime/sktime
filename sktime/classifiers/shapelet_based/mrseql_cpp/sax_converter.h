@@ -12,11 +12,10 @@
 #include <iostream>
 #include <cmath>
 #include <string>
-#include <cstring>
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
-#include <ctime>
+//#include <ctime>
 #include <fstream>
 #include <sstream>
 #include <map>
@@ -277,7 +276,7 @@ public:
 
 		// z-normalize
 		// padding data for the indivisible-length time series
-		double subsection[window_size*word_length];
+		std::vector<double> subsection(window_size*word_length);
 		for (int i = cur_pos; i <= window_end; i++){
 			double normalized_value;
 			if (TEST_NORMALIZE){
@@ -352,7 +351,7 @@ public:
 
 			// z-normalize
 			// padding data for the indivisible-length time series
-			double subsection[window_size*word_length];
+			std::vector<double> subsection(window_size*word_length);
 			for (int i = cur_pos; i <= window_end; i++){
 				double normalized_value;
 				if (TEST_NORMALIZE){
