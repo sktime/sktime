@@ -62,7 +62,7 @@ To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__
 
 Currently, the package implements:
 
-* Various state-of-the-art algorithms for time series classification and regression,
+* Various state-of-the-art algorithms for time series classification and regression, ported from the Java-based `tsml <https://github.com/uea-machine-learning/tsml/>`__ toolkit,
 * Transformers, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms a.k.a. feature extractors (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
 * Pipelining, allowing to chain multiple transformers with a final estimator,
 * Meta-estimators such as reduction strategies, grid-search tuners and ensembles, including ensembles for multivariate time series classification,
@@ -110,12 +110,9 @@ If you use sktime in a scientific publication, we would appreciate citations to 
 
 Bibtex entry::
 
-    @misc{sktime,
-          author = {Markus Löning and Anthony Bagnall and Sajaysurya Ganesh and Viktor Kazakov
-          and Jason Lines and Franz J. Király},
-          title = {sktime: A Unified Interface for Machine Learning with Time Series},
-          year = {2019},
-          eprint = {arXiv:1909.07872},
+    @inproceedings{sktime,
+        author = {L{\"{o}}ning, Markus and Bagnall, Anthony and Ganesh, Sajaysurya and Kazakov, Viktor and Lines, Jason and Kir{\'{a}}ly, Franz J},
+        booktitle = {Workshop on Systems for ML at NeurIPS 2019},
+        title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
+        date = {2019},
     }
-
-
