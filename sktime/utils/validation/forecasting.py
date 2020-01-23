@@ -1,9 +1,9 @@
+__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv"]
+__author__ = "Markus Löning"
+
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_is_fitted
-
-__author__ = "Markus Löning"
-__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh"]
 
 
 def validate_y_X(y, X):
@@ -32,11 +32,11 @@ def validate_y(y):
 
     Parameters
     ----------
-    y : pandas Series or numpy ndarray
+    y : pd.Series
 
     Returns
     -------
-    None
+    y : pd.Series
 
     Raises
     ------
@@ -44,8 +44,46 @@ def validate_y(y):
         If y is an invalid input
     """
     # Check if pandas series
+
     if not isinstance(y, pd.Series):
-        raise ValueError(f'y must be a pandas Series, but found: {type(y)}')
+        raise ValueError(f'y must be a pd.Series, but found: {type(y)}')
+
+    # check time index
+    validate_time_index(y.index)
+    return y
+
+
+def validate_cv(cv):
+    if not hasattr(cv, "split"):
+        raise ValueError("Expected cv as a temporal cross-validation object with `split` method")
+
+    if not hasattr(cv, "fh"):
+        raise ValueError("Expected cv as a temporal cross-validation object with `fh` attribute")
+
+    return cv
+
+
+def validate_time_index(time_index):
+    """Validate time index
+
+    Parameters
+    ----------
+    time_index : pd.Index
+
+    Returns
+    -------
+    time_index : pd.Index
+    """
+    # period or datetime index are not support yet
+    # TODO add support for period/datetime indexing
+    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
+        raise NotImplementedError(f"{type(time_index)} is not fully supported yet, "
+                                  f"use pandas RangeIndex instead")
+
+    if not time_index.is_monotonic:
+        raise ValueError("Time index must be monotonically increasing, but found non-monotonic index")
+
+    return time_index
 
 
 def validate_X(X):
@@ -197,26 +235,6 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
                "appropriate arguments before using this method.")
 
     check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
-
-
-def validate_time_index(time_index):
-    """Validate time index
-
-    Parameters
-    ----------
-    time_index : array-like
-
-    Returns
-    -------
-    time_index : ndarray
-    """
-    # period or datetime index are not support yet
-    # TODO add support for period/datetime indexing
-    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-        raise NotImplementedError(f"{type(time_index)} is not fully supported yet, "
-                                  f"use pandas RangeIndex instead")
-
-    return np.asarray(time_index)
 
 
 def check_consistent_time_indices(x, y):

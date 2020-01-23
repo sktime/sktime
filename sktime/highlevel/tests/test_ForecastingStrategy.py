@@ -3,7 +3,7 @@ import pandas as pd
 
 from sktime.datasets import load_longley
 from sktime.datasets import load_shampoo_sales
-from sktime.forecasters import ARIMAForecaster
+from sktime.forecasting import ARIMAForecaster
 from sktime.highlevel.strategies import ForecastingStrategy
 from sktime.highlevel.tasks import ForecastingTask
 
