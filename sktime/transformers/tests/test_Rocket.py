@@ -16,6 +16,9 @@ def test_rocket_on_gunpoint():
     # transform training data
     X_training_transform = ROCKET.transform(X_training)
 
+    # test shape of transformed training data -> (number of training examples, num_kernels * 2)
+    np.testing.assert_equal(X_training_transform.shape, (len(X_training), 20_000))
+
     # fit classifier
     classifier = RidgeClassifierCV(alphas = np.logspace(-3, 3, 10), normalize = True)
     classifier.fit(X_training_transform, Y_training)
@@ -26,5 +29,12 @@ def test_rocket_on_gunpoint():
     # transform test data
     X_test_transform = ROCKET.transform(X_test)
 
-    # predict
-    classifier.score(X_test_transform, Y_test)
+    # test shape of transformed test data -> (number of test examples, num_kernels * 2)
+    np.testing.assert_equal(X_test_transform.shape, (len(X_test), 20_000))
+
+    # predict (alternatively: 'classifier.score(X_test_transform, Y_test)')
+    predictions = classifier.predict(X_test_transform)
+    accuracy = (predictions == Y_test).mean()
+
+    # test predictions (on Gunpoint, should be 100% accurate)
+    np.testing.assert_array_equal(predictions, Y_test)
