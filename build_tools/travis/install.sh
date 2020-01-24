@@ -96,7 +96,8 @@ TO_INSTALL="python=$PYTHON_VERSION pip pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             cython=$CYTHON_VERSION scikit-learn=$SKLEARN_VERSION \
             pandas=$PANDAS_VERSION statsmodels=$STATSMODELS_VERSION \
-            wheel"
+            wheel \
+						numba=$NUMBA_VERSION"
 make_conda $TO_INSTALL
 
 if [ "$COVERAGE" == "true" ]
