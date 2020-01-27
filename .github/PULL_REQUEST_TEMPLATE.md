@@ -25,10 +25,10 @@ A clear and concise description of what you have implemented.
 If you contribute new estimators (classifiers, regressors, forecasters, etc), please go through the checklist below. 
 -->
 
-- [ ] My contributions introduces a new dependency
+- [ ] My contributions introduce a new dependency
 - [ ] I have added unit tests 
 - [ ] I have updated the existing example notebooks or provided a new one   
-- [ ] I have registered my contribution in our [overview](https://github.com/alan-turing-institute/sktime/CONTRIBUTIONS.md)  
+- [ ] I have updated our [contributions overview](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTIONS.md)  
 
 #### Any other comments?
 <!--
