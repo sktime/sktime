@@ -15,8 +15,20 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 
 #### What does this implement/fix? Explain your changes.
 <!--
-A clear and concise description of what you have implemented.
+A clear and concise description of what you have implemented. 
 -->
+
+
+
+#### PR checklist for new estimtors 
+<!--
+If you contribute new estimators (classifiers, regressors, forecasters, etc), please go through the checklist below. 
+-->
+
+- [ ] My contributions introduces a new dependency
+- [ ] I have added unit tests 
+- [ ] I have updated the existing example notebooks or provided a new one   
+- [ ] I have registered my contribution in our [overview](https://github.com/alan-turing-institute/sktime/CONTRIBUTIONS.md)  
 
 #### Any other comments?
 <!--
