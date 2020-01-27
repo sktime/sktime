@@ -18,19 +18,18 @@ is merged. See https://github.com/blog/1506-closing-issues-via-pull-requests
 A clear and concise description of what you have implemented. 
 -->
 
+#### Does your contribution introduce a new dependency? If yes, which one? 
+
+<!--
+If your contribution does add a new dependency, we may suggest to initially develop your contribution in a separate
+ companion package in https://github.com/sktime/ to keep external dependencies of the core sktime package to a minimum. 
+-->
 
 
 #### PR checklist for new estimators 
 <!--
 This is only relevant if you contribute new algorithm or estimator (classifiers, regressors, forecasters, etc
 .). If so, please go through the checklist below. Otherwise please delete check list.
--->
-
-- [ ] Does your contribution introduce a new dependency? If yes, which one? 
-
-<!--
-If your contribution does add a new dependency, we may suggest to initially develop your contribution in a separate
- companion package in https://github.com/sktime/ to keep external dependencies of the core sktime package to a minimum. 
 -->
 
 - [ ] I have added unit tests and made sure they pass locally. 
