@@ -21,15 +21,14 @@
 sktime
 ======
 
-A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for learning with
+A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine learning with
 time series. sktime currently supports:
 
 * State-of-the-art time series classification and regression algorithms,
 * Classical forecasting including reduction strategies to regression,
 * Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
 
-For deep learning methods, we have a separate extension package:
-`sktime-dl <https://github.com/sktime/sktime-dl>`__.
+For deep learning, we have a separate extension package: `sktime-dl <https://github.com/sktime/sktime-dl>`_. 
 
 sktime is under active development and we are looking for contributors. You can find our development road map below.
 
@@ -50,15 +49,15 @@ To install the development version, please see our
 
 Documentation
 -------------
-* Tutorials can be found in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder or can be launched directly on Binder_.
-* The full API documentation can be found `here <https://alan-turing-institute.github.io/sktime/>`__.
 
+* The full API documentation can be found `here <https://alan-turing-institute.github.io/sktime/>`__,
+* Tutorials can be found in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder or can be launched directly on Binder_,
+* Material from previous workshops and development sprints can be found `here <https://github.com/sktime/sktime-workshops>`__.
 
 Overview
 --------
-sktime extends the standard scikit-learn API to handle modular workflows for time series and panel data.
-The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification or forecasting.
-To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
+sktime extends the standard scikit-learn API to handle modular machine learning workflows for time series data.
+The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification and forecasting. To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
 
 Currently, the package implements:
 
@@ -69,8 +68,7 @@ Currently, the package implements:
 * Composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
 * Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
 
-In addition, sktime includes a high-level API that unifies multiple learning tasks, partially inspired by the APIs of
-`mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
+In addition, sktime includes a experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
 In particular, we introduce:
 
 * Task objects that encapsulate meta-data from a dataset and the necessary information about the particular learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
