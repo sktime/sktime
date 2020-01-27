@@ -20,10 +20,10 @@ A clear and concise description of what you have implemented.
 
 
 
-#### PR checklist for new estimtors 
+#### PR checklist for new estimators 
 <!--
 This is only relevant if you contribute new algorithm or estimator (classifiers, regressors, forecasters, etc
-.). If so, please go through the checklist below. 
+.). If so, please go through the checklist below. Otherwise please delete check list.
 -->
 
 - [ ] Does your contribution introduce a new dependency? If yes, which one? 
