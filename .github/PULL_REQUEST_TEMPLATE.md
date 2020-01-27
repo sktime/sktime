@@ -22,13 +22,18 @@ A clear and concise description of what you have implemented.
 
 #### PR checklist for new estimtors 
 <!--
-If you contribute new estimators (classifiers, regressors, forecasters, etc), please go through the checklist below. 
+This is only relevant if you contribute new algorithm or estimator (classifiers, regressors, forecasters, etc
+.). If so, please go through the checklist below. 
 -->
 
-- [ ] My contributions introduce a new dependency
-- [ ] I have added unit tests 
-- [ ] I have updated the existing example notebooks or provided a new one   
-- [ ] I have updated our [contributions overview](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTIONS.md)  
+- [ ] Does your contribution introduce a new dependency? If yes, which one?
+
+- [ ] I have added unit tests and made sure they pass locally. 
+ 
+- [ ] I have updated the existing example notebooks or provided a new one to showcase how my algorithm works.
+   
+- [ ] I have updated sktime's 
+[estimator overview](https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md). 
 
 #### Any other comments?
 <!--
