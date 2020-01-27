@@ -18,17 +18,11 @@ from sktime.utils.validation.forecasting import validate_y
 
 class DummyForecaster(BaseEstimator, ForecasterMixin):
     """
-    Dummy forecaster for naive forecasters approaches.
-
-    Parameters
-    ----------
-    strategy : str{'mean', 'last', 'linear'}, optional (default='last')
-        Naive forecasters strategy
-    sp : int
-        Seasonal periodicity
+    Dummy forecaster for naive baseline forecasts
     """
 
     def __init__(self, strategy="last"):
+        # allowed strategies an include: last, constant, seasonal-last, mean, median
         allowed_strategies = ("last",)
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}, expected one of {allowed_strategies}")
@@ -36,6 +30,8 @@ class DummyForecaster(BaseEstimator, ForecasterMixin):
         super(DummyForecaster, self).__init__()
 
     def fit(self, y_train, fh=None):
+        if fh == "insample":
+            raise NotImplementedError
 
         y_train = validate_y(y_train)
         self._time_index = y_train.index
@@ -53,6 +49,9 @@ class DummyForecaster(BaseEstimator, ForecasterMixin):
         return self
 
     def predict(self, fh=None, return_conf_int=False, alpha=0.05):
+        if fh == "insample":
+            raise NotImplementedError
+
         check_is_fitted(self, "_y_pred")
         # validate forecasting horizon
         # if no fh is passed to predict, check if it was passed to fit; if so, use it; otherwise raise error

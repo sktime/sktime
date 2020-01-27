@@ -163,6 +163,9 @@ def validate_fh(fh):
     fh : numpy array of int
         Sorted and validated forecasting horizon.
     """
+    # in-sample predictions
+    if fh == "insample":
+        return fh
 
     # Check single integer
     if np.issubdtype(type(fh), np.integer):
