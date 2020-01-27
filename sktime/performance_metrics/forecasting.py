@@ -1,5 +1,5 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_indices, validate_time_index
+from sktime.utils.validation.forecasting import check_consistent_time_indices, validate_obs_horizon
 
 __author__ = ['Markus Löning']
 __all__ = ["mase_score", "smape_score"]
@@ -33,8 +33,8 @@ def mase_score(y_true, y_pred, y_train, sp=1):
     check_consistent_time_indices(y_true, y_pred)
 
     # check if training series is before forecasted series
-    train_index = validate_time_index(y_train.index)
-    pred_index = validate_time_index(y_pred)
+    train_index = validate_obs_horizon(y_train.index)
+    pred_index = validate_obs_horizon(y_pred)
     if train_index.max() >= pred_index.min():
         raise ValueError(f"Found y_train with time index which is not "
                          f"before time index of y_pred")

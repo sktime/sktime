@@ -1,4 +1,4 @@
-__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv"]
+__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv", "validate_obs_horizon"]
 __author__ = "Markus Löning"
 
 import numpy as np
@@ -49,7 +49,7 @@ def validate_y(y):
         raise ValueError(f'y must be a pd.Series, but found: {type(y)}')
 
     # check time index
-    validate_time_index(y.index)
+    validate_obs_horizon(y.index)
     return y
 
 
@@ -63,7 +63,7 @@ def validate_cv(cv):
     return cv
 
 
-def validate_time_index(time_index):
+def validate_obs_horizon(time_index):
     """Validate time index
 
     Parameters
@@ -164,7 +164,7 @@ def validate_fh(fh):
         Sorted and validated forecasting horizon.
     """
     # in-sample predictions
-    if fh == "insample":
+    if isinstance(fh, str) and fh == "insample":
         return fh
 
     # Check single integer
@@ -248,8 +248,8 @@ def check_consistent_time_indices(x, y):
     x : pandas Series
     y : pandas Series
 
-    Raises:
-    -------
+    Raises
+    ------
     ValueError
         If time indicies are not equal
     """
