@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sklearn.exceptions import NotFittedError
 from sktime.forecasting.dummy import DummyForecaster
 from sktime.forecasting.model_selection import RollingWindowSplit
 
@@ -19,7 +20,24 @@ y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
 
 
-# updating and forecasts
+########################################################################################################################
+# not fitted error
+@pytest.mark.parametrize("forecaster", FORECASTERS)
+def test_not_fitted_error(forecaster):
+    f = forecaster()
+    with pytest.raises(NotFittedError):
+        f.predict(fh=1)
+
+    with pytest.raises(NotFittedError):
+        f.update(y_test)
+
+    with pytest.raises(NotFittedError):
+        cv = RollingWindowSplit(fh=1, window_length=1)
+        f.update_predict(y_test, cv=cv)
+
+
+########################################################################################################################
+# update_predict
 def compute_expected_index_from_update_predict(y_test, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # points at which to make predictions

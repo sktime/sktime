@@ -4,13 +4,13 @@
 __all__ = ["DummyForecaster"]
 __author__ = "Markus Löning"
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-from warnings import warn
-from sklearn.utils.validation import check_is_fitted
 
 from sktime.forecasting.base import BaseForecasterOptionalFHinFit
-from sktime.utils.validation.forecasting import validate_y, validate_cv
+from sktime.utils.validation.forecasting import validate_y
 
 
 class DummyForecaster(BaseForecasterOptionalFHinFit):
@@ -36,7 +36,8 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
                 raise ValueError("`window_length` has to be specified "
                                  "when the `mean` strategy is used.")
             if window_length < 2:
-                raise ValueError("`window_length` must be > 2; for `window_length` == 1 you the `last` strategy.")
+                raise ValueError("`window_length` must be > 2; for `window_length`=1, "
+                                 "use the `last` strategy.")
             self.window_length = window_length
 
         self._last_window = None
@@ -56,7 +57,6 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
 
         # update observation horizon
         self._set_obs_horizon(y.index)
-        self._now = self._obs_horizon[-1]
 
         if self.window_length > len(self._obs_horizon):
             raise ValueError(f"The window length: {self.window_length} is larger than "
@@ -69,14 +69,17 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
     def predict(self, fh=None, X=None, return_conf_int=False, alpha=0.05):
 
         # input checks
+        self._check_is_fitted()
+
         if isinstance(fh, str) and fh == "insample":
             raise NotImplementedError
         if return_conf_int:
             raise NotImplementedError
 
-        check_is_fitted(self, "_is_fitted")
+        # set fh
         self._set_fh(fh)
 
+        # compute prediction
         if self.strategy == "last":
             y_pred = self._last_window.iloc[-1]
 
@@ -89,12 +92,12 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
     def update(self, y_new, X_new=None, update_params=False):
 
         # input checks
-        check_is_fitted(self, "_is_fitted")
+        self._check_is_fitted()
+
         y_new = validate_y(y_new)
 
         # update observation horizon
         self._set_obs_horizon(y_new.index)
-        self._now = self._obs_horizon[-1]
 
         # update last window
         self._last_window = y_new.iloc[-self.window_length:]
