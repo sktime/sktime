@@ -36,8 +36,13 @@ def test_splitting(fh, window_length, step_length):
     # compare actual values against expected values
     ns = cv.get_n_splits()
 
-    # check output dimensions
+    # check first window
+    np.testing.assert_array_equal(inputs[0, :], np.arange(window_length))
+
+    # check window length
     assert inputs.shape == (ns, window_length)
+
+    # check fh
     assert outputs.shape == (ns, len(validate_fh(fh)))
 
     # check step length

@@ -1,4 +1,4 @@
-__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv", "validate_obs_horizon"]
+__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv", "validate_time_index"]
 __author__ = "Markus Löning"
 
 import numpy as np
@@ -23,8 +23,9 @@ def validate_y_X(y, X):
     ValueError
         If y is an invalid input
     """
-    validate_y(y)
-    validate_X(X)
+    y = validate_y(y)
+    X = validate_X(X)
+    return y, X
 
 
 def validate_y(y):
@@ -46,10 +47,13 @@ def validate_y(y):
     # Check if pandas series
 
     if not isinstance(y, pd.Series):
-        raise ValueError(f'y must be a pd.Series, but found: {type(y)}')
+        raise ValueError(f"`y` must be a pd.Series, but found: {type(y)}")
+
+    if len(y) == 0:
+        raise ValueError(f"`y` cannot be empty.")
 
     # check time index
-    validate_obs_horizon(y.index)
+    validate_time_index(y.index)
     return y
 
 
@@ -60,10 +64,16 @@ def validate_cv(cv):
     if not hasattr(cv, "fh"):
         raise ValueError("Expected cv as a temporal cross-validation object with `fh` attribute")
 
+    if not hasattr(cv, "window_length"):
+        raise ValueError("Expected cv as a temporal cross-validation object with `window_length` attribute")
+
+    if not hasattr(cv, "step_length"):
+        raise ValueError("Expected cv as a temporal cross-validation object with `step_length` attribute")
+
     return cv
 
 
-def validate_obs_horizon(time_index):
+def validate_time_index(time_index):
     """Validate time index
 
     Parameters
@@ -74,14 +84,27 @@ def validate_obs_horizon(time_index):
     -------
     time_index : pd.Index
     """
-    # period or datetime index are not support yet
-    # TODO add support for period/datetime indexing
-    if isinstance(time_index, (pd.PeriodIndex, pd.DatetimeIndex)):
-        raise NotImplementedError(f"{type(time_index)} is not fully supported yet, "
-                                  f"use pandas RangeIndex instead")
+
+    # input conversion
+    if isinstance(time_index, pd.Series):
+        time_index = time_index.index  # get pandas index
+
+    elif isinstance(time_index, np.ndarray):
+        if not time_index.ndim == 1:
+            raise ValueError("Cannot construct time index from multi-dimensional numpy array; "
+                             "please pass a 1d array as the time index.")
+        time_index = pd.Index(time_index)
+
+    # input checks
+    if isinstance(time_index, pd.Index):
+        # period or datetime index are not support yet
+        not_supported_index_types = (pd.PeriodIndex, pd.DatetimeIndex, pd.Float64Index)
+        if isinstance(time_index, not_supported_index_types):
+            raise NotImplementedError(f"{type(time_index)} is not supported yet, "
+                                      f"please use pandas range or integer index instead.")
 
     if not time_index.is_monotonic:
-        raise ValueError("Time index must be monotonically increasing, but found non-monotonic index")
+        raise ValueError(f"Time index must be monotonically increasing, but found: {time_index}")
 
     return time_index
 
@@ -124,6 +147,8 @@ def validate_X(X):
             if not np.array_equal(first_index, index):
                 raise ValueError(f'Found time series with unequal index in column {col}. '
                                  f'Input time-series must have the same index.')
+
+    return X
 
 
 def validate_sp(sp):
