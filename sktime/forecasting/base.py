@@ -33,11 +33,11 @@ class BaseForecaster(BaseEstimator):
         """Forecast"""
         raise NotImplementedError
 
-    def update(self, y_new, X=None, update_params=False):
+    def update(self, y_new, X_new=None, update_params=False):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
         raise NotImplementedError
 
-    def update_predict(self, y_test, cv=None, X=None, update_params=False, return_conf_int=False, alpha=0.05):
+    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_conf_int=False, alpha=0.05):
         """Model evaluation with temporal cross-validation"""
         # temporal cross-validation is performed for model evaluation, returning
         # predictions for all time points of the new time series y (i.e. y_test)
@@ -45,7 +45,7 @@ class BaseForecaster(BaseEstimator):
         # input checks
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
-        if X is not None:
+        if X_test is not None:
             raise NotImplementedError
 
         if return_conf_int:
@@ -57,7 +57,7 @@ class BaseForecaster(BaseEstimator):
 
         # check forecasting horizon
         fh = cv.fh
-        self._validate_fh(fh)
+        self._set_fh(fh)
 
         # allocate lists for prediction results
         y_preds = []
@@ -99,19 +99,28 @@ class BaseForecaster(BaseEstimator):
         if X is not None:
             raise NotImplementedError
 
-        self.update(y_new, X=X, update_params=update_params)
+        self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh=fh, X=X, return_conf_int=return_conf_int, alpha=alpha)
 
     def score(self, y_test, fh=None, X=None):
         y_pred = self.predict(fh=fh, X=X)
-        # compute scores
+        # compute scores against y_test
         raise NotImplementedError
 
     def update_score(self, y_test, cv=None, X=None, update_params=False):
         """Model evaluation with temporal cross-validation"""
-        y_pred = self.update_predict(y_test, cv=cv, X=X, update_params=update_params)
+        y_pred = self.update_predict(y_test, cv=cv, X_test=X, update_params=update_params)
         # compute scores
         raise NotImplementedError
+
+    @property
+    def fh(self):
+        """Protect the forecasting horizon"""
+        return self._fh
+
+    @property
+    def is_fitted(self):
+        return self._is_fitted
 
     def _update_obs_horizon(self, obs_horizon):
         """
@@ -135,21 +144,12 @@ class BaseForecaster(BaseEstimator):
         self._obs_horizon = new_obs_horizon
         return new_obs_horizon
 
-    @property
-    def fh(self):
-        """Protect the forecasting horizon"""
-        return self._fh
-
-    def _validate_fh(self, fh):
+    def _set_fh(self, fh):
         raise NotImplementedError
 
     def _reset_to_fitted(self):
         """Reset model to fitted state after running model evaluation"""
         raise NotImplementedError
-
-    @property
-    def is_fitted(self):
-        return self._is_fitted
 
     def _iter(self, y, cv):
         # set up temporal cv
@@ -178,7 +178,7 @@ class BaseForecaster(BaseEstimator):
 class BaseForecasterOptionalFHinFit(BaseForecaster):
     """Base class for forecasters which can take the forecasting horizon either during fitting or prediction."""
 
-    def _validate_fh(self, fh):
+    def _set_fh(self, fh):
         """Validate and set forecasting horizon"""
 
         # check if fitted, fh can only be set if not fitted already
@@ -206,7 +206,7 @@ class BaseForecasterOptionalFHinFit(BaseForecaster):
 class BaseForecasterRequiredFHinFit(BaseForecaster):
     """Base class for forecasters which require the forecasting horizon during fitting."""
 
-    def _validate_fh(self, fh):
+    def _set_fh(self, fh):
         is_fitted = self._is_fitted if hasattr(self, "_is_fitted") else False
 
         if fh is None:

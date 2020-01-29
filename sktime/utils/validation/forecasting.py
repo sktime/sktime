@@ -33,7 +33,7 @@ def validate_y(y):
 
     Parameters
     ----------
-    y : pd.Series
+    y : pd.Series or np.ndarray
 
     Returns
     -------
@@ -44,13 +44,19 @@ def validate_y(y):
     ValueError
         If y is an invalid input
     """
-    # Check if pandas series
+    # Check if pandas series or numpy array
+    if not isinstance(y, (pd.Series, np.ndarray)):
+        raise ValueError(f"`y` must be a pandas Series or numpy array, but found: {type(y)}")
 
-    if not isinstance(y, pd.Series):
-        raise ValueError(f"`y` must be a pd.Series, but found: {type(y)}")
+    # if numpy array, transform into series to handle time index
+    if isinstance(y, np.ndarray):
+        if y.ndim > 1:
+            raise ValueError(f"`y` must be 1-dimensional, but found series of shape: {y.shape}")
+        y = pd.Series(y)
 
-    if len(y) == 0:
-        raise ValueError(f"`y` cannot be empty.")
+    # check that series is not empty
+    if y.size < 1:
+        raise ValueError(f"`y` must contain at least some observations, but found empty series: {y}")
 
     # check time index
     validate_time_index(y.index)

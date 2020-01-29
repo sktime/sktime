@@ -42,7 +42,7 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
 
         # ignore exogenous variables X
         y = validate_y(y)
-        self._validate_fh(fh)
+        self._set_fh(fh)
 
         # update observation horizon
         self._update_obs_horizon(y.index)
@@ -61,12 +61,12 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
             raise NotImplementedError
 
         check_is_fitted(self, "_is_fitted")
-        self._validate_fh(fh)
+        self._set_fh(fh)
 
         # prediction
         return pd.Series(np.repeat(self._last_window.to_numpy(), len(self.fh)), index=self._now + self.fh)
 
-    def update(self, y_new, X=None, update_params=False):
+    def update(self, y_new, X_new=None, update_params=False):
 
         # input checks
         check_is_fitted(self, "_is_fitted")
