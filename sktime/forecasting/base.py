@@ -122,7 +122,7 @@ class BaseForecaster(BaseEstimator):
     def is_fitted(self):
         return self._is_fitted
 
-    def _update_obs_horizon(self, obs_horizon):
+    def _set_obs_horizon(self, obs_horizon):
         """
         Update observation horizon
         """
@@ -142,7 +142,6 @@ class BaseForecaster(BaseEstimator):
 
         # update observation horizon
         self._obs_horizon = new_obs_horizon
-        return new_obs_horizon
 
     def _set_fh(self, fh):
         raise NotImplementedError
