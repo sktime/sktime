@@ -159,7 +159,7 @@ class _BaseForecaster(BaseEstimator):
 
     def _set_now(self, now=None):
         if now is None:
-            if self.fh == "insample":
+            if isinstance(self.fh, str) and self.fh == "insample":
                 # now = self._first_window[-1]
                 raise NotImplementedError
             else:

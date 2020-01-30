@@ -1,5 +1,5 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_indices, validate_time_index
+from sktime.utils.validation.forecasting import check_consistent_time_index, validate_time_index, validate_y
 
 __author__ = ['Markus Löning']
 __all__ = ["mase_score", "smape_score"]
@@ -7,12 +7,12 @@ __all__ = ["mase_score", "smape_score"]
 # for reference implementations, see https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
 
 
-def mase_score(y_true, y_pred, y_train, sp=1):
+def mase_score(y_test, y_pred, y_train, sp=1):
     """Negative mean absolute scaled error
 
     Parameters
     ----------
-    y_true : pandas Series of shape = (fh,) where fh is the forecasting horizon
+    y_test : pandas Series of shape = (fh,) where fh is the forecasting horizon
         Ground truth (correct) target values.
     y_pred : pandas Series of shape = (fh,)
         Estimated target values.
@@ -30,14 +30,12 @@ def mase_score(y_true, y_pred, y_train, sp=1):
     ----------
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
     """
-    check_consistent_time_indices(y_true, y_pred)
 
-    # check if training series is before forecasted series
-    train_index = validate_time_index(y_train.index)
-    pred_index = validate_time_index(y_pred)
-    if train_index.max() >= pred_index.min():
-        raise ValueError(f"Found y_train with time index which is not "
-                         f"before time index of y_pred")
+    # input checks
+    y_test = validate_y(y_test)
+    y_pred = validate_y(y_pred)
+    y_train = validate_y(y_train)
+    check_consistent_time_index(y_test, y_pred, y_train=y_train)
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)
@@ -46,7 +44,7 @@ def mase_score(y_true, y_pred, y_train, sp=1):
     # mean absolute error of naive seasonal prediction
     mae_naive = np.mean(np.abs(y_train[sp:] - y_pred_naive))
 
-    return -np.mean(np.abs(y_true - y_pred)) / mae_naive
+    return -np.mean(np.abs(y_test - y_pred)) / mae_naive
 
 
 def smape_score(y_true, y_pred):
@@ -64,7 +62,7 @@ def smape_score(y_true, y_pred):
     loss : float
         SMAPE loss
     """
-    check_consistent_time_indices(y_true, y_pred)
+    check_consistent_time_index(y_true, y_pred)
 
     nominator = np.abs(y_true - y_pred)
     denominator = np.abs(y_true) + np.abs(y_pred)

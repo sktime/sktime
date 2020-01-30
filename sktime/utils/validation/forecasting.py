@@ -90,7 +90,6 @@ def validate_time_index(time_index):
     -------
     time_index : pd.Index
     """
-
     # input conversion
     if isinstance(time_index, pd.Series):
         time_index = time_index.index  # get pandas index
@@ -104,13 +103,14 @@ def validate_time_index(time_index):
     # input checks
     if isinstance(time_index, pd.Index):
         # period or datetime index are not support yet
-        not_supported_index_types = (pd.PeriodIndex, pd.DatetimeIndex, pd.Float64Index)
-        if isinstance(time_index, not_supported_index_types):
+        supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
+        if not isinstance(time_index, supported_index_types):
             raise NotImplementedError(f"{type(time_index)} is not supported yet, "
-                                      f"please use pandas range or integer index instead.")
+                                      f"please use one of {supported_index_types} instead.")
 
     if not time_index.is_monotonic:
-        raise ValueError(f"Time index must be monotonically increasing, but found: {time_index}")
+        raise ValueError(f"Time index must be sorted (monotonically increasing), "
+                         f"but found: {time_index}")
 
     return time_index
 
@@ -263,26 +263,29 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
     check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
 
 
-def check_consistent_time_indices(x, y):
-    """Check that x and y have consistent indices.
+def check_consistent_time_index(y_test, y_pred, y_train=None):
+    """Check that  and y have consistent indices.
 
     Parameters
     ----------
-    x : pandas Series
-    y : pandas Series
+    y_test : pd.Series
+    y_pred : pd.Series
+    y_train : pd.Series
 
     Raises
     ------
     ValueError
         If time indicies are not equal
     """
+    validate_time_index(y_test.index)
+    validate_time_index(y_pred.index)
 
-    if not x.index.equals(y.index):
-        raise ValueError(f"Found input variables with inconsistent time indices")
+    if not y_test.index.equals(y_pred.index):
+        raise ValueError(f"Time index of `y_pred` does not match time index of `y_test`.")
 
+    if y_train is not None:
+        validate_time_index(y_train.index)
+        if y_train.index.max() >= y_pred.index.min():
+            raise ValueError(f"Found y_train with time index which is not "
+                             f"before time index of y_pred")
 
-def check_integer_time_index(time_index):
-    if not np.issubdtype(time_index.dtype, np.dtype(int).type):
-        raise NotImplementedError("Non-integer time indices are not supported yet")
-
-    return time_index.values
