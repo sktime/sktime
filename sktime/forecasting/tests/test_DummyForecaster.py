@@ -26,10 +26,14 @@ def test_strategy_last(fh):
 
 
 @pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
-@pytest.mark.parametrize("window_length", [3, 5])
+@pytest.mark.parametrize("window_length", [None, 3, 5])
 def test_strategy_mean(fh, window_length):
     f = DummyForecaster(strategy="mean", window_length=window_length)
     f.fit(y_train)
     y_pred = f.predict(fh)
+
+    if window_length is None:
+        window_length = len(y_train)
+
     expected = np.repeat(y_train.iloc[-window_length:].mean(), len(f.fh))
     np.testing.assert_array_equal(y_pred, expected)
