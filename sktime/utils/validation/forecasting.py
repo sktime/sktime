@@ -202,6 +202,9 @@ def validate_fh(fh):
     elif isinstance(fh, (int, np.integer)):
         fh = np.array([fh], dtype=np.int)  # make iterable
 
+    elif isinstance(fh, (list, tuple)):
+        fh = np.array(fh, dtype=np.int)
+
     # Check array-like input
     elif isinstance(fh, np.ndarray):
         if fh.ndim > 1:

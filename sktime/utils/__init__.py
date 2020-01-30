@@ -40,7 +40,7 @@ def all_estimators(type_filter=None):
     # modified from sklearn.utils.__init__
 
     # lazy import to avoid circular imports from sklearn.base
-    from sklearn.utils._testing import ignore_warnings
+    import warnings
     from sklearn.base import BaseEstimator
     from sktime.forecasting.base import _BaseForecaster
     from sktime.classifiers.base import BaseClassifier
@@ -61,7 +61,7 @@ def all_estimators(type_filter=None):
     root = str(Path(__file__).parent.parent)  # sktime package
 
     # Ignore deprecation warnings triggered at import time and from walking packages
-    with ignore_warnings(category=FutureWarning):
+    with warnings.simplefilter("ignore", category=FutureWarning):
         for importer, modname, ispkg in pkgutil.walk_packages(path=[root], prefix="sktime."):
             mod_parts = modname.split(".")
 

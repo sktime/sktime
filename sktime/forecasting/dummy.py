@@ -79,7 +79,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_conf_int=False, alpha=_BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
 
         # input checks
         self._check_is_fitted()

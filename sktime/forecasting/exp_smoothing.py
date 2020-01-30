@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from sktime.forecasting.base import BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.utils.validation.forecasting import validate_y
 
 
@@ -15,7 +15,7 @@ __all__ = [
 __author__ = ["Markus Löning", "big-o@github"]
 
 
-class ExpSmoothingForecaster(BaseForecasterOptionalFHinFit):
+class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
     """
     Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
     without trend and seasonality components.
@@ -136,7 +136,7 @@ class ExpSmoothingForecaster(BaseForecasterOptionalFHinFit):
 
         return self
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_conf_int=False, alpha=_BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
         """
         Make forecasts.
 
