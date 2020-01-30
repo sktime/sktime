@@ -118,10 +118,23 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         y = validate_y(y)
         self._set_fh(fh)
+        fh = self._fh
 
         # update observation horizon
         self._set_obs_horizon(y.index)
 
+        y = self._deseasonalise(y)
+
+        # Find theta lines. Theta lines are just SES + drift.
+        super().fit(y, fh=fh)
+        self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
+        self.trend_ = self._compute_trend(y)
+
+        self._is_fitted = True
+
+        return self
+
+    def _deseasonalise(self, y):
         if self._deseasonaliser.sp == 1:
             self._is_seasonal = False
         else:
@@ -131,19 +144,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
             y_nested = self._to_nested(y)
             y = self._deseasonaliser.fit_transform(y_nested).iloc[0, 0]
 
-        # Find theta lines.
-
-        # Theta lines are just SES + drift.
-        super().fit(y, fh=fh)
-        self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
-
-        # Drift calculated through least squares regression.
-        coefs = fit_trend(y.values.reshape(1, -1), order=1)
-        self.trend_ = coefs[0, 0] / 2
-
-        self._is_fitted = True
-
-        return self
+        return y
 
     def predict(self, fh=None, X=None, return_conf_int=False, alpha=ExpSmoothingForecaster._DEFAULT_ALPHA):
         """
@@ -167,20 +168,13 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         # Set forecast horizon.
         self._set_fh(fh)
+        fh = self._fh
 
-        # SES
+        # SES.
         y_pred = super().predict(fh=fh)
 
-        if np.isclose(self.smoothing_level_, 0.0):
-            # SES was constant so revert to simple trend
-            drift = self.trend_ * fh
-        else:
-            # Calculate drift from SES parameters
-            n_obs = len(self._obs_horizon)
-            drift = self.trend_ * (
-                fh + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
-            )
-
+        # Add drift.
+        drift = self._compute_drift(fh)
         y_pred += drift
 
         if self._is_seasonal:
@@ -193,6 +187,24 @@ class ThetaForecaster(ExpSmoothingForecaster):
             return y_pred, errs
 
         return y_pred
+
+    def _compute_trend(self, y):
+        # Trend calculated through least squares regression.
+        coefs = fit_trend(y.values.reshape(1, -1), order=1)
+        return coefs[0, 0] / 2
+
+    def _compute_drift(self, fh):
+        if np.isclose(self.smoothing_level_, 0.0):
+            # SES was constant so revert to simple trend
+            drift = self.trend_ * fh
+        else:
+            # Calculate drift from SES parameters
+            n_obs = len(self._obs_horizon)
+            drift = self.trend_ * (
+                fh + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
+            )
+
+        return drift
 
     def pred_errs(self, alpha=ExpSmoothingForecaster._DEFAULT_ALPHA):
         self._check_is_fitted()
@@ -216,3 +228,13 @@ class ThetaForecaster(ExpSmoothingForecaster):
             errs.append(pd.Series(index=self._get_relative_fh(), data=err))
 
         return tuple(errs)
+
+    def update(self, y_new, X_new=None, update_params=False):
+        # update observation horizon
+        self._set_obs_horizon(y_new.index)
+
+        y_new = self._deseasonalise(y_new)
+
+        super().update(y_new, X_new=X_new, update_params=update_params)
+        self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
+        self.trend_ = self._compute_trend(y)

@@ -112,6 +112,13 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         # update observation horizon
         self._set_obs_horizon(y.index)
 
+        self._fit_estimator(y)
+
+        self._is_fitted = True
+
+        return self
+
+    def _fit_estimator(self, y):
         # Fit forecaster.
         self._estimator = ExponentialSmoothing(
             y,
@@ -131,10 +138,6 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
             remove_bias=self.remove_bias,
             use_basinhopping=self.use_basinhopping,
         )
-
-        self._is_fitted = True
-
-        return self
 
     def predict(self, fh=None, X=None, return_conf_int=False, alpha=_BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
         """
@@ -177,3 +180,16 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         y_pred = y_pred.iloc[fh_idx]
 
         return y_pred
+
+    def update(self, y_new, X_new=None, update_params=False):
+        # input checks
+        self._check_is_fitted()
+
+        y_new = validate_y(y_new)
+
+        # update observation horizon
+        self._set_obs_horizon(y_new.index)
+
+        #self._fit_estimator(y_new)
+
+        return self
