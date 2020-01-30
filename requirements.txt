@@ -1,6 +1,6 @@
 numpy==1.17.*
 scipy==1.2.*
-scikit-learn==0.21.*
+scikit-learn==0.22.*
 pandas==0.23.*
 joblib==0.13.*
 scikit-posthocs==0.5.*

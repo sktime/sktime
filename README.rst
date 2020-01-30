@@ -29,7 +29,7 @@ time series. sktime currently supports:
 * Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
 
 For deep learning methods, we have a separate extension package:
-`sktime-dl <https://github.com/uea-machine-learning/sktime-dl>`__.
+`sktime-dl <https://github.com/sktime/sktime-dl>`__.
 
 sktime is under active development and we are looking for contributors. You can find our development road map below.
 
@@ -89,7 +89,7 @@ Development road map
 
 Contributions
 -------------
-We are actively looking for contributors. Please contact @fkiraly or @jasonlines for volunteering or information on
+We are actively looking for contributors. Please contact @fkiraly or @mloning for volunteering or information on
 paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
 or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
 
@@ -110,12 +110,9 @@ If you use sktime in a scientific publication, we would appreciate citations to 
 
 Bibtex entry::
 
-    @misc{sktime,
-          author = {Markus Löning and Anthony Bagnall and Sajaysurya Ganesh and Viktor Kazakov
-          and Jason Lines and Franz J. Király},
-          title = {sktime: A Unified Interface for Machine Learning with Time Series},
-          year = {2019},
-          eprint = {arXiv:1909.07872},
+    @inproceedings{sktime,
+        author = {L{\"{o}}ning, Markus and Bagnall, Anthony and Ganesh, Sajaysurya and Kazakov, Viktor and Lines, Jason and Kir{\'{a}}ly, Franz J},
+        booktitle = {Workshop on Systems for ML at NeurIPS 2019},
+        title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
+        date = {2019},
     }
-
-
