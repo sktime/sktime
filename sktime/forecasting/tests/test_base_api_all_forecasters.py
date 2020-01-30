@@ -6,12 +6,14 @@ __author__ = "Markus Löning"
 import numpy as np
 import pandas as pd
 import pytest
-
 from sklearn.exceptions import NotFittedError
-from sktime.forecasting.dummy import DummyForecaster
-from sktime.forecasting.model_selection import RollingWindowSplit
 
-FORECASTERS = [DummyForecaster]
+from sktime.forecasting.model_selection import RollingWindowSplit
+from sktime.utils import all_estimators
+
+
+# get all forecasters
+forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
 
 n_timepoints = 30
 n_train = 20
@@ -22,7 +24,7 @@ y_test = s.iloc[n_train:]
 
 ########################################################################################################################
 # not fitted error
-@pytest.mark.parametrize("forecaster", FORECASTERS)
+@pytest.mark.parametrize("forecaster", forecasters)
 def test_not_fitted_error(forecaster):
     f = forecaster()
     with pytest.raises(NotFittedError):
@@ -55,11 +57,11 @@ def compute_expected_index_from_update_predict(y_test, fh, step_length):
     return np.unique(points_predicted)
 
 
-@pytest.mark.parametrize("forecaster", FORECASTERS)
+@pytest.mark.parametrize("forecaster", forecasters)
 @pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
 @pytest.mark.parametrize("window_length", [1, 3, 5])
 @pytest.mark.parametrize("step_length", [1, 3, 5])
-def test_update_predict_indices(forecaster, fh, window_length, step_length):
+def test_update_predict_check_predicted_indices(forecaster, fh, window_length, step_length):
     # initiate cv with different fh, so that out window in temporal cv does not contain fh
     cv = RollingWindowSplit(fh, window_length=window_length, step_length=step_length)
     f = forecaster()
@@ -74,11 +76,11 @@ def test_update_predict_indices(forecaster, fh, window_length, step_length):
 
 # update_predict
 # inconsistent fhs warning
-@pytest.mark.parametrize("forecaster", FORECASTERS)
+@pytest.mark.parametrize("forecaster", forecasters)
 @pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
 @pytest.mark.parametrize("window_length", [1, 3, 5])
 @pytest.mark.parametrize("step_length", [1, 3, 5])
-def test_update_predict_inconsistent_fhs(forecaster, fh, window_length, step_length):
+def test_update_predict_check_warning_for_inconsistent_fhs(forecaster, fh, window_length, step_length):
     # check user warning if fh passed through cv is different from fh seen in fit
     cv = RollingWindowSplit(fh + 1, window_length=window_length, step_length=step_length)
     f = forecaster()

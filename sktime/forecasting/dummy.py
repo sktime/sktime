@@ -9,11 +9,11 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.utils.validation.forecasting import validate_y
 
 
-class DummyForecaster(BaseForecasterOptionalFHinFit):
+class DummyForecaster(_BaseForecasterOptionalFHinFit):
     """
     Dummy forecaster for naive baseline forecasts
     """
@@ -25,11 +25,12 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
+        self.window_length = window_length
 
         if self.strategy == "last":
             if window_length is not None:
                 warn("For the `last` strategy the `window_length` value will be ignored.")
-            self.window_length = 1
+            self._window_length = 1
 
         if self.strategy == "mean":
             if window_length is None:
@@ -38,7 +39,7 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
             if window_length < 2:
                 raise ValueError("`window_length` must be > 2; for `window_length`=1, "
                                  "use the `last` strategy.")
-            self.window_length = window_length
+            self._window_length = window_length
 
         self._last_window = None
 
@@ -58,11 +59,11 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
         # update observation horizon
         self._set_obs_horizon(y.index)
 
-        if self.window_length > len(self._obs_horizon):
-            raise ValueError(f"The window length: {self.window_length} is larger than "
+        if self._window_length > len(self._obs_horizon):
+            raise ValueError(f"The window length: {self._window_length} is larger than "
                              f"the training series.")
 
-        self._last_window = y.iloc[-self.window_length:]
+        self._last_window = y.iloc[-self._window_length:]
         self._is_fitted = True
         return self
 
@@ -100,6 +101,6 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
         self._set_obs_horizon(y_new.index)
 
         # update last window
-        self._last_window = y_new.iloc[-self.window_length:]
+        self._last_window = y_new.iloc[-self._window_length:]
 
         return self
