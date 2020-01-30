@@ -90,7 +90,6 @@ def validate_time_index(time_index):
     -------
     time_index : pd.Index
     """
-
     # input conversion
     if isinstance(time_index, pd.Series):
         time_index = time_index.index  # get pandas index
@@ -104,13 +103,14 @@ def validate_time_index(time_index):
     # input checks
     if isinstance(time_index, pd.Index):
         # period or datetime index are not support yet
-        not_supported_index_types = (pd.PeriodIndex, pd.DatetimeIndex, pd.Float64Index)
-        if isinstance(time_index, not_supported_index_types):
+        supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
+        if not isinstance(time_index, supported_index_types):
             raise NotImplementedError(f"{type(time_index)} is not supported yet, "
-                                      f"please use pandas range or integer index instead.")
+                                      f"please use one of {supported_index_types} instead.")
 
     if not time_index.is_monotonic:
-        raise ValueError(f"Time index must be monotonically increasing, but found: {time_index}")
+        raise ValueError(f"Time index must be sorted (monotonically increasing), "
+                         f"but found: {time_index}")
 
     return time_index
 
@@ -199,40 +199,32 @@ def validate_fh(fh):
         return fh
 
     # Check single integer
-    if np.issubdtype(type(fh), np.integer):
-        fh = [fh]  # make iterable
+    elif isinstance(fh, (int, np.integer)):
+        fh = np.array([fh], dtype=np.int)  # make iterable
 
     # Check array-like input
-    elif isinstance(fh, list):
-        if len(fh) < 1:
-            raise ValueError(f"`fh` must specify at least one step, but found: "
-                             f"{type(fh)} of length {len(fh)}")
-        if not np.all([np.issubdtype(type(h), np.integer) for h in fh]):
-            raise ValueError('If `fh` is passed as a list, '
-                             'it has to be a list of integers')
-
     elif isinstance(fh, np.ndarray):
         if fh.ndim > 1:
-            raise ValueError(f"`fh` must be a 1d array, but found: "
-                             f"{fh.ndim} dimensions")
+            raise ValueError(f"`fh` must be a 1d array, but found shape: "
+                             f"{fh.shape}")
         if len(fh) < 1:
-            raise ValueError(f"`fh` must specify at least one step, but found: "
-                             f"{type(fh)} of length {len(fh)}")
+            raise ValueError(f"`fh` must specify at least one step, but found empty array.")
+
         if not np.issubdtype(fh.dtype, np.integer):
             raise ValueError(
-                f'If `fh` is passed as an array, it has to be an array of '
+                f'If `fh` is passed as an array, it must be an array of '
                 f'integers, but found an array of dtype: {fh.dtype}')
 
     else:
-        raise ValueError(f"`fh` has to be either a list or array of integers, or a single "
+        raise ValueError(f"`fh` has to be either a numpy array of integers or a single "
                          f"integer, but found: {type(fh)}")
 
     # check fh contains only non-zero positive values
     fh_sorted = np.sort(fh)
     if fh_sorted[0] <= 0:
-        raise ValueError(f"fh must contain only positive values (> 0), but found: {fh}")
+        raise ValueError(f"fh must contain only positive values (>=1), but found: {fh_sorted[0]}")
 
-    return np.asarray(fh_sorted, dtype=np.int)
+    return fh_sorted
 
 
 def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
@@ -298,26 +290,29 @@ def check_alpha(alpha):
                 f"Alphas must lie in open interval (0, 1): got {al}."
             )
 
-def check_consistent_time_indices(x, y):
-    """Check that x and y have consistent indices.
+def check_consistent_time_index(y_test, y_pred, y_train=None):
+    """Check that  and y have consistent indices.
 
     Parameters
     ----------
-    x : pandas Series
-    y : pandas Series
+    y_test : pd.Series
+    y_pred : pd.Series
+    y_train : pd.Series
 
     Raises
     ------
     ValueError
         If time indicies are not equal
     """
+    validate_time_index(y_test.index)
+    validate_time_index(y_pred.index)
 
-    if not x.index.equals(y.index):
-        raise ValueError(f"Found input variables with inconsistent time indices")
+    if not y_test.index.equals(y_pred.index):
+        raise ValueError(f"Time index of `y_pred` does not match time index of `y_test`.")
 
+    if y_train is not None:
+        validate_time_index(y_train.index)
+        if y_train.index.max() >= y_pred.index.min():
+            raise ValueError(f"Found y_train with time index which is not "
+                             f"before time index of y_pred")
 
-def check_integer_time_index(time_index):
-    if not np.issubdtype(time_index.dtype, np.dtype(int).type):
-        raise NotImplementedError("Non-integer time indices are not supported yet")
-
-    return time_index.values

@@ -9,39 +9,49 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.utils.validation.forecasting import validate_y
 
 
-class DummyForecaster(BaseForecasterOptionalFHinFit):
+class DummyForecaster(_BaseForecasterOptionalFHinFit):
     """
-    Dummy forecaster for naive baseline forecasts
+    NaiveForecaster is a forecaster that makes forecasts using simple strategies.
+
+    Parameters
+    ----------
+    strategy : str, {"last", "mean"}, optional (default="last")
+        Strategy used to make forecasts:
+
+        * "last": forecast the last value in the training series
+        * "mean": forecast the mean of (a given window) of the training series
+
+    window_length : int or None, optional (default=None)
+        Window length to use in the `mean` strategy. If None, entire training
+            series will be used.
     """
 
     def __init__(self, strategy="last", window_length=None):
+
         # input checks
-        # allowed strategies an include: last, constant, seasonal-last, mean, median
+        # allowed strategies to include: last, constant, seasonal-last, mean, median
         allowed_strategies = ("last", "mean")
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
+        self.window_length = window_length
 
         if self.strategy == "last":
             if window_length is not None:
                 warn("For the `last` strategy the `window_length` value will be ignored.")
-            self.window_length = 1
+            self._window_length = 1
 
         if self.strategy == "mean":
-            if window_length is None:
-                raise ValueError("`window_length` has to be specified "
-                                 "when the `mean` strategy is used.")
-            if window_length < 2:
-                raise ValueError("`window_length` must be > 2; for `window_length`=1, "
-                                 "use the `last` strategy.")
-            self.window_length = window_length
+            if isinstance(window_length, (int, np.integer)) and window_length < 2:
+                raise ValueError("`window_length` must be a positive integer >= 2 or None; "
+                                 "for `window_length`=1, use the `last` strategy.")
+            self._window_length = window_length
 
         self._last_window = None
-
         super(DummyForecaster, self).__init__()
 
     def fit(self, y, fh=None, X=None):
@@ -58,11 +68,14 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
         # update observation horizon
         self._set_obs_horizon(y.index)
 
-        if self.window_length > len(self._obs_horizon):
-            raise ValueError(f"The window length: {self.window_length} is larger than "
+        if self.strategy == "mean" and self._window_length is None:
+            self._window_length = len(y)
+
+        if self._window_length > len(self._obs_horizon):
+            raise ValueError(f"The window length: {self._window_length} is larger than "
                              f"the training series.")
 
-        self._last_window = y.iloc[-self.window_length:]
+        self._last_window = y.iloc[-self._window_length:]
         self._is_fitted = True
         return self
 
@@ -100,6 +113,6 @@ class DummyForecaster(BaseForecasterOptionalFHinFit):
         self._set_obs_horizon(y_new.index)
 
         # update last window
-        self._last_window = y_new.iloc[-self.window_length:]
+        self._last_window = y_new.iloc[-self._window_length:]
 
         return self

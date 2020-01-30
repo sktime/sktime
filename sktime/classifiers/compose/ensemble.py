@@ -5,25 +5,25 @@ Configurable time series ensembles
 __all__ = ["TimeSeriesForestClassifier"]
 __author__ = "Markus Löning"
 
-
-from warnings import warn
 from warnings import catch_warnings
 from warnings import simplefilter
+from warnings import warn
+
 import numpy as np
+from sklearn.ensemble.base import _partition_estimators
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
 from sklearn.ensemble.forest import _generate_sample_indices
 from sklearn.ensemble.forest import _generate_unsampled_indices
 from sklearn.ensemble.forest import _get_n_samples_bootstrap
-from sklearn.ensemble.base import _partition_estimators
-from sklearn.utils._joblib import Parallel, delayed
-from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_random_state
-from sklearn.utils import check_array
-from sklearn.utils import compute_sample_weight
-from sklearn.utils.validation import check_is_fitted
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree._tree import DOUBLE
+from sklearn.utils import check_array
+from sklearn.utils import check_random_state
+from sklearn.utils import compute_sample_weight
+from sklearn.utils._joblib import Parallel, delayed
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor

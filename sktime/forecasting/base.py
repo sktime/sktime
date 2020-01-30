@@ -1,4 +1,4 @@
-__all__ = ["BaseForecaster", "BaseForecasterOptionalFHinFit", "BaseForecasterRequiredFHinFit"]
+__all__ = ["_BaseForecaster", "_BaseForecasterOptionalFHinFit", "_BaseForecasterRequiredFHinFit"]
 __author__ = ["Markus Löning", "big-o@github"]
 
 from warnings import warn
@@ -15,7 +15,7 @@ from sktime.utils.validation.forecasting import validate_time_index
 from sktime.utils.validation.forecasting import validate_y
 
 
-class BaseForecaster(BaseEstimator):
+class _BaseForecaster(BaseEstimator):
     """
     Base class for forecasters.
     """
@@ -319,7 +319,7 @@ class BaseForecaster(BaseEstimator):
 
     def _set_now(self, now=None):
         if now is None:
-            if self.fh == "insample":
+            if isinstance(self.fh, str) and self.fh == "insample":
                 # now = self._first_window[-1]
                 raise NotImplementedError
             else:
@@ -386,7 +386,7 @@ class BaseForecaster(BaseEstimator):
             yield i[-step_length:]  # return only index of new data points
 
 
-class BaseForecasterOptionalFHinFit(BaseForecaster):
+class _BaseForecasterOptionalFHinFit(_BaseForecaster):
     """Base class for forecasters which can take the forecasting horizon either during fitting or prediction."""
 
     def _set_fh(self, fh):
@@ -411,7 +411,7 @@ class BaseForecasterOptionalFHinFit(BaseForecaster):
             self._fh = fh
 
 
-class BaseForecasterRequiredFHinFit(BaseForecaster):
+class _BaseForecasterRequiredFHinFit(_BaseForecaster):
     """Base class for forecasters which require the forecasting horizon during fitting."""
 
     def _set_fh(self, fh):
