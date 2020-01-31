@@ -59,7 +59,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         # input checks
         # in-sample forecast
         if isinstance(fh, str) and fh == "insample":
-            raise NotImplementedError
+            raise NotImplementedError()
 
         # ignore exogenous variables X
         y = validate_y(y)
@@ -85,9 +85,9 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._check_is_fitted()
 
         if isinstance(fh, str) and fh == "insample":
-            raise NotImplementedError
+            raise NotImplementedError()
         if return_conf_int:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         # set fh
         self._set_fh(fh)

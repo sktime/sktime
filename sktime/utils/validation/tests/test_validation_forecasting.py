@@ -7,8 +7,7 @@ from sktime.utils.validation.forecasting import validate_fh
 __author__ = ["Markus Löning"]
 
 
-bad_input_args = ((1, 2), [], np.array([]),
-                  'str', 0.1, [0.1, 0.2], True, [True, False])
+bad_input_args = ((1, 2), [], np.array([]), [1, 2], 'some_string', 0.1, [0.1, 0.2], True, [True, False])
 
 
 @pytest.mark.parametrize("arg", bad_input_args)
