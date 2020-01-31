@@ -15,7 +15,7 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 
 from sktime.classifiers.compose.ensemble import _parallel_build_trees
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
@@ -400,7 +400,7 @@ class TimeSeriesForestRegressor(ForestRegressor):
 
     @property
     def feature_importances_(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _set_oob_score(self, X, y):
         raise NotImplementedError()
