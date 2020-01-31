@@ -230,7 +230,7 @@ def get_time_index(X):
     return time_index
 
 def dataframe_to_numpy(X, a = None, b = None):
-    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (num_examples, num_dimensions, time_series_length).
+    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
 
     Parameters
     ----------

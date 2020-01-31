@@ -45,9 +45,9 @@ class Rocket(BaseTransformer):
         self
         """
         validate_X(X)
-        _, self.num_channels = X.shape
-        input_length = X.applymap(lambda series : series.size).max().max()
-        self.kernels = _generate_kernels(input_length, self.num_kernels, self.num_channels, self.seed)
+        _, self.n_columns = X.shape
+        n_timepoints = X.applymap(lambda series : series.size).max().max()
+        self.kernels = _generate_kernels(n_timepoints, self.num_kernels, self.n_columns, self.seed)
         self._is_fitted = True
         return self
 
@@ -71,7 +71,7 @@ class Rocket(BaseTransformer):
         return pd.DataFrame(_apply_kernels(_X, self.kernels))
 
 @njit("Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],int32[:]))(int64,int64,int64,optional(int64))")
-def _generate_kernels(input_length, num_kernels, num_channels, seed):
+def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
 
     if seed is not None:
         np.random.seed(seed)
@@ -81,7 +81,7 @@ def _generate_kernels(input_length, num_kernels, num_channels, seed):
 
     num_channel_indices = np.zeros(num_kernels, dtype = np.int32)
     for i in range(num_kernels):
-        limit = min(num_channels, lengths[i])
+        limit = min(n_columns, lengths[i])
         num_channel_indices[i] = 2 ** np.random.uniform(0, np.log2(limit + 1))
 
     channel_indices = np.zeros(num_channel_indices.sum(), dtype = np.int32)
@@ -112,11 +112,11 @@ def _generate_kernels(input_length, num_kernels, num_channels, seed):
 
         weights[a1:b1] = _weights
 
-        channel_indices[a2:b2] = np.random.choice(np.arange(0, num_channels), _num_channel_indices, replace = False)
+        channel_indices[a2:b2] = np.random.choice(np.arange(0, n_columns), _num_channel_indices, replace = False)
 
         biases[i] = np.random.uniform(-1, 1)
 
-        dilation = 2 ** np.random.uniform(0, np.log2((input_length - 1) / (_length - 1)))
+        dilation = 2 ** np.random.uniform(0, np.log2((n_timepoints - 1) / (_length - 1)))
         dilation = np.int32(dilation)
         dilations[i] = dilation
 
@@ -131,14 +131,14 @@ def _generate_kernels(input_length, num_kernels, num_channels, seed):
 @njit(fastmath = True)
 def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
 
-    input_length = len(X)
+    n_timepoints = len(X)
 
-    output_length = (input_length + (2 * padding)) - ((length - 1) * dilation)
+    output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
     _max = np.NINF
 
-    end = (input_length + padding) - ((length - 1) * dilation)
+    end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
 
@@ -148,7 +148,7 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
 
         for j in range(length):
 
-            if index > -1 and index < input_length:
+            if index > -1 and index < n_timepoints:
 
                 _sum = _sum + weights[j] * X[index]
 
@@ -165,14 +165,14 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
 @njit(fastmath = True)
 def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding, num_channel_indices, channel_indices):
 
-    num_channels, input_length = X.shape
+    n_columns, n_timepoints = X.shape
 
-    output_length = (input_length + (2 * padding)) - ((length - 1) * dilation)
+    output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
 
     _ppv = 0
     _max = np.NINF
 
-    end = (input_length + padding) - ((length - 1) * dilation)
+    end = (n_timepoints + padding) - ((length - 1) * dilation)
 
     for i in range(-padding, end):
 
@@ -182,7 +182,7 @@ def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding, num_
 
         for j in range(length):
 
-            if index > -1 and index < input_length:
+            if index > -1 and index < n_timepoints:
 
                 for k in range(num_channel_indices):
 
@@ -203,12 +203,12 @@ def _apply_kernels(X, kernels):
 
     weights, lengths, biases, dilations, paddings, num_channel_indices, channel_indices = kernels
 
-    num_examples, num_channels, _ = X.shape
+    n_instances, n_columns, _ = X.shape
     num_kernels = len(lengths)
 
-    _X = np.zeros((num_examples, num_kernels * 2), dtype = np.float64) # 2 features per kernel
+    _X = np.zeros((n_instances, num_kernels * 2), dtype = np.float64) # 2 features per kernel
 
-    for i in prange(num_examples):
+    for i in prange(n_instances):
 
         a1 = 0 # for weights
         a2 = 0 # for channel_indices
