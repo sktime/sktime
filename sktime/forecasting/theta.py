@@ -223,13 +223,13 @@ class ThetaForecaster(ExpSmoothingForecaster):
             z = zscore(1 - alpha)
             err = z * sem
 
-            return pd.Series(index=self._get_relative_fh(), data=err)
+            return pd.Series(index=self._get_absolute_fh(), data=err)
 
         errs = []
         for al in alpha:
             z = zscore(1 - al)
             err = z * sem
-            errs.append(pd.Series(index=self._get_relative_fh(), data=err))
+            errs.append(pd.Series(index=self._get_absolute_fh(), data=err))
 
         return tuple(errs)
 

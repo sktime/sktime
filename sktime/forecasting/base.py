@@ -360,7 +360,7 @@ class _BaseForecaster(BaseEstimator):
     def _set_fh(self, fh):
         raise NotImplementedError()
 
-    def _get_relative_fh(self):
+    def _get_absolute_fh(self):
         """
         Convert the step-ahead forecast horizon into the corresponding time index
         values to append to the target data.

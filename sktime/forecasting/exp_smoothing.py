@@ -6,12 +6,7 @@ from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPH
 from sktime.utils.validation.forecasting import validate_y
 
 
-__all__ = [
-    "ARIMAForecaster",
-    "ExpSmoothingForecaster",
-    "DummyForecaster",
-    "ThetaForecaster",
-]
+__all__ = ["ExpSmoothingForecaster"]
 __author__ = ["Markus Löning", "big-o@github"]
 
 
@@ -166,7 +161,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
 
         # Set forecast horizon.
         self._set_fh(fh)
-        fh = self._get_relative_fh()
+        fh = self._get_absolute_fh()
 
         # Predict fitted model with start and end points relative to start of train series
         start = fh[0]
