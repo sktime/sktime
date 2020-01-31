@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
