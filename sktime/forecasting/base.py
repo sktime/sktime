@@ -6,21 +6,22 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.metrics import mean_squared_error
 
+from sktime.performance_metrics.forecasting import smape_score
 from sktime.utils.validation.forecasting import validate_cv
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
 from sktime.utils.validation.forecasting import validate_y
 
 
+# Default confidence level for prediction intervals.
+DEFAULT_ALPHA = 0.05
+
+
 class _BaseForecaster(BaseEstimator):
     """
     Base class for forecasters.
     """
-    # Default confidence level for prediction intervals.
-    _DEFAULT_ALPHA = 0.05
-
     _estimator_type = "forecaster"
 
     def __init__(self):
@@ -33,19 +34,44 @@ class _BaseForecaster(BaseEstimator):
         """Fit model to training data"""
         raise NotImplementedError()
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=_DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast"""
         raise NotImplementedError()
 
-    def pred_errs(self, fh=None, alpha=None):
-        """Prediction errors."""
+    def compute_pred_errs(self, alpha=None):
+        """
+        Prediction errors. If alpha is iterable, errors will be calculated for
+        multiple confidence levels.
+        """
         raise NotImplementedError()
+
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction intervals for the forecast. If alpha is iterable, multiple
+        intervals will be calculated.
+        """
+        errs = self.compute_pred_errs(alpha=alpha)
+        if isinstance(errs, pd.Series):
+            ints = pd.DataFrame({
+                    "lower": y_pred - errs,
+                    "upper": y_pred + errs
+                })
+        else:
+            ints = tuple(
+                pd.DataFrame({
+                    "lower": y_pred - err,
+                    "upper": y_pred + err
+                })
+                for err in errs
+            )
+
+        return ints
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
         raise NotImplementedError()
 
-    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_conf_int=False, alpha=_DEFAULT_ALPHA):
+    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Model evaluation with temporal cross-validation"""
         # temporal cross-validation is performed for model evaluation, returning
         # predictions for all time points of the new time series y (i.e. y_test)
@@ -56,7 +82,7 @@ class _BaseForecaster(BaseEstimator):
         if X_test is not None:
             raise NotImplementedError()
 
-        if return_conf_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         # input checks
@@ -100,7 +126,7 @@ class _BaseForecaster(BaseEstimator):
 
         return y_preds
 
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_conf_int=False, alpha=_DEFAULT_ALPHA):
+    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Allows for more efficient update-predict routines than calling them sequentially"""
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
@@ -108,11 +134,12 @@ class _BaseForecaster(BaseEstimator):
             raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_conf_int=return_conf_int, alpha=alpha)
+        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def score(self, y_test, fh=None, X=None):
         """
-        Returns the root mean squared error on the given forecast horizon.
+        Returns the negative symmetric mean absolute percentage error on the given
+        forecast horizon.
 
         Parameters
         ----------
@@ -126,7 +153,7 @@ class _BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            Mean squared error of self.predict(fh=fh, X=X) with respect to y.
+            SMAPE score of self.predict(fh=fh, X=X) with respect to y.
         """
         # only check y here, X and fh will be checked during predict
         validate_y(y_test)
@@ -139,7 +166,8 @@ class _BaseForecaster(BaseEstimator):
                              f"make sure the forecasters horizon `fh` matches the time index of `y_test`")
 
         # compute scores against y_test
-        return np.sqrt(mean_squared_error(y_test, y_pred))
+        score = smape_score(y_test, y_pred)
+        return score
 
     def update_score(self, y_test, cv=None, X=None, update_params=False):
         """Model evaluation with temporal cross-validation"""
@@ -268,11 +296,11 @@ class _BaseForecaster(BaseEstimator):
                 alpha = sorted(alpha)
 
                 for tran, al in zip(trans, alpha):
-                    err = self.pred_errs(alpha=al)
+                    intvl = self.compute_pred_int(y_pred=y_hat, alpha=al)
                     ax.fill_between(
                         y_hat.index,
-                        y_hat+err,
-                        y_hat-err,
+                        intvl.upper,
+                        intvl.lower,
                         fc=col,
                         ec=col,
                         alpha=tran,

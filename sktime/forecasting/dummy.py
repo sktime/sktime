@@ -9,7 +9,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import validate_y
 
 
@@ -79,14 +79,14 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=_BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
         # input checks
         self._check_is_fitted()
 
         if isinstance(fh, str) and fh == "insample":
             raise NotImplementedError()
-        if return_conf_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         # set fh

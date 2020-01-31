@@ -2,10 +2,10 @@ import pytest
 import numpy as np
 import pandas as pd
 from numpy.testing import assert_array_equal
-from sklearn.metrics import mean_squared_error
 
 from sktime.forecasting import ExpSmoothingForecaster
 from sktime.datasets import load_shampoo_sales
+from sktime.performance_metrics.forecasting import smape_score
 from sktime.utils.validation.forecasting import validate_fh
 
 __author__ = ["Markus Löning", "big-o@github"]
@@ -61,5 +61,5 @@ def test_score():
     fh = np.arange(len(test)) + 1
     m.fit(train, fh=fh)
     y_pred = m.predict(fh=fh)
-    expected = np.sqrt(mean_squared_error(y_pred.values, test.values))
+    expected = smape_score(y_pred, test)
     assert m.score(test, fh=fh) == expected

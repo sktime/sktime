@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import validate_y
 
 
@@ -139,7 +139,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
             use_basinhopping=self.use_basinhopping,
         )
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=_BaseForecasterOptionalFHinFit._DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """
         Make forecasts.
 
@@ -158,7 +158,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         if isinstance(fh, str) and fh == "insample":
             raise NotImplementedError()
 
-        if return_conf_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         # Input checks.
@@ -190,6 +190,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         # update observation horizon
         self._set_obs_horizon(y_new.index)
 
-        #self._fit_estimator(y_new)
+        if update_params:
+            self._fit_estimator(y_new)
 
         return self

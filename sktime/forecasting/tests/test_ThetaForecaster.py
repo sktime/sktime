@@ -22,9 +22,9 @@ def test_ThetaForecaster_univariate(fh):
     y_pred = m.predict(fh=fh)
 
     assert y_pred.shape[0] == len(fh)
-    assert m.score(y_test, fh=fh) > 0
+    assert m.score(y_test, fh=fh) < 0
 
-    errs = m.pred_errs(alpha=0.05)
+    errs = m.compute_pred_errs(alpha=0.05)
 
     # Prediction errors should always increase with the horizon.
     assert errs.is_monotonic_increasing
@@ -34,10 +34,10 @@ def test_ThetaForecaster_univariate(fh):
     assert np.all(y_pred - errs < y_test)
     assert np.all(y_test < y_pred + errs)
 
-    y_pred2, errs2 = m.predict(fh=fh, return_conf_int=True, alpha=0.05)
+    y_pred2, errs2 = m.predict(fh=fh, return_pred_int=True, alpha=0.05)
     assert np.allclose(y_pred, y_pred2)
-    assert np.allclose(errs, errs2)
+    assert np.allclose(errs, y_pred - errs2.lower)
 
-    y_pred3, errs3 = m.predict(fh=fh, return_conf_int=True, alpha=[0.05, 0.2])
-    assert np.allclose(y_pred, y_pred2)
-    assert np.allclose(errs, errs3[0])
+    y_pred3, errs3 = m.predict(fh=fh, return_pred_int=True, alpha=[0.05, 0.2])
+    assert np.allclose(y_pred, y_pred3)
+    assert np.allclose(errs, y_pred3 - errs3[0].lower)

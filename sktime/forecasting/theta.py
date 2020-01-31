@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting import ExpSmoothingForecaster
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.confidence import zscore
 from sktime.utils.validation.forecasting import check_alpha, validate_sp, validate_y
@@ -146,7 +147,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return y
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=ExpSmoothingForecaster._DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """
         Make forecasts.
 
@@ -182,9 +183,9 @@ class ThetaForecaster(ExpSmoothingForecaster):
             y_pred_nested = self._to_nested(y_pred)
             y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
 
-        if return_conf_int:
-            errs = self.pred_errs(alpha=alpha)
-            return y_pred, errs
+        if return_pred_int:
+            intvl = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
+            return y_pred, intvl
 
         return y_pred
 
@@ -206,7 +207,10 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return drift
 
-    def pred_errs(self, alpha=ExpSmoothingForecaster._DEFAULT_ALPHA):
+    def compute_pred_errs(self, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction errors for the forecast.
+        """
         self._check_is_fitted()
         check_alpha(alpha)
 
@@ -237,4 +241,4 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         super().update(y_new)
         self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
-        self.trend_ = self._compute_trend(y)
+        self.trend_ = self._compute_trend(y_new)
