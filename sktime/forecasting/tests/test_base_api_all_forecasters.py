@@ -6,7 +6,7 @@ __author__ = "Markus Löning"
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.exceptions import NotFittedError
+from sktime.exceptions import NotFittedError
 
 from sktime.forecasting.model_selection import RollingWindowSplit
 from sktime.utils import all_estimators

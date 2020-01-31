@@ -6,7 +6,6 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.exceptions import NotFittedError
 from sklearn.metrics import mean_squared_error
 
 from sktime.utils.validation.forecasting import validate_cv
@@ -32,11 +31,11 @@ class _BaseForecaster(BaseEstimator):
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit model to training data"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def predict(self, fh=None, X=None, return_conf_int=False, alpha=_DEFAULT_ALPHA):
         """Forecast"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def pred_errs(self, fh=None, alpha=None):
         """Prediction errors."""
@@ -44,7 +43,7 @@ class _BaseForecaster(BaseEstimator):
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def update_predict(self, y_test, cv, X_test=None, update_params=False, return_conf_int=False, alpha=_DEFAULT_ALPHA):
         """Model evaluation with temporal cross-validation"""
@@ -55,10 +54,10 @@ class _BaseForecaster(BaseEstimator):
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
         if X_test is not None:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         if return_conf_int:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         # input checks
         y_test = validate_y(y_test)
@@ -106,7 +105,7 @@ class _BaseForecaster(BaseEstimator):
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
         if X is not None:
-            raise NotImplementedError
+            raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh=fh, X=X, return_conf_int=return_conf_int, alpha=alpha)
@@ -146,7 +145,7 @@ class _BaseForecaster(BaseEstimator):
         """Model evaluation with temporal cross-validation"""
         y_pred = self.update_predict(y_test, cv=cv, X_test=X, update_params=update_params)
         # compute scores
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def fh(self):
@@ -319,9 +318,9 @@ class _BaseForecaster(BaseEstimator):
 
     def _set_now(self, now=None):
         if now is None:
-            if isinstance(self.fh, str) and self.fh == "insample":
+            if isinstance(self._fh, str) and self._fh == "insample":
                 # now = self._first_window[-1]
-                raise NotImplementedError
+                raise NotImplementedError()
             else:
                 now = self._obs_horizon[-1]
         else:
@@ -331,7 +330,7 @@ class _BaseForecaster(BaseEstimator):
         self._now = now
 
     def _set_fh(self, fh):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _get_relative_fh(self):
         """
@@ -360,7 +359,7 @@ class _BaseForecaster(BaseEstimator):
 
     def _reset_to_fitted(self):
         """Reset model to fitted state after running model evaluation"""
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def _iter(self, y, cv):
         # set up temporal cv

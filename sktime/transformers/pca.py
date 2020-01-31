@@ -3,7 +3,7 @@ __all__ = "PCATransformer"
 
 import pandas as pd
 
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 from sklearn.decomposition import PCA
 
 from sktime.transformers.base import BaseTransformer

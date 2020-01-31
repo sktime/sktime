@@ -3,7 +3,7 @@ __author__ = ["Markus Löning", "big-o@github"]
 
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 
 
 def validate_y_X(y, X):
@@ -186,7 +186,7 @@ def validate_fh(fh):
 
     Parameters
     ----------
-    fh : int or list of int
+    fh : int, list of int, or str{'insample'}
         Forecasting horizon with steps ahead to predict.
 
     Returns
@@ -199,28 +199,21 @@ def validate_fh(fh):
         return fh
 
     # Check single integer
-    elif isinstance(fh, (int, np.integer)):
-        fh = np.array([fh], dtype=np.int)  # make iterable
+    # boolean are subclasses of integers in Python, so explicitly exclude them
+    elif isinstance(fh, (int, np.integer)) and not isinstance(fh, bool):
+        fh = np.array([fh], dtype=np.int)
 
-    elif isinstance(fh, (list, tuple)):
-        fh = np.array(fh, dtype=np.int)
+    fh = np.asarray(fh)
+    if fh.ndim > 1:
+        raise ValueError(f"`fh` must be a 1d array, but found shape: "
+                         f"{fh.shape}")
+    if len(fh) < 1:
+        raise ValueError(f"`fh` must specify at least one step, but found empty array.")
 
-    # Check array-like input
-    elif isinstance(fh, np.ndarray):
-        if fh.ndim > 1:
-            raise ValueError(f"`fh` must be a 1d array, but found shape: "
-                             f"{fh.shape}")
-        if len(fh) < 1:
-            raise ValueError(f"`fh` must specify at least one step, but found empty array.")
-
-        if not np.issubdtype(fh.dtype, np.integer):
-            raise ValueError(
-                f'If `fh` is passed as an array, it must be an array of '
-                f'integers, but found an array of dtype: {fh.dtype}')
-
-    else:
-        raise ValueError(f"`fh` has to be either a numpy array of integers or a single "
-                         f"integer, but found: {type(fh)}")
+    if not np.issubdtype(fh.dtype, np.integer):
+        raise ValueError(
+            f'If `fh` is passed as an array, it must be an array of '
+            f'integers, but found an array of dtype: {fh.dtype}')
 
     # check fh contains only non-zero positive values
     fh_sorted = np.sort(fh)
@@ -307,6 +300,8 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
     ValueError
         If time indicies are not equal
     """
+
+    # only validate indices if data is passed as pd.Series
     validate_time_index(y_test.index)
     validate_time_index(y_pred.index)
 
@@ -316,6 +311,5 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
     if y_train is not None:
         validate_time_index(y_train.index)
         if y_train.index.max() >= y_pred.index.min():
-            raise ValueError(f"Found y_train with time index which is not "
-                             f"before time index of y_pred")
-
+            raise ValueError(f"Found `y_train` with time index which is not "
+                             f"before time index of `y_pred`")

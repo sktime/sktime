@@ -10,6 +10,7 @@ from warnings import simplefilter
 from warnings import warn
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.ensemble.base import _partition_estimators
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
@@ -22,12 +23,12 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-from sklearn.utils._joblib import Parallel, delayed
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
 
 

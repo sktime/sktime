@@ -40,7 +40,7 @@ class BaseTemporalCrossValidator:
         self._n_splits = None
 
     def split(self, y):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     @property
     def n_splits(self):

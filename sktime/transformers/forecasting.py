@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformers.base import BaseTransformer
