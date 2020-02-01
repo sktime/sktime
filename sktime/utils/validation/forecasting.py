@@ -190,7 +190,7 @@ def validate_fh(fh):
 
     Parameters
     ----------
-    fh : int, list of int, or str{'insample'}
+    fh : int, list of int, array of int, or 'insample'
         Forecasting horizon with steps ahead to predict.
 
     Returns
@@ -217,8 +217,17 @@ def validate_fh(fh):
 
         if not np.issubdtype(fh.dtype, np.integer):
             raise ValueError(
-                f'If `fh` is passed as an array, it must be an array of '
-                f'integers, but found an array of dtype: {fh.dtype}')
+                f"If `fh` is passed as an array, it must be an array of "
+                f"integers, but found an array of dtype: {fh.dtype}")
+
+    # check list input
+    elif isinstance(fh, list):
+        if len(fh) < 1:
+            raise ValueError(f"`fh` must specify at least one step, but found: "
+                             f"{type(fh)} of length {len(fh)}")
+        if not np.all([isinstance(step, (int, np.integer)) and not isinstance(step, bool) for step in fh]):
+            raise ValueError("If `fh` is passed as a list, "
+                             "it has to be a list of integers.")
 
     else:
         raise ValueError(f"`fh` has to be either a numpy array of integers, a single "
