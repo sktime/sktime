@@ -7,6 +7,8 @@ from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import check_equal_index, tabularize
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
+from tsfresh import extract_features
+from tsfresh import select_features
 
 class PlateauFinder(BaseTransformer):
     """Transformer that finds segments of the same given value, plateau in the time series, and
@@ -214,4 +216,42 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
+        return Xt
+
+
+class TsFreshTransfomer(BaseTransformer):
+    
+    def __init__(self,column_id=None,column_sort=None,
+                    column_value=None,column_kind=None,
+                    default_fc_parameters=None,kind_to_fc_parameters=None):
+        self.column_id = column_id
+        self.column_sort = column_sort
+        self.column_value = column_value
+        self.column_kind = column_kind
+        self.default_fc_parameters = default_fc_parameters
+        self.kind_to_fc_parameters = kind_to_fc_parameters
+
+    def fit(X, y=None):
+        #empty
+        return self
+
+    def transform(self, X, y=None):
+        """Transform X.
+        Parameters
+        ----------
+        X : univariate nested pandas DataFrame of shape [n_samples, n_columns]
+            Nested dataframe with time-series in cells.
+        Returns
+        -------
+        Xt : pandas DataFrame
+          Transformed pandas DataFrame
+        """
+        #input checks
+        validate_X(X)
+        check_X_is_univariate(X)
+        
+        # TODO Check if y is required for transform, if yes then combine into a pd dataframe
+        # TODO Complete extract_features call args
+        Xt = extract_features(X,**kwargs)
+
         return Xt
