@@ -12,6 +12,7 @@ from sktime.utils.validation.forecasting import validate_cv
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
 from sktime.utils.validation.forecasting import validate_y
+from sktime.exceptions import NotFittedError
 
 
 # Default confidence level for prediction intervals.
@@ -38,7 +39,7 @@ class _BaseForecaster(BaseEstimator):
         """Forecast"""
         raise NotImplementedError()
 
-    def compute_pred_errs(self, alpha=None):
+    def compute_pred_errs(self, alpha=DEFAULT_ALPHA):
         """
         Prediction errors. If alpha is iterable, errors will be calculated for
         multiple confidence levels.
@@ -369,21 +370,10 @@ class _BaseForecaster(BaseEstimator):
 
         Returns
         =======
-
         fh : numpy.ndarray
-            The forecasting horizon, relative to the start observation horizon.
-
-        Raises
-        ======
-
-        NotFittedError : If the forecaster has not been previously fitted.
+            The forecasting horizon
         """
-        self._check_is_fitted()
-
-        fh = len(self._obs_horizon) - 1 + self._fh
-
-        return fh
-
+        return self.now + self.fh
 
     def _reset_to_fitted(self):
         """Reset model to fitted state after running model evaluation"""

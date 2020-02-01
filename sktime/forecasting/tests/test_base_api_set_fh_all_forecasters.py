@@ -4,12 +4,12 @@
 __author__ = "Markus Löning"
 
 import numpy as np
+import pandas as pd
 import pytest
-from sktime.utils import all_estimators
 
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.forecasting.base import _BaseForecasterRequiredFHinFit
-
+from sktime.utils import all_estimators
 
 # get all forecasters
 forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
@@ -32,13 +32,13 @@ if len(forecasters_required_fh_in_fit) < 1:
             self._set_fh(fh)
             assert self.fh is not None
 
-    forecasters_required_fh_in_fit = [ForecasterReq]
 
+    forecasters_required_fh_in_fit = [ForecasterReq]
 
 ########################################################################################################################
 # test base api for setting/updating/getting fh
 fh = np.array([1, 2])
-y = np.random.normal(size=10)
+y = pd.Series(np.random.normal(size=10))
 
 
 ########################################################################################################################

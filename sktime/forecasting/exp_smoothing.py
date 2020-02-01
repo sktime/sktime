@@ -86,13 +86,13 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self.use_basinhopping = use_basinhopping
         super(ExpSmoothingForecaster, self).__init__()
 
-    def fit(self, y, fh=None):
+    def fit(self, y_train, fh=None, X_train=None):
         """
         Fit to training data.
 
         Parameters
         ----------
-        y : pandas.Series
+        y_train : pandas.Series
             Target time series to which to fit the forecaster.
         fh : array-like, optional (default=[1])
             The forecasters horizon with the steps ahead to to predict.
@@ -101,13 +101,13 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self : returns an instance of self.
         """
 
-        y = validate_y(y)
+        y_train = validate_y(y_train)
         self._set_fh(fh)
 
         # update observation horizon
-        self._set_obs_horizon(y.index)
+        self._set_obs_horizon(y_train.index)
 
-        self._fit_estimator(y)
+        self._fit_estimator(y_train)
 
         self._is_fitted = True
 
@@ -161,22 +161,22 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
 
         # Set forecast horizon.
         self._set_fh(fh)
-        fh = self._get_absolute_fh()
+        fh_abs = self._get_absolute_fh()
 
         # Predict fitted model with start and end points relative to start of train series
-        start = fh[0]
-        end = fh[-1]
+        start = fh_abs[0]
+        end = fh_abs[-1]
         y_pred = self._fitted_estimator.predict(start=start, end=end)
 
         # Convert step-ahead prediction horizon into zero-based index
-        fh_idx = fh - np.min(fh)
+        fh_idx = fh_abs - np.min(fh_abs)
 
         # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
         y_pred = y_pred.iloc[fh_idx]
 
         return y_pred
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y_new, X_new=None, update_params=True):
         # input checks
         self._check_is_fitted()
 
