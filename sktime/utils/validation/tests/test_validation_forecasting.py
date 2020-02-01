@@ -1,18 +1,28 @@
-from pytest import raises
-import pytest
+__author__ = ["Markus Löning"]
+__all__ = ["test_validate_fh_bad_input_args"]
+
 import numpy as np
-from numpy.testing import assert_array_equal
+import pytest
+from pytest import raises
+
 from sktime.utils.validation.forecasting import validate_fh
 
-__author__ = ["Markus Löning"]
 
-
-bad_input_args = ((1, 2), [], np.array([]), [1, 2], 'some_string', 0.1, [0.1, 0.2], True, [True, False])
+bad_input_args = (
+    (1, 2),  # tuple
+    [],  # empty list
+    np.array([]),  # empty array
+    'some_string',  # string but not "insample"
+    0.1,  # float
+    [0.1, 2],  # float in list
+    np.array([0.1, 2]),  # float in list
+    True,  # boolean
+    [True, 2],  # boolean in list
+    np.array([False, 2]),  # boolean in array
+)
 
 
 @pytest.mark.parametrize("arg", bad_input_args)
 def test_validate_fh_bad_input_args(arg):
     with raises(ValueError):
         validate_fh(arg)
-
-
