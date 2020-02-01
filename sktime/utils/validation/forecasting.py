@@ -3,6 +3,7 @@ __author__ = ["Markus Löning", "big-o@github"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.utils.validation import check_is_fitted
 
 
@@ -157,6 +158,14 @@ def validate_X(X):
     return X
 
 
+def validate_window_length(window_length):
+    """Validate window length"""
+    if window_length is not None:
+        if (not isinstance(window_length, (int, np.integer)) or isinstance(window_length, bool)) and window_length < 1:
+            raise ValueError("`window_length` must be a positive integer >= 1 or None")
+    return window_length
+
+
 def validate_sp(sp):
     """Validate seasonal periodicity.
 
@@ -170,15 +179,10 @@ def validate_sp(sp):
     sp : int
         Validated seasonal periodicity
     """
-
-    if sp is None:
-        return sp
-
-    else:
-        if not isinstance(sp, int) and (sp >= 0):
-            raise ValueError(f"Seasonal periodicity (sp) has to be a positive integer, but found: "
-                             f"{sp} of type: {type(sp)}")
-        return sp
+    if sp is not None:
+        if (not isinstance(sp, (int, np.integer)) or isinstance(sp, bool)) and sp < 1:
+            raise ValueError("`sp` must be a positive integer >= 1 or None")
+    return sp
 
 
 def validate_fh(fh):

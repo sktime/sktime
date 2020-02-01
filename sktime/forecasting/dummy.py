@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import validate_y
+from sktime.utils.validation.forecasting import validate_y, validate_sp, validate_window_length
 
 
 class DummyForecaster(_BaseForecasterOptionalFHinFit):
@@ -30,26 +30,41 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
             series will be used.
     """
 
-    def __init__(self, strategy="last", window_length=None):
+    def __init__(self, strategy="last", window_length=None, sp=None):
 
         # input checks
         # allowed strategies to include: last, constant, seasonal-last, mean, median
-        allowed_strategies = ("last", "mean")
+        allowed_strategies = ("last", "mean", "seasonal_last")
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
         self.window_length = window_length
+        self.sp = sp
+
+        if self.strategy == "last" or self.strategy == "seasonal_last":
+            if window_length is not None:
+                warn("For the `last` and `seasonal_last` strategy, "
+                     "the `window_length` value will be ignored.")
+
+        if self.strategy == "last" or self.strategy == "mean":
+            if sp is not None:
+                warn("For the `last` and `mean` strategy, "
+                     "the `sp` value will be ignored.")
 
         if self.strategy == "last":
-            if window_length is not None:
-                warn("For the `last` strategy the `window_length` value will be ignored.")
             self._window_length = 1
 
+        if self.strategy == "seasonal_last":
+            if sp is None:
+                raise NotImplementedError("Estimation of the seasonal periodicity `sp` "
+                                          "from the data is not implemented yet; "
+                                          "please specify the `sp` value.")
+            sp = validate_sp(sp)
+            self._window_length = sp
+            self._sp = sp
+
         if self.strategy == "mean":
-            if isinstance(window_length, (int, np.integer)) and window_length < 2:
-                raise ValueError("`window_length` must be a positive integer >= 2 or None; "
-                                 "for `window_length`=1, use the `last` strategy.")
-            self._window_length = window_length
+            self._window_length = validate_window_length(window_length)
 
         self._last_window = None
         super(DummyForecaster, self).__init__()
@@ -68,11 +83,13 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         # update observation horizon
         self._set_obs_horizon(y.index)
 
+        # set default window length for the mean strategy
         if self.strategy == "mean" and self._window_length is None:
             self._window_length = len(y)
 
         if self._window_length > len(self._obs_horizon):
-            raise ValueError(f"The window length: {self._window_length} is larger than "
+            param = "sp" if self.strategy == "seasonal_last" else "window_length"
+            raise ValueError(f"The {param}: {self._window_length} is larger than "
                              f"the training series.")
 
         self._last_window = y.iloc[-self._window_length:]
@@ -94,13 +111,27 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
         # compute prediction
         if self.strategy == "last":
-            y_pred = self._last_window.iloc[-1]
+            y_pred = np.repeat(self._last_window.iloc[-1], len(self.fh))
+
+        if self.strategy == "seasonal_last":
+            # we need to replicate the last window if max(fh) is larger than sp,
+            # so that we still make forecasts by repeating the last value for that season,
+            # assume fh is sorted, i.e. max(fh) == fh[-1]
+            if self.fh[-1] > self.sp:
+                reps = np.int(np.ceil(self.fh[-1] / self.sp))
+                last_window = np.tile(self._last_window, reps=reps)
+            else:
+                last_window = self._last_window.values
+
+            fh_idx = self.fh - np.min(self.fh)
+            y_pred = last_window[fh_idx]
 
         if self.strategy == "mean":
-            y_pred = self._last_window.mean()
+            y_pred = np.repeat(self._last_window.mean(), len(self.fh))
 
         # return as series with correct time index
-        return pd.Series(np.repeat(y_pred, len(self.fh)), index=self._now + self.fh)
+        index = self._now + self.fh
+        return pd.Series(y_pred, index=index)
 
     def update(self, y_new, X_new=None, update_params=False):
 
