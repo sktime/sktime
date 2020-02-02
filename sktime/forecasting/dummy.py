@@ -19,7 +19,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
     Parameters
     ----------
-    strategy : str, {"last", "mean"}, optional (default="last")
+    strategy : str, {"last", "mean", "seasonal_last"}, optional (default="last")
         Strategy used to make forecasts:
 
         * "last": forecast the last value in the training series

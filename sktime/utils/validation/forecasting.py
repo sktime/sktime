@@ -307,6 +307,7 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
     validate_time_index(y_pred.index)
 
     if not y_test.index.equals(y_pred.index):
+        print(y_test.index, y_pred.index)
         raise ValueError(f"Time index of `y_pred` does not match time index of `y_test`.")
 
     if y_train is not None:

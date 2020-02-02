@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 
 from sktime.forecasting import ExpSmoothingForecaster
 from sktime.datasets import load_shampoo_sales
-from sktime.performance_metrics.forecasting import smape_score
+from sktime.performance_metrics.forecasting import mase_loss
 from sktime.utils.validation.forecasting import validate_fh
 
 __author__ = ["Markus Löning", "big-o@github"]
@@ -56,10 +56,12 @@ def test_set_params():
 @pytest.mark.filterwarnings('ignore::FutureWarning')
 def test_score():
     m = ExpSmoothingForecaster()
-    train = y.iloc[:30]
-    test = y.iloc[30:]
-    fh = np.arange(len(test)) + 1
-    m.fit(train, fh=fh)
+    y_train = y.iloc[:30]
+    y_test = y.iloc[30:]
+    fh = np.arange(len(y_test)) + 1
+
+    m.fit(y_train, fh=fh)
     y_pred = m.predict(fh=fh)
-    expected = smape_score(y_pred, test)
-    assert m.score(test, fh=fh) == expected
+
+    expected = -mase_loss(y_pred, y_test, y_train)
+    assert m.score(y_test, y_train, fh=fh) == expected

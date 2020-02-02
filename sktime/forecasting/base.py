@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from sktime.performance_metrics.forecasting import smape_score
+from sktime.performance_metrics.forecasting import mase_loss
+from sktime.utils.plotting import composite_alpha
+from sktime.utils.validation.forecasting import check_consistent_time_index
 from sktime.utils.validation.forecasting import validate_cv
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
@@ -137,15 +139,17 @@ class _BaseForecaster(BaseEstimator):
         self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def score(self, y_test, fh=None, X=None):
+    def score(self, y_test, y_train, fh=None, X=None):
         """
-        Returns the negative symmetric mean absolute percentage error on the given
-        forecast horizon.
+        Returns the negative mean absolute scaled error (MASE) on the given forecast
+        horizon.
 
         Parameters
         ----------
         y_test : pandas.Series
             Target time series to which to compare the forecasts.
+        y_train : pandas.Series
+            The data used to originally train the forecaster; needed to scale the score.
         fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -154,20 +158,24 @@ class _BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            SMAPE score of self.predict(fh=fh, X=X) with respect to y.
+            MASE score of self.predict(fh=fh, X=X) with respect to y.
+
+        See Also
+        --------
+
+        :meth:`sktime.performance_metrics.forecasting.mase_loss`.`
         """
         # only check y here, X and fh will be checked during predict
         validate_y(y_test)
+        fh = self._set_fh(fh)
 
         y_pred = self.predict(fh=fh, X=X)
 
         # Check if passed true time series coincides with forecast horizon of predicted values
-        if not y_test.index.equals(y_pred.index):
-            raise ValueError(f"Index of passed time series `y_test` does not match index of predicted time series; "
-                             f"make sure the forecasters horizon `fh` matches the time index of `y_test`")
+        check_consistent_time_index(y_test, y_pred, y_train)
 
         # compute scores against y_test
-        score = smape_score(y_test, y_pred)
+        score = -mase_loss(y_test, y_pred, y_train)
         return score
 
     def update_score(self, y_test, cv=None, X=None, update_params=False):
@@ -201,8 +209,10 @@ class _BaseForecaster(BaseEstimator):
         alpha=(0.05, 0.2),
         y_train=None,
         y_test=None,
+        y_pred=None,
         fig=None,
         ax=None,
+        title=None,
         score='lower right',
         **kwargs,
     ):
@@ -222,9 +232,13 @@ class _BaseForecaster(BaseEstimator):
         y_train : :class:`pandas.Series`, optional
             The original training data to plot alongside the forecast.
 
-        y_test : :class:`pandas.Series`
+        y_test : :class:`pandas.Series`, optional
             The actual data to compare to the forecast for in-sample forecasts
             ("nowcasts").
+
+        y_pred : :class:`pandas.Series`, optional
+            Previously calculated forecast from the same forecaster. If omitted, a
+            forecast will be generated automatically using :meth:`.predict()`.
 
         fig : :class:`matplotlib.figure.Figure`, optional
             A figure to plot the graphic on.
@@ -247,8 +261,12 @@ class _BaseForecaster(BaseEstimator):
             The axis on which the graphic was drawn.
         """
 
-        y_hat = self.predict(fh=fh, **kwargs)
-        y_hat.name = f"Forecast ($h = {len(fh)}$)"
+        self._set_fh(fh)
+
+        if y_pred is None:
+            y_pred = self.predict(fh=self.fh, **kwargs)
+
+        y_pred_label =  y_pred.name if y_pred.name else f"Forecast ($h = {len(self.fh)}$)"
 
         # Import dynamically to avoid creating matplotlib dependencies.
         import matplotlib.pyplot as plt
@@ -260,22 +278,27 @@ class _BaseForecaster(BaseEstimator):
                 fig = plt.figure()
             ax = fig.gca()
 
-        train_col = None
+        if title:
+            ax.set_title(title)
+
+        y_col=None
+        fcast_col = None
         if y_train is not None:
             label = f"{y_train.name} (Train)" if y_train.name else "Train"
             y_train.plot(ax=ax, label=label)
-            train_col = ax.get_lines()[-1].get_color()
+            y_col = ax.get_lines()[-1].get_color()
 
         if y_test is not None:
             label = f"{y_test.name} (Test)" if y_test.name else "Test"
-            y_test.plot(ax=ax, c=train_col, label=label, ls="-.")
+            dense_dots = (0, (1, 1))
+            y_test.plot(ax=ax, label=label, ls=dense_dots, c=y_col)
 
-        y_hat.plot(ax=ax, ls="-")
-        y_hat_line = ax.get_lines()[-1]
+        y_pred.plot(ax=ax, label=y_pred_label)
+        fcast_col = ax.get_lines()[-1].get_color()
 
-        if score and y_test is not None:
+        if score and y_test is not None and y_train is not None:
             try:
-                y_score = self.score(y_test=y_test, fh=fh, X=kwargs.get("X"))
+                y_score = self.score(y_test, y_train, fh=self.fh, X=kwargs.get("X"))
                 text_box = AnchoredText(
                     f"Score = ${y_score:.3f}$", frameon=True, loc=score
                 )
@@ -291,23 +314,30 @@ class _BaseForecaster(BaseEstimator):
                 if isinstance(alpha, (np.integer, np.float)):
                     alpha = [alpha]
 
-                col = y_hat_line.get_color()
-                trans = np.linspace(0.25, 0.85, num=len(alpha), endpoint=False)
+                #trans = np.linspace(0.25, 0.65, num=len(alpha), endpoint=False)
+                transp = 0.25
                 # Plot widest intervals first.
                 alpha = sorted(alpha)
 
-                for tran, al in zip(trans, alpha):
-                    intvl = self.compute_pred_int(y_pred=y_hat, alpha=al)
+                last_transp = 0
+                for al in alpha:
+                    intvl = self.compute_pred_int(y_pred=y_pred, alpha=al)
                     ax.fill_between(
-                        y_hat.index,
+                        y_pred.index,
                         intvl.upper,
                         intvl.lower,
-                        fc=col,
-                        ec=col,
-                        alpha=tran,
+                        fc=fcast_col,
+                        ec=fcast_col,
+                        alpha=transp,
                         lw=0
                     )
-                    axhandles.append(Patch(fc=col, alpha=tran, ec=col))
+
+                    # Each level gives an effective transparency through overlapping.
+                    # Reflect this in the legend.
+                    effective_transp = composite_alpha(last_transp, transp)
+                    axhandles.append(Patch(fc=fcast_col, alpha=effective_transp, ec=fcast_col))
+                    last_transp = effective_transp
+
                     axlabels.append(f"{round((1 - al) * 100)}% conf")
 
             except NotImplementedError:
@@ -427,6 +457,8 @@ class _BaseForecasterOptionalFHinFit(_BaseForecaster):
                          "the new one will be used.")
             self._fh = fh
 
+        return self._fh
+
 
 class _BaseForecasterRequiredFHinFit(_BaseForecaster):
     """Base class for forecasters which require the forecasting horizon during fitting."""
@@ -455,3 +487,5 @@ class _BaseForecasterRequiredFHinFit(_BaseForecaster):
             else:
                 # intended workflow: fh is passed when not forecaster is not fitted yet
                 self._fh = fh
+
+        return self._fh

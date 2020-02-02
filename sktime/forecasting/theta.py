@@ -116,8 +116,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         """
 
         y_train = validate_y(y_train)
-        self._set_fh(fh)
-        fh = self._fh
+        fh = self._set_fh(fh)
 
         # update observation horizon
         self._set_obs_horizon(y_train.index)
@@ -169,10 +168,10 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self._set_fh(fh)
 
         # SES.
-        y_pred = super(ThetaForecaster, self).predict(fh=self.fh)
+        y_pred = super(ThetaForecaster, self).predict()
 
         # Add drift.
-        drift = self._compute_drift(self.fh)
+        drift = self._compute_drift()
         y_pred += drift
 
         if self._is_seasonal:
@@ -191,15 +190,16 @@ class ThetaForecaster(ExpSmoothingForecaster):
         coefs = fit_trend(y.values.reshape(1, -1), order=1)
         return coefs[0, 0] / 2
 
-    def _compute_drift(self, fh):
+    def _compute_drift(self):
         if np.isclose(self.smoothing_level_, 0.0):
             # SES was constant so revert to simple trend
-            drift = self.trend_ * fh
+            drift = self.trend_ * self.fh
         else:
             # Calculate drift from SES parameters
             n_obs = len(self._obs_horizon)
             drift = self.trend_ * (
-                fh + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
+                self.fh
+                + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
             )
 
         return drift
@@ -232,7 +232,9 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
     def update(self, y_new, X_new=None, update_params=True):
         # update observation horizon
-        super(ThetaForecaster, self).update(y_new, X_new=None, update_params=update_params)
+        super(ThetaForecaster, self).update(
+            y_new, X_new=None, update_params=update_params
+        )
 
         if update_params:
             y_new = self._deseasonalise(y_new)
