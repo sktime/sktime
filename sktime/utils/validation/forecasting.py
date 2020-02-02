@@ -287,7 +287,7 @@ def check_alpha(alpha):
             )
 
 def check_consistent_time_index(y_test, y_pred, y_train=None):
-    """Check that  and y have consistent indices.
+    """Check that y_test and y_pred have consistent indices.
 
     Parameters
     ----------
