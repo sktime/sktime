@@ -1,8 +1,19 @@
-__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv", "validate_time_index"]
+__all__ = [
+    "validate_y",
+    "validate_X",
+    "validate_y_X",
+    "validate_fh",
+    "validate_cv",
+    "validate_time_index",
+    "check_consistent_time_index",
+    "check_alpha",
+    "check_is_fitted_in_transform"
+]
 __author__ = ["Markus Löning", "big-o@github"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.utils.validation import check_is_fitted
 
 
@@ -157,6 +168,14 @@ def validate_X(X):
     return X
 
 
+def validate_window_length(window_length):
+    """Validate window length"""
+    if window_length is not None:
+        if (not isinstance(window_length, (int, np.integer)) or isinstance(window_length, bool)) and window_length < 1:
+            raise ValueError("`window_length` must be a positive integer >= 1 or None")
+    return window_length
+
+
 def validate_sp(sp):
     """Validate seasonal periodicity.
 
@@ -170,15 +189,10 @@ def validate_sp(sp):
     sp : int
         Validated seasonal periodicity
     """
-
-    if sp is None:
-        return sp
-
-    else:
-        if not isinstance(sp, int) and (sp >= 0):
-            raise ValueError(f"Seasonal periodicity (sp) has to be a positive integer, but found: "
-                             f"{sp} of type: {type(sp)}")
-        return sp
+    if sp is not None:
+        if (not isinstance(sp, (int, np.integer)) or isinstance(sp, bool)) and sp < 1:
+            raise ValueError("`sp` must be a positive integer >= 1 or None")
+    return sp
 
 
 def validate_fh(fh):
@@ -186,7 +200,7 @@ def validate_fh(fh):
 
     Parameters
     ----------
-    fh : int, list of int, or str{'insample'}
+    fh : int, list of int, array of int, or 'insample'
         Forecasting horizon with steps ahead to predict.
 
     Returns
@@ -203,17 +217,31 @@ def validate_fh(fh):
     elif isinstance(fh, (int, np.integer)) and not isinstance(fh, bool):
         fh = np.array([fh], dtype=np.int)
 
-    fh = np.asarray(fh)
-    if fh.ndim > 1:
-        raise ValueError(f"`fh` must be a 1d array, but found shape: "
-                         f"{fh.shape}")
-    if len(fh) < 1:
-        raise ValueError(f"`fh` must specify at least one step, but found empty array.")
+    # Check array input
+    elif isinstance(fh, np.ndarray):
+        if fh.ndim > 1:
+            raise ValueError(f"`fh` must be a 1d array, but found shape: "
+                             f"{fh.shape}")
+        if len(fh) < 1:
+            raise ValueError(f"`fh` must specify at least one step, but found empty array.")
 
-    if not np.issubdtype(fh.dtype, np.integer):
-        raise ValueError(
-            f'If `fh` is passed as an array, it must be an array of '
-            f'integers, but found an array of dtype: {fh.dtype}')
+        if not np.issubdtype(fh.dtype, np.integer):
+            raise ValueError(
+                f"If `fh` is passed as an array, it must be an array of "
+                f"integers, but found an array of dtype: {fh.dtype}")
+
+    # check list input
+    elif isinstance(fh, list):
+        if len(fh) < 1:
+            raise ValueError(f"`fh` must specify at least one step, but found: "
+                             f"{type(fh)} of length {len(fh)}")
+        if not np.all([isinstance(step, (int, np.integer)) and not isinstance(step, bool) for step in fh]):
+            raise ValueError("If `fh` is passed as a list, "
+                             "it has to be a list of integers.")
+
+    else:
+        raise ValueError(f"`fh` has to be either a numpy array of integers, a single "
+                         f"integer or 'insample', but found: {type(fh)}")
 
     # check fh contains only non-zero positive values
     fh_sorted = np.sort(fh)
@@ -259,33 +287,6 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
     check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
 
 
-def check_alpha(alpha):
-    """
-    Check that a confidence level alpha (or list of alphas) is valid.
-
-    Alphas should lie in the open interval (0, 1).
-
-    Parameters
-    ----------
-
-    level : float
-
-    Raises
-    ------
-
-    ValueError
-        If level is outside the range (0, 1).
-    """
-
-    if isinstance(alpha, (np.integer, np.float)):
-        alpha = [alpha]
-
-    for al in alpha:
-        if not 0 < al < 1:
-            raise ValueError(
-                f"Alphas must lie in open interval (0, 1): got {al}."
-            )
-
 def check_consistent_time_index(y_test, y_pred, y_train=None):
     """Check that y_test and y_pred have consistent indices.
 
@@ -313,3 +314,31 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
         if y_train.index.max() >= y_pred.index.min():
             raise ValueError(f"Found `y_train` with time index which is not "
                              f"before time index of `y_pred`")
+
+
+def check_alpha(alpha):
+    """
+    Check that a confidence level alpha (or list of alphas) is valid.
+
+    Alphas should lie in the open interval (0, 1).
+
+    Parameters
+    ----------
+
+    level : float
+
+    Raises
+    ------
+
+    ValueError
+        If level is outside the range (0, 1).
+    """
+
+    if isinstance(alpha, (np.integer, np.float)):
+        alpha = [alpha]
+
+    for al in alpha:
+        if not 0 < al < 1:
+            raise ValueError(
+                f"Alphas must lie in open interval (0, 1): got {al}."
+            )

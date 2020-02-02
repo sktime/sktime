@@ -30,14 +30,14 @@ def test_ThetaForecaster_univariate(fh):
     assert errs.is_monotonic_increasing
 
     # Performance on this particular dataset should be reasonably good.
-    assert np.allclose(y_pred, y_test, rtol=0.05)
+    np.testing.assert_allclose(y_pred, y_test, rtol=0.05)
     assert np.all(y_pred - errs < y_test)
     assert np.all(y_test < y_pred + errs)
 
     y_pred2, errs2 = m.predict(fh=fh, return_pred_int=True, alpha=0.05)
-    assert np.allclose(y_pred, y_pred2)
-    assert np.allclose(errs, y_pred - errs2.lower)
+    np.testing.assert_allclose(y_pred, y_pred2)
+    np.testing.assert_allclose(errs, y_pred - errs2.lower)
 
     y_pred3, errs3 = m.predict(fh=fh, return_pred_int=True, alpha=[0.05, 0.2])
-    assert np.allclose(y_pred, y_pred3)
-    assert np.allclose(errs, y_pred3 - errs3[0].lower)
+    np.testing.assert_allclose(y_pred, y_pred3)
+    np.testing.assert_allclose(errs, y_pred3 - errs3[0].lower)
