@@ -9,7 +9,7 @@ __all__ = [
     "check_alpha",
     "check_is_fitted_in_transform"
 ]
-__author__ = ["Markus Löning", "big-o@github"]
+__author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd

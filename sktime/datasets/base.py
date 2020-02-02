@@ -19,7 +19,7 @@ __all__ = [
     "load_lynx"
 ]
 
-__author__ = ['Markus Löning', 'Sajay Ganesh', 'big-o@github']
+__author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
 
 DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)

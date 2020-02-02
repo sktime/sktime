@@ -8,7 +8,7 @@ from sktime.datasets import load_shampoo_sales
 from sktime.performance_metrics.forecasting import mase_loss
 from sktime.utils.validation.forecasting import validate_fh
 
-__author__ = ["Markus Löning", "big-o@github"]
+__author__ = ["Markus Löning", "@big-o"]
 
 
 # forecast horizons

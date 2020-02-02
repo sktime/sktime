@@ -3,7 +3,7 @@ Plotting utilities.
 """
 
 
-__author__ = ["big-o@github"]
+__author__ = ["@big-o"]
 __all__ = ["composite_alpha"]
 
 

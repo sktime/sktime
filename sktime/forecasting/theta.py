@@ -10,7 +10,7 @@ from sktime.utils.seasonality import seasonality_test
 from sktime.utils.time_series import fit_trend
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["big-o@github"]
+__author__ = ["@big-o"]
 
 
 class ThetaForecaster(ExpSmoothingForecaster):

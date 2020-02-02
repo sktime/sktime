@@ -5,7 +5,7 @@ from sktime.forecasting import ThetaForecaster
 from sktime.datasets import load_airline
 
 
-__author__ = "big-o@github"
+__author__ = "@big-o"
 
 
 # forecast horizons

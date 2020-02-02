@@ -7,7 +7,7 @@ from sktime.utils.validation.forecasting import validate_y
 
 
 __all__ = ["ExpSmoothingForecaster"]
-__author__ = ["Markus Löning", "big-o@github"]
+__author__ = ["Markus Löning", "@big-o"]
 
 
 class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
