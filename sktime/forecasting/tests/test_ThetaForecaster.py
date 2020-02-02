@@ -15,7 +15,7 @@ FHS = ([1], np.arange(1, 5), np.arange(1, 20))
 @pytest.mark.parametrize("fh", FHS)
 def test_ThetaForecaster_univariate(fh):
     y = np.log1p(load_airline())
-    y_train, y_test = y.iloc[:-len(fh)], y.iloc[-len(fh):]
+    y_train, y_test = y.iloc[: -len(fh)], y.iloc[-len(fh) :]
 
     m = ThetaForecaster(seasonal_periods=12)
     m.fit(y_train)

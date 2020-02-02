@@ -12,14 +12,14 @@ __author__ = ["Markus Löning", "@big-o"]
 
 
 # forecast horizons
-FHS = ([1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5)+1)
+FHS = ([1], [1, 3], np.array([1]), np.array([1, 3]), np.arange(5) + 1)
 
 # load test data
 y = load_shampoo_sales()
 
 
 # test default forecasters output for different forecasters horizons
-@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("fh", FHS)
 def test_fhs(fh):
     m = ExpSmoothingForecaster()
@@ -37,7 +37,7 @@ def test_fhs(fh):
     assert_array_equal(y_pred.index.values, y.index[-1] + fh)
 
 
-@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_set_params():
     params = {"trend": "additive"}
 
@@ -53,7 +53,7 @@ def test_set_params():
     assert_array_equal(y_pred, expected)
 
 
-@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_score():
     m = ExpSmoothingForecaster()
     y_train = y.iloc[:30]
