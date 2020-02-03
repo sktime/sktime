@@ -1,5 +1,15 @@
-__all__ = ["validate_y", "validate_X", "validate_y_X", "validate_fh", "validate_cv", "validate_time_index"]
-__author__ = "Markus Löning"
+__all__ = [
+    "validate_y",
+    "validate_X",
+    "validate_y_X",
+    "validate_fh",
+    "validate_cv",
+    "validate_time_index",
+    "check_consistent_time_index",
+    "check_alpha",
+    "check_is_fitted_in_transform"
+]
+__author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
@@ -278,7 +288,7 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
 
 
 def check_consistent_time_index(y_test, y_pred, y_train=None):
-    """Check that  and y have consistent indices.
+    """Check that y_test and y_pred have consistent indices.
 
     Parameters
     ----------
@@ -297,6 +307,7 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
     validate_time_index(y_pred.index)
 
     if not y_test.index.equals(y_pred.index):
+        print(y_test.index, y_pred.index)
         raise ValueError(f"Time index of `y_pred` does not match time index of `y_test`.")
 
     if y_train is not None:
@@ -304,3 +315,31 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
         if y_train.index.max() >= y_pred.index.min():
             raise ValueError(f"Found `y_train` with time index which is not "
                              f"before time index of `y_pred`")
+
+
+def check_alpha(alpha):
+    """
+    Check that a confidence level alpha (or list of alphas) is valid.
+
+    Alphas should lie in the open interval (0, 1).
+
+    Parameters
+    ----------
+
+    level : float
+
+    Raises
+    ------
+
+    ValueError
+        If level is outside the range (0, 1).
+    """
+
+    if isinstance(alpha, (np.integer, np.float)):
+        alpha = [alpha]
+
+    for al in alpha:
+        if not 0 < al < 1:
+            raise ValueError(
+                f"Alphas must lie in open interval (0, 1): got {al}."
+            )

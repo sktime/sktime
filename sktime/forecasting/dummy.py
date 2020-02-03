@@ -9,7 +9,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
+from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import validate_y, validate_sp, validate_window_length
 
 
@@ -19,7 +19,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
     Parameters
     ----------
-    strategy : str, {"last", "mean"}, optional (default="last")
+    strategy : str, {"last", "mean", "seasonal_last"}, optional (default="last")
         Strategy used to make forecasts:
 
         * "last": forecast the last value in the training series
@@ -96,14 +96,14 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=0.05):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
         # input checks
         self._check_is_fitted()
 
         if isinstance(fh, str) and fh == "insample":
             raise NotImplementedError()
-        if return_conf_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         # set fh

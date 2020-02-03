@@ -7,16 +7,19 @@ import pandas as pd
 
 from ..utils.load_data import load_from_tsfile_to_dataframe
 
-__all__ = ["load_gunpoint",
-           "load_arrow_head",
-           "load_italy_power_demand",
-           "load_basic_motions",
-           "load_japanese_vowels",
-           "load_shampoo_sales",
-           "load_longley",
-           "load_lynx"]
+__all__ = [
+    "load_airline",
+    "load_gunpoint",
+    "load_arrow_head",
+    "load_italy_power_demand",
+    "load_basic_motions",
+    "load_japanese_vowels",
+    "load_shampoo_sales",
+    "load_longley",
+    "load_lynx"
+]
 
-__author__ = ['Markus Löning', 'Sajay Ganesh']
+__author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
 
 DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)
@@ -418,3 +421,45 @@ def load_lynx():
     data.name = name
     return data
 
+
+def load_airline():
+    """
+    Load the airline univariate time series dataset for forecasting.
+
+    Returns
+    -------
+    y : pandas Series
+        Lynx sales dataset
+
+    Details
+    -------
+    The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960.
+
+    Dimensionality:     univariate
+    Series length:      144
+    Frequency:          Monthly
+    Number of cases:    1
+
+    Notes
+    -----
+    This data shows an increasing trend, non-constant (increasing) variance
+    and periodic, seasonal patterns.
+
+    References
+    ----------
+    ..[1] Box, G. E. P., Jenkins, G. M. and Reinsel, G. C. (1976) Time Series
+          Analysis, Forecasting and Control. Third Edition. Holden-Day.
+          Series G.
+    """
+
+    name = 'Airline'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0, squeeze=True)
+
+    # change period index to simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.reset_index(drop=True)
+    data.name = name
+    return data

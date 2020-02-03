@@ -1,17 +1,24 @@
 __all__ = ["_BaseForecaster", "_BaseForecasterOptionalFHinFit", "_BaseForecasterRequiredFHinFit"]
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "@big-o"]
 
 from warnings import warn
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sktime.exceptions import NotFittedError
 
+from sktime.performance_metrics.forecasting import mase_loss
+from sktime.utils.plotting import composite_alpha
+from sktime.utils.validation.forecasting import check_consistent_time_index
 from sktime.utils.validation.forecasting import validate_cv
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
 from sktime.utils.validation.forecasting import validate_y
+from sktime.exceptions import NotFittedError
+
+
+# Default confidence level for prediction intervals.
+DEFAULT_ALPHA = 0.05
 
 
 class _BaseForecaster(BaseEstimator):
@@ -30,15 +37,44 @@ class _BaseForecaster(BaseEstimator):
         """Fit model to training data"""
         raise NotImplementedError()
 
-    def predict(self, fh=None, X=None, return_conf_int=False, alpha=0.05):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Forecast"""
         raise NotImplementedError()
+
+    def compute_pred_errs(self, alpha=DEFAULT_ALPHA):
+        """
+        Prediction errors. If alpha is iterable, errors will be calculated for
+        multiple confidence levels.
+        """
+        raise NotImplementedError()
+
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction intervals for the forecast. If alpha is iterable, multiple
+        intervals will be calculated.
+        """
+        errs = self.compute_pred_errs(alpha=alpha)
+        if isinstance(errs, pd.Series):
+            ints = pd.DataFrame({
+                    "lower": y_pred - errs,
+                    "upper": y_pred + errs
+                })
+        else:
+            ints = tuple(
+                pd.DataFrame({
+                    "lower": y_pred - err,
+                    "upper": y_pred + err
+                })
+                for err in errs
+            )
+
+        return ints
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
         raise NotImplementedError()
 
-    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_conf_int=False, alpha=0.05):
+    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Model evaluation with temporal cross-validation"""
         # temporal cross-validation is performed for model evaluation, returning
         # predictions for all time points of the new time series y (i.e. y_test)
@@ -49,7 +85,7 @@ class _BaseForecaster(BaseEstimator):
         if X_test is not None:
             raise NotImplementedError()
 
-        if return_conf_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         # input checks
@@ -93,7 +129,7 @@ class _BaseForecaster(BaseEstimator):
 
         return y_preds
 
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_conf_int=False, alpha=0.05):
+    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Allows for more efficient update-predict routines than calling them sequentially"""
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
@@ -101,12 +137,46 @@ class _BaseForecaster(BaseEstimator):
             raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_conf_int=return_conf_int, alpha=alpha)
+        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def score(self, y_test, fh=None, X=None):
+    def score(self, y_test, y_train, fh=None, X=None):
+        """
+        Returns the negative mean absolute scaled error (MASE) on the given forecast
+        horizon.
+
+        Parameters
+        ----------
+        y_test : pandas.Series
+            Target time series to which to compare the forecasts.
+        y_train : pandas.Series
+            The data used to originally train the forecaster; needed to scale the score.
+        fh : int or array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+            An optional 2-d dataframe of exogenous variables.
+
+        Returns
+        -------
+        score : float
+            MASE score of self.predict(fh=fh, X=X) with respect to y.
+
+        See Also
+        --------
+
+        :meth:`sktime.performance_metrics.forecasting.mase_loss`.`
+        """
+        # only check y here, X and fh will be checked during predict
+        validate_y(y_test)
+        fh = self._set_fh(fh)
+
         y_pred = self.predict(fh=fh, X=X)
+
+        # Check if passed true time series coincides with forecast horizon of predicted values
+        check_consistent_time_index(y_test, y_pred, y_train)
+
         # compute scores against y_test
-        raise NotImplementedError()
+        score = -mase_loss(y_test, y_pred, y_train)
+        return score
 
     def update_score(self, y_test, cv=None, X=None, update_params=False):
         """Model evaluation with temporal cross-validation"""
@@ -131,6 +201,154 @@ class _BaseForecaster(BaseEstimator):
     @property
     def now(self):
         return self._now
+
+    def plot(
+        self,
+        *,
+        fh=None,
+        alpha=(0.05, 0.2),
+        y_train=None,
+        y_test=None,
+        y_pred=None,
+        fig=None,
+        ax=None,
+        title=None,
+        score='lower right',
+        **kwargs,
+    ):
+        """
+        Plot a forecast.
+
+        Parameters
+        ----------
+
+        fh : int or array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+
+        alpha : float or array-like, optional (default=(0.05, 0.2))
+            Alpha values for a confidence level or list of confidence levels to plot
+            prediction intervals for.
+
+        y_train : :class:`pandas.Series`, optional
+            The original training data to plot alongside the forecast.
+
+        y_test : :class:`pandas.Series`, optional
+            The actual data to compare to the forecast for in-sample forecasts
+            ("nowcasts").
+
+        y_pred : :class:`pandas.Series`, optional
+            Previously calculated forecast from the same forecaster. If omitted, a
+            forecast will be generated automatically using :meth:`.predict()`.
+
+        fig : :class:`matplotlib.figure.Figure`, optional
+            A figure to plot the graphic on.
+
+        ax : :class:`matplotlib.axes.Axes`, optional
+            The axis on which to plot the graphic. If not provided, a new one
+            will be created.
+
+        score : str, optional (default="lower right")
+            Where to draw a text box showing the score of the forecast if possible.
+            If set to None, no score will be displayed.
+
+        kwargs
+            Additional keyword arguments to pass to :meth:`.predict`.
+
+        Returns
+        -------
+
+        ax : :class:`matplotlib.axes.Axes`
+            The axis on which the graphic was drawn.
+        """
+
+        self._set_fh(fh)
+
+        if y_pred is None:
+            y_pred = self.predict(fh=self.fh, **kwargs)
+
+        y_pred_label =  y_pred.name if y_pred.name else f"Forecast ($h = {len(self.fh)}$)"
+
+        # Import dynamically to avoid creating matplotlib dependencies.
+        import matplotlib.pyplot as plt
+        from matplotlib.offsetbox import AnchoredText
+        from matplotlib.patches import Patch
+
+        if ax is None:
+            if fig is None:
+                fig = plt.figure()
+            ax = fig.gca()
+
+        if title:
+            ax.set_title(title)
+
+        y_col=None
+        fcast_col = None
+        if y_train is not None:
+            label = f"{y_train.name} (Train)" if y_train.name else "Train"
+            y_train.plot(ax=ax, label=label)
+            y_col = ax.get_lines()[-1].get_color()
+
+        if y_test is not None:
+            label = f"{y_test.name} (Test)" if y_test.name else "Test"
+            dense_dots = (0, (1, 1))
+            y_test.plot(ax=ax, label=label, ls=dense_dots, c=y_col)
+
+        y_pred.plot(ax=ax, label=y_pred_label)
+        fcast_col = ax.get_lines()[-1].get_color()
+
+        if score and y_test is not None and y_train is not None:
+            try:
+                y_score = self.score(y_test, y_train, fh=self.fh, X=kwargs.get("X"))
+                text_box = AnchoredText(
+                    f"Score = ${y_score:.3f}$", frameon=True, loc=score
+                )
+                ax.add_artist(text_box)
+            except ValueError:
+                # Cannot calculate score if y_test and fh indices don't align.
+                pass
+
+        axhandles, axlabels = ax.get_legend_handles_labels()
+        if alpha is not None:
+            # Plot prediction intervals if available.
+            try:
+                if isinstance(alpha, (np.integer, np.float)):
+                    alpha = [alpha]
+
+                #trans = np.linspace(0.25, 0.65, num=len(alpha), endpoint=False)
+                transp = 0.25
+                # Plot widest intervals first.
+                alpha = sorted(alpha)
+
+                last_transp = 0
+                for al in alpha:
+                    intvl = self.compute_pred_int(y_pred=y_pred, alpha=al)
+                    ax.fill_between(
+                        y_pred.index,
+                        intvl.upper,
+                        intvl.lower,
+                        fc=fcast_col,
+                        ec=fcast_col,
+                        alpha=transp,
+                        lw=0
+                    )
+
+                    # Each level gives an effective transparency through overlapping.
+                    # Reflect this in the legend.
+                    effective_transp = composite_alpha(last_transp, transp)
+                    axhandles.append(Patch(fc=fcast_col, alpha=effective_transp, ec=fcast_col))
+                    last_transp = effective_transp
+
+                    axlabels.append(f"{round((1 - al) * 100)}% conf")
+
+            except NotImplementedError:
+                pass
+
+        ax.legend(handles=axhandles, labels=axlabels)
+
+        if fig is not None:
+            fig.tight_layout()
+
+        return ax
 
     def _set_obs_horizon(self, obs_horizon, update_now=True):
         """
@@ -172,6 +390,20 @@ class _BaseForecaster(BaseEstimator):
 
     def _set_fh(self, fh):
         raise NotImplementedError()
+
+    def _get_absolute_fh(self):
+        """
+        Convert the step-ahead forecast horizon into the corresponding time index
+        values to append to the target data.
+
+        The forecaster must be fitted before calling this method.
+
+        Returns
+        =======
+        fh : numpy.ndarray
+            The forecasting horizon
+        """
+        return self.now + self.fh
 
     def _reset_to_fitted(self):
         """Reset model to fitted state after running model evaluation"""
@@ -225,6 +457,8 @@ class _BaseForecasterOptionalFHinFit(_BaseForecaster):
                          "the new one will be used.")
             self._fh = fh
 
+        return self._fh
+
 
 class _BaseForecasterRequiredFHinFit(_BaseForecaster):
     """Base class for forecasters which require the forecasting horizon during fitting."""
@@ -253,3 +487,5 @@ class _BaseForecasterRequiredFHinFit(_BaseForecaster):
             else:
                 # intended workflow: fh is passed when not forecaster is not fitted yet
                 self._fh = fh
+
+        return self._fh

@@ -8,7 +8,12 @@ __all__ = ["mase_loss", "smape_loss"]
 
 
 def mase_loss(y_test, y_pred, y_train, sp=1):
-    """Mean absolute scaled error
+    """Mean absolute scaled error.
+
+    This scale-free error metric can be used to compare forecast methods on a single
+    series and also to compare forecast accuracy between series. This metric is well
+    suited to intermittent-demand series because it never gives infinite or undefined
+    values.
 
     Parameters
     ----------
