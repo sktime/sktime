@@ -71,4 +71,4 @@ def smape_loss(y_test, y_pred):
 
     nominator = np.abs(y_test - y_pred)
     denominator = np.abs(y_test) + np.abs(y_pred)
-    return 2 * np.mean(nominator / denominator)
+    return np.mean(2.0 * nominator / denominator)
