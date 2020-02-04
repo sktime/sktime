@@ -457,13 +457,14 @@ class _BaseForecasterOptionalFHinFit(_BaseForecaster):
                          "the new one will be used.")
             self._fh = fh
 
-        return self._fh
-
 
 class _BaseForecasterRequiredFHinFit(_BaseForecaster):
     """Base class for forecasters which require the forecasting horizon during fitting."""
 
     def _set_fh(self, fh):
+        """Validate and set forecasting horizon"""
+
+        msg = f"This is because fitting of the `{self.__class__.__name__}` depends on `fh`. "
 
         if fh is None:
             if self.is_fitted:
@@ -472,20 +473,18 @@ class _BaseForecasterRequiredFHinFit(_BaseForecaster):
             else:
                 # fh must be passed when forecaster is not fitted yet
                 raise ValueError("The forecasting horizon `fh` must be passed to `fit`, "
-                                 "but none was found.")
+                                 "but none was found. " + msg)
         else:
             fh = validate_fh(fh)
             if self.is_fitted:
                 if not np.array_equal(fh, self.fh):
                     # raise error if existing fh and new one don't match
                     raise ValueError(
-                        f"A different forecasting horizon `fh` has been provided from the one seen in `fit`. "
-                        f"Training of {self.__class__.__name__} depends on the forecasting horizon. "
-                        f"If you want to change the forecasting horizon, please re-fit the forecaster.")
+                        f"A different forecasting horizon `fh` has been provided from "
+                        f"the one seen in `fit`. If you want to change the forecasting "
+                        f"horizon, please re-fit the forecaster. " + msg)
                 # if existing one and new match, ignore new one
                 pass
             else:
-                # intended workflow: fh is passed when not forecaster is not fitted yet
+                # intended workflow: fh is passed when forecaster is not fitted yet
                 self._fh = fh
-
-        return self._fh

@@ -1,10 +1,7 @@
 __all__ = ["RollingWindowSplit"]
 __author__ = "Markus Löning"
 
-import numbers
-
 import numpy as np
-import pandas as pd
 
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
@@ -31,7 +28,7 @@ class BaseTemporalCrossValidator:
             raise ValueError(f"window_length must be a postive integer, but found: {type(window_length)}")
 
         if not isinstance(step_length, (int, np.integer)) and (step_length < 1):
-            raise ValueError(f"step_lenght must be an positive integer, but found: {type(step_length)}")
+            raise ValueError(f"step_length must be an positive integer, but found: {type(step_length)}")
 
         # set during construction
         self.fh = validate_fh(fh)
