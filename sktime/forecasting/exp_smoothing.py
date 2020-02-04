@@ -23,7 +23,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         Should the trend component be damped.
     seasonal : {"add", "mul", "additive", "multiplicative", None}, optional (default=None)
         Type of seasonal component.
-    seasonal_periods : int, optional (default=None)
+    sp : int, optional (default=None)
         The number of seasons to consider for the holt winters.
     smoothing_level : float, optional
         The alpha value of the simple exponential smoothing, if the value
@@ -59,7 +59,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         trend=None,
         damped=False,
         seasonal=None,
-        seasonal_periods=None,
+        sp=None,
         smoothing_level=None,
         smoothing_slope=None,
         smoothing_seasonal=None,
@@ -73,17 +73,18 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self.trend = trend
         self.damped = damped
         self.seasonal = seasonal
-        self.seasonal_periods = seasonal_periods
+        self.sp = sp
 
         # Fit params
         self.smoothing_level = smoothing_level
         self.optimized = optimized
         self.smoothing_slope = smoothing_slope
-        self.smooting_seasonal = smoothing_seasonal
+        self.smoothing_seasonal = smoothing_seasonal
         self.damping_slope = damping_slope
         self.use_boxcox = use_boxcox
         self.remove_bias = remove_bias
         self.use_basinhopping = use_basinhopping
+
         super(ExpSmoothingForecaster, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
@@ -120,14 +121,14 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
             trend=self.trend,
             damped=self.damped,
             seasonal=self.seasonal,
-            seasonal_periods=self.seasonal_periods,
+            seasonal_periods=self.sp,
         )
 
         self._fitted_estimator = self._estimator.fit(
             smoothing_level=self.smoothing_level,
             optimized=self.optimized,
             smoothing_slope=self.smoothing_slope,
-            smoothing_seasonal=self.smooting_seasonal,
+            smoothing_seasonal=self.smoothing_seasonal,
             damping_slope=self.damping_slope,
             use_boxcox=self.use_boxcox,
             remove_bias=self.remove_bias,

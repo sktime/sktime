@@ -12,6 +12,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.base import clone
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import RollingWindowSplit
@@ -32,6 +33,19 @@ n_train = 20
 s = pd.Series(np.arange(n_timepoints))
 y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
+
+
+########################################################################################################################
+# not fitted error
+@pytest.mark.parametrize("forecaster", forecasters)
+def test_clone(forecaster):
+    f = forecaster()
+    params = f.get_params()
+
+    f_cloned = clone(f)
+    params_cloned = f_cloned.get_params()
+
+    assert params == params_cloned
 
 
 ########################################################################################################################
@@ -110,5 +124,7 @@ def test_update_predict_check_warning_for_inconsistent_fhs(forecaster, fh, windo
     cv = RollingWindowSplit(fh + 1, window_length=window_length, step_length=step_length)
     f = forecaster()
     f.fit(y_train, fh)
+
+    # check for expected warning when updating fh via passed cv object
     with pytest.warns(UserWarning):
         f.update_predict(y_test, cv=cv)

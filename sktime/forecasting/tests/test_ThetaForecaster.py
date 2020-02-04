@@ -17,7 +17,7 @@ def test_ThetaForecaster_univariate(fh):
     y = np.log1p(load_airline())
     y_train, y_test = y.iloc[: -len(fh)], y.iloc[-len(fh) :]
 
-    m = ThetaForecaster(seasonal_periods=12)
+    m = ThetaForecaster(sp=12)
     m.fit(y_train)
     y_pred = m.predict(fh=fh)
 

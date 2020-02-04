@@ -5,12 +5,12 @@ from sktime.forecasting import ExpSmoothingForecaster
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.confidence import zscore
-from sktime.utils.validation.forecasting import check_alpha, validate_sp, validate_y
 from sktime.utils.seasonality import seasonality_test
 from sktime.utils.time_series import fit_trend
+from sktime.utils.validation.forecasting import check_alpha, validate_y
 
 __all__ = ["ThetaForecaster"]
-__author__ = ["@big-o"]
+__author__ = ["@big-o", "Markus Löning"]
 
 
 class ThetaForecaster(ExpSmoothingForecaster):
@@ -41,7 +41,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         A transformer to use for seasonal adjustments. Overrides the
         ``seasonal_periods`` parameter.
 
-    seasonal_periods : int, optional (default=1)
+    sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
         multiplicative deseasonaliser, which is used if seasonality is detected in the
         training data. Ignored if a deseasonaliser transformer is provided. Default is
@@ -72,29 +72,23 @@ class ThetaForecaster(ExpSmoothingForecaster):
            <https://www.sciencedirect.com/science/article/pii/S0169207001001431>`_
     """
 
-    def __init__(self, smoothing_level=None, deseasonaliser=None, seasonal_periods=1):
-        self.deseasonaliser = deseasonaliser
-        self.seasonal_periods = seasonal_periods
-        self.smoothing_level = smoothing_level
+    def __init__(self, smoothing_level=None, deseasonaliser=None, sp=1):
 
-        if deseasonaliser:
+        self.deseasonaliser = deseasonaliser
+
+        if deseasonaliser is not None:
             self._deseasonaliser = deseasonaliser
-        elif seasonal_periods is not None:
-            self._deseasonaliser = Deseasonaliser(
-                model="multiplicative", sp=seasonal_periods
-            )
         else:
-            raise ValueError(
-                "One of 'seasonal_periods' or 'deseasonaliser' must be provided."
-            )
+            if sp is not None:
+                # default deseasonaliser
+                self._deseasonaliser = Deseasonaliser(model="multiplicative", sp=sp)
 
         self.trend_ = None
         self.smoothing_level_ = None
-        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level)
+        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
     def _to_nested(self, y):
         nested = pd.DataFrame(pd.Series([y]))
-
         return nested
 
     def fit(self, y_train, fh=None, X_train=None):
@@ -198,8 +192,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
             # Calculate drift from SES parameters
             n_obs = len(self._obs_horizon)
             drift = self.trend_ * (
-                self.fh
-                + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
+                    self.fh
+                    + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
             )
 
         return drift
