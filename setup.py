@@ -44,7 +44,7 @@ def find_version(*file_paths):
 
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible toolbox for learning with time series/panel data'
+DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Király'
