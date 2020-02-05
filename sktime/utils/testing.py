@@ -1,6 +1,42 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+
+from sktime.forecasting.base import _BaseForecaster
+from sktime.forecasting.reduce import _ReducedTabularRegressorMixin
+from sktime.forecasting.reduce import _ReducedTimeSeriesRegressorMixin
+from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import detabularise
+from sktime.forecasting.model_selection import RollingWindowSplit
+
+
+def _construct_instance(Estimator):
+    """Construct Estimator instance if possible"""
+    required_parameters = getattr(Estimator, "_required_parameters", [])
+    if len(required_parameters) > 0:
+        # if estimator requires parameters for construction,
+        # set default ones for testing
+        if issubclass(Estimator, _BaseForecaster):
+            if "regressor" in required_parameters:
+                if issubclass(Estimator, _ReducedTabularRegressorMixin):
+                    kwargs = {"regressor": LinearRegression()}
+
+                elif issubclass(Estimator, _ReducedTimeSeriesRegressorMixin):
+                    kwargs = {"regressor": make_pipeline(Tabulariser(), LinearRegression())}
+
+            if "cv" in required_parameters:
+                kwargs["cv"] = RollingWindowSplit(fh=1, window_length=10)
+            
+            estimator = Estimator(**kwargs)
+
+        else:
+            raise NotImplementedError()
+    else:
+        # construct without kwargs if no parameters are required
+        estimator = Estimator()
+
+    return estimator
 
 
 def generate_df_from_array(array, n_rows=10, n_cols=1):
@@ -58,4 +94,3 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100, order=
     X = pd.DataFrame(samples)
     assert X.shape == (n_samples, n_obs)
     return detabularise(X)
-

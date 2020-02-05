@@ -234,3 +234,5 @@ class ThetaForecaster(ExpSmoothingForecaster):
             y_new = self._deseasonalise(y_new)
             self.smoothing_level_ = self._fitted_estimator.params["smoothing_level"]
             self.trend_ = self._compute_trend(y_new)
+
+        return self

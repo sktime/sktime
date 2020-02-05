@@ -32,10 +32,11 @@ from sktime.utils.validation.forecasting import validate_y
 class _BaseReducer(_BaseForecaster):
     """Base class for reducing forecasting to time series regression"""
 
-    def __init__(self, base_regressor, cv):
-        self.base_regressor = base_regressor
-        self.cv = validate_cv(cv)
+    _required_parameters = ["regressor", "cv"]
 
+    def __init__(self, regressor, cv):
+        self.regressor = regressor
+        self.cv = validate_cv(cv)
         self._window_length = cv.window_length
         self._last_window = None
 
@@ -62,6 +63,21 @@ class _BaseReducer(_BaseForecaster):
         # Put into required input format for regression
         X_train, y_train = self._convert_data(xs, ys)
         return X_train, y_train
+
+    def update(self, y_new, X_new=None, update_params=False):
+        if X_new is not None:
+            raise NotImplementedError()
+        if update_params:
+            raise NotImplementedError()
+
+        # input checks
+        self._check_is_fitted()
+
+        y_new = validate_y(y_new)
+
+        # update observation horizon
+        self._set_obs_horizon(y_new.index)
+        return self
 
 
 class _ReducedTimeSeriesRegressorMixin:
@@ -90,16 +106,14 @@ class _ReducedTabularRegressorMixin:
             return X_train
 
         y_train = np.vstack(y)
-        if y_train.shape[1] == 1:
-            y_train = y_train.ravel()
         return X_train, y_train
 
 
 class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
     strategy = "direct"
 
-    def __init__(self, base_regressor, cv):
-        super(_DirectReducer, self).__init__(base_regressor=base_regressor, cv=cv)
+    def __init__(self, regressor, cv):
+        super(_DirectReducer, self).__init__(regressor=regressor, cv=cv)
 
     def fit(self, y_train, fh=None, X_train=None):
         # input checks
@@ -124,12 +138,12 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         X_train, Y_train = self.transform(y_train)
 
         # iterate over forecasting horizon
-        self.base_regressors_ = []
+        self.regressors_ = []
         for i in range(len(self.fh)):
             y_train = Y_train[:, i]
-            base_regressor = clone(self.base_regressor)
-            base_regressor.fit(X_train, y_train)
-            self.base_regressors_.append(base_regressor)
+            regressor = clone(self.regressor)
+            regressor.fit(X_train, y_train)
+            self.regressors_.append(regressor)
 
         self._is_fitted = True
         return self
@@ -142,6 +156,9 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         if return_pred_int:
             raise NotImplementedError()
 
+        self._check_is_fitted()
+        self._set_fh(fh)
+
         # use last window as new input data for time series regressors to make forecasts
         X_last = self._convert_data([self._last_window])
 
@@ -150,8 +167,8 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         y_pred = np.zeros(len_fh)
 
         # Iterate over estimators/forecast horizon
-        for i, base_regressor in enumerate(self.base_regressors_):
-            y_pred[i] = base_regressor.predict(X_last)
+        for i, regressor in enumerate(self.regressors_):
+            y_pred[i] = regressor.predict(X_last)
 
         # Add forecasting time index
         index = self._get_absolute_fh()
@@ -161,7 +178,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
 class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
     strategy = "recursive"
 
-    def __init__(self, base_regressor, cv):
+    def __init__(self, regressor, cv):
 
         # for recursive reduction strategy, the forecaster are fitted on
         # one-step ahead forecast and then recursively applied to make
@@ -172,8 +189,8 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
                  f"This value will be ignored and 1 will be used instead.")
             cv.fh = np.array([1])
 
-        self.base_regressor_ = None
-        super(_RecursiveReducer, self).__init__(base_regressor=base_regressor, cv=cv)
+        self.regressor_ = None
+        super(_RecursiveReducer, self).__init__(regressor=regressor, cv=cv)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit forecaster"""
@@ -192,9 +209,9 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
         X_train, y_train = self.transform(y_train)
 
         # fit base regressor
-        base_regressor = clone(self.base_regressor)
-        base_regressor.fit(X_train, y_train)
-        self.base_regressor_ = base_regressor
+        regressor = clone(self.regressor)
+        regressor.fit(X_train, y_train)
+        self.regressor_ = regressor
 
         self._is_fitted = True
         return self
@@ -214,12 +231,12 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
         fh_max = max(self.fh)
         y_pred = np.zeros(fh_max)
 
-        base_regressor = self.base_regressor_
+        regressor = self.regressor_
 
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
             X_last = self._convert_data([self._last_window])  # convert data into required input format
-            y_pred[i] = base_regressor.predict(X_last)  # make forecast using fitted regressor
+            y_pred[i] = regressor.predict(X_last)  # make forecast using fitted regressor
             self._update_last_window(y_pred[i])  # update last window with previous prediction
 
         # select specific steps ahead and add index
@@ -273,9 +290,9 @@ def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv, strategy="recursive"
     ..[1] Bontempi, Gianluca & Ben Taieb, Souhaib & Le Borgne, Yann-Aël. (2013).
       Machine Learning Strategies for Time Series Forecasting.
     """
-    scitype = "time_series_regressor"
-    forecaster = _get_forecaster_class(scitype, strategy)
-    return forecaster(base_regressor=ts_regressor, cv=cv)
+    scitype = "ts_regressor"
+    Forecaster = _get_forecaster_class(scitype, strategy)
+    return Forecaster(regressor=ts_regressor, cv=cv)
 
 
 def ReducedRegressionForecaster(regressor, cv, strategy="recursive"):
@@ -298,8 +315,8 @@ def ReducedRegressionForecaster(regressor, cv, strategy="recursive"):
       Machine Learning Strategies for Time Series Forecasting.
     """
     scitype = "regressor"
-    forecaster = _get_forecaster_class(scitype, strategy)
-    return forecaster(base_regressor=regressor, cv=cv)
+    Forecaster = _get_forecaster_class(scitype, strategy)
+    return Forecaster(regressor=regressor, cv=cv)
 
 
 def _get_forecaster_class(scitype, strategy):
@@ -318,10 +335,11 @@ def _get_forecaster_class(scitype, strategy):
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
         },
-        "time_series_regressor": {
+        "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
             "recursive": RecursiveTimeSeriesRegressionForecaster
         }
     }
     # look up and return forecaster class
-    return lookup_table.get(scitype).get(strategy)
+    Forecaster = lookup_table.get(scitype).get(strategy)
+    return Forecaster

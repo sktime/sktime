@@ -7,7 +7,7 @@ from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
 
 
-class BaseTemporalCrossValidator:
+class _BaseTemporalCrossValidator:
     """Rolling window iterator that allows to split time series index into two windows,
     one containing observations used as feature data and one containing observations used as
     target data to be predicted. The target window has the length of the given forecasting horizon.
@@ -57,7 +57,7 @@ class BaseTemporalCrossValidator:
         return self.n_splits
 
 
-class RollingWindowSplit(BaseTemporalCrossValidator):
+class RollingWindowSplit(_BaseTemporalCrossValidator):
 
     def split(self, y):
         # check input

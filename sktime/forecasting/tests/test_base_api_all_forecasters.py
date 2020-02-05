@@ -6,7 +6,6 @@ __all__ = [
     "test_not_fitted_error",
     "test_predict_time_index",
     "test_update_predict_check_predicted_indices",
-    "test_update_predict_check_warning_for_inconsistent_fhs",
 ]
 
 import numpy as np
@@ -17,15 +16,17 @@ from sklearn.base import clone
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import RollingWindowSplit
 from sktime.utils import all_estimators
+from sktime.utils.testing import _construct_instance
 from sktime.utils.validation.forecasting import validate_fh
 
 # get all forecasters
-forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
+Forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
 
 # testing grid
 WINDOW_LENGTHS = [1, 3, 5]
 STEP_LENGTHS = [1, 3, 5]
 FHS = [1, 3, np.arange(1, 5)]
+fh = FHS[0]
 
 # testing data
 n_timepoints = 30
@@ -36,23 +37,33 @@ y_test = s.iloc[n_train:]
 
 
 ########################################################################################################################
-# not fitted error
-@pytest.mark.parametrize("forecaster", forecasters)
-def test_clone(forecaster):
-    f = forecaster()
-    params = f.get_params()
+# test clone
+@pytest.mark.parametrize("Forecaster", Forecasters)
+def test_clone(Forecaster):
+    f = _construct_instance(Forecaster)
+    clone(f)
 
-    f_cloned = clone(f)
-    params_cloned = f_cloned.get_params()
 
-    assert params == params_cloned
+########################################################################################################################
+# fit, set_params and update return self
+@pytest.mark.parametrize("Forecaster", Forecasters)
+def test_fit_set_params_and_update_return_self(Forecaster):
+    f = _construct_instance(Forecaster)
+    ret = f.fit(y_train, fh)
+    assert ret == f
+
+    ret = f.update(y_test)
+    assert ret == f
+
+    ret = f.set_params()
+    assert ret == f
 
 
 ########################################################################################################################
 # not fitted error
-@pytest.mark.parametrize("forecaster", forecasters)
-def test_not_fitted_error(forecaster):
-    f = forecaster()
+@pytest.mark.parametrize("Forecaster", Forecasters)
+def test_not_fitted_error(Forecaster):
+    f = _construct_instance(Forecaster)
     with pytest.raises(NotFittedError):
         f.predict(fh=1)
 
@@ -67,10 +78,10 @@ def test_not_fitted_error(forecaster):
 ########################################################################################################################
 # predict
 # predicted time index
-@pytest.mark.parametrize("forecaster", forecasters)
+@pytest.mark.parametrize("Forecaster", Forecasters)
 @pytest.mark.parametrize("fh", FHS)
-def test_predict_time_index(forecaster, fh):
-    f = forecaster()
+def test_predict_time_index(Forecaster, fh):
+    f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.predict()
 
@@ -98,33 +109,17 @@ def compute_expected_index_from_update_predict(y_test, fh, step_length):
 
 
 # check if predicted time index is correct
-@pytest.mark.parametrize("forecaster", forecasters)
+@pytest.mark.parametrize("Forecaster", Forecasters)
 @pytest.mark.parametrize("fh", FHS)
 @pytest.mark.parametrize("window_length", WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", STEP_LENGTHS)
-def test_update_predict_check_predicted_indices(forecaster, fh, window_length, step_length):
+def test_update_predict_check_predicted_indices(Forecaster, fh, window_length, step_length):
     # initiate cv with different fh, so that out window in temporal cv does not contain fh
     cv = RollingWindowSplit(fh, window_length=window_length, step_length=step_length)
-    f = forecaster()
-    f.fit(y_train)
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh)
     y_pred = f.update_predict(y_test, cv=cv)
 
     pred_index = y_pred.index.values
     expected_index = compute_expected_index_from_update_predict(y_test, f.fh, step_length)
     np.testing.assert_array_equal(pred_index, expected_index)
-
-
-# check if warning is raised if inconsistent fh is passed
-@pytest.mark.parametrize("forecaster", forecasters)
-@pytest.mark.parametrize("fh", FHS)
-@pytest.mark.parametrize("window_length", WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", STEP_LENGTHS)
-def test_update_predict_check_warning_for_inconsistent_fhs(forecaster, fh, window_length, step_length):
-    # check user warning if fh passed through cv is different from fh seen in fit
-    cv = RollingWindowSplit(fh + 1, window_length=window_length, step_length=step_length)
-    f = forecaster()
-    f.fit(y_train, fh)
-
-    # check for expected warning when updating fh via passed cv object
-    with pytest.warns(UserWarning):
-        f.update_predict(y_test, cv=cv)
