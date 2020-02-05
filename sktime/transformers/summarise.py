@@ -7,8 +7,9 @@ from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import check_equal_index, tabularize
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
-from tsfresh import extract_features
-from tsfresh import select_features
+from tsfresh import extract_features, extract_relevant_features, select_features
+from tsfresh.utilities.dataframe_functions import impute
+from tsfresh.feature_extraction import ComprehensiveFCParameters
 
 class PlateauFinder(BaseTransformer):
     """Transformer that finds segments of the same given value, plateau in the time series, and
@@ -220,16 +221,43 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
 
 class TsFreshTransfomer(BaseTransformer):
+
+    def get_time_series_container(self,X):
+        columns = X.columns
+        X_time_series = pd.DataFrame()
+        rows = X.shape[0]
+        
+        for i in range(rows):
+            column_index = 0
+            temp_dataframe = pd.DataFrame()
+            time_series_shape = X.iloc[i,0].shape
+            time_series_len = time_series_shape[0]
+            
+            series_time = np.arange(start=0,stop=time_series_len,step=1)
+            series_id = np.full(time_series_shape,(i+1))
+            
+            for j in range(len(columns)):
+                temp_dataframe[columns[column_index]] = X.iloc[i,j]
+                column_index += 1
+                
+            temp_dataframe['series_time'] = series_time
+            temp_dataframe['series_id'] = series_id
+    #         print(temp_dataframe.head())
+            X_time_series = X_time_series.append(temp_dataframe)
+    #     print(X_time_series.head())
+        return X_time_series
+        
     
-    def __init__(self,column_id=None,column_sort=None,
-                    column_value=None,column_kind=None,
-                    default_fc_parameters=None,kind_to_fc_parameters=None):
-        self.column_id = column_id
-        self.column_sort = column_sort
-        self.column_value = column_value
-        self.column_kind = column_kind
-        self.default_fc_parameters = default_fc_parameters
-        self.kind_to_fc_parameters = kind_to_fc_parameters
+    def get_formatted_predictions(self,y):
+        y_time_series_container = []
+        for i in range(len(y)):
+            y_time_series_container.append([(i+1),y[i]])
+        return y_time_series_container
+
+
+    
+    def __init__(self):
+        pass
 
     def fit(X, y=None):
         #empty
@@ -248,10 +276,14 @@ class TsFreshTransfomer(BaseTransformer):
         """
         #input checks
         validate_X(X)
-        check_X_is_univariate(X)
-        
-        # TODO Check if y is required for transform, if yes then combine into a pd dataframe
-        # TODO Complete extract_features call args
-        Xt = extract_features(X,**kwargs)
+        # check_X_is_univariate(X)
+        X_time_series = self.get_time_series_container(X)
+        # y_time_series = get_formatted_predictions(y_train)
 
+        # TODO Complete extract_features call args and add args if required
+        extraction_settings = ComprehensiveFCParameters()
+        Xt = extract_features(X_time_series,column_id='series_id',column_sort='series_time',
+                                default_fc_parameters=extraction_settings,impute_function=impute)
+
+        # TODO Assert original time series column should not be in Xt
         return Xt
