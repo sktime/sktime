@@ -104,7 +104,7 @@ How to cite sktime
 
 If you use sktime in a scientific publication, we would appreciate citations to the following paper:
 
-* `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines: “sktime: A Unified Interface for Machine Learning with Time Series”, 2019; arXiv:1909.07872 <http://arxiv.org/abs/1909.07872>`__
+`Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
 
 Bibtex entry::
 
