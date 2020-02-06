@@ -78,11 +78,12 @@ def all_estimators(type_filter=None):
 
     all_classes = set(all_classes)
 
-    # only keep classes that inherit from BaseEstimator
-    base_classes = ("BaseEstimator", "BaseClassifier", "BaseRegressor", "BaseTransformer", "BaseForecaster")
+    # only keep classes that inherit from base classes
+    base_class_names = ("BaseClassifier", "BaseRegressor", "BaseTransformer", "BaseForecaster")
+    base_classes = (BaseClassifier, BaseRegressor, BaseTransformer, _BaseForecaster)
     estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] not in base_classes)]
+                  if (issubclass(c[1], base_classes) and
+                      c[0] not in base_class_names)]
 
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]

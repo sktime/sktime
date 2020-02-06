@@ -9,7 +9,7 @@ import pytest
 
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.forecasting.base import _BaseForecasterRequiredFHinFit
-from sktime.forecasting.model_selection import RollingWindowSplit
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils import all_estimators
 from sktime.utils.testing import _construct_instance
 
@@ -127,7 +127,7 @@ def test_different_fh_in_fit_and_predict_opt(Forecaster):
 @pytest.mark.parametrize("step_length", STEP_LENGTHS)
 def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
     # check user warning if fh passed through cv is different from fh seen in fit
-    cv = RollingWindowSplit(fh + 1, window_length=window_length, step_length=step_length)
+    cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
 

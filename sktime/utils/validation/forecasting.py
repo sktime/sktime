@@ -210,7 +210,8 @@ def validate_fh(fh):
     """
     # in-sample predictions
     if isinstance(fh, str) and fh == "insample":
-        return fh
+        # return fh
+        raise NotImplementedError()
 
     # Check single integer
     # boolean are subclasses of integers in Python, so explicitly exclude them
@@ -240,8 +241,8 @@ def validate_fh(fh):
                              "it has to be a list of integers.")
 
     else:
-        raise ValueError(f"`fh` has to be either a numpy array of integers, a single "
-                         f"integer or 'insample', but found: {type(fh)}")
+        raise ValueError(f"`fh` has to be either a numpy array or list of integers, a single "
+                         f"integer or the 'insample' string, but found: {type(fh)}")
 
     # check fh contains only non-zero positive values
     fh_sorted = np.sort(fh)

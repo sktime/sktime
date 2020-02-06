@@ -51,17 +51,17 @@ class _BaseReducer(_BaseForecaster):
 
         # Transform target series into tabular format using
         # rolling window tabularisation
-        xs = []
-        ys = []
-        for x_window, y_window in cv.split(time_index):
-            x = y_train.iloc[x_window]
-            y = y_train.iloc[y_window]
+        x_windows = []
+        y_windows = []
+        for x_index, y_index in cv.split(time_index):
+            x_window = y_train.iloc[x_index]
+            x_windows.append(x_window)
 
-            xs.append(x)
-            ys.append(y)
+            y_window = y_train.iloc[y_index]
+            y_windows.append(y_window)
 
         # Put into required input format for regression
-        X_train, y_train = self._convert_data(xs, ys)
+        X_train, y_train = self._convert_data(x_windows, y_windows)
         return X_train, y_train
 
     def update(self, y_new, X_new=None, update_params=False):
@@ -85,7 +85,20 @@ class _ReducedTimeSeriesRegressorMixin:
 
     @staticmethod
     def _convert_data(X, y=None):
-        """Return nested dataframe for time series regression"""
+        """Helper function to combine windows from temporal cross-validation into nested
+        pandas DataFrame used for solving forecasting via reduction to time series regression.
+
+        Parameters
+        ----------
+        X : list of pd.Series or np.ndarray
+        y : list of pd.Series or np.ndarray, optional (default=None)
+
+        Returns
+        -------
+        X_train : pd.DataFrame
+            nested time series DataFrame
+        y_train : np.ndarray
+        """
         # return nested dataframe
         X_train = pd.DataFrame(pd.Series([np.asarray(xi) for xi in X]))
         if y is None:
@@ -100,7 +113,19 @@ class _ReducedTabularRegressorMixin:
 
     @staticmethod
     def _convert_data(X, y=None):
-        """Return numpy arrays for regresssion"""
+        """Helper function to combine windows from temporal cross-validation into numpy array
+        used for solving forecasting via reduction to tabular regression.
+
+        Parameters
+        ----------
+        X : list of pd.Series or np.ndarray
+        y : list of pd.Series or np.ndarray, optional (default=None)
+
+        Returns
+        -------
+        X_train : np.ndarray
+        y_train : np.ndarray
+        """
         X_train = np.vstack(X)
         if y is None:
             return X_train
@@ -132,7 +157,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
             warn(f"The `fh` of the temporal cross validator `cv` must contain the "
                  f"`fh` passed to `fit`, the `fh` of the `cv` will be ignored and "
                  f"the `fh` passed to `fit` will be used instead.")
-            self.cv.fh = self.fh
+            self.cv._fh = self.fh
 
         # transform data using rolling window split
         X_train, Y_train = self.transform(y_train)

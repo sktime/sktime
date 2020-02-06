@@ -8,7 +8,7 @@ from sktime.forecasting.reduce import _ReducedTabularRegressorMixin
 from sktime.forecasting.reduce import _ReducedTimeSeriesRegressorMixin
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import detabularise
-from sktime.forecasting.model_selection import RollingWindowSplit
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 
 def _construct_instance(Estimator):
@@ -26,7 +26,7 @@ def _construct_instance(Estimator):
                     kwargs = {"regressor": make_pipeline(Tabulariser(), LinearRegression())}
 
             if "cv" in required_parameters:
-                kwargs["cv"] = RollingWindowSplit(fh=1, window_length=10)
+                kwargs["cv"] = SlidingWindowSplitter(fh=1, window_length=10)
             
             estimator = Estimator(**kwargs)
 

@@ -10,7 +10,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import validate_y, validate_sp, validate_window_length
+from sktime.utils.validation.forecasting import validate_y
+from sktime.utils.validation.forecasting import validate_sp
+from sktime.utils.validation.forecasting import validate_window_length
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 
 class DummyForecaster(_BaseForecasterOptionalFHinFit):
@@ -41,12 +44,12 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self.window_length = window_length
         self.sp = sp
 
-        if self.strategy == "last" or self.strategy == "seasonal_last":
+        if self.strategy in ("last", "seasonal_last"):
             if window_length is not None:
                 warn("For the `last` and `seasonal_last` strategy, "
                      "the `window_length` value will be ignored.")
 
-        if self.strategy == "last" or self.strategy == "mean":
+        if self.strategy in ("last", "mean"):
             if sp is not None:
                 warn("For the `last` and `mean` strategy, "
                      "the `sp` value will be ignored.")
@@ -56,7 +59,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
         if self.strategy == "seasonal_last":
             if sp is None:
-                raise NotImplementedError("Estimation of the seasonal periodicity `sp` "
+                raise NotImplementedError("Automatic estimation of the seasonal periodicity `sp` "
                                           "from the data is not implemented yet; "
                                           "please specify the `sp` value.")
             sp = validate_sp(sp)
@@ -67,16 +70,12 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
             self._window_length = validate_window_length(window_length)
 
         self._last_window = None
+        self._first_window = None
         super(DummyForecaster, self).__init__()
 
-    def fit(self, y, fh=None, X=None):
+    def fit(self, y, fh=None):
+        """Fit"""
 
-        # input checks
-        # in-sample forecast
-        if isinstance(fh, str) and fh == "insample":
-            raise NotImplementedError()
-
-        # ignore exogenous variables X
         y = validate_y(y)
         self._set_fh(fh)
 
@@ -92,21 +91,20 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
             raise ValueError(f"The {param}: {self._window_length} is larger than "
                              f"the training series.")
 
+        self._first_window = y.iloc[:self._window_length]
         self._last_window = y.iloc[-self._window_length:]
+
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Predict"""
 
         # input checks
-        self._check_is_fitted()
-
-        if isinstance(fh, str) and fh == "insample":
-            raise NotImplementedError()
         if return_pred_int:
             raise NotImplementedError()
 
-        # set fh
+        self._check_is_fitted()
         self._set_fh(fh)
 
         # compute prediction
@@ -133,17 +131,39 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         index = self._now + self.fh
         return pd.Series(y_pred, index=index)
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y_new, update_params=False):
+        """Update"""
 
         # input checks
         self._check_is_fitted()
-
         y_new = validate_y(y_new)
 
         # update observation horizon
         self._set_obs_horizon(y_new.index)
 
-        # update last window
-        self._last_window = y_new.iloc[-self._window_length:]
-
+        # update windows
+        self._last_window = self._last_window.append(y_new).iloc[-self._window_length:]
         return self
+
+    def predict_in_sample(self, y_train, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make in-sample predictions"""
+
+        y_train = validate_y(y_train)
+        window_length = self._window_length
+
+        n_timepoints = len(y_train)
+        y_pred = np.zeros(n_timepoints)
+
+        y_pred[:window_length] = np.nan
+
+        self._last_window = y_train[:window_length]
+
+        cv = SlidingWindowSplitter(fh=1, window_length=window_length)
+        for k, (i, o) in enumerate(cv.split(y_train.index), start=window_length):
+            y_new = y_train.iloc[i]
+            self._last_window = self._last_window.append(y_new).iloc[-self._window_length:]
+            y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
+
+        return pd.Series(y_pred, index=y_train.index)
+
+

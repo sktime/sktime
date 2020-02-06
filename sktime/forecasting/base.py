@@ -1,4 +1,9 @@
-__all__ = ["_BaseForecaster", "_BaseForecasterOptionalFHinFit", "_BaseForecasterRequiredFHinFit"]
+__all__ = [
+    "_BaseTemporalEstimator",
+    "_BaseForecaster",
+    "_BaseForecasterOptionalFHinFit",
+    "_BaseForecasterRequiredFHinFit"
+]
 __author__ = ["Markus Löning", "@big-o"]
 
 from warnings import warn
@@ -6,7 +11,7 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
-
+from sktime.exceptions import NotFittedError
 from sktime.performance_metrics.forecasting import mase_loss
 from sktime.utils.plotting import composite_alpha
 from sktime.utils.validation.forecasting import check_consistent_time_index
@@ -14,24 +19,74 @@ from sktime.utils.validation.forecasting import validate_cv
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
 from sktime.utils.validation.forecasting import validate_y
-from sktime.exceptions import NotFittedError
-
 
 # Default confidence level for prediction intervals.
 DEFAULT_ALPHA = 0.05
 
 
-class _BaseForecaster(BaseEstimator):
+class _BaseTemporalEstimator(BaseEstimator):
+
+    def __init__(self):
+        self._obs_horizon = None  # observation horizon, i.e. time points seen in fit or update
+        self._now = None  # time point in observation horizon from which to make forecasts
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self):
+        return self._is_fitted
+
+    def _check_is_fitted(self):
+        if not self.is_fitted:
+            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
+                                 f"been fitted yet; please call `fit` first.")
+
+    @property
+    def now(self):
+        return self._now
+
+    def _set_obs_horizon(self, obs_horizon):
+        """
+        Update observation horizon
+        """
+        obs_horizon = validate_time_index(obs_horizon)
+
+        # for fitting: since no previous observation horizon is present, set new one
+        if not self.is_fitted:
+            new_obs_horizon = obs_horizon
+
+        # for updating: append observation horizon to previous one
+        else:
+            new_obs_horizon = self._obs_horizon.append(obs_horizon)
+            if not new_obs_horizon.is_monotonic:
+                raise ValueError("Updated time index is no longer monotonically increasing. Data passed "
+                                 "to `update` must contain more recent observations than data previously "
+                                 "passed to `fit` or `update`.")
+
+        # update observation horizon
+        self._obs_horizon = new_obs_horizon
+
+        # update now when new obs horizon is updated
+        self._set_now()
+
+    def _set_now(self, now=None):
+        """Set now where now is the time point at which to make forecasts"""
+        if now is None:
+            self._now = self._obs_horizon[-1]
+        else:
+            if now not in self._obs_horizon:
+                raise ValueError("Passed value not in current observation horizon")
+            self._now = now
+
+
+class _BaseForecaster(_BaseTemporalEstimator):
     """
     Base class for forecasters.
     """
     _estimator_type = "forecaster"
 
     def __init__(self):
-        self._obs_horizon = None  # observation horizon, i.e. time points seen in fit or update
-        self._now = None  # time point in observation horizon from which to make forecasts
-        self._is_fitted = False
         self._fh = None  # forecasting horizon, i.e. time points to forecast, relative to now
+        super(_BaseForecaster, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit model to training data"""
@@ -56,9 +111,9 @@ class _BaseForecaster(BaseEstimator):
         errs = self.compute_pred_errs(alpha=alpha)
         if isinstance(errs, pd.Series):
             ints = pd.DataFrame({
-                    "lower": y_pred - errs,
-                    "upper": y_pred + errs
-                })
+                "lower": y_pred - errs,
+                "upper": y_pred + errs
+            })
         else:
             ints = tuple(
                 pd.DataFrame({
@@ -129,7 +184,8 @@ class _BaseForecaster(BaseEstimator):
 
         return y_preds
 
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
         """Allows for more efficient update-predict routines than calling them sequentially"""
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
@@ -189,32 +245,35 @@ class _BaseForecaster(BaseEstimator):
         """Protect the forecasting horizon"""
         return self._fh
 
-    @property
-    def is_fitted(self):
-        return self._is_fitted
+    def _set_fh(self, fh):
+        raise NotImplementedError()
 
-    def _check_is_fitted(self):
-        if not self.is_fitted:
-            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
-                                 f"been fitted yet; please call `fit` first.")
+    def _get_absolute_fh(self):
+        """
+        Convert the step-ahead forecast horizon into the corresponding time index
+        values to append to the target data.
 
-    @property
-    def now(self):
-        return self._now
+        The forecaster must be fitted before calling this method.
+
+        Returns
+        =======
+        fh : numpy.ndarray
+            The forecasting horizon
+        """
+        return self.now + self.fh
 
     def plot(
-        self,
-        *,
-        fh=None,
-        alpha=(0.05, 0.2),
-        y_train=None,
-        y_test=None,
-        y_pred=None,
-        fig=None,
-        ax=None,
-        title=None,
-        score='lower right',
-        **kwargs,
+            self,
+            fh=None,
+            alpha=(0.05, 0.2),
+            y_train=None,
+            y_test=None,
+            y_pred=None,
+            fig=None,
+            ax=None,
+            title=None,
+            score='lower right',
+            **kwargs,
     ):
         """
         Plot a forecast.
@@ -266,7 +325,7 @@ class _BaseForecaster(BaseEstimator):
         if y_pred is None:
             y_pred = self.predict(fh=self.fh, **kwargs)
 
-        y_pred_label =  y_pred.name if y_pred.name else f"Forecast ($h = {len(self.fh)}$)"
+        y_pred_label = y_pred.name if y_pred.name else f"Forecast ($h = {len(self.fh)}$)"
 
         # Import dynamically to avoid creating matplotlib dependencies.
         import matplotlib.pyplot as plt
@@ -281,7 +340,7 @@ class _BaseForecaster(BaseEstimator):
         if title:
             ax.set_title(title)
 
-        y_col=None
+        y_col = None
         fcast_col = None
         if y_train is not None:
             label = f"{y_train.name} (Train)" if y_train.name else "Train"
@@ -314,7 +373,7 @@ class _BaseForecaster(BaseEstimator):
                 if isinstance(alpha, (np.integer, np.float)):
                     alpha = [alpha]
 
-                #trans = np.linspace(0.25, 0.65, num=len(alpha), endpoint=False)
+                # trans = np.linspace(0.25, 0.65, num=len(alpha), endpoint=False)
                 transp = 0.25
                 # Plot widest intervals first.
                 alpha = sorted(alpha)
@@ -349,65 +408,6 @@ class _BaseForecaster(BaseEstimator):
             fig.tight_layout()
 
         return ax
-
-    def _set_obs_horizon(self, obs_horizon, update_now=True):
-        """
-        Update observation horizon
-        """
-        obs_horizon = validate_time_index(obs_horizon)
-
-        # for fitting: since no previous observation horizon is present, set new one
-        if not self.is_fitted:
-            new_obs_horizon = obs_horizon
-
-        # for updating: append observation horizon to previous one
-        else:
-            new_obs_horizon = self._obs_horizon.append(obs_horizon)
-            if not new_obs_horizon.is_monotonic:
-                raise ValueError("Updated time index is no longer monotonically increasing. Data passed "
-                                 "to `update` must contain more recent observations than data previously "
-                                 "passed to `fit` or `update`.")
-
-        # update observation horizon
-        self._obs_horizon = new_obs_horizon
-
-        # by default, update now when new obs horizon is updated
-        if update_now:
-            self._set_now()
-
-    def _set_now(self, now=None):
-        if now is None:
-            if isinstance(self._fh, str) and self._fh == "insample":
-                # now = self._first_window[-1]
-                raise NotImplementedError()
-            else:
-                now = self._obs_horizon[-1]
-        else:
-            if now not in self._obs_horizon:
-                raise ValueError("Passed value not in current observation horizon")
-
-        self._now = now
-
-    def _set_fh(self, fh):
-        raise NotImplementedError()
-
-    def _get_absolute_fh(self):
-        """
-        Convert the step-ahead forecast horizon into the corresponding time index
-        values to append to the target data.
-
-        The forecaster must be fitted before calling this method.
-
-        Returns
-        =======
-        fh : numpy.ndarray
-            The forecasting horizon
-        """
-        return self.now + self.fh
-
-    def _reset_to_fitted(self):
-        """Reset model to fitted state after running model evaluation"""
-        raise NotImplementedError()
 
     def _iter(self, y, cv):
         # set up temporal cv

@@ -14,7 +14,7 @@ import pytest
 from sklearn.base import clone
 
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.model_selection import RollingWindowSplit
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils import all_estimators
 from sktime.utils.testing import _construct_instance
 from sktime.utils.validation.forecasting import validate_fh
@@ -71,7 +71,7 @@ def test_not_fitted_error(Forecaster):
         f.update(y_test)
 
     with pytest.raises(NotFittedError):
-        cv = RollingWindowSplit(fh=1, window_length=1)
+        cv = SlidingWindowSplitter(fh=1, window_length=1)
         f.update_predict(y_test, cv=cv)
 
 
@@ -115,7 +115,7 @@ def compute_expected_index_from_update_predict(y_test, fh, step_length):
 @pytest.mark.parametrize("step_length", STEP_LENGTHS)
 def test_update_predict_check_predicted_indices(Forecaster, fh, window_length, step_length):
     # initiate cv with different fh, so that out window in temporal cv does not contain fh
-    cv = RollingWindowSplit(fh, window_length=window_length, step_length=step_length)
+    cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.update_predict(y_test, cv=cv)

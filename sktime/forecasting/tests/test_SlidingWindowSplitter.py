@@ -4,7 +4,7 @@
 __author__ = "Markus Löning"
 
 
-from sktime.forecasting.model_selection import RollingWindowSplit
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import validate_fh
 import pandas as pd
 import numpy as np
@@ -21,7 +21,7 @@ def test_splitting(fh, window_length, step_length):
     s = pd.Series(idx)
 
     # initiate rolling window cv iterator
-    cv = RollingWindowSplit(fh=fh, window_length=window_length, step_length=step_length)
+    cv = SlidingWindowSplitter(fh=fh, window_length=window_length, step_length=step_length)
 
     inputs = []
     outputs = []

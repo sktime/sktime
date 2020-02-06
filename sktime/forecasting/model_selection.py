@@ -1,10 +1,11 @@
-__all__ = ["RollingWindowSplit"]
+__all__ = ["SlidingWindowSplitter"]
 __author__ = "Markus Löning"
 
 import numpy as np
 
 from sktime.utils.validation.forecasting import validate_fh
 from sktime.utils.validation.forecasting import validate_time_index
+from sktime.utils.validation import is_int
 
 
 class _BaseTemporalCrossValidator:
@@ -22,18 +23,18 @@ class _BaseTemporalCrossValidator:
         Step length
     """
 
-    def __init__(self, fh, window_length, step_length=1):
+    def __init__(self, fh=1, window_length=10, step_length=1):
         # check input
-        if not isinstance(window_length, (int, np.integer)) and (window_length < 1):
+        if not is_int(window_length) and (window_length < 1):
             raise ValueError(f"window_length must be a postive integer, but found: {type(window_length)}")
 
-        if not isinstance(step_length, (int, np.integer)) and (step_length < 1):
+        if not is_int(step_length) and (step_length < 1):
             raise ValueError(f"step_length must be an positive integer, but found: {type(step_length)}")
 
         # set during construction
-        self.fh = validate_fh(fh)
         self.window_length = window_length
         self.step_length = step_length
+        self.fh = fh
         self._n_splits = None
 
     def split(self, y):
@@ -56,10 +57,25 @@ class _BaseTemporalCrossValidator:
         """
         return self.n_splits
 
+    @property
+    def fh(self):
+        """Forecasting horizon"""
+        return self._fh
 
-class RollingWindowSplit(_BaseTemporalCrossValidator):
+    @fh.setter
+    def fh(self, fh):
+        """Validate forecasting horizon before setting it"""
+        self._fh = validate_fh(fh)
 
-    def split(self, y):
+
+class SlidingWindowSplitter(_BaseTemporalCrossValidator):
+
+    def split(self, y, X=None):
+        """Split time series using sliding window cross-validation"""
+
+        if X is not None:
+            raise NotImplementedError()
+
         # check input
         time_index = validate_time_index(y)
 
