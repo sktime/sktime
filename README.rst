@@ -21,17 +21,17 @@
 sktime
 ======
 
-A `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine learning with
-time series. sktime currently supports:
+sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine
+learning with time series. sktime currently supports:
 
-* State-of-the-art time series classification and regression algorithms,
-* Classical forecasting including reduction strategies to regression,
+* State-of-the-art time series classification and time series regression algorithms,
+* Classical forecasting including reduction strategies,
 * Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
 
-For deep learning, we have a separate extension package: `sktime-dl <https://github.com/sktime/sktime-dl>`_. 
+sktime has a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
+<https://github.com/sktime/sktime-dl>`_.
 
-sktime is under active development and we are looking for contributors. You can find our development road map below.
-
+sktime is under active development and we are looking for contributors.
 
 Installation
 ------------
@@ -49,13 +49,13 @@ To install the development version, please see our
 
 Documentation
 -------------
+* Read the detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__,
+* Check out our `examples notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ or run them interactively on Binder_,
+* Take a look at our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
-* The full API documentation can be found `here <https://alan-turing-institute.github.io/sktime/>`__,
-* Tutorials can be found in the `examples <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ folder or can be launched directly on Binder_,
-* Material from previous workshops and development sprints can be found `here <https://github.com/sktime/sktime-workshops>`__.
 
-Overview
---------
+API Overview
+------------
 sktime extends the standard scikit-learn API to handle modular machine learning workflows for time series data.
 The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification and forecasting. To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
 
@@ -104,7 +104,7 @@ How to cite sktime
 
 If you use sktime in a scientific publication, we would appreciate citations to the following paper:
 
-* `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines: “sktime: A Unified Interface for Machine Learning with Time Series”, 2019; arXiv:1909.07872 <http://arxiv.org/abs/1909.07872>`__
+`Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
 
 Bibtex entry::
 
@@ -114,3 +114,4 @@ Bibtex entry::
         title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
         date = {2019},
     }
+
