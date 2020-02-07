@@ -1,13 +1,14 @@
+__all__ = ["ExpSmoothingForecaster"]
+__author__ = ["Markus Löning", "@big-o"]
+
+
 import numpy as np
 import pandas as pd
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import validate_y
-
-
-__all__ = ["ExpSmoothingForecaster"]
-__author__ = ["Markus Löning", "@big-o"]
+from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_fh
 
 
 class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
@@ -102,7 +103,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self : returns an instance of self.
         """
 
-        y_train = validate_y(y_train)
+        y_train = check_y(y_train)
         self._set_fh(fh)
 
         # update observation horizon
@@ -150,10 +151,6 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-
-        if isinstance(fh, str) and fh == "insample":
-            raise NotImplementedError()
-
         if return_pred_int:
             raise NotImplementedError()
 
@@ -181,7 +178,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         # input checks
         self._check_is_fitted()
 
-        y_new = validate_y(y_new)
+        y_new = check_y(y_new)
 
         # update observation horizon
         self._set_obs_horizon(y_new.index)
@@ -190,3 +187,22 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
             self._fit_estimator(y_new)
 
         return self
+
+    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+
+        if return_pred_int:
+            raise NotImplementedError()
+
+        self._check_is_fitted()
+        fh = check_fh(fh)
+
+        start = fh[0]
+        end = fh[-1]
+        y_pred = self._fitted_estimator.predict(start=start, end=end)
+
+        # Convert step-ahead prediction horizon into zero-based index
+        fh_idx = fh - np.min(fh)
+
+        # Forecast all periods from start to end of pred horizon,
+        # but only return given time points in pred horizon
+        return y_pred.iloc[fh_idx]

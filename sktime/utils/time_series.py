@@ -10,7 +10,7 @@ __all__ = [
 import numpy as np
 from sklearn.utils import check_array
 
-from sktime.utils.validation.forecasting import validate_fh, validate_time_index
+from sktime.utils.validation.forecasting import check_fh, check_time_index
 
 
 def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
@@ -193,7 +193,7 @@ def remove_trend(x, coefs, time_index=None):
             time_index = np.arange(n_obs)
         else:
             # validate given time index
-            time_index = validate_time_index(time_index)
+            time_index = check_time_index(time_index)
             if not len(time_index) == x.shape[1]:
                 raise ValueError('Length of passed index does not match length of passed x')
 
@@ -242,7 +242,7 @@ def add_trend(x, coefs, time_index=None):
 
         else:
             # validate given time index
-            time_index = validate_time_index(time_index)
+            time_index = check_time_index(time_index)
 
             if not len(time_index) == x.shape[1]:
                 raise ValueError('Length of passed index does not match length of passed x')

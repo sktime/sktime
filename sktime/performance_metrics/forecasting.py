@@ -1,5 +1,5 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_index, validate_time_index, validate_y
+from sktime.utils.validation.forecasting import check_consistent_time_index, check_time_index, check_y
 
 __author__ = ['Markus Löning']
 __all__ = ["mase_loss", "smape_loss"]
@@ -37,9 +37,9 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     """
 
     # input checks
-    y_test = validate_y(y_test)
-    y_pred = validate_y(y_pred)
-    y_train = validate_y(y_train)
+    y_test = check_y(y_test)
+    y_pred = check_y(y_pred)
+    y_train = check_y(y_train)
     check_consistent_time_index(y_test, y_pred, y_train=y_train)
 
     #  naive seasonal prediction
@@ -67,6 +67,8 @@ def smape_loss(y_test, y_pred):
     loss : float
         SMAPE loss
     """
+    y_test = check_y(y_test)
+    y_pred = check_y(y_pred)
     check_consistent_time_index(y_test, y_pred)
 
     nominator = np.abs(y_test - y_pred)

@@ -3,8 +3,10 @@ __author__ = "Markus Löning"
 
 import numpy as np
 
-from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.validation.forecasting import validate_time_index
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation.forecasting import check_step_length
+from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation import is_int
 
 
@@ -32,9 +34,9 @@ class _BaseTemporalCrossValidator:
             raise ValueError(f"step_length must be an positive integer, but found: {type(step_length)}")
 
         # set during construction
-        self.window_length = window_length
-        self.step_length = step_length
-        self.fh = fh
+        self._window_length = check_window_length(window_length)
+        self._step_length = check_step_length(step_length)
+        self._fh = check_fh(fh)
         self._n_splits = None
 
     def split(self, y):
@@ -62,10 +64,15 @@ class _BaseTemporalCrossValidator:
         """Forecasting horizon"""
         return self._fh
 
-    @fh.setter
-    def fh(self, fh):
-        """Validate forecasting horizon before setting it"""
-        self._fh = validate_fh(fh)
+    @property
+    def window_length(self):
+        """Window length"""
+        return self._window_length
+
+    @property
+    def step_length(self):
+        """Step length"""
+        return self._step_length
 
 
 class SlidingWindowSplitter(_BaseTemporalCrossValidator):
@@ -77,7 +84,7 @@ class SlidingWindowSplitter(_BaseTemporalCrossValidator):
             raise NotImplementedError()
 
         # check input
-        time_index = validate_time_index(y)
+        time_index = check_time_index(y)
 
         n_timepoints = len(time_index)
         fh_max = self.fh[-1]  # furthest step ahead, assume fh is sorted

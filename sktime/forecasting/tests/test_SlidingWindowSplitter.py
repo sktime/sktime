@@ -5,7 +5,7 @@ __author__ = "Markus Löning"
 
 
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import check_fh
 import pandas as pd
 import numpy as np
 import pytest
@@ -43,7 +43,7 @@ def test_splitting(fh, window_length, step_length):
     assert inputs.shape == (ns, window_length)
 
     # check fh
-    assert outputs.shape == (ns, len(validate_fh(fh)))
+    assert outputs.shape == (ns, len(check_fh(fh)))
 
     # check step length
     np.testing.assert_array_equal(inputs[:, 0] // step_length, np.arange(ns))

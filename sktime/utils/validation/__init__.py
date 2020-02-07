@@ -81,4 +81,5 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
 
 def is_int(x):
     """Check if x is of integer type, but not boolean"""
+    # boolean are subclasses of integers in Python, so explicitly exclude them
     return isinstance(x, (int, np.integer)) and not isinstance(x, bool)

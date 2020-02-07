@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 
-from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import check_fh
 
 
 class BaseTask:
@@ -241,7 +241,7 @@ class ForecastingTask(BaseTask):
 
     def __init__(self, target, fh=1, features=None, metadata=None):
         self._case = "Forecasting"
-        self._fh = validate_fh(fh)
+        self._fh = check_fh(fh)
         super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
 
     @property

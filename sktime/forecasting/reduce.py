@@ -16,14 +16,16 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base import _BaseForecaster
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
 from sktime.forecasting.base import _BaseForecasterRequiredFHinFit
-from sktime.utils.validation.forecasting import validate_cv
-from sktime.utils.validation.forecasting import validate_time_index
-from sktime.utils.validation.forecasting import validate_y
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_window_length
 
 
 ##############################################################################
@@ -36,8 +38,12 @@ class _BaseReducer(_BaseForecaster):
 
     def __init__(self, regressor, cv):
         self.regressor = regressor
-        self.cv = validate_cv(cv)
+        self.cv = check_cv(cv)
+
+        # no need to validate window length, has been
+        # validated already in CV object
         self._window_length = cv.window_length
+
         self._last_window = None
 
         super(_BaseReducer, self).__init__()
@@ -46,7 +52,7 @@ class _BaseReducer(_BaseForecaster):
         """Transform data using rolling window approach"""
 
         # get integer time index
-        time_index = validate_time_index(y_train)
+        time_index = check_time_index(y_train)
         cv = self.cv
 
         # Transform target series into tabular format using
@@ -73,11 +79,41 @@ class _BaseReducer(_BaseForecaster):
         # input checks
         self._check_is_fitted()
 
-        y_new = validate_y(y_new)
+        y_new = check_y(y_new)
 
         # update observation horizon
         self._set_obs_horizon(y_new.index)
         return self
+
+    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make in-sample predictions"""
+
+        # input checks
+        self._check_is_fitted()
+        if fh is not None:
+            fh = check_fh(fh)
+
+        # get parameters
+        window_length = self._window_length
+        n_timepoints = len(self._obs_horizon)
+
+        # initialise array for predictions
+        y_pred = np.zeros(n_timepoints)
+        y_pred[:window_length] = np.nan
+
+        # initialise last window
+        self._last_window = y_train[:window_length]
+
+        # iterate over training series
+        cv = SlidingWindowSplitter(fh=1, window_length=window_length)
+        for k, (i, o) in enumerate(cv.split(y_train.index), start=window_length):
+            y_new = y_train.iloc[i]
+            self._last_window = np.append(self._last_window, y_new)[-self._window_length:]
+            y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
+
+        # select only predictions in given fh
+        fh_idx = fh - np.min(fh)
+        return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]
 
 
 class _ReducedTimeSeriesRegressorMixin:
@@ -145,7 +181,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         if X_train is not None:
             raise NotImplementedError()
 
-        y_train = validate_y(y_train)
+        y_train = check_y(y_train)
         self._set_obs_horizon(y_train.index)
         self._last_window = y_train.values[-self._window_length:]
         self._set_fh(fh)
@@ -223,7 +259,7 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
         if X_train is not None:
             raise NotImplementedError()
 
-        y_train = validate_y(y_train)
+        y_train = check_y(y_train)
 
         # set values
         self._set_fh(fh)

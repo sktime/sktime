@@ -12,13 +12,12 @@ import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sktime.exceptions import NotFittedError
-from sktime.performance_metrics.forecasting import mase_loss
+from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.plotting import composite_alpha
-from sktime.utils.validation.forecasting import check_consistent_time_index
-from sktime.utils.validation.forecasting import validate_cv
-from sktime.utils.validation.forecasting import validate_fh
-from sktime.utils.validation.forecasting import validate_time_index
-from sktime.utils.validation.forecasting import validate_y
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.forecasting import check_y
 
 # Default confidence level for prediction intervals.
 DEFAULT_ALPHA = 0.05
@@ -42,13 +41,14 @@ class _BaseTemporalEstimator(BaseEstimator):
 
     @property
     def now(self):
+        """Time point at which to make forecasts"""
         return self._now
 
     def _set_obs_horizon(self, obs_horizon):
         """
         Update observation horizon
         """
-        obs_horizon = validate_time_index(obs_horizon)
+        obs_horizon = check_time_index(obs_horizon)
 
         # for fitting: since no previous observation horizon is present, set new one
         if not self.is_fitted:
@@ -96,7 +96,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
         """Forecast"""
         raise NotImplementedError()
 
-    def compute_pred_errs(self, alpha=DEFAULT_ALPHA):
+    def _compute_pred_errors(self, alpha=DEFAULT_ALPHA):
         """
         Prediction errors. If alpha is iterable, errors will be calculated for
         multiple confidence levels.
@@ -108,7 +108,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
         Get the prediction intervals for the forecast. If alpha is iterable, multiple
         intervals will be calculated.
         """
-        errs = self.compute_pred_errs(alpha=alpha)
+        errs = self._compute_pred_errors(alpha=alpha)
         if isinstance(errs, pd.Series):
             ints = pd.DataFrame({
                 "lower": y_pred - errs,
@@ -144,8 +144,8 @@ class _BaseForecaster(_BaseTemporalEstimator):
             raise NotImplementedError()
 
         # input checks
-        y_test = validate_y(y_test)
-        cv = validate_cv(cv)
+        y_test = check_y(y_test)
+        cv = check_cv(cv)
 
         # check forecasting horizon
         fh = cv.fh
@@ -195,17 +195,14 @@ class _BaseForecaster(_BaseTemporalEstimator):
         self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def score(self, y_test, y_train, fh=None, X=None):
+    def score(self, y_test, fh=None, X=None):
         """
-        Returns the negative mean absolute scaled error (MASE) on the given forecast
-        horizon.
+        Returns the SMAPE on the given forecast horizon.
 
         Parameters
         ----------
         y_test : pandas.Series
             Target time series to which to compare the forecasts.
-        y_train : pandas.Series
-            The data used to originally train the forecaster; needed to scale the score.
         fh : int or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
@@ -214,25 +211,16 @@ class _BaseForecaster(_BaseTemporalEstimator):
         Returns
         -------
         score : float
-            MASE score of self.predict(fh=fh, X=X) with respect to y.
+            SMAPE score of self.predict(fh=fh, X=X) with respect to y.
 
         See Also
         --------
+        :meth:`sktime.performance_metrics.forecasting.smape_loss`.`
 
-        :meth:`sktime.performance_metrics.forecasting.mase_loss`.`
         """
-        # only check y here, X and fh will be checked during predict
-        validate_y(y_test)
-        fh = self._set_fh(fh)
-
-        y_pred = self.predict(fh=fh, X=X)
-
-        # Check if passed true time series coincides with forecast horizon of predicted values
-        check_consistent_time_index(y_test, y_pred, y_train)
-
-        # compute scores against y_test
-        score = -mase_loss(y_test, y_pred, y_train)
-        return score
+        # no input checks needed here, they will be performed
+        # in predict and loss function
+        return smape_loss(y_test, self.predict(fh=fh, X=X))
 
     def update_score(self, y_test, cv=None, X=None, update_params=False):
         """Model evaluation with temporal cross-validation"""
@@ -242,7 +230,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
 
     @property
     def fh(self):
-        """Protect the forecasting horizon"""
+        """The forecasting horizon"""
         return self._fh
 
     def _set_fh(self, fh):
@@ -432,6 +420,9 @@ class _BaseForecaster(_BaseTemporalEstimator):
             # only the last ones, depending on the step length
             yield i[-step_length:]  # return only index of new data points
 
+    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        raise NotImplementedError()
+
 
 class _BaseForecasterOptionalFHinFit(_BaseForecaster):
     """Base class for forecasters which can take the forecasting horizon either during fitting or prediction."""
@@ -445,11 +436,11 @@ class _BaseForecasterOptionalFHinFit(_BaseForecaster):
                 if self.fh is None:
                     raise ValueError("The forecasting horizon `fh` must be passed either to `fit` or `predict`, "
                                      "but was found in neither.")
-                # otherwise if no fh passed, but there is one already, we simply use that one
+                # otherwise if no fh passed, but there is one already, we can simply use that one
         else:
             # if fh is passed, validate first, then check if there is one already,
             # and overwrite with appropriate warning
-            fh = validate_fh(fh)
+            fh = check_fh(fh)
             if self.is_fitted:
                 # raise warning if existing fh and new one don't match
                 if self.fh is not None and not np.array_equal(fh, self.fh):
@@ -475,7 +466,7 @@ class _BaseForecasterRequiredFHinFit(_BaseForecaster):
                 raise ValueError("The forecasting horizon `fh` must be passed to `fit`, "
                                  "but none was found. " + msg)
         else:
-            fh = validate_fh(fh)
+            fh = check_fh(fh)
             if self.is_fitted:
                 if not np.array_equal(fh, self.fh):
                     # raise error if existing fh and new one don't match

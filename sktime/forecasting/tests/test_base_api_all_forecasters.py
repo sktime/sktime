@@ -12,20 +12,20 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
-
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils.testing import _construct_instance
-from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 Forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
 
 # testing grid
-WINDOW_LENGTHS = [1, 3, 5]
-STEP_LENGTHS = [1, 3, 5]
-FHS = [1, 3, np.arange(1, 5)]
+WINDOW_LENGTHS = [1, 5]
+STEP_LENGTHS = [1, 5]
+FHS = [1, np.array([2, 5])]
 fh = FHS[0]
 
 # testing data
@@ -47,7 +47,7 @@ def test_clone(Forecaster):
 ########################################################################################################################
 # fit, set_params and update return self
 @pytest.mark.parametrize("Forecaster", Forecasters)
-def test_fit_set_params_and_update_return_self(Forecaster):
+def test_return_self_for_fit_set_params_update(Forecaster):
     f = _construct_instance(Forecaster)
     ret = f.fit(y_train, fh)
     assert ret == f
@@ -85,8 +85,79 @@ def test_predict_time_index(Forecaster, fh):
     f.fit(y_train, fh)
     y_pred = f.predict()
 
-    fh = validate_fh(fh)
+    fh = check_fh(fh)
     np.testing.assert_array_equal(y_pred.index.values, y_train.iloc[-1] + fh)
+
+
+########################################################################################################################
+# test predicted pred int time index
+@pytest.mark.parametrize("Forecaster", Forecasters)
+@pytest.mark.parametrize("fh", FHS)
+def test_predict_return_pred_int_time_index(Forecaster, fh):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh=fh)
+    try:
+        _, pred_ints = f.predict(return_pred_int=True, alpha=0.05)
+        fh = check_fh(fh)
+        np.testing.assert_array_equal(pred_ints.index.values, y_train.iloc[-1] + fh)
+
+    except NotImplementedError:
+        print(f"{Forecaster}'s `return_pred_int` option is not implemented, test skipped.")
+        pass
+
+
+########################################################################################################################
+# predict_in_sample
+@pytest.mark.parametrize("Forecaster", Forecasters)
+@pytest.mark.parametrize("fh", FHS)
+def test_compute_pred_errors(Forecaster, fh):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh=fh)
+    try:
+        y_pred = f.predict_in_sample(y_train, fh=fh)
+        fh = check_fh(fh)
+        np.testing.assert_array_equal(y_pred.index.values, y_train.iloc[0] + fh)
+
+    except NotImplementedError:
+        print(f"{Forecaster}'s `predict_in_sample` method is not implemented, test skipped.")
+        pass
+
+
+########################################################################################################################
+# score
+@pytest.mark.parametrize("Forecaster", Forecasters)
+@pytest.mark.parametrize("fh", FHS)
+def test_score(Forecaster, fh):
+    # compute expected score
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh)
+    y_pred = f.predict()
+
+    fh_idx = check_fh(fh) - 1  # get zero based index
+    expected = smape_loss(y_pred, y_test.iloc[fh_idx])
+
+    # compare with actual score
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh)
+    actual = f.score(y_test.iloc[fh_idx], fh=fh)
+    assert actual == expected
+
+
+########################################################################################################################
+# compute_pred_errors
+@pytest.mark.parametrize("Forecaster", Forecasters)
+def test_compute_pred_errors(Forecaster):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh=fh)
+    try:
+        errs = f._compute_pred_errors(alpha=0.05)
+
+        # Prediction errors should always increase with the horizon
+        assert errs.is_monotonic_increasing
+
+    except NotImplementedError:
+        print(f"{Forecaster}'s `compute_pred_errors` method is not implemented, test skipped.")
+        pass
 
 
 ########################################################################################################################

@@ -5,14 +5,14 @@ import numpy as np
 import pytest
 from pytest import raises
 
-from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import check_fh
 
 
 bad_input_args = (
     (1, 2),  # tuple
     [],  # empty list
     np.array([]),  # empty array
-    'some_string',  # string but not "insample"
+    'some_string',  # string
     0.1,  # float
     [0.1, 2],  # float in list
     np.array([0.1, 2]),  # float in list
@@ -25,4 +25,4 @@ bad_input_args = (
 @pytest.mark.parametrize("arg", bad_input_args)
 def test_validate_fh_bad_input_args(arg):
     with raises(ValueError):
-        validate_fh(arg)
+        check_fh(arg)

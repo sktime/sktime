@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.dummy import DummyForecaster
-from sktime.utils.validation.forecasting import validate_fh
+from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
 n_train = 20
@@ -47,7 +47,7 @@ def test_strategy_seasonal_last(fh, sp):
     f.fit(y_train)
     y_pred = f.predict(fh)
 
-    fh = validate_fh(fh)  # get well formatted fh
+    fh = check_fh(fh)  # get well formatted fh
     reps = np.int(np.ceil(max(fh) / sp))
     expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - np.min(fh)]
     np.testing.assert_array_equal(y_pred, expected)

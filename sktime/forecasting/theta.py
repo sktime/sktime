@@ -7,7 +7,7 @@ from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.confidence import zscore
 from sktime.utils.seasonality import seasonality_test
 from sktime.utils.time_series import fit_trend
-from sktime.utils.validation.forecasting import check_alpha, validate_y
+from sktime.utils.validation.forecasting import check_alpha, check_y
 
 __all__ = ["ThetaForecaster"]
 __author__ = ["@big-o", "Markus Löning"]
@@ -109,7 +109,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self : returns an instance of self.
         """
 
-        y_train = validate_y(y_train)
+        y_train = check_y(y_train)
         fh = self._set_fh(fh)
 
         # update observation horizon
@@ -198,16 +198,16 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return drift
 
-    def compute_pred_errs(self, alpha=DEFAULT_ALPHA):
+    def _compute_pred_errors(self, alpha=DEFAULT_ALPHA):
         """
         Get the prediction errors for the forecast.
         """
         self._check_is_fitted()
-        check_alpha(alpha)
+        alpha = check_alpha(alpha)
 
-        n_obs = len(self._obs_horizon)
+        n_timepoints = len(self._obs_horizon)
 
-        self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_obs - 1))
+        self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)
 
         if isinstance(alpha, (np.integer, np.float)):

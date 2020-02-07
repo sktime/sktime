@@ -7,7 +7,7 @@ from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import get_time_index
 from sktime.utils.time_series import fit_trend, remove_trend, add_trend
-from sktime.utils.validation.forecasting import validate_sp, check_is_fitted_in_transform
+from sktime.utils.validation.forecasting import check_sp, check_is_fitted_in_transform
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
 
@@ -26,7 +26,7 @@ class Deseasonaliser(BaseTransformer):
     """
 
     def __init__(self, sp=1, model='additive', check_input=True):
-        self.sp = validate_sp(sp)
+        self.sp = check_sp(sp)
         allowed_models = ('additive', 'multiplicative')
         if model in allowed_models:
             self.model = model

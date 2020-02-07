@@ -15,16 +15,16 @@ FHS = ([1], np.arange(1, 5), np.arange(1, 20))
 @pytest.mark.parametrize("fh", FHS)
 def test_ThetaForecaster_univariate(fh):
     y = np.log1p(load_airline())
-    y_train, y_test = y.iloc[: -len(fh)], y.iloc[-len(fh) :]
+    y_train, y_test = y.iloc[: -len(fh)], y.iloc[-len(fh):]
 
     m = ThetaForecaster(sp=12)
     m.fit(y_train)
     y_pred = m.predict(fh=fh)
 
     assert y_pred.shape[0] == len(fh)
-    assert m.score(y_test, y_train) < 0
+    assert m.score(y_test) > 0
 
-    errs = m.compute_pred_errs(alpha=0.05)
+    errs = m._compute_pred_errors(alpha=0.05)
 
     # Prediction errors should always increase with the horizon.
     assert errs.is_monotonic_increasing
