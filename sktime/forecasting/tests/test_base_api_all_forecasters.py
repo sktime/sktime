@@ -150,7 +150,7 @@ def test_compute_pred_errors(Forecaster):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     try:
-        errs = f._compute_pred_errors(alpha=0.05)
+        errs = f.compute_pred_errors(alpha=0.05)
 
         # Prediction errors should always increase with the horizon
         assert errs.is_monotonic_increasing

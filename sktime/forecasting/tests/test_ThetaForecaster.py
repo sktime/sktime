@@ -24,7 +24,7 @@ def test_ThetaForecaster_univariate(fh):
     assert y_pred.shape[0] == len(fh)
     assert m.score(y_test) > 0
 
-    errs = m._compute_pred_errors(alpha=0.05)
+    errs = m.compute_pred_errors(alpha=0.05)
 
     # Prediction errors should always increase with the horizon.
     assert errs.is_monotonic_increasing

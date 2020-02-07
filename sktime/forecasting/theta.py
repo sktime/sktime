@@ -174,8 +174,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
             y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
 
         if return_pred_int:
-            intvl = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, intvl
+            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
+            return y_pred, pred_int
 
         return y_pred
 
@@ -198,7 +198,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return drift
 
-    def _compute_pred_errors(self, alpha=DEFAULT_ALPHA):
+    def compute_pred_errors(self, alpha=DEFAULT_ALPHA):
         """
         Get the prediction errors for the forecast.
         """
@@ -210,19 +210,18 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)
 
-        if isinstance(alpha, (np.integer, np.float)):
-            z = zscore(1 - alpha)
-            err = z * sem
+        errors = []
+        for a in alpha:
+            z = zscore(1 - a)
+            error = z * sem
+            errors.append(pd.Series(error, index=self._get_absolute_fh()))
 
-            return pd.Series(index=self._get_absolute_fh(), data=err)
+        # for a single alpha value, unwrap list
+        if len(errors) == 1:
+            return errors[0]
 
-        errs = []
-        for al in alpha:
-            z = zscore(1 - al)
-            err = z * sem
-            errs.append(pd.Series(index=self._get_absolute_fh(), data=err))
-
-        return tuple(errs)
+        # otherwise, return list of errors
+        return errors
 
     def update(self, y_new, X_new=None, update_params=True):
         # update observation horizon

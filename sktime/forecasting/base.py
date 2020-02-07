@@ -96,7 +96,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
         """Forecast"""
         raise NotImplementedError()
 
-    def _compute_pred_errors(self, alpha=DEFAULT_ALPHA):
+    def compute_pred_errors(self, alpha=DEFAULT_ALPHA):
         """
         Prediction errors. If alpha is iterable, errors will be calculated for
         multiple confidence levels.
@@ -108,22 +108,30 @@ class _BaseForecaster(_BaseTemporalEstimator):
         Get the prediction intervals for the forecast. If alpha is iterable, multiple
         intervals will be calculated.
         """
-        errs = self._compute_pred_errors(alpha=alpha)
-        if isinstance(errs, pd.Series):
-            ints = pd.DataFrame({
-                "lower": y_pred - errs,
-                "upper": y_pred + errs
-            })
-        else:
-            ints = tuple(
-                pd.DataFrame({
-                    "lower": y_pred - err,
-                    "upper": y_pred + err
-                })
-                for err in errs
-            )
+        errors = self.compute_pred_errors(alpha=alpha)
 
-        return ints
+        # for multiple alphas, errors come in a list;
+        # for single alpha, as a single pd.Series,
+        # wrap it here into a list to make it iterable again,
+        # to avoid code duplication
+        if isinstance(errors, pd.Series):
+            errors = [errors]
+
+        # compute prediction intervals
+        pred_int = [
+            pd.DataFrame({
+                "lower": y_pred - error,
+                "upper": y_pred + error
+            })
+            for error in errors
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if len(pred_int) == 1:
+            return pred_int[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
