@@ -107,7 +107,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self._set_fh(fh)
 
         # update observation horizon
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
 
         self._fit_estimator(y_train)
 
@@ -181,7 +181,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         y_new = check_y(y_new)
 
         # update observation horizon
-        self._set_obs_horizon(y_new.index)
+        self._set_oh(y_new)
 
         if update_params:
             self._fit_estimator(y_new)

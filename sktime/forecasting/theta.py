@@ -113,7 +113,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         fh = self._set_fh(fh)
 
         # update observation horizon
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
 
         y_train = self._deseasonalise(y_train)
 
@@ -190,10 +190,10 @@ class ThetaForecaster(ExpSmoothingForecaster):
             drift = self.trend_ * self.fh
         else:
             # Calculate drift from SES parameters
-            n_obs = len(self._obs_horizon)
+            n_timepoints = len(self.oh)
             drift = self.trend_ * (
                     self.fh
-                    + (1 - (1 - self.smoothing_level_) ** n_obs) / self.smoothing_level_
+                    + (1 - (1 - self.smoothing_level_) ** n_timepoints) / self.smoothing_level_
             )
 
         return drift
@@ -205,7 +205,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         self._check_is_fitted()
         alpha = check_alpha(alpha)
 
-        n_timepoints = len(self._obs_horizon)
+        n_timepoints = len(self.oh)
 
         self.sigma_ = np.sqrt(self._fitted_estimator.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)

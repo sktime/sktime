@@ -24,7 +24,7 @@ class Detrender(_BaseTemporalEstimator):
     def fit(self, y_train, X_train=None):
         # input checks
         y_train = check_y(y_train)
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
 
         # fit forecaster
         # forecasters which require fh in fit are not supported
@@ -70,18 +70,18 @@ class Detrender(_BaseTemporalEstimator):
         passed time series and known observation horizon"""
 
         # check if time index is in observation horizon seen in training
-        isin_obs_horizon = y.index.isin(self._obs_horizon)
+        isin_obs_horizon = y.index.isin(self.oh.index)
 
         # raise error if y contains values before observation horizon
         # seen in training
-        if np.any(y.index.values < self._obs_horizon.min()):
+        if np.any(y.index.values < self.oh.index.min()):
             raise ValueError("Passed `y` contains values from before the "
                              "observation horizon seen in `fit`")
 
         # if all values are in observation horizon,
         # make in-sample forecasts
         if isin_obs_horizon.all():
-            fh = y.index.values - self._obs_horizon.min() + 1
+            fh = y.index.values - self.oh.index.min() + 1
             y_pred = self.forecaster_.predict_in_sample(y, fh=fh, X_train=X)
 
         # if only some of the values are in the observation horizon,
@@ -100,7 +100,7 @@ class Detrender(_BaseTemporalEstimator):
 
             # out-of-sample predictions
             out_of_sample = y.index[~isin_obs_horizon]
-            fh = out_of_sample.values - self._obs_horizon.max()
+            fh = out_of_sample.values - self.oh.inde.xmax()
             out_pred = self.forecaster_.predict(fh=fh, X=None)
 
             # combine predictions

@@ -83,13 +83,13 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._set_fh(fh)
 
         # update observation horizon
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
 
         # set default window length for the mean strategy
         if self.strategy == "mean" and self._window_length is None:
             self._window_length = len(y_train)
 
-        if self._window_length > len(self._obs_horizon):
+        if self._window_length > len(self.oh):
             param = "sp" if self.strategy == "seasonal_last" else "window_length"
             raise ValueError(f"The {param}: {self._window_length} is larger than "
                              f"the training series.")
@@ -142,7 +142,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         y_new = check_y(y_new)
 
         # update observation horizon
-        self._set_obs_horizon(y_new.index)
+        self._set_oh(y_new)
 
         # update windows
         self._last_window = np.append(self._last_window, y_new)[-self._window_length:]
@@ -158,7 +158,7 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
         # get parameters
         window_length = self._window_length
-        n_timepoints = len(self._obs_horizon)
+        n_timepoints = len(self.oh)
 
         # initialise array for predictions
         y_pred = np.zeros(n_timepoints)

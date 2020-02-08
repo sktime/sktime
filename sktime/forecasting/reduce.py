@@ -82,7 +82,7 @@ class _BaseReducer(_BaseForecaster):
         y_new = check_y(y_new)
 
         # update observation horizon
-        self._set_obs_horizon(y_new.index)
+        self._set_oh(y_new)
         return self
 
     def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -95,7 +95,7 @@ class _BaseReducer(_BaseForecaster):
 
         # get parameters
         window_length = self._window_length
-        n_timepoints = len(self._obs_horizon)
+        n_timepoints = len(self.oh)
 
         # initialise array for predictions
         y_pred = np.zeros(n_timepoints)
@@ -182,7 +182,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
             raise NotImplementedError()
 
         y_train = check_y(y_train)
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
         self._last_window = y_train.values[-self._window_length:]
         self._set_fh(fh)
 
@@ -263,7 +263,7 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
 
         # set values
         self._set_fh(fh)
-        self._set_obs_horizon(y_train.index)
+        self._set_oh(y_train)
         self._last_window = y_train.values[-self._window_length:]
 
         # transform data
@@ -331,7 +331,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer, _ReducedTimeSer
 
 
 ##############################################################################
-# factory methods for easier user interface
+# factory methods for easier user interface, but not tunable as it's not an estimator
 def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv, strategy="recursive"):
     """
     Forecasting based on reduction to time series regression.

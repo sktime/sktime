@@ -16,8 +16,8 @@ from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.plotting import composite_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation.forecasting import check_y
+from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 # Default confidence level for prediction intervals.
 DEFAULT_ALPHA = 0.05
@@ -26,7 +26,7 @@ DEFAULT_ALPHA = 0.05
 class _BaseTemporalEstimator(BaseEstimator):
 
     def __init__(self):
-        self._obs_horizon = None  # observation horizon, i.e. time points seen in fit or update
+        self._oh = None  # observation horizon, i.e. time points seen in fit or update
         self._now = None  # time point in observation horizon from which to make forecasts
         self._is_fitted = False
 
@@ -44,36 +44,45 @@ class _BaseTemporalEstimator(BaseEstimator):
         """Time point at which to make forecasts"""
         return self._now
 
-    def _set_obs_horizon(self, obs_horizon):
-        """
-        Update observation horizon
-        """
-        obs_horizon = check_time_index(obs_horizon)
+    @property
+    def oh(self):
+        """Observation horizon"""
+        return self._oh
 
-        # for fitting: since no previous observation horizon is present, set new one
-        if not self.is_fitted:
-            new_obs_horizon = obs_horizon
+    def _set_oh(self, y, X=None):
+        """
+        Set and update observation horizon
+        """
+        if X is not None:
+            raise NotImplementedError()
+
+        y = check_y(y)
 
         # for updating: append observation horizon to previous one
-        else:
-            new_obs_horizon = self._obs_horizon.append(obs_horizon)
-            if not new_obs_horizon.is_monotonic:
+        if self.is_fitted:
+            new_oh = self.oh.append(y)
+            if not new_oh.index.is_monotonic:
                 raise ValueError("Updated time index is no longer monotonically increasing. Data passed "
                                  "to `update` must contain more recent observations than data previously "
                                  "passed to `fit` or `update`.")
 
-        # update observation horizon
-        self._obs_horizon = new_obs_horizon
+        # for fitting: since no previous observation horizon is present, set new one
+        else:
+            new_oh = y
+
+        # set or update observation horizon
+        self._oh = new_oh
 
         # update now when new obs horizon is updated
         self._set_now()
 
     def _set_now(self, now=None):
         """Set now where now is the time point at which to make forecasts"""
+
         if now is None:
-            self._now = self._obs_horizon[-1]
+            self._now = self.oh.index[-1]
         else:
-            if now not in self._obs_horizon:
+            if now not in self.oh.index:
                 raise ValueError("Passed value not in current observation horizon")
             self._now = now
 
@@ -137,7 +146,8 @@ class _BaseForecaster(_BaseTemporalEstimator):
         """Update model, including observation horizon used to make predictions and/or model parameters"""
         raise NotImplementedError()
 
-    def update_predict(self, y_test, cv, X_test=None, update_params=False, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+                       alpha=DEFAULT_ALPHA):
         """Model evaluation with temporal cross-validation"""
         # temporal cross-validation is performed for model evaluation, returning
         # predictions for all time points of the new time series y (i.e. y_test)
@@ -153,11 +163,17 @@ class _BaseForecaster(_BaseTemporalEstimator):
 
         # input checks
         y_test = check_y(y_test)
-        cv = check_cv(cv)
 
-        # check forecasting horizon
-        fh = cv.fh
-        self._set_fh(fh)
+        if cv is None:
+            # if no cv is provided, use default
+            cv = SlidingWindowSplitter(fh=self.fh)
+
+        else:
+            # otherwise check provided cv
+            cv = check_cv(cv)
+
+            # check fh provided via cv
+            self._set_fh(cv.fh)
 
         # allocate lists for prediction results
         y_preds = []
@@ -174,7 +190,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
             self.update(y_test[new], update_params=update_params)
 
             # predict
-            y_pred = self.predict()
+            y_pred = self.predict(return_pred_int=return_pred_int, alpha=alpha)
             y_preds.append(y_pred)
             pred_timepoints.append(self._now)
 
@@ -337,7 +353,6 @@ class _BaseForecaster(_BaseTemporalEstimator):
             ax.set_title(title)
 
         y_col = None
-        fcast_col = None
         if y_train is not None:
             label = f"{y_train.name} (Train)" if y_train.name else "Train"
             y_train.plot(ax=ax, label=label)
@@ -353,7 +368,7 @@ class _BaseForecaster(_BaseTemporalEstimator):
 
         if score and y_test is not None and y_train is not None:
             try:
-                y_score = self.score(y_test, y_train, fh=self.fh, X=kwargs.get("X"))
+                y_score = self.score(y_test, fh=self.fh, X=kwargs.get("X"))
                 text_box = AnchoredText(
                     f"Score = ${y_score:.3f}$", frameon=True, loc=score
                 )
@@ -412,12 +427,12 @@ class _BaseForecaster(_BaseTemporalEstimator):
 
         # check consistent length, window cannot go further back in obs horizon
         # than length of obs horizon
-        if window_length > len(self._obs_horizon):
+        if window_length > len(self.oh):
             raise ValueError(f"The window length: {window_length} is larger than "
-                             f"the current observation horizon: {len(self._obs_horizon)}")
+                             f"the current observation horizon: {len(self.oh)}")
 
         # combine obs horizons
-        new_obs_horizon = self._obs_horizon.append(y.index)
+        new_obs_horizon = self.oh.append(y)
 
         # time index to use for updating and predicting
         time_index = new_obs_horizon[-(len(y) + window_length - step_length):]
