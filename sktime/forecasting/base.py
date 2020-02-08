@@ -452,9 +452,6 @@ class _BaseForecaster(_BaseTemporalEstimator):
             # only the last ones, depending on the step length
             yield i[-step_length:]  # return only index of new data points
 
-    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        raise NotImplementedError()
-
 
 class _BaseForecasterOptionalFHinFit(_BaseForecaster):
     """Base class for forecasters which can take the forecasting horizon either during fitting or prediction."""

@@ -6,7 +6,7 @@ __author__ = "Markus Löning"
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.forecasting.dummy import DummyForecaster
+from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_SPS, DEFAULT_WINDOW_LENGTHS
 from sktime.utils.validation.forecasting import check_fh
 
@@ -19,7 +19,7 @@ y_test = s.iloc[n_train:]
 
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_strategy_last(fh):
-    f = DummyForecaster(strategy="last")
+    f = NaiveForecaster(strategy="last")
     f.fit(y_train)
     y_pred = f.predict(fh)
     expected = np.repeat(y_train.iloc[-1], len(f.fh))
@@ -29,7 +29,7 @@ def test_strategy_last(fh):
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 def test_strategy_mean(fh, window_length):
-    f = DummyForecaster(strategy="mean", window_length=window_length)
+    f = NaiveForecaster(strategy="mean", window_length=window_length)
     f.fit(y_train)
     y_pred = f.predict(fh)
 
@@ -43,7 +43,7 @@ def test_strategy_mean(fh, window_length):
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("sp", DEFAULT_SPS)
 def test_strategy_seasonal_last(fh, sp):
-    f = DummyForecaster(strategy="seasonal_last", sp=sp)
+    f = NaiveForecaster(strategy="seasonal_last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
 
