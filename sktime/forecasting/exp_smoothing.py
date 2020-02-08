@@ -1,14 +1,9 @@
 __all__ = ["ExpSmoothingForecaster"]
 __author__ = ["Markus Löning", "@big-o"]
 
-
-import numpy as np
-import pandas as pd
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
-
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_fh
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 
 class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
@@ -56,19 +51,19 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
     """
 
     def __init__(
-        self,
-        trend=None,
-        damped=False,
-        seasonal=None,
-        sp=None,
-        smoothing_level=None,
-        smoothing_slope=None,
-        smoothing_seasonal=None,
-        damping_slope=None,
-        optimized=True,
-        use_boxcox=False,
-        remove_bias=False,
-        use_basinhopping=False,
+            self,
+            trend=None,
+            damped=False,
+            seasonal=None,
+            sp=None,
+            smoothing_level=None,
+            smoothing_slope=None,
+            smoothing_seasonal=None,
+            damping_slope=None,
+            optimized=True,
+            use_boxcox=False,
+            remove_bias=False,
+            use_basinhopping=False,
     ):
         # Model params
         self.trend = trend
@@ -103,16 +98,13 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         self : returns an instance of self.
         """
 
-        y_train = check_y(y_train)
-        self._set_fh(fh)
-
         # update observation horizon
         self._set_oh(y_train)
+        self._set_fh(fh)
 
         self._fit_estimator(y_train)
 
         self._is_fitted = True
-
         return self
 
     def _fit_estimator(self, y):
@@ -166,19 +158,13 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         end = fh_abs[-1]
         y_pred = self._fitted_estimator.predict(start=start, end=end)
 
-        # Convert step-ahead prediction horizon into zero-based index
-        fh_idx = fh_abs - np.min(fh_abs)
-
-        # Forecast all periods from start to end of pred horizon, but only return given time points in pred horizon
-        y_pred = y_pred.iloc[fh_idx]
-
-        return y_pred
+        # Forecast all periods from start to end of pred horizon,
+        # but only return given time points in pred horizon
+        return y_pred.loc[fh_abs]
 
     def update(self, y_new, X_new=None, update_params=True):
         # input checks
         self._check_is_fitted()
-
-        y_new = check_y(y_new)
 
         # update observation horizon
         self._set_oh(y_new)
@@ -201,7 +187,7 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         y_pred = self._fitted_estimator.predict(start=start, end=end)
 
         # Convert step-ahead prediction horizon into zero-based index
-        fh_idx = fh - np.min(fh)
+        fh_idx = self._get_fh_index()
 
         # Forecast all periods from start to end of pred horizon,
         # but only return given time points in pred horizon

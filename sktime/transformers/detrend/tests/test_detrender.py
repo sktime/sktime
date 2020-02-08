@@ -4,7 +4,7 @@
 __author__ = "Markus Löning"
 
 from sktime.transformers.detrend import Detrender
-from sktime.forecasting.reduce import ReducedRegressionForecaster
+from sktime.forecasting.reduction import ReducedRegressionForecaster
 from sklearn.linear_model import LinearRegression
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 import numpy as np

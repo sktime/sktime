@@ -14,6 +14,7 @@ import pytest
 from sklearn.base import clone
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils.testing import _construct_instance
@@ -22,11 +23,8 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 Forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
 
-# testing grid
-WINDOW_LENGTHS = [1, 5]
-STEP_LENGTHS = [1, 5]
-FHS = [1, np.array([2, 5])]
-fh = FHS[0]
+# default fh
+fh = DEFAULT_FHS[0]
 
 # testing data
 n_timepoints = 30
@@ -79,7 +77,7 @@ def test_not_fitted_error(Forecaster):
 # predict
 # predicted time index
 @pytest.mark.parametrize("Forecaster", Forecasters)
-@pytest.mark.parametrize("fh", FHS)
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_predict_time_index(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
@@ -92,7 +90,7 @@ def test_predict_time_index(Forecaster, fh):
 ########################################################################################################################
 # test predicted pred int time index
 @pytest.mark.parametrize("Forecaster", Forecasters)
-@pytest.mark.parametrize("fh", FHS)
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_predict_return_pred_int_time_index(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
@@ -108,25 +106,25 @@ def test_predict_return_pred_int_time_index(Forecaster, fh):
 
 ########################################################################################################################
 # predict_in_sample
-@pytest.mark.parametrize("Forecaster", Forecasters)
-@pytest.mark.parametrize("fh", FHS)
-def test_compute_pred_errors(Forecaster, fh):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
-    try:
-        y_pred = f.predict_in_sample(y_train, fh=fh)
-        fh = check_fh(fh)
-        np.testing.assert_array_equal(y_pred.index.values, y_train.iloc[0] + fh)
-
-    except NotImplementedError:
-        print(f"{Forecaster}'s `predict_in_sample` method is not implemented, test skipped.")
-        pass
+# @pytest.mark.parametrize("Forecaster", Forecasters)
+# @pytest.mark.parametrize("fh", FHS)
+# def test_compute_pred_errors(Forecaster, fh):
+#     f = _construct_instance(Forecaster)
+#     f.fit(y_train, fh=fh)
+#     try:
+#         y_pred = f.predict_in_sample(y_train, fh=fh)
+#         fh = check_fh(fh)
+#         np.testing.assert_array_equal(y_pred.index.values, y_train.iloc[0] + fh)
+#
+#     except NotImplementedError:
+#         print(f"{Forecaster}'s `predict_in_sample` method is not implemented, test skipped.")
+#         pass
 
 
 ########################################################################################################################
 # score
 @pytest.mark.parametrize("Forecaster", Forecasters)
-@pytest.mark.parametrize("fh", FHS)
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_score(Forecaster, fh):
     # compute expected score
     f = _construct_instance(Forecaster)
@@ -181,11 +179,10 @@ def compute_expected_index_from_update_predict(y_test, fh, step_length):
 
 # check if predicted time index is correct
 @pytest.mark.parametrize("Forecaster", Forecasters)
-@pytest.mark.parametrize("fh", FHS)
-@pytest.mark.parametrize("window_length", WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", STEP_LENGTHS)
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
 def test_update_predict_check_predicted_indices(Forecaster, fh, window_length, step_length):
-    # initiate cv with different fh, so that out window in temporal cv does not contain fh
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)

@@ -4,8 +4,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 
 from sktime.forecasting.base import _BaseForecaster
-from sktime.forecasting.reduce import _ReducedTabularRegressorMixin
-from sktime.forecasting.reduce import _ReducedTimeSeriesRegressorMixin
+from sktime.forecasting.reduction import _ReducedTabularRegressorMixin
+from sktime.forecasting.reduction import _ReducedTimeSeriesRegressorMixin
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import detabularise
 from sktime.forecasting.model_selection import SlidingWindowSplitter

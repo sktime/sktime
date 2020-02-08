@@ -261,18 +261,27 @@ class _BaseForecaster(_BaseTemporalEstimator):
         raise NotImplementedError()
 
     def _get_absolute_fh(self):
-        """
-        Convert the step-ahead forecast horizon into the corresponding time index
-        values to append to the target data.
-
-        The forecaster must be fitted before calling this method.
+        """Convert the step-ahead forecast horizon relative to the end
+        of the observation horizon into the absolute time index.
 
         Returns
-        =======
+        -------
         fh : numpy.ndarray
-            The forecasting horizon
+            The absolute time index of the forecasting horizon
         """
         return self.now + self.fh
+
+    def _get_fh_index(self):
+        """Convert the step-ahead forecast horizon relative to the end
+        of the observation horizon into the zero-based forecasting horizon
+        for array indexing.
+
+        Returns
+        -------
+        fh : numpy.ndarray
+            The zero-based index of the forecasting horizon
+        """
+        return self.fh - 1
 
     def plot(
             self,

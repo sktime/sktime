@@ -6,8 +6,8 @@ __author__ = "Markus Löning"
 import numpy as np
 import pandas as pd
 import pytest
-
 from sktime.forecasting.dummy import DummyForecaster
+from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_SPS, DEFAULT_WINDOW_LENGTHS
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -17,7 +17,7 @@ y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
 
 
-@pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_strategy_last(fh):
     f = DummyForecaster(strategy="last")
     f.fit(y_train)
@@ -26,8 +26,8 @@ def test_strategy_last(fh):
     np.testing.assert_array_equal(y_pred, expected)
 
 
-@pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
-@pytest.mark.parametrize("window_length", [None, 3, 5])
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 def test_strategy_mean(fh, window_length):
     f = DummyForecaster(strategy="mean", window_length=window_length)
     f.fit(y_train)
@@ -40,14 +40,18 @@ def test_strategy_mean(fh, window_length):
     np.testing.assert_array_equal(y_pred, expected)
 
 
-@pytest.mark.parametrize("fh", [1, 3, np.arange(1, 5)])
-@pytest.mark.parametrize("sp", [3, 7, 12])
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("sp", DEFAULT_SPS)
 def test_strategy_seasonal_last(fh, sp):
     f = DummyForecaster(strategy="seasonal_last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
 
+    # check predicted index
+    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh), y_pred.index)
+
+    # check values
     fh = check_fh(fh)  # get well formatted fh
     reps = np.int(np.ceil(max(fh) / sp))
-    expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - np.min(fh)]
+    expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
     np.testing.assert_array_equal(y_pred, expected)

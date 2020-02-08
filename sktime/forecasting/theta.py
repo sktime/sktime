@@ -226,7 +226,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
     def update(self, y_new, X_new=None, update_params=True):
         # update observation horizon
         super(ThetaForecaster, self).update(
-            y_new, X_new=None, update_params=update_params
+            y_new, X_new=X_new, update_params=update_params
         )
 
         if update_params:

@@ -23,9 +23,6 @@ from sktime.forecasting.base import _BaseForecasterRequiredFHinFit
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_time_index
-from sktime.utils.validation.forecasting import check_y
-from sktime.utils.validation.forecasting import check_window_length
 
 
 ##############################################################################
@@ -44,15 +41,16 @@ class _BaseReducer(_BaseForecaster):
         # validated already in CV object
         self._window_length = cv.window_length
 
-        self._last_window = None
-
         super(_BaseReducer, self).__init__()
 
-    def transform(self, y_train):
+    def transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
 
+        if X_train is not None:
+            raise NotImplementedError()
+
         # get integer time index
-        time_index = check_time_index(y_train)
+        time_index = y_train.index
         cv = self.cv
 
         # Transform target series into tabular format using
@@ -79,10 +77,8 @@ class _BaseReducer(_BaseForecaster):
         # input checks
         self._check_is_fitted()
 
-        y_new = check_y(y_new)
-
         # update observation horizon
-        self._set_oh(y_new)
+        self._set_oh(y_new, X_new)
         return self
 
     def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -112,7 +108,7 @@ class _BaseReducer(_BaseForecaster):
             y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
 
         # select only predictions in given fh
-        fh_idx = fh - np.min(fh)
+        fh_idx = fh - 1
         return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]
 
 
@@ -174,6 +170,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
     strategy = "direct"
 
     def __init__(self, regressor, cv):
+        self.regressors_ = []
         super(_DirectReducer, self).__init__(regressor=regressor, cv=cv)
 
     def fit(self, y_train, fh=None, X_train=None):
@@ -181,9 +178,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         if X_train is not None:
             raise NotImplementedError()
 
-        y_train = check_y(y_train)
-        self._set_oh(y_train)
-        self._last_window = y_train.values[-self._window_length:]
+        self._set_oh(y_train, X_train)
         self._set_fh(fh)
 
         # for the direct reduction strategy, a separate forecaster is fitted
@@ -196,10 +191,9 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
             self.cv._fh = self.fh
 
         # transform data using rolling window split
-        X_train, Y_train = self.transform(y_train)
+        X_train, Y_train = self.transform(y_train, X_train)
 
         # iterate over forecasting horizon
-        self.regressors_ = []
         for i in range(len(self.fh)):
             y_train = Y_train[:, i]
             regressor = clone(self.regressor)
@@ -220,8 +214,13 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         self._check_is_fitted()
         self._set_fh(fh)
 
+        # compute prediction
+        # get last window from observation horizon
+        last_window = self.oh.values[-self._window_length:]
+
         # use last window as new input data for time series regressors to make forecasts
-        X_last = self._convert_data([self._last_window])
+        # get last window from observation horizon
+        X_last = self._convert_data([last_window])
 
         # preallocate array for forecasted values
         len_fh = len(self.fh)
@@ -259,15 +258,12 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
         if X_train is not None:
             raise NotImplementedError()
 
-        y_train = check_y(y_train)
-
         # set values
+        self._set_oh(y_train, X_train)
         self._set_fh(fh)
-        self._set_oh(y_train)
-        self._last_window = y_train.values[-self._window_length:]
 
         # transform data
-        X_train, y_train = self.transform(y_train)
+        X_train, y_train = self.transform(y_train, X_train)
 
         # fit base regressor
         regressor = clone(self.regressor)
@@ -288,26 +284,27 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
         self._check_is_fitted()
         self._set_fh(fh)
 
+        # compute prediction
         # prepare recursive predictions
-        fh_max = max(self.fh)
+        fh_max = self.fh[-1]
         y_pred = np.zeros(fh_max)
-
         regressor = self.regressor_
+
+        # get last window from observation horizon
+        last_window = self.oh.values[-self._window_length:]
 
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
-            X_last = self._convert_data([self._last_window])  # convert data into required input format
+            X_last = self._convert_data([last_window])  # convert data into required input format
             y_pred[i] = regressor.predict(X_last)  # make forecast using fitted regressor
-            self._update_last_window(y_pred[i])  # update last window with previous prediction
+
+            # update last window with previous prediction
+            last_window = np.append(last_window, y_pred[i])[-self._window_length:]
 
         # select specific steps ahead and add index
-        fh_idx = self.fh - np.min(self.fh)
+        fh_idx = self._get_fh_index()
         index = self._get_absolute_fh()
         return pd.Series(y_pred[fh_idx], index=index)
-
-    def _update_last_window(self, y):
-        """Update last window used in recursive predictions"""
-        self._last_window = np.append(self._last_window, y)[-self._window_length:]
 
 
 ##############################################################################

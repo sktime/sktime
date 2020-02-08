@@ -8,13 +8,11 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-
 from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import check_y
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
-from sktime.utils.validation.forecasting import check_fh
-from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 
 class DummyForecaster(_BaseForecasterOptionalFHinFit):
@@ -72,30 +70,25 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         if self.strategy == "mean":
             self._window_length = check_window_length(window_length)
 
-        self._last_window = None
-        self._first_window = None
         super(DummyForecaster, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit"""
 
-        y_train = check_y(y_train)
+        # update observation horizon
+        # X_train is ignored
+        self._set_oh(y_train)
         self._set_fh(fh)
 
-        # update observation horizon
-        self._set_oh(y_train)
-
-        # set default window length for the mean strategy
+        #  if not given, set default window length for the mean strategy
         if self.strategy == "mean" and self._window_length is None:
             self._window_length = len(y_train)
 
+        # check window length
         if self._window_length > len(self.oh):
             param = "sp" if self.strategy == "seasonal_last" else "window_length"
             raise ValueError(f"The {param}: {self._window_length} is larger than "
                              f"the training series.")
-
-        self._first_window = y_train.values[:self._window_length]
-        self._last_window = y_train.values[-self._window_length:]
 
         self._is_fitted = True
         return self
@@ -111,8 +104,11 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
         self._set_fh(fh)
 
         # compute prediction
+        # get last window from observation horizon
+        last_window = self.oh.values[-self._window_length:]
+
         if self.strategy == "last":
-            y_pred = np.repeat(self._last_window[-1], len(self.fh))
+            y_pred = np.repeat(last_window[-1], len(self.fh))
 
         if self.strategy == "seasonal_last":
             # we need to replicate the last window if max(fh) is larger than sp,
@@ -120,15 +116,14 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
             # assume fh is sorted, i.e. max(fh) == fh[-1]
             if self.fh[-1] > self.sp:
                 reps = np.int(np.ceil(self.fh[-1] / self.sp))
-                last_window = np.tile(self._last_window, reps=reps)
-            else:
-                last_window = self._last_window
+                last_window = np.tile(last_window, reps=reps)
 
-            fh_idx = self.fh - np.min(self.fh)
+            # get zero-based index by subtracting the minimum
+            fh_idx = self._get_fh_index()
             y_pred = last_window[fh_idx]
 
         if self.strategy == "mean":
-            y_pred = np.repeat(self._last_window.mean(), len(self.fh))
+            y_pred = np.repeat(last_window.mean(), len(self.fh))
 
         # return as series with correct time index
         index = self._now + self.fh
@@ -139,13 +134,11 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
 
         # input checks
         self._check_is_fitted()
-        y_new = check_y(y_new)
 
         # update observation horizon
+        # X is ignored
         self._set_oh(y_new)
 
-        # update windows
-        self._last_window = np.append(self._last_window, y_new)[-self._window_length:]
         return self
 
     def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -175,7 +168,5 @@ class DummyForecaster(_BaseForecasterOptionalFHinFit):
             y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
 
         # select only predictions in given fh
-        fh_idx = fh - np.min(fh)
+        fh_idx = fh - 1
         return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]
-
-
