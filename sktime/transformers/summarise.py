@@ -4,12 +4,15 @@ from sklearn.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.utils.data_container import check_equal_index, tabularize
+from sktime.utils.data_container import check_equal_index, convert_data
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
-from tsfresh import extract_features, extract_relevant_features, select_features
-from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction import ComprehensiveFCParameters
+from tsfresh import extract_features, extract_relevant_features, select_features,defaults
+from tsfresh.feature_extraction import ComprehensiveFCParameters,MinimalFCParameters,EfficientFCParameters
+
+COMPREHENSIVE = "COMPREHENSIVE"
+MINIMAL = "MINIMAL"
+EFFICIENT = "EFFICIENT"
 
 class PlateauFinder(BaseTransformer):
     """Transformer that finds segments of the same given value, plateau in the time series, and
@@ -221,43 +224,35 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
 
 class TsFreshTransfomer(BaseTransformer):
-
-    def get_time_series_container(self,X):
-        columns = X.columns
-        X_time_series = pd.DataFrame()
-        rows = X.shape[0]
-        
-        for i in range(rows):
-            column_index = 0
-            temp_dataframe = pd.DataFrame()
-            time_series_shape = X.iloc[i,0].shape
-            time_series_len = time_series_shape[0]
-            
-            series_time = np.arange(start=0,stop=time_series_len,step=1)
-            series_id = np.full(time_series_shape,(i+1))
-            
-            for j in range(len(columns)):
-                temp_dataframe[columns[column_index]] = X.iloc[i,j]
-                column_index += 1
-                
-            temp_dataframe['series_time'] = series_time
-            temp_dataframe['series_id'] = series_id
-    #         print(temp_dataframe.head())
-            X_time_series = X_time_series.append(temp_dataframe)
-    #     print(X_time_series.head())
-        return X_time_series
-        
     
-    def get_formatted_predictions(self,y):
+    def __init__(self,default_fc_parameters=None,kind_to_fc_parameters=None,
+                    chunksize=defaults.CHUNKSIZE,
+                     n_jobs=defaults.N_PROCESSES, show_warnings=defaults.SHOW_WARNINGS,
+                     disable_progressbar=defaults.DISABLE_PROGRESSBAR,
+                     impute_function=defaults.IMPUTE_FUNCTION,
+                     profile=defaults.PROFILING,
+                     profiling_filename=defaults.PROFILING_FILENAME,
+                     profiling_sorting=defaults.PROFILING_SORTING,
+                     distributor=None):
+        self.default_fc_parameters = default_fc_parameters
+        self.kind_to_fc_parameters = kind_to_fc_parameters
+        self.n_jobs = n_jobs
+        self.show_warnings = show_warnings
+        self.disable_progressbar = disable_progressbar
+        self.impute_function = impute_function
+        self.profile = profile
+        self.profiling_sorting = profiling_sorting
+        self.profiling_filename = profiling_filename
+        self.distributor = distributor
+        self.passed_default_fc_params = None
+        self.passed_kind_to_fc_params = None
+
+    # TODO remove this method?
+    def _get_formatted_predictions(self,y):
         y_time_series_container = []
         for i in range(len(y)):
             y_time_series_container.append([(i+1),y[i]])
         return y_time_series_container
-
-
-    
-    def __init__(self):
-        pass
 
     def fit(X, y=None):
         #empty
@@ -277,13 +272,53 @@ class TsFreshTransfomer(BaseTransformer):
         #input checks
         validate_X(X)
         # check_X_is_univariate(X)
-        X_time_series = self.get_time_series_container(X)
+        X_time_series = convert_data(X)
         # y_time_series = get_formatted_predictions(y_train)
 
-        # TODO Complete extract_features call args and add args if required
-        extraction_settings = ComprehensiveFCParameters()
-        Xt = extract_features(X_time_series,column_id='series_id',column_sort='series_time',
-                                default_fc_parameters=extraction_settings,impute_function=impute)
+        # check for default_fc_parameters
+        # TODO change value error statement
+        # TODO Is this method required? Drop handling this error to tsfresh?
+        def check_default_rc_parameters(default_fc_parameters):
+            if not (isinstance(self.default_fc_parameters,str) or isinstance(self.default_fc_parameters,dict) or isinstance(self.default_fc_parameters,
+                    (tsfresh.feature_extraction.settings.ComprehensiveFCParameters,
+                    tsfresh.feature_extraction.settings.MinimalFCParameters,
+                    tsfresh.feature_extraction.settings.EfficientFCParameters))):
+                raise ValueError("default_fc_parameters must be either of the predefined classes or of type dict or a string")
 
-        # TODO Assert original time series column should not be in Xt
+            if isinstance(self.default_fc_parameters,str):
+                if self.default_fc_parameters == COMPREHENSIVE:
+                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
+                elif self.default_fc_parameters == MINIMAL:
+                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.MinimalFCParameters()
+                elif self.default_fc_parameters == EFFICIENT:
+                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.EfficientFCParameters()
+
+
+            elif isinstance(self.default_fc_parameters,(tsfresh.feature_extraction.settings.ComprehensiveFCParameters,tsfresh.feature_extraction.settings.MinimalFCParameters,tsfresh.feature_extraction.settings.EfficientFCParameters)):
+                self.passed_default_fc_params = self.default_fc_parameters
+
+            elif isinstance(self.default_fc_parameters,dict):
+                # TODO checks to be performed over custom parameters
+                self.passed_default_fc_params = self.default_fc_parameters
+
+            else:
+                raise ValueError("Invalid type of default_fc_parameters")
+
+        # TODO Checks for kind_to_fc_params
+
+        # TODO Complete extract_features call args and add args if required
+        Xt = extract_features(
+                    X_time_series,
+                    column_id="index", column_value="value", 
+                    column_kind="column", column_sort="time_index"
+                    default_fc_parameters=self.passed_default_fc_params,
+                    kind_fc_parameters=self.passed_kind_to_fc_params,
+                    n_jobs=self.n_jobs, show_warnings=self.show_warnings
+                    disable_progressbar=self.disable_progressbar,
+                    impute_function=self.impute_function,
+                    profile=self.profile,
+                    profiling_filename=self.profiling_filename,
+                    profiling_sorting=self.profiling_sorting,
+                    distributor=self.distributor)
+
         return Xt

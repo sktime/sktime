@@ -228,3 +228,17 @@ def get_time_index(X):
     time_index = Xs.index if hasattr(Xs, 'index') else pd.RangeIndex(Xs.shape[0])
 
     return time_index
+
+
+def convert_data(X):
+    columns = []
+
+    for i in range(len(X.columns)):
+        df = tabularise(X.iloc[:, i])
+        df = df.reset_index()
+        df = df.melt(id_vars="index")
+        df["column"] = df["variable"].str.split("__").str[0]
+        df["time_index"] = df["variable"].str.split("__").str[1]
+        df = df.drop(columns="variable")
+        columns.append(df)
+    return pd.concat(columns)
