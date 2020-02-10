@@ -79,6 +79,19 @@ cdef extern from "mrseql_cpp/seql.h":
         vector[string] get_sequence_features(bool)
         vector[double] get_coefficients(bool)
 
+# class BaseLearner:
+#     def learn(self, sequences, labels):
+#         raise NotImplementedError('this is an abstract method')
+
+#     def classify(self, sequence):
+#         raise NotImplementedError('this is an abstract method')    
+
+#     def get_sequence_features(self, only_positive):
+#         raise NotImplementedError('this is an abstract method')
+
+#     def get_coefficients(self, only_positive):
+#         raise NotImplementedError('this is an abstract method')
+
 
 cdef class PySEQL:
     cdef SEQL *thisptr
@@ -92,16 +105,47 @@ cdef class PySEQL:
         self.thisptr.learn(sequences, labels)
 
     def classify(self, string sequence):
-        return self.thisptr.brute_classify(sequence, 0.0)
+        scr = self.thisptr.brute_classify(sequence, 0.0)
+        return np.array([-scr,scr]) # keep consistent with multiclass case
 
     def print_model(self):
         self.thisptr.print_model(100)
 
-    def get_sequence_features(self, bool only_positive):
+    def get_sequence_features(self, bool only_positive = False):
         return self.thisptr.get_sequence_features(only_positive)
 
-    def get_coefficients(self, bool only_positive):
+    def get_coefficients(self, bool only_positive = False):
         return self.thisptr.get_coefficients(only_positive)
+
+class OVASEQL:
+    def __init__(self, unique_labels):
+        self.labels_ = unique_labels
+        self.models = []
+
+    def learn(self, sequences, labels):
+        for l in self.labels_:
+            tmp_labels = [1 if c == l else - 1 for c in labels]
+            m = PySEQL()
+            m.learn(sequences, tmp_labels)
+            self.models.append(m)
+
+    def classify(self, string sequence):
+        scr = []
+        for m in self.models:
+            scr.append(m.classify(sequence)[1])
+        return np.array(scr)
+
+    def get_sequence_features(self, bool only_positive = False):
+        sqs = []
+        for m in self.models:
+            sqs.extend(m.get_sequence_features(True))
+        return sqs
+
+    def get_coefficients(self, bool only_positive = False):
+        coefs = []
+        for m in self.models:
+            coefs.extend(m.get_coefficients(True))
+        return coefs
 
 
 ###########################################################################
@@ -221,42 +265,31 @@ class MrSEQLClassifier(BaseClassifier):
             models.append(m)
         return models
 
-
     def __fit_multiclass_problem(self, mr_seqs, labels):
-        # one versus all
-        ova_models = []
-        for l in self.classes_:
-            tmp_labels = [1 if x == l else -1 for x in labels]
-            models = self.__fit_binary_problem(mr_seqs, tmp_labels)
-            ova_models.append(models)
-        return ova_models
+        models = []
+        for rep in mr_seqs:
+            m = OVASEQL(self.classes_)
+            m.learn(rep, labels)
+            models.append(m)
+        return models
+
+
 
     # represent data (in multiple reps form) in feature space
     def __to_feature_space(self, mr_seqs):
         full_fm = []
 
-        if self.__is_multiclass():
-            for ova_models in self.seql_models:
-                for rep, model in zip(mr_seqs, ova_models):
-                    seq_features = model.get_sequence_features(True)
-                    # print(seq_features)
-                    fm = np.zeros((len(rep), len(seq_features)))
-                    for i,s in enumerate(rep):
-                        for j,f in enumerate(seq_features):
-                            if f in s:
-                                fm[i,j] = 1
-                    full_fm.append(fm)
+        for rep, model in zip(mr_seqs, self.seql_models):
+            seq_features = model.get_sequence_features(False)
+            # print(seq_features)
+            fm = np.zeros((len(rep), len(seq_features)))
+            for i,s in enumerate(rep):
+                for j,f in enumerate(seq_features):
+                    if f in s:
+                        fm[i,j] = 1
+            full_fm.append(fm)
 
-        else:
-            for rep, model in zip(mr_seqs, self.seql_models):
-                seq_features = model.get_sequence_features(False)
-                # print(seq_features)
-                fm = np.zeros((len(rep), len(seq_features)))
-                for i,s in enumerate(rep):
-                    for j,f in enumerate(seq_features):
-                        if f in s:
-                            fm[i,j] = 1
-                full_fm.append(fm)
+
         full_fm = np.hstack(full_fm)
         return full_fm
 
@@ -312,36 +345,16 @@ class MrSEQLClassifier(BaseClassifier):
             test_x = self.__to_feature_space(mr_seqs)
             return self.clf.predict_proba(test_x) # TODO: Check if sklearn clf store labels in the same order
 
-
-
-        if self.__is_multiclass():
+        else:
             scores = np.zeros((len(X), len(self.classes_)))
-
-            for li, ova_models in enumerate(self.seql_models):
-                for rep, model in zip(mr_seqs, ova_models):
+            for rep, model in zip(mr_seqs, self.seql_models):
                     for c,seq in enumerate(rep):
-                        scores[c,li] += model.classify(seq)
+                        scores[c] = scores[c] + model.classify(seq)
 
             proba = self.__compute_proba(scores)
             proba /= proba.sum(axis=1).reshape((proba.shape[0], -1)) # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
 
             return proba
-
-
-
-
-        else: # binary
-            scores = np.zeros(len(X))
-            for rep, model in zip(mr_seqs, self.seql_models):
-                for c,seq in enumerate(rep):
-                    scores[c] = scores[c] + model.classify(seq)
-            positive_proba = self.__compute_proba(scores)
-            return np.vstack([1 - positive_proba, positive_proba]).T # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
-
-
-
-
-
 
     def predict(self, X, input_checks=True):
         if input_checks:
@@ -351,23 +364,38 @@ class MrSEQLClassifier(BaseClassifier):
 
 
     def get_configuration(self):
-        return self.config
+        return self.config 
 
     # map sax features on time series
-    # return a time series with the same length
-    # each value represents the importanceness
+    # return ndarray of (number of classes, length of time series)        
     def map_sax_model(self, ts):
-        weighted_ts = np.zeros(len(ts))
-        if self.__is_multiclass():
-            print('Do nothing')
-        else:
-            for cfg,m in zip(self.config, self.seql_models):
-                if cfg['method'] == 'sax':
-                    features = m.get_sequence_features(False)
-                    weights = m.get_coefficients(False)
+        if len(self.symbolic_methods) == 1 and self.symbolic_methods[0] == 'sax' and self.seql_mode == 'fs':
+            # X = self.__X_check(X)
+            # proba = self.predict_proba(X, False)
+            
+            # predict = np.array([self.classes_[np.argmax(prob)] for prob in proba])
+
+            weighted_ts = np.zeros((len(self.classes_),len(ts)))                  
+
+
+            fi = 0
+            for cfg,m in zip(self.config, self.seql_models):                
+                features = m.get_sequence_features()
+                if cfg['method'] == 'sax':                    
                     ps = PySAX(cfg['window'],cfg['word'],cfg['alphabet'])
-                    weighted_ts += ps.map_weighted_patterns(ts,features,weights)
-        return weighted_ts
+                    if self.__is_multiclass():
+                        for ci, cl in enumerate(self.classes_):                        
+                            weighted_ts[ci,:] += ps.map_weighted_patterns(ts,features,self.clf.coef_[ci,fi:(fi+len(features))])
+                    else:
+                        weighted_ts[0,:] += ps.map_weighted_patterns(ts,features,self.clf.coef_[0,fi:(fi+len(features))])
+                        
+                fi += len(features)
+            if not self.__is_multiclass():
+                weighted_ts[1,:] = -weighted_ts[0,:]
+            return weighted_ts
+        else:
+            print('The mapping only works on fs mode. In addition, only sax features will be mapped to the time series.')
+            return None
 
 
 
@@ -381,3 +409,25 @@ class MrSEQLClassifier(BaseClassifier):
             print('Classification Method: SEQL as feature selection')
         elif self.seql_mode == 'clf':
             print('Classification Method: Ensemble SEQL')
+
+    # def test_ensemble_members(self, X):
+    #     mr_seqs = self.__transform_time_series(X)
+
+    #     prds = []
+        
+    #     for rep, model in zip(mr_seqs, self.seql_models):
+    #         scores = np.zeros((len(X), len(self.classes_)))
+    #         for c,seq in enumerate(rep):
+    #              scores[c] = scores[c] + model.classify(seq)
+
+    #         proba = self.__compute_proba(scores)
+    #         proba /= proba.sum(axis=1).reshape((proba.shape[0], -1)) # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
+    #         predict = np.array([self.classes_[np.argmax(prob)] for prob in proba])
+    #         prds.append(predict)
+    #     return prds
+
+    def get_all_sequences(self):
+        rt = []
+        for m in self.seql_models:
+            rt.append([s.decode('ascii') for s in m.get_sequence_features()])
+        return rt
