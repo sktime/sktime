@@ -12,7 +12,7 @@ def configuration(parent_package="", top_path=None):
 
     config.add_extension(
         name="mrseql",
-        sources=["mrseql_wrapper.pyx","mrseql_cpp/seql_learn.cpp","mrseql_cpp/SNode.cpp"],
+        sources=["mrseql.pyx","seql_learn.cpp","SNode.cpp"],
         # sources=["mrseql_wrapper.cpp"],
         extra_compile_args=['-std=c++11'],
         language="c++",

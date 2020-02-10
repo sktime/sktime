@@ -1,3 +1,9 @@
+# cython: language_level=3, boundscheck=False, wraparound=False, initializedcheck=False, nonecheck=False,
+
+# believe it or not, the below variable is required for cython to compile properly. A global python variable hooks
+# into a c global variable. Without this functions do not compile properly!
+STUFF = "Hi"  # https://stackoverflow.com/questions/8024805/cython-compiled-c-extension-importerror-dynamic-module-does-not-define-init-fu
+
 from libcpp.string cimport string
 from libcpp cimport bool
 from libcpp.vector cimport vector
@@ -11,7 +17,7 @@ from sktime.classifiers.base import BaseClassifier
 
 ######################### SAX and SFA #########################
 
-cdef extern from "mrseql_cpp/sax_converter.h":
+cdef extern from "sax_converter.h":
     cdef cppclass SAX:
         SAX(int, int, int)
         #string timeseries2SAX(string, string)
@@ -70,7 +76,7 @@ class AdaptedSFA:
 #########################SEQL wrapper#########################
 
 
-cdef extern from "mrseql_cpp/seql.h":
+cdef extern from "seql.h":
     cdef cppclass SEQL:
         SEQL()
         void learn(vector[string] &, vector[double] &)
@@ -155,7 +161,7 @@ class OVASEQL:
 ''' Time Series Classification with multiple symbolic representations and SEQL (Mr-SEQL)
 
  @article{mrseql,
- author = {Nguyen, Thach and Gsponer, Severin and Ilie, Iulia and O'reilly, Martin and Ifrim, Georgiana},
+ author = {Le Nguyen, Thach and Gsponer, Severin and Ilie, Iulia and O'reilly, Martin and Ifrim, Georgiana},
  title = {Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations},
  journal = {Data Mining and Knowledge Discovery},
  volume = {33},
