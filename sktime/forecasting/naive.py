@@ -8,14 +8,14 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
+from sktime.forecasting.base import OptionalForecastingHorizonMixin, BaseForecaster, DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
-class NaiveForecaster(_BaseForecasterOptionalFHinFit):
+class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple strategies.
 
@@ -120,7 +120,7 @@ class NaiveForecaster(_BaseForecasterOptionalFHinFit):
                 last_window = np.tile(last_window, reps=reps)
 
             # get zero-based index by subtracting the minimum
-            fh_idx = self._get_fh_index()
+            fh_idx = self._get_index_fh()
             y_pred = last_window[fh_idx]
 
         if self.strategy == "mean":

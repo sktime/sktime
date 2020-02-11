@@ -1,12 +1,12 @@
 __all__ = ["ExpSmoothingForecaster"]
 __author__ = ["Markus Löning", "@big-o"]
 
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit, DEFAULT_ALPHA
-from sktime.utils.validation.forecasting import check_fh
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import OptionalForecastingHorizonMixin, DEFAULT_ALPHA
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 
-class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
+class ExpSmoothingForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
     """
     Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
     without trend and seasonality components.
@@ -89,10 +89,12 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
 
         Parameters
         ----------
-        y_train : pandas.Series
+        y_train : pd.Series
             Target time series to which to fit the forecaster.
         fh : array-like, optional (default=[1])
             The forecasters horizon with the steps ahead to to predict.
+        X_train : None
+            Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
@@ -137,6 +139,10 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
         fh : int or array-like, optional (default=1)
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
             i.e. np.array([1])
+        X : None
+            Exogenous variables are ignored.
+        return_pred_int : bool, optional (default=False)
+        alpha : int or list, optional (default=0.95)
 
         Returns
         -------
@@ -173,22 +179,3 @@ class ExpSmoothingForecaster(_BaseForecasterOptionalFHinFit):
             self._fit_estimator(y_new)
 
         return self
-
-    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
-        if return_pred_int:
-            raise NotImplementedError()
-
-        self._check_is_fitted()
-        fh = check_fh(fh)
-
-        start = fh[0]
-        end = fh[-1]
-        y_pred = self._fitted_estimator.predict(start=start, end=end)
-
-        # Convert step-ahead prediction horizon into zero-based index
-        fh_idx = self._get_fh_index()
-
-        # Forecast all periods from start to end of pred horizon,
-        # but only return given time points in pred horizon
-        return y_pred.iloc[fh_idx]

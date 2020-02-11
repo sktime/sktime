@@ -17,9 +17,9 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import _BaseForecaster
-from sktime.forecasting.base import _BaseForecasterOptionalFHinFit
-from sktime.forecasting.base import _BaseForecasterRequiredFHinFit
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import OptionalForecastingHorizonMixin
+from sktime.forecasting.base import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
@@ -28,7 +28,7 @@ from sktime.utils.validation.forecasting import check_fh
 ##############################################################################
 # base classes for reduction from forecasting to regression
 
-class _BaseReducer(_BaseForecaster):
+class BaseReducer(BaseForecaster):
     """Base class for reducing forecasting to time series regression"""
 
     _required_parameters = ["regressor", "cv"]
@@ -41,7 +41,7 @@ class _BaseReducer(_BaseForecaster):
         # validated already in CV object
         self._window_length = cv.window_length
 
-        super(_BaseReducer, self).__init__()
+        super(BaseReducer, self).__init__()
 
     def transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
@@ -67,6 +67,9 @@ class _BaseReducer(_BaseForecaster):
         # Put into required input format for regression
         X_train, y_train = self._convert_data(x_windows, y_windows)
         return X_train, y_train
+
+    def _convert_data(self, x, y):
+        raise NotImplementedError()
 
     def update(self, y_new, X_new=None, update_params=False):
         if X_new is not None:
@@ -112,7 +115,7 @@ class _BaseReducer(_BaseForecaster):
         return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]
 
 
-class _ReducedTimeSeriesRegressorMixin:
+class ReducedTimeSeriesRegressorMixin:
     """Base class for reducing forecasting to time series regression"""
 
     @staticmethod
@@ -140,7 +143,7 @@ class _ReducedTimeSeriesRegressorMixin:
         return X_train, y_train
 
 
-class _ReducedTabularRegressorMixin:
+class ReducedTabularRegressorMixin:
     """Base class for reducing forecasting to tabular regression"""
 
     @staticmethod
@@ -166,7 +169,7 @@ class _ReducedTabularRegressorMixin:
         return X_train, y_train
 
 
-class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
+class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "direct"
 
     def __init__(self, regressor, cv):
@@ -235,7 +238,7 @@ class _DirectReducer(_BaseReducer, _BaseForecasterRequiredFHinFit):
         return pd.Series(y_pred, index=index)
 
 
-class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
+class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
     def __init__(self, regressor, cv):
@@ -302,28 +305,28 @@ class _RecursiveReducer(_BaseReducer, _BaseForecasterOptionalFHinFit):
             last_window = np.append(last_window, y_pred[i])[-self._window_length:]
 
         # select specific steps ahead and add index
-        fh_idx = self._get_fh_index()
+        fh_idx = self._get_index_fh()
         index = self._get_absolute_fh()
         return pd.Series(y_pred[fh_idx], index=index)
 
 
 ##############################################################################
 # redution to regression
-class DirectRegressionForecaster(_DirectReducer, _ReducedTabularRegressorMixin):
+class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     pass
 
 
-class RecursiveRegressionForecaster(_RecursiveReducer, _ReducedTabularRegressorMixin):
+class RecursiveRegressionForecaster(ReducedTabularRegressorMixin, _RecursiveReducer):
     pass
 
 
 ##############################################################################
 # reduction to time series regression
-class DirectTimeSeriesRegressionForecaster(_DirectReducer, _ReducedTimeSeriesRegressorMixin):
+class DirectTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin, _DirectReducer):
     pass
 
 
-class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer, _ReducedTimeSeriesRegressorMixin):
+class RecursiveTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin, _RecursiveReducer):
     pass
 
 

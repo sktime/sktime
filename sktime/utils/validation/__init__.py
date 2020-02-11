@@ -5,7 +5,7 @@ __all__ = [
 __author__ = "Markus Löning"
 
 from inspect import isclass
-from sktime.exceptions import NotFittedError
+from sktime.utils.exceptions import NotFittedError
 import numpy as np
 
 

@@ -42,7 +42,7 @@ def all_estimators(type_filter=None):
     # lazy import to avoid circular imports from sklearn.base
     import warnings
     from sklearn.base import BaseEstimator
-    from sktime.forecasting.base import _BaseForecaster
+    from sktime.forecasting.base import BaseForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer
@@ -80,7 +80,7 @@ def all_estimators(type_filter=None):
 
     # only keep classes that inherit from base classes
     base_class_names = ("BaseClassifier", "BaseRegressor", "BaseTransformer", "BaseForecaster")
-    base_classes = (BaseClassifier, BaseRegressor, BaseTransformer, _BaseForecaster)
+    base_classes = (BaseClassifier, BaseRegressor, BaseTransformer, BaseForecaster)
     estimators = [c for c in all_classes
                   if (issubclass(c[1], base_classes) and
                       c[0] not in base_class_names)]
@@ -98,7 +98,7 @@ def all_estimators(type_filter=None):
             "classifier": (BaseClassifier, ClassifierMixin),
             "regressor": (BaseRegressor, RegressorMixin),
             "transformer": (BaseTransformer, TransformerMixin),
-            "forecaster": _BaseForecaster
+            "forecaster": BaseForecaster
         }
 
         for name, base_class in filters.items():

@@ -74,31 +74,32 @@ class _BaseTemporalCrossValidator:
 
 class SlidingWindowSplitter(_BaseTemporalCrossValidator):
 
-    def split(self, y, X=None):
+    def split(self, time_index):
         """Split time series using sliding window cross-validation"""
 
-        if X is not None:
-            raise NotImplementedError()
-
         # check input
-        time_index = check_time_index(y)
+        check_time_index(time_index)
 
+        # return numeric indices
         n_timepoints = len(time_index)
+        time_index = np.arange(n_timepoints)
+
+        # compute parameters for splitting
         fh_max = self.fh.max()
         last_window_end = n_timepoints - fh_max + 1
 
         # compute number of splits for given forecasting horizon, window length and step length
         self._n_splits = np.int(np.ceil((last_window_end - self.window_length) / self.step_length))
 
-        # check if computed values are feasible given n_timepoints
+        # check if computed values are feasible with the provided index
         if self.window_length + fh_max > n_timepoints:
             raise ValueError(f"`window_length` + `max(fh)` must be smaller than "
                              f"the number of time points in `y`, but found: "
                              f"{self.window_length} + {fh_max} > {n_timepoints}")
 
-        # iterate over windows
+        # split into windows
         start = self.window_length
         for window in range(start, last_window_end, self.step_length):
-            in_window = time_index[window - self.window_length:window]
-            out_window = time_index[window + self.fh - 1]
-            yield in_window, out_window
+            training_window = time_index[window - self.window_length:window]
+            test_window = time_index[window + self.fh - 1]
+            yield training_window, test_window

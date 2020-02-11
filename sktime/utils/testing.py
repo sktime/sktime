@@ -3,9 +3,9 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 
-from sktime.forecasting.base import _BaseForecaster
-from sktime.forecasting.reduction import _ReducedTabularRegressorMixin
-from sktime.forecasting.reduction import _ReducedTimeSeriesRegressorMixin
+from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.reduction import ReducedTabularRegressorMixin
+from sktime.forecasting.reduction import ReducedTimeSeriesRegressorMixin
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import detabularise
 from sktime.forecasting.model_selection import SlidingWindowSplitter
@@ -17,12 +17,12 @@ def _construct_instance(Estimator):
     if len(required_parameters) > 0:
         # if estimator requires parameters for construction,
         # set default ones for testing
-        if issubclass(Estimator, _BaseForecaster):
+        if issubclass(Estimator, BaseForecaster):
             if "regressor" in required_parameters:
-                if issubclass(Estimator, _ReducedTabularRegressorMixin):
+                if issubclass(Estimator, ReducedTabularRegressorMixin):
                     kwargs = {"regressor": LinearRegression()}
 
-                elif issubclass(Estimator, _ReducedTimeSeriesRegressorMixin):
+                elif issubclass(Estimator, ReducedTimeSeriesRegressorMixin):
                     kwargs = {"regressor": make_pipeline(Tabulariser(), LinearRegression())}
 
             if "cv" in required_parameters:

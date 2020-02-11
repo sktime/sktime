@@ -8,13 +8,13 @@ __author__ = ["Markus Löning"]
 
 
 from sklearn.base import clone
-from sktime.forecasting.base import _BaseTemporalEstimator
+from sktime.forecasting.base import BaseTemporalEstimator
 from sktime.utils.validation.forecasting import check_y
 import pandas as pd
 import numpy as np
 
 
-class Detrender(_BaseTemporalEstimator):
+class Detrender(BaseTemporalEstimator):
 
     def __init__(self, forecaster):
         self.forecaster = forecaster
