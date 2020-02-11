@@ -1,13 +1,17 @@
 __all__ = ["SlidingWindowSplitter"]
 __author__ = "Markus Löning"
 
-
 import numpy as np
+import pandas as pd
 from sktime.utils.validation import is_int
-from sktime.utils.validation.forecasting import check_window_length, check_step_length, check_fh, check_time_index
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_step_length
+from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation.forecasting import check_y
 
 
-class _BaseTemporalCrossValidator:
+class BaseTemporalCrossValidator:
     """Rolling window iterator that allows to split time series index into two windows,
     one containing observations used as feature data and one containing observations used as
     target data to be predicted. The target window has the length of the given forecasting horizon.
@@ -72,34 +76,42 @@ class _BaseTemporalCrossValidator:
         return self._step_length
 
 
-class SlidingWindowSplitter(_BaseTemporalCrossValidator):
+class SlidingWindowSplitter(BaseTemporalCrossValidator):
 
-    def split(self, time_index):
+    def split(self, y):
         """Split time series using sliding window cross-validation"""
 
         # check input
-        check_time_index(time_index)
+        if isinstance(y, pd.Series):
+            y = check_y(y)
+            y = y.index
 
-        # return numeric indices
-        n_timepoints = len(time_index)
-        time_index = np.arange(n_timepoints)
+        # check time index
+        check_time_index(y)
+
+        # convert to numeric indices
+        n_timepoints = len(y)
+        y = np.arange(n_timepoints)
 
         # compute parameters for splitting
+        # end point is end of last window
         fh_max = self.fh.max()
-        last_window_end = n_timepoints - fh_max + 1
+        end = n_timepoints - fh_max + 1
 
-        # compute number of splits for given forecasting horizon, window length and step length
-        self._n_splits = np.int(np.ceil((last_window_end - self.window_length) / self.step_length))
+        # start point
+        start = self.window_length
+
+        # number of splits for given forecasting horizon, window length and step length
+        self._n_splits = np.int(np.ceil((end - self.window_length) / self.step_length))
 
         # check if computed values are feasible with the provided index
         if self.window_length + fh_max > n_timepoints:
-            raise ValueError(f"`window_length` + `max(fh)` must be smaller than "
-                             f"the number of time points in `y`, but found: "
-                             f"{self.window_length} + {fh_max} > {n_timepoints}")
+            raise ValueError(f"`window_length` + `max(fh)` must be smaller or equal to "
+                             f"`len(y)`, but found: {self.window_length}+{fh_max} "
+                             f"> {n_timepoints}.")
 
         # split into windows
-        start = self.window_length
-        for window in range(start, last_window_end, self.step_length):
-            training_window = time_index[window - self.window_length:window]
-            test_window = time_index[window + self.fh - 1]
+        for window in range(start, end, self.step_length):
+            training_window = y[window - self.window_length:window]
+            test_window = y[window + self.fh - 1]
             yield training_window, test_window

@@ -8,7 +8,15 @@ from sktime.forecasting.reduction import ReducedTabularRegressorMixin
 from sktime.forecasting.reduction import ReducedTimeSeriesRegressorMixin
 from sktime.transformers.compose import Tabulariser
 from sktime.utils.data_container import detabularise
-from sktime.forecasting.model_selection import SlidingWindowSplitter
+
+# look up table for estimators which require arguments during constructions,
+# links base classes with the default constructor arguments
+REGRESSOR = LinearRegression()
+
+DEFAULT_INSTANTIATIONS = {
+    ReducedTabularRegressorMixin: {"regressor": REGRESSOR},
+    ReducedTimeSeriesRegressorMixin: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)}
+}
 
 
 def _construct_instance(Estimator):
@@ -18,20 +26,21 @@ def _construct_instance(Estimator):
         # if estimator requires parameters for construction,
         # set default ones for testing
         if issubclass(Estimator, BaseForecaster):
-            if "regressor" in required_parameters:
-                if issubclass(Estimator, ReducedTabularRegressorMixin):
-                    kwargs = {"regressor": LinearRegression()}
 
-                elif issubclass(Estimator, ReducedTimeSeriesRegressorMixin):
-                    kwargs = {"regressor": make_pipeline(Tabulariser(), LinearRegression())}
+            kwargs = {}
+            for base in Estimator.__bases__:
+                if base in DEFAULT_INSTANTIATIONS:
+                    kwargs = DEFAULT_INSTANTIATIONS[base]
 
-            if "cv" in required_parameters:
-                kwargs["cv"] = SlidingWindowSplitter(fh=1, window_length=10)
-            
-            estimator = Estimator(**kwargs)
+            if not kwargs:
+                raise ValueError(f"no default instantiation has been found "
+                                 f"for estimator: {Estimator}")
 
         else:
             raise NotImplementedError()
+
+        estimator = Estimator(**kwargs)
+
     else:
         # construct without kwargs if no parameters are required
         estimator = Estimator()

@@ -13,17 +13,27 @@ import pytest
 from sklearn.base import clone
 from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-# get all forecasters
-# Forecasters = [e[1] for e in all_estimators(type_filter="forecaster")]
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.forecasting.tests import make_forecasting_problem
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.exceptions import NotFittedError
 from sktime.utils.testing import _construct_instance
 from sktime.utils.validation.forecasting import check_fh
+from sktime.utils import all_estimators
 
-FORECASTERS = [NaiveForecaster]
+# get all forecasters
+FORECASTERS = [e[1] for e in all_estimators(type_filter="forecaster")]
+# from sktime.forecasting.naive import NaiveForecaster
+# from sktime.forecasting.exp_smoothing import ExpSmoothingForecaster
+# from sktime.forecasting.theta import ThetaForecaster
+# from sktime.forecasting.reduction import RecursiveTimeSeriesRegressionForecaster, DirectTimeSeriesRegressionForecaster
+# FORECASTERS = [
+#     NaiveForecaster,
+#     ExpSmoothingForecaster,
+#     ThetaForecaster,
+#     RecursiveTimeSeriesRegressionForecaster,
+#     DirectTimeSeriesRegressionForecaster
+# ]
 
 # default fh
 FH0 = DEFAULT_FHS[0]

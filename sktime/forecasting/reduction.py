@@ -3,6 +3,8 @@
 
 __author__ = "Markus Löning"
 __all__ = [
+    "ReducedTabularRegressorMixin",
+    "ReducedTimeSeriesRegressorMixin",
     "ReducedTimeSeriesRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
     "RecursiveTimeSeriesRegressionForecaster",
@@ -16,13 +18,12 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base import OptionalForecastingHorizonMixin
 from sktime.forecasting.base import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
 
 
 ##############################################################################
@@ -31,11 +32,14 @@ from sktime.utils.validation.forecasting import check_fh
 class BaseReducer(BaseForecaster):
     """Base class for reducing forecasting to time series regression"""
 
-    _required_parameters = ["regressor", "cv"]
+    _required_parameters = ["regressor"]
 
-    def __init__(self, regressor, cv):
+    def __init__(self, regressor, cv=None):
         self.regressor = regressor
-        self.cv = check_cv(cv)
+
+        if cv is None:
+            cv = SlidingWindowSplitter()
+        self._cv = check_cv(cv)
 
         # no need to validate window length, has been
         # validated already in CV object
@@ -51,7 +55,7 @@ class BaseReducer(BaseForecaster):
 
         # get integer time index
         time_index = y_train.index
-        cv = self.cv
+        cv = self._cv
 
         # Transform target series into tabular format using
         # rolling window tabularisation
@@ -68,51 +72,29 @@ class BaseReducer(BaseForecaster):
         X_train, y_train = self._convert_data(x_windows, y_windows)
         return X_train, y_train
 
-    def _convert_data(self, x, y):
+    @staticmethod
+    def _convert_data(X, y=None):
+        """Convert X and y windows from sliding window transformation into required regression input format.
+
+        Abstract method, implemented by mixin classes.
+
+        Parameters
+        ----------
+        X : list
+        y : list
+        """
         raise NotImplementedError()
 
     def update(self, y_new, X_new=None, update_params=False):
-        if X_new is not None:
-            raise NotImplementedError()
-        if update_params:
+        if X_new is not None or update_params:
             raise NotImplementedError()
 
         # input checks
         self._check_is_fitted()
 
         # update observation horizon
-        self._set_oh(y_new, X_new)
+        self._set_oh(y_new)
         return self
-
-    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make in-sample predictions"""
-
-        # input checks
-        self._check_is_fitted()
-        if fh is not None:
-            fh = check_fh(fh)
-
-        # get parameters
-        window_length = self._window_length
-        n_timepoints = len(self.oh)
-
-        # initialise array for predictions
-        y_pred = np.zeros(n_timepoints)
-        y_pred[:window_length] = np.nan
-
-        # initialise last window
-        self._last_window = y_train[:window_length]
-
-        # iterate over training series
-        cv = SlidingWindowSplitter(fh=1, window_length=window_length)
-        for k, (i, o) in enumerate(cv.split(y_train.index), start=window_length):
-            y_new = y_train.iloc[i]
-            self._last_window = np.append(self._last_window, y_new)[-self._window_length:]
-            y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
-
-        # select only predictions in given fh
-        fh_idx = fh - 1
-        return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]
 
 
 class ReducedTimeSeriesRegressorMixin:
@@ -131,8 +113,9 @@ class ReducedTimeSeriesRegressorMixin:
         Returns
         -------
         X_train : pd.DataFrame
-            nested time series DataFrame
+            Nested time series data frame.
         y_train : np.ndarray
+            Array of target values.
         """
         # return nested dataframe
         X_train = pd.DataFrame(pd.Series([np.asarray(xi) for xi in X]))
@@ -172,26 +155,26 @@ class ReducedTabularRegressorMixin:
 class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "direct"
 
-    def __init__(self, regressor, cv):
-        self.regressors_ = []
+    def __init__(self, regressor, cv=None):
         super(_DirectReducer, self).__init__(regressor=regressor, cv=cv)
+        self.regressors_ = []
 
     def fit(self, y_train, fh=None, X_train=None):
         # input checks
         if X_train is not None:
             raise NotImplementedError()
 
-        self._set_oh(y_train, X_train)
+        self._set_oh(y_train)
         self._set_fh(fh)
 
         # for the direct reduction strategy, a separate forecaster is fitted
         # for step ahead of the forecasting horizon; raise warning if fh in cv
         # does not contain fh passed to fit
-        if not np.array_equal(self.cv.fh, self.fh):
+        if not np.array_equal(self._cv.fh, self.fh):
             warn(f"The `fh` of the temporal cross validator `cv` must contain the "
                  f"`fh` passed to `fit`, the `fh` of the `cv` will be ignored and "
                  f"the `fh` passed to `fit` will be used instead.")
-            self.cv._fh = self.fh
+            self._cv._fh = self.fh
 
         # transform data using rolling window split
         X_train, Y_train = self.transform(y_train, X_train)
@@ -209,9 +192,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
 
         # check input
-        if X is not None:
-            raise NotImplementedError()
-        if return_pred_int:
+        if X is not None or return_pred_int:
             raise NotImplementedError()
 
         self._check_is_fitted()
@@ -241,19 +222,18 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
 class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
-    def __init__(self, regressor, cv):
+    def __init__(self, regressor, cv=None):
+        super(_RecursiveReducer, self).__init__(regressor=regressor, cv=cv)
 
         # for recursive reduction strategy, the forecaster are fitted on
         # one-step ahead forecast and then recursively applied to make
         # forecasts for the whole forecasting horizon, raise warning if
         # different fh is given in cv
-        if not np.array_equal(cv.fh, np.array([1])):
+        if not np.array_equal(self._cv.fh, np.array([1])):
             warn(f"The `fh` of the temporal cross validator `cv` must be 1, but found: {cv.fh}. "
                  f"This value will be ignored and 1 will be used instead.")
             cv.fh = np.array([1])
-
         self.regressor_ = None
-        super(_RecursiveReducer, self).__init__(regressor=regressor, cv=cv)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit forecaster"""
@@ -262,7 +242,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             raise NotImplementedError()
 
         # set values
-        self._set_oh(y_train, X_train)
+        self._set_oh(y_train)
         self._set_fh(fh)
 
         # transform data
@@ -332,7 +312,7 @@ class RecursiveTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin, _
 
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an estimator
-def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv, strategy="recursive"):
+def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv=None, strategy="recursive"):
     """
     Forecasting based on reduction to time series regression.
 
@@ -356,7 +336,7 @@ def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv, strategy="recursive"
     return Forecaster(regressor=ts_regressor, cv=cv)
 
 
-def ReducedRegressionForecaster(regressor, cv, strategy="recursive"):
+def ReducedRegressionForecaster(regressor, cv=None, strategy="recursive"):
     """
     Forecasting based on reduction to tabular regression.
 

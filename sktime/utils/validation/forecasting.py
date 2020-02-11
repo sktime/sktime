@@ -4,6 +4,8 @@ __all__ = [
     "check_y_X",
     "check_fh",
     "check_cv",
+    "check_window_length",
+    "check_step_length",
     "check_time_index",
     "check_consistent_time_index",
     "check_alpha",
@@ -20,16 +22,13 @@ from sktime.utils.validation import is_int
 
 def check_y_X(y, X):
     """Validate input data.
-
     Parameters
     ----------
     y : pandas Series or numpy ndarray
     X : pandas DataFrame
-
     Returns
     -------
     None
-
     Raises
     ------
     ValueError
@@ -42,10 +41,9 @@ def check_y_X(y, X):
 
 def check_y(y):
     """Validate input data.
-
     Parameters
     ----------
-    y : pd.Series or np.ndarray
+    y : pd.Series
 
     Returns
     -------
@@ -70,18 +68,10 @@ def check_y(y):
 
 
 def check_cv(cv):
-    if not hasattr(cv, "split"):
-        raise ValueError("Expected cv as a temporal cross-validation object with `split` method")
-
-    if not hasattr(cv, "fh"):
-        raise ValueError("Expected cv as a temporal cross-validation object with `fh` attribute")
-
-    if not hasattr(cv, "window_length"):
-        raise ValueError("Expected cv as a temporal cross-validation object with `window_length` attribute")
-
-    if not hasattr(cv, "step_length"):
-        raise ValueError("Expected cv as a temporal cross-validation object with `step_length` attribute")
-
+    required_attributes = ("split", "fh", "window_length", "step_length")
+    for attr in required_attributes:
+        if not hasattr(cv, attr):
+            raise ValueError(f"`cv` iterator must have a {attr} attribute.")
     return cv
 
 
@@ -90,29 +80,17 @@ def check_time_index(time_index):
 
     Parameters
     ----------
-    time_index : pd.Index
+    time_index : pd.Index or pd.Series
 
     Returns
     -------
     time_index : pd.Index
     """
-    # input conversion
-    if isinstance(time_index, pd.Series):
-        time_index = time_index.index  # get pandas index
-
-    elif isinstance(time_index, np.ndarray):
-        if time_index.ndim > 1:
-            raise ValueError("Cannot construct time index from multi-dimensional numpy array; "
-                             "please pass a 1d array as the time index.")
-        time_index = pd.Index(time_index)
-
-    # input checks
-    if isinstance(time_index, pd.Index):
-        # period or datetime index are not support yet
-        supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
-        if not isinstance(time_index, supported_index_types):
-            raise NotImplementedError(f"{type(time_index)} is not supported yet, "
-                                      f"please use one of {supported_index_types} instead.")
+    # period or datetime index are not support yet
+    supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
+    if not isinstance(time_index, supported_index_types):
+        raise NotImplementedError(f"{type(time_index)} is not supported yet, "
+                                  f"please use one of {supported_index_types} instead.")
 
     if not time_index.is_monotonic:
         raise ValueError(f"Time index must be sorted (monotonically increasing), "
@@ -123,15 +101,12 @@ def check_time_index(time_index):
 
 def check_X(X):
     """Validate input data.
-
     Parameters
     ----------
     X : pandas.DataFrame
-
     Returns
     -------
     X : pandas.DataFrame
-
     Raises
     ------
     ValueError
@@ -147,9 +122,9 @@ def check_X(X):
     # Get index from first row, can be either pd.Series or np.array.
     first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
 
-    # Series must contain at least 2 observations, otherwise should be primitive.
+    # Series must contain now least 2 observations, otherwise should be primitive.
     if len(first_index) < 1:
-        raise ValueError(f'Time series must contain at least 2 observations, but found: '
+        raise ValueError(f'Time series must contain now least 2 observations, but found: '
                          f'{len(first_index)} observations in column: {X.columns[0]}')
 
     # Compare with remaining columns
@@ -182,12 +157,10 @@ def check_step_length(step_length):
 
 def check_sp(sp):
     """Validate seasonal periodicity.
-
     Parameters
     ----------
     sp : int
         Seasonal periodicity
-
     Returns
     -------
     sp : int
@@ -201,12 +174,10 @@ def check_sp(sp):
 
 def check_fh(fh):
     """Validate forecasting horizon.
-
     Parameters
     ----------
     fh : int, list of int, array of int
         Forecasting horizon with steps ahead to predict.
-
     Returns
     -------
     fh : numpy array of int
@@ -240,7 +211,7 @@ def check_fh(fh):
 
     # check fh is not empty
     if len(fh) < 1:
-        raise ValueError(f"`fh` cannot be empty, please specify at least one "
+        raise ValueError(f"`fh` cannot be empty, please specify now least one "
                          f"step to forecast.")
 
     # sort fh
@@ -258,7 +229,7 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
     """Checks if the estimator is fitted during transform by verifying the presence of
     "all_or_any" of the passed attributes and raises a NotFittedError with the
     given message.
-    
+
     Parameters
     ----------
     estimator : estimator instance.
@@ -277,7 +248,7 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
     Returns
     -------
     None
-    
+
     Raises
     ------
     NotFittedError
@@ -292,13 +263,11 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
 
 def check_consistent_time_index(y_test, y_pred, y_train=None):
     """Check that y_test and y_pred have consistent indices.
-
     Parameters
     ----------
     y_test : pd.Series
     y_pred : pd.Series
     y_train : pd.Series
-
     Raises
     ------
     ValueError
@@ -322,13 +291,10 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
 
 def check_alpha(alpha):
     """Check that a confidence level alpha (or list of alphas) is valid.
-
     All alpha values must lie in the open interval (0, 1).
-
     Parameters
     ----------
     alpha : float, list of float
-
     Raises
     ------
     ValueError

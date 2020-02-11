@@ -29,7 +29,7 @@ class BaseTemporalEstimator(BaseEstimator):
 
     @property
     def is_fitted(self):
-        """Has `fit` been called already?"""
+        """Has `fit` been called?"""
         return self._is_fitted
 
     def _check_is_fitted(self):
@@ -46,7 +46,7 @@ class BaseTemporalEstimator(BaseEstimator):
 
     @property
     def oh(self):
-        """The observation horizon, i.e. the seen training data
+        """The observation horizon, i.e. the seen data
         passed either to `fit` or one of the `update` methods.
 
         Returns
@@ -200,7 +200,7 @@ class BaseForecaster(BaseTemporalEstimator):
         """The forecasting horizon"""
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
-            raise ValueError("No `fh` has been set")
+            raise ValueError("No `fh` has been set yet.")
         return self._fh
 
     def compute_pred_errors(self, alpha=DEFAULT_ALPHA):
@@ -218,8 +218,8 @@ class BaseForecaster(BaseTemporalEstimator):
         errors = self.compute_pred_errors(alpha=alpha)
 
         # for multiple alphas, errors come in a list;
-        # for single alpha, as a single pd.Series,
-        # wrap it here into a list to make it iterable again,
+        # for single alpha, they come as a single pd.Series,
+        # wrap it here into a list to make it iterable,
         # to avoid code duplication
         if isinstance(errors, pd.Series):
             errors = [errors]

@@ -72,18 +72,22 @@ def all_estimators(type_filter=None):
 
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
-            classes = [(name, est_cls) for name, est_cls in classes
-                       if not name.startswith("_")]
+            classes = [(name, klass) for name, klass in classes
+                       if not (name.startswith("_") or name.startswith("Base"))]
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
     # only keep classes that inherit from base classes
-    base_class_names = ("BaseClassifier", "BaseRegressor", "BaseTransformer", "BaseForecaster")
-    base_classes = (BaseClassifier, BaseRegressor, BaseTransformer, BaseForecaster)
+    base_classes = {
+        "classifier": (BaseClassifier, ClassifierMixin),
+        "regressor": (BaseRegressor, RegressorMixin),
+        "transformer": (BaseTransformer, TransformerMixin),
+        "forecaster": BaseForecaster
+    }
     estimators = [c for c in all_classes
-                  if (issubclass(c[1], base_classes) and
-                      c[0] not in base_class_names)]
+                  if (issubclass(c[1], tuple(base_classes.values())) and
+                      c[0] not in base_classes.keys())]
 
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
@@ -94,14 +98,9 @@ def all_estimators(type_filter=None):
         else:
             type_filter = list(type_filter)  # copy
         filtered_estimators = []
-        filters = {
-            "classifier": (BaseClassifier, ClassifierMixin),
-            "regressor": (BaseRegressor, RegressorMixin),
-            "transformer": (BaseTransformer, TransformerMixin),
-            "forecaster": BaseForecaster
-        }
 
-        for name, base_class in filters.items():
+
+        for name, base_class in base_classes.items():
             if name in type_filter:
                 type_filter.remove(name)
                 filtered_estimators.extend([est for est in estimators
