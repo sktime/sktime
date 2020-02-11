@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning"]
 __all__ = [
     "test_clone",
     "test_compute_pred_errors",
@@ -74,14 +74,18 @@ def test_return_self_for_fit_set_params_update(Forecaster):
 # test oh setting
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_oh_setting(Forecaster):
+    # check oh and now is None after construction
     f = _construct_instance(Forecaster)
     assert f.oh is None
     assert f.now is None
 
+    # check that oh and now is updated during fit
     f.fit(y_train, FH0)
-    np.testing.assert_array_equal(f.oh.values, y_train.values)
+    assert f.oh is not None
     assert f.now == y_train.iloc[-1]
+    np.testing.assert_array_equal(f.oh.values, y_train.values)
 
+    # check that oh and now is updated during update
     f.update(y_test)
     np.testing.assert_array_equal(f.oh.values, np.append(y_train.values, y_test.values))
     assert f.now == y_test.iloc[-1]
