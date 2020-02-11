@@ -103,3 +103,20 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100, order=
     X = pd.DataFrame(samples)
     assert X.shape == (n_samples, n_obs)
     return detabularise(X)
+
+
+def compute_expected_index_from_update_predict(y, fh, step_length):
+    """Helper function to compute expected time index from `update_predict`"""
+    # time points at which to make predictions
+    predict_at_all = np.arange(y.index.values[0] - 1, y.index.values[-1], step_length)
+
+    # only predict at time points if all steps in fh can be predicted within y_test
+    predict_at = predict_at_all[np.isin(predict_at_all + max(fh), y)]
+    n_predict_at = len(predict_at)
+
+    # all time points predicted, including duplicates from overlapping fhs
+    broadcast_fh = np.repeat(fh, n_predict_at).reshape(len(fh), n_predict_at)
+    points_predicted = predict_at + broadcast_fh
+
+    # return only unique time points
+    return np.unique(points_predicted)

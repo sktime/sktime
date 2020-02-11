@@ -3,6 +3,23 @@
 
 __author__ = "Markus Löning"
 __all__ = [
+    "test_clone",
+    "test_compute_pred_errors",
+    "test_different_fh_in_fit_and_predict_opt",
+    "test_different_fh_in_fit_and_predict_req",
+    "test_update_predict_check_warning_for_inconsistent_fhs",
+    "test_not_fitted_error",
+    "test_fh_in_fit_opt",
+    "test_fh_in_fit_req",
+    "test_fh_in_predict_opt",
+    "test_no_fh_in_fit_req",
+    "test_no_fh_opt",
+    "test_oh_setting",
+    "test_predict_return_pred_int_time_index",
+    "test_return_self_for_fit_set_params_update",
+    "test_same_fh_in_fit_and_predict_opt",
+    "test_same_fh_in_fit_and_predict_req",
+    "test_score",
     "test_not_fitted_error",
     "test_predict_time_index",
     "test_update_predict_check_predicted_indices",
@@ -16,26 +33,14 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.forecasting.tests import make_forecasting_problem
 from sktime.performance_metrics.forecasting import smape_loss
+from sktime.utils import all_estimators
 from sktime.utils.exceptions import NotFittedError
 from sktime.utils.testing import _construct_instance
+from sktime.utils.testing import compute_expected_index_from_update_predict
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils import all_estimators
 
 # get all forecasters
 FORECASTERS = [e[1] for e in all_estimators(type_filter="forecaster")]
-# from sktime.forecasting.naive import NaiveForecaster
-# from sktime.forecasting.exp_smoothing import ExpSmoothingForecaster
-# from sktime.forecasting.theta import ThetaForecaster
-# from sktime.forecasting.reduction import RecursiveTimeSeriesRegressionForecaster, DirectTimeSeriesRegressionForecaster
-# FORECASTERS = [
-#     NaiveForecaster,
-#     ExpSmoothingForecaster,
-#     ThetaForecaster,
-#     RecursiveTimeSeriesRegressionForecaster,
-#     DirectTimeSeriesRegressionForecaster
-# ]
-
-# default fh
 FH0 = DEFAULT_FHS[0]
 
 # testing data
@@ -168,23 +173,6 @@ def test_compute_pred_errors(Forecaster):
 
 ########################################################################################################################
 # update_predict
-def compute_expected_index_from_update_predict(y, fh, step_length):
-    """Helper function to compute expected time index from `update_predict`"""
-    # time points at which to make predictions
-    predict_at_all = np.arange(y.index.values[0] - 1, y.index.values[-1], step_length)
-
-    # only predict at time points if all steps in fh can be predicted within y_test
-    predict_at = predict_at_all[np.isin(predict_at_all + max(fh), y)]
-    n_predict_at = len(predict_at)
-
-    # all time points predicted, including duplicates from overlapping fhs
-    broadcast_fh = np.repeat(fh, n_predict_at).reshape(len(fh), n_predict_at)
-    points_predicted = predict_at + broadcast_fh
-
-    # return only unique time points
-    return np.unique(points_predicted)
-
-
 # check if predicted time index is correct
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)

@@ -13,6 +13,7 @@ from sklearn.base import BaseEstimator
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.exceptions import NotFittedError
+from sktime.utils.plotting import composite_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
@@ -340,6 +341,129 @@ class BaseForecaster(BaseTemporalEstimator):
             The zero-based index of the forecasting horizon
         """
         return self.fh - 1
+
+    def plot(self, fh=None, alpha=(0.05, 0.2), y_train=None, y_test=None, y_pred=None, fig=None, ax=None, title=None,
+             score='lower right', **kwargs):
+        """Plot a forecast.
+
+        Parameters
+        ----------
+        fh : int or array-like, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        alpha : float or array-like, optional (default=(0.05, 0.2))
+            Alpha values for a confidence level or list of confidence levels to plot
+            prediction intervals for.
+        y_train : :class:`pandas.Series`, optional
+            The original training data to plot alongside the forecast.
+        y_test : :class:`pandas.Series`, optional
+            The actual data to compare to the forecast for in-sample forecasts
+            ("nowcasts").
+        y_pred : :class:`pandas.Series`, optional
+            Previously calculated forecast from the same forecaster. If omitted, a
+            forecast will be generated automatically using :meth:`.predict()`.
+        fig : :class:`matplotlib.figure.Figure`, optional
+            A figure to plot the graphic on.
+        ax : :class:`matplotlib.axes.Axes`, optional
+            The axis on which to plot the graphic. If not provided, a new one
+            will be created.
+        score : str, optional (default="lower right")
+            Where to draw a text box showing the score of the forecast if possible.
+            If set to None, no score will be displayed.
+        kwargs
+            Additional keyword arguments to pass to :meth:`.predict`.
+        Returns
+        -------
+        ax : :class:`matplotlib.axes.Axes`
+            The axis on which the graphic was drawn.
+        """
+
+        self._set_fh(fh)
+
+        if y_pred is None:
+            y_pred = self.predict(fh=self.fh, **kwargs)
+
+        y_pred_label = y_pred.name if y_pred.name else f"Forecast ($h = {len(self.fh)}$)"
+
+        # Import dynamically to avoid creating matplotlib dependencies.
+        import matplotlib.pyplot as plt
+        from matplotlib.offsetbox import AnchoredText
+        from matplotlib.patches import Patch
+
+        if ax is None:
+            if fig is None:
+                fig = plt.figure()
+            ax = fig.gca()
+
+        if title:
+            ax.set_title(title)
+
+        y_col = None
+        if y_train is not None:
+            label = f"{y_train.name} (Train)" if y_train.name else "Train"
+            y_train.plot(ax=ax, label=label)
+            y_col = ax.get_lines()[-1].get_color()
+
+        if y_test is not None:
+            label = f"{y_test.name} (Test)" if y_test.name else "Test"
+            dense_dots = (0, (1, 1))
+            y_test.plot(ax=ax, label=label, ls=dense_dots, c=y_col)
+
+        y_pred.plot(ax=ax, label=y_pred_label)
+        fcast_col = ax.get_lines()[-1].get_color()
+
+        if score and y_test is not None and y_train is not None:
+            try:
+                y_score = self.score(y_test, fh=self.fh, X=kwargs.get("X"))
+                text_box = AnchoredText(
+                    f"Score = ${y_score:.3f}$", frameon=True, loc=score
+                )
+                ax.add_artist(text_box)
+            except ValueError:
+                # Cannot calculate score if y_test and fh indices don't align.
+                pass
+
+        axhandles, axlabels = ax.get_legend_handles_labels()
+        if alpha is not None:
+            # Plot prediction intervals if available.
+            try:
+                if isinstance(alpha, (np.integer, np.float)):
+                    alpha = [alpha]
+
+                # trans = np.linspace(0.25, 0.65, num=len(alpha), endpoint=False)
+                transp = 0.25
+                # Plot widest intervals first.
+                alpha = sorted(alpha)
+
+                last_transp = 0
+                for al in alpha:
+                    intvl = self.compute_pred_int(y_pred=y_pred, alpha=al)
+                    ax.fill_between(
+                        y_pred.index,
+                        intvl.upper,
+                        intvl.lower,
+                        fc=fcast_col,
+                        ec=fcast_col,
+                        alpha=transp,
+                        lw=0
+                    )
+
+                    # Each level gives an effective transparency through overlapping.
+                    # Reflect this in the legend.
+                    effective_transp = composite_alpha(last_transp, transp)
+                    axhandles.append(Patch(fc=fcast_col, alpha=effective_transp, ec=fcast_col))
+                    last_transp = effective_transp
+
+                    axlabels.append(f"{round((1 - al) * 100)}% conf")
+
+            except NotImplementedError:
+                pass
+
+        ax.legend(handles=axhandles, labels=axlabels)
+
+        if fig is not None:
+            fig.tight_layout()
+
+        return ax
 
 
 class OptionalForecastingHorizonMixin:

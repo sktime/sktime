@@ -41,7 +41,6 @@ def all_estimators(type_filter=None):
 
     # lazy import to avoid circular imports from sklearn.base
     import warnings
-    from sklearn.base import BaseEstimator
     from sktime.forecasting.base import BaseForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
@@ -98,7 +97,6 @@ def all_estimators(type_filter=None):
         else:
             type_filter = list(type_filter)  # copy
         filtered_estimators = []
-
 
         for name, base_class in base_classes.items():
             if name in type_filter:
