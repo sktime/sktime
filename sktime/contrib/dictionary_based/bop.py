@@ -1,9 +1,5 @@
-__author__ = "Matthew Middlehurst"
-
-import sys
-import numpy as np
-from sklearn.base import BaseEstimator
 from sklearn.model_selection import GridSearchCV
+from sklearn.base import BaseEstimator
 
 from sktime.classifiers.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
@@ -12,9 +8,9 @@ from sktime.transformers.dictionary_based.SAX import SAX
 
 
 class BagOfPatterns(BaseEstimator):
-    """ Bag of Patterns classifier
+    __author__ = "Matthew Middlehurst"
+    """ Bag of Patterns classifier 
     """
-
     def bop_pipeline(X, y):
         steps = [
             ('transform', SAX(remove_repeat_words=True)),
@@ -42,6 +38,7 @@ class BagOfPatterns(BaseEstimator):
         return model
 
 
+
 def euclidean_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
 
@@ -59,3 +56,11 @@ def euclidean_distance(first, second, best_dist=sys.float_info.max):
 
     return dist
 
+
+
+if __name__ == "__main__":
+    X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
+
+    model = bop_pipeline(X_train, y_train)
+    model.predict(X_test)
