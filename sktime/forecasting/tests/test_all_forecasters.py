@@ -54,6 +54,11 @@ def test_clone(Forecaster):
     f = _construct_instance(Forecaster)
     clone(f)
 
+    # check cloning of fitted instance
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, FH0)
+    clone(f)
+
 
 ########################################################################################################################
 # fit, set_params and update return self

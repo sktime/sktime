@@ -1,8 +1,8 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__author__ = ["Markus Löning"]
-__all__ = ["BaseTemporalEstimator", "BaseForecaster", "RequiredForecastingHorizonMixin",
+__author__ = ["Markus Löning", "@big-o"]
+__all__ = ["BaseForecaster", "RequiredForecastingHorizonMixin",
            "OptionalForecastingHorizonMixin", "DEFAULT_ALPHA"]
 
 from warnings import warn
@@ -21,12 +21,15 @@ from sktime.utils.validation.forecasting import check_y
 DEFAULT_ALPHA = 0.05
 
 
-class BaseTemporalEstimator(BaseEstimator):
+class BaseForecaster(BaseEstimator):
+    _estimator_type = "forecaster"
 
     def __init__(self):
         self._oh = None  # observation horizon, i.e. time points seen in fit or update
         self._now = None  # time point in observation horizon now which to make forecasts
         self._is_fitted = False
+        self._fh = None
+        super(BaseForecaster, self).__init__()
 
     @property
     def is_fitted(self):
@@ -104,13 +107,13 @@ class BaseTemporalEstimator(BaseEstimator):
             raise ValueError("Passed `now` value not in observation horizon")
         self._now = now
 
-
-class BaseForecaster(BaseTemporalEstimator):
-    _estimator_type = "forecaster"
-
-    def __init__(self):
-        self._fh = None
-        super(BaseForecaster, self).__init__()
+    @property
+    def fh(self):
+        """The forecasting horizon"""
+        # raise error if some method tries to accessed it before it has been set
+        if self._fh is None:
+            raise ValueError("No `fh` has been set yet.")
+        return self._fh
 
     def fit(self, y_train, fh=None, X_train=None):
         raise NotImplementedError()
@@ -196,14 +199,6 @@ class BaseForecaster(BaseTemporalEstimator):
         self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-    @property
-    def fh(self):
-        """The forecasting horizon"""
-        # raise error if some method tries to accessed it before it has been set
-        if self._fh is None:
-            raise ValueError("No `fh` has been set yet.")
-        return self._fh
-
     def compute_pred_errors(self, alpha=DEFAULT_ALPHA):
         """
         Prediction errors. If alpha is iterable, errors will be calculated for
@@ -263,84 +258,6 @@ class BaseForecaster(BaseTemporalEstimator):
         # no input checks needed here, they will be performed
         # in predict and loss function
         return smape_loss(y_test, self.predict(fh=fh, X=X))
-
-    def _iter(self, cv):
-        """Iterate over the observation horizon starting at `now`
-
-        Parameters
-        ----------
-        cv : cross-validation generator
-
-        Yields
-        ------
-        y_train : pd.Series
-            Training window of observation horizon
-        y_test : pd.Series
-            Test window of observation horizon
-        """
-        # get window length from cv generator
-        window_length = cv.window_length
-
-        # get starting point
-        start = self.now - window_length + 1
-
-        # check starting point for cv iterator is in observation horizon
-        if start not in self.oh.index:
-            raise ValueError(f"The `window_length`: {window_length} is longer than "
-                             f"the available observation horizon `oh`.")
-
-        # select subset to iterate over from observation horizon
-        y = self.oh.iloc[start:]
-        time_index = y.index
-
-        # split subet of observation horizon into training and test set
-        for training_window, test_window in cv.split(time_index):
-            y_train = y.iloc[training_window]
-            y_test = y.iloc[test_window]
-            yield y_train, y_test
-
-    def _set_fh(self, fh):
-        """Check, set and update the forecasting horizon.
-
-        Abstract base method, implemented by mixin classes.
-
-        Parameters
-        ----------
-        fh : None, int, list, np.ndarray
-        """
-        #
-        raise NotImplementedError()
-
-    def _get_absolute_fh(self):
-        """Convert the user-defined forecasting horizon relative to the end
-        of the observation horizon into the absolute time index.
-
-        Returns
-        -------
-        fh : numpy.ndarray
-            The absolute time index of the forecasting horizon
-        """
-        # user defined forecasting horizon `fh` is relative to the end of the
-        # observation horizon, i.e. `now`
-        fh_abs = self.now + self.fh
-
-        # for in-sample predictions, check if forecasting horizon is still within
-        # observation horizon
-        if any(fh_abs < 0):
-            raise ValueError("Forecasting horizon `fh` includes time points "
-                             "before observation horizon")
-        return np.sort(fh_abs)
-
-    def _get_index_fh(self):
-        """Convert the step-ahead forecast horizon relative to the end
-        of the observation horizon into the zero-based forecasting horizon
-        for array indexing.
-        Returns
-        -------
-        fh : numpy.ndarray
-            The zero-based index of the forecasting horizon
-        """
-        return self.fh - 1
 
     def plot(self, fh=None, alpha=(0.05, 0.2), y_train=None, y_test=None, y_pred=None, fig=None, ax=None, title=None,
              score='lower right', **kwargs):
@@ -464,6 +381,84 @@ class BaseForecaster(BaseTemporalEstimator):
             fig.tight_layout()
 
         return ax
+
+    def _iter(self, cv):
+        """Iterate over the observation horizon starting at `now`
+
+        Parameters
+        ----------
+        cv : cross-validation generator
+
+        Yields
+        ------
+        y_train : pd.Series
+            Training window of observation horizon
+        y_test : pd.Series
+            Test window of observation horizon
+        """
+        # get window length from cv generator
+        window_length = cv.window_length
+
+        # get starting point
+        start = self.now - window_length + 1
+
+        # check starting point for cv iterator is in observation horizon
+        if start not in self.oh.index:
+            raise ValueError(f"The `window_length`: {window_length} is longer than "
+                             f"the available observation horizon `oh`.")
+
+        # select subset to iterate over from observation horizon
+        y = self.oh.iloc[start:]
+        time_index = y.index
+
+        # split subet of observation horizon into training and test set
+        for training_window, test_window in cv.split(time_index):
+            y_train = y.iloc[training_window]
+            y_test = y.iloc[test_window]
+            yield y_train, y_test
+
+    def _set_fh(self, fh):
+        """Check, set and update the forecasting horizon.
+
+        Abstract base method, implemented by mixin classes.
+
+        Parameters
+        ----------
+        fh : None, int, list, np.ndarray
+        """
+        #
+        raise NotImplementedError()
+
+    def _get_absolute_fh(self):
+        """Convert the user-defined forecasting horizon relative to the end
+        of the observation horizon into the absolute time index.
+
+        Returns
+        -------
+        fh : numpy.ndarray
+            The absolute time index of the forecasting horizon
+        """
+        # user defined forecasting horizon `fh` is relative to the end of the
+        # observation horizon, i.e. `now`
+        fh_abs = self.now + self.fh
+
+        # for in-sample predictions, check if forecasting horizon is still within
+        # observation horizon
+        if any(fh_abs < 0):
+            raise ValueError("Forecasting horizon `fh` includes time points "
+                             "before observation horizon")
+        return np.sort(fh_abs)
+
+    def _get_index_fh(self):
+        """Convert the step-ahead forecast horizon relative to the end
+        of the observation horizon into the zero-based forecasting horizon
+        for array indexing.
+        Returns
+        -------
+        fh : numpy.ndarray
+            The zero-based index of the forecasting horizon
+        """
+        return self.fh - 1
 
 
 class OptionalForecastingHorizonMixin:
