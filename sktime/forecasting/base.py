@@ -60,7 +60,7 @@ class BaseForecaster(BaseEstimator):
         """
         return self._oh
 
-    def _set_oh(self, y, update_now=True):
+    def _set_oh(self, y):
         """Set and update the observation horizon
 
         Parameters
@@ -83,8 +83,7 @@ class BaseForecaster(BaseEstimator):
             self._oh = oh
 
         # by default, set now to the end of the observation horizon
-        if update_now:
-            self._set_now(oh.index[-1])
+        self._set_now(oh.index[-1])
 
     @property
     def now(self):
@@ -103,8 +102,6 @@ class BaseForecaster(BaseEstimator):
         ----------
         now : int
         """
-        if now not in self.oh.index:
-            raise ValueError("Passed `now` value not in observation horizon")
         self._now = now
 
     @property
@@ -158,7 +155,10 @@ class BaseForecaster(BaseEstimator):
         # add the test set to the observation horizon, but keep `now` at the
         # end of the training set, so that we can make prediction iteratively
         # over the test set
-        self._set_oh(y_test, update_now=False)
+        self._set_oh(y_test)
+
+        # set now before y_test
+        self._set_now(y_test.index[0] - 1)
 
         # allocate lists for prediction results
         y_preds = []
