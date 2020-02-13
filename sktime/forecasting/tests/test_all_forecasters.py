@@ -7,7 +7,7 @@ __all__ = [
     "test_compute_pred_errors",
     "test_different_fh_in_fit_and_predict_opt",
     "test_different_fh_in_fit_and_predict_req",
-    "test_update_predict_check_warning_for_inconsistent_fhs",
+    # "test_update_predict_check_warning_for_inconsistent_fhs",
     "test_not_fitted_error",
     "test_fh_in_fit_opt",
     "test_fh_in_fit_req",
@@ -42,6 +42,16 @@ from sktime.utils.validation.forecasting import check_fh
 # get all forecasters
 FORECASTERS = [e[1] for e in all_estimators(type_filter="forecaster")]
 FH0 = DEFAULT_FHS[0]
+
+#
+# from sktime.forecasting.naive import NaiveForecaster
+# from sktime.forecasting.reduction import DirectRegressionForecaster, DirectTimeSeriesRegressionForecaster, RecursiveTimeSeriesRegressionForecaster
+# FORECASTERS = [
+#     NaiveForecaster,
+#     DirectRegressionForecaster,
+#     DirectTimeSeriesRegressionForecaster,
+#     RecursiveTimeSeriesRegressionForecaster
+# ]
 
 # testing data
 y_train, y_test = make_forecasting_problem()
@@ -301,16 +311,16 @@ def test_different_fh_in_fit_and_predict_opt(Forecaster):
 
 ########################################################################################################################
 # check if warning is raised if inconsistent fh is passed
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
-    # check user warning if fh passed through cv is different from fh seen in fit
-    cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
-
-    # check for expected warning when updating fh via passed cv object
-    with pytest.warns(UserWarning):
-        f.update_predict(y_test, cv=cv)
+# @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
+# @pytest.mark.parametrize("fh", DEFAULT_FHS)
+# @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+# @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+# def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
+#     # check user warning if fh passed through cv is different from fh seen in fit
+#     cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
+#     f = _construct_instance(Forecaster)
+#     f.fit(y_train, fh)
+#
+#     # check for expected warning when updating fh via passed cv object
+#     with pytest.warns(UserWarning):
+#         f.update_predict(y_test, cv=cv)

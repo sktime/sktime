@@ -85,6 +85,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         self.trend_ = None
         self.smoothing_level_ = None
+        self.drift_ = None
+        self.se_ = None
         super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
     def _to_nested(self, y):
@@ -138,6 +140,25 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return y
 
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        # SES.
+        y_pred = super(ThetaForecaster, self)._predict(fh, X=X)
+
+        # Add drift.
+        drift = self._compute_drift()
+        y_pred += drift
+
+        if self._is_seasonal:
+            # Reseasonalise.
+            y_pred_nested = self._to_nested(y_pred)
+            y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
+
+        if return_pred_int:
+            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
+            return y_pred, pred_int
+
+        return y_pred
+
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """
         Make forecasts.
@@ -161,23 +182,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         # Set forecast horizon.
         self._set_fh(fh)
 
-        # SES.
-        y_pred = super(ThetaForecaster, self).predict()
-
-        # Add drift.
-        drift = self._compute_drift()
-        y_pred += drift
-
-        if self._is_seasonal:
-            # Reseasonalise.
-            y_pred_nested = self._to_nested(y_pred)
-            y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
-
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
-
-        return y_pred
+        return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _compute_trend(self, y):
         # Trend calculated through least squares regression.
