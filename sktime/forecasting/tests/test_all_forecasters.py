@@ -48,6 +48,10 @@ y_train, y_test = make_forecasting_problem()
 
 
 ########################################################################################################################
+########################################################################################################################
+# test API provided through BaseForecaster
+
+########################################################################################################################
 # test clone
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_clone(Forecaster):
@@ -87,13 +91,16 @@ def test_oh_setting(Forecaster):
     # check that oh and now is updated during fit
     f.fit(y_train, FH0)
     assert f.oh is not None
-    assert f.now == y_train.iloc[-1]
-    np.testing.assert_array_equal(f.oh.values, y_train.values)
+    assert f.now == y_train.index[-1]
+
+    # check data pointers
+    # np.testing.assert_array_equal(f.oh.index, y_train.index)
+    assert f.oh.index is y_train.index
 
     # check that oh and now is updated during update
     f.update(y_test)
-    np.testing.assert_array_equal(f.oh.values, np.append(y_train.values, y_test.values))
-    assert f.now == y_test.iloc[-1]
+    np.testing.assert_array_equal(f.oh.index, np.append(y_train.index, y_test.index))
+    assert f.now == y_test.index[-1]
 
 
 ########################################################################################################################
@@ -123,7 +130,7 @@ def test_predict_time_index(Forecaster, fh):
     y_pred = f.predict()
 
     fh = check_fh(fh)
-    np.testing.assert_array_equal(y_pred.index.values, y_train.iloc[-1] + fh)
+    np.testing.assert_array_equal(y_pred.index.values, y_train.index[-1] + fh)
 
 
 ########################################################################################################################
@@ -136,7 +143,7 @@ def test_predict_return_pred_int_time_index(Forecaster, fh):
     try:
         _, pred_ints = f.predict(return_pred_int=True, alpha=0.05)
         fh = check_fh(fh)
-        np.testing.assert_array_equal(pred_ints.index.values, y_train.iloc[-1] + fh)
+        np.testing.assert_array_equal(pred_ints.index.values, y_train.index[-1] + fh)
 
     except NotImplementedError:
         print(f"{Forecaster}'s `return_pred_int` option is not implemented, test skipped.")
@@ -287,30 +294,29 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
 
-
 ########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_different_fh_in_fit_and_predict_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    # passing different fh to predict than to fit works, but raises warning
-    with pytest.warns(UserWarning):
-        f.predict(FH0 + 1)
-    np.testing.assert_array_equal(f.fh, FH0 + 1)
+# @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
+# def test_different_fh_in_fit_and_predict_opt(Forecaster):
+#     f = _construct_instance(Forecaster)
+#     f.fit(y_train, FH0)
+#     # passing different fh to predict than to fit works, but raises warning
+#     with pytest.warns(UserWarning):
+#         f.predict(FH0 + 1)
+#     np.testing.assert_array_equal(f.fh, FH0 + 1)
 
 
 ########################################################################################################################
 # check if warning is raised if inconsistent fh is passed
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
-    # check user warning if fh passed through cv is different from fh seen in fit
-    cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
-
-    # check for expected warning when updating fh via passed cv object
-    with pytest.warns(UserWarning):
-        f.update_predict(y_test, cv=cv)
+# @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
+# @pytest.mark.parametrize("fh", DEFAULT_FHS)
+# @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+# @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+# def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
+#     # check user warning if fh passed through cv is different from fh seen in fit
+#     cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
+#     f = _construct_instance(Forecaster)
+#     f.fit(y_train, fh)
+#
+#     # check for expected warning when updating fh via passed cv object
+#     with pytest.warns(UserWarning):
+#         f.update_predict(y_test, cv=cv)

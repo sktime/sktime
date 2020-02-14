@@ -16,7 +16,10 @@ DEFAULT_SPS = [3, 7, 12]
 def make_forecasting_problem():
     n_timepoints = 30
     n_train = n_timepoints - 10
-    s = pd.Series(np.arange(n_timepoints))
+    trend = np.arange(n_timepoints)
+    noise = np.random.normal(size=n_timepoints)
+    values = trend + noise
+    s = pd.Series(values)
     y_train = s.iloc[:n_train]
     y_test = s.iloc[n_train:]
     return y_train, y_test

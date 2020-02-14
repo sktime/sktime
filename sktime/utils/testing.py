@@ -2,20 +2,29 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.reduction import ReducedTabularRegressorMixin
-from sktime.forecasting.reduction import ReducedTimeSeriesRegressorMixin
+from sktime.forecasting.composition import TransformedTargetForecaster
+from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.reduction import DirectRegressionForecaster
+from sktime.forecasting.reduction import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.reduction import RecursiveRegressionForecaster
+from sktime.forecasting.reduction import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
+from sktime.transformers.detrend import Detrender
 from sktime.utils.data_container import detabularise
+from sktime.utils.validation.forecasting import check_y
 
 # look up table for estimators which require arguments during constructions,
 # links base classes with the default constructor arguments
 REGRESSOR = LinearRegression()
 
 DEFAULT_INSTANTIATIONS = {
-    ReducedTabularRegressorMixin: {"regressor": REGRESSOR},
-    ReducedTimeSeriesRegressorMixin: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)}
+    DirectRegressionForecaster: {"regressor": REGRESSOR},
+    RecursiveRegressionForecaster: {"regressor": REGRESSOR},
+    DirectTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
+    RecursiveTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
+    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())}
 }
 
 
@@ -26,16 +35,12 @@ def _construct_instance(Estimator):
         # if estimator requires parameters for construction,
         # set default ones for testing
         if issubclass(Estimator, BaseForecaster):
-
             kwargs = {}
-            for base in Estimator.__bases__:
-                if base in DEFAULT_INSTANTIATIONS:
-                    kwargs = DEFAULT_INSTANTIATIONS[base]
-
+            if Estimator in DEFAULT_INSTANTIATIONS:
+                kwargs = DEFAULT_INSTANTIATIONS[Estimator]
             if not kwargs:
-                raise ValueError(f"no default instantiation has been found "
+                raise ValueError(f"No default instantiation has been found "
                                  f"for estimator: {Estimator}")
-
         else:
             raise NotImplementedError()
 
@@ -108,10 +113,13 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100, order=
 def compute_expected_index_from_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
-    predict_at_all = np.arange(y.index.values[0] - 1, y.index.values[-1], step_length)
+    y = check_y(y)
+    index = y.index.values
+
+    predict_at_all = np.arange(index[0] - 1, index[-1], step_length)
 
     # only predict at time points if all steps in fh can be predicted within y_test
-    predict_at = predict_at_all[np.isin(predict_at_all + max(fh), y)]
+    predict_at = predict_at_all[np.isin(predict_at_all + max(fh), index)]
     n_predict_at = len(predict_at)
 
     # all time points predicted, including duplicates from overlapping fhs

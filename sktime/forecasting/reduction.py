@@ -47,6 +47,17 @@ class BaseReducer(BaseForecaster):
 
         super(BaseReducer, self).__init__()
 
+    def update(self, y_new, X_new=None, update_params=False):
+        if X_new is not None or update_params:
+            raise NotImplementedError()
+
+        # input checks
+        self._check_is_fitted()
+
+        # update observation horizon
+        self._set_oh(y_new)
+        return self
+
     def transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
 
@@ -72,84 +83,87 @@ class BaseReducer(BaseForecaster):
         X_train, y_train = self._convert_data(x_windows, y_windows)
         return X_train, y_train
 
-    @staticmethod
-    def _convert_data(X, y=None):
-        """Convert X and y windows from sliding window transformation into required regression input format.
-
-        Abstract method, implemented by mixin classes.
+    def _convert_data(self, x_windows, y_windows=None):
+        """Helper function to combine windows from temporal cross-validation into nested
+        pd.DataFrame for reduction to time series regression or tabular np.array for
+        tabular regression.
 
         Parameters
         ----------
-        X : list
-        y : list
+        x_windows : list of pd.Series or np.array
+        y_windows : list of pd.Series or np.array, optional (default=None)
+
+        Returns
+        -------
+        X : pd.DataFrame or np.array
+            Nested time series data frame.
+        y : np.array
+            Array of target values.
         """
-        raise NotImplementedError()
+        X = self._convert_x_windows(x_windows)
+        if y_windows is None:
+            # during prediction, y=None, so only return X
+            return X
 
-    def update(self, y_new, X_new=None, update_params=False):
-        if X_new is not None or update_params:
-            raise NotImplementedError()
+        y = self._convert_y_windows(y_windows)
+        return X, y
 
-        # input checks
-        self._check_is_fitted()
+    @staticmethod
+    def _convert_y_windows(y):
+        raise NotImplementedError("abstract method")
 
-        # update observation horizon
-        self._set_oh(y_new)
-        return self
+    @staticmethod
+    def _convert_x_windows(X):
+        raise NotImplementedError("abstract method")
 
 
 class ReducedTimeSeriesRegressorMixin:
-    """Base class for reducing forecasting to time series regression"""
+    """Mixin class for reducing forecasting to time series regression"""
 
     @staticmethod
-    def _convert_data(X, y=None):
+    def _convert_x_windows(x_windows):
         """Helper function to combine windows from temporal cross-validation into nested
-        pandas DataFrame used for solving forecasting via reduction to time series regression.
+        pd.DataFrame used for solving forecasting via reduction to time series regression.
 
         Parameters
         ----------
-        X : list of pd.Series or np.ndarray
-        y : list of pd.Series or np.ndarray, optional (default=None)
+        x_windows : list of pd.Series or np.array
 
         Returns
         -------
-        X_train : pd.DataFrame
+        X : pd.DataFrame
             Nested time series data frame.
-        y_train : np.ndarray
-            Array of target values.
         """
         # return nested dataframe
-        X_train = pd.DataFrame(pd.Series([np.asarray(xi) for xi in X]))
-        if y is None:
-            return X_train
+        return pd.DataFrame(pd.Series([np.asarray(xi) for xi in x_windows]))
 
-        y_train = np.array([np.asarray(yi) for yi in y])
-        return X_train, y_train
+    @staticmethod
+    def _convert_y_windows(y_windows):
+        return np.array([np.asarray(yi) for yi in y_windows])
 
 
 class ReducedTabularRegressorMixin:
-    """Base class for reducing forecasting to tabular regression"""
+    """Mixin class for reducing forecasting to tabular regression"""
 
     @staticmethod
-    def _convert_data(X, y=None):
-        """Helper function to combine windows from temporal cross-validation into numpy array
-        used for solving forecasting via reduction to tabular regression.
+    def _convert_x_windows(x_windows):
+        """Helper function to combine windows from temporal cross-validation into nested
+        pd.DataFrame used for solving forecasting via reduction to time series regression.
 
         Parameters
         ----------
-        X : list of pd.Series or np.ndarray
-        y : list of pd.Series or np.ndarray, optional (default=None)
+        x_windows : list of pd.Series or np.array
 
         Returns
         -------
-        X_train : np.ndarray
-        y_train : np.ndarray
+        X : pd.DataFrame
+            Nested time series data frame.
         """
-        X_train = np.vstack(X)
-        if y is None:
-            return X_train
+        return np.vstack(x_windows)
 
-        y_train = np.vstack(y)
-        return X_train, y_train
+    @staticmethod
+    def _convert_y_windows(y_windows):
+        return np.vstack(y_windows)
 
 
 class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
@@ -247,6 +261,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # transform data
         X_train, y_train = self.transform(y_train, X_train)
+        y_train = y_train.ravel()
 
         # fit base regressor
         regressor = clone(self.regressor)
@@ -259,9 +274,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict"""
         # check inputs
-        if X is not None:
-            raise NotImplementedError()
-        if return_pred_int:
+        if X is not None or return_pred_int:
             raise NotImplementedError()
 
         self._check_is_fitted()

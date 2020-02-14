@@ -36,6 +36,7 @@ def check_y_X(y, X):
     """
     y = check_y(y)
     X = check_X(X)
+    check_consistent_time_index(y, X)
     return y, X
 
 
@@ -68,7 +69,19 @@ def check_y(y):
 
 
 def check_cv(cv):
-    required_attributes = ("split", "fh", "window_length", "step_length")
+    """
+    Check CV generators.
+
+    Parameters
+    ----------
+    cv : CV generator
+
+    Raises
+    ------
+    ValueError
+        if cv does not have the required attributes.
+    """
+    required_attributes = ("split", "fh", "window_length")
     for attr in required_attributes:
         if not hasattr(cv, attr):
             raise ValueError(f"`cv` iterator must have a {attr} attribute.")
@@ -89,7 +102,7 @@ def check_time_index(time_index):
     # period or datetime index are not support yet
     supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
     if not isinstance(time_index, supported_index_types):
-        raise NotImplementedError(f"{type(time_index)} is not supported yet, "
+        raise NotImplementedError(f"{type(time_index)} is not supported, "
                                   f"please use one of {supported_index_types} instead.")
 
     if not time_index.is_monotonic:
@@ -101,12 +114,15 @@ def check_time_index(time_index):
 
 def check_X(X):
     """Validate input data.
+
     Parameters
     ----------
     X : pandas.DataFrame
+
     Returns
     -------
     X : pandas.DataFrame
+
     Raises
     ------
     ValueError
@@ -157,10 +173,12 @@ def check_step_length(step_length):
 
 def check_sp(sp):
     """Validate seasonal periodicity.
+
     Parameters
     ----------
     sp : int
         Seasonal periodicity
+
     Returns
     -------
     sp : int
@@ -174,10 +192,12 @@ def check_sp(sp):
 
 def check_fh(fh):
     """Validate forecasting horizon.
+
     Parameters
     ----------
     fh : int, list of int, array of int
         Forecasting horizon with steps ahead to predict.
+
     Returns
     -------
     fh : numpy array of int
@@ -187,7 +207,7 @@ def check_fh(fh):
     if is_int(fh):
         fh = np.array([fh], dtype=np.int)
 
-    # check array input
+    # check array
     elif isinstance(fh, np.ndarray):
         if fh.ndim > 1:
             raise ValueError(f"`fh` must be a 1d array, but found shape: "
@@ -198,7 +218,9 @@ def check_fh(fh):
                              f"be an array of integers, but found an "
                              f"array of type: {fh.dtype}")
 
-    # check list input
+
+
+    # check list
     elif isinstance(fh, list):
         if not np.all([is_int(h) for h in fh]):
             raise ValueError("If `fh` is passed as a list, "
@@ -214,13 +236,12 @@ def check_fh(fh):
         raise ValueError(f"`fh` cannot be empty, please specify now least one "
                          f"step to forecast.")
 
+    # check fh does not contain duplicates
+    if len(fh) != len(np.unique(fh)):
+        raise ValueError(f"`fh` should not contain duplicates.")
+
     # sort fh
     fh.sort()
-
-    # check fh contains only non-zero positive values
-    if fh[0] <= 0:
-        raise ValueError(f"fh must contain only positive values (>=1), "
-                         f"but found: {fh[0]}")
 
     return fh
 
@@ -261,7 +282,7 @@ def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all
     check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
 
 
-def check_consistent_time_index(y_test, y_pred, y_train=None):
+def check_consistent_time_index(*ys, y_train=None):
     """Check that y_test and y_pred have consistent indices.
     Parameters
     ----------
@@ -275,16 +296,17 @@ def check_consistent_time_index(y_test, y_pred, y_train=None):
     """
 
     # only validate indices if data is passed as pd.Series
-    check_time_index(y_test.index)
-    check_time_index(y_pred.index)
+    first_index = ys[0].index
+    check_time_index(first_index)
+    for y in ys[1:]:
+        check_time_index(y.index)
 
-    if not y_test.index.equals(y_pred.index):
-        print(y_test.index, y_pred.index)
-        raise ValueError(f"Time index of `y_pred` does not match time index of `y_test`.")
+        if not first_index.equals(y.index):
+            raise ValueError(f"Found inconsistent time indices.")
 
     if y_train is not None:
         check_time_index(y_train.index)
-        if y_train.index.max() >= y_pred.index.min():
+        if y_train.index.max() >= first_index.min():
             raise ValueError(f"Found `y_train` with time index which is not "
                              f"before time index of `y_pred`")
 

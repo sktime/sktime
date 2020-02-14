@@ -6,15 +6,60 @@ __all__ = [
 ]
 __author__ = ["Markus Löning"]
 
-
-from sklearn.base import clone
-from sklearn.base import BaseEstimator
-from sktime.utils.validation.forecasting import check_y
 import pandas as pd
-import numpy as np
+from sklearn.base import BaseEstimator
+from sklearn.base import clone
+from sktime.utils.exceptions import NotFittedError
+from sktime.utils.validation.forecasting import check_y
 
 
-class Detrender(BaseEstimator):
+class BaseSeriesToSeriesTransformer(BaseEstimator):
+
+    def __init__(self):
+        self._is_fitted = False
+
+    @property
+    def is_fitted(self):
+        """Has `fit` been called?"""
+        return self._is_fitted
+
+    def _check_is_fitted(self):
+        """Check if the forecaster has been fitted.
+
+        Raises
+        ------
+        NotFittedError
+            if the forecaster has not been fitted yet.
+        """
+        if not self.is_fitted:
+            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
+                                 f"been fitted yet; please call `fit` first.")
+
+    def fit(self, y, **fit_params):
+        self._is_fitted = True
+        return self
+
+    def fit_transform(self, y, **fit_params):
+        """Fit to data, then transform it.
+        Fits transformer to X and y with optional parameters fit_params
+        and returns a transformed version of X.
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        yt : pd.Series
+            Transformed time series.
+        """
+        return self.fit(y, **fit_params).transform(y)
+
+    def transform(self, y, **transform_args):
+        raise NotImplementedError("abstract method")
+
+
+class Detrender(BaseSeriesToSeriesTransformer):
 
     def __init__(self, forecaster):
         self.forecaster = forecaster
@@ -22,95 +67,23 @@ class Detrender(BaseEstimator):
         super(Detrender, self).__init__()
 
     def fit(self, y_train, X_train=None):
-        # input checks
-        y_train = check_y(y_train)
-        self._set_oh(y_train)
-
-        # fit forecaster
-        # forecasters which require fh in fit are not supported
         forecaster = clone(self.forecaster)
         self.forecaster_ = forecaster.fit(y_train, X_train=X_train)
-
         self._is_fitted = True
         return self
 
-    def fit_transform(self, y_train, X_train=None):
-        # first fit
-        self.fit(y_train, X_train=X_train)
-
-        # then directly transform via in-sample prediction
-        y_pred = self.forecaster_.predict_in_sample(y_train, X_train=X_train)
-        residuals = y_train - y_pred
-        return residuals
-
     def transform(self, y, X=None):
-        y = check_y(y)
         self._check_is_fitted()
-
-        # get predictions from forecaster
-        y_pred = self._predict(y, X=X)
-
-        # remove trend from series
-        residuals = y - y_pred
-        return residuals
+        fh = self._get_relative_fh(y)
+        y_pred = self.forecaster_.predict(fh=fh, X=X)
+        return y - y_pred
 
     def inverse_transform(self, y, X=None):
-        y = check_y(y)
         self._check_is_fitted()
+        fh = self._get_relative_fh(y)
+        y_pred = self.forecaster_.predict(fh=fh, X=X)
+        return y + y_pred
 
-        # get predictions from forecaster
-        y_pred = self._predict(y, X=X)
-
-        # add trend back to series
-        yit = y + y_pred
-        return yit
-
-    def _predict(self, y, X=None):
-        """Make in-sample or out-of-sample predictions depending on
-        passed time series and known observation horizon"""
-
-        # check if time index is in observation horizon seen in training
-        isin_obs_horizon = y.index.isin(self.oh.index)
-
-        # raise error if y contains values before observation horizon
-        # seen in training
-        if np.any(y.index.values < self.oh.index.min()):
-            raise ValueError("Passed `y` contains values from before the "
-                             "observation horizon seen in `fit`")
-
-        # if all values are in observation horizon,
-        # make in-sample forecasts
-        if isin_obs_horizon.all():
-            fh = y.index.values - self.oh.index.min() + 1
-            y_pred = self.forecaster_.predict_in_sample(y, fh=fh, X_train=X)
-
-        # if only some of the values are in the observation horizon,
-        # make both in-sample and out-of-sample predictions
-        elif isin_obs_horizon.any():
-
-            if X is not None:
-                # split x according to in-sample or out-of-sample predictions
-                raise NotImplementedError()
-
-            # in-sample predictions
-            in_sample = y.index[isin_obs_horizon]
-            fh = in_sample.values
-            y_train = y.iloc[in_sample]
-            in_pred = self.forecaster_.predict_in_sample(y_train, fh=fh, X_train=None)
-
-            # out-of-sample predictions
-            out_of_sample = y.index[~isin_obs_horizon]
-            fh = out_of_sample.values - self.oh.inde.xmax()
-            out_pred = self.forecaster_.predict(fh=fh, X=None)
-
-            # combine predictions
-            y_pred = in_pred.append(out_pred)
-
-        # if all values are out-of-sample, call predict
-        else:
-            # get relative forecasting horizon
-            fh = y.index.values - self.now
-            y_pred = self.forecaster_.predict(fh=fh, X=X)
-
-        return pd.Series(y_pred.values, index=y.index)
-
+    def _get_relative_fh(self, y):
+        y = check_y(y)
+        return y.index.values - self.forecaster_.now

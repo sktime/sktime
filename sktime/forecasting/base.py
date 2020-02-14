@@ -486,13 +486,12 @@ class OptionalForecastingHorizonMixin:
                 # otherwise if no fh passed, but there is one already, we can simply use that one
         else:
             # if fh is passed, validate first, then check if there is one already,
-            # and overwrite with appropriate warning
+            # and overwrite
+
+            # a warning should only be raised if fh passed to fit is overwritten, but no warning is required
+            # when no fh has been provided in fit, and different fhs are passed to predict, but this requires
+            # to keep track of whether fh has been passed to fit or not, hence not implemented for now
             fh = check_fh(fh)
-            if is_fitted:
-                # raise warning if existing fh and new one don't match
-                if self._fh is not None and not np.array_equal(fh, self._fh):
-                    warn("The provided forecasting horizon `fh` is different from the "
-                         "previously provided one; the new one will be used.")
             self._fh = fh
 
 
@@ -536,3 +535,8 @@ class RequiredForecastingHorizonMixin:
             else:
                 # intended workflow: fh is passed when forecaster is not fitted yet
                 self._fh = fh
+
+
+class MetaForecasterMixin:
+    _required_parameters = ["forecaster"]
+    """Mixin class for all meta forecasters in sktime."""
