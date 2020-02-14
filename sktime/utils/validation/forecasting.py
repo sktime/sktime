@@ -218,6 +218,8 @@ def check_fh(fh):
                              f"be an array of integers, but found an "
                              f"array of type: {fh.dtype}")
 
+
+
     # check list
     elif isinstance(fh, list):
         if not np.all([is_int(h) for h in fh]):

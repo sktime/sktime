@@ -43,16 +43,6 @@ from sktime.utils.validation.forecasting import check_fh
 FORECASTERS = [e[1] for e in all_estimators(type_filter="forecaster")]
 FH0 = DEFAULT_FHS[0]
 
-#
-# from sktime.forecasting.naive import NaiveForecaster
-# from sktime.forecasting.reduction import DirectRegressionForecaster, DirectTimeSeriesRegressionForecaster, RecursiveTimeSeriesRegressionForecaster
-# FORECASTERS = [
-#     NaiveForecaster,
-#     DirectRegressionForecaster,
-#     DirectTimeSeriesRegressionForecaster,
-#     RecursiveTimeSeriesRegressionForecaster
-# ]
-
 # testing data
 y_train, y_test = make_forecasting_problem()
 

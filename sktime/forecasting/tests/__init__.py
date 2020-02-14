@@ -10,6 +10,7 @@ import pandas as pd
 DEFAULT_WINDOW_LENGTHS = [1, 5]
 DEFAULT_STEP_LENGTHS = [1, 5]
 DEFAULT_FHS = [1, np.array([2, 5])]
+DEFAULT_INSAMPLE_FHS = [-3, np.array([-2, -5]), 0, np.array([-3, 2])]
 DEFAULT_SPS = [3, 7, 12]
 
 
