@@ -27,38 +27,26 @@ class BaseTemporalCrossValidator:
     """
 
     def __init__(self, fh=1, window_length=10, step_length=1):
-        # check input
-        if not is_int(window_length) and (window_length < 1):
-            raise ValueError(f"window_length must be a postive integer, but found: {type(window_length)}")
-
-        if not is_int(step_length) and (step_length < 1):
-            raise ValueError(f"step_length must be an positive integer, but found: {type(step_length)}")
-
-        # set during construction
         self._window_length = check_window_length(window_length)
         self._step_length = check_step_length(step_length)
         self._fh = check_fh(fh)
         self._n_splits = None
 
     def split(self, y):
-        raise NotImplementedError()
+        raise NotImplementedError("abstract method")
 
     @property
     def n_splits(self):
         """
         Return number of splits.
         """
-        if self._n_splits is None:
-            raise ValueError(f"`n_splits_` is only available after calling `split`. "
-                             f"This is because it depends on the number of time points of the "
-                             f"time series `y` which is passed to split.")
         return self._n_splits
 
-    def get_n_splits(self):
+    def get_n_splits(self, y):
         """
         Return number of splits.
         """
-        return self.n_splits
+        raise NotImplementedError("abstract method")
 
     @property
     def fh(self):
@@ -101,9 +89,6 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
         # start point
         start = self.window_length
 
-        # number of splits for given forecasting horizon, window length and step length
-        self._n_splits = np.int(np.ceil((end - self.window_length) / self.step_length))
-
         # check if computed values are feasible with the provided index
         if self.window_length + fh_max > n_timepoints:
             raise ValueError(f"`window_length` + `max(fh)` must be smaller or equal to "
@@ -115,3 +100,15 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
             training_window = y[window - self.window_length:window]
             test_window = y[window + self.fh - 1]
             yield training_window, test_window
+
+    def get_n_splits(self, y):
+        """Get number of splits"""
+        y = check_y(y)
+        n_timepoints = len(y)
+        fh_max = self.fh.max()
+        end = n_timepoints - fh_max + 1
+
+        # number of splits for given forecasting horizon, window length and step length
+        self._n_splits = np.int(np.ceil((end - self.window_length) / self.step_length))
+        return self._n_splits
+

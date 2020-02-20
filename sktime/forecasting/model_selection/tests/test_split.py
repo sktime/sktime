@@ -34,7 +34,7 @@ def test_splitting(fh, window_length, step_length):
     outputs = np.vstack(outputs)
 
     # compare actual values against expected values
-    ns = cv.get_n_splits()
+    ns = cv.get_n_splits(s)
 
     # check first window
     np.testing.assert_array_equal(inputs[0, :], np.arange(window_length))
