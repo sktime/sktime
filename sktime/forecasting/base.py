@@ -17,6 +17,8 @@ from sktime.utils.plotting import composite_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
+from contextlib import contextmanager
+from sktime.forecasting.model_selection import ManualWindowSplitter
 
 DEFAULT_ALPHA = 0.05
 
@@ -114,40 +116,7 @@ class BaseForecaster(BaseEstimator):
         raise NotImplementedError()
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        self._check_is_fitted()
-        self._set_fh(fh)
-
-        # distinguish between in-sample and out-of-sample prediction
-        is_in_sample = self.fh <= 0
-        is_out_of_sample = np.logical_not(is_in_sample)
-
-        # pure out-of-sample prediction
-        if np.all(is_out_of_sample):
-            y_pred = self._predict_out_of_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
-
-        # pure in-sample prediction
-        elif np.all(is_in_sample):
-            y_pred = self._predict_in_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
-
-        # mixed in-sample and out-of-sample prediction
-        else:
-            fh_in_sample = self.fh[is_in_sample]
-            fh_out_of_sample = self.fh[is_out_of_sample]
-
-            y_pred_in = self._predict_in_sample(fh_in_sample, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
-            y_pred_out = self._predict_out_of_sample(fh_out_of_sample, X=X, return_pred_int=return_pred_int,
-                                                     alpha=DEFAULT_ALPHA)
-
-            y_pred = np.append(y_pred_in, y_pred_out)
-
-        index = self._get_absolute_fh()
-        return pd.Series(y_pred, index=index)
-
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        raise NotImplementedError()
-
-    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        raise NotImplementedError()
+        raise NotImplementedError("abstract method")
 
     def update(self, y_new, X_new=None, update_params=False):
         raise NotImplementedError()
@@ -236,7 +205,7 @@ class BaseForecaster(BaseEstimator):
                 self.update(y_new, update_params=update_params)
 
                 # predict: make a forecast at each step
-                y_test_pred = self._predict(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
+                y_test_pred = self.predict(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
 
             y_preds.append(y_test_pred)
             nows.append(self.now)
@@ -349,6 +318,8 @@ class BaseForecaster(BaseEstimator):
         ax : :class:`matplotlib.axes.Axes`, optional
             The axis on which to plot the graphic. If not provided, a new one
             will be created.
+        title : str
+            Title of plot
         score : str, optional (default="lower right")
             Where to draw a text box showing the score of the forecast if possible.
             If set to None, no score will be displayed.
@@ -495,8 +466,15 @@ class BaseForecaster(BaseEstimator):
             fh = self.fh
         return fh - 1
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        raise NotImplementedError()
+    @contextmanager
+    def _detached_now(self):
+        """context manager to detach now"""
+        now = self.now  # remember initial now
+        try:
+            yield
+        finally:
+            # re-set now to initial state
+            self._set_now(now)
 
 
 class OptionalForecastingHorizonMixin:
@@ -582,18 +560,138 @@ class BaseLastWindowForecaster(BaseForecaster):
         super(BaseLastWindowForecaster, self).__init__()
         self._window_length = None
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        from sktime.forecasting.model_selection import ManualWindowSplitter
-        fh_abs = self._get_absolute_fh(fh)
-        predict_at = fh_abs - 1
-        cv = ManualWindowSplitter(predict_at, fh=1, window_length=self._window_length)
-        return self.update_predict(self.oh, cv=cv, X_test=X, return_pred_int=return_pred_int, alpha=alpha)
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        self._check_is_fitted()
+        self._set_fh(fh)
 
-    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        return self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        # distinguish between in-sample and out-of-sample prediction
+        is_in_sample = self.fh <= 0
+        is_out_of_sample = np.logical_not(is_in_sample)
+
+        # pure out-of-sample prediction
+        if np.all(is_out_of_sample):
+            return self._predict_out_of_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+
+        # pure in-sample prediction
+        elif np.all(is_in_sample):
+            return self._predict_in_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+
+        # mixed in-sample and out-of-sample prediction
+        else:
+            fh_in_sample = self.fh[is_in_sample]
+            fh_out_of_sample = self.fh[is_out_of_sample]
+
+            y_pred_in = self._predict_in_sample(fh_in_sample, X=X, return_pred_int=return_pred_int,
+                                                alpha=DEFAULT_ALPHA)
+            y_pred_out = self._predict_out_of_sample(fh_out_of_sample, X=X, return_pred_int=return_pred_int,
+                                                     alpha=DEFAULT_ALPHA)
+            return y_pred_in.append(y_pred_out)
+
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+                       alpha=DEFAULT_ALPHA):
+        self._check_is_fitted()
+        self._set_oh(y_test)
+
+        # if no cv is provided, use default, otherwise check provided cv
+        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(fh=self.fh)
+
+        return self._predict_moving_cutoff(y_test, cv, update=True, update_params=update_params,
+                                           return_pred_int=return_pred_int, alpha=alpha)
+
+    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        assert all(fh > 0)
+        return self._predict_fixed_cutoff(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        assert all(fh <= 0)
+        #  convert in-sample fh steps to cutoff points
+        index = self._get_absolute_fh(fh)
+        cutoffs = index - 1  # points before fh steps
+        cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self._window_length)
+        y_train = self.oh
+        return self._predict_moving_cutoff(y_train, cv, X_test=X, update=False, return_pred_int=return_pred_int,
+                                           alpha=alpha)
+
+    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        if return_pred_int or X is not None:
+            raise NotImplementedError()
+
+        last_window = self._get_last_window()
+        if len(last_window) == 0:
+            #  pre-sample time points will return empty last window
+            #  predict nan
+            y_pred = self._predict_nan(fh, return_pred_int=return_pred_int)
+        else:
+            y_pred = self._predict(last_window, fh, return_pred_int=return_pred_int, alpha=alpha)
+        index = self._get_absolute_fh(fh)
+        return pd.Series(y_pred, index=index)
+
+    def _predict_moving_cutoff(self, y_test, cv, X_test=None, update=True, update_params=False, return_pred_int=False,
+                               alpha=DEFAULT_ALPHA):
+        """static moving cutoff predictions, i.e. no previously
+        predicted values are used to make subsequent predictions"""
+        if not update and update_params:
+            raise ValueError("`update_params` can only be used if `update`=True")
+
+        fh = cv.fh
+        window_length = cv.window_length
+
+        with self._detached_now():
+            # set before new data, so that first prediction is
+            # first observation in new data
+            self._set_now(y_test.index[0] - 1)
+            start = self.now - window_length + 1
+
+            # extend observation horizon into the past if any window
+            # would be before the first observation
+            start_oh = self.oh.index[0]
+            is_pre_sample = start_oh > start
+            if is_pre_sample:
+                index = np.arange(self.now - window_length, self.now) + 1
+                presample = pd.Series(np.full(window_length, np.nan), index=index)
+                self._set_oh(presample)
+                y = self.oh
+            else:
+                y = self.oh.iloc[start:]
+
+            # initialise lists
+            y_preds = []
+            nows = []
+
+            # iterate over data
+            for i, (new_window, _) in enumerate(cv.split(y)):
+                y_new = y.iloc[new_window]
+
+                # if udpate=True, run full update, otherwise only update now
+                if update:
+                    self.update(y_new, update_params=update_params)
+                else:
+                    self._set_now(y_new.index[-1])
+
+                y_pred = self._predict_fixed_cutoff(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
+                y_preds.append(y_pred)
+                nows.append(self.now)
+
+            if len(fh) == 1:
+                # return series for single step ahead predictions
+                y_pred = pd.concat(y_preds)
+            else:
+                # return data frame when we predict multiple steps ahead
+                y_pred = pd.DataFrame(y_preds).T
+                y_pred.columns = nows
+
+            return y_pred
+
+    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        raise NotImplementedError("abstract method")
+
+    def _predict_nan(self, fh, return_pred_int=False):
+        if return_pred_int:
+            raise NotImplementedError()
+        return np.full(len(fh), np.nan)
 
     def _get_last_window(self):
         start = self.now - self._window_length + 1
-        end = self.now + 1  # non-inclusive end indexing in Python
-        return self.oh.values[start:end]
+        end = self.now
+        return self.oh.loc[start:end].values
 

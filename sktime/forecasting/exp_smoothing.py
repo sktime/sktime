@@ -151,13 +151,8 @@ class ExpSmoothingForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
-
-        # Input checks.
         self._check_is_fitted()
-
-        # Set forecast horizon.
         self._set_fh(fh)
-
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

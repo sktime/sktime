@@ -141,6 +141,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
         return y
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Internal predict"""
         # SES.
         y_pred = super(ThetaForecaster, self)._predict(fh, X=X)
 
@@ -176,12 +177,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-
         self._check_is_fitted()
-
-        # Set forecast horizon.
-        self._set_fh(fh)
-
+        self._set_fh(fh)  # set forecast horizon
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _compute_trend(self, y):

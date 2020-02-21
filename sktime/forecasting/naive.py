@@ -92,21 +92,16 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Predict"""
+    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Internal predict"""
+        # if last window only contains missing values, return nan
+        if np.all(np.isnan(last_window)):
+            return self._predict_nan(fh)
 
-        # input checks
-        if return_pred_int:
-            raise NotImplementedError()
+        elif self.strategy == "last":
+            return np.repeat(last_window[-1], len(fh))
 
-        # compute prediction
-        # get last window from observation horizon
-        last_window = self._get_last_window()
-
-        if self.strategy == "last":
-            y_pred = np.repeat(last_window[-1], len(fh))
-
-        if self.strategy == "seasonal_last":
+        elif self.strategy == "seasonal_last":
             # we need to replicate the last window if max(fh) is larger than sp,
             # so that we still make forecasts by repeating the last value for that season,
             # assume fh is sorted, i.e. max(fh) == fh[-1]
@@ -116,14 +111,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
             # get zero-based index by subtracting the minimum
             fh_idx = self._get_index_fh(fh)
-            y_pred = last_window[fh_idx]
+            return last_window[fh_idx]
 
-        if self.strategy == "mean":
-            y_pred = np.repeat(last_window.mean(), len(fh))
-
-        # return as series with correct time index
-        index = self._get_absolute_fh(fh)
-        return pd.Series(y_pred, index=index)
+        elif self.strategy == "mean":
+            return np.repeat(np.nanmean(last_window), len(fh))
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update"""

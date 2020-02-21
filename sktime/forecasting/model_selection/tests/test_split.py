@@ -16,19 +16,19 @@ YS = [
     pd.Series(np.random.random(size=30), index=np.arange(30, 60)),  # non-zero-based index
     pd.Series(np.random.random(size=30), index=np.arange(-60, -30))  # negative index
 ]
-SPLIT_POINTS = [
+CUTOFF_POINTS = [
     np.array([21, 22]),
     np.array([40, 45]),
     np.array([-45, -40])
 ]
 
 
-@pytest.mark.parametrize("y, splitpoints", [(y, split_points) for y, split_points in zip(YS, SPLIT_POINTS)])
+@pytest.mark.parametrize("y, cutoff_points", [(y, cutoff_points) for y, cutoff_points in zip(YS, CUTOFF_POINTS)])
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-def test_manual_window(y, splitpoints, fh, window_length):
+def test_manual_window(y, cutoff_points, fh, window_length):
     # initiate rolling window cv iterator
-    cv = ManualWindowSplitter(splitpoints, fh=fh, window_length=window_length)
+    cv = ManualWindowSplitter(cutoff_points, fh=fh, window_length=window_length)
 
     # generate and keep splits
     inputs = []
@@ -39,14 +39,14 @@ def test_manual_window(y, splitpoints, fh, window_length):
     inputs = np.vstack(inputs)
     outputs = np.vstack(outputs)
 
-    ns = cv.get_n_splits()
-    assert ns == len(splitpoints)
+    ns = cv.get_n_splits(y)
+    assert ns == len(cutoff_points)
     assert inputs.shape == (ns, window_length)  # check window length
     assert outputs.shape == (ns, len(check_fh(fh)))  # check fh
 
     # check if last values of input window are split points
     # comparing relative indices returned by cv iterator with absolute split points
-    np.testing.assert_array_equal(y.iloc[inputs[:, -1]].values, y.loc[splitpoints].values)
+    np.testing.assert_array_equal(y.iloc[inputs[:, -1]].values, y.loc[cutoff_points].values)
 
 
 @pytest.mark.parametrize("y", YS)
@@ -66,7 +66,7 @@ def test_sliding_window(y, fh, window_length, step_length):
     inputs = np.vstack(inputs)
     outputs = np.vstack(outputs)
 
-    ns = cv.get_n_splits()
+    ns = cv.get_n_splits(y)
 
     np.testing.assert_array_equal(inputs[0, :], np.arange(window_length))  # check first window
     np.testing.assert_array_equal(inputs[:, 0] // step_length, np.arange(ns))  # check step length

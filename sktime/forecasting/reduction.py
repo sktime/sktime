@@ -189,31 +189,18 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-
-        # check input
-        if X is not None or return_pred_int:
-            raise NotImplementedError()
-
-        # compute prediction
-        # get last window from observation horizon
-        last_window = self._get_last_window()
-
+    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # use last window as new input data for time series regressors to make forecasts
         # get last window from observation horizon
         X_last = self._convert_data([last_window])
 
         # preallocate array for forecasted values
-        len_fh = len(fh)
-        y_pred = np.zeros(len_fh)
+        y_pred = np.zeros(len(fh))
 
         # Iterate over estimators/forecast horizon
         for i, regressor in enumerate(self.regressors_):
             y_pred[i] = regressor.predict(X_last)
-
-        # Add forecasting time index
-        index = self._get_absolute_fh(fh)
-        return pd.Series(y_pred, index=index)
+        return y_pred
 
 
 class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
@@ -253,12 +240,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict"""
-        # check inputs
-        if X is not None or return_pred_int:
-            raise NotImplementedError()
-
         # compute prediction
         # prepare recursive predictions
         fh_max = fh[-1]
@@ -276,10 +259,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self._window_length:]
 
-        # select specific steps ahead and add index
         fh_idx = self._get_index_fh(fh)
-        index = self._get_absolute_fh(fh)
-        return pd.Series(y_pred[fh_idx], index=index)
+        return y_pred[fh_idx]
 
 
 ##############################################################################
