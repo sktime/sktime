@@ -151,13 +151,12 @@ class ExpSmoothingForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
-
-        # Input checks.
         self._check_is_fitted()
-
-        # Set forecast horizon.
         self._set_fh(fh)
-        fh_abs = self._get_absolute_fh()
+        return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        fh_abs = self._get_absolute_fh(fh)
 
         # Predict fitted model with start and end points relative to start of train series
         start = fh_abs[0]

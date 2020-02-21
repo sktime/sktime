@@ -1,5 +1,5 @@
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils.testing.base import generate_df_from_array
 import pandas as pd
 import numpy as np
 from sktime.transformers.compose import RowwiseTransformer

@@ -2,7 +2,8 @@ import numpy as np
 import pytest
 
 from sktime.transformers.forecasting import Deseasonaliser
-from sktime.utils.testing import generate_seasonal_time_series_data_with_trend, generate_time_series_data_with_trend
+from sktime.utils.testing.forecasting import generate_time_series_data_with_trend, \
+    generate_seasonal_time_series_data_with_trend
 from sktime.utils.data_container import select_times, tabularise
 
 

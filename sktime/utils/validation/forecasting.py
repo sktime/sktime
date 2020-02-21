@@ -89,16 +89,19 @@ def check_cv(cv):
 
 
 def check_time_index(time_index):
-    """Validate time index
+    """Check time index.
 
     Parameters
     ----------
-    time_index : pd.Index or pd.Series
+    time_index : pd.Index or np.array
 
     Returns
     -------
     time_index : pd.Index
     """
+    if isinstance(time_index, np.ndarray):
+        time_index = pd.Index(time_index)
+
     # period or datetime index are not support yet
     supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
     if not isinstance(time_index, supported_index_types):
@@ -242,7 +245,6 @@ def check_fh(fh):
 
     # sort fh
     fh.sort()
-
     return fh
 
 

@@ -43,6 +43,11 @@ class TransformedTargetForecaster(BaseForecaster, MetaForecasterMixin):
         self.forecaster_.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+                       alpha=DEFAULT_ALPHA):
+        return self.forecaster_.update_predict(y_test, cv=cv, X_test=X_test, update_params=update_params,
+                                               return_pred_int=return_pred_int, alpha=alpha)
+
     def transform(self, y):
         return self.transformer_.fit_transform(y)
 
@@ -52,8 +57,8 @@ class TransformedTargetForecaster(BaseForecaster, MetaForecasterMixin):
     def _set_fh(self, fh):
         self.forecaster_._set_fh(fh)
 
-    def _set_oh(self, oh, update_now=False):
-        self.forecaster_._set_oh(oh, update_now=update_now)
+    def _set_oh(self, oh):
+        self.forecaster_._set_oh(oh)
 
     @property
     def now(self):

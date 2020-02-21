@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.data_container import select_times, tabularise
-from sktime.utils.testing import generate_time_series_data_with_trend
+from sktime.utils.testing.forecasting import generate_time_series_data_with_trend
 from sktime.datasets import load_gunpoint
 from sktime.transformers.forecasting import Detrender
 

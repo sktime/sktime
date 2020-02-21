@@ -5,9 +5,7 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "test_clone",
     "test_compute_pred_errors",
-    "test_different_fh_in_fit_and_predict_opt",
     "test_different_fh_in_fit_and_predict_req",
-    "test_update_predict_check_warning_for_inconsistent_fhs",
     "test_not_fitted_error",
     "test_fh_in_fit_opt",
     "test_fh_in_fit_req",
@@ -15,7 +13,7 @@ __all__ = [
     "test_no_fh_in_fit_req",
     "test_no_fh_opt",
     "test_oh_setting",
-    "test_predict_return_pred_int_time_index",
+    "test_predict_return_pred_interval_time_index",
     "test_return_self_for_fit_set_params_update",
     "test_same_fh_in_fit_and_predict_opt",
     "test_same_fh_in_fit_and_predict_req",
@@ -30,13 +28,13 @@ import pytest
 from sklearn.base import clone
 from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
-from sktime.forecasting.tests import make_forecasting_problem
+from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils.exceptions import NotFittedError
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import compute_expected_index_from_update_predict
+from sktime.utils.testing.base import _construct_instance
+from sktime.utils.testing.forecasting import compute_expected_index_from_update_predict, make_forecasting_problem, \
+    assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
@@ -128,22 +126,36 @@ def test_predict_time_index(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.predict()
+    assert_correct_pred_time_index(y_pred, y_train, fh)
 
-    fh = check_fh(fh)
-    np.testing.assert_array_equal(y_pred.index.values, y_train.index[-1] + fh)
+
+########################################################################################################################
+# test predicted pred int time index
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", DEFAULT_INSAMPLE_FHS)
+def test_predict_insample(Forecaster, fh):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh=fh)
+
+    try:
+        y_pred = f.predict()
+        assert_correct_pred_time_index(y_pred, y_train, fh)
+
+    except NotImplementedError:
+        print(f"{Forecaster}'s in-sample predictions are not implemented, test skipped.")
+        pass
 
 
 ########################################################################################################################
 # test predicted pred int time index
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
-def test_predict_return_pred_int_time_index(Forecaster, fh):
+def test_predict_return_pred_interval_time_index(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     try:
         _, pred_ints = f.predict(return_pred_int=True, alpha=0.05)
-        fh = check_fh(fh)
-        np.testing.assert_array_equal(pred_ints.index.values, y_train.index[-1] + fh)
+        assert_correct_pred_time_index(pred_ints, y_train, fh)
 
     except NotImplementedError:
         print(f"{Forecaster}'s `return_pred_int` option is not implemented, test skipped.")
@@ -293,30 +305,3 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
     f.fit(y_train, FH0)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
-
-########################################################################################################################
-# @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-# def test_different_fh_in_fit_and_predict_opt(Forecaster):
-#     f = _construct_instance(Forecaster)
-#     f.fit(y_train, FH0)
-#     # passing different fh to predict than to fit works, but raises warning
-#     with pytest.warns(UserWarning):
-#         f.predict(FH0 + 1)
-#     np.testing.assert_array_equal(f.fh, FH0 + 1)
-
-
-########################################################################################################################
-# check if warning is raised if inconsistent fh is passed
-# @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-# @pytest.mark.parametrize("fh", DEFAULT_FHS)
-# @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-# @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-# def test_update_predict_check_warning_for_inconsistent_fhs(Forecaster, fh, window_length, step_length):
-#     # check user warning if fh passed through cv is different from fh seen in fit
-#     cv = SlidingWindowSplitter(fh + 1, window_length=window_length, step_length=step_length)
-#     f = _construct_instance(Forecaster)
-#     f.fit(y_train, fh)
-#
-#     # check for expected warning when updating fh via passed cv object
-#     with pytest.warns(UserWarning):
-#         f.update_predict(y_test, cv=cv)

@@ -8,14 +8,14 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base import OptionalForecastingHorizonMixin, BaseForecaster, DEFAULT_ALPHA
-from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_fh
+from sktime.forecasting.base import BaseLastWindowForecaster
+from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base import OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
-class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
+class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple strategies.
 
@@ -34,15 +34,15 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
     """
 
     def __init__(self, strategy="last", window_length=None, sp=None):
-
+        super(NaiveForecaster, self).__init__()
         # input checks
         # allowed strategies to include: last, constant, seasonal-last, mean, median
         allowed_strategies = ("last", "mean", "seasonal_last")
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
-        self.window_length = window_length
         self.sp = sp
+        self.window_length = window_length
 
         if self.strategy in ("last", "seasonal_last"):
             if window_length is not None:
@@ -71,8 +71,6 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         if self.strategy == "mean":
             self._window_length = check_window_length(window_length)
 
-        super(NaiveForecaster, self).__init__()
-
     def fit(self, y_train, fh=None, X_train=None):
         """Fit"""
 
@@ -94,41 +92,29 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Predict"""
+    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Internal predict"""
+        # if last window only contains missing values, return nan
+        if np.all(np.isnan(last_window)):
+            return self._predict_nan(fh)
 
-        # input checks
-        if return_pred_int:
-            raise NotImplementedError()
+        elif self.strategy == "last":
+            return np.repeat(last_window[-1], len(fh))
 
-        self._check_is_fitted()
-        self._set_fh(fh)
-
-        # compute prediction
-        # get last window from observation horizon
-        last_window = self.oh.values[-self._window_length:]
-
-        if self.strategy == "last":
-            y_pred = np.repeat(last_window[-1], len(self.fh))
-
-        if self.strategy == "seasonal_last":
+        elif self.strategy == "seasonal_last":
             # we need to replicate the last window if max(fh) is larger than sp,
             # so that we still make forecasts by repeating the last value for that season,
             # assume fh is sorted, i.e. max(fh) == fh[-1]
-            if self.fh[-1] > self.sp:
-                reps = np.int(np.ceil(self.fh[-1] / self.sp))
+            if fh[-1] > self.sp:
+                reps = np.int(np.ceil(fh[-1] / self.sp))
                 last_window = np.tile(last_window, reps=reps)
 
             # get zero-based index by subtracting the minimum
-            fh_idx = self._get_index_fh()
-            y_pred = last_window[fh_idx]
+            fh_idx = self._get_index_fh(fh)
+            return last_window[fh_idx]
 
-        if self.strategy == "mean":
-            y_pred = np.repeat(last_window.mean(), len(self.fh))
-
-        # return as series with correct time index
-        index = self._now + self.fh
-        return pd.Series(y_pred, index=index)
+        elif self.strategy == "mean":
+            return np.repeat(np.nanmean(last_window), len(fh))
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update"""
@@ -141,33 +127,3 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         self._set_oh(y_new)
 
         return self
-
-    def predict_in_sample(self, y_train, fh=None, X_train=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Make in-sample predictions"""
-
-        # input checks
-        self._check_is_fitted()
-        if fh is not None:
-            fh = check_fh(fh)
-
-        # get parameters
-        window_length = self._window_length
-        n_timepoints = len(self.oh)
-
-        # initialise array for predictions
-        y_pred = np.zeros(n_timepoints)
-        y_pred[:window_length] = np.nan
-
-        # initialise last window
-        self._last_window = y_train[:window_length]
-
-        # iterate over training series
-        cv = SlidingWindowSplitter(fh=1, window_length=window_length)
-        for k, (i, o) in enumerate(cv.split(y_train.index), start=window_length):
-            y_new = y_train.iloc[i]
-            self._last_window = np.append(self._last_window, y_new)[-self._window_length:]
-            y_pred[k] = self.predict(fh=1, return_pred_int=return_pred_int, alpha=alpha)
-
-        # select only predictions in given fh
-        fh_idx = fh - 1
-        return pd.Series(y_pred, index=y_train.index).iloc[fh_idx]

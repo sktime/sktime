@@ -4,7 +4,7 @@ __all__ = ["test_set_params"]
 import pytest
 from numpy.testing import assert_array_equal
 from sktime.forecasting import ExpSmoothingForecaster
-from sktime.forecasting.tests import make_forecasting_problem
+from sktime.utils.testing.forecasting import make_forecasting_problem
 
 # load test data
 y_train, y_test = make_forecasting_problem()

@@ -4,22 +4,15 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
-import pandas as pd
 
 # default parameter testing grid
 DEFAULT_WINDOW_LENGTHS = [1, 5]
 DEFAULT_STEP_LENGTHS = [1, 5]
 DEFAULT_FHS = [1, np.array([2, 5])]
+DEFAULT_INSAMPLE_FHS = [
+    -3,  # single in-sample
+    np.array([-2, -5]),  # multiple in-sample
+    0,
+    np.array([-3, 2])  # mixed in-sample and out-of-sample
+]
 DEFAULT_SPS = [3, 7, 12]
-
-
-def make_forecasting_problem():
-    n_timepoints = 30
-    n_train = n_timepoints - 10
-    trend = np.arange(n_timepoints)
-    noise = np.random.normal(size=n_timepoints)
-    values = trend + noise
-    s = pd.Series(values)
-    y_train = s.iloc[:n_train]
-    y_test = s.iloc[n_train:]
-    return y_train, y_test
