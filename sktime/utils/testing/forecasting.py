@@ -2,12 +2,18 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = [
+    "compute_expected_index_from_update_predict",
+    "generate_polynomial_series",
+    "generate_seasonal_time_series_data_with_trend",
+    "generate_time_series_data_with_trend"
+]
 
 import numpy as np
 import pandas as pd
 from sktime.utils.data_container import detabularise
 from sktime.utils.validation.forecasting import check_y, check_fh
+from sktime.forecasting.model_selection import temporal_train_test_split
 
 
 def compute_expected_index_from_update_predict(y, fh, step_length):
@@ -15,7 +21,6 @@ def compute_expected_index_from_update_predict(y, fh, step_length):
     # time points at which to make predictions
     y = check_y(y)
     index = y.index.values
-
     predict_at_all = np.arange(index[0] - 1, index[-1], step_length)
 
     # only predict at time points if all steps in fh can be predicted within y_test
@@ -83,10 +88,8 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100, order=
 
 
 def make_forecasting_problem(n_timepoints=50):
-    n_train = n_timepoints - 20
-    s = pd.Series(np.random.random(size=n_timepoints), index=np.arange(n_timepoints))
-    y_train = s.iloc[:n_train]
-    y_test = s.iloc[n_train:]
+    y = pd.Series(np.random.random(size=n_timepoints), index=np.arange(n_timepoints))
+    y_train, y_test = temporal_train_test_split(y, train_size=0.75)
     return y_train, y_test
 
 

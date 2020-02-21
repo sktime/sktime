@@ -1,9 +1,12 @@
-__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter"]
-__author__ = "Markus Löning"
+#!/usr/bin/env python3 -u
+# coding: utf-8
+
+__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "temporal_train_test_split"]
+__author__ = ["Markus Löning"]
 
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import is_int
+from sklearn.model_selection import train_test_split
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_time_index
@@ -28,17 +31,18 @@ class BaseTemporalCrossValidator:
     """
 
     def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
-        # check input
-        if not is_int(window_length) and (window_length < 1):
-            raise ValueError(f"window_length must be a postive integer, but found: {type(window_length)}")
-
-        # set during construction
         self._window_length = check_window_length(window_length)
         self._fh = check_fh(fh)
         self._n_splits = None
 
     def split(self, y):
-        raise NotImplementedError()
+        raise NotImplementedError("abstract method")
+
+    def get_n_splits(self, y=None):
+        """
+        Return number of splits.
+        """
+        raise NotImplementedError("abstract method")
 
     @property
     def fh(self):
@@ -50,16 +54,10 @@ class BaseTemporalCrossValidator:
         """Window length"""
         return self._window_length
 
-    def get_n_splits(self, y=None):
-        raise NotImplementedError("abstract method")
-
 
 class SlidingWindowSplitter(BaseTemporalCrossValidator):
 
     def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH, step_length=DEFAULT_STEP_LENGTH):
-        if not is_int(step_length) and (step_length < 1):
-            raise ValueError(f"step_length must be an positive integer, but found: {type(step_length)}")
-
         self._step_length = check_step_length(step_length)
         super(SlidingWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
@@ -156,5 +154,43 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
             test_window = time_index[time_point + fh]
             yield training_window, test_window
 
-    def get_n_splits(self, y):
+    def get_n_splits(self, y=None):
         return len(self.cutoffs)
+
+
+def temporal_train_test_split(*arrays, test_size=None, train_size=None):
+    """Split arrays or matrices into sequential train and test subsets
+    Creates train/test splits over endogenous arrays an optional exogenous
+    arrays. This is a wrapper of scikit-learn's ``train_test_split`` that
+    does not shuffle.
+    Parameters
+    ----------
+    *arrays : sequence of indexables with same length / shape[0]
+        Allowed inputs are lists, numpy arrays, scipy-sparse
+        matrices or pandas dataframes.
+    test_size : float, int or None, optional (default=None)
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. If ``train_size`` is also None, it will
+        be set to 0.25.
+    train_size : float, int, or None, (default=None)
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the dataset to include in the train split. If
+        int, represents the absolute number of train samples. If None,
+        the value is automatically set to the complement of the test size.
+    Returns
+    -------
+    splitting : list, length=2 * len(arrays)
+        List containing train-test split of inputs.
+
+    References
+    ----------
+    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/blob/master/pmdarima/model_selection/_split.py
+    """
+    return train_test_split(
+        *arrays,
+        shuffle=False,
+        stratify=None,
+        test_size=test_size,
+        train_size=train_size)

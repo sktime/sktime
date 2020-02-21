@@ -2,14 +2,20 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning", "@big-o"]
-__all__ = ["BaseForecaster", "RequiredForecastingHorizonMixin",
-           "OptionalForecastingHorizonMixin", "DEFAULT_ALPHA"]
+__all__ = [
+    "BaseForecaster",
+    "RequiredForecastingHorizonMixin",
+    "OptionalForecastingHorizonMixin",
+    "MetaForecasterMixin",
+    "DEFAULT_ALPHA"
+]
 
-from warnings import warn
+from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
+from sktime.forecasting.model_selection import ManualWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils.exceptions import NotFittedError
@@ -17,8 +23,6 @@ from sktime.utils.plotting import composite_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
-from contextlib import contextmanager
-from sktime.forecasting.model_selection import ManualWindowSplitter
 
 DEFAULT_ALPHA = 0.05
 
@@ -502,13 +506,12 @@ class OptionalForecastingHorizonMixin:
                 # otherwise if no fh passed, but there is one already, we can simply use that one
         else:
             # if fh is passed, validate first, then check if there is one already,
-            # and overwrite with appropriate warning
+            # and overwrite
+
+            # a warning should only be raised if fh passed to fit is overwritten, but no warning is required
+            # when no fh has been provided in fit, and different fhs are passed to predict, but this requires
+            # to keep track of whether fh has been passed to fit or not, hence not implemented for now
             fh = check_fh(fh)
-            if is_fitted:
-                # raise warning if existing fh and new one don't match
-                if self._fh is not None and not np.array_equal(fh, self._fh):
-                    warn("The provided forecasting horizon `fh` is different from the "
-                         "previously provided one; the new one will be used.")
             self._fh = fh
 
 
@@ -693,3 +696,7 @@ class BaseLastWindowForecaster(BaseForecaster):
         end = self.now
         return self.oh.loc[start:end].values
 
+
+class MetaForecasterMixin:
+    _required_parameters = ["forecaster"]
+    """Mixin class for all meta forecasters in sktime."""

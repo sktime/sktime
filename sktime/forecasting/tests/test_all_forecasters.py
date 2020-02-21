@@ -5,7 +5,6 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "test_clone",
     "test_compute_pred_errors",
-    "test_different_fh_in_fit_and_predict_opt",
     "test_different_fh_in_fit_and_predict_req",
     "test_not_fitted_error",
     "test_fh_in_fit_opt",
@@ -45,6 +44,10 @@ FH0 = DEFAULT_FHS[0]
 # testing data
 y_train, y_test = make_forecasting_problem()
 
+
+########################################################################################################################
+########################################################################################################################
+# test API provided through BaseForecaster
 
 ########################################################################################################################
 # test clone
@@ -87,11 +90,14 @@ def test_oh_setting(Forecaster):
     f.fit(y_train, FH0)
     assert f.oh is not None
     assert f.now == y_train.index[-1]
-    np.testing.assert_array_equal(f.oh.values, y_train.values)
+
+    # check data pointers
+    # np.testing.assert_array_equal(f.oh.index, y_train.index)
+    assert f.oh.index is y_train.index
 
     # check that oh and now is updated during update
     f.update(y_test)
-    np.testing.assert_array_equal(f.oh.values, np.append(y_train.values, y_test.values))
+    np.testing.assert_array_equal(f.oh.index, np.append(y_train.index, y_test.index))
     assert f.now == y_test.index[-1]
 
 
@@ -299,14 +305,3 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
     f.fit(y_train, FH0)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_different_fh_in_fit_and_predict_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    # passing different fh to predict than to fit works, but raises warning
-    with pytest.warns(UserWarning):
-        f.predict(FH0 + 1)
-    np.testing.assert_array_equal(f.fh, FH0 + 1)

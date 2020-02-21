@@ -245,12 +245,6 @@ def check_fh(fh):
 
     # sort fh
     fh.sort()
-
-    # check fh contains only non-zero positive values
-    # if fh[0] <= 0:
-    #     raise ValueError(f"fh must contain only positive values (>=1), "
-    #                      f"but found: {fh[0]}")
-
     return fh
 
 
