@@ -1,5 +1,5 @@
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils.testing.base import generate_df_from_array
 from sktime.utils.data_container import tabularize
 import pytest
 import pandas as pd

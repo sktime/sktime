@@ -157,6 +157,8 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
     def __init__(self, regressor, cv=None):
         super(_DirectReducer, self).__init__(regressor=regressor, cv=cv)
+        # use dictionary to link specific steps ahead of forecating horizon
+        # with fitted regressors
         self.regressors_ = []
 
     def fit(self, y_train, fh=None, X_train=None):
@@ -201,6 +203,10 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         for i, regressor in enumerate(self.regressors_):
             y_pred[i] = regressor.predict(X_last)
         return y_pred
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        # it's not clear how the direct reducer would generate in-sample predictions
+        raise NotImplementedError("in-sample predictions are not implemented")
 
 
 class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
@@ -262,6 +268,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         fh_idx = self._get_index_fh(fh)
         return y_pred[fh_idx]
 
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        raise NotImplementedError("in-sample predictions are not implemented")
 
 ##############################################################################
 # redution to regression

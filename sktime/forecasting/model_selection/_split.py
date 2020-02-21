@@ -66,36 +66,39 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
     def split(self, y):
         """Split time series using sliding window cross-validation"""
 
-        # check input
+        # check time index
         if isinstance(y, pd.Series):
             y = y.index
+        y = check_time_index(y)
 
-        # check time index
-        time_index = check_time_index(y)
-        n_timepoints = len(time_index)
-
-        # convert to zero-based integer index
-        time_index = np.arange(n_timepoints)
-
-        # compute parameters for splitting
-        # end point is end of last window
-        fh_max = self.fh.max()
-        end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
-
-        # start point
-        start = self.window_length
-
-        # check if computed values are feasible with the provided index
-        if self.window_length + fh_max > n_timepoints:
-            raise ValueError(f"`window_length` + `max(fh)` must be before the end of the "
-                             f"time index, but found: {self.window_length}+{fh_max} "
-                             f"> {n_timepoints}.")
+        end = self._compute_end(y)
+        fh = self.fh
+        window_length = self._window_length
+        step_length = self._step_length
 
         # split into windows
-        for split_point in range(start, end, self.step_length):
-            training_window = time_index[split_point - self.window_length:split_point]
-            test_window = time_index[split_point + self.fh - 1]
+        for split_point in range(window_length, end, step_length):
+            training_window = np.arange(split_point - window_length, split_point)
+            test_window = split_point + fh - 1
             yield training_window, test_window
+
+    def _compute_end(self, y):
+        """Helper function to compute the end of the last window"""
+        n_timepoints = len(y)
+        fh = self.fh
+
+        # end point is end of last window
+        is_in_sample = np.all(fh <= 0)
+        if is_in_sample:
+            end = n_timepoints + 1
+        else:
+            fh_max = fh[-1]
+            end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
+
+            # check if computed values are feasible with the provided index
+            if self._window_length + fh_max > n_timepoints:
+                raise ValueError(f"The window length and forecasting horizon are incompatible with the length of `y`")
+        return end
 
     def get_n_splits(self, y=None):
         if y is None:
@@ -103,16 +106,9 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
 
         if isinstance(y, pd.Series):
             y = y.index
+        y = check_time_index(y)
 
-        # check time index
-        time_index = check_time_index(y)
-        n_timepoints = len(time_index)
-
-        # compute parameters for splitting
-        # end point is end of last window
-        fh_max = self.fh.max()
-        end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
-        # number of splits for given forecasting horizon, window length and step length
+        end = self._compute_end(y)
         return np.int(np.ceil((end - self.window_length) / self.step_length))
 
     @property

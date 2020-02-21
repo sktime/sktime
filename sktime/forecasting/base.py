@@ -599,11 +599,9 @@ class BaseLastWindowForecaster(BaseForecaster):
                                            return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        assert all(fh > 0)
         return self._predict_fixed_cutoff(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        assert all(fh <= 0)
         #  convert in-sample fh steps to cutoff points
         index = self._get_absolute_fh(fh)
         cutoffs = index - 1  # points before fh steps

@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
+from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.utils.validation.forecasting import check_fh
 
 # generate random series
@@ -22,9 +22,11 @@ CUTOFF_POINTS = [
     np.array([-45, -40])
 ]
 
+ALL_FHS = DEFAULT_FHS + DEFAULT_INSAMPLE_FHS
+
 
 @pytest.mark.parametrize("y, cutoff_points", [(y, cutoff_points) for y, cutoff_points in zip(YS, CUTOFF_POINTS)])
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", ALL_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 def test_manual_window(y, cutoff_points, fh, window_length):
     # initiate rolling window cv iterator
@@ -50,7 +52,7 @@ def test_manual_window(y, cutoff_points, fh, window_length):
 
 
 @pytest.mark.parametrize("y", YS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", ALL_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
 def test_sliding_window(y, fh, window_length, step_length):
