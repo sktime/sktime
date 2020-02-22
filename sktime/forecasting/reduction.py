@@ -208,6 +208,10 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # use last window as new input data for time series regressors to make forecasts
         # get last window from observation horizon
+
+        if np.any(fh <= 0):
+            raise NotImplementedError("in-sample predictions are not implemented")
+
         X_last = self._convert_data([last_window])
 
         # preallocate array for forecasted values
@@ -280,7 +284,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self._window_length:]
 
-        fh_idx = self._get_index_fh(fh)
+        fh_idx = self._get_array_index_fh(fh)
         return y_pred[fh_idx]
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):

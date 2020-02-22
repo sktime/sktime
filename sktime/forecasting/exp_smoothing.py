@@ -175,6 +175,6 @@ class ExpSmoothingForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         self._set_oh(y_new)
 
         if update_params:
-            self._fit_estimator(y_new)
+            raise NotImplementedError()
 
         return self

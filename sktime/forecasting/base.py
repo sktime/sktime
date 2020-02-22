@@ -144,14 +144,10 @@ class BaseForecaster(BaseEstimator):
         """
 
         # input checks
-        if X_test is not None or return_pred_int:
+        if return_pred_int:
             raise NotImplementedError()
 
         self._check_is_fitted()
-
-        # keep previous now to reset after
-        # update predict routine
-        previous_now = self.now
 
         if cv is None:
             # if no cv is provided, use default
@@ -164,58 +160,45 @@ class BaseForecaster(BaseEstimator):
 
         #  update oh, but reset now to time point before new data
         self._set_oh(y_test)
-        oh = self.oh
-        self._set_now(y_test.index[0] - 1)
 
         #  get window length from cv
         window_length = cv.window_length
 
-        # if any window would be before the first observation of the observation horizon,
-        # oh with missing values
-        oh_start = self.oh[0]
-        start = self.now - window_length + 1
-        is_before_oh = start < oh_start
-        if is_before_oh:
-            index = np.arange(self.now - window_length, self.now) + 1
-            presample = pd.Series(np.full(window_length, np.nan), index=index)
-            oh = presample.append(oh)
+        with self._detached_now():
+            self._set_now(y_test.index[0] - 1)
 
-        # select subset to iterate over from observation horizon
-        y = oh.iloc[start:]
-        time_index = y.index
+            # if any window would be before the first observation of the observation horizon,
+            # oh with missing values
+            oh_start = self.oh[0]
+            start = self.now - window_length + 1
+            is_before_oh = start < oh_start
+            if is_before_oh:
+                index = np.arange(self.now - window_length, self.now) + 1
+                presample = pd.Series(np.full(window_length, np.nan), index=index)
+                self._set_oh(presample)
 
-        # allocate lists for prediction results
-        y_preds = []
-        nows = []  # time points at which we predict
+            # select subset to iterate over from observation horizon
+            y = self.oh.iloc[start:]
 
-        # iteratively call update and predict, first update will contain only the
-        # last window before the given data and no new data, so that we start by
-        # predicting the first value of the given data
-        for new_window, _ in cv.split(time_index):
-            y_new = y.iloc[new_window]
+            # allocate lists for prediction results
+            y_preds = []
+            nows = []  # time points at which we predict
 
-            # if presample, only update now and predict nan
-            now = y_new.index[-1]
-            is_presample = now - window_length + 1 < oh_start
-            if is_presample:
-                self._set_now(now)
-                index = self._get_absolute_fh(fh)
-                y_test_pred = pd.Series(np.full(len(fh), np.nan), index=index)
+            # iteratively call update and predict, first update will contain only the
+            # last window before the given data and no new data, so that we start by
+            # predicting the first value of the given data
+            for new_window, _ in cv.split(y):
+                y_new = y.iloc[new_window]
 
-            # otherwise, run update and predict
-            else:
                 # update: while the observation horizon is already_test updated, we still need to
                 # update `now` and may_test want to update fitted parameters
                 self.update(y_new, update_params=update_params)
 
                 # predict: make a forecast at each step
-                y_test_pred = self.predict(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
+                y_pred = self.predict(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
 
-            y_preds.append(y_test_pred)
-            nows.append(self.now)
-
-        # reset now
-        self._set_now(previous_now)
+                y_preds.append(y_pred)
+                nows.append(self.now)
 
         # format results
         if len(fh) > 1:
@@ -457,7 +440,7 @@ class BaseForecaster(BaseEstimator):
                              "before observation horizon")
         return np.sort(fh_abs)
 
-    def _get_index_fh(self, fh=None):
+    def _get_array_index_fh(self, fh=None):
         """Convert the step-ahead forecast horizon relative to the end
         of the observation horizon into the zero-based forecasting horizon
         for array indexing.
@@ -564,6 +547,20 @@ class BaseLastWindowForecaster(BaseForecaster):
         self._window_length = None
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Predict
+
+        Parameters
+        ----------
+        fh : int, list or np.array
+        X : pd.DataFrame
+        return_pred_int : bool, optional (default=False)
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+        y_pred_int : pd.DataFrame
+        """
         self._check_is_fitted()
         self._set_fh(fh)
 
@@ -592,6 +589,21 @@ class BaseLastWindowForecaster(BaseForecaster):
 
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
+        """Make predictions and updates iteratively over the test set.
+
+        Parameters
+        ----------
+        y_test : pd.Series
+        cv : cross-validation generator, optional (default=None)
+        X_test : pd.DataFrame, optional (default=None)
+        update_params : bool, optional (default=False)
+        return_pred_int : bool, optional (default=False)
+        alpha : int or list of ints, optional (default=None)
+
+        Returns
+        -------
+        y_pred : pd.Series or pd.DataFrame
+        """
         self._check_is_fitted()
         self._set_oh(y_test)
 
@@ -602,18 +614,25 @@ class BaseLastWindowForecaster(BaseForecaster):
                                            return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        """Make out-of-sample predictions"""
         return self._predict_fixed_cutoff(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+        """Make in-sample predictions"""
         #  convert in-sample fh steps to cutoff points
         index = self._get_absolute_fh(fh)
         cutoffs = index - 1  # points before fh steps
+
+        # specify manual window splitter for iterating over cutoff points
+        # set fh=1 for in-sample predictions
         cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self._window_length)
         y_train = self.oh
         return self._predict_moving_cutoff(y_train, cv, X_test=X, update=False, return_pred_int=return_pred_int,
                                            alpha=alpha)
 
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make a single prediction at a fixed cutoff point, potentially predicting multiple steps
+        ahead"""
         if return_pred_int or X is not None:
             raise NotImplementedError()
 
@@ -629,8 +648,14 @@ class BaseLastWindowForecaster(BaseForecaster):
 
     def _predict_moving_cutoff(self, y_test, cv, X_test=None, update=True, update_params=False, return_pred_int=False,
                                alpha=DEFAULT_ALPHA):
-        """static moving cutoff predictions, i.e. no previously
-        predicted values are used to make subsequent predictions"""
+        """Make repeated predictions at a moving cutoff points over the time horizon of the passed data `y_test`.
+
+        The cutoff points are generated by the CV generator, which iterates over `y_test`. At each cutoff point,
+        the forecaster is updated and a fixed cutoff point prediction is made.
+
+        To make subsequent predictions, actual observations from `y_test` are used rather than previously made
+        predictions
+        """
         if not update and update_params:
             raise ValueError("`update_params` can only be used if `update`=True")
 
@@ -670,6 +695,7 @@ class BaseLastWindowForecaster(BaseForecaster):
                     self._set_now(y_new.index[-1])
 
                 y_pred = self._predict_fixed_cutoff(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
+
                 y_preds.append(y_pred)
                 nows.append(self.now)
 
@@ -687,11 +713,14 @@ class BaseLastWindowForecaster(BaseForecaster):
         raise NotImplementedError("abstract method")
 
     def _predict_nan(self, fh, return_pred_int=False):
+        """Helper function to return missing values when no predictions can be made"""
         if return_pred_int:
             raise NotImplementedError()
         return np.full(len(fh), np.nan)
 
     def _get_last_window(self):
+        """Helper function to get the last window of available data, depending on the current temporal state of the
+        model"""
         start = self.now - self._window_length + 1
         end = self.now
         return self.oh.loc[start:end].values

@@ -20,7 +20,7 @@ __all__ = [
     "test_score",
     "test_not_fitted_error",
     "test_predict_time_index",
-    "test_update_predict_check_predicted_indices",
+    "test_update_predict_predicted_indices",
 ]
 
 import numpy as np
@@ -70,7 +70,7 @@ def test_return_self_for_fit_set_params_update(Forecaster):
     ret = f.fit(y_train, FH0)
     assert ret == f
 
-    ret = f.update(y_test)
+    ret = f.update(y_test, update_params=False)
     assert ret == f
 
     ret = f.set_params()
@@ -96,7 +96,7 @@ def test_oh_setting(Forecaster):
     assert f.oh.index is y_train.index
 
     # check that oh and now is updated during update
-    f.update(y_test)
+    f.update(y_test, update_params=False)
     np.testing.assert_array_equal(f.oh.index, np.append(y_train.index, y_test.index))
     assert f.now == y_test.index[-1]
 
@@ -110,7 +110,7 @@ def test_not_fitted_error(Forecaster):
         f.predict(fh=1)
 
     with pytest.raises(NotFittedError):
-        f.update(y_test)
+        f.update(y_test, update_params=False)
 
     with pytest.raises(NotFittedError):
         cv = SlidingWindowSplitter(fh=1, window_length=1)
@@ -206,7 +206,7 @@ def test_compute_pred_errors(Forecaster):
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_update_predict_check_predicted_indices(Forecaster, fh, window_length, step_length):
+def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_length):
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)

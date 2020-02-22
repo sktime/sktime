@@ -19,20 +19,23 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 def compute_expected_index_from_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
+    fh = check_fh(fh)
     y = check_y(y)
     index = y.index.values
-    predict_at_all = np.arange(index[0] - 1, index[-1], step_length)
+    start = index[0] - 1  # initial cutoff
+    end = index[-1]  #  last point to predict
+    cutoffs = np.arange(start, end, step_length)
 
-    # only predict at time points if all steps in fh can be predicted within y_test
-    predict_at = predict_at_all[np.isin(predict_at_all + max(fh), index)]
-    n_predict_at = len(predict_at)
+    # only predict at time points if all steps in fh can be predicted before the end of y_test
+    cutoffs = cutoffs[cutoffs + max(fh) <= max(index)]
+    n_cutoffs = len(cutoffs)
 
     # all time points predicted, including duplicates from overlapping fhs
-    broadcast_fh = np.repeat(fh, n_predict_at).reshape(len(fh), n_predict_at)
-    points_predicted = predict_at + broadcast_fh
+    fh_broadcasted = np.repeat(fh, n_cutoffs).reshape(len(fh), n_cutoffs)
+    pred_index = cutoffs + fh_broadcasted
 
     # return only unique time points
-    return np.unique(points_predicted)
+    return np.unique(pred_index)
 
 
 def generate_polynomial_series(n, order, coefs=None):
