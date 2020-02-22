@@ -22,6 +22,7 @@ PANDAS_MIN_VERSION = "0.23.0"
 SKLEARN_MIN_VERSION = "0.21.0"
 STATSMODELS_MIN_VERSION = "0.9.0"
 SCIKIT_POSTHOCS_MIN_VERSION = "0.5.0"
+PMDARIMA_VERSION = "1.5"
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -65,7 +66,8 @@ INSTALL_REQUIRES = (
     'pandas>={}'.format(PANDAS_MIN_VERSION),
     'joblib>={}'.format(JOBLIB_MIN_VERSION),
     'scikit-posthocs>={}'.format(SCIKIT_POSTHOCS_MIN_VERSION),
-    'statsmodels>={}'.format(STATSMODELS_MIN_VERSION)
+    'statsmodels>={}'.format(STATSMODELS_MIN_VERSION),
+    'pmdarima>={}'.format(PMDARIMA_VERSION)
 )
 CLASSIFIERS = [
     'Intended Audience :: Science/Research',
