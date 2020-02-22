@@ -56,6 +56,8 @@ class Deseasonaliser(BaseTransformer):
                 raise NotImplementedError(f"Currently does not work on multiple columns, make use of ColumnTransformer "
                                           f"instead")
 
+        check_is_fitted(self, 'is_fitted_')
+        validate_X(X)
         self._input_shape = X.shape
 
         # when seasonal periodicity is equal to 1 return X unchanged
@@ -68,9 +70,6 @@ class Deseasonaliser(BaseTransformer):
         # convert into tabular format
         tabulariser = Tabulariser()
         Xs = tabulariser.transform(X.iloc[:, :1])
-
-        check_is_fitted(self, 'is_fitted_')
-        validate_X(X)
 
         # fit seasonal decomposition model
         seasonal_components = self._fit_seasonal_decomposition_model(Xs)
@@ -169,7 +168,8 @@ class Deseasonaliser(BaseTransformer):
         """Fit seasonal decopmosition model and return fitted seasonal components"""
         # statsmodels `seasonal_decompose` expects time series to be in columns, rather than rows, we therefore need to
         # transpose X here
-        res = seasonal_decompose(X.T, model=self.model, freq=self.sp, filt=None, two_sided=True, extrapolate_trend=0)
+        res = seasonal_decompose(X.values.T, model=self.model, period=self.sp, filt=None, two_sided=True,
+                                 extrapolate_trend=0)
         seasonal_components = res.seasonal.T
         return np.atleast_2d(seasonal_components)
 
