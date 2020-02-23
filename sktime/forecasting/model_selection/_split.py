@@ -44,6 +44,12 @@ class BaseTemporalCrossValidator:
         """
         raise NotImplementedError("abstract method")
 
+    def get_cutoffs(self, y=None):
+        """
+        Return the cutoff time points.
+        """
+        raise NotImplementedError("abstract method")
+
     @property
     def fh(self):
         """Forecasting horizon"""
@@ -54,6 +60,13 @@ class BaseTemporalCrossValidator:
         """Window length"""
         return self._window_length
 
+    @staticmethod
+    def _check_y(y):
+        # additionally allow for pd.Series
+        if isinstance(y, pd.Series):
+            y = y.index
+        return check_time_index(y)
+
 
 class SlidingWindowSplitter(BaseTemporalCrossValidator):
 
@@ -62,25 +75,27 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
         super(SlidingWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def split(self, y):
-        """Split time series using sliding window cross-validation"""
+        """Split `y` using sliding window cross-validation
 
-        # check time index
-        if isinstance(y, pd.Series):
-            y = y.index
-        y = check_time_index(y)
+        Parameters
+        ----------
+        y : index-like
 
-        end = self._compute_end(y)
-        fh = self.fh
-        window_length = self._window_length
-        step_length = self._step_length
+        Yields
+        ------
+        training_window : np.array
+        test_window : np.array
+        """
+        y = self._check_y(y)
 
         # split into windows
-        for split_point in range(window_length, end, step_length):
-            training_window = np.arange(split_point - window_length, split_point)
-            test_window = split_point + fh - 1
+        end = self._get_end(y)
+        for split_point in range(self.window_length, end, self.step_length):
+            training_window = np.arange(split_point - self.window_length, split_point)
+            test_window = split_point + self.fh - 1
             yield training_window, test_window
 
-    def _compute_end(self, y):
+    def _get_end(self, y):
         """Helper function to compute the end of the last window"""
         n_timepoints = len(y)
         fh = self.fh
@@ -101,13 +116,28 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
     def get_n_splits(self, y=None):
         if y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
-
-        if isinstance(y, pd.Series):
-            y = y.index
-        y = check_time_index(y)
-
-        end = self._compute_end(y)
+        y = self._check_y(y)
+        end = self._get_end(y)
         return np.int(np.ceil((end - self.window_length) / self.step_length))
+
+    def get_cutoffs(self, y=None):
+        """Get the cutoff time points.
+
+        Parameters
+        ----------
+        y : index-like
+
+        Returns
+        -------
+        cutoffs : np.array
+        """
+        if y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
+        y = self._check_y(y)
+        end = self._get_end(y)
+        cutoff_indices = np.arange(self.window_length, end, self.step_length) - 1
+        cutoffs = y.values[cutoff_indices]
+        return cutoffs
 
     @property
     def step_length(self):
@@ -122,40 +152,40 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
         super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def split(self, y):
+        """Split `y` at cutoff points.
+
+        Parameters
+        ----------
+        y : index-like
+
+        Yields
+        ------
+        training_window : np.array
+        test_window : np.array
+        """
         # check input
-        if isinstance(y, pd.Series):
-            y = y.index
-
-        # check time index
-        time_index = check_time_index(y)
-        n_timepoints = len(time_index)
-
-        # get parameters
-        window_length = self._window_length
-        fh = self._fh
-        cutoffs = self.cutoffs
-
-        self._n_splits = len(cutoffs)
+        y = self._check_y(y)
 
         # check that all time points are in time index
-        if not all(np.isin(cutoffs, time_index)):
+        if not all(np.isin(self.cutoffs, y)):
             raise ValueError("`cutoff` points must be in time index.")
 
-        if not all(np.isin(cutoffs - window_length + 1, time_index)):
+        if not all(np.isin(self.cutoffs - self.window_length + 1, y)):
             raise ValueError("Some windows would be outside of the time index; "
                              "please change `window length` or `time_points` ")
 
         # convert to zero-based integer index
-        cutoffs = np.where(np.isin(time_index, cutoffs))[0]
-        time_index = np.arange(n_timepoints)
-
-        for time_point in cutoffs:
-            training_window = time_index[time_point - window_length + 1:time_point + 1]
-            test_window = time_index[time_point + fh]
+        cutoffs = np.where(np.isin(y, self.cutoffs))[0]
+        for cutoff in cutoffs:
+            training_window = np.arange(cutoff - self.window_length, cutoff) + 1
+            test_window = cutoff + self.fh
             yield training_window, test_window
 
     def get_n_splits(self, y=None):
         return len(self.cutoffs)
+
+    def get_cutoffs(self, y=None):
+        return self.cutoffs
 
 
 def temporal_train_test_split(*arrays, test_size=None, train_size=None):

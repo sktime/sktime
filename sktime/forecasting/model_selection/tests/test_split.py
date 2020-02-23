@@ -28,7 +28,7 @@ ALL_FHS = DEFAULT_FHS + DEFAULT_INSAMPLE_FHS
 @pytest.mark.parametrize("y, cutoff_points", [(y, cutoff_points) for y, cutoff_points in zip(YS, CUTOFF_POINTS)])
 @pytest.mark.parametrize("fh", ALL_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-def test_manual_window(y, cutoff_points, fh, window_length):
+def test_manual_window_split(y, cutoff_points, fh, window_length):
     # initiate rolling window cv iterator
     cv = ManualWindowSplitter(cutoff_points, fh=fh, window_length=window_length)
 
@@ -41,13 +41,20 @@ def test_manual_window(y, cutoff_points, fh, window_length):
     inputs = np.vstack(inputs)
     outputs = np.vstack(outputs)
 
-    ns = cv.get_n_splits(y)
-    assert ns == len(cutoff_points)
-    assert inputs.shape == (ns, window_length)  # check window length
-    assert outputs.shape == (ns, len(check_fh(fh)))  # check fh
+    n_splits = cv.get_n_splits(y)
+    cutoffs = cv.get_cutoffs(y)
 
-    # check if last values of input window are split points
-    # comparing relative indices returned by cv iterator with absolute split points
+    # check number of splits
+    assert n_splits == len(cutoff_points)
+
+    # check window length
+    assert inputs.shape == (n_splits, window_length)
+
+    # check fh
+    assert outputs.shape == (n_splits, len(check_fh(fh)))
+
+    # check cutoffs
+    # comparing relative indices returned by cv iterator with absolute cutoffs
     np.testing.assert_array_equal(y.iloc[inputs[:, -1]].values, y.loc[cutoff_points].values)
 
 
@@ -55,7 +62,7 @@ def test_manual_window(y, cutoff_points, fh, window_length):
 @pytest.mark.parametrize("fh", ALL_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_sliding_window(y, fh, window_length, step_length):
+def test_sliding_window_split(y, fh, window_length, step_length):
     # initiate rolling window cv iterator
     cv = SlidingWindowSplitter(fh=fh, window_length=window_length, step_length=step_length)
 
@@ -68,9 +75,23 @@ def test_sliding_window(y, fh, window_length, step_length):
     inputs = np.vstack(inputs)
     outputs = np.vstack(outputs)
 
-    ns = cv.get_n_splits(y)
+    n_splits = cv.get_n_splits(y)
+    cutoffs = cv.get_cutoffs(y)
 
-    np.testing.assert_array_equal(inputs[0, :], np.arange(window_length))  # check first window
-    np.testing.assert_array_equal(inputs[:, 0] // step_length, np.arange(ns))  # check step length
-    assert inputs.shape == (ns, window_length)  # check window length
-    assert outputs.shape == (ns, len(check_fh(fh)))  # check fh
+    # check cutoffs
+    cutoff_indicies = inputs[:, -1]
+    np.testing.assert_array_equal(y.iloc[cutoff_indicies].index.values, cutoffs)
+
+    # check first window
+    np.testing.assert_array_equal(inputs[0, :], np.arange(window_length))
+
+    # check step length
+    np.testing.assert_array_equal(inputs[:, 0] // step_length, np.arange(n_splits))
+
+    # check window length
+    assert inputs.shape == (n_splits, window_length)
+
+    # check fh
+    assert outputs.shape == (n_splits, len(check_fh(fh)))
+
+
