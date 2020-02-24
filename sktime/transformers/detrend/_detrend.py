@@ -87,4 +87,4 @@ class Detrender(BaseSeriesToSeriesTransformer):
         return y + y_pred
 
     def _get_relative_fh(self, y):
-        return y.index.values - self.forecaster_.now
+        return y.index.values - self.forecaster_.cutoff

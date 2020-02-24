@@ -61,8 +61,8 @@ class TransformedTargetForecaster(BaseForecaster, MetaForecasterMixin):
         self.forecaster_._set_oh(oh)
 
     @property
-    def now(self):
-        return self.forecaster_.now
+    def cutoff(self):
+        return self.forecaster_.cutoff
 
     @property
     def oh(self):

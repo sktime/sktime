@@ -33,7 +33,7 @@ class BaseForecaster(BaseEstimator):
 
     def __init__(self):
         self._oh = None  # observation horizon, i.e. time points seen in fit or update
-        self._now = None  # time point in observation horizon now which to make forecasts
+        self._cutoff = None  # time point in observation horizon cutoff which to make forecasts
         self._is_fitted = False
         self._fh = None
         super(BaseForecaster, self).__init__()
@@ -87,27 +87,27 @@ class BaseForecaster(BaseEstimator):
         else:
             self._oh = oh
 
-        # by default, set now to the end of the observation horizon
-        self._set_now(oh.index[-1])
+        # by default, set cutoff to the end of the observation horizon
+        self._set_cutoff(oh.index[-1])
 
     @property
-    def now(self):
+    def cutoff(self):
         """Now, the time point at which to make forecasts.
 
         Returns
         -------
-        now : int
+        cutoff : int
         """
-        return self._now
+        return self._cutoff
 
-    def _set_now(self, now):
-        """Set and update now, the time point at which to make forecasts.
+    def _set_cutoff(self, cutoff):
+        """Set and update cutoff, the time point at which to make forecasts.
 
         Parameters
         ----------
-        now : int
+        cutoff : int
         """
-        self._now = now
+        self._cutoff = cutoff
 
     @property
     def fh(self):
@@ -159,22 +159,22 @@ class BaseForecaster(BaseEstimator):
 
         fh = check_fh(cv.fh)
 
-        #  update oh, but reset now to time point before new data
+        #  update oh, but reset cutoff to time point before new data
         self._set_oh(y_test)
 
         #  get window length from cv
         window_length = cv.window_length
 
-        with self._detached_now():
-            self._set_now(y_test.index[0] - 1)
+        with self._detached_cutoff():
+            self._set_cutoff(y_test.index[0] - 1)
 
             # if any window would be before the first observation of the observation horizon,
             # oh with missing values
             oh_start = self.oh[0]
-            start = self.now - window_length + 1
+            start = self.cutoff - window_length + 1
             is_before_oh = start < oh_start
             if is_before_oh:
-                index = np.arange(self.now - window_length, self.now) + 1
+                index = np.arange(self.cutoff - window_length, self.cutoff) + 1
                 presample = pd.Series(np.full(window_length, np.nan), index=index)
                 self._set_oh(presample)
 
@@ -183,7 +183,7 @@ class BaseForecaster(BaseEstimator):
 
             # allocate lists for prediction results
             y_preds = []
-            nows = []  # time points at which we predict
+            cutoffs = []  # time points at which we predict
 
             # iteratively call update and predict, first update will contain only the
             # last window before the given data and no new data, so that we start by
@@ -192,20 +192,20 @@ class BaseForecaster(BaseEstimator):
                 y_new = y.iloc[new_window]
 
                 # update: while the observation horizon is already_test updated, we still need to
-                # update `now` and may_test want to update fitted parameters
+                # update `cutoff` and may_test want to update fitted parameters
                 self.update(y_new, update_params=update_params)
 
                 # predict: make a forecast at each step
                 y_pred = self.predict(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
 
                 y_preds.append(y_pred)
-                nows.append(self.now)
+                cutoffs.append(self.cutoff)
 
         # format results
         if len(fh) > 1:
             # return data frame when we predict multiple steps ahead
             y_preds = pd.DataFrame(y_preds).T
-            y_preds.columns = nows
+            y_preds.columns = cutoffs
         else:
             # return series for single step ahead predictions
             y_preds = pd.concat(y_preds)
@@ -429,10 +429,10 @@ class BaseForecaster(BaseEstimator):
             The absolute time index of the forecasting horizon
         """
         # user defined forecasting horizon `fh` is relative to the end of the
-        # observation horizon, i.e. `now`
+        # observation horizon, i.e. `cutoff`
         if fh is None:
             fh = self.fh
-        fh_abs = self.now + fh
+        fh_abs = self.cutoff + fh
 
         # for in-sample predictions, check if forecasting horizon is still within
         # observation horizon
@@ -455,14 +455,14 @@ class BaseForecaster(BaseEstimator):
         return fh - 1
 
     @contextmanager
-    def _detached_now(self):
-        """context manager to detach now"""
-        now = self.now  # remember initial now
+    def _detached_cutoff(self):
+        """context manager to detach cutoff"""
+        cutoff = self.cutoff  # remember initial cutoff
         try:
             yield
         finally:
-            # re-set now to initial state
-            self._set_now(now)
+            # re-set cutoff to initial state
+            self._set_cutoff(cutoff)
 
 
 class OptionalForecastingHorizonMixin:
@@ -494,7 +494,7 @@ class OptionalForecastingHorizonMixin:
 
             # a warning should only be raised if fh passed to fit is overwritten, but no warning is required
             # when no fh has been provided in fit, and different fhs are passed to predict, but this requires
-            # to keep track of whether fh has been passed to fit or not, hence not implemented for now
+            # to keep track of whether fh has been passed to fit or not, hence not implemented for cutoff
             fh = check_fh(fh)
             self._fh = fh
 
@@ -663,18 +663,18 @@ class BaseLastWindowForecaster(BaseForecaster):
         fh = cv.fh
         window_length = cv.window_length
 
-        with self._detached_now():
+        with self._detached_cutoff():
             # set before new data, so that first prediction is
             # first observation in new data
-            self._set_now(y_test.index[0] - 1)
-            start = self.now - window_length + 1
+            self._set_cutoff(y_test.index[0] - 1)
+            start = self.cutoff - window_length + 1
 
             # extend observation horizon into the past if any window
             # would be before the first observation
             start_oh = self.oh.index[0]
             is_pre_sample = start_oh > start
             if is_pre_sample:
-                index = np.arange(self.now - window_length, self.now) + 1
+                index = np.arange(self.cutoff - window_length, self.cutoff) + 1
                 presample = pd.Series(np.full(window_length, np.nan), index=index)
                 self._set_oh(presample)
                 y = self.oh
@@ -683,22 +683,22 @@ class BaseLastWindowForecaster(BaseForecaster):
 
             # initialise lists
             y_preds = []
-            nows = []
+            cutoffs = []
 
             # iterate over data
             for i, (new_window, _) in enumerate(cv.split(y)):
                 y_new = y.iloc[new_window]
 
-                # if udpate=True, run full update, otherwise only update now
+                # if udpate=True, run full update, otherwise only update cutoff
                 if update:
                     self.update(y_new, update_params=update_params)
                 else:
-                    self._set_now(y_new.index[-1])
+                    self._set_cutoff(y_new.index[-1])
 
                 y_pred = self._predict_fixed_cutoff(fh, X=X_test, return_pred_int=return_pred_int, alpha=alpha)
 
                 y_preds.append(y_pred)
-                nows.append(self.now)
+                cutoffs.append(self.cutoff)
 
             if len(fh) == 1:
                 # return series for single step ahead predictions
@@ -706,7 +706,7 @@ class BaseLastWindowForecaster(BaseForecaster):
             else:
                 # return data frame when we predict multiple steps ahead
                 y_pred = pd.DataFrame(y_preds).T
-                y_pred.columns = nows
+                y_pred.columns = cutoffs
 
             return y_pred
 
@@ -722,8 +722,8 @@ class BaseLastWindowForecaster(BaseForecaster):
     def _get_last_window(self):
         """Helper function to get the last window of available data, depending on the current temporal state of the
         model"""
-        start = self.now - self._window_length + 1
-        end = self.now
+        start = self.cutoff - self._window_length + 1
+        end = self.cutoff
         return self.oh.loc[start:end].values
 
 
