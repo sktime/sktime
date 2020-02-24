@@ -7,12 +7,13 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.composition import TransformedTargetForecaster
+from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.reduction import DirectRegressionForecaster
-from sktime.forecasting.reduction import DirectTimeSeriesRegressionForecaster
-from sktime.forecasting.reduction import RecursiveRegressionForecaster
-from sktime.forecasting.reduction import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
@@ -26,7 +27,11 @@ DEFAULT_INSTANTIATIONS = {
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
     RecursiveTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
-    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())}
+    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())},
+    EnsembleForecaster: {"forecasters": [
+        ("last", NaiveForecaster()),
+        ("mean", NaiveForecaster(strategy="mean", window_length=3))
+    ]}
 }
 
 

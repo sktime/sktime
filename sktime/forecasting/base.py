@@ -7,7 +7,8 @@ __all__ = [
     "RequiredForecastingHorizonMixin",
     "OptionalForecastingHorizonMixin",
     "MetaForecasterMixin",
-    "DEFAULT_ALPHA"
+    "DEFAULT_ALPHA",
+    "is_forecaster"
 ]
 
 from contextlib import contextmanager
@@ -729,3 +730,19 @@ class BaseLastWindowForecaster(BaseForecaster):
 class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
     """Mixin class for all meta forecasters in sktime."""
+
+
+def is_forecaster(estimator):
+    """Return True if the given estimator is (probably) a forecaster.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a forecaster and False otherwise.
+    """
+    return getattr(estimator, "_estimator_type", None) == "forecaster"
