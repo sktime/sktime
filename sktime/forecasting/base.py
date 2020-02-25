@@ -726,6 +726,10 @@ class BaseLastWindowForecaster(BaseForecaster):
         end = self.cutoff
         return self.oh.loc[start:end].values
 
+    @property
+    def window_length(self):
+        return self._window_length
+
 
 class MetaForecasterMixin:
     _required_parameters = ["forecaster"]

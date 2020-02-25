@@ -34,18 +34,12 @@ class BaseReducer(BaseLastWindowForecaster):
 
     _required_parameters = ["regressor"]
 
-    def __init__(self, regressor, cv=None):
+    def __init__(self, regressor, window_length=10, step_length=1):
         super(BaseReducer, self).__init__()
-
         self.regressor = regressor
-
-        if cv is None:
-            cv = SlidingWindowSplitter()
-        self._cv = check_cv(cv)
-
-        # no need to validate window length, has been
-        # validated already in CV object
-        self._window_length = cv.window_length
+        self._window_length = window_length
+        self._step_length = step_length
+        self._cv = None
 
     def update(self, y_new, X_new=None, update_params=False):
         if X_new is not None or update_params:
@@ -101,8 +95,9 @@ class BaseReducer(BaseLastWindowForecaster):
             Array of target values.
         """
         X = self._convert_x_windows(x_windows)
+
+        # during prediction, y=None, so only return X
         if y_windows is None:
-            # during prediction, y=None, so only return X
             return X
 
         y = self._convert_y_windows(y_windows)
@@ -115,6 +110,10 @@ class BaseReducer(BaseLastWindowForecaster):
     @staticmethod
     def _convert_x_windows(X):
         raise NotImplementedError("abstract method")
+
+    @property
+    def step_length(self):
+        return self._step_length
 
 
 class ReducedTimeSeriesRegressorMixin:
@@ -135,7 +134,7 @@ class ReducedTimeSeriesRegressorMixin:
             Nested time series data frame.
         """
         # return nested dataframe
-        return pd.DataFrame(pd.Series([np.asarray(xi) for xi in x_windows]))
+        return pd.DataFrame(pd.Series([pd.Series(xi) for xi in x_windows]))
 
     @staticmethod
     def _convert_y_windows(y_windows):
@@ -169,12 +168,6 @@ class ReducedTabularRegressorMixin:
 class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "direct"
 
-    def __init__(self, regressor, cv=None):
-        super(_DirectReducer, self).__init__(regressor=regressor, cv=cv)
-        # use dictionary to link specific steps ahead of forecating horizon
-        # with fitted regressors
-        self.regressors_ = []
-
     def fit(self, y_train, fh=None, X_train=None):
         # input checks
         if X_train is not None:
@@ -184,18 +177,14 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self._set_fh(fh)
 
         # for the direct reduction strategy, a separate forecaster is fitted
-        # for step ahead of the forecasting horizon; raise warning if fh in cv
-        # does not contain fh passed to fit
-        if not np.array_equal(self._cv.fh, self.fh):
-            warn(f"The `fh` of the temporal cross validator `cv` must contain the "
-                 f"`fh` passed to `fit`, the `fh` of the `cv` will be ignored and "
-                 f"the `fh` passed to `fit` will be used instead.")
-            self._cv._fh = self.fh
+        # for each step ahead of the forecasting horizon
+        self._cv = SlidingWindowSplitter(fh=self.fh, window_length=self.window_length, step_length=self.step_length)
 
         # transform data using rolling window split
         X_train, Y_train = self.transform(y_train, X_train)
 
         # iterate over forecasting horizon
+        self.regressors_ = []
         for i in range(len(self.fh)):
             y_train = Y_train[:, i]
             regressor = clone(self.regressor)
@@ -230,19 +219,6 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
 class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
-    def __init__(self, regressor, cv=None):
-        super(_RecursiveReducer, self).__init__(regressor=regressor, cv=cv)
-
-        # for recursive reduction strategy, the forecaster are fitted on
-        # one-step ahead forecast and then recursively applied to make
-        # forecasts for the whole forecasting horizon, raise warning if
-        # different fh is given in cv
-        if not np.array_equal(self._cv.fh, np.array([1])):
-            warn(f"The `fh` of the temporal cross validator `cv` must be 1, but found: {cv.fh}. "
-                 f"This value will be ignored and 1 will be used instead.")
-            cv.fh = np.array([1])
-        self.regressor_ = None
-
     def fit(self, y_train, fh=None, X_train=None):
         """Fit forecaster"""
         # input checks
@@ -252,6 +228,11 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # set values
         self._set_oh(y_train)
         self._set_fh(fh)
+
+        # set up cv iterator, for recursive strategy, a single estimator
+        # is fit for a one-step-ahead forecasting horizon and then called
+        # iteratively to predict multiple steps ahead
+        self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length, step_length=self.step_length)
 
         # transform data
         X_train, y_train = self.transform(y_train, X_train)

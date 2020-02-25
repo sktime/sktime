@@ -42,7 +42,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
         self.sp = sp
-        self.window_length = window_length
+        self._window_length = window_length
 
         if self.strategy in ("last", "seasonal_last"):
             if window_length is not None:
