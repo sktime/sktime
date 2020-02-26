@@ -66,7 +66,7 @@ def test_clone(Forecaster):
 ########################################################################################################################
 # fit, set_params and update return self
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_return_self_for_fit_set_params_update(Forecaster):
+def test_fit_update(Forecaster):
     f = _construct_instance(Forecaster)
     ret = f.fit(y_train, FH0)
     assert ret == f
@@ -76,6 +76,11 @@ def test_return_self_for_fit_set_params_update(Forecaster):
 
     ret = f.set_params()
     assert ret == f
+
+    # fitted params
+    if hasattr(f, "get_fitted_params"):
+        params = f.get_fitted_params()
+        assert isinstance(params, dict)
 
 
 ########################################################################################################################
@@ -101,6 +106,25 @@ def test_oh_setting(Forecaster):
     np.testing.assert_array_equal(f.oh.index, np.append(y_train.index, y_test.index))
     assert f.cutoff == y_test.index[-1]
 
+
+########################################################################################################################
+# not fitted error
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_not_fitted_error(Forecaster):
+    f = _construct_instance(Forecaster)
+    with pytest.raises(NotFittedError):
+        f.predict(fh=1)
+
+    with pytest.raises(NotFittedError):
+        f.update(y_test, update_params=False)
+
+    with pytest.raises(NotFittedError):
+        cv = SlidingWindowSplitter(fh=1, window_length=1)
+        f.update_predict(y_test, cv=cv)
+
+    if hasattr(f, "get_fitted_params"):
+        with pytest.raises(NotFittedError):
+            f.get_fitted_params()
 
 ########################################################################################################################
 # not fitted error

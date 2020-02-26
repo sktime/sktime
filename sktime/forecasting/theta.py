@@ -140,26 +140,6 @@ class ThetaForecaster(ExpSmoothingForecaster):
 
         return y
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Internal predict"""
-        # SES.
-        y_pred = super(ThetaForecaster, self)._predict(fh, X=X)
-
-        # Add drift.
-        drift = self._compute_drift()
-        y_pred += drift
-
-        if self._is_seasonal:
-            # Reseasonalise.
-            y_pred_nested = self._to_nested(y_pred)
-            y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
-
-        if return_pred_int:
-            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
-            return y_pred, pred_int
-
-        return y_pred
-
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """
         Make forecasts.
@@ -179,7 +159,22 @@ class ThetaForecaster(ExpSmoothingForecaster):
         """
         self._check_is_fitted()
         self._set_fh(fh)  # set forecast horizon
-        return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        y_pred = super(ThetaForecaster, self).predict(fh, X=X)
+
+        # Add drift.
+        drift = self._compute_drift()
+        y_pred += drift
+
+        if self._is_seasonal:
+            # Reseasonalise.
+            y_pred_nested = self._to_nested(y_pred)
+            y_pred = self._deseasonaliser.inverse_transform(y_pred_nested).iloc[0, 0]
+
+        if return_pred_int:
+            pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
+            return y_pred, pred_int
+
+        return y_pred
 
     def _compute_trend(self, y):
         # Trend calculated through least squares regression.
@@ -237,3 +232,7 @@ class ThetaForecaster(ExpSmoothingForecaster):
             self.trend_ = self._compute_trend(y_new)
 
         return self
+
+    def get_fitted_params(self):
+        fitted_params = ("initial_level", "smoothing_level")
+        return {param: self._fitted_estimator.params[param] for param in fitted_params}
