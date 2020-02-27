@@ -12,6 +12,8 @@ from sktime.forecasting.base import DEFAULT_ALPHA
 
 class BaseStatsModelsForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
 
+    _fitted_param_names = tuple()
+
     def __init__(self):
         self._fitted_estimator = None
         super(BaseStatsModelsForecaster, self).__init__()
@@ -92,4 +94,9 @@ class BaseStatsModelsForecaster(OptionalForecastingHorizonMixin, BaseForecaster)
         return self
 
     def get_fitted_params(self):
-        raise NotImplementedError("abstract method")
+        self._check_is_fitted()
+        return {name: self._fitted_estimator.params.get(name)
+                for name in self.get_fitted_param_names()}
+
+    def get_fitted_param_names(self):
+        return self._fitted_param_names

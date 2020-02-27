@@ -49,6 +49,9 @@ class ExpSmoothingForecaster(BaseStatsModelsForecaster):
         and practice. OTexts, 2014.
     """
 
+    _fitted_param_names = ("initial_level", "initial_slope", "initial_seasons", "smoothing_level", "smoothing_slope",
+                           "smoothing_seasonal", "damping_slope")
+
     def __init__(
             self,
             trend=None,
@@ -103,9 +106,3 @@ class ExpSmoothingForecaster(BaseStatsModelsForecaster):
             use_basinhopping=self.use_basinhopping,
         )
 
-    def get_fitted_params(self):
-        self._check_is_fitted()
-        fitted_params = ("initial_level", "initial_slope", "initial_seasons",
-                         "smoothing_level", "smoothing_slope",
-                         "smoothing_seasonal", "damping_slope")
-        return {param: self._fitted_estimator.params[param] for param in fitted_params}

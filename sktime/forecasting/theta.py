@@ -72,6 +72,8 @@ class ThetaForecaster(ExpSmoothingForecaster):
            <https://www.sciencedirect.com/science/article/pii/S0169207001001431>`_
     """
 
+    _fitted_param_names = ("initial_level", "smoothing_level")
+
     def __init__(self, smoothing_level=None, deseasonaliser=None, sp=1):
 
         self.deseasonaliser = deseasonaliser
@@ -232,7 +234,3 @@ class ThetaForecaster(ExpSmoothingForecaster):
             self.trend_ = self._compute_trend(y_new)
 
         return self
-
-    def get_fitted_params(self):
-        fitted_params = ("initial_level", "smoothing_level")
-        return {param: self._fitted_estimator.params[param] for param in fitted_params}
