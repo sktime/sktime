@@ -7,8 +7,10 @@ from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import check_equal_index, convert_data
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
+import tsfresh
 from tsfresh import extract_features, extract_relevant_features, select_features,defaults
 from tsfresh.feature_extraction import ComprehensiveFCParameters,MinimalFCParameters,EfficientFCParameters
+from tsfresh.utilities.dataframe_functions import impute
 
 COMPREHENSIVE = "COMPREHENSIVE"
 MINIMAL = "MINIMAL"
@@ -223,7 +225,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         return Xt
 
 
-class TsFreshTransfomer(BaseTransformer):
+class TsFreshFeatureExtractor(BaseTransformer):
     
     def __init__(self,default_fc_parameters=None,kind_to_fc_parameters=None,
                     chunksize=defaults.CHUNKSIZE,
@@ -247,14 +249,43 @@ class TsFreshTransfomer(BaseTransformer):
         self.passed_default_fc_params = None
         self.passed_kind_to_fc_params = None
 
-    # TODO remove this method?
-    def _get_formatted_predictions(self,y):
-        y_time_series_container = []
-        for i in range(len(y)):
-            y_time_series_container.append([(i+1),y[i]])
-        return y_time_series_container
+    def _check_default_rc_parameters(self):
 
-    def fit(X, y=None):
+        if self.default_fc_parameters is None:
+            return
+
+        if not (isinstance(self.default_fc_parameters,str) or isinstance(self.default_fc_parameters,dict) or isinstance(self.default_fc_parameters,
+                (tsfresh.feature_extraction.settings.ComprehensiveFCParameters,
+                tsfresh.feature_extraction.settings.MinimalFCParameters,
+                tsfresh.feature_extraction.settings.EfficientFCParameters))):
+            raise ValueError("default_fc_parameters must be either of the predefined classes or of type dict or a string")
+        
+        #TODO remove valuerror in future versions
+        if isinstance(self.default_fc_parameters,str):
+            if self.default_fc_parameters == COMPREHENSIVE:
+                self.passed_default_fc_params = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
+            elif self.default_fc_parameters == MINIMAL:
+                self.passed_default_fc_params = tsfresh.feature_extraction.settings.MinimalFCParameters()
+            elif self.default_fc_parameters == EFFICIENT:
+                self.passed_default_fc_params = tsfresh.feature_extraction.settings.EfficientFCParameters()
+            else:
+                raise ValueError("Unsupposrted default_fc_parameters, choose one of COMPREHENSIVE,MINIMAL or EFFICIENT")
+
+
+        elif isinstance(self.default_fc_parameters,
+            (tsfresh.feature_extraction.settings.ComprehensiveFCParameters,
+            tsfresh.feature_extraction.settings.MinimalFCParameters,
+            tsfresh.feature_extraction.settings.EfficientFCParameters)):
+            self.passed_default_fc_params = self.default_fc_parameters
+
+            # TODO checks to be performed over custom parameters
+        elif isinstance(self.default_fc_parameters,dict):
+            self.passed_default_fc_params = self.default_fc_parameters
+
+        else:
+            raise ValueError("Invalid type of default_fc_parameters")
+
+    def fit(self,X, y=None):
         #empty
         return self
 
@@ -273,47 +304,21 @@ class TsFreshTransfomer(BaseTransformer):
         validate_X(X)
         # check_X_is_univariate(X)
         X_time_series = convert_data(X)
-        # y_time_series = get_formatted_predictions(y_train)
+       
 
         # check for default_fc_parameters
-        # TODO change value error statement
         # TODO Is this method required? Drop handling this error to tsfresh?
-        def check_default_rc_parameters(default_fc_parameters):
-            if not (isinstance(self.default_fc_parameters,str) or isinstance(self.default_fc_parameters,dict) or isinstance(self.default_fc_parameters,
-                    (tsfresh.feature_extraction.settings.ComprehensiveFCParameters,
-                    tsfresh.feature_extraction.settings.MinimalFCParameters,
-                    tsfresh.feature_extraction.settings.EfficientFCParameters))):
-                raise ValueError("default_fc_parameters must be either of the predefined classes or of type dict or a string")
-
-            if isinstance(self.default_fc_parameters,str):
-                if self.default_fc_parameters == COMPREHENSIVE:
-                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
-                elif self.default_fc_parameters == MINIMAL:
-                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.MinimalFCParameters()
-                elif self.default_fc_parameters == EFFICIENT:
-                    self.passed_default_fc_params = tsfresh.feature_extraction.settings.EfficientFCParameters()
-
-
-            elif isinstance(self.default_fc_parameters,(tsfresh.feature_extraction.settings.ComprehensiveFCParameters,tsfresh.feature_extraction.settings.MinimalFCParameters,tsfresh.feature_extraction.settings.EfficientFCParameters)):
-                self.passed_default_fc_params = self.default_fc_parameters
-
-            elif isinstance(self.default_fc_parameters,dict):
-                # TODO checks to be performed over custom parameters
-                self.passed_default_fc_params = self.default_fc_parameters
-
-            else:
-                raise ValueError("Invalid type of default_fc_parameters")
-
+        self._check_default_rc_parameters()
+        
         # TODO Checks for kind_to_fc_params
 
-        # TODO Complete extract_features call args and add args if required
         Xt = extract_features(
                     X_time_series,
                     column_id="index", column_value="value", 
-                    column_kind="column", column_sort="time_index"
+                    column_kind="column", column_sort="time_index",
                     default_fc_parameters=self.passed_default_fc_params,
-                    kind_fc_parameters=self.passed_kind_to_fc_params,
-                    n_jobs=self.n_jobs, show_warnings=self.show_warnings
+                    kind_to_fc_parameters=self.passed_kind_to_fc_params,
+                    n_jobs=self.n_jobs, show_warnings=self.show_warnings,
                     disable_progressbar=self.disable_progressbar,
                     impute_function=self.impute_function,
                     profile=self.profile,
@@ -321,4 +326,4 @@ class TsFreshTransfomer(BaseTransformer):
                     profiling_sorting=self.profiling_sorting,
                     distributor=self.distributor)
 
-        return Xt
+        return impute(Xt)
