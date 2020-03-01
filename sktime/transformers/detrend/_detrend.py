@@ -2,7 +2,7 @@
 # coding: utf-8
 
 __all__ = [
-    "ResidualDetrender"
+    "Detrender"
 ]
 __author__ = ["Markus Löning"]
 
@@ -12,12 +12,12 @@ from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
-class ResidualDetrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
+class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
 
     def __init__(self, forecaster):
         self.forecaster = forecaster
         self.forecaster_ = None
-        super(ResidualDetrender, self).__init__()
+        super(Detrender, self).__init__()
 
     def fit(self, y_train, X_train=None):
         forecaster = clone(self.forecaster)

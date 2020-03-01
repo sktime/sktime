@@ -18,7 +18,7 @@ y_train, y_test = make_forecasting_problem()
 
 @pytest.mark.parametrize("sp", DEFAULT_SPS)
 def test_deseasonalised_values(sp):
-    t = Deseasonaliser(sp=sp)
+    t = Deseasonaliser(sp=sp, test_seasonality=False)
     t.fit(y_train)
     a = t.transform(y_train)
 

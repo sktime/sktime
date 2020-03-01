@@ -18,7 +18,7 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
-from sktime.transformers.detrend import ResidualDetrender
+from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
 
@@ -34,10 +34,10 @@ DEFAULT_INSTANTIATIONS = {
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
     RecursiveTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
-    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": ResidualDetrender(ThetaForecaster())},
+    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
-    ResidualDetrender: {"forecaster": FORECASTER},
+    Detrender: {"forecaster": FORECASTER},
 }
 
 

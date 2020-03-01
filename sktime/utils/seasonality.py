@@ -2,7 +2,7 @@ from statsmodels.tsa.stattools import acf
 import numpy as np
 
 
-def seasonality_test(x, freq):
+def seasonality_test(y, sp):
     """Seasonality test used in M4 competition
 
     # original implementation
@@ -38,12 +38,10 @@ def seasonality_test(x, freq):
     https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
 
     """
-    x = np.asarray(x)
+    y = np.asarray(y)
     crit_val = 1.645
-
-    n = len(x)
-    r = acf(x, nlags=freq)
+    n_timepoints = len(y)
+    r = acf(y, nlags=sp)
     s = r[1] + np.sum(r[2:] ** 2)
-    limit = crit_val * np.sqrt((1 + 2 * s) / n)
-
-    return np.abs(r[freq]) > limit
+    limit = crit_val * np.sqrt((1 + 2 * s) / n_timepoints)
+    return np.abs(r[sp]) > limit

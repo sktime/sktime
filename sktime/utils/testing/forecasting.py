@@ -6,14 +6,15 @@ __all__ = [
     "compute_expected_index_from_update_predict",
     "generate_polynomial_series",
     "generate_seasonal_time_series_data_with_trend",
-    "generate_time_series_data_with_trend"
+    "generate_time_series_data_with_trend",
+    "make_forecasting_problem"
 ]
 
 import numpy as np
 import pandas as pd
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils.data_container import detabularise
 from sktime.utils.validation.forecasting import check_y, check_fh
-from sktime.forecasting.model_selection import temporal_train_test_split
 
 
 def compute_expected_index_from_update_predict(y, fh, step_length):
