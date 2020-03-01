@@ -4,7 +4,6 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "test_clone",
-    "test_compute_pred_errors",
     "test_different_fh_in_fit_and_predict_req",
     "test_not_fitted_error",
     "test_fh_in_fit_opt",
@@ -23,10 +22,12 @@ __all__ = [
 ]
 
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.base import clone
-from sktime.forecasting._base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
+from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.tests import DEFAULT_ALPHAS
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
@@ -39,7 +40,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FORECASTERS = [e[1] for e in all_estimators(scitype="forecaster")]
-FH0 = DEFAULT_FHS[0]
+FH0 = 1
 
 # testing data
 y_train, y_test = make_forecasting_problem()
@@ -65,21 +66,44 @@ def test_clone(Forecaster):
 ########################################################################################################################
 # fit, set_params and update return self
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_fit_update(Forecaster):
+def test_fit_update_set_params_returns_self(Forecaster):
     f = _construct_instance(Forecaster)
-    ret = f.fit(y_train, FH0)
-    assert ret == f
+    fitted_f = f.fit(y_train, FH0)
+    assert fitted_f == f
 
-    ret = f.update(y_test, update_params=False)
-    assert ret == f
+    fitted_f = f.update(y_test, update_params=False)
+    assert fitted_f == f
 
-    ret = f.set_params()
-    assert ret == f
+    fitted_f = f.set_params()
+    assert fitted_f == f
 
-    # fitted params
-    if hasattr(f, "get_fitted_params"):
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_fit_non_stateful(Forecaster):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, FH0)
+    a = f.predict()
+
+    # refit without reconstructing
+    f.fit(y_train, FH0)
+    b = f.predict()
+    np.testing.assert_array_equal(a, b)
+
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_fitted_params(Forecaster):
+    f = _construct_instance(Forecaster)
+    try:
+        param_names = f.get_fitted_param_names()
+        assert isinstance(param_names, (list, tuple))
+        assert len(set(param_names)) == len(param_names)
+
         params = f.get_fitted_params()
         assert isinstance(params, dict)
+        assert set(param_names) == set(list(params.keys()))
+
+    except NotImplementedError:
+        pass
 
 
 ########################################################################################################################
@@ -173,17 +197,32 @@ def test_predict_insample(Forecaster, fh):
 
 ########################################################################################################################
 # test predicted pred int time index
+def check_pred_ints(pred_ints, y_pred, fh):
+    # make iterable
+    if isinstance(pred_ints, pd.DataFrame):
+        pred_ints = [pred_ints]
+
+    for pred_int in pred_ints:
+        assert pred_int.columns == ["lower", "upper"]
+        assert_correct_pred_time_index(pred_ints, y_train, fh)
+
+        # check if errors are weakly monotonically increasing
+        pred_errors = y_pred - pred_int["lower"]
+        # assert pred_errors.is_mononotic_increasing
+        assert np.all(pred_errors.values[1:] >= pred_errors.values[:-1])
+
+
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
-def test_predict_return_pred_interval_time_index(Forecaster, fh):
+@pytest.mark.parametrize("alpha", DEFAULT_ALPHAS)
+def test_predict_pred_interval(Forecaster, fh, alpha):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     try:
-        _, pred_ints = f.predict(return_pred_int=True, alpha=0.05)
-        assert_correct_pred_time_index(pred_ints, y_train, fh)
+        y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
+        check_pred_ints(pred_ints, y_pred, fh)
 
     except NotImplementedError:
-        print(f"{Forecaster}'s `return_pred_int` option is not implemented, test skipped.")
         pass
 
 
@@ -204,24 +243,8 @@ def test_score(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     actual = f.score(y_test.iloc[fh_idx], fh=fh)
+    assert actual > 0
     assert actual == expected
-
-
-########################################################################################################################
-# compute_pred_errors
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_compute_pred_errors(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=FH0)
-    try:
-        errs = f.compute_pred_errors(alpha=0.05)
-
-        # Prediction errors should always increase with the horizon
-        assert errs.is_monotonic_increasing
-
-    except NotImplementedError:
-        print(f"{Forecaster}'s `compute_pred_errors` method is not implemented, test skipped.")
-        pass
 
 
 ########################################################################################################################

@@ -7,7 +7,7 @@ __all__ = [
 __author__ = ["Markus Löning"]
 
 from sklearn.base import clone
-from sktime.forecasting._base import MetaForecasterMixin
+from sktime.forecasting.base import MetaForecasterMixin
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 

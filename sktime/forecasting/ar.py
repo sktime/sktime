@@ -4,7 +4,7 @@
 __author__ = ["Markus Löning"]
 __all__ = ["_AutoARForecaster"]
 
-from sktime.forecasting._base import BaseStatsModelsForecaster
+from sktime.forecasting.base import BaseStatsModelsForecaster
 from statsmodels.tsa.ar_model import ar_select_order
 
 
@@ -67,7 +67,7 @@ class _AutoARForecaster(BaseStatsModelsForecaster):
         self.ic = ic
         super(_AutoARForecaster, self).__init__()
 
-    def _fit_estimator(self, y_train, X_train=None):
+    def _fit_forecaster(self, y_train, X_train=None):
         self._fitted_estimator = ar_select_order(
             y_train,
             maxlag=self.maxlag,

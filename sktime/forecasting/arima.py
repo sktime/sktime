@@ -7,14 +7,13 @@ __all__ = [
 ]
 
 from pmdarima.arima import AutoARIMA
-from sktime.forecasting._base import BaseForecaster
-from sktime.forecasting._base import OptionalForecastingHorizonMixin
-from sktime.forecasting._base import DEFAULT_ALPHA
+from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import DEFAULT_ALPHA
 import pandas as pd
 import numpy as np
 
 
-class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
+class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
                  max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
@@ -70,7 +69,7 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
 
         super(AutoARIMAForecaster, self).__init__()
 
-        self.model = AutoARIMA(
+        self._forecaster = AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
             max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
             max_D=max_D, max_Q=max_Q, max_order=max_order, m=m, seasonal=seasonal,
@@ -88,30 +87,27 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
     def fit(self, y_train, fh=None, X_train=None, **fit_args):
         self._set_oh(y_train)
         self._set_fh(fh)
-        self.model.fit(y_train, exogenous=X_train, **fit_args)
+        self._forecaster.fit(y_train, exogenous=X_train, **fit_args)
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        self._check_is_fitted()
-        self._set_fh(fh)
-
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # distinguish between in-sample and out-of-sample prediction
-        is_in_sample = self.fh <= 0
+        is_in_sample = fh <= 0
         is_out_of_sample = np.logical_not(is_in_sample)
 
         # pure out-of-sample prediction
         if np.all(is_out_of_sample):
-            return self._predict_out_of_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+            return self._predict_out_of_sample(fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
 
         # pure in-sample prediction
         elif np.all(is_in_sample):
-            return self._predict_in_sample(self.fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+            return self._predict_in_sample(fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
 
         # mixed in-sample and out-of-sample prediction
         else:
-            fh_in_sample = self.fh[is_in_sample]
-            fh_out_of_sample = self.fh[is_out_of_sample]
+            fh_in_sample = fh[is_in_sample]
+            fh_out_of_sample = fh[is_out_of_sample]
 
             y_pred_in = self._predict_in_sample(fh_in_sample, X=X, return_pred_int=return_pred_int,
                                                 alpha=DEFAULT_ALPHA)
@@ -126,13 +122,13 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         end = fh_abs[-1]
 
         if return_pred_int:
-            y_pred, pred_int = self.model.model_.predict_in_sample(start=start, end=end, exogenous=X,
-                                                         return_conf_int=return_pred_int, alpha=alpha)
+            y_pred, pred_int = self._forecaster.model_._predict_in_sample(start=start, end=end, exogenous=X,
+                                                                          return_conf_int=return_pred_int, alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=fh_abs), pd.DataFrame(pred_int[fh_idx, :], index=fh_abs)
 
         else:
-            y_pred = self.model.model_.predict_in_sample(start=start, end=end, exogenous=X,
-                                                         return_conf_int=return_pred_int, alpha=alpha)
+            y_pred = self._forecaster.model_._predict_in_sample(start=start, end=end, exogenous=X,
+                                                                return_conf_int=return_pred_int, alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=fh_abs)
 
     def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -142,31 +138,24 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseForecaster):
         fh_idx = self._get_array_index_fh(fh)
 
         if return_pred_int:
-            y_pred, pred_int = self.model.model_.predict(n_periods=n_periods, exogenous=X,
-                                                         return_conf_int=return_pred_int, alpha=alpha)
+            y_pred, pred_int = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X,
+                                                               return_conf_int=return_pred_int, alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=index), pd.DataFrame(pred_int[fh_idx, :], index=index)
 
         else:
-            y_pred = self.model.model_.predict(n_periods=n_periods, exogenous=X, return_conf_int=return_pred_int,
-                                               alpha=alpha)
+            y_pred = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X, return_conf_int=return_pred_int,
+                                                     alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=index)
-
-    def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
-        self._set_oh(y_new)
-        if update_params:
-            raise NotImplementedError()
-        return self
 
     def get_fitted_params(self):
         self._check_is_fitted()
         names = self.get_fitted_param_names()
-        params = self.model.model_.arima_res_._results.params
+        params = self._forecaster.model_.arima_res_._results.params
         return {name: param for name, param in zip(names, params)}
 
     def get_fitted_param_names(self):
         self._check_is_fitted()
-        return self.model.model_.arima_res_._results.param_names
+        return self._forecaster.model_.arima_res_._results.param_names
 
 
 

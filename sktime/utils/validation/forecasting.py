@@ -40,11 +40,13 @@ def check_y_X(y, X):
     return y, X
 
 
-def check_y(y):
+def check_y(y, allow_empty=False):
     """Validate input data.
     Parameters
     ----------
     y : pd.Series
+    allow_empty : bool, optional (default=False)
+        If True, empty y does not raise error.
 
     Returns
     -------
@@ -60,8 +62,9 @@ def check_y(y):
         raise ValueError(f"`y` must be a pandas Series, but found: {type(y)}")
 
     # check that series is not empty
-    if len(y) < 1:
-        raise ValueError(f"`y` must contain at least some observations, but found empty series: {y}")
+    if not allow_empty:
+        if len(y) < 1:
+            raise ValueError(f"`y` must contain at least some observations, but found empty series: {y}")
 
     # check time index
     check_time_index(y.index)

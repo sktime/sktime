@@ -1,11 +1,11 @@
-__all__ = ["ExpSmoothingForecaster"]
+__all__ = ["ExponentialSmoothingForecaster"]
 __author__ = ["Markus Löning", "@big-o"]
 
-from sktime.forecasting._base import BaseStatsModelsForecaster
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from sktime.forecasting.base import BaseStatsModelsForecaster
+from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
 
 
-class ExpSmoothingForecaster(BaseStatsModelsForecaster):
+class ExponentialSmoothingForecaster(BaseStatsModelsForecaster):
     """
     Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
     without trend and seasonality components.
@@ -83,11 +83,10 @@ class ExpSmoothingForecaster(BaseStatsModelsForecaster):
         self.remove_bias = remove_bias
         self.use_basinhopping = use_basinhopping
 
-        super(ExpSmoothingForecaster, self).__init__()
+        super(ExponentialSmoothingForecaster, self).__init__()
 
-    def _fit_estimator(self, y, X_train=None):
-        # Fit forecaster.
-        self._estimator = ExponentialSmoothing(
+    def _fit_forecaster(self, y, X_train=None):
+        self._forecaster = _ExponentialSmoothing(
             y,
             trend=self.trend,
             damped=self.damped,
@@ -95,7 +94,7 @@ class ExpSmoothingForecaster(BaseStatsModelsForecaster):
             seasonal_periods=self.sp,
         )
 
-        self._fitted_estimator = self._estimator.fit(
+        self._fitted_forecaster = self._forecaster.fit(
             smoothing_level=self.smoothing_level,
             optimized=self.optimized,
             smoothing_slope=self.smoothing_slope,
@@ -105,4 +104,3 @@ class ExpSmoothingForecaster(BaseStatsModelsForecaster):
             remove_bias=self.remove_bias,
             use_basinhopping=self.use_basinhopping,
         )
-

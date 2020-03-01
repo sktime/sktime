@@ -16,10 +16,9 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting._base import BaseLastWindowForecaster
-from sktime.forecasting._base import DEFAULT_ALPHA
-from sktime.forecasting._base import OptionalForecastingHorizonMixin
-from sktime.forecasting._base import RequiredForecastingHorizonMixin
+from sktime.forecasting.base import BaseLastWindowForecaster, OptionalForecastingHorizonMixin, \
+    RequiredForecastingHorizonMixin
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 
 
@@ -175,7 +174,8 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
-        self._cv = SlidingWindowSplitter(fh=self.fh, window_length=self.window_length, step_length=self.step_length)
+        self._cv = SlidingWindowSplitter(fh=self.fh, window_length=self.window_length, step_length=self.step_length,
+                                         start_with_window=True)
 
         # transform data using rolling window split
         X_train, Y_train = self.transform(y_train, X_train)
@@ -191,13 +191,10 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self._is_fitted = True
         return self
 
-    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # use last window as new input data for time series regressors to make forecasts
         # get last window from observation horizon
-
-        if np.any(fh <= 0):
-            raise NotImplementedError("in-sample predictions are not implemented")
-
+        last_window = self._get_last_window()
         X_last = self._convert_data([last_window])
 
         # preallocate array for forecasted values
@@ -229,7 +226,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # set up cv iterator, for recursive strategy, a single estimator
         # is fit for a one-step-ahead forecasting horizon and then called
         # iteratively to predict multiple steps ahead
-        self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length, step_length=self.step_length)
+        self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length, step_length=self.step_length,
+                                         start_with_window=True)
 
         # transform data
         X_train, y_train = self.transform(y_train, X_train)
@@ -243,7 +241,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         self._is_fitted = True
         return self
 
-    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict"""
         # compute prediction
         # prepare recursive predictions

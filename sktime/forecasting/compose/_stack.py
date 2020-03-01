@@ -10,9 +10,8 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting._base import BaseHeterogenousMetaForecaster
-from sktime.forecasting._base import DEFAULT_ALPHA
-from sktime.forecasting._base import OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseHeterogenousMetaForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import DEFAULT_ALPHA
 
 
 class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaForecaster):

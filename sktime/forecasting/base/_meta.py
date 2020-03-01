@@ -9,8 +9,8 @@ __all__ = [
 
 from joblib import Parallel, delayed
 from sklearn.base import clone
-from sktime.forecasting._base import BaseForecaster
-from sktime.forecasting._base import is_forecaster
+from sktime.forecasting.base._base import is_forecaster
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
 
 
 class MetaForecasterMixin:
@@ -18,7 +18,7 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseForecaster):
+class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -70,12 +70,11 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseForecaster):
     def _fit_forecasters(self, forecasters, y_train, X_train):
         """Helper function to fit all forecasters"""
 
-        def _fit_forecaster(forecaster, y_train, X_train):
-            """Helper function to fit single forecaster"""
+        def fit(forecaster, y_train, X_train):
             return forecaster.fit(y_train, X_train=X_train)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y_train, X_train)
+            delayed(fit)(clone(forecaster), y_train, X_train)
             for forecaster in forecasters)
 
     def _predict_forecasters(self, fh=None, X=None):
