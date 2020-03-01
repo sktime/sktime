@@ -6,32 +6,38 @@ __author__ = ["Markus Löning"]
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting import ExpSmoothingForecaster
+from sktime.forecasting._base import BaseForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import EnsembleForecaster
 from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
-from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import ResidualDetrender
+from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
-# look up table for estimators which require arguments during constructions,
-# links base classes with the default constructor arguments
+
 REGRESSOR = LinearRegression()
+FORECASTER = ExpSmoothingForecaster()
+FORECASTERS = [
+    ("ses1", FORECASTER),
+    ("ses2", FORECASTER)
+]
 
 DEFAULT_INSTANTIATIONS = {
     DirectRegressionForecaster: {"regressor": REGRESSOR},
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
     RecursiveTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
-    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())},
-    EnsembleForecaster: {"forecasters": [
-        ("last", NaiveForecaster()),
-        ("mean", NaiveForecaster(strategy="mean", window_length=3))
-    ]}
+    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": ResidualDetrender(ThetaForecaster())},
+    EnsembleForecaster: {"forecasters": FORECASTERS},
+    StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
+    ResidualDetrender: {"forecaster": FORECASTER},
 }
 
 
@@ -41,15 +47,19 @@ def _construct_instance(Estimator):
     if len(required_parameters) > 0:
         # if estimator requires parameters for construction,
         # set default ones for testing
-        if issubclass(Estimator, BaseForecaster):
+        allowed_base_estimators = (BaseForecaster, BaseSeriesToSeriesTransformer)
+        if issubclass(Estimator, allowed_base_estimators):
             kwargs = {}
+            # look up default instantiations for estimators which require
+            # arguments during constructions
             if Estimator in DEFAULT_INSTANTIATIONS:
                 kwargs = DEFAULT_INSTANTIATIONS[Estimator]
             if not kwargs:
                 raise ValueError(f"No default instantiation has been found "
                                  f"for estimator: {Estimator}")
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(f"No default instantiation has been found "
+                                      f"for estimator: {Estimator}")
 
         estimator = Estimator(**kwargs)
 

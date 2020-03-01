@@ -14,7 +14,6 @@ __all__ = [
     "test_no_fh_opt",
     "test_oh_setting",
     "test_predict_return_pred_interval_time_index",
-    "test_return_self_for_fit_set_params_update",
     "test_same_fh_in_fit_and_predict_opt",
     "test_same_fh_in_fit_and_predict_req",
     "test_score",
@@ -26,20 +25,20 @@ __all__ = [
 import numpy as np
 import pytest
 from sklearn.base import clone
-from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
+from sktime.forecasting._base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils.exceptions import NotFittedError
 from sktime.utils.testing.base import _construct_instance
+from sktime.utils.testing.forecasting import assert_correct_pred_time_index
 from sktime.utils.testing.forecasting import compute_expected_index_from_update_predict
 from sktime.utils.testing.forecasting import make_forecasting_problem
-from sktime.utils.testing.forecasting import assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
-FORECASTERS = [e[1] for e in all_estimators(type_filter="forecaster")]
+FORECASTERS = [e[1] for e in all_estimators(scitype="forecaster")]
 FH0 = DEFAULT_FHS[0]
 
 # testing data
@@ -125,6 +124,7 @@ def test_not_fitted_error(Forecaster):
     if hasattr(f, "get_fitted_params"):
         with pytest.raises(NotFittedError):
             f.get_fitted_params()
+
 
 ########################################################################################################################
 # not fitted error
@@ -222,6 +222,19 @@ def test_compute_pred_errors(Forecaster):
     except NotImplementedError:
         print(f"{Forecaster}'s `compute_pred_errors` method is not implemented, test skipped.")
         pass
+
+
+########################################################################################################################
+# test update-predict single
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+def test_update_predict_single(Forecaster, fh, window_length, step_length):
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, fh)
+    y_pred = f.update_predict_single(y_test)
+    assert_correct_pred_time_index(y_pred, y_test, fh)
 
 
 ########################################################################################################################

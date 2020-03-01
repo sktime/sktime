@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting import ExpSmoothingForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting._base import DEFAULT_ALPHA
 from sktime.transformers.forecasting import Deseasonaliser
 from sktime.utils.confidence import zscore
 from sktime.utils.seasonality import seasonality_test

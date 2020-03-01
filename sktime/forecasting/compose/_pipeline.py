@@ -5,9 +5,8 @@ __author__ = ["Markus Löning"]
 __all__ = ["TransformedTargetForecaster"]
 
 from sklearn.base import clone
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import MetaForecasterMixin
+from sktime.forecasting._base import BaseForecaster, MetaForecasterMixin
+from sktime.forecasting._base import DEFAULT_ALPHA
 
 
 class TransformedTargetForecaster(BaseForecaster, MetaForecasterMixin):

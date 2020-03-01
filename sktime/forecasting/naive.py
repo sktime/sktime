@@ -8,9 +8,9 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base import BaseLastWindowForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import OptionalForecastingHorizonMixin
+from sktime.forecasting._base import BaseLastWindowForecaster
+from sktime.forecasting._base import DEFAULT_ALPHA
+from sktime.forecasting._base import OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 

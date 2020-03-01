@@ -7,9 +7,9 @@ __all__ = [
 ]
 
 from pmdarima.arima import AutoARIMA
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import OptionalForecastingHorizonMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting._base import BaseForecaster
+from sktime.forecasting._base import OptionalForecastingHorizonMixin
+from sktime.forecasting._base import DEFAULT_ALPHA
 import pandas as pd
 import numpy as np
 

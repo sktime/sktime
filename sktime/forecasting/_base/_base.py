@@ -6,7 +6,6 @@ __all__ = [
     "BaseForecaster",
     "RequiredForecastingHorizonMixin",
     "OptionalForecastingHorizonMixin",
-    "MetaForecasterMixin",
     "DEFAULT_ALPHA",
     "is_forecaster"
 ]
@@ -729,11 +728,6 @@ class BaseLastWindowForecaster(BaseForecaster):
     @property
     def window_length(self):
         return self._window_length
-
-
-class MetaForecasterMixin:
-    _required_parameters = ["forecaster"]
-    """Mixin class for all meta forecasters in sktime."""
 
 
 def is_forecaster(estimator):

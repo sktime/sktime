@@ -13,17 +13,14 @@ __all__ = [
     "RecursiveRegressionForecaster"
 ]
 
-from warnings import warn
-
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import BaseLastWindowForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import OptionalForecastingHorizonMixin
-from sktime.forecasting.base import RequiredForecastingHorizonMixin
+from sktime.forecasting._base import BaseLastWindowForecaster
+from sktime.forecasting._base import DEFAULT_ALPHA
+from sktime.forecasting._base import OptionalForecastingHorizonMixin
+from sktime.forecasting._base import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_cv
 
 
 ##############################################################################
@@ -294,7 +291,7 @@ class RecursiveTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin, _
 
 ##############################################################################
 # factory methods for easier user interface, but not tunable as it's not an estimator
-def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv=None, strategy="recursive"):
+def ReducedTimeSeriesRegressionForecaster(ts_regressor, strategy="recursive", window_length=10, step_length=1):
     """
     Forecasting based on reduction to time series regression.
 
@@ -305,8 +302,6 @@ def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv=None, strategy="recur
     Parameters
     ----------
     ts_regressor : a time series regressor
-    cv : temporal cross-validator
-    strategy : str{"direct", "recursive", "dirrec"}, optional (default="direct")
 
     References
     ----------
@@ -315,10 +310,10 @@ def ReducedTimeSeriesRegressionForecaster(ts_regressor, cv=None, strategy="recur
     """
     scitype = "ts_regressor"
     Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(regressor=ts_regressor, cv=cv)
+    return Forecaster(regressor=ts_regressor, window_length=window_length, step_length=step_length)
 
 
-def ReducedRegressionForecaster(regressor, cv=None, strategy="recursive"):
+def ReducedRegressionForecaster(regressor, strategy="recursive", window_length=10, step_length=1):
     """
     Forecasting based on reduction to tabular regression.
 
@@ -329,8 +324,6 @@ def ReducedRegressionForecaster(regressor, cv=None, strategy="recursive"):
     Parameters
     ----------
     regressor : a regressor
-    cv : temporal cross-validator
-    strategy : str{"direct", "recursive", "dirrec"}, optional (default="direct")
 
     References
     ----------
@@ -339,7 +332,7 @@ def ReducedRegressionForecaster(regressor, cv=None, strategy="recursive"):
     """
     scitype = "regressor"
     Forecaster = _get_forecaster_class(scitype, strategy)
-    return Forecaster(regressor=regressor, cv=cv)
+    return Forecaster(regressor=regressor, window_length=window_length, step_length=step_length)
 
 
 def _get_forecaster_class(scitype, strategy):

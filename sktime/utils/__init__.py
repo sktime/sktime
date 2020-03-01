@@ -8,7 +8,7 @@ from operator import itemgetter
 from pathlib import Path
 
 
-def all_estimators(type_filter=None):
+def all_estimators(scitype=None):
     """Get a list of all estimators from sktime.
 
     This function crawls the module and gets all classes that inherit
@@ -19,7 +19,7 @@ def all_estimators(type_filter=None):
 
     Parameters
     ----------
-    type_filter : string, list of string,  or None, default=None
+    scitype : string, list of string,  or None, default=None
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'transformer' and 'forecaster' to get
@@ -41,7 +41,7 @@ def all_estimators(type_filter=None):
 
     # lazy import to avoid circular imports from sklearn.base
     import warnings
-    from sktime.forecasting.base import BaseForecaster
+    from sktime.forecasting._base import BaseForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer
@@ -82,7 +82,7 @@ def all_estimators(type_filter=None):
         "classifier": (BaseClassifier, ClassifierMixin),
         "regressor": (BaseRegressor, RegressorMixin),
         "transformer": (BaseTransformer, TransformerMixin),
-        "forecaster": BaseForecaster
+        "forecaster": BaseForecaster,
     }
     estimators = [c for c in all_classes
                   if (issubclass(c[1], tuple(base_classes.values())) and
@@ -91,26 +91,25 @@ def all_estimators(type_filter=None):
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
+    if scitype is not None:
+        if not isinstance(scitype, list):
+            scitype = [scitype]
         else:
-            type_filter = list(type_filter)  # copy
+            scitype = list(scitype)  # copy
         filtered_estimators = []
 
         for name, base_class in base_classes.items():
-            if name in type_filter:
-                type_filter.remove(name)
+            if name in scitype:
+                scitype.remove(name)
                 filtered_estimators.extend([est for est in estimators
                                             if issubclass(est[1], base_class)])
         estimators = filtered_estimators
 
-        allowed_filters = ("classifier", "regressor", "transformer", "forecaster")
-
         # raise error if any filter names are left
-        if type_filter:
+        allowed_filters = ("classifier", "regressor", "transformer", "forecaster")
+        if scitype:
             raise ValueError(f"Parameter type_filter must be one or a list of {allowed_filters} or "
-                             f"None, but found: {repr(type_filter)}")
+                             f"None, but found: {repr(scitype)}")
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
