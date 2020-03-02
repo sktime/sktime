@@ -6,7 +6,7 @@ __all__ = []
 
 from sktime.transformers.summarise import FittedParamExtractor
 from sktime.datasets import load_gunpoint
-from sktime.forecasting.exp_smoothing import ExpSmoothingForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothingForecaster
 import pytest
 
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
@@ -14,7 +14,7 @@ X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
 
 @pytest.mark.parametrize("param_names", ["smoothing_level"])
 def test_FittedParamExtractor(param_names):
-    forecaster = ExpSmoothingForecaster()
+    forecaster = ExponentialSmoothingForecaster()
     t = FittedParamExtractor(forecaster=forecaster, param_names=param_names)
     Xt = t.fit_transform(X_train)
 

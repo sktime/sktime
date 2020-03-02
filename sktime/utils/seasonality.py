@@ -41,7 +41,7 @@ def seasonality_test(y, sp):
     y = np.asarray(y)
     crit_val = 1.645
     n_timepoints = len(y)
-    r = acf(y, nlags=sp)
+    r = acf(y, nlags=sp, fft=False)
     s = r[1] + np.sum(r[2:] ** 2)
     limit = crit_val * np.sqrt((1 + 2 * s) / n_timepoints)
     return np.abs(r[sp]) > limit

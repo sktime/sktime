@@ -14,13 +14,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sktime.classifiers.base import BaseClassifier
-from sktime.forecasting._base import BaseForecaster
+from sktime.forecasting.base import BaseSktimeForecaster
 from sktime.regressors.base import BaseRegressor
 
 # TODO implement task-strategy-estimator compatibility lookup registry using strategy traits
 REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)
 CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
-FORECASTER_TYPES = (BaseForecaster,)
+FORECASTER_TYPES = (BaseSktimeForecaster,)
 ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 
 CASES = ("TSR", "TSC", "Forecasting")

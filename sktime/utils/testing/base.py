@@ -6,8 +6,8 @@ __author__ = ["Markus Löning"]
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.forecasting import ExpSmoothingForecaster
-from sktime.forecasting._base import BaseForecaster
+from sktime.forecasting import ExponentialSmoothingForecaster
+from sktime.forecasting.base import BaseSktimeForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
@@ -21,9 +21,8 @@ from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
-
 REGRESSOR = LinearRegression()
-FORECASTER = ExpSmoothingForecaster()
+FORECASTER = ExponentialSmoothingForecaster()
 FORECASTERS = [
     ("ses1", FORECASTER),
     ("ses2", FORECASTER)
@@ -47,7 +46,7 @@ def _construct_instance(Estimator):
     if len(required_parameters) > 0:
         # if estimator requires parameters for construction,
         # set default ones for testing
-        allowed_base_estimators = (BaseForecaster, BaseSeriesToSeriesTransformer)
+        allowed_base_estimators = (BaseSktimeForecaster, BaseSeriesToSeriesTransformer)
         if issubclass(Estimator, allowed_base_estimators):
             kwargs = {}
             # look up default instantiations for estimators which require

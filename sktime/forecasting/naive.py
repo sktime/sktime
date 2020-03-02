@@ -8,9 +8,8 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting._base import BaseLastWindowForecaster
-from sktime.forecasting._base import DEFAULT_ALPHA
-from sktime.forecasting._base import OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseLastWindowForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
@@ -44,13 +43,13 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self.sp = sp
         self._window_length = window_length
 
-        if self.strategy in ("last", "seasonal_last"):
-            if window_length is not None:
+        if strategy in ("last", "seasonal_last"):
+            if self.window_length is not None:
                 warn("For the `last` and `seasonal_last` strategy, "
                      "the `window_length` value will be ignored.")
 
         if self.strategy in ("last", "mean"):
-            if sp is not None:
+            if self.sp is not None:
                 warn("For the `last` and `mean` strategy, "
                      "the `sp` value will be ignored.")
 
@@ -58,7 +57,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             self._window_length = 1
 
         if self.strategy == "seasonal_last":
-            if sp is None:
+            if self.sp is None:
                 raise NotImplementedError("Automatic estimation of the seasonal periodicity `sp` "
                                           "from the data is not implemented yet; "
                                           "please specify the `sp` value.")
@@ -73,8 +72,6 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit"""
-
-        # update observation horizon
         # X_train is ignored
         self._set_oh(y_train)
         self._set_fh(fh)
@@ -92,10 +89,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self._is_fitted = True
         return self
 
-    def _predict(self, last_window, fh, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal predict"""
+        last_window = self._get_last_window()
+
         # if last window only contains missing values, return nan
-        if np.all(np.isnan(last_window)):
+        if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
         elif self.strategy == "last":
@@ -116,14 +115,3 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         elif self.strategy == "mean":
             return np.repeat(np.nanmean(last_window), len(fh))
 
-    def update(self, y_new, X_new=None, update_params=False):
-        """Update"""
-
-        # input checks
-        self._check_is_fitted()
-
-        # update observation horizon
-        # X is ignored
-        self._set_oh(y_new)
-
-        return self

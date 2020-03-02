@@ -16,3 +16,4 @@ DEFAULT_INSAMPLE_FHS = [
     np.array([-3, 2])  # mixed in-sample and out-of-sample
 ]
 DEFAULT_SPS = [3, 7, 12]
+DEFAULT_ALPHAS = [0.95, 0.9]

@@ -9,8 +9,9 @@ __all__ = [
 
 from joblib import Parallel, delayed
 from sklearn.base import clone
-from sktime.forecasting._base import BaseForecaster
-from sktime.forecasting._base import is_forecaster
+from sktime.forecasting.base._base import is_forecaster
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base import DEFAULT_ALPHA
 
 
 class MetaForecasterMixin:
@@ -18,7 +19,7 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseForecaster):
+class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -67,19 +68,21 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseForecaster):
                 )
         return names, forecasters
 
-    def _fit_forecasters(self, forecasters, y_train, X_train):
+    def _fit_forecasters(self, forecasters, y_train, fh=None, X_train=None):
         """Helper function to fit all forecasters"""
 
-        def _fit_forecaster(forecaster, y_train, X_train):
-            """Helper function to fit single forecaster"""
-            return forecaster.fit(y_train, X_train=X_train)
+        def fit(forecaster, y_train, fh, X_train):
+            return forecaster.fit(y_train, fh=fh, X_train=X_train)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_forecaster)(clone(forecaster), y_train, X_train)
+            delayed(fit)(clone(forecaster), y_train, fh, X_train)
             for forecaster in forecasters)
 
-    def _predict_forecasters(self, fh=None, X=None):
+    def _predict_forecasters(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Collect results from forecaster.predict() calls."""
+        if return_pred_int:
+            raise NotImplementedError()
         # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(fh, X=X)
         #                                     for forecaster in self.forecasters_)
-        return [forecaster.predict(fh, X=X) for forecaster in self.forecasters_]
+        return [forecaster.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+                for forecaster in self.forecasters_]
