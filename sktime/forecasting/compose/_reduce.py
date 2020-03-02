@@ -235,12 +235,12 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length, step_length=self.step_length,
                                          start_with_window=True)
 
-        # transform data
-        X_train, y_train = self.transform(y_train, X_train)
+        # transform data into tabular form
+        X_train_tab, y_train_tab = self.transform(y_train, X_train)
 
         # fit base regressor
         regressor = clone(self.regressor)
-        regressor.fit(X_train, y_train.ravel())
+        regressor.fit(X_train_tab, y_train_tab.ravel())
         self.regressor_ = regressor
 
         self._is_fitted = True
@@ -271,7 +271,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         return y_pred[fh_idx]
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        raise NotImplementedError("in-sample predictions are not implemented")
+        raise NotImplementedError()
 
 
 ##############################################################################

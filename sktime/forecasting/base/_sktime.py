@@ -213,6 +213,7 @@ class BaseSktimeForecaster(BaseForecaster):
         y_preds = []
         cutoffs = []
         with self._detached_cutoff():
+            self._set_cutoff(y.index[0] - 1)
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
                 self.update(y_new, update_params=update_params)
@@ -352,10 +353,10 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        # assert all(fh <= 0)
-        cutoffs = self.cutoff + fh - 1
-        cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length)
+        assert all(fh <= 0)
         y_train = self.oh
+        cutoffs = fh + self.cutoff - 1
+        cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length)
         return self._predict_moving_cutoff(y_train, cv, X=X, update_params=False, return_pred_int=return_pred_int,
                                            alpha=alpha)
 

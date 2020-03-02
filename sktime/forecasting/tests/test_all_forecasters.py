@@ -237,11 +237,21 @@ def test_predict_time_index(Forecaster, fh):
 def test_predict_in_sample(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
-
     try:
         y_pred = f.predict()
         assert_correct_pred_time_index(y_pred, y_train, fh)
+    except NotImplementedError:
+        pass
 
+
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_predict_in_sample_full(Forecaster):
+    f = _construct_instance(Forecaster)
+    fh = -np.arange(len(y_train))
+    f.fit(y_train, fh=fh)
+    try:
+        y_pred = f.predict()
+        assert_correct_pred_time_index(y_pred, y_train, fh)
     except NotImplementedError:
         pass
 

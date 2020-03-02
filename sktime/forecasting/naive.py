@@ -91,9 +91,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
     def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal predict"""
-        # if last window only contains missing values, return nan
         last_window = self._get_last_window()
-        if np.all(np.isnan(last_window)):
+
+        # if last window only contains missing values, return nan
+        if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
         elif self.strategy == "last":
