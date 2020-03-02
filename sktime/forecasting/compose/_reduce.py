@@ -16,10 +16,12 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import BaseLastWindowForecaster, OptionalForecastingHorizonMixin, \
-    RequiredForecastingHorizonMixin
+from sktime.forecasting.base import BaseLastWindowForecaster
 from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base import OptionalForecastingHorizonMixin
+from sktime.forecasting.base import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.validation.forecasting import check_y
 
 
 ##############################################################################
@@ -40,19 +42,15 @@ class BaseReducer(BaseLastWindowForecaster):
     def update(self, y_new, X_new=None, update_params=False):
         if X_new is not None or update_params:
             raise NotImplementedError()
-
-        # input checks
         self._check_is_fitted()
-
-        # update observation horizon
         self._set_oh(y_new)
         return self
 
     def transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
-
         if X_train is not None:
             raise NotImplementedError()
+        y_train = check_y(y_train)
 
         # get integer time index
         time_index = y_train.index
@@ -110,6 +108,11 @@ class BaseReducer(BaseLastWindowForecaster):
     @property
     def step_length(self):
         return self._step_length
+
+    def _is_predictable(self, last_window):
+        return len(last_window) == self.window_length \
+               and np.sum(np.isnan(last_window)) == 0 \
+               and np.sum(np.isinf(last_window)) == 0
 
 
 class ReducedTimeSeriesRegressorMixin:
@@ -191,10 +194,13 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # use last window as new input data for time series regressors to make forecasts
         # get last window from observation horizon
         last_window = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+
         X_last = self._convert_data([last_window])
 
         # preallocate array for forecasted values
@@ -231,17 +237,16 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # transform data
         X_train, y_train = self.transform(y_train, X_train)
-        y_train = y_train.ravel()
 
         # fit base regressor
         regressor = clone(self.regressor)
-        regressor.fit(X_train, y_train)
+        regressor.fit(X_train, y_train.ravel())
         self.regressor_ = regressor
 
         self._is_fitted = True
         return self
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict"""
         # compute prediction
         # prepare recursive predictions
@@ -251,6 +256,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # get last window from observation horizon
         last_window = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
 
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
@@ -258,7 +265,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             y_pred[i] = regressor.predict(X_last)  # make forecast using fitted regressor
 
             # update last window with previous prediction
-            last_window = np.append(last_window, y_pred[i])[-self._window_length:]
+            last_window = np.append(last_window, y_pred[i])[-self.window_length:]
 
         fh_idx = self._get_array_index_fh(fh)
         return y_pred[fh_idx]

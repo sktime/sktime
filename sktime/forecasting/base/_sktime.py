@@ -18,7 +18,7 @@ from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
 class BaseSktimeForecaster(BaseForecaster):
 
     def __init__(self):
-        self._oh = None  # observation horizon, i.e. time points seen in fit or update
+        self._oh = pd.Series([])  # observation horizon, i.e. time points seen in fit or update
         self._cutoff = None  # time point in observation horizon cutoff which to make forecasts
         self._is_fitted = False
         self._fh = None
@@ -60,21 +60,16 @@ class BaseSktimeForecaster(BaseForecaster):
         ----------
         y : pd.Series
         """
-        # input checks
-        oh = check_y(y, allow_empty=True)
+        y = check_y(y, allow_empty=True)
 
-        # for updating: append observation horizon to previous one
-        if self.is_fitted:
-            # update observation horizon, merging both series on time index,
-            # overwriting old data with new data
-            self._oh = oh.combine_first(self.oh)
+        # update only for non-empty data
+        if len(y) > 0:
+            # for fitting: since no previous observation horizon is present, set new one
+            # for updating: append observation horizon to previous one
+            self._oh = y.combine_first(self.oh)
 
-        # for fitting: since no previous observation horizon is present, set new one
-        else:
-            self._oh = oh
-
-        # by default, set cutoff to the end of the observation horizon
-        self._set_cutoff(oh.index[-1])
+            # by default, set cutoff to the end of the observation horizon
+            self._set_cutoff(y.index[-1])
 
     @property
     def cutoff(self):
@@ -180,10 +175,9 @@ class BaseSktimeForecaster(BaseForecaster):
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
         if update_params:
             raise NotImplementedError()
-        y_new = check_y(y_new, allow_empty=True)
+        self._check_is_fitted()
         self._set_oh(y_new)
         return self
 
@@ -206,6 +200,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
+        y_test = check_y(y_test)
         cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(fh=self.fh)
         return self._predict_moving_cutoff(y_test, cv, X=X_test, update_params=update_params,
                                            return_pred_int=return_pred_int, alpha=alpha)
@@ -216,16 +211,30 @@ class BaseSktimeForecaster(BaseForecaster):
             raise NotImplementedError()
         fh = cv.fh
         y_preds = []
+        cutoffs = []
         with self._detached_cutoff():
-            for new_window, _ in enumerate(cv.split(y)):
+            for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
                 self.update(y_new, update_params=update_params)
                 y_pred = self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
                 y_preds.append(y_pred)
-        cutoffs = cv.get_cutoffs(y)
+                cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Internal predict
+
+        Parameters
+        ----------
+        fh : np.array
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or list of floats
+
+        Returns
+        -------
+        y_pred : pd.Series
+        """
         raise NotImplementedError("abstract method")
 
 
@@ -336,13 +345,13 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
             y_oos = self._predict_fixed_cutoff(fh_oos, X=X, return_pred_int=return_pred_int, alpha=alpha)
             return y_ins.append(y_oos)
 
-    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=None):
+    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # assert all(fh > 0)
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
         index = self._get_absolute_fh(fh)
         return pd.Series(y_pred, index=index)
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # assert all(fh <= 0)
         cutoffs = self.cutoff + fh - 1
         cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length)
@@ -351,9 +360,23 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
                                            alpha=alpha)
 
     def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Internal predict
+
+        Parameters
+        ----------
+        fh : np.array
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or list of floats
+
+        Returns
+        -------
+        y_pred : np.array
+        """
         raise NotImplementedError("abstract method")
 
     def _get_last_window(self):
+        """Helper function to get last window"""
         start = self.cutoff - self.window_length + 1
         end = self.cutoff
         return self.oh.loc[start:end].values
@@ -362,15 +385,22 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
     def window_length(self):
         return self._window_length
 
+    @staticmethod
+    def _predict_nan(fh):
+        return np.full(len(fh), np.nan)
+
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Helper function to format moving-cutoff predictions"""
-    if len(y_preds) == 1:
+    if not isinstance(y_preds, list):
+        raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
+
+    if len(y_preds[0]) == 1:
         # return series for single step ahead predictions
-        y_pred = pd.concat(y_preds)
+        return pd.concat(y_preds)
+
     else:
         # return data frame when we predict multiple steps ahead
         y_pred = pd.DataFrame(y_preds).T
         y_pred.columns = cutoffs
-
-    return y_pred
+        return y_pred

@@ -99,4 +99,4 @@ def make_forecasting_problem(n_timepoints=50):
 
 def assert_correct_pred_time_index(y_pred, y_train, fh):
     fh = check_fh(fh)
-    np.testing.assert_array_equal(y_pred.index.values, y_train.index[-1] + fh)
+    np.testing.assert_array_equal(y_pred.index, y_train.index[-1] + fh)

@@ -107,11 +107,6 @@ class ThetaForecaster(ExponentialSmoothingForecaster):
 
         self : returns an instance of self.
         """
-        y_train = check_y(y_train)
-
-        fh = self._set_fh(fh)
-        self._set_oh(y_train)
-
         # de-seasonalise
         yt = self._deseasonaliser.fit_transform(y_train)
 

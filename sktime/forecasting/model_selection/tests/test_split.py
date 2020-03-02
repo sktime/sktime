@@ -29,8 +29,13 @@ def generate_windows(y, cv):
     training_windows = []
     test_windows = []
     for training_window, test_window in cv.split(y):
+
+        assert isinstance(training_window, np.ndarray)
+        assert isinstance(test_window, np.ndarray)
+
         training_windows.append(training_window)
         test_windows.append(test_window)
+
     return training_windows, test_windows
 
 

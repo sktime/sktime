@@ -9,7 +9,7 @@ __all__ = ["ColumnEnsembleClassifier", "HomogeneousColumnEnsembleClassifier"]
 from itertools import chain
 import numpy as np
 from sklearn.base import clone
-from sklearn.preprocessing.label import LabelEncoder
+from sklearn.preprocessing import LabelEncoder
 from sktime.classifiers.base import BaseClassifier
 
 

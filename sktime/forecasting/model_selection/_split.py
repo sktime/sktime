@@ -36,7 +36,7 @@ class BaseTemporalCrossValidator:
         self._n_splits = None
 
     def split(self, y):
-        """Split `y` at cutoff points.
+        """Split `y`.
 
         Parameters
         ----------
@@ -56,13 +56,13 @@ class BaseTemporalCrossValidator:
 
     def get_n_splits(self, y=None):
         """
-        Return number of splits.
+        Return the number of splits.
         """
         raise NotImplementedError("abstract method")
 
     def get_cutoffs(self, y=None):
         """
-        Return the cutoff time points.
+        Return the cutoff points in time at which `y` is split.
         """
         raise NotImplementedError("abstract method")
 

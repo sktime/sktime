@@ -122,13 +122,18 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         end = fh_abs[-1]
 
         if return_pred_int:
-            y_pred, pred_int = self._forecaster.model_._predict_in_sample(start=start, end=end, exogenous=X,
-                                                                          return_conf_int=return_pred_int, alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=fh_abs), pd.DataFrame(pred_int[fh_idx, :], index=fh_abs)
+
+            if isinstance(alpha, (list, tuple)):
+                raise NotImplementedError()
+            y_pred, pred_int = self._forecaster.predict_in_sample(start=start, end=end, exogenous=X,
+                                                                  return_conf_int=return_pred_int, alpha=alpha)
+            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"])
+            return y_pred, pred_int
 
         else:
-            y_pred = self._forecaster.model_._predict_in_sample(start=start, end=end, exogenous=X,
-                                                                return_conf_int=return_pred_int, alpha=alpha)
+            y_pred = self._forecaster.predict_in_sample(start=start, end=end, exogenous=X,
+                                                        return_conf_int=return_pred_int, alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=fh_abs)
 
     def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -140,8 +145,9 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         if return_pred_int:
             y_pred, pred_int = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X,
                                                                return_conf_int=return_pred_int, alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=index), pd.DataFrame(pred_int[fh_idx, :], index=index)
-
+            y_pred = pd.Series(y_pred[fh_idx], index=index)
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=index, columns=["lower", "upper"])
+            return y_pred, pred_int
         else:
             y_pred = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X, return_conf_int=return_pred_int,
                                                      alpha=alpha)
