@@ -52,3 +52,6 @@ class BaseSeriesToSeriesTransformer(BaseEstimator):
 
     def transform(self, y, **transform_params):
         raise NotImplementedError("abstract method")
+
+    def inverse_transform(self, y, **transform_params):
+        raise NotImplementedError("abstract method")

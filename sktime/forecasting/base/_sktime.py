@@ -25,23 +25,6 @@ class BaseSktimeForecaster(BaseForecaster):
         super(BaseSktimeForecaster, self).__init__()
 
     @property
-    def is_fitted(self):
-        """Has `fit` been called?"""
-        return self._is_fitted
-
-    def _check_is_fitted(self):
-        """Check if the forecaster has been fitted.
-
-        Raises
-        ------
-        NotFittedError
-            if the forecaster has not been fitted yet.
-        """
-        if not self.is_fitted:
-            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
-                                 f"been fitted yet; please call `fit` first.")
-
-    @property
     def oh(self):
         """The observation horizon, i.e. the seen data
         passed either to `fit` or one of the `update` methods.

@@ -91,6 +91,10 @@ def test_fitted_params(Forecaster):
     try:
         params = f.get_fitted_params()
         assert isinstance(params, dict)
+
+
+
+
     except NotImplementedError:
         pass
 
