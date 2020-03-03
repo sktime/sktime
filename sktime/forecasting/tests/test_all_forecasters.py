@@ -128,18 +128,7 @@ def test_oh_setting(Forecaster):
     assert f.cutoff == y_train.index[-1]
 
     # check data pointers
-    assert f.oh.index is y_train.index
-
-    try:
-        assert f.oh.values is y_train.values
-    except AssertionError:
-        # handle exceptions which transform the data first
-        from sktime.forecasting.theta import ThetaForecaster
-        from sktime.forecasting.compose import TransformedTargetForecaster
-        if isinstance(f, (ThetaForecaster, TransformedTargetForecaster)):
-            pass
-        else:
-            raise
+    np.testing.assert_array_equal(f.oh.index, y_train.index)
 
     # check that oh and cutoff is updated during update
     f.update(y_test, update_params=False)
@@ -186,20 +175,6 @@ def test_bad_y_input(Forecaster, y):
         f = _construct_instance(Forecaster)
         f.fit(y, FH0)
     assert_correct_msg(e, expected_msg)
-
-    # f = _construct_instance(Forecaster)
-    # f.fit(y_train, FH0)
-    # with pytest.raises(ValueError) as e:
-    #     f.update(y, update_params=False)
-    # assert_correct_msg(e, expected_msg)
-    #
-    # with pytest.raises(ValueError) as e:
-    #     f.update_predict_single(y, update_params=False)
-    # assert_correct_msg(e, expected_msg)
-    #
-    # with pytest.raises(ValueError) as e:
-    #     f.update_predict(y, update_params=False)
-    # assert_correct_msg(e, expected_msg)
 
 
 ########################################################################################################################
