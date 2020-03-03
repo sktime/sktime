@@ -74,7 +74,7 @@ class BaseStatsModelsForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
     def get_fitted_params(self):
         self._check_is_fitted()
         return {name: self._fitted_forecaster.params.get(name)
-                for name in self.get_fitted_param_names()}
+                for name in self._get_fitted_param_names()}
 
-    def get_fitted_param_names(self):
+    def _get_fitted_param_names(self):
         return self._fitted_param_names

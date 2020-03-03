@@ -69,9 +69,6 @@ class BaseForecaster(BaseEstimator):
     def get_fitted_params(self):
         raise NotImplementedError("abstract method")
 
-    def get_fitted_param_names(self):
-        raise NotImplementedError("abstract method")
-
 
 def is_forecaster(estimator):
     """Return True if the given estimator is (probably) a forecaster.

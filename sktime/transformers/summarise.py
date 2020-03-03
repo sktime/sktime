@@ -222,7 +222,7 @@ class FittedParamExtractor(BaseTransformer):
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster
-        self.param_names = self._check_param_names(param_names)
+        self.param_names = param_names
         self.n_jobs = n_jobs
 
     def fit(self, X, y=None):
@@ -233,6 +233,7 @@ class FittedParamExtractor(BaseTransformer):
     def transform(self, X, y=None):
         validate_X(X)
         check_X_is_univariate(X)
+        param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
         extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(self._fit_extract)(clone(self.forecaster), X.iloc[i, 0])
@@ -254,14 +255,7 @@ class FittedParamExtractor(BaseTransformer):
         return np.hstack([params.get(name) for name in self.param_names])
 
     def _check_param_names(self, param_names):
-        if param_names is None:
-            if hasattr(self.forecaster, "get_fitted_param_names"):
-                param_names = self.forecaster.get_fitted_param_names()
-            else:
-                raise AttributeError(f"{self.forecaster.__class__.__name__} does not have a method to "
-                                     f"get all parameter names, please specify the parameter names as "
-                                     f"an input argument in the constructor")
-        elif isinstance(param_names, str):
+        if isinstance(param_names, str):
             param_names = [param_names]
         elif isinstance(param_names, (list, tuple)):
             for param in param_names:

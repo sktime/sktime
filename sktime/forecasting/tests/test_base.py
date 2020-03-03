@@ -1,19 +1,12 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
+# test API provided through BaseForecaster
+
 __author__ = ["Markus Löning"]
 __all__ = [
     "test_clone",
-    "test_different_fh_in_fit_and_predict_req",
     "test_not_fitted_error",
-    "test_fh_in_fit_opt",
-    "test_fh_in_fit_req",
-    "test_fh_in_predict_opt",
-    "test_no_fh_in_fit_req",
-    "test_no_fh_opt",
-    "test_oh_setting",
-    "test_same_fh_in_fit_and_predict_opt",
-    "test_same_fh_in_fit_and_predict_req",
     "test_score",
     "test_not_fitted_error",
     "test_predict_time_index",
@@ -31,7 +24,6 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
-from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.tests import DEFAULT_ALPHAS
 from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
@@ -45,16 +37,12 @@ from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
-FORECASTERS = [e[1] for e in all_estimators(scitype="forecaster")]
+FORECASTERS = [forecaster for (name, forecaster) in all_estimators(scitype="forecaster")]
 FH0 = 1
 
 # testing data
 y_train, y_test = make_forecasting_problem()
 
-
-########################################################################################################################
-########################################################################################################################
-# test API provided through BaseForecaster
 
 ########################################################################################################################
 # test clone
@@ -101,39 +89,10 @@ def test_fitted_params(Forecaster):
     f = _construct_instance(Forecaster)
     f.fit(y_train, FH0)
     try:
-        param_names = f.get_fitted_param_names()
-        assert isinstance(param_names, (list, tuple))
-        assert len(set(param_names)) == len(param_names)
-
         params = f.get_fitted_params()
         assert isinstance(params, dict)
-        assert set(param_names) == set(list(params.keys()))
-
     except NotImplementedError:
         pass
-
-
-########################################################################################################################
-# test oh setting
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_oh_setting(Forecaster):
-    # check oh and cutoff is None after construction
-    f = _construct_instance(Forecaster)
-    assert isinstance(f.oh, pd.Series) and len(f.oh) == 0
-    assert f.cutoff is None
-
-    # check that oh and cutoff is updated during fit
-    f.fit(y_train, FH0)
-    assert f.oh is not None
-    assert f.cutoff == y_train.index[-1]
-
-    # check data pointers
-    np.testing.assert_array_equal(f.oh.index, y_train.index)
-
-    # check that oh and cutoff is updated during update
-    f.update(y_test, update_params=False)
-    np.testing.assert_array_equal(f.oh.index, np.append(y_train.index, y_test.index))
-    assert f.cutoff == y_test.index[-1]
 
 
 ########################################################################################################################
@@ -151,9 +110,11 @@ def test_not_fitted_error(Forecaster):
         cv = SlidingWindowSplitter(fh=1, window_length=1)
         f.update_predict(y_test, cv=cv)
 
-    if hasattr(f, "get_fitted_params"):
+    try:
         with pytest.raises(NotFittedError):
             f.get_fitted_params()
+    except NotImplementedError:
+        pass
 
 
 ########################################################################################################################
@@ -175,22 +136,6 @@ def test_bad_y_input(Forecaster, y):
         f = _construct_instance(Forecaster)
         f.fit(y, FH0)
     assert_correct_msg(e, expected_msg)
-
-
-########################################################################################################################
-# not fitted error
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_not_fitted_error(Forecaster):
-    f = _construct_instance(Forecaster)
-    with pytest.raises(NotFittedError):
-        f.predict(fh=1)
-
-    with pytest.raises(NotFittedError):
-        f.update(y_test, update_params=False)
-
-    with pytest.raises(NotFittedError):
-        cv = SlidingWindowSplitter(fh=1, window_length=1)
-        f.update_predict(y_test, cv=cv)
 
 
 ########################################################################################################################
@@ -312,93 +257,3 @@ def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_le
     pred_index = y_pred.index.values
     expected_index = compute_expected_index_from_update_predict(y_test, f.fh, step_length)
     np.testing.assert_array_equal(pred_index, expected_index)
-
-
-########################################################################################################################
-########################################################################################################################
-# check setting/getting API for forecasting horizon
-
-# divide Forecasters into groups
-FORECASTERS_REQUIRED = [f for f in FORECASTERS if issubclass(f, RequiredForecastingHorizonMixin)]
-FORECASTERS_OPTIONAL = [f for f in FORECASTERS if issubclass(f, OptionalForecastingHorizonMixin)]
-
-
-########################################################################################################################
-# testing Forecasters which require fh during fitting
-@pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
-def test_no_fh_in_fit_req(Forecaster):
-    f = _construct_instance(Forecaster)
-    # fh required in fit, raises error if not passed
-    with pytest.raises(ValueError):
-        f.fit(y_train)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
-def test_fh_in_fit_req(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-    f.predict()
-    np.testing.assert_array_equal(f.fh, FH0)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
-def test_same_fh_in_fit_and_predict_req(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-    f.predict(FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
-def test_different_fh_in_fit_and_predict_req(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-    # updating fh during predict raises error as fitted model depends on fh seen in fit
-    with pytest.raises(ValueError):
-        f.predict(fh=FH0 + 1)
-
-
-########################################################################################################################
-# testing Forecasters which take fh either during fitting or predicting
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_no_fh_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train)
-    # not passing fh to either fit or predict raises error
-    with pytest.raises(ValueError):
-        f.predict()
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_fh_in_fit_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-    f.predict()
-    np.testing.assert_array_equal(f.fh, FH0)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_fh_in_predict_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train)
-    f.predict(FH0)
-    np.testing.assert_array_equal(f.fh, FH0)
-
-
-########################################################################################################################
-@pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
-def test_same_fh_in_fit_and_predict_opt(Forecaster):
-    f = _construct_instance(Forecaster)
-    # passing the same fh to both fit and predict works
-    f.fit(y_train, FH0)
-    f.predict(FH0)
-    np.testing.assert_array_equal(f.fh, FH0)

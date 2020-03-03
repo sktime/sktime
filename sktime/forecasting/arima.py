@@ -155,12 +155,11 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
 
     def get_fitted_params(self):
         self._check_is_fitted()
-        names = self.get_fitted_param_names()
+        names = self._get_fitted_param_names()
         params = self._forecaster.model_.arima_res_._results.params
         return {name: param for name, param in zip(names, params)}
 
-    def get_fitted_param_names(self):
-        self._check_is_fitted()
+    def _get_fitted_param_names(self):
         return self._forecaster.model_.arima_res_._results.param_names
 
 
