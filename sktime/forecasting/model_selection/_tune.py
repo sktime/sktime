@@ -25,8 +25,8 @@ from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base import MetaForecasterMixin
-from sktime.performance_metrics.forecasting import smape_loss
-from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_y
 
 
 def _check_param_grid(param_grid):
@@ -347,49 +347,28 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
         else:
             self.best_forecaster_._check_is_fitted()
 
-    def fit(self, y, fh=None, X=None, **fit_params):
+    def fit(self, y_train, fh=None, X_train=None, **fit_params):
         """Internal fit"""
+        y_train = check_y(y_train)
 
         # validate cross-validator
         cv = check_cv(self.cv)
 
-        # get integer time index
-        time_index = check_time_index(self._time_index)
+        base_forecaster = clone()
 
-        base_forecaster = clone(self.forecaster)
-
-        # scorers, self.multimetric_ = _check_multimetric_scoring(
-        #     self.forecaster, scoring=self.scoring)
+        if not callable(self.scoring) or self.scoring is None:
+            raise NotImplementedError()
         scorers = {"score": self.scoring}
         refit_metric = "score"
-
-        # if self.multimetric_:
-        #     if self.refit is not False and (
-        #             not isinstance(self.refit, str) or
-        #             # This will work for both dict / list (tuple)
-        #             self.refit not in scorers) and not callable(self.refit):
-        #         raise ValueError("For multi-metric scoring, the parameter "
-        #                          "refit must be set to a scorer key or a "
-        #                          "callable to refit an forecaster with the "
-        #                          "best parameter setting on the whole "
-        #                          "data and make the best_* attributes "
-        #                          "available for that metric. If this is "
-        #                          "not needed, refit should be set to "
-        #                          "False explicitly. %r was passed."
-        #                          % self.refit)
-        #     else:
-        #         refit_metric = self.refit
-        # else:
-        #     refit_metric = "score"
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
             fit_params=fit_params,
-            # return_train_score=self.return_train_score,
+            return_train_score=self.return_train_score,
             return_n_test_timepoints=True,
             return_times=True,
             return_parameters=False,
-            # error_score=self.error_score,
+            error_score=self.error_score,
             verbose=self.verbose
         )
 
@@ -401,20 +380,21 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
             candidate_params = list(candidate_params)
             n_candidates = len(candidate_params)
 
-            # if self.verbose > 0:
-            #     print("Fitting {0} folds for each of {1} candidates,"
-            #           " totalling {2} fits".format(
-            #         n_splits, n_candidates, n_candidates * n_splits))
+            if self.verbose > 0:
+                n_splits = cv.get_n_splits(y_train)
+                print("Fitting {0} folds for each of {1} candidates,"
+                      " totalling {2} fits".format(
+                    n_splits, n_candidates, n_candidates * n_splits))
 
             out = []
-            for parameters, (train, test) in product(candidate_params, cv.split(time_index)):
+            for parameters, (training_window, test_window) in product(candidate_params, cv.split(y_train)):
                 r = _fit_and_score(
                     clone(base_forecaster),
                     y,
                     fh,
                     X=X,
-                    train=train,
-                    test=test,
+                    training_window=training_window,
+                    test_window=test_window,
                     parameters=parameters,
                     **fit_and_score_kwargs
                 )
