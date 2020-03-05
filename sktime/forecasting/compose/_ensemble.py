@@ -5,11 +5,11 @@ __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
 import pandas as pd
-from sktime.forecasting.base import BaseHeterogenousMetaForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 
 
-class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaForecaster):
+class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
 

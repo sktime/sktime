@@ -40,12 +40,14 @@ y_train, y_test = make_forecasting_problem()
 def test_oh_setting(Forecaster):
     # check oh and cutoff is None after construction
     f = _construct_instance(Forecaster)
-    assert isinstance(f.oh, pd.Series) and len(f.oh) == 0
+    assert isinstance(f.oh, pd.Series)
+    assert len(f.oh) == 0
     assert f.cutoff is None
 
     # check that oh and cutoff is updated during fit
     f.fit(y_train, FH0)
-    assert f.oh is not None
+    assert isinstance(f.oh, pd.Series)
+    assert len(f.oh) > 0
     assert f.cutoff == y_train.index[-1]
 
     # check data pointers

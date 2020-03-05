@@ -10,11 +10,11 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting.base import BaseHeterogenousMetaForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 
 
-class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaForecaster):
+class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters", "final_regressor"]
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
