@@ -4,10 +4,10 @@
 __author__ = ["Markus Löning"]
 __all__ = []
 
-from sktime.transformers.summarise import FittedParamExtractor
+import pytest
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothingForecaster
-import pytest
+from sktime.transformers.summarise import FittedParamExtractor
 
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
 
@@ -17,6 +17,7 @@ def test_FittedParamExtractor(param_names):
     forecaster = ExponentialSmoothingForecaster()
     t = FittedParamExtractor(forecaster=forecaster, param_names=param_names)
     Xt = t.fit_transform(X_train)
+    assert Xt.shape == (X_train.shape[0], len(t._check_param_names(param_names)))
 
-    assert X_train.shape[0] == Xt.shape[0]
-    assert Xt.iloc[0, 0] == forecaster.fit(X_train.iloc[0, 0]).get_fitted_params().get(param_names)
+    # check specific value
+    assert Xt.iloc[47, 0] == forecaster.fit(X_train.iloc[47, 0]).get_fitted_params()[param_names]

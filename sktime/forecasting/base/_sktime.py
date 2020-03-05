@@ -117,7 +117,6 @@ class BaseSktimeForecaster(BaseForecaster):
         ----------
         fh : None, int, list, np.array
         """
-        #
         raise NotImplementedError()
 
     def _get_absolute_fh(self, fh=None):

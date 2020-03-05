@@ -19,6 +19,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import RegressionDetrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
 REGRESSOR = LinearRegression()
@@ -27,16 +28,21 @@ FORECASTERS = [
     ("ses1", FORECASTER),
     ("ses2", FORECASTER)
 ]
+STEPS = [
+    ("t", Detrender(ThetaForecaster())),
+    ("f", NaiveForecaster())
+]
 
 DEFAULT_INSTANTIATIONS = {
     DirectRegressionForecaster: {"regressor": REGRESSOR},
     RecursiveRegressionForecaster: {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
     RecursiveTimeSeriesRegressionForecaster: {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
-    TransformedTargetForecaster: {"forecaster": NaiveForecaster(), "transformer": Detrender(ThetaForecaster())},
+    TransformedTargetForecaster: {"steps": STEPS},
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
     Detrender: {"forecaster": FORECASTER},
+    RegressionDetrender: {"regressor": REGRESSOR}
 }
 
 

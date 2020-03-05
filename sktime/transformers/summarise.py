@@ -236,25 +236,19 @@ class FittedParamExtractor(BaseTransformer):
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
-        extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(self._fit_extract)(clone(self.forecaster), X.iloc[i, 0])
-                                                        for i in range(n_instances))
+        def _fit_extract(forecaster, x, param_names):
+            forecaster.fit(x)
+            params = forecaster.get_fitted_params()
+            return np.hstack([params[name] for name in param_names])
 
-        # extracted_params = np.zeros((n_instances, len(self.param_names)))
-        # for i in range(n_instances):
-        #     x = X.iloc[i, 0]
-        #     f = clone(self.forecaster)
-        #     f.fit(x)
-        #     params = f.get_fitted_params()
-        #     extracted_params[i, :] = np.hstack([params.get(name) for name in self.param_names])
+        # iterate over rows
+        extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(_fit_extract)(
+            clone(self.forecaster), X.iloc[i, 0], param_names) for i in range(n_instances))
 
-        return pd.DataFrame(extracted_params, index=X.index, columns=X.columns)
+        return pd.DataFrame(extracted_params, index=X.index, columns=param_names)
 
-    def _fit_extract(self, forecaster, x):
-        forecaster.fit(x)
-        params = forecaster.get_fitted_params()
-        return np.hstack([params.get(name) for name in self.param_names])
-
-    def _check_param_names(self, param_names):
+    @staticmethod
+    def _check_param_names(param_names):
         if isinstance(param_names, str):
             param_names = [param_names]
         elif isinstance(param_names, (list, tuple)):

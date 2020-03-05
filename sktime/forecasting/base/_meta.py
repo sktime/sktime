@@ -4,14 +4,15 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "MetaForecasterMixin",
-    "BaseHeterogenousMetaForecaster"
+    "BaseHeterogenousEnsembleForecaster"
 ]
 
 from joblib import Parallel, delayed
 from sklearn.base import clone
+from sktime.base import BaseComposition
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import is_forecaster
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
 
 
 class MetaForecasterMixin:
@@ -19,7 +20,7 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
+class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecaster, BaseComposition):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -27,20 +28,7 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(BaseHeterogenousMetaForecaster, self).__init__()
-
-    def _check_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError('Estimator names conflict with constructor '
-                             'arguments: {0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
-        if invalid_names:
-            raise ValueError('Estimator names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
+        super(BaseHeterogenousEnsembleForecaster, self).__init__()
 
     def _check_forecasters(self):
         if self.forecasters is None or len(self.forecasters) == 0:
