@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "temporal_train_test_split"]
+__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "SingleWindowSplit", "temporal_train_test_split"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
@@ -129,6 +129,8 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
         return end
 
     def get_n_splits(self, y=None):
+        if y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
         return len(self.get_cutoffs(y))
 
     def get_cutoffs(self, y=None):
@@ -143,7 +145,7 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
         cutoffs : np.array
         """
         if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
+            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
         y = self._check_y(y)
         end = self._get_end(y)
         start = self._get_start()
@@ -192,6 +194,31 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
 
     def get_cutoffs(self, y=None):
         return self.cutoffs
+
+
+class SingleWindowSplit(BaseTemporalCrossValidator):
+
+    def __init__(self, fh, window_length=None):
+        super(SingleWindowSplit, self).__init__(fh=fh, window_length=window_length)
+        if np.any(self.fh <= 0):
+            raise ValueError(f"{self.__class__.__name__} does not support "
+                             f"negative steps in the forecasting horizon "
+                             f"`fh`.")
+
+    def _split_windows(self, y):
+        index = np.arange(len(y))
+        training_window, test_window = temporal_train_test_split(index, test_size=max(self.fh),
+                                                                 train_size=self.window_length)
+        yield training_window, test_window[self.fh - 1]
+
+    def get_n_splits(self, y=None):
+        return 1
+
+    def get_cutoffs(self, y=None):
+        if y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
+        training_window, _ = next(self._split_windows(y))
+        return training_window[-1:]  # array output
 
 
 def temporal_train_test_split(*arrays, test_size=None, train_size=None):
