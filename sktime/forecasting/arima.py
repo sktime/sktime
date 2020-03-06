@@ -6,7 +6,6 @@ __all__ = [
     "AutoARIMAForecaster"
 ]
 
-from pmdarima.arima import AutoARIMA
 from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 import pandas as pd
@@ -69,6 +68,8 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
 
         super(AutoARIMAForecaster, self).__init__()
 
+        # import inside method to avoid hard dependency
+        from pmdarima.arima import AutoARIMA
         self._forecaster = AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
             max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
