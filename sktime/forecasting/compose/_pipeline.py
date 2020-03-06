@@ -95,7 +95,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        self._check_is_fitted()
+        self.check_is_fitted()
 
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
@@ -106,7 +106,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
         return y_pred
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
 
         for step_idx, name, transformer in self._iter():
@@ -121,18 +121,18 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
 
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
-        self._check_is_fitted()
+        self.check_is_fitted()
         raise NotImplementedError()
 
     def transform(self, y):
-        self._check_is_fitted()
+        self.check_is_fitted()
         yt = check_y(y)
         for step_idx, name, transformer in self._iter():
             yt = transformer.transform(yt)
         return yt
 
     def inverse_transform(self, y):
-        self._check_is_fitted()
+        self.check_is_fitted()
         yt = check_y(y)
         for step_idx, name, transformer in self._iter():
             yt = transformer.inverse_transform(yt)

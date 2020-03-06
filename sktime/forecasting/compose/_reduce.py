@@ -42,7 +42,7 @@ class BaseReducer(BaseLastWindowForecaster):
     def update(self, y_new, X_new=None, update_params=False):
         if X_new is not None or update_params:
             raise NotImplementedError()
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         return self
 

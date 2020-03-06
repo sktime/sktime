@@ -155,7 +155,7 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
             return pd.Series(y_pred[fh_idx], index=index)
 
     def get_fitted_params(self):
-        self._check_is_fitted()
+        self.check_is_fitted()
         names = self._get_fitted_param_names()
         params = self._forecaster.model_.arima_res_._results.params
         return {name: param for name, param in zip(names, params)}

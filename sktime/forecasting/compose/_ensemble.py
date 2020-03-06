@@ -26,14 +26,14 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsemb
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
     def transform(self, fh=None, X=None):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_fh(fh)
         return pd.concat(self._predict_forecasters(fh=self.fh, X=X), axis=1)
 

@@ -174,7 +174,7 @@ class ThetaForecaster(ExponentialSmoothingForecaster):
         """
         Get the prediction errors for the forecast.
         """
-        self._check_is_fitted()
+        self.check_is_fitted()
         alpha = check_alpha(alpha)
 
         n_timepoints = len(self.oh)

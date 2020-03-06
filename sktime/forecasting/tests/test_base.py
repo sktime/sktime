@@ -8,7 +8,6 @@ __all__ = [
     "test_clone",
     "test_not_fitted_error",
     "test_score",
-    "test_not_fitted_error",
     "test_predict_time_index",
     "test_update_predict_predicted_indices",
     "test_bad_y_input",

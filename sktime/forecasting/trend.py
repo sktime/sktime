@@ -38,7 +38,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int or X is not None:
             raise NotImplementedError()
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_fh(fh)
         fh_abs = self._get_absolute_fh()
         x = fh_abs.reshape(-1, 1)

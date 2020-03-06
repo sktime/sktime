@@ -45,7 +45,7 @@ class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsemb
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         if update_params:
             warn("Updating `final regressor is not implemented")

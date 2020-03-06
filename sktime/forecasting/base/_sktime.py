@@ -11,7 +11,6 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
-from sktime.utils.exceptions import NotFittedError
 from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
 
 
@@ -20,26 +19,8 @@ class BaseSktimeForecaster(BaseForecaster):
     def __init__(self):
         self._oh = pd.Series([])  # observation horizon, i.e. time points seen in fit or update
         self._cutoff = None  # time point in observation horizon cutoff which to make forecasts
-        self._is_fitted = False
         self._fh = None
         super(BaseSktimeForecaster, self).__init__()
-
-    @property
-    def is_fitted(self):
-        """Has `fit` been called?"""
-        return self._is_fitted
-
-    def _check_is_fitted(self):
-        """Check if the forecaster has been fitted.
-
-        Raises
-        ------
-        NotFittedError
-            if the forecaster has not been fitted yet.
-        """
-        if not self.is_fitted:
-            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
-                                 f"been fitted yet; please call `fit` first.")
 
     @property
     def oh(self):
@@ -169,14 +150,14 @@ class BaseSktimeForecaster(BaseForecaster):
         y_pred : pd.Series
         y_pred_int : pd.DataFrame
         """
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_fh(fh)
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def update(self, y_new, X_new=None, update_params=False):
         if update_params:
             raise NotImplementedError()
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         return self
 
