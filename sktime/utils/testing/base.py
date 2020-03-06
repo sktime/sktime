@@ -19,7 +19,6 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
-from sktime.transformers.detrend import RegressionDetrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
 REGRESSOR = LinearRegression()
@@ -42,7 +41,6 @@ DEFAULT_INSTANTIATIONS = {
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
     Detrender: {"forecaster": FORECASTER},
-    RegressionDetrender: {"regressor": REGRESSOR}
 }
 
 

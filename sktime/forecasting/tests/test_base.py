@@ -213,9 +213,7 @@ def test_score(Forecaster, fh):
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_update_predict_single(Forecaster, fh, window_length, step_length):
+def test_update_predict_single(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.update_predict_single(y_test)

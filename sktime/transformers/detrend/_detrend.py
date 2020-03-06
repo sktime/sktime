@@ -42,36 +42,3 @@ class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
 
     def _get_relative_fh(self, y):
         return y.index.values - self.forecaster_.cutoff
-
-
-class RegressionDetrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
-
-    def __init__(self, regressor):
-        self.regressor = regressor
-        super(RegressionDetrender, self).__init__()
-
-    def fit(self, y, *fit_kwargs):
-        y = check_y(y)
-        x = self._get_x(y)
-        self.regressor_ = clone(self.regressor)
-        self.regressor_.fit(x, y.values)
-        self._is_fitted = True
-        return self
-
-    def transform(self, y, **transform_kwargs):
-        self._check_is_fitted()
-        y = check_y(y)
-        x = self._get_x(y)
-        yt = y - self.regressor_.predict(x)
-        return pd.Series(yt, index=y.index)
-
-    def inverse_transform(self, y, **inverse_transform_kwargs):
-        self._check_is_fitted()
-        y = check_y(y)
-        x = self._get_x(y)
-        yit = y + self.regressor_.predict(x)
-        return pd.Series(yit, index=y.index)
-
-    @staticmethod
-    def _get_x(y):
-        return y.index.values.reshape(-1, 1)
