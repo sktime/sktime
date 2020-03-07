@@ -174,7 +174,7 @@ def check_pred_ints(pred_ints, y_train, y_pred, fh):
         # check if errors are weakly monotonically increasing
         pred_errors = y_pred - pred_int["lower"]
         # assert pred_errors.is_mononotic_increasing
-        assert np.all(pred_errors.values[1:] >= pred_errors.values[:-1])
+        assert np.all(pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4))
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
