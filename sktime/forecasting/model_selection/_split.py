@@ -84,7 +84,30 @@ class BaseTemporalCrossValidator:
         return check_time_index(y)
 
 
-class SlidingWindowSplitter(BaseTemporalCrossValidator):
+class BaseWindowSplitter(BaseTemporalCrossValidator):
+
+    def _get_end(self, y):
+        """Helper function to compute the end of the last window"""
+        n_timepoints = len(y)
+        fh = self.fh
+
+        # end point is end of last window
+        is_in_sample = np.all(fh <= 0)
+        if is_in_sample:
+            end = n_timepoints + 1
+        else:
+            fh_max = fh[-1]
+            end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
+
+            # check if computed values are feasible with the provided index
+            if self.window_length is not None:
+                if self.window_length + fh_max > n_timepoints:
+                    raise ValueError(
+                        f"The window length and forecasting horizon are incompatible with the length of `y`")
+        return end
+
+
+class SlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(self, fh=1, window_length=10, step_length=1, start_with_window=False):
         self._step_length = check_step_length(step_length)
@@ -109,24 +132,6 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
             training_window = np.arange(split_point - self.window_length, split_point)
             test_window = split_point + self.fh - 1
             yield training_window, test_window
-
-    def _get_end(self, y):
-        """Helper function to compute the end of the last window"""
-        n_timepoints = len(y)
-        fh = self.fh
-
-        # end point is end of last window
-        is_in_sample = np.all(fh <= 0)
-        if is_in_sample:
-            end = n_timepoints + 1
-        else:
-            fh_max = fh[-1]
-            end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
-
-            # check if computed values are feasible with the provided index
-            if self._window_length + fh_max > n_timepoints:
-                raise ValueError(f"The window length and forecasting horizon are incompatible with the length of `y`")
-        return end
 
     def get_n_splits(self, y=None):
         if y is None:
@@ -163,6 +168,28 @@ class SlidingWindowSplitter(BaseTemporalCrossValidator):
             return 0
 
 
+class SingleWindowSplit(BaseWindowSplitter):
+
+    def __init__(self, fh, window_length=None):
+        super(SingleWindowSplit, self).__init__(fh=fh, window_length=window_length)
+
+    def _split_windows(self, y):
+        end = self._get_end(y) - 1
+        start = 0 if self.window_length is None else end - self.window_length
+        training_window = np.arange(start, end)
+        test_window = end + self.fh - 1
+        yield training_window, test_window
+
+    def get_n_splits(self, y=None):
+        return 1
+
+    def get_cutoffs(self, y=None):
+        if y is None:
+            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
+        training_window, _ = next(self._split_windows(y))
+        return training_window[-1:]  # array output
+
+
 class ManualWindowSplitter(BaseTemporalCrossValidator):
     """Manual window splitter.
 
@@ -173,6 +200,7 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
     fh : int, list or np.array
     window_length : int
     """
+
     def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
         self.cutoffs = self._check_cutoffs(cutoffs)
         super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
@@ -194,31 +222,6 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
 
     def get_cutoffs(self, y=None):
         return self.cutoffs
-
-
-class SingleWindowSplit(BaseTemporalCrossValidator):
-
-    def __init__(self, fh, window_length=None):
-        super(SingleWindowSplit, self).__init__(fh=fh, window_length=window_length)
-        if np.any(self.fh <= 0):
-            raise ValueError(f"{self.__class__.__name__} does not support "
-                             f"negative steps in the forecasting horizon "
-                             f"`fh`.")
-
-    def _split_windows(self, y):
-        index = np.arange(len(y))
-        training_window, test_window = temporal_train_test_split(index, test_size=max(self.fh),
-                                                                 train_size=self.window_length)
-        yield training_window, test_window[self.fh - 1]
-
-    def get_n_splits(self, y=None):
-        return 1
-
-    def get_cutoffs(self, y=None):
-        if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
-        training_window, _ = next(self._split_windows(y))
-        return training_window[-1:]  # array output
 
 
 def temporal_train_test_split(*arrays, test_size=None, train_size=None):

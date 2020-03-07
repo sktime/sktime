@@ -121,9 +121,9 @@ def assert_correct_msg(exception, msg):
     (1, 3, 0.5)  # tuple
 ])
 def test_bad_y_input(Forecaster, y):
-    expected_msg = f"`y` must be a pandas Series, but found: {type(y)}"
+    expected_msg = f"`y` must be a pandas Series, but found type: {type(y)}"
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(TypeError) as e:
         f = _construct_instance(Forecaster)
         f.fit(y, FH0)
     assert_correct_msg(e, expected_msg)

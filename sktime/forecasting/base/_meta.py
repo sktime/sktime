@@ -59,11 +59,11 @@ class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecast
     def _fit_forecasters(self, forecasters, y_train, fh=None, X_train=None):
         """Helper function to fit all forecasters"""
 
-        def fit(forecaster, y_train, fh, X_train):
+        def _fit_forecaster(forecaster, y_train, fh, X_train):
             return forecaster.fit(y_train, fh=fh, X_train=X_train)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit)(clone(forecaster), y_train, fh, X_train)
+            delayed(_fit_forecaster)(clone(forecaster), y_train, fh, X_train)
             for forecaster in forecasters)
 
     def _predict_forecasters(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -72,5 +72,5 @@ class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecast
             raise NotImplementedError()
         # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(fh, X=X)
         #                                     for forecaster in self.forecasters_)
-        return [forecaster.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
                 for forecaster in self.forecasters_]

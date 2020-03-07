@@ -35,9 +35,9 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsemb
     def transform(self, fh=None, X=None):
         self.check_is_fitted()
         self._set_fh(fh)
-        return pd.concat(self._predict_forecasters(fh=self.fh, X=X), axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(self.fh, X=X), axis=1).mean(axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)

@@ -51,6 +51,11 @@ def generate_and_check_windows(y, cv):
     training_windows = []
     test_windows = []
     for training_window, test_window in cv.split(y):
+        # check if indexing works
+        _ = y.iloc[training_window]
+        _ = y.iloc[test_window]
+
+        # keep windows for more checks
         training_windows.append(training_window)
         test_windows.append(test_window)
 
@@ -71,7 +76,7 @@ def generate_and_check_windows(y, cv):
 
 
 @pytest.mark.parametrize("y", YS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", ALL_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
 def test_single_window_split(y, fh, window_length):
     cv = SingleWindowSplit(fh=fh, window_length=window_length)
@@ -84,6 +89,7 @@ def test_single_window_split(y, fh, window_length):
     assert training_window.shape[0] == window_length
     assert training_window[-1] == cutoffs[0]
     assert test_window.shape[0] == len(check_fh(fh))
+    np.testing.assert_array_equal(test_window, training_window[-1] + check_fh(fh))
 
 
 @pytest.mark.parametrize("y, cutoffs", [(y, cutoffs) for y, cutoffs in zip(YS, CUTOFFS)])
