@@ -230,7 +230,7 @@ def get_time_index(X):
     return time_index
 
 
-def convert_data(X):
+def from_nested_to_long(X):
     columns = []
 
     for i in range(len(X.columns)):
