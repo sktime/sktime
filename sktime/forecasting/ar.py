@@ -4,12 +4,12 @@
 __author__ = ["Markus Löning"]
 __all__ = ["_AutoARForecaster"]
 
-from sktime.forecasting.base import BaseStatsModelsForecaster
+from sktime.forecasting.base import BaseStatsModelsAdapter
 from statsmodels.tsa.ar_model import ar_select_order
 
 
 # TODO remove leading underscore to include it in tests once statsmodels bug fix is released
-class _AutoARForecaster(BaseStatsModelsForecaster):
+class _AutoARForecaster(BaseStatsModelsAdapter):
     """
     Autoregressive AR-X(p) model.
 

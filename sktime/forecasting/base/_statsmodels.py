@@ -2,20 +2,20 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["BaseStatsModelsForecaster"]
+__all__ = ["BaseStatsModelsAdapter"]
 
 from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 
 
-class BaseStatsModelsForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     _fitted_param_names = ()
 
     def __init__(self):
         self._forecaster = None
         self._fitted_forecaster = None
-        super(BaseStatsModelsForecaster, self).__init__()
+        super(BaseStatsModelsAdapter, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         """

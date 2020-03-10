@@ -12,4 +12,4 @@ from sktime.forecasting.base._sktime import BaseLastWindowForecaster
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
-from sktime.forecasting.base._statsmodels import BaseStatsModelsForecaster
+from sktime.forecasting.base._statsmodels import BaseStatsModelsAdapter

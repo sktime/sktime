@@ -6,7 +6,7 @@ __author__ = ["Markus Löning"]
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.forecasting import ExponentialSmoothingForecaster
+from sktime.forecasting import ExponentialSmoothing
 from sktime.forecasting.base import BaseSktimeForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
@@ -22,7 +22,7 @@ from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
 REGRESSOR = LinearRegression()
-FORECASTER = ExponentialSmoothingForecaster()
+FORECASTER = ExponentialSmoothing()
 FORECASTERS = [
     ("ses1", FORECASTER),
     ("ses2", FORECASTER)

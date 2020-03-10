@@ -3,7 +3,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "AutoARIMAForecaster"
+    "AutoARIMA"
 ]
 
 from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 
 
-class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
                  max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
@@ -66,11 +66,11 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         self.scoring_args = scoring_args
         self.with_intercept = with_intercept
 
-        super(AutoARIMAForecaster, self).__init__()
+        super(AutoARIMA, self).__init__()
 
         # import inside method to avoid hard dependency
-        from pmdarima.arima import AutoARIMA
-        self._forecaster = AutoARIMA(
+        from pmdarima.arima import AutoARIMA as _AutoARIMA
+        self._forecaster = _AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
             max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
             max_D=max_D, max_Q=max_Q, max_order=max_order, m=m, seasonal=seasonal,
