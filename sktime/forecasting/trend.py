@@ -28,7 +28,8 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
         self._set_oh(y_train)
         self._set_fh(fh)
 
-        r = self.regressor if self.regressor is not None else LinearRegression()
+        # for default regressor, set fit_intercept=False as we generate a dummy variable in polynomial features
+        r = self.regressor if self.regressor is not None else LinearRegression(fit_intercept=False)  #
         self.regressor_ = make_pipeline(PolynomialFeatures(degree=self.degree, include_bias=self.with_intercept), r)
         x = y_train.index.values.reshape(-1, 1)
         self.regressor_.fit(x, y_train.values)
