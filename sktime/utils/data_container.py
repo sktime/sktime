@@ -231,8 +231,19 @@ def get_time_index(X):
 
 
 def from_nested_to_long(X):
-    columns = []
+    """Convert nested dataframe to long dataframe
 
+    Parameters
+    ----------
+    X : pd.DataFrame
+        nested dataframe
+
+    Returns
+    -------
+    Xt : pd.DataFrame
+        long dataframe
+    """
+    columns = []
     for i in range(len(X.columns)):
         df = tabularise(X.iloc[:, i])
         df = df.reset_index()
