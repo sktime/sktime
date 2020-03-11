@@ -87,9 +87,6 @@ def test_fitted_params(Forecaster):
         params = f.get_fitted_params()
         assert isinstance(params, dict)
 
-
-
-
     except NotImplementedError:
         pass
 
@@ -223,6 +220,15 @@ def test_update_predict_single(Forecaster, fh):
     assert_correct_pred_time_index(y_pred, y_test, fh)
 
 
+def check_update_predict_y_pred(y_pred, fh, step_length):
+    assert isinstance(y_pred, (pd.Series, pd.DataFrame))
+    if isinstance(y_pred, pd.DataFrame):
+        assert y_pred.shape[1] > 1
+
+    expected_index = compute_expected_index_from_update_predict(y_test, fh, step_length)
+    np.testing.assert_array_equal(y_pred.index, expected_index)
+
+
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
@@ -233,9 +239,7 @@ def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_le
     f.fit(y_train, fh)
     try:
         y_pred = f.update_predict(y_test, cv=cv)
-        pred_index = y_pred.index.values
-        expected_index = compute_expected_index_from_update_predict(y_test, f.fh, step_length)
-        np.testing.assert_array_equal(pred_index, expected_index)
+        check_update_predict_y_pred(y_pred, f.fh, step_length)
 
     except NotImplementedError:
         pass

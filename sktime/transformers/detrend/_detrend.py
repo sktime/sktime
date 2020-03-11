@@ -8,7 +8,7 @@ __author__ = ["Markus Löning"]
 
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import MetaForecasterMixin
+from sktime.forecasting.base.meta import MetaForecasterMixin
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 

@@ -41,7 +41,7 @@ def all_estimators(scitype=None):
 
     # lazy import to avoid circular imports from sklearn.base
     import warnings
-    from sktime.forecasting.base._sktime import BaseSktimeForecaster
+    from sktime.forecasting.base.sktime import BaseSktimeForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer

@@ -4,8 +4,8 @@
 __author__ = ["Markus Löning"]
 __all__ = ["BaseStatsModelsAdapter"]
 
-from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.sktime import BaseSktimeForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 
 
 class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):

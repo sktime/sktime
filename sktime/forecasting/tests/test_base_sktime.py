@@ -19,8 +19,8 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.forecasting.base import BaseSktimeForecaster
-from sktime.forecasting.base import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
+from sktime.forecasting.base.sktime import BaseSktimeForecaster
+from sktime.forecasting.base.sktime import OptionalForecastingHorizonMixin, RequiredForecastingHorizonMixin
 from sktime.utils import all_estimators
 from sktime.utils.testing.base import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem

@@ -90,10 +90,10 @@ def check_cv(cv):
     ValueError
         if cv does not have the required attributes.
     """
-    required_attributes = ("split", "fh", "window_length")
-    for attr in required_attributes:
-        if not hasattr(cv, attr):
-            raise ValueError(f"`cv` iterator must have a {attr} attribute.")
+    from sktime.forecasting.model_selection._split import BaseTemporalCrossValidator
+    allowed_base_class = BaseTemporalCrossValidator
+    if not isinstance(cv, allowed_base_class):
+        raise TypeError(f"`cv` is not an instance of {allowed_base_class}")
     return cv
 
 
@@ -169,7 +169,7 @@ def check_window_length(window_length):
     """Validate window length"""
     if window_length is not None:
         if not is_int(window_length) or window_length < 1:
-            raise ValueError(f"`window_length` must be a positive integer >= 1 or None, "
+            raise ValueError(f"`window_length_` must be a positive integer >= 1 or None, "
                              f"but found: {window_length}")
     return window_length
 

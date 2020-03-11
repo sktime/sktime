@@ -16,12 +16,12 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import BaseLastWindowForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import OptionalForecastingHorizonMixin
-from sktime.forecasting.base import RequiredForecastingHorizonMixin
+from sktime.forecasting.base.sktime import BaseLastWindowForecaster
+from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.forecasting.base.sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base.sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y, check_window_length, check_step_length
 
 
 ##############################################################################
@@ -33,10 +33,10 @@ class BaseReducer(BaseLastWindowForecaster):
     _required_parameters = ["regressor"]
 
     def __init__(self, regressor, window_length=10, step_length=1):
-        super(BaseReducer, self).__init__()
+        super(BaseReducer, self).__init__(window_length=window_length)
         self.regressor = regressor
-        self._window_length = window_length
-        self._step_length = step_length
+        self.step_length = step_length
+        self.step_length_ = None
         self._cv = None
 
     def update(self, y_new, X_new=None, update_params=False):
@@ -105,12 +105,8 @@ class BaseReducer(BaseLastWindowForecaster):
     def _convert_x_windows(X):
         raise NotImplementedError("abstract method")
 
-    @property
-    def step_length(self):
-        return self._step_length
-
     def _is_predictable(self, last_window):
-        return len(last_window) == self.window_length \
+        return len(last_window) == self.window_length_ \
                and np.sum(np.isnan(last_window)) == 0 \
                and np.sum(np.isinf(last_window)) == 0
 
@@ -175,9 +171,12 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self._set_oh(y_train)
         self._set_fh(fh)
 
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
-        self._cv = SlidingWindowSplitter(fh=self.fh, window_length=self.window_length, step_length=self.step_length,
+        self._cv = SlidingWindowSplitter(fh=self.fh, window_length=self.window_length_, step_length=self.step_length_,
                                          start_with_window=True)
 
         # transform data using rolling window split
@@ -229,10 +228,13 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         self._set_oh(y_train)
         self._set_fh(fh)
 
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
         # set up cv iterator, for recursive strategy, a single estimator
         # is fit for a one-step-ahead forecasting horizon and then called
         # iteratively to predict multiple steps ahead
-        self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length, step_length=self.step_length,
+        self._cv = SlidingWindowSplitter(fh=1, window_length=self.window_length_, step_length=self.step_length_,
                                          start_with_window=True)
 
         # transform data into tabular form
@@ -265,7 +267,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             y_pred[i] = regressor.predict(X_last)  # make forecast using fitted regressor
 
             # update last window with previous prediction
-            last_window = np.append(last_window, y_pred[i])[-self.window_length:]
+            last_window = np.append(last_window, y_pred[i])[-self.window_length_:]
 
         fh_idx = self._get_array_index_fh(fh)
         return y_pred[fh_idx]

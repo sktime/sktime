@@ -10,9 +10,9 @@ __all__ = [
 from joblib import Parallel, delayed
 from sklearn.base import clone
 from sktime.base import BaseComposition
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base._base import is_forecaster
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.forecasting.base.base import is_forecaster
+from sktime.forecasting.base.sktime import BaseSktimeForecaster
 
 
 class MetaForecasterMixin:

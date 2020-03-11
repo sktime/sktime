@@ -7,9 +7,10 @@ __all__ = ["TransformedTargetForecaster"]
 from itertools import islice
 from sklearn.base import clone
 from sktime.base import BaseComposition
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import BaseSktimeForecaster, MetaForecasterMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.base import BaseForecaster
+from sktime.forecasting.base.sktime import BaseSktimeForecaster
+from sktime.forecasting.base.meta import MetaForecasterMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 

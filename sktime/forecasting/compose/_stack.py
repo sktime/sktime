@@ -10,8 +10,9 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, RequiredForecastingHorizonMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.meta import BaseHeterogenousEnsembleForecaster
+from sktime.forecasting.base.sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SingleWindowSplit
 
 

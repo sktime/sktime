@@ -11,20 +11,18 @@ from collections import defaultdict
 from collections.abc import Sequence
 from contextlib import suppress
 from functools import partial
-from itertools import product
 from traceback import format_exception_only
 
 import numpy as np
 from scipy.stats import rankdata
-from sklearn.base import BaseEstimator
 from sklearn.base import clone
 from sklearn.exceptions import FitFailedWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv, ParameterGrid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.base import MetaForecasterMixin
+from sktime.forecasting.base.base import BaseForecaster
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_y
 
@@ -49,19 +47,7 @@ def _check_param_grid(param_grid):
                                  "to be a non-empty sequence.".format(name))
 
 
-def _score(forecaster, fh, y_test, scorer):
-    """Compute the score(s) of an forecaster on a given test set.
-    Will return a dict of floats if `scorer` is a dict, otherwise a single
-    float is returned.
-    """
-    # if isinstance(scorer, dict):
-    #     # will cache method calls if needed. scorer() returns a dict
-    #     scorer = _MultimetricScorer(**scorer)
-    # if y_test is None:
-    #     scores = scorer(forecaster, X_test)
-    # else:
-    #     scores = scorer(forecaster, X_test, y_test)
-    y_pred = forecaster.predict(fh=fh)
+def _score(y_test, y_pred, scorer):
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
 
     error_msg = ("scoring must return a number, got %s (%s) "
@@ -85,34 +71,42 @@ def _score(forecaster, fh, y_test, scorer):
     return scores
 
 
-def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
-                   parameters, fit_params, X=None,
+def _update_score(forecaster, cv, y_test, X_test, scorer):
+    """Compute the score(s) of an forecaster on a given test set.
+    Will return a dict of floats if `scorer` is a dict, otherwise a single
+    float is returned.
+    """
+    y_pred = forecaster.update_predict(y_test, cv=cv, X_test=X_test)
+    return _score(y_test, y_pred, scorer)
+
+
+def _fit_and_score(forecaster, cv, y, X, scorer, verbose,
+                   parameters, fit_params,
                    return_parameters=False,
-                   return_n_test_timepoints=False,
                    return_times=False,
+                   return_train_score=False,
                    return_forecaster=False,
                    error_score=np.nan):
-    if verbose > 1:
-        if parameters is None:
-            msg = ""
-        else:
-            msg = "%s" % (", ".join("%s=%s" % (k, v)
-                                    for k, v in parameters.items()))
-        print("[CV] %s %s" % (msg, (64 - len(msg)) * "."))
+    if return_train_score:
+        raise NotImplementedError()
+
+    # Get forecasting horizon
+    fh = cv.get_fh()
 
     # Fit params
     fit_params = fit_params if fit_params is not None else {}
-
     if parameters is not None:
         forecaster.set_params(**parameters)
 
+    # Split training data into training set and validation set
+    training_window, _ = cv.split_initial(y)
+    y_train = y.iloc[training_window]
+    X_train = X.iloc[training_window, :] if X is not None else None
+
+    # Fit forecaster
     start_time = time.time()
-
-    y_train = y.iloc[train]
-    y_test = y.iloc[test]
-
     try:
-        forecaster.fit(y_train, fh=fh, X=X, **fit_params)
+        forecaster.fit(y_train, fh, X_train=X_train, **fit_params)
 
     except Exception as e:
         # Note fit time as time until error
@@ -123,12 +117,8 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
         elif isinstance(error_score, numbers.Number):
             if isinstance(scorer, dict):
                 test_scores = {name: error_score for name in scorer}
-                # if return_train_score:
-                #     train_scores = test_scores.copy()
             else:
                 test_scores = error_score
-                # if return_train_score:
-                #     train_scores = error_score
             warnings.warn("forecaster fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
                           "Details: \n%s" %
@@ -141,17 +131,11 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(forecaster, fh, y_test, scorer)
+        test_scores = _update_score(forecaster, cv, y, X, scorer)
         score_time = time.time() - start_time - fit_time
-
-    # if verbose > 1:
-    #     total_time = score_time + fit_time
-    #     print(_message_with_time("CV", msg, total_time))
 
     ret = [test_scores]
 
-    if return_n_test_timepoints:
-        ret.append(len(test))
     if return_times:
         ret.extend([fit_time, score_time])
     if return_parameters:
@@ -161,7 +145,7 @@ def _fit_and_score(forecaster, y, fh, scorer, train, test, verbose,
     return ret
 
 
-class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
+class BaseGridSearch(BaseForecaster):
 
     def __init__(self, forecaster, cv, n_jobs=None, pre_dispatch=None, refit=False, scoring=None, verbose=0,
                  error_score=None, return_train_score=None):
@@ -175,6 +159,7 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
         self.error_score = error_score
         self.return_train_score = return_train_score
         self.best_forecaster_ = None
+        super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update(self, y_new, X_new=None, update_params=False):
@@ -272,8 +257,7 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
         # else:
         #     (test_score_dicts, test_sample_counts, fit_time,
         #      score_time) = zip(*out)
-        (test_score_dicts, test_sample_counts, fit_time,
-         score_time) = zip(*out)
+        (test_score_dicts, fit_time, score_time) = zip(*out)
 
         # test_score_dicts and train_score dicts are lists of dictionaries and
         # we make them into dict of lists
@@ -354,7 +338,7 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
         # validate cross-validator
         cv = check_cv(self.cv)
 
-        base_forecaster = clone()
+        base_forecaster = clone(self.forecaster)
 
         if not callable(self.scoring) or self.scoring is None:
             raise NotImplementedError()
@@ -365,7 +349,6 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
             scorer=scorers,
             fit_params=fit_params,
             return_train_score=self.return_train_score,
-            return_n_test_timepoints=True,
             return_times=True,
             return_parameters=False,
             error_score=self.error_score,
@@ -387,20 +370,18 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
                     n_splits, n_candidates, n_candidates * n_splits))
 
             out = []
-            for parameters, (training_window, test_window) in product(candidate_params, cv.split(y_train)):
+            for parameters in candidate_params:
                 r = _fit_and_score(
                     clone(base_forecaster),
-                    y,
-                    fh,
-                    X=X,
-                    training_window=training_window,
-                    test_window=test_window,
+                    cv,
+                    y_train,
+                    X_train,
                     parameters=parameters,
                     **fit_and_score_kwargs
                 )
                 out.append(r)
 
-            n_splits = cv.get_n_splits()
+            n_splits = cv.get_n_splits(y_train)
 
             if len(out) < 1:
                 raise ValueError("No fits were performed. "
@@ -433,9 +414,8 @@ class BaseGridSearch(MetaForecasterMixin, BaseEstimator):
 
         if self.refit:
             refit_start_time = time.time()
-            self.best_forecaster_.fit(y, fh=fh, **fit_params)
-            refit_end_time = time.time()
-            self.refit_time_ = refit_end_time - refit_start_time
+            self.best_forecaster_.fit(y_train, fh=fh, X_train=X_train, **fit_params)
+            self.refit_time_ = time.time() - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers["score"]
