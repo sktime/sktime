@@ -4,7 +4,7 @@ __author__ = ["@big-o", "Markus Löning"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting import ExponentialSmoothingForecaster
+from sktime.forecasting import ExponentialSmoothing
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.utils.confidence import zscore
@@ -12,7 +12,7 @@ from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_alpha, check_y
 
 
-class ThetaForecaster(ExponentialSmoothingForecaster):
+class ThetaForecaster(ExponentialSmoothing):
     """
     Theta method of forecasting.
 
@@ -174,7 +174,7 @@ class ThetaForecaster(ExponentialSmoothingForecaster):
         """
         Get the prediction errors for the forecast.
         """
-        self._check_is_fitted()
+        self.check_is_fitted()
         alpha = check_alpha(alpha)
 
         n_timepoints = len(self.oh)

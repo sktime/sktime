@@ -49,7 +49,13 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     # mean absolute error of naive seasonal prediction
     mae_naive = np.mean(np.abs(y_train[sp:] - y_pred_naive))
 
-    return np.mean(np.abs(y_test - y_pred)) / mae_naive
+    # if training data is flat, mae may be zero,
+    # return np.nan to avoid divide by zero error
+    # and np.inf values
+    if mae_naive == 0:
+        return np.nan
+    else:
+        return np.mean(np.abs(y_test - y_pred)) / mae_naive
 
 
 def smape_loss(y_test, y_pred):

@@ -39,7 +39,7 @@ def seasonality_test(y, sp):
 
     """
     y = np.asarray(y)
-    crit_val = 1.645
+    crit_val = 1.645  # 90% confidence level
     n_timepoints = len(y)
     r = acf(y, nlags=sp, fft=False)
     s = r[1] + np.sum(r[2:] ** 2)

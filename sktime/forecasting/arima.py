@@ -3,17 +3,16 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "AutoARIMAForecaster"
+    "AutoARIMA"
 ]
 
-from pmdarima.arima import AutoARIMA
 from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 import pandas as pd
 import numpy as np
 
 
-class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
                  max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
@@ -67,9 +66,11 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         self.scoring_args = scoring_args
         self.with_intercept = with_intercept
 
-        super(AutoARIMAForecaster, self).__init__()
+        super(AutoARIMA, self).__init__()
 
-        self._forecaster = AutoARIMA(
+        # import inside method to avoid hard dependency
+        from pmdarima.arima import AutoARIMA as _AutoARIMA
+        self._forecaster = _AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
             max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
             max_D=max_D, max_Q=max_Q, max_order=max_order, m=m, seasonal=seasonal,
@@ -154,7 +155,7 @@ class AutoARIMAForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
             return pd.Series(y_pred[fh_idx], index=index)
 
     def get_fitted_params(self):
-        self._check_is_fitted()
+        self.check_is_fitted()
         names = self._get_fitted_param_names()
         params = self._forecaster.model_.arima_res_._results.params
         return {name: param for name, param in zip(names, params)}

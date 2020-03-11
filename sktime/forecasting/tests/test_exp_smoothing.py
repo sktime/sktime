@@ -3,7 +3,7 @@ __all__ = ["test_set_params"]
 
 import pytest
 from numpy.testing import assert_array_equal
-from sktime.forecasting import ExponentialSmoothingForecaster
+from sktime.forecasting import ExponentialSmoothing
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
 # load test data
@@ -14,11 +14,11 @@ y_train, y_test = make_forecasting_problem()
 def test_set_params():
     params = {"trend": "additive"}
 
-    f = ExponentialSmoothingForecaster(**params)
+    f = ExponentialSmoothing(**params)
     f.fit(y_train, fh=1)
     expected = f.predict()
 
-    f = ExponentialSmoothingForecaster()
+    f = ExponentialSmoothing()
     f.set_params(**params)
     f.fit(y_train, fh=1)
     y_pred = f.predict()

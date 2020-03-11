@@ -10,11 +10,12 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting.base import BaseHeterogenousMetaForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, RequiredForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.model_selection import SingleWindowSplit
 
 
-class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaForecaster):
+class StackingForecaster(RequiredForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
     _required_parameters = ["forecasters", "final_regressor"]
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
@@ -24,28 +25,34 @@ class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaFo
         super(StackingForecaster, self).__init__(forecasters=forecasters)
 
     def fit(self, y_train, fh=None, X_train=None):
+        if X_train is not None:
+            raise NotImplementedError()
         self._set_oh(y_train)
         self._set_fh(fh)
 
         names, forecasters = self._check_forecasters()
         self._check_final_regressor()
 
-        # fit forecasters
-        self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
+        # split training series into training set to fit forecasters and
+        # validation set to fit meta-learner
+        cv = SingleWindowSplit(fh=self.fh)
+        training_window, test_window = next(cv.split(y_train))
+        y_fcst = y_train.iloc[training_window]
+        y_meta = y_train.iloc[test_window].values
 
-        # make in-sample prediction
-        fh_ins = -np.arange(len(y_train))
-        y_pred_ins = np.column_stack(self._predict_forecasters(fh_ins, X=X_train))
+        # fit forecasters on training window
+        self._fit_forecasters(forecasters, y_fcst, fh=self.fh, X_train=X_train)
+        y_pred = np.column_stack(self._predict_forecasters(X=X_train))
 
-        # fit final regressor on in-sample predictions
+        # fit final regressor on on validation window
         self.final_regressor_ = clone(self.final_regressor)
-        self.final_regressor_.fit(y_pred_ins, y_train.values)
+        self.final_regressor_.fit(y_pred, y_meta)
 
         self._is_fitted = True
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         if update_params:
             warn("Updating `final regressor is not implemented")
@@ -56,7 +63,7 @@ class StackingForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaFo
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        y_preds = np.column_stack(self._predict_forecasters(fh, X=X))
+        y_preds = np.column_stack(self._predict_forecasters(X=X))
         y_pred = self.final_regressor_.predict(y_preds)
         index = self._get_absolute_fh(self.fh)
         return pd.Series(y_pred, index=index)

@@ -6,6 +6,7 @@ __all__ = [
 ]
 __author__ = ["Markus Löning"]
 
+import pandas as pd
 from sklearn.base import clone
 from sktime.forecasting.base import MetaForecasterMixin
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer

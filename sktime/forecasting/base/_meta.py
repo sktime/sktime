@@ -4,14 +4,15 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "MetaForecasterMixin",
-    "BaseHeterogenousMetaForecaster"
+    "BaseHeterogenousEnsembleForecaster"
 ]
 
 from joblib import Parallel, delayed
 from sklearn.base import clone
+from sktime.base import BaseComposition
+from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import is_forecaster
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
 
 
 class MetaForecasterMixin:
@@ -19,7 +20,7 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
+class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecaster, BaseComposition):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -27,20 +28,7 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
         self.forecasters = forecasters
         self.forecasters_ = None
         self.n_jobs = n_jobs
-        super(BaseHeterogenousMetaForecaster, self).__init__()
-
-    def _check_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError('Estimator names conflict with constructor '
-                             'arguments: {0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
-        if invalid_names:
-            raise ValueError('Estimator names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
+        super(BaseHeterogenousEnsembleForecaster, self).__init__()
 
     def _check_forecasters(self):
         if self.forecasters is None or len(self.forecasters) == 0:
@@ -71,11 +59,11 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
     def _fit_forecasters(self, forecasters, y_train, fh=None, X_train=None):
         """Helper function to fit all forecasters"""
 
-        def fit(forecaster, y_train, fh, X_train):
+        def _fit_forecaster(forecaster, y_train, fh, X_train):
             return forecaster.fit(y_train, fh=fh, X_train=X_train)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(fit)(clone(forecaster), y_train, fh, X_train)
+            delayed(_fit_forecaster)(clone(forecaster), y_train, fh, X_train)
             for forecaster in forecasters)
 
     def _predict_forecasters(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -84,5 +72,5 @@ class BaseHeterogenousMetaForecaster(MetaForecasterMixin, BaseSktimeForecaster):
             raise NotImplementedError()
         # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(fh, X=X)
         #                                     for forecaster in self.forecasters_)
-        return [forecaster.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
                 for forecaster in self.forecasters_]

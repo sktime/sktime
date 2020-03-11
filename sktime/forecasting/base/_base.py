@@ -8,7 +8,7 @@ __all__ = [
     "is_forecaster"
 ]
 
-from sklearn.base import BaseEstimator
+from sktime.base import BaseEstimator
 from sktime.utils.exceptions import NotFittedError
 
 DEFAULT_ALPHA = 0.05

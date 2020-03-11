@@ -11,7 +11,6 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
-from sktime.utils.exceptions import NotFittedError
 from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
 
 
@@ -20,7 +19,6 @@ class BaseSktimeForecaster(BaseForecaster):
     def __init__(self):
         self._oh = pd.Series([])  # observation horizon, i.e. time points seen in fit or update
         self._cutoff = None  # time point in observation horizon cutoff which to make forecasts
-        self._is_fitted = False
         self._fh = None
         super(BaseSktimeForecaster, self).__init__()
 
@@ -100,7 +98,6 @@ class BaseSktimeForecaster(BaseForecaster):
         ----------
         fh : None, int, list, np.array
         """
-        #
         raise NotImplementedError()
 
     def _get_absolute_fh(self, fh=None):
@@ -153,14 +150,14 @@ class BaseSktimeForecaster(BaseForecaster):
         y_pred : pd.Series
         y_pred_int : pd.DataFrame
         """
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_fh(fh)
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def update(self, y_new, X_new=None, update_params=False):
         if update_params:
             raise NotImplementedError()
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         return self
 

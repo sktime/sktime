@@ -239,14 +239,13 @@ class FittedParamExtractor(BaseTransformer):
         def _fit_extract(forecaster, x, param_names):
             forecaster.fit(x)
             params = forecaster.get_fitted_params()
-            if param_names is None:
-                param_names = params.keys()
-            return np.hstack([params.get(name) for name in param_names])
+            return np.hstack([params[name] for name in param_names])
 
+        # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(_fit_extract)(
-            clone(self.forecaster), X.iloc[i, 0], param_names)
-                                                        for i in range(n_instances))
-        return pd.DataFrame(extracted_params, index=X.index)
+            clone(self.forecaster), X.iloc[i, 0], param_names) for i in range(n_instances))
+
+        return pd.DataFrame(extracted_params, index=X.index, columns=param_names)
 
     @staticmethod
     def _check_param_names(param_names):

@@ -5,11 +5,11 @@ __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
 import pandas as pd
-from sktime.forecasting.base import BaseHeterogenousMetaForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base import DEFAULT_ALPHA
 
 
-class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaForecaster):
+class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
 
     _required_parameters = ["forecasters"]
 
@@ -26,18 +26,18 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousMetaFo
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_oh(y_new)
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
     def transform(self, fh=None, X=None):
-        self._check_is_fitted()
+        self.check_is_fitted()
         self._set_fh(fh)
-        return pd.concat(self._predict_forecasters(fh=self.fh, X=X), axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(self.fh, X=X), axis=1).mean(axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)

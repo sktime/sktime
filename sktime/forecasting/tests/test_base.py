@@ -8,7 +8,6 @@ __all__ = [
     "test_clone",
     "test_not_fitted_error",
     "test_score",
-    "test_not_fitted_error",
     "test_predict_time_index",
     "test_update_predict_predicted_indices",
     "test_bad_y_input",
@@ -44,8 +43,6 @@ FH0 = 1
 y_train, y_test = make_forecasting_problem()
 
 
-########################################################################################################################
-# test clone
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_clone(Forecaster):
     f = _construct_instance(Forecaster)
@@ -57,8 +54,6 @@ def test_clone(Forecaster):
     clone(f)
 
 
-########################################################################################################################
-# fit, set_params and update return self
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_fit_update_set_params_returns_self(Forecaster):
     f = _construct_instance(Forecaster)
@@ -99,8 +94,6 @@ def test_fitted_params(Forecaster):
         pass
 
 
-########################################################################################################################
-# not fitted error
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_not_fitted_error(Forecaster):
     f = _construct_instance(Forecaster)
@@ -121,8 +114,6 @@ def test_not_fitted_error(Forecaster):
         pass
 
 
-########################################################################################################################
-# not fitted error
 def assert_correct_msg(exception, msg):
     assert exception.value.args[0] == msg
 
@@ -134,17 +125,14 @@ def assert_correct_msg(exception, msg):
     (1, 3, 0.5)  # tuple
 ])
 def test_bad_y_input(Forecaster, y):
-    expected_msg = f"`y` must be a pandas Series, but found: {type(y)}"
+    expected_msg = f"`y` must be a pandas Series, but found type: {type(y)}"
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(TypeError) as e:
         f = _construct_instance(Forecaster)
         f.fit(y, FH0)
     assert_correct_msg(e, expected_msg)
 
 
-########################################################################################################################
-# predict
-# predicted time index
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_predict_time_index(Forecaster, fh):
@@ -154,8 +142,6 @@ def test_predict_time_index(Forecaster, fh):
     assert_correct_pred_time_index(y_pred, y_train, fh)
 
 
-########################################################################################################################
-# test predicted pred int time index
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_INSAMPLE_FHS)
 def test_predict_in_sample(Forecaster, fh):
@@ -180,8 +166,6 @@ def test_predict_in_sample_full(Forecaster):
         pass
 
 
-########################################################################################################################
-# test predicted pred int time index
 def check_pred_ints(pred_ints, y_train, y_pred, fh):
     # make iterable
     if isinstance(pred_ints, pd.DataFrame):
@@ -194,7 +178,7 @@ def check_pred_ints(pred_ints, y_train, y_pred, fh):
         # check if errors are weakly monotonically increasing
         pred_errors = y_pred - pred_int["lower"]
         # assert pred_errors.is_mononotic_increasing
-        assert np.all(pred_errors.values[1:] >= pred_errors.values[:-1])
+        assert np.all(pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4))
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -211,8 +195,6 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
         pass
 
 
-########################################################################################################################
-# score
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 def test_score(Forecaster, fh):
@@ -232,22 +214,15 @@ def test_score(Forecaster, fh):
     assert actual == expected
 
 
-########################################################################################################################
-# test update-predict single
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
-def test_update_predict_single(Forecaster, fh, window_length, step_length):
+def test_update_predict_single(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.update_predict_single(y_test)
     assert_correct_pred_time_index(y_pred, y_test, fh)
 
 
-########################################################################################################################
-# update_predict
-# check if predicted time index is correct
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", DEFAULT_FHS)
 @pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
@@ -256,8 +231,11 @@ def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_le
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
-    y_pred = f.update_predict(y_test, cv=cv)
+    try:
+        y_pred = f.update_predict(y_test, cv=cv)
+        pred_index = y_pred.index.values
+        expected_index = compute_expected_index_from_update_predict(y_test, f.fh, step_length)
+        np.testing.assert_array_equal(pred_index, expected_index)
 
-    pred_index = y_pred.index.values
-    expected_index = compute_expected_index_from_update_predict(y_test, f.fh, step_length)
-    np.testing.assert_array_equal(pred_index, expected_index)
+    except NotImplementedError:
+        pass
