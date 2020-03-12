@@ -6,8 +6,7 @@ from sktime.datasets import load_gunpoint, load_basic_motions
 from sktime.transformers.summarise import TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor
 
 
-# Test output format and dimensions.
-@pytest.mark.parametrize("default_fc_parameters", ["minimal", "efficient"])
+@pytest.mark.parametrize("default_fc_parameters", ["minimal"])
 @pytest.mark.parametrize("load_data", [load_gunpoint, load_basic_motions])
 @pytest.mark.parametrize("Transformer", [TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor])
 def test_tsfresh_extractor(Transformer, load_data, default_fc_parameters):
