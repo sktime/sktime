@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__author__ = ["Ayushmann Seth", "Markus Löning"]
+__author__ = ["Ayushmaan Seth", "Markus Löning"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 import pandas as pd
@@ -13,6 +13,7 @@ from sktime.utils.validation.supervised import validate_y
 
 
 class BaseTSFreshFeatureExtractor(BaseTransformer):
+    """Base class for sktime Transformers"""
 
     def __init__(self, default_fc_parameters="comprehensive", kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
@@ -51,7 +52,12 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         return self
 
     def _set_extraction_defaults(self):
-        """Helper function to set default parameters for feature extraction"""
+        """Helper function to set default parameters for feature extraction
+
+        Dependencies: tsfresh
+
+        tsfresh defaults and utilities used for parameters
+        """
         from tsfresh.defaults import CHUNKSIZE
         from tsfresh.defaults import DISABLE_PROGRESSBAR
         from tsfresh.utilities.dataframe_functions import impute
@@ -92,6 +98,15 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
 
 
 class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
+    """Transformer for extracting features from given timeseries container.
+    
+    Use:
+        >> tf = TsFreshFeatureExtractor()
+        >> X_transformed = tf.fit_transform(X_train)
+
+    Dependencies: 
+        tsfresh
+    """
 
     def transform(self, X, y=None):
         """Transform X.
@@ -127,6 +142,15 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
 
 class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
 
+    """Transformer for extracting features from given timeseries container.
+        Use:
+        >> tf = TsFreshRelevantFeatureExtractor()
+        >> X_transformed = tf.fit_transform(X_train, y_train)
+
+        Dependencies: 
+        tsfresh
+    """
+
     def __init__(self, default_fc_parameters="comprehensive", kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
                  impute_function=None, profiling=None, profiling_filename=None,
@@ -159,7 +183,12 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _set_selection_defaults(self):
-        """Helper function to set default values from tsfresh"""
+        """Helper function to set default values from tsfresh.
+
+        Dependencies: 
+            tsfresh.defaults
+        
+        """
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
         from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
