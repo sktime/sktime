@@ -64,14 +64,19 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         from tsfresh.feature_extraction.settings import EfficientFCParameters
         from tsfresh.feature_extraction.settings import MinimalFCParameters
 
-        self.n_jobs = N_PROCESSES if self.n_jobs is None else self.n_jobs
-        self.chunksize = CHUNKSIZE if self.chunksize is None else self.chunksize
-        self.show_warnings = SHOW_WARNINGS if self.show_warnings is None else self.show_warnings
-        self.disable_progressbar = DISABLE_PROGRESSBAR if self.disable_progressbar is None else self.disable_progressbar
-        self.impute_function = impute if self.impute_function is None else self.impute_function
-        self.profiling_sorting = PROFILING_SORTING if self.profiling_sorting is None else self.profiling_sorting
-        self.profiling_filename = PROFILING_FILENAME if self.profiling_filename is None else self.profiling_filename
-        self.profiling = PROFILING if self.profiling is None else self.profiling
+        defaults = {
+            "n_jobs": N_PROCESSES,
+            "chunksize": CHUNKSIZE,
+            "show_warnings": SHOW_WARNINGS,
+            "disable_progressbar": DISABLE_PROGRESSBAR,
+            "impute_function": impute,
+            "profiling_sorting": PROFILING_SORTING,
+            "profiling_filename": PROFILING_FILENAME,
+            "profiling": PROFILING
+        }
+        for attr, value in defaults.items():
+            if getattr(self, attr) is None:
+                setattr(self, attr, value)
 
         allowed_default_fc_parameter_strings = {
             "minimal": MinimalFCParameters(),
@@ -161,15 +166,16 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
         from tsfresh.defaults import FDR_LEVEL
 
-        self.test_for_binary_target_binary_feature = TEST_FOR_BINARY_TARGET_BINARY_FEATURE if \
-            self.test_for_binary_target_binary_feature is None else self.test_for_binary_target_binary_feature
-        self.test_for_binary_target_real_feature = TEST_FOR_BINARY_TARGET_REAL_FEATURE if \
-            self.test_for_binary_target_real_feature is None else self.test_for_binary_target_real_feature
-        self.test_for_real_target_binary_feature = TEST_FOR_REAL_TARGET_BINARY_FEATURE if \
-            self.test_for_real_target_binary_feature is None else self.test_for_real_target_binary_feature
-        self.test_for_real_target_real_feature = TEST_FOR_REAL_TARGET_REAL_FEATURE if \
-            self.test_for_real_target_real_feature is None else self.test_for_real_target_real_feature
-        self.fdr_level = FDR_LEVEL if self.fdr_level is None else self.fdr_level
+        defaults = {
+            "test_for_binary_target_binary_feature": TEST_FOR_BINARY_TARGET_BINARY_FEATURE,
+            "test_for_binary_target_real_feature": TEST_FOR_BINARY_TARGET_REAL_FEATURE,
+            "test_for_real_target_binary_feature": TEST_FOR_REAL_TARGET_BINARY_FEATURE,
+            "test_for_real_target_real_feature": TEST_FOR_REAL_TARGET_REAL_FEATURE,
+            "fdr_level": FDR_LEVEL
+        }
+        for attr, value in defaults.items():
+            if getattr(self, attr) is None:
+                setattr(self, attr, value)
 
     def fit(self, X, y=None):
         """Fit.
@@ -186,7 +192,6 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self : an instance of self
         """
 
-        from tsfresh.feature_extraction.settings import from_columns
         from tsfresh.transformers.feature_selector import FeatureSelector
 
         # input checks
@@ -197,7 +202,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self._set_extraction_defaults()
         self._set_selection_defaults()
 
-        feature_extractor = TSFreshFeatureExtractor(
+        self.feature_extractor_ = TSFreshFeatureExtractor(
             default_fc_parameters=self.default_fc_parameters,
             kind_to_fc_parameters=self.kind_to_fc_parameters,
             chunksize=self.chunksize,
@@ -209,9 +214,6 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
             profiling_sorting=self.profiling_sorting,
             keep_time_series=False,
         )
-        Xt = feature_extractor.fit_transform(X)
-        self._extracted_features = from_columns(Xt)
-
         self.feature_selector_ = FeatureSelector(
             test_for_binary_target_binary_feature=self.test_for_binary_target_binary_feature,
             test_for_binary_target_real_feature=self.test_for_binary_target_real_feature,
@@ -223,6 +225,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
             chunksize=self.chunksize,
             ml_task=self.ml_task
         )
+        Xt = self.feature_extractor_.fit_transform(X)
         self.feature_selector_.fit(Xt, y)
         return self
 
@@ -241,19 +244,9 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         Xt : pandas DataFrame
           Transformed pandas DataFrame
         """
-        check_is_fitted(self, "feature_selector_")
+        check_is_fitted(self, ["feature_selector_", "feature_extractor_"])
         validate_X(X)
-
-        feature_extractor = TSFreshFeatureExtractor(kind_to_fc_parameters=self._extracted_features,
-                                                    chunksize=self.chunksize,
-                                                    n_jobs=self.n_jobs,
-                                                    show_warnings=self.show_warnings,
-                                                    disable_progressbar=self.disable_progressbar,
-                                                    impute_function=self.impute_function,
-                                                    profiling=self.profiling,
-                                                    profiling_filename=self.profiling_filename,
-                                                    profiling_sorting=self.profiling_sorting)
-        Xt = feature_extractor.fit_transform(X)
+        Xt = self.feature_extractor_.transform(X)
         Xt = self.feature_selector_.transform(Xt)
         if self.keep_original:
             return pd.merge(X, Xt, left_index=True, right_index=True, how="left")
