@@ -54,6 +54,7 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
     def _set_extraction_defaults(self):
         """Helper function to set default parameters from tsfresh
         """
+        # lazy imports to avoid hard dependency
         from tsfresh.defaults import CHUNKSIZE
         from tsfresh.defaults import DISABLE_PROGRESSBAR
         from tsfresh.utilities.dataframe_functions import impute
@@ -118,6 +119,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         Xt = from_nested_to_long(X)
         check_is_fitted(self, "_is_fitted")
 
+        # lazy imports to avoid hard dependency
         from tsfresh import extract_features
         Xt = extract_features(Xt, column_id="index", column_value="value", column_kind="column",
                               column_sort="time_index", default_fc_parameters=self.default_fc_parameters,
@@ -175,6 +177,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
     def _set_selection_defaults(self):
         """Helper function to set default values from tsfresh
         """
+        # lazy imports to avoid hard dependency
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
         from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
@@ -206,7 +209,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         -------
         self : an instance of self
         """
-
+        # lazy imports to avoid hard dependency
         from tsfresh.transformers.feature_selector import FeatureSelector
 
         # input checks
