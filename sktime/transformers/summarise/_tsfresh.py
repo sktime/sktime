@@ -13,7 +13,7 @@ from sktime.utils.validation.supervised import validate_y
 
 
 class BaseTSFreshFeatureExtractor(BaseTransformer):
-    """Base class for sktime Transformers"""
+    """Base adapter class for tsfresh transformers"""
 
     def __init__(self, default_fc_parameters="comprehensive", kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
@@ -52,11 +52,7 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         return self
 
     def _set_extraction_defaults(self):
-        """Helper function to set default parameters for feature extraction
-
-        Dependencies: tsfresh
-
-        tsfresh defaults and utilities used for parameters
+        """Helper function to set default parameters from tsfresh
         """
         from tsfresh.defaults import CHUNKSIZE
         from tsfresh.defaults import DISABLE_PROGRESSBAR
@@ -98,14 +94,11 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
 
 
 class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
-    """Transformer for extracting features from given timeseries container.
-    
-    Use:
-        >> tf = TsFreshFeatureExtractor()
-        >> X_transformed = tf.fit_transform(X_train)
+    """Transformer for extracting time series features
 
-    Dependencies: 
-        tsfresh
+    References
+    ----------
+    ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
     def transform(self, X, y=None):
@@ -141,14 +134,11 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
 
 
 class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
+    """Transformer for extracting and selecting features.
 
-    """Transformer for extracting features from given timeseries container.
-        Use:
-        >> tf = TsFreshRelevantFeatureExtractor()
-        >> X_transformed = tf.fit_transform(X_train, y_train)
-
-        Dependencies: 
-        tsfresh
+    References
+    ----------
+    ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
     def __init__(self, default_fc_parameters="comprehensive", kind_to_fc_parameters=None, chunksize=None,
@@ -183,11 +173,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self.ml_task = ml_task
 
     def _set_selection_defaults(self):
-        """Helper function to set default values from tsfresh.
-
-        Dependencies: 
-            tsfresh.defaults
-        
+        """Helper function to set default values from tsfresh
         """
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
         from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
