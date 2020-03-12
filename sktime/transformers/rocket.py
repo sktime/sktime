@@ -2,7 +2,8 @@ from numba import njit, prange
 import numpy as np
 import pandas as pd
 
-from sklearn.utils.validation import check_is_fitted, check_random_state
+from sklearn.utils.validation import check_random_state
+from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import dataframe_to_numpy
@@ -29,7 +30,7 @@ class Rocket(BaseTransformer):
     seed        : int, random seed (optional, default None)
     """
 
-    def __init__(self, num_kernels, seed = None):
+    def __init__(self, num_kernels = 10_000, seed = None):
         self.num_kernels = num_kernels
         self.seed = seed
 
