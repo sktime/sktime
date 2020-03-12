@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sktime.forecasting import ExponentialSmoothing
-from sktime.forecasting.base.sktime import BaseSktimeForecaster
+from sktime.forecasting.base.base import BaseForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
@@ -15,8 +15,11 @@ from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import SingleWindowSplit
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.performance_metrics.forecasting import smape_loss
 from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
@@ -41,6 +44,12 @@ DEFAULT_INSTANTIATIONS = {
     EnsembleForecaster: {"forecasters": FORECASTERS},
     StackingForecaster: {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},
     Detrender: {"forecaster": FORECASTER},
+    ForecastingGridSearchCV: {
+        "forecaster": NaiveForecaster(strategy="mean"),
+        "cv": SingleWindowSplit(fh=1),
+        "param_grid": {"window_length": [2, 5]},
+        "scoring": smape_loss,
+    }
 }
 
 
@@ -50,7 +59,7 @@ def _construct_instance(Estimator):
     if len(required_parameters) > 0:
         # if estimator requires parameters for construction,
         # set default ones for testing
-        allowed_base_estimators = (BaseSktimeForecaster, BaseSeriesToSeriesTransformer)
+        allowed_base_estimators = (BaseForecaster, BaseSeriesToSeriesTransformer)
         if issubclass(Estimator, allowed_base_estimators):
             kwargs = {}
             # look up default instantiations for estimators which require
@@ -62,7 +71,8 @@ def _construct_instance(Estimator):
                                  f"for estimator: {Estimator}")
         else:
             raise NotImplementedError(f"No default instantiation has been found "
-                                      f"for estimator: {Estimator}")
+                                      f"for estimator: {Estimator}, check if it is"
+                                      f"a subclass of one of: {allowed_base_estimators}")
 
         estimator = Estimator(**kwargs)
 

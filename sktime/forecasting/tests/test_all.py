@@ -239,7 +239,7 @@ def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_le
     f.fit(y_train, fh)
     try:
         y_pred = f.update_predict(y_test, cv=cv)
-        check_update_predict_y_pred(y_pred, f.fh, step_length)
+        check_update_predict_y_pred(y_pred, fh, step_length)
 
     except NotImplementedError:
         pass

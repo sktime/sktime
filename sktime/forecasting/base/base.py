@@ -21,6 +21,7 @@ class BaseForecaster(BaseEstimator):
 
     def __init__(self):
         self._is_fitted = False
+        super(BaseEstimator, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         raise NotImplementedError("abstract method")
@@ -72,23 +73,6 @@ class BaseForecaster(BaseEstimator):
 
     def get_fitted_params(self):
         raise NotImplementedError("abstract method")
-
-    @property
-    def is_fitted(self):
-        """Has `fit` been called?"""
-        return self._is_fitted
-
-    def _check_is_fitted(self):
-        """Check if the forecaster has been fitted.
-
-        Raises
-        ------
-        NotFittedError
-            if the forecaster has not been fitted yet.
-        """
-        if not self.is_fitted:
-            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
-                                 f"been fitted yet; please call `fit` first.")
 
 
 def is_forecaster(estimator):

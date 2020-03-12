@@ -14,16 +14,18 @@ from functools import partial
 from traceback import format_exception_only
 
 import numpy as np
+import pandas as pd
 from scipy.stats import rankdata
 from sklearn.base import clone
 from sklearn.exceptions import FitFailedWarning
-from sklearn.exceptions import NotFittedError
 from sklearn.model_selection import check_cv, ParameterGrid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.forecasting.base.base import BaseForecaster
 from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.utils.exceptions import NotFittedError
 from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -48,6 +50,12 @@ def _check_param_grid(param_grid):
 
 
 def _score(y_test, y_pred, scorer):
+    if not isinstance(y_pred, pd.Series):
+        raise NotImplementedError()
+
+    # select only test points for which we have made predictions
+    y_test = y_test.loc[y_pred.index]
+
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
 
     error_msg = ("scoring must return a number, got %s (%s) "
@@ -80,6 +88,22 @@ def _update_score(forecaster, cv, y_test, X_test, scorer):
     return _score(y_test, y_pred, scorer)
 
 
+def _split(y, X, cv):
+    """Split data into training and validation window"""
+    training_window, validation_window = cv.split_initial(y)
+    y_train = y.iloc[training_window]
+    y_val = y.iloc[validation_window]
+
+    if X is not None:
+        X_train = X.iloc[training_window, :]
+        X_val = X.iloc[validation_window, :]
+    else:
+        X_train = None
+        X_val = None
+
+    return y_train, y_val, X_train, X_val
+
+
 def _fit_and_score(forecaster, cv, y, X, scorer, verbose,
                    parameters, fit_params,
                    return_parameters=False,
@@ -99,9 +123,7 @@ def _fit_and_score(forecaster, cv, y, X, scorer, verbose,
         forecaster.set_params(**parameters)
 
     # Split training data into training set and validation set
-    training_window, _ = cv.split_initial(y)
-    y_train = y.iloc[training_window]
-    X_train = X.iloc[training_window, :] if X is not None else None
+    y_train, y_val, X_train, X_val = _split(y, X, cv)
 
     # Fit forecaster
     start_time = time.time()
@@ -131,7 +153,7 @@ def _fit_and_score(forecaster, cv, y, X, scorer, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _update_score(forecaster, cv, y, X, scorer)
+        test_scores = _update_score(forecaster, cv, y_val, X_val, scorer)
         score_time = time.time() - start_time - fit_time
 
     ret = [test_scores]
@@ -158,22 +180,22 @@ class BaseGridSearch(BaseForecaster):
         self.verbose = verbose
         self.error_score = error_score
         self.return_train_score = return_train_score
-        self.best_forecaster_ = None
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update(self, y_new, X_new=None, update_params=False):
         """Call predict on the forecaster with the best found parameters.
         """
-        self._check_is_fitted("update")
-        return self.best_forecaster_.update(y_new, X_new=X_new, update_params=update_params)
+        self.check_is_fitted("update")
+        self.best_forecaster_.update(y_new, X_new=X_new, update_params=update_params)
+        return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters.
         """
-        self._check_is_fitted("update_predict")
+        self.check_is_fitted("update_predict")
         return self.best_forecaster_.update_predict(y_test, cv=cv, X_test=X_test, update_params=update_params,
                                                     return_pred_int=return_pred_int, alpha=alpha)
 
@@ -182,27 +204,27 @@ class BaseGridSearch(BaseForecaster):
                               alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters.
         """
-        self._check_is_fitted("update_predict_single")
+        self.check_is_fitted("update_predict_single")
         return self.best_forecaster_.update_predict_single(y_new, fh=fh, X=X, update_params=update_params,
                                                            return_pred_int=return_pred_int, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def predict(self, fh=None, X=None):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters.
         """
-        self._check_is_fitted("predict")
-        return self.best_forecaster_.predict(fh=fh, X=X)
+        self.check_is_fitted("predict")
+        return self.best_forecaster_.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, **transform_params):
-        self._check_is_fitted("transform")
+        self.check_is_fitted("transform")
         return self.best_forecaster_.transform(y, **transform_params)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def get_fitted_params(self, y):
+    def get_fitted_params(self):
         """Call transform on the forecaster with the best found parameters.
         """
-        self._check_is_fitted("transform")
+        self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_.get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
@@ -216,80 +238,54 @@ class BaseGridSearch(BaseForecaster):
             Must fulfill the input assumptions of the
             underlying forecaster.
         """
-        self._check_is_fitted("inverse_transform")
+        self.check_is_fitted("inverse_transform")
         return self.best_forecaster_.inverse_transform(y)
 
-    def score(self, y_true, fh=None, X=None):
+    def score(self, y_test, fh=None, X=None):
         """Returns the score on the given data, if the forecaster has been refit.
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
-        y_true : array-like, shape = [n_samples] or [n_samples, n_output], optional
-            Target relative to X for classification or regression;
-            None for unsupervised learning.
+        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+            An optional 2-d dataframe of exogenous variables.
+        y_test : pandas.Series
+            Target time series to which to compare the forecasts.
         Returns
         -------
         score : float
         """
-        self._check_is_fitted("score")
+        self.check_is_fitted("score")
         if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the forecaster doesn't provide one %s"
                              % self.best_forecaster_)
         score = self.scorer_
         y_pred = self.best_forecaster_.predict(fh, X=X)
-        return score(y_true, y_pred)
+        return score(y_test, y_pred)
 
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("_run_search not implemented.")
 
-    def _format_results(self, candidate_params, scorers, n_splits, out):
+    @staticmethod
+    def _format_results(candidate_params, scorers, out):
         n_candidates = len(candidate_params)
-
-        # if one choose to see train score, "out" will contain train score info
-        # if self.return_train_score:
-        #     (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-        #      score_time) = zip(*out)
-        # else:
-        #     (test_score_dicts, test_sample_counts, fit_time,
-        #      score_time) = zip(*out)
         (test_score_dicts, fit_time, score_time) = zip(*out)
-
-        # test_score_dicts and train_score dicts are lists of dictionaries and
-        # we make them into dict of lists
         test_scores = _aggregate_score_dicts(test_score_dicts)
-        # if self.return_train_score:
-        #     train_scores = _aggregate_score_dicts(train_score_dicts)
 
         results = {}
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
+        def _store(key_name, array, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
-            array = np.array(array, dtype=np.float64).reshape(n_candidates,
-                                                              n_splits)
-            if splits:
-                for split_i in range(n_splits):
-                    # Uses closure to alter the results
-                    results["split%d_%s"
-                            % (split_i, key_name)] = array[:, split_i]
+            array = np.array(array, dtype=np.float64)
 
-            array_means = np.average(array, axis=1, weights=weights)
-            results["mean_%s" % key_name] = array_means
-            # Weighted std is not directly available in numpy
-            array_stds = np.sqrt(np.average((array -
-                                             array_means[:, np.newaxis]) ** 2,
-                                            axis=1, weights=weights))
-            results["std_%s" % key_name] = array_stds
+            results["mean_%s" % key_name] = array
 
             if rank:
                 results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32)
+                    rankdata(array, method="min"), dtype=np.int32)
 
         _store("fit_time", fit_time)
         _store("score_time", score_time)
@@ -313,23 +309,24 @@ class BaseGridSearch(BaseForecaster):
 
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
-            _store("test_%s" % scorer_name, test_scores[scorer_name],
-                   splits=True, rank=True,
-                   weights=None)
+            _store("test_%s" % scorer_name, test_scores[scorer_name], rank=True)
 
         return results
 
-    def _check_is_fitted(self, method_name):
-        if not self.refit:
-            raise NotFittedError("This %s instance was initialized "
-                                 "with refit=False. %s is "
-                                 "available only after refitting on the best "
-                                 "parameters. You can refit an forecaster "
-                                 "manually using the ``best_params_`` "
-                                 "attribute"
-                                 % (type(self).__name__, method_name))
-        else:
-            self.best_forecaster_._check_is_fitted()
+    def check_is_fitted(self, method_name=None):
+        super(BaseGridSearch, self).check_is_fitted()
+
+        if method_name is not None:
+            if not self.refit:
+                raise NotFittedError("This %s instance was initialized "
+                                     "with refit=False. %s is "
+                                     "available only after refitting on the best "
+                                     "parameters. You can refit an forecaster "
+                                     "manually using the ``best_params_`` "
+                                     "attribute"
+                                     % (type(self).__name__, method_name))
+            else:
+                self.best_forecaster_.check_is_fitted()
 
     def fit(self, y_train, fh=None, X_train=None, **fit_params):
         """Internal fit"""
@@ -337,7 +334,6 @@ class BaseGridSearch(BaseForecaster):
 
         # validate cross-validator
         cv = check_cv(self.cv)
-
         base_forecaster = clone(self.forecaster)
 
         if not callable(self.scoring) or self.scoring is None:
@@ -387,19 +383,13 @@ class BaseGridSearch(BaseForecaster):
                 raise ValueError("No fits were performed. "
                                  "Was the CV iterator empty? "
                                  "Were there no candidates?")
-            elif len(out) != n_candidates * n_splits:
-                raise ValueError("cv.split and cv.get_n_splits returned "
-                                 "inconsistent results. Expected {} "
-                                 "splits, got {}"
-                                 .format(n_splits,
-                                         len(out) // n_candidates))
 
             all_candidate_params.extend(candidate_params)
             all_out.extend(out)
 
             nonlocal results
             results = self._format_results(
-                all_candidate_params, scorers, n_splits, all_out)
+                all_candidate_params, scorers, all_out)
             return results
 
         self._run_search(evaluate_candidates)
@@ -421,15 +411,18 @@ class BaseGridSearch(BaseForecaster):
         self.scorer_ = scorers["score"]
 
         self.cv_results_ = results
-        self.n_splits_ = cv.get_n_splits()
+        self.n_splits_ = cv.get_n_splits(y_train)
 
+        self._is_fitted = True
         return self
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
 
-    def __init__(self, forecaster, param_grid, scoring=None,
-                 n_jobs=None, refit=True, cv=None,
+    _required_parameters = ["forecaster", "cv", "param_grid"]
+
+    def __init__(self, forecaster, cv, param_grid, scoring=None,
+                 n_jobs=None, refit=True,
                  verbose=0, pre_dispatch='2*n_jobs',
                  error_score=np.nan, return_train_score=False):
         super(ForecastingGridSearchCV, self).__init__(

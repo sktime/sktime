@@ -37,11 +37,9 @@ def all_estimators(scitype=None):
     ..[1]   Modified version from scikit-learn's `all_estimators()` in sklearn.utils.__init__.py
     """
 
-    # modified from sklearn.utils.__init__
-
-    # lazy import to avoid circular imports from sklearn.base
+    # lazy import to avoid circular imports
     import warnings
-    from sktime.forecasting.base.sktime import BaseSktimeForecaster
+    from sktime.forecasting.base.base import BaseForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer
@@ -82,7 +80,7 @@ def all_estimators(scitype=None):
         "classifier": (BaseClassifier, ClassifierMixin),
         "regressor": (BaseRegressor, RegressorMixin),
         "transformer": (BaseTransformer, TransformerMixin),
-        "forecaster": BaseSktimeForecaster,
+        "forecaster": BaseForecaster,
     }
     estimators = [c for c in all_classes
                   if (issubclass(c[1], tuple(base_classes.values())) and

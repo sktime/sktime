@@ -176,13 +176,11 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         return np.arange(start, end, step_length) - 1
 
     def _get_start(self):
-        initial = check_window_length(self.initial_window)
         window_length = check_window_length(self.window_length)
-        initial_start = 0 if initial is None else initial
         if self.start_with_window:
-            return initial_start + window_length
+            return window_length
         else:
-            return initial_start
+            return 0
 
 
 class SingleWindowSplit(BaseWindowSplitter):
@@ -211,7 +209,9 @@ class SingleWindowSplit(BaseWindowSplitter):
 
     def split_initial(self, y):
         # the single window splitter simply returns the single split
-        return next(self._split_windows(y))
+        training_window, _ = next(self._split_windows(y))
+        test_window = np.arange(training_window[-1] + 1, len(y))
+        return training_window, test_window
 
 
 class ManualWindowSplitter(BaseTemporalCrossValidator):
