@@ -90,6 +90,7 @@ make_conda() {
     # Install packages not available via conda
     pip install scikit-posthocs==$SCIKIT_POSTHOCS_VERSION
     pip install joblib==$JOBLIB_VERSION
+    pip install tsfresh
 }
 
 TO_INSTALL="python=$PYTHON_VERSION pip pytest \
