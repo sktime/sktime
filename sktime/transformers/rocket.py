@@ -2,11 +2,10 @@ from numba import njit, prange
 import numpy as np
 import pandas as pd
 
-from sklearn.utils.validation import check_random_state
 from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.data_container import dataframe_to_numpy
+from sktime.utils.data_container import nested_to_3d_numpy
 from sktime.utils.validation.supervised import validate_X
 
 __author__ = "Angus Dempster"
@@ -26,20 +25,23 @@ class Rocket(BaseTransformer):
 
     Parameters
     ----------
-    num_kernels : int, number of random convolutional kernels
-    seed        : int, random seed (optional, default None)
+    num_kernels  : int, number of random convolutional kernels (default 10,000)
+    normalise    : boolean, whether or not to normalise the input time series per instance (default True)
+    random_state : int (ignored unless int due to compatability with Numba), random seed (optional, default None)
     """
 
-    def __init__(self, num_kernels = 10_000, seed = None):
+    def __init__(self, num_kernels = 10_000, normalise = True, random_state = None):
         self.num_kernels = num_kernels
-        self.seed = seed
+        self.normalise = normalise
+        self.seed = random_state if isinstance(random_state, int) else None
 
-    def fit(self, X):
+    def fit(self, X, y = None):
         """Infers time series length and number of channels / dimensions (for multivariate time series) from input pandas DataFrame, and generates random kernels.
 
         Parameters
         ----------
         X : pandas DataFrame, input time series (sktime format)
+        y : array_like, target values (optional, ignored as irrelevant)
 
         Returns
         -------
@@ -52,13 +54,13 @@ class Rocket(BaseTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, normalise = True):
+    def transform(self, X, y = None):
         """Transforms input time series using random convolutional kernels.
 
         Parameters
         ----------
-        X         : pandas DataFrame, input time series (sktime format)
-        normalise : boolean, whether or not to normalise the input time series per instance (default True)
+        X : pandas DataFrame, input time series (sktime format)
+        y : array_like, target values (optional, ignored as irrelevant)
 
         Returns
         -------
@@ -66,8 +68,8 @@ class Rocket(BaseTransformer):
         """
         check_is_fitted(self, "_is_fitted")
         validate_X(X)
-        _X = dataframe_to_numpy(X)
-        if normalise:
+        _X = nested_to_3d_numpy(X)
+        if self.normalise:
             _X = (_X - _X.mean(axis = -1, keepdims = True)) / (_X.std(axis = -1, keepdims = True) + 1e-8)
         return pd.DataFrame(_apply_kernels(_X, self.kernels))
 

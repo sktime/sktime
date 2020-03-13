@@ -3,6 +3,7 @@ import numpy as np
 from sktime.datasets import load_gunpoint
 from sktime.transformers.rocket import Rocket
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.metrics import accuracy_score
 
 def test_rocket_on_gunpoint():
 
@@ -34,7 +35,7 @@ def test_rocket_on_gunpoint():
 
     # predict (alternatively: 'classifier.score(X_test_transform, Y_test)')
     predictions = classifier.predict(X_test_transform)
-    accuracy = (predictions == Y_test).mean()
+    accuracy = accuracy_score(predictions, Y_test)
 
     # test predictions (on Gunpoint, should be 100% accurate)
-    np.testing.assert_array_equal(predictions, Y_test)
+    assert accuracy == 1.0

@@ -229,7 +229,7 @@ def get_time_index(X):
 
     return time_index
 
-def dataframe_to_numpy(X, a = None, b = None):
+def nested_to_3d_numpy(X, a = None, b = None):
     """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
 
     Parameters
