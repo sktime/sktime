@@ -162,13 +162,12 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
     Xt = pd.DataFrame(pd.Series([container(X.iloc[i, :].values, **kwargs) for i in range(n_samples)]))
 
     if index is not None:
-         Xt.index = index
+        Xt.index = index
 
     return Xt
 
 
 tabularise = tabularize
-
 
 detabularise = detabularize
 
@@ -253,3 +252,20 @@ def from_nested_to_long(X):
         df = df.drop(columns="variable")
         columns.append(df)
     return pd.concat(columns)
+
+
+def nested_to_3d_numpy(X, a=None, b=None):
+    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
+
+    Parameters
+    ----------
+    X : pandas DataFrame, input
+    a : int, first row (optional, default None)
+    b : int, last row (optional, default None)
+
+    Returns
+    -------
+    NumPy ndarray, converted NumPy ndarray
+    """
+    return np.stack(
+        X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(lambda row: np.stack(row), axis=1).to_numpy())
