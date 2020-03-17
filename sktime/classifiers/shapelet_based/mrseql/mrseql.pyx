@@ -18,8 +18,7 @@ __author__ = "Thach Le Nguyen"
 
 cdef extern from "sax_converter.h":
     cdef cppclass SAX:
-        SAX(int, int, int)
-        # string timeseries2SAX(string, string)
+        SAX(int, int, int)        
         vector[string] timeseries2SAX(vector[double])
         vector[double] map_weighted_patterns(vector[double], vector[string], vector[double])
 
@@ -37,13 +36,12 @@ cdef class PySAX:
 
     def timeseries2SAX(self, ts):
         return self.thisptr.timeseries2SAX(ts)
-        # if isinstance(obj, basestring):
-        #    return self.thisptr.timeseries2SAX(ts, delimiter)
+        
 
     def timeseries2SAXseq(self, ts):
         words = self.thisptr.timeseries2SAX(ts)
         seq = b''
-        # print(words)
+        
         for w in words:
             seq = seq + b' ' + w
         if seq:  # remove extra space
@@ -76,8 +74,7 @@ class AdaptedSFA:
             for i in range(self.sfa.word_length):
                 for bp in range(self.sfa.alphabet_size):
                     if dft[i] <= self.sfa.breakpoints[i][bp]:
-                        sfa_str += bytes([first_char + bp])
-                        #print(chr(first_char + bp))
+                        sfa_str += bytes([first_char + bp])                        
                         break
                 first_char += self.sfa.alphabet_size
         return sfa_str
@@ -295,9 +292,9 @@ class MrSEQLClassifier(BaseClassifier):
         full_fm = []
 
         for rep, model in zip(mr_seqs, self.seql_models):
-            seq_features = model.get_sequence_features(False)
-            # print(seq_features)
+            seq_features = model.get_sequence_features(False)            
             fm = np.zeros((len(rep), len(seq_features)))
+
             for i, s in enumerate(rep):
                 for j, f in enumerate(seq_features):
                     if f in s:
@@ -378,8 +375,7 @@ class MrSEQLClassifier(BaseClassifier):
         mr_seqs = self._transform_time_series(X)
 
         if self.seql_mode == 'fs':
-            test_x = self._to_feature_space(mr_seqs)
-            # TODO: Check if sklearn clf store labels in the same order
+            test_x = self._to_feature_space(mr_seqs)            
             return self.clf.predict_proba(test_x)
 
         else:
