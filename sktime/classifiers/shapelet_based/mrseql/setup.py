@@ -8,7 +8,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("classifiers", parent_package, top_path)
+    config = Configuration("mrseql", parent_package, top_path)
 
     config.add_extension(
         name="mrseql",
