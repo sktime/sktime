@@ -1,6 +1,10 @@
-from statsmodels.tsa.stattools import acf
-import numpy as np
+__author__ = ["Markus Löning"]
 
+from warnings import warn
+
+import numpy as np
+from statsmodels.tsa.stattools import acf
+from sktime.utils.validation.forecasting import check_y, check_sp
 
 def seasonality_test(y, sp):
     """Seasonality test used in M4 competition
@@ -23,25 +27,37 @@ def seasonality_test(y, sp):
 
     Parameters
     ----------
-    x : ndarray
+    y : pd.Series or np.array
         Time series
-    freq : int
-        Frequency, periods per year (ppy)
+    sp : int
+        Seasonal periodicity, periods per year (ppy)
 
     Returns
     -------
-    test : bool
+    is_seasonal : bool
         Whether or not seasonality is present in data for given frequency
 
     References
     ----------
-    https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
-
+    ..[1]  https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
     """
+    y = check_y(y)
     y = np.asarray(y)
-    crit_val = 1.645  # 90% confidence level
     n_timepoints = len(y)
-    r = acf(y, nlags=sp, fft=False)
-    s = r[1] + np.sum(r[2:] ** 2)
-    limit = crit_val * np.sqrt((1 + 2 * s) / n_timepoints)
-    return np.abs(r[sp]) > limit
+
+    sp = check_sp(sp)
+
+    if n_timepoints < 3 * sp:
+        warn("Did not perform seasonality test, as `y`` is too short for the given `sp`, returned: False")
+        is_seasonal = False
+
+    else:
+        coefs = acf(y, nlags=sp)  # acf coefficients
+        coef = coefs[sp]  # coefficient to check
+
+        tcrit = 1.645  # 90% confidence level
+        limits = tcrit / np.sqrt(n_timepoints) * np.sqrt(np.cumsum(np.append(1, 2 * coefs[1:] ** 2)))
+        limit = limits[sp - 1]  #  zero-based indexing
+        is_seasonal = np.abs(coef) > limit
+
+    return is_seasonal
