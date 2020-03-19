@@ -96,6 +96,8 @@
 | Shapelet Transform Classifier | classifiers.shapelet_based.stc.ShapeletTransformClassifier | @TonyBagnall | [Hills et al (2014) - Classification of time series by shapelet transformation](https://ieeexplore.ieee.org/document/7837946) |
 | Time Series Forest | classifiers.interval_based.tsf.TimeSeriesForestClassifier | @TonyBagnall | [Deng et al (2013) - A Time Series Forest for Classification and Feature Extraction](https://www.sciencedirect.com/science/article/pii/S0020025513001473) |
 | Time Series k-NN | classifiers.distance_based.time_series_neighbors.KNeighborsTimeSeriesClassifier | @jasonlines |  |
+| ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
+| Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
 
 ### Multivariate Time Series Classifiers
 
@@ -166,7 +168,7 @@
 
 ## Higher-order building blocks
 
-<<<<<<< HEAD
+
 # Forecasters
 | name | sktime class | maintainer | literature
 | ------ | ------- | ------ | ------- |

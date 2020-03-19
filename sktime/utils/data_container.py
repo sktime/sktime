@@ -1,3 +1,4 @@
+
 import numpy as np
 import pandas as pd
 
@@ -58,19 +59,8 @@ def select_times(X, times):
         pandas DataFrame in nested format containing only selected times
     """
     # TODO currently we loose the time index, need to add it back to Xt after slicing in time
-
-    if isinstance(X, pd.DataFrame):
-        Xt = detabularise(tabularise(X).iloc[:, times])
-        Xt.columns = X.columns
-
-    elif isinstance(X, pd.Series):
-        time_index = get_time_index(X)[times]
-        Xt = X.iloc[0].iloc[times]
-        Xt = pd.Series([pd.Series(Xt, index=time_index)])
-
-    else:
-        raise ValueError(f"Expected input is pandas DataFrame or Series, "
-                         f"but found: {type(X)}")
+    Xt = detabularise(tabularise(X).iloc[:, times])
+    Xt.columns = X.columns
     return Xt
 
 
@@ -164,13 +154,13 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
 
     container = np.array if return_arrays else pd.Series
 
-    n_instances, n_timepoints = X.shape
+    n_samples, n_obs = X.shape
 
     if time_index is None:
-        time_index = np.arange(n_timepoints)
+        time_index = np.arange(n_obs)
     kwargs = {'index': time_index}
 
-    Xt = pd.DataFrame(pd.Series([container(X.iloc[i, :].values, **kwargs) for i in range(n_instances)]))
+    Xt = pd.DataFrame(pd.Series([container(X.iloc[i, :].values, **kwargs) for i in range(n_samples)]))
 
     if index is not None:
          Xt.index = index
@@ -239,3 +229,18 @@ def get_time_index(X):
     time_index = Xs.index if hasattr(Xs, 'index') else pd.RangeIndex(Xs.shape[0])
 
     return time_index
+
+def nested_to_3d_numpy(X, a = None, b = None):
+    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
+
+    Parameters
+    ----------
+    X : pandas DataFrame, input
+    a : int, first row (optional, default None)
+    b : int, last row (optional, default None)
+
+    Returns
+    -------
+    NumPy ndarray, converted NumPy ndarray
+    """
+    return np.stack(X.iloc[a:b].applymap(lambda cell : cell.to_numpy()).apply(lambda row : np.stack(row), axis = 1).to_numpy())
