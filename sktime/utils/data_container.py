@@ -243,6 +243,7 @@ def from_nested_to_long(X):
         long dataframe
     """
     columns = []
+
     for i in range(len(X.columns)):
         df = tabularise(X.iloc[:, i])
         df = df.reset_index()
