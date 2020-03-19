@@ -1,10 +1,12 @@
+#!/usr/bin/env python3 -u
+# coding: utf-8
+
 import numpy as np
 import pandas as pd
 from sktime.utils.validation import check_is_fitted
-
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.utils.data_container import check_equal_index, tabularize
+from sktime.utils.data_container import tabularize
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
 

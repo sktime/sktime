@@ -8,4 +8,5 @@ statsmodels==0.9.*
 cython==0.29.*
 pytest
 wheel
+tsfresh
 numba

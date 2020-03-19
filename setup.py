@@ -86,7 +86,8 @@ CLASSIFIERS = [
 EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
-        'pytest-cov'
+        'pytest-cov',
+        'tsfresh'
     ],
     'docs': [
         'sphinx',
