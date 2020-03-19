@@ -88,6 +88,7 @@ EXTRAS_REQUIRE = {
         'pytest',
         'pytest-cov',
         'pmdarima'
+        'tsfresh'
     ],
     'docs': [
         'sphinx',

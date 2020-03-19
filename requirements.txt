@@ -9,4 +9,5 @@ cython==0.29.*
 pytest
 wheel
 pmdarima
+tsfresh
 numba

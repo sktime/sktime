@@ -15,6 +15,8 @@
 | Cosine Transform  | transformers.spectral_based.CosineTransformer | @jsellier  |  |
 | Discrete Fourier Transform  | transformers.spectral_based.DiscreteFourierTransformer | @jsellier  |  |
 | Power Spectrum | transformers.spectral_based.PowerSpectrumTransformer | @jsellier  |  |
+| Feature Extractor | transformers.summarise.\_tsfresh.TSFreshFeatureExtractor | @mloning @Ayushmaanseth |  |
+| Relevant Feature Extractor | transformers.summarise.\_tsfresh.TSFreshRelevantFeatureExtractor | @mloning @Ayushmaanseth |  |
 
 ### Transforming a Single TS to a Single TS (1-ts-to-1-ts)
 
@@ -23,6 +25,8 @@
 | Derivative Series | transformers.summarise.DeriativeSlopeTransformer | @mloning |  |
 | Plateau Finder | transformers.summarise.PlateauFinder | @mloning |  |
 | Random Intervals | transformers.summarise.RandomIntervalFeatureExtractor | @mloning |  |
+
+
 
 ### Transforming a Batch of TS to a Primitive Data Frame (n-ts-to-df)
 
