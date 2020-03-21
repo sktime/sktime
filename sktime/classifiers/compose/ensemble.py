@@ -45,7 +45,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
     base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
-    n_estimators : integer, optional (default=100)
+    n_estimators : integer, optional (default=200)
         The number of trees in the forest.
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -182,7 +182,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=500,
+                 n_estimators=200,
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
