@@ -17,7 +17,7 @@ from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.utils import gen_even_slices
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 from sklearn.utils import Parallel, delayed, effective_n_jobs
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.exceptions import DataConversionWarning
