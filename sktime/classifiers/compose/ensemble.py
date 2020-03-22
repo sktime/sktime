@@ -45,7 +45,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
     base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
-    n_estimators : integer, optional (default=100)
+    n_estimators : integer, optional (default=200)
         The number of trees in the forest.
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -75,7 +75,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
@@ -103,10 +103,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float or None, (default=None)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
-    bootstrap : boolean, optional (default=True)
+    bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
@@ -182,7 +182,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=500,
+                 n_estimators=200,
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
