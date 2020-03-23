@@ -115,6 +115,12 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         """
         # input checks
         validate_X(X)
+
+        # tsfresh requires unique index, returns only values for
+        # unique index values
+        if X.index.nunique() < X.shape[0]:
+            X = X.reset_index(drop=True)
+
         Xt = from_nested_to_long(X)
         check_is_fitted(self, "_is_fitted")
 
