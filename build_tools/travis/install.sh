@@ -91,13 +91,15 @@ make_conda() {
     pip install scikit-posthocs==$SCIKIT_POSTHOCS_VERSION
     pip install joblib==$JOBLIB_VERSION
     pip install pmdarima==$PMDARIMA_VERSION
+    pip install tsfresh
 }
 
 TO_INSTALL="python=$PYTHON_VERSION pip pytest \
             numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             cython=$CYTHON_VERSION scikit-learn=$SKLEARN_VERSION \
             pandas=$PANDAS_VERSION statsmodels=$STATSMODELS_VERSION \
-            wheel"
+            wheel \
+						numba=$NUMBA_VERSION"
 make_conda $TO_INSTALL
 
 if [ "$COVERAGE" == "true" ]
