@@ -36,15 +36,15 @@ def test_gscv(fh):
     param_grid = ParameterGrid(param_dict)
 
     y = load_airline()
-    score_func = smape_loss
+    scoring = smape_loss()
     f = NaiveForecaster(strategy="mean")
     cv = SingleWindowSplit(fh)
-    gscv = ForecastingGridSearchCV(f, param_grid=param_dict, cv=cv, scoring=smape_loss)
+    gscv = ForecastingGridSearchCV(f, param_grid=param_dict, cv=cv, scoring=scoring)
     gscv.fit(y)
 
     # check scores
     gscv_scores = gscv.cv_results_["mean_test_score"]
-    expected_scores = compute_expected_gscv_scores(f, cv, param_grid, y, score_func)
+    expected_scores = compute_expected_gscv_scores(f, cv, param_grid, y, scoring)
     np.testing.assert_array_equal(gscv_scores, expected_scores)
 
     # check best parameters

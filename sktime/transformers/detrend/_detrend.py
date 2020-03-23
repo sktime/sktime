@@ -42,3 +42,7 @@ class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
 
     def _get_relative_fh(self, y):
         return y.index.values - self.forecaster_.cutoff
+
+    def update(self, y_new, update_params=False):
+        self.forecaster_.update(y_new, update_params=update_params)
+        return self

@@ -1,13 +1,21 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_index, check_time_index, check_y
+from sktime.utils.validation.forecasting import check_consistent_time_index, check_y
 
 __author__ = ['Markus Löning']
 __all__ = ["mase_loss", "smape_loss"]
 
-# for reference implementations, see https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
+
+class BaseMetric:
+
+    def __init__(self, name, greater_is_better=False):
+        self.name = name
+        self.greater_is_better = greater_is_better
+
+    def __call__(self, y_test, y_pred, *args, **kwargs):
+        raise NotImplementedError("abstract method")
 
 
-def mase_loss(y_test, y_pred, y_train, sp=1):
+class mase_loss(BaseMetric):
     """Mean absolute scaled error.
 
     This scale-free error metric can be used to compare forecast methods on a single
@@ -36,29 +44,33 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
     """
 
-    # input checks
-    y_test = check_y(y_test)
-    y_pred = check_y(y_pred)
-    y_train = check_y(y_train)
-    check_consistent_time_index(y_test, y_pred, y_train=y_train)
+    def __init__(self):
+        super(mase_loss, self).__init__(name="MASE", greater_is_better=False)
 
-    #  naive seasonal prediction
-    y_train = np.asarray(y_train)
-    y_pred_naive = y_train[:-sp]
+    def __call__(self, y_test, y_pred, y_train, sp=1):
+        # input checks
+        y_test = check_y(y_test)
+        y_pred = check_y(y_pred)
+        y_train = check_y(y_train)
+        check_consistent_time_index(y_test, y_pred, y_train=y_train)
 
-    # mean absolute error of naive seasonal prediction
-    mae_naive = np.mean(np.abs(y_train[sp:] - y_pred_naive))
+        #  naive seasonal prediction
+        y_train = np.asarray(y_train)
+        y_pred_naive = y_train[:-sp]
 
-    # if training data is flat, mae may be zero,
-    # return np.nan to avoid divide by zero error
-    # and np.inf values
-    if mae_naive == 0:
-        return np.nan
-    else:
-        return np.mean(np.abs(y_test - y_pred)) / mae_naive
+        # mean absolute error of naive seasonal prediction
+        mae_naive = np.mean(np.abs(y_train[sp:] - y_pred_naive))
+
+        # if training data is flat, mae may be zero,
+        # return np.nan to avoid divide by zero error
+        # and np.inf values
+        if mae_naive == 0:
+            return np.nan
+        else:
+            return np.mean(np.abs(y_test - y_pred)) / mae_naive
 
 
-def smape_loss(y_test, y_pred):
+class smape_loss(BaseMetric):
     """Symmetric mean absolute percentage error
 
     Parameters
@@ -73,10 +85,15 @@ def smape_loss(y_test, y_pred):
     loss : float
         SMAPE loss
     """
-    y_test = check_y(y_test)
-    y_pred = check_y(y_pred)
-    check_consistent_time_index(y_test, y_pred)
 
-    nominator = np.abs(y_test - y_pred)
-    denominator = np.abs(y_test) + np.abs(y_pred)
-    return np.mean(2.0 * nominator / denominator)
+    def __init__(self):
+        super(smape_loss, self).__init__(name="sMAPE", greater_is_better=False)
+
+    def __call__(self, y_test, y_pred):
+        y_test = check_y(y_test)
+        y_pred = check_y(y_pred)
+        check_consistent_time_index(y_test, y_pred)
+
+        nominator = np.abs(y_test - y_pred)
+        denominator = np.abs(y_test) + np.abs(y_pred)
+        return np.mean(2.0 * nominator / denominator)

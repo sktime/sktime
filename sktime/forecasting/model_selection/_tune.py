@@ -25,7 +25,7 @@ from sktime.forecasting.base.base import BaseForecaster
 from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.utils.exceptions import NotFittedError
 from sktime.utils.validation.forecasting import check_cv
-from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -275,7 +275,7 @@ class BaseGridSearch(BaseForecaster):
 
         results = {}
 
-        def _store(key_name, array, rank=False):
+        def _store(key_name, array, rank=False, greater_is_better=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
@@ -284,6 +284,7 @@ class BaseGridSearch(BaseForecaster):
             results["mean_%s" % key_name] = array
 
             if rank:
+                array = -array if greater_is_better else array
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(array, method="min"), dtype=np.int32)
 
@@ -307,9 +308,10 @@ class BaseGridSearch(BaseForecaster):
         # Store a list of param dicts at the key "params"
         results["params"] = candidate_params
 
-        for scorer_name in scorers.keys():
+        for scorer_name, scorer in scorers.items():
             # Computed the (weighted) mean and std for test scores alone
-            _store("test_%s" % scorer_name, test_scores[scorer_name], rank=True)
+            _store("test_%s" % scorer_name, test_scores[scorer_name], rank=True,
+                   greater_is_better=scorer.greater_is_better)
 
         return results
 
@@ -336,10 +338,9 @@ class BaseGridSearch(BaseForecaster):
         cv = check_cv(self.cv)
         base_forecaster = clone(self.forecaster)
 
-        if not callable(self.scoring) or self.scoring is None:
-            raise NotImplementedError()
-        scorers = {"score": self.scoring}
-        refit_metric = "score"
+        scoring = check_scoring(self.scoring)
+        scorers = {scoring.name: scoring}
+        refit_metric = scoring.name
 
         fit_and_score_kwargs = dict(
             scorer=scorers,
@@ -408,7 +409,7 @@ class BaseGridSearch(BaseForecaster):
             self.refit_time_ = time.time() - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers["score"]
+        self.scorer_ = scorers[scoring.name]
 
         self.cv_results_ = results
         self.n_splits_ = cv.get_n_splits(y_train)
@@ -418,7 +419,6 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
-
     _required_parameters = ["forecaster", "cv", "param_grid"]
 
     def __init__(self, forecaster, cv, param_grid, scoring=None,

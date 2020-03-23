@@ -349,3 +349,16 @@ def check_alpha(alpha):
                              f"but found: {a}.")
 
     return alpha
+
+
+def check_scoring(scoring):
+    from sktime.performance_metrics.forecasting import BaseMetric
+    from sktime.performance_metrics.forecasting import smape_loss
+
+    if scoring is None:
+        return smape_loss()
+
+    if not isinstance(scoring, BaseMetric):
+        raise TypeError(f"`scoring` must inherit from `BaseMetric`")
+
+    return scoring
