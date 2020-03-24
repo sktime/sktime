@@ -30,7 +30,7 @@ def test_pred_errors_against_y_test(fh):
     f = ThetaForecaster()
     f.fit(y_train, fh)
     y_pred = f.predict(return_pred_int=False)
-    errors = f._compute_pred_errors(alpha=0.05)
+    errors = f._compute_pred_errors(alpha=0.1)
     if isinstance(errors, pd.Series):
         errors = [errors]
     y_test = y_test.iloc[check_fh(fh) - 1]

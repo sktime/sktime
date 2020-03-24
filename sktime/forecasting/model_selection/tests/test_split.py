@@ -4,24 +4,18 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
-import pandas as pd
 import pytest
 from sktime.forecasting.model_selection import SingleWindowSplit
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
-from sktime.forecasting.tests import TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS, TEST_FHS
+from sktime.forecasting.tests import TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS, TEST_FHS, TEST_YS
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
 
 # generate random series
 n_timepoints = 30
-YS = [
-    pd.Series(np.arange(n_timepoints)),  # zero-based index
-    pd.Series(np.random.random(size=n_timepoints), index=np.arange(30, 30 + n_timepoints)),  # non-zero-based index
-]
 CUTOFFS = [
     np.array([21, 22]),
     np.array([3, 7, 10]),
-    # np.arange(n_timepoints) - 1  # full in-sample
 ]
 
 
@@ -120,7 +114,7 @@ def check_test_windows(windows, fh, cutoffs):
                                   np.vstack(windows[n_incomplete_windows:])[:, 0] - np.min(check_fh(fh)))
 
 
-@pytest.mark.parametrize("y", YS)
+@pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_split(y, fh, window_length):
@@ -137,7 +131,7 @@ def test_single_window_split(y, fh, window_length):
     np.testing.assert_array_equal(test_window, training_window[-1] + check_fh(fh))
 
 
-@pytest.mark.parametrize("y", YS)
+@pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("cutoffs", CUTOFFS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
@@ -159,7 +153,7 @@ def test_manual_window_split(y, cutoffs, fh, window_length):
     check_test_windows(test_windows, fh, cutoffs)
 
 
-@pytest.mark.parametrize("y", YS)
+@pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
@@ -190,7 +184,7 @@ def test_sliding_window_split_start_with_window(y, fh, window_length, step_lengt
     check_test_windows(test_windows, fh, cutoffs)
 
 
-@pytest.mark.parametrize("y", YS)
+@pytest.mark.parametrize("y", TEST_YS)
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)

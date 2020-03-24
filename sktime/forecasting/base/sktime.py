@@ -328,15 +328,45 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
             return y_ins.append(y_oos)
 
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make single-step or multi-step fixed cutoff predictions
+
+        Parameters
+        ----------
+        fh : np.array
+            all positive (> 0)
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series
+        """
         # assert all(fh > 0)
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
         index = self._get_absolute_fh(fh)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        assert all(fh <= 0)
+        """Make in-sample prediction using single-step moving-cutoff predictions
+
+        Parameters
+        ----------
+        fh : np.array
+            all non-positive (<= 0)
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred : pd.DataFrame or pd.Series
+        """
         y_train = self.oh
-        cutoffs = fh + self.cutoff - 1
+
+        # generate cutoffs from forecasting horizon, note that cutoffs are still based on integer indexes,
+        # so that they can be used with .iloc
+        cutoffs = fh + len(y_train) - 2
         cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_train, cv, X=X, update_params=False, return_pred_int=return_pred_int,
                                            alpha=alpha)
