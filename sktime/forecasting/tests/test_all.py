@@ -24,8 +24,8 @@ import pandas as pd
 import pytest
 from sklearn.base import clone
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.tests import DEFAULT_ALPHAS
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
+from sktime.forecasting.tests import TEST_ALPHAS
+from sktime.forecasting.tests import TEST_OOS_FHS, TEST_INS_FHS, TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils.exceptions import NotFittedError
@@ -131,7 +131,7 @@ def test_bad_y_input(Forecaster, y):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_predict_time_index(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
@@ -140,11 +140,11 @@ def test_predict_time_index(Forecaster, fh):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_INSAMPLE_FHS)
+@pytest.mark.parametrize("fh", TEST_INS_FHS)
 def test_predict_in_sample(Forecaster, fh):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh=fh)
     try:
+        f.fit(y_train, fh=fh)
         y_pred = f.predict()
         assert_correct_pred_time_index(y_pred, y_train, fh)
     except NotImplementedError:
@@ -155,8 +155,8 @@ def test_predict_in_sample(Forecaster, fh):
 def test_predict_in_sample_full(Forecaster):
     f = _construct_instance(Forecaster)
     fh = -np.arange(len(y_train))
-    f.fit(y_train, fh=fh)
     try:
+        f.fit(y_train, fh=fh)
         y_pred = f.predict()
         assert_correct_pred_time_index(y_pred, y_train, fh)
     except NotImplementedError:
@@ -179,8 +179,8 @@ def check_pred_ints(pred_ints, y_train, y_pred, fh):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("alpha", DEFAULT_ALPHAS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("alpha", TEST_ALPHAS)
 def test_predict_pred_interval(Forecaster, fh, alpha):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
@@ -193,7 +193,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_score(Forecaster, fh):
     # compute expected score
     f = _construct_instance(Forecaster)
@@ -212,7 +212,7 @@ def test_score(Forecaster, fh):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_update_predict_single(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
@@ -230,9 +230,9 @@ def check_update_predict_y_pred(y_pred, fh, step_length):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_length):
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)

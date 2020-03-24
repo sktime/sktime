@@ -9,13 +9,13 @@ import pytest
 from sklearn.base import clone
 from sklearn.model_selection import ParameterGrid
 from sktime.datasets import load_airline
-from sktime.forecasting.model_selection import SingleWindowSplit, ForecastingGridSearchCV, SlidingWindowSplitter
+from sktime.forecasting.model_selection import SingleWindowSplit, ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests import DEFAULT_FHS
-from sktime.performance_metrics.forecasting import smape_loss
+from sktime.forecasting.tests import TEST_OOS_FHS
+from sktime.performance_metrics.forecasting import sMAPE
 
 
-def compute_expected_gscv_scores(forecaster, cv, param_grid, y, score_func):
+def compute_expected_gscv_scores(forecaster, cv, param_grid, y, scoring):
     training_window, validation_window = cv.split_initial(y)
     y_train, y_val = y.iloc[training_window], y.iloc[validation_window]
 
@@ -26,24 +26,24 @@ def compute_expected_gscv_scores(forecaster, cv, param_grid, y, score_func):
         f.fit(y_train)
         y_pred = f.update_predict(y_val, cv)
         y_test = y_val.loc[y_pred.index]
-        scores[i] = score_func(y_test, y_pred)
+        scores[i] = scoring(y_test, y_pred)
     return scores
 
 
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_gscv(fh):
     param_dict = {"window_length": [3, 5, 7]}
     param_grid = ParameterGrid(param_dict)
 
     y = load_airline()
-    scoring = smape_loss()
+    scoring = sMAPE()
     f = NaiveForecaster(strategy="mean")
     cv = SingleWindowSplit(fh)
     gscv = ForecastingGridSearchCV(f, param_grid=param_dict, cv=cv, scoring=scoring)
     gscv.fit(y)
 
     # check scores
-    gscv_scores = gscv.cv_results_["mean_test_score"]
+    gscv_scores = gscv.cv_results_[f"mean_test_{scoring.name}"]
     expected_scores = compute_expected_gscv_scores(f, cv, param_grid, y, scoring)
     np.testing.assert_array_equal(gscv_scores, expected_scores)
 

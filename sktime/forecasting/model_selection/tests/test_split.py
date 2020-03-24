@@ -8,27 +8,24 @@ import pandas as pd
 import pytest
 from sktime.forecasting.model_selection import SingleWindowSplit
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_INSAMPLE_FHS, DEFAULT_STEP_LENGTHS, DEFAULT_WINDOW_LENGTHS
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.forecasting.tests import TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS, TEST_FHS
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
 
 # generate random series
+n_timepoints = 30
 YS = [
-    pd.Series(np.arange(30)),  # zero-based index
-    pd.Series(np.random.random(size=30), index=np.arange(30, 60)),  # non-zero-based index
-    pd.Series(np.random.random(size=30), index=np.arange(-60, -30))  # negative index
+    pd.Series(np.arange(n_timepoints)),  # zero-based index
+    pd.Series(np.random.random(size=n_timepoints), index=np.arange(30, 30 + n_timepoints)),  # non-zero-based index
 ]
 CUTOFFS = [
     np.array([21, 22]),
     np.array([3, 7, 10]),
-    np.array([-5, -1, 0, 1, 2])
+    # np.arange(n_timepoints) - 1  # full in-sample
 ]
 
-ALL_FHS = DEFAULT_FHS + DEFAULT_INSAMPLE_FHS
 
-
-def check_windows(windows, allow_empty=False):
+def check_window_properties(windows, allow_empty=False):
     """Helper function to test common properties of windows"""
     assert isinstance(windows, list)
     for window in windows:
@@ -39,11 +36,18 @@ def check_windows(windows, allow_empty=False):
             assert len(window) > 0
 
 
-def check_cutoffs(cutoffs):
+def check_cutoff_properties(cutoffs):
     """Helper function to test common properties of cutoffs"""
     assert isinstance(cutoffs, np.ndarray)
-    assert cutoffs.ndim == 1
     assert all([is_int(cutoff) for cutoff in cutoffs])
+    assert cutoffs.ndim == 1
+    assert len(cutoffs) > 0
+
+
+def check_n_splits_properties(n_splits):
+    """Helper function to test common properties of n_splits"""
+    assert is_int(n_splits)
+    assert n_splits > 0
 
 
 def generate_and_check_windows(y, cv):
@@ -60,24 +64,65 @@ def generate_and_check_windows(y, cv):
         test_windows.append(test_window)
 
     # check windows, allow empty for cv starting at fh rather than window
-    check_windows(training_windows, allow_empty=True)
-    check_windows(test_windows)
+    check_window_properties(training_windows, allow_empty=True)
+    check_window_properties(test_windows, allow_empty=True)
 
     # check cutoffs
     cutoffs = cv.get_cutoffs(y)
-    check_cutoffs(cutoffs)
+    check_cutoff_properties(cutoffs)
 
     # check n_splits
     n_splits = cv.get_n_splits(y)
-    assert is_int(n_splits)
+    check_n_splits_properties(n_splits)
     assert n_splits == len(training_windows) == len(test_windows) == len(cutoffs)
 
     return training_windows, test_windows, n_splits, cutoffs
 
 
+def get_n_incomplete_windows(windows, window_length):
+    n = 0
+    for window in windows:
+        if len(window) < window_length:
+            n += 1
+    return n
+
+
+def check_windows_dimensions(windows, n_incomplete_windows, window_length):
+    assert n_incomplete_windows == get_n_incomplete_windows(windows, window_length)
+
+    # check incomplete windows
+    if n_incomplete_windows > 1:
+        incomplete_windows = windows[:n_incomplete_windows]
+        check_incomplete_windows_dimensions(incomplete_windows, n_incomplete_windows, window_length)
+
+    # check complete windows
+    n_complete_windows = len(windows) - n_incomplete_windows
+    if n_complete_windows > 1:
+        complete_training_windows = windows[n_incomplete_windows:]
+        check_complete_windows_dimensions(complete_training_windows, n_complete_windows, window_length)
+
+
+def check_complete_windows_dimensions(windows, n_windows, window_length):
+    windows = np.vstack(windows)
+    assert windows.shape == (n_windows, window_length)
+
+
+def check_incomplete_windows_dimensions(windows, n_windows, max_window_length):
+    assert len(windows) == n_windows
+    assert all(len(window) < max_window_length for window in windows)
+
+
+def check_test_windows(windows, fh, cutoffs):
+    n_incomplete_windows = get_n_incomplete_windows(windows, len(check_fh(fh)))
+    check_windows_dimensions(windows, n_incomplete_windows, len(check_fh(fh)))
+
+    np.testing.assert_array_equal(cutoffs[n_incomplete_windows:],
+                                  np.vstack(windows[n_incomplete_windows:])[:, 0] - np.min(check_fh(fh)))
+
+
 @pytest.mark.parametrize("y", YS)
-@pytest.mark.parametrize("fh", ALL_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_split(y, fh, window_length):
     cv = SingleWindowSplit(fh=fh, window_length=window_length)
     training_windows, test_windows, n_splits, cutoffs = generate_and_check_windows(y, cv)
@@ -92,9 +137,10 @@ def test_single_window_split(y, fh, window_length):
     np.testing.assert_array_equal(test_window, training_window[-1] + check_fh(fh))
 
 
-@pytest.mark.parametrize("y, cutoffs", [(y, cutoffs) for y, cutoffs in zip(YS, CUTOFFS)])
-@pytest.mark.parametrize("fh", ALL_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+@pytest.mark.parametrize("y", YS)
+@pytest.mark.parametrize("cutoffs", CUTOFFS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_manual_window_split(y, cutoffs, fh, window_length):
     # initiate rolling window cv iterator
     cv = ManualWindowSplitter(cutoffs, fh=fh, window_length=window_length)
@@ -102,64 +148,52 @@ def test_manual_window_split(y, cutoffs, fh, window_length):
     # generate and keep splits
     training_windows, test_windows, n_splits, _ = generate_and_check_windows(y, cv)
 
-    test_windows = np.vstack(test_windows)
-    assert test_windows.shape == (n_splits, len(check_fh(fh)))
-
     # check cutoffs
     np.testing.assert_array_equal(cutoffs, cv.get_cutoffs(y))
-    np.testing.assert_array_equal(cutoffs, test_windows[:, 0] - np.min(check_fh(fh)))
 
-    # check incomplete and full windows
-    n_incomplete_windows = sum(cutoffs - window_length < 0)
-    if 1 < n_incomplete_windows < n_splits:
-        assert len(training_windows[0]) < window_length
-        training_windows = np.vstack(training_windows[n_incomplete_windows:])
-        assert training_windows.shape == (n_splits - n_incomplete_windows, window_length)
+    # check training windows
+    n_incomplete_windows = get_n_incomplete_windows(training_windows, window_length)
+    check_windows_dimensions(training_windows, n_incomplete_windows, window_length)
 
-
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-def test_manual_window_split_full_in_sample(window_length):
-    y, y_test = make_forecasting_problem()
-    cutoffs = -np.arange(len(y)) + len(y) - 2
-    cv = ManualWindowSplitter(cutoffs, fh=1, window_length=window_length)
-
-    # generate and keep splits
-    training_windows, test_windows, _, _ = generate_and_check_windows(y, cv)
-    assert len(training_windows[0]) == 0
-    np.testing.assert_array_equal(np.hstack(test_windows), np.arange(len(y)))
+    # check test windows
+    check_test_windows(test_windows, fh, cutoffs)
 
 
 @pytest.mark.parametrize("y", YS)
-@pytest.mark.parametrize("fh", ALL_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_split_start_with_window(y, fh, window_length, step_length):
     # initiate rolling window cv iterator
     cv = SlidingWindowSplitter(fh=fh, window_length=window_length, step_length=step_length, start_with_window=True)
 
     # generate and keep splits
     training_windows, test_windows, n_splits, cutoffs = generate_and_check_windows(y, cv)
+
+    # check training windows
+    n_incomplete_windows = 0  # infer expected number of incomplete windows
+    check_windows_dimensions(training_windows, n_incomplete_windows, window_length)
+
+    # check training windows values
     training_windows = np.vstack(training_windows)
-    test_windows = np.vstack(test_windows)
 
-    # check window shapes
-    assert training_windows.shape == (n_splits, window_length)  # check window length
-    assert test_windows.shape == (n_splits, len(check_fh(fh)))  # check fh
-
-    # check cutoffs
+    # check against cutoffs
     np.testing.assert_array_equal(cutoffs, training_windows[:, -1])
 
-    # check first window
+    # check values of first window
     np.testing.assert_array_equal(training_windows[0, :], np.arange(window_length))
 
-    # check step length
+    # check against step length
     np.testing.assert_array_equal(training_windows[:, 0] // step_length, np.arange(n_splits))
+
+    # check test windows
+    check_test_windows(test_windows, fh, cutoffs)
 
 
 @pytest.mark.parametrize("y", YS)
-@pytest.mark.parametrize("fh", ALL_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
-@pytest.mark.parametrize("step_length", DEFAULT_STEP_LENGTHS)
+@pytest.mark.parametrize("fh", TEST_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_sliding_window_split_start_with_fh(y, fh, window_length, step_length):
     # initiate rolling window cv iterator
     cv = SlidingWindowSplitter(fh=fh, window_length=window_length, step_length=step_length, start_with_window=False)
@@ -171,14 +205,9 @@ def test_sliding_window_split_start_with_fh(y, fh, window_length, step_length):
     assert len(training_windows[0]) == 0
     assert len(training_windows[1]) == min(step_length, window_length)
 
-    # check window shapes
-    test_windows = np.vstack(test_windows)
-    assert test_windows.shape == (n_splits, len(check_fh(fh)))
+    # check training windows
+    n_incomplete_windows = np.int(np.ceil(window_length / step_length))  # infer expected number of incomplete windows
+    check_windows_dimensions(training_windows, n_incomplete_windows, window_length)
 
-    # check cutoffs
-    np.testing.assert_array_equal(cutoffs, test_windows[:, 0] - np.min(check_fh(fh)))
-
-    # check full windows
-    n_incomplete_windows = np.int(np.ceil(window_length / step_length))
-    training_windows = np.vstack(training_windows[n_incomplete_windows:])
-    assert training_windows.shape == (n_splits - n_incomplete_windows, window_length)
+    # check test windows
+    check_test_windows(test_windows, fh, cutoffs)

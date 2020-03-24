@@ -19,7 +19,7 @@ from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplit
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.performance_metrics.forecasting import smape_loss
+from sktime.performance_metrics.forecasting import sMAPE
 from sktime.transformers.compose import Tabulariser
 from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
@@ -48,7 +48,7 @@ DEFAULT_INSTANTIATIONS = {
         "forecaster": NaiveForecaster(strategy="mean"),
         "cv": SingleWindowSplit(fh=1),
         "param_grid": {"window_length": [2, 5]},
-        "scoring": smape_loss,
+        "scoring": sMAPE(),
     }
 }
 

@@ -11,6 +11,7 @@ from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation.forecasting import check_cutoffs
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -48,7 +49,7 @@ class BaseTemporalCrossValidator:
         """
         y = self._check_y(y)
         for training_window, test_window in self._split_windows(y):
-            yield training_window[training_window >= 0], test_window
+            yield training_window[training_window >= 0], test_window[test_window >= 0]
 
     def _split_windows(self, y):
         raise NotImplementedError("abstract method")
@@ -220,7 +221,7 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
     Parameters
     ----------
     cutoffs : np.array
-        cutoff points relative to start of `y`
+        cutoff points, positive and integer-index like, usable with pandas .iloc[] indexing
     fh : int, list or np.array
     window_length : int
     """
@@ -229,15 +230,15 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
         self.cutoffs = cutoffs
         super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
-    @staticmethod
-    def _check_cutoffs(cutoffs):
-        if not isinstance(cutoffs, np.ndarray):
-            raise ValueError(f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
-        return np.sort(cutoffs)
-
     def _split_windows(self, y):
-        cutoffs = self._check_cutoffs(self.cutoffs)
+        # cutoffs
+        cutoffs = check_cutoffs(self.cutoffs)
+        if not np.max(cutoffs) < len(y):
+            raise ValueError(f"`cutoffs` are out-of-bounds for given `y`.")
+
         fh = check_fh(self.fh)
+        if np.max(cutoffs) + np.max(fh) > len(y):
+            raise ValueError(f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length)
 
         for cutoff in cutoffs:
@@ -249,7 +250,7 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
         return len(self.cutoffs)
 
     def get_cutoffs(self, y=None):
-        return self._check_cutoffs(self.cutoffs)
+        return check_cutoffs(self.cutoffs)
 
 
 def temporal_train_test_split(*arrays, test_size=None, train_size=None):

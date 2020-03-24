@@ -6,7 +6,7 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting import ThetaForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_ALPHAS
+from sktime.forecasting.tests import TEST_OOS_FHS, TEST_ALPHAS
 from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
@@ -24,7 +24,7 @@ def test_predictive_performance_on_airline():
     np.testing.assert_allclose(y_pred, y_test, rtol=0.05)
 
 
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_pred_errors_against_y_test(fh):
     y_train, y_test = make_forecasting_problem()
     f = ThetaForecaster()

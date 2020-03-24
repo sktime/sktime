@@ -53,18 +53,17 @@ class BaseReducer(BaseLastWindowForecaster):
         y_train = check_y(y_train)
 
         # get integer time index
-        time_index = y_train.index
         cv = self._cv
 
         # Transform target series into tabular format using
         # rolling window tabularisation
         x_windows = []
         y_windows = []
-        for x_index, y_index in cv.split(time_index):
+        for x_index, y_index in cv.split(y_train):
             x_window = y_train.iloc[x_index]
-            x_windows.append(x_window)
-
             y_window = y_train.iloc[y_index]
+
+            x_windows.append(x_window)
             y_windows.append(y_window)
 
         # Put into required input format for regression
@@ -170,6 +169,8 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
         self._set_oh(y_train)
         self._set_fh(fh)
+        if np.any(self.fh <= 0):
+            raise NotImplementedError("in-sample predictions are not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length)
@@ -254,7 +255,6 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # prepare recursive predictions
         fh_max = fh[-1]
         y_pred = np.zeros(fh_max)
-        regressor = self.regressor_
 
         # get last window from observation horizon
         last_window = self._get_last_window()
@@ -264,7 +264,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
             X_last = self._convert_data([last_window])  # convert data into required input format
-            y_pred[i] = regressor.predict(X_last)  # make forecast using fitted regressor
+            y_pred[i] = self.regressor_.predict(X_last)  # make forecast using fitted regressor
 
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self.window_length_:]
@@ -272,8 +272,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         fh_idx = self._get_array_index_fh(fh)
         return y_pred[fh_idx]
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
-        raise NotImplementedError()
+    # def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=None):
+    #     raise NotImplementedError()
 
 
 ##############################################################################
