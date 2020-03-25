@@ -111,7 +111,7 @@ class TimeSeriesForest(ForestClassifier):
             self.n_intervals = 1
         if self.series_length <self.min_interval:
             self.min_interval=self.series_length
-        self.intervals=np.zeros((self.n_trees, 3 * self.n_intervals, 2), dtype=int)
+        self.intervals=np.zeros((self.n_trees, self.n_intervals, 2), dtype=int)
         for i in range(0, self.n_trees):
             transformed_x = np.empty(shape=(3 * self.n_intervals, n_samps))
             # Find the random intervals for classifier i and concatentate features
