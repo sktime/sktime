@@ -6,8 +6,8 @@ __all__ = [
     "AutoARIMA"
 ]
 
-from sktime.forecasting.base import BaseSktimeForecaster, OptionalForecastingHorizonMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.sktime import BaseSktimeForecaster, OptionalForecastingHorizonMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 import pandas as pd
 import numpy as np
 

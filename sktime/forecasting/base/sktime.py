@@ -8,8 +8,8 @@ from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.base import BaseForecaster
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
 from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
 
@@ -86,7 +86,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """The forecasting horizon"""
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
-            raise ValueError("No `fh` has been set yet.")
+            raise ValueError("No `fh` has been set yet, please specify `fh` in `fit` or `predict`")
         return self._fh
 
     def _set_fh(self, fh):
@@ -189,7 +189,7 @@ class BaseSktimeForecaster(BaseForecaster):
                                alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        fh = cv.fh
+        fh = cv.get_fh()
         y_preds = []
         cutoffs = []
         with self._detached_cutoff():
@@ -297,13 +297,14 @@ class RequiredForecastingHorizonMixin:
 
 class BaseLastWindowForecaster(BaseSktimeForecaster):
 
-    def __init__(self):
+    def __init__(self, window_length=None):
         super(BaseLastWindowForecaster, self).__init__()
-        self._window_length = None
+        self.window_length = window_length
+        self.window_length_ = None
 
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
-        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(self.fh, window_length=self.window_length)
+        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(self.fh, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_test, cv, X=X_test, update_params=update_params,
                                            return_pred_int=return_pred_int, alpha=alpha)
 
@@ -327,16 +328,46 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
             return y_ins.append(y_oos)
 
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make single-step or multi-step fixed cutoff predictions
+
+        Parameters
+        ----------
+        fh : np.array
+            all positive (> 0)
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred = pd.Series
+        """
         # assert all(fh > 0)
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
         index = self._get_absolute_fh(fh)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        assert all(fh <= 0)
+        """Make in-sample prediction using single-step moving-cutoff predictions
+
+        Parameters
+        ----------
+        fh : np.array
+            all non-positive (<= 0)
+        X : pd.DataFrame
+        return_pred_int : bool
+        alpha : float or array-like
+
+        Returns
+        -------
+        y_pred : pd.DataFrame or pd.Series
+        """
         y_train = self.oh
-        cutoffs = fh + self.cutoff - 1
-        cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length)
+
+        # generate cutoffs from forecasting horizon, note that cutoffs are still based on integer indexes,
+        # so that they can be used with .iloc
+        cutoffs = fh + len(y_train) - 2
+        cv = ManualWindowSplitter(cutoffs, fh=1, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_train, cv, X=X, update_params=False, return_pred_int=return_pred_int,
                                            alpha=alpha)
 
@@ -358,13 +389,9 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
 
     def _get_last_window(self):
         """Helper function to get last window"""
-        start = self.cutoff - self.window_length + 1
+        start = self.cutoff - self.window_length_ + 1
         end = self.cutoff
         return self.oh.loc[start:end].values
-
-    @property
-    def window_length(self):
-        return self._window_length
 
     @staticmethod
     def _predict_nan(fh):
@@ -384,4 +411,6 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         # return data frame when we predict multiple steps ahead
         y_pred = pd.DataFrame(y_preds).T
         y_pred.columns = cutoffs
+        if y_pred.shape[1] == 1:
+            return y_pred.iloc[:, 0]
         return y_pred

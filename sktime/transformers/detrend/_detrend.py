@@ -8,7 +8,7 @@ __author__ = ["Markus Löning"]
 
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base import MetaForecasterMixin
+from sktime.forecasting.base.meta import MetaForecasterMixin
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
@@ -42,3 +42,7 @@ class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
 
     def _get_relative_fh(self, y):
         return y.index.values - self.forecaster_.cutoff
+
+    def update(self, y_new, update_params=False):
+        self.forecaster_.update(y_new, update_params=update_params)
+        return self

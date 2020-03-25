@@ -23,7 +23,6 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
     model : str {"additive", "multiplicative"}, optional (default="additive")
         Model to use for estimating seasonal component
     """
-
     def __init__(self, sp=1, model="additive"):
         self.sp = check_sp(sp)
         allowed_models = ("additive", "multiplicative")
@@ -76,6 +75,11 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
         y = check_y(y)
         seasonal = self._align_seasonal(y)
         return self._retrend(y, seasonal)
+
+    def update(self, y_new, update_params=False):
+        self._check_is_fitted()
+        y = check_y(y_new)
+        self._set_oh_index(y_new)
 
 
 Deseasonalizer = Deseasonaliser

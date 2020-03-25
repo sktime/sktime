@@ -7,14 +7,17 @@ __all__ = ["TransformedTargetForecaster"]
 from itertools import islice
 from sklearn.base import clone
 from sktime.base import BaseComposition
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import BaseSktimeForecaster, MetaForecasterMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
+from sktime.forecasting.base.base import BaseForecaster
+from sktime.forecasting.base.sktime import BaseSktimeForecaster
+from sktime.forecasting.base.meta import MetaForecasterMixin
+from sktime.forecasting.base.sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
-class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, BaseComposition):
+class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizonMixin, BaseSktimeForecaster,
+                                  BaseComposition):
     """Meta-estimator for forecasting transformed time series."""
 
     _required_parameters = ("steps",)
@@ -75,6 +78,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
     def fit(self, y_train, fh=None, X_train=None):
         self.steps_ = self._check_steps()
         self._set_oh(y_train)
+        self._set_fh(fh)
 
         # transform
         yt = check_y(y_train)
@@ -92,10 +96,9 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        self.check_is_fitted()
 
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
@@ -118,11 +121,6 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
         forecaster.update(y_new, update_params=update_params)
         self.steps_[-1] = (name, forecaster)
         return self
-
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
-        self.check_is_fitted()
-        raise NotImplementedError()
 
     def transform(self, y):
         self.check_is_fitted()
@@ -161,3 +159,4 @@ class TransformedTargetForecaster(MetaForecasterMixin, BaseSktimeForecaster, Bas
         """
         self._set_params('steps', **kwargs)
         return self
+

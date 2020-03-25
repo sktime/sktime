@@ -14,7 +14,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sktime.classifiers.base import BaseClassifier
-from sktime.forecasting.base import BaseSktimeForecaster
+from sktime.forecasting.base.sktime import BaseSktimeForecaster
 from sktime.regressors.base import BaseRegressor
 
 # TODO implement task-strategy-estimator compatibility lookup registry using strategy traits

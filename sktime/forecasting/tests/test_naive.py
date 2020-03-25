@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests import DEFAULT_FHS, DEFAULT_SPS, DEFAULT_WINDOW_LENGTHS
+from sktime.forecasting.tests import TEST_OOS_FHS, TEST_SPS, TEST_WINDOW_LENGTHS
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -17,7 +17,7 @@ y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
 
 
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_strategy_last(fh):
     f = NaiveForecaster(strategy="last")
     f.fit(y_train)
@@ -26,8 +26,8 @@ def test_strategy_last(fh):
     np.testing.assert_array_equal(y_pred, expected)
 
 
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("window_length", DEFAULT_WINDOW_LENGTHS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_mean(fh, window_length):
     f = NaiveForecaster(strategy="mean", window_length=window_length)
     f.fit(y_train)
@@ -40,8 +40,8 @@ def test_strategy_mean(fh, window_length):
     np.testing.assert_array_equal(y_pred, expected)
 
 
-@pytest.mark.parametrize("fh", DEFAULT_FHS)
-@pytest.mark.parametrize("sp", DEFAULT_SPS)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_seasonal_last(fh, sp):
     f = NaiveForecaster(strategy="seasonal_last", sp=sp)
     f.fit(y_train)

@@ -7,7 +7,8 @@ __all__ = [
     "generate_polynomial_series",
     "generate_seasonal_time_series_data_with_trend",
     "generate_time_series_data_with_trend",
-    "make_forecasting_problem"
+    "make_forecasting_problem",
+    "generate_time_series"
 ]
 
 import numpy as np
@@ -23,6 +24,7 @@ def compute_expected_index_from_update_predict(y, fh, step_length):
     fh = check_fh(fh)
     y = check_y(y)
     index = y.index.values
+
     start = index[0] - 1  # initial cutoff
     end = index[-1]  #  last point to predict
     cutoffs = np.arange(start, end, step_length)
@@ -37,6 +39,16 @@ def compute_expected_index_from_update_predict(y, fh, step_length):
 
     # return only unique time points
     return np.unique(pred_index)
+
+
+def generate_time_series(n_timepoints=75, positive=True, non_zero_index=False):
+    a = np.random.normal(size=n_timepoints)
+    if positive:
+        a -= np.min(a) - 1
+    index = np.arange(n_timepoints)
+    if non_zero_index:
+        index += 30
+    return pd.Series(a, index=index)
 
 
 def generate_polynomial_series(n, order, coefs=None):

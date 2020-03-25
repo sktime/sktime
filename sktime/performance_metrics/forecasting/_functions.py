@@ -1,10 +1,8 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_index, check_time_index, check_y
+from sktime.utils.validation.forecasting import check_consistent_time_index, check_y
 
-__author__ = ['Markus Löning']
+__author__ = ["Markus Löning"]
 __all__ = ["mase_loss", "smape_loss"]
-
-# for reference implementations, see https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
 
 
 def mase_loss(y_test, y_pred, y_train, sp=1):
@@ -35,7 +33,6 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     ----------
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
     """
-
     # input checks
     y_test = check_y(y_test)
     y_pred = check_y(y_pred)

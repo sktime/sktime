@@ -9,6 +9,7 @@ __all__ = [
 ]
 
 from sktime.base import BaseEstimator
+from sktime.utils.exceptions import NotFittedError
 
 DEFAULT_ALPHA = 0.05
 
@@ -17,6 +18,10 @@ class BaseForecaster(BaseEstimator):
     """Base forecaster"""
 
     _estimator_type = "forecaster"
+
+    def __init__(self):
+        self._is_fitted = False
+        super(BaseEstimator, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         raise NotImplementedError("abstract method")

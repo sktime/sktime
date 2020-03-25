@@ -90,10 +90,10 @@ def check_cv(cv):
     ValueError
         if cv does not have the required attributes.
     """
-    required_attributes = ("split", "fh", "window_length")
-    for attr in required_attributes:
-        if not hasattr(cv, attr):
-            raise ValueError(f"`cv` iterator must have a {attr} attribute.")
+    from sktime.forecasting.model_selection._split import BaseTemporalCrossValidator
+    allowed_base_class = BaseTemporalCrossValidator
+    if not isinstance(cv, allowed_base_class):
+        raise TypeError(f"`cv` is not an instance of {allowed_base_class}")
     return cv
 
 
@@ -169,7 +169,7 @@ def check_window_length(window_length):
     """Validate window length"""
     if window_length is not None:
         if not is_int(window_length) or window_length < 1:
-            raise ValueError(f"`window_length` must be a positive integer >= 1 or None, "
+            raise ValueError(f"`window_length_` must be a positive integer >= 1 or None, "
                              f"but found: {window_length}")
     return window_length
 
@@ -349,3 +349,36 @@ def check_alpha(alpha):
                              f"but found: {a}.")
 
     return alpha
+
+
+def check_cutoffs(cutoffs):
+    if not isinstance(cutoffs, np.ndarray):
+        raise ValueError(f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
+
+    if not all([is_int(cutoff) for cutoff in cutoffs]):
+        raise ValueError("All cutoff points must be integers")
+
+    if not cutoffs.ndim == 1:
+        raise ValueError("`cutoffs must be 1-dimensional array")
+
+    if not len(cutoffs) > 0:
+        raise ValueError("Found empty `cutoff` array")
+
+    return np.sort(cutoffs)
+
+
+def check_scoring(scoring):
+    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
+    from sktime.performance_metrics.forecasting import sMAPE
+
+    if scoring is None:
+        return sMAPE()
+
+    if not callable(scoring):
+        raise TypeError("`scoring` must be a callable object")
+
+    allowed_base_class = MetricFunctionWrapper
+    if not isinstance(scoring, allowed_base_class):
+        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
+
+    return scoring

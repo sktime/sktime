@@ -10,9 +10,10 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting.base import BaseHeterogenousEnsembleForecaster, RequiredForecastingHorizonMixin
-from sktime.forecasting.base import DEFAULT_ALPHA
-from sktime.forecasting.model_selection import SingleWindowSplit
+from sktime.forecasting.base.meta import BaseHeterogenousEnsembleForecaster
+from sktime.forecasting.base.sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.forecasting.model_selection import SingleWindowSplitter
 
 
 class StackingForecaster(RequiredForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
@@ -35,7 +36,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin, BaseHeterogenousEnsemb
 
         # split training series into training set to fit forecasters and
         # validation set to fit meta-learner
-        cv = SingleWindowSplit(fh=self.fh)
+        cv = SingleWindowSplitter(fh=self.fh)
         training_window, test_window = next(cv.split(y_train))
         y_fcst = y_train.iloc[training_window]
         y_meta = y_train.iloc[test_window].values
