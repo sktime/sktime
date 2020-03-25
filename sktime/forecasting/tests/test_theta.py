@@ -26,14 +26,15 @@ def test_predictive_performance_on_airline():
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_pred_errors_against_y_test(fh):
-    y_train, y_test = make_forecasting_problem()
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
     f = ThetaForecaster()
     f.fit(y_train, fh)
     y_pred = f.predict(return_pred_int=False)
     errors = f._compute_pred_errors(alpha=0.1)
     if isinstance(errors, pd.Series):
-        errors = [errors]
+        errors = [errors]  # make iterable
     y_test = y_test.iloc[check_fh(fh) - 1]
     for error in errors:
-        assert np.all(y_pred - error < y_test)
+        assert np.all(y_test > y_pred - error)
         assert np.all(y_test < y_pred + error)

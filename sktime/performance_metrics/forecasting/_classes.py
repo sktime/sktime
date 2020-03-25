@@ -17,7 +17,7 @@ class MetricFunctionWrapper:
 
 def make_forecasting_scorer(fn, name=None, greater_is_better=False):
     """Factory method for creating metric classes from metric functions"""
-    return MetricFunctionWrapper(fn, name, greater_is_better=greater_is_better)
+    return MetricFunctionWrapper(fn, name=name, greater_is_better=greater_is_better)
 
 
 class MASE(MetricFunctionWrapper):

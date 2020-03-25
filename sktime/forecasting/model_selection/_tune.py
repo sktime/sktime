@@ -8,7 +8,6 @@ import numbers
 import time
 import warnings
 from collections import defaultdict
-from collections.abc import Sequence
 from contextlib import suppress
 from functools import partial
 from traceback import format_exception_only
@@ -19,6 +18,7 @@ from scipy.stats import rankdata
 from sklearn.base import clone
 from sklearn.exceptions import FitFailedWarning
 from sklearn.model_selection import check_cv, ParameterGrid
+from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.forecasting.base.base import BaseForecaster
@@ -29,35 +29,22 @@ from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.validation.forecasting import check_y
 
 
-def _check_param_grid(param_grid):
-    if hasattr(param_grid, 'items'):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
-
-            if (isinstance(v, str) or
-                    not isinstance(v, (np.ndarray, Sequence))):
-                raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a sequence(but not a string) or"
-                                 " np.ndarray.".format(name))
-
-            if len(v) == 0:
-                raise ValueError("Parameter values for parameter ({0}) need "
-                                 "to be a non-empty sequence.".format(name))
-
-
 def _score(y_test, y_pred, scorer):
+    """Evaluate forecasts"""
     if not isinstance(y_pred, pd.Series):
-        raise NotImplementedError()
+        raise NotImplementedError("multi-step forecasting horizons with multiple cutoffs/windows are not supported yet")
 
     # select only test points for which we have made predictions
+    if not np.all(np.isin(y_pred.index, y_test.index)):
+        raise IndexError(f"Predicted time points are not in test set")
     y_test = y_test.loc[y_pred.index]
 
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
+    return _check_scores(scores, scorer)
 
+
+def _check_scores(scores, scorer):
+    """Check returned scores"""
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
     if isinstance(scores, dict):
@@ -80,10 +67,7 @@ def _score(y_test, y_pred, scorer):
 
 
 def _update_score(forecaster, cv, y_test, X_test, scorer):
-    """Compute the score(s) of an forecaster on a given test set.
-    Will return a dict of floats if `scorer` is a dict, otherwise a single
-    float is returned.
-    """
+    """Make, update and evaluate forecasts"""
     y_pred = forecaster.update_predict(y_test, cv=cv, X_test=X_test)
     return _score(y_test, y_pred, scorer)
 

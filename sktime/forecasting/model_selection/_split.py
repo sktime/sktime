@@ -1,17 +1,17 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "SingleWindowSplit", "temporal_train_test_split"]
+__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "SingleWindowSplitter", "temporal_train_test_split"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sktime.utils.validation.forecasting import check_cutoffs
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation.forecasting import check_window_length
-from sktime.utils.validation.forecasting import check_cutoffs
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -76,6 +76,44 @@ class BaseTemporalCrossValidator:
         if isinstance(y, pd.Series):
             y = y.index
         return check_time_index(y)
+
+
+class ManualWindowSplitter(BaseTemporalCrossValidator):
+    """Manual window splitter.
+
+    Parameters
+    ----------
+    cutoffs : np.array
+        cutoff points, positive and integer-index like, usable with pandas .iloc[] indexing
+    fh : int, list or np.array
+    window_length : int
+    """
+
+    def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
+        self.cutoffs = cutoffs
+        super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+
+    def _split_windows(self, y):
+        # cutoffs
+        cutoffs = check_cutoffs(self.cutoffs)
+        if not np.max(cutoffs) < len(y):
+            raise ValueError(f"`cutoffs` are out-of-bounds for given `y`.")
+
+        fh = check_fh(self.fh)
+        if np.max(cutoffs) + np.max(fh) > len(y):
+            raise ValueError(f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
+        window_length = check_window_length(self.window_length)
+
+        for cutoff in cutoffs:
+            training_window = np.arange(cutoff - window_length, cutoff) + 1
+            test_window = cutoff + fh
+            yield training_window, test_window
+
+    def get_n_splits(self, y=None):
+        return len(self.cutoffs)
+
+    def get_cutoffs(self, y=None):
+        return check_cutoffs(self.cutoffs)
 
 
 class BaseWindowSplitter(BaseTemporalCrossValidator):
@@ -184,10 +222,10 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             return 0
 
 
-class SingleWindowSplit(BaseWindowSplitter):
+class SingleWindowSplitter(BaseWindowSplitter):
 
     def __init__(self, fh, window_length=None):
-        super(SingleWindowSplit, self).__init__(fh=fh, window_length=window_length)
+        super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split_windows(self, y):
         window_length = check_window_length(self.window_length)
@@ -213,44 +251,6 @@ class SingleWindowSplit(BaseWindowSplitter):
         training_window, _ = next(self._split_windows(y))
         test_window = np.arange(training_window[-1] + 1, len(y))
         return training_window, test_window
-
-
-class ManualWindowSplitter(BaseTemporalCrossValidator):
-    """Manual window splitter.
-
-    Parameters
-    ----------
-    cutoffs : np.array
-        cutoff points, positive and integer-index like, usable with pandas .iloc[] indexing
-    fh : int, list or np.array
-    window_length : int
-    """
-
-    def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
-        self.cutoffs = cutoffs
-        super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
-
-    def _split_windows(self, y):
-        # cutoffs
-        cutoffs = check_cutoffs(self.cutoffs)
-        if not np.max(cutoffs) < len(y):
-            raise ValueError(f"`cutoffs` are out-of-bounds for given `y`.")
-
-        fh = check_fh(self.fh)
-        if np.max(cutoffs) + np.max(fh) > len(y):
-            raise ValueError(f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
-        window_length = check_window_length(self.window_length)
-
-        for cutoff in cutoffs:
-            training_window = np.arange(cutoff - window_length, cutoff) + 1
-            test_window = cutoff + fh
-            yield training_window, test_window
-
-    def get_n_splits(self, y=None):
-        return len(self.cutoffs)
-
-    def get_cutoffs(self, y=None):
-        return check_cutoffs(self.cutoffs)
 
 
 def temporal_train_test_split(*arrays, test_size=None, train_size=None):

@@ -16,7 +16,7 @@ from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.model_selection import SingleWindowSplit
+from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
@@ -46,7 +46,7 @@ DEFAULT_INSTANTIATIONS = {
     Detrender: {"forecaster": FORECASTER},
     ForecastingGridSearchCV: {
         "forecaster": NaiveForecaster(strategy="mean"),
-        "cv": SingleWindowSplit(fh=1),
+        "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
         "scoring": sMAPE(),
     }

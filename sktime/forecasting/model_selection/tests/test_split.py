@@ -5,7 +5,7 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 import pytest
-from sktime.forecasting.model_selection import SingleWindowSplit
+from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
 from sktime.forecasting.tests import TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS, TEST_FHS, TEST_YS
 from sktime.utils.validation import is_int
@@ -118,7 +118,7 @@ def check_test_windows(windows, fh, cutoffs):
 @pytest.mark.parametrize("fh", TEST_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_single_window_split(y, fh, window_length):
-    cv = SingleWindowSplit(fh=fh, window_length=window_length)
+    cv = SingleWindowSplitter(fh=fh, window_length=window_length)
     training_windows, test_windows, n_splits, cutoffs = generate_and_check_windows(y, cv)
 
     training_window = training_windows[0]
