@@ -16,7 +16,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
                  max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
-                 max_D=1, max_Q=2, max_order=5, m=1, seasonal=True,
+                 max_D=1, max_Q=2, max_order=5, sp=1, seasonal=True,
                  stationary=False, information_criterion='aic', alpha=0.05,
                  test='kpss', seasonal_test='ocsb', stepwise=True, n_jobs=1,
                  start_params=None, trend=None, method='lbfgs', maxiter=50,
@@ -40,7 +40,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         self.max_D = max_D
         self.max_Q = max_Q
         self.max_order = max_order
-        self.m = m
+        self.sp = sp
         self.seasonal = seasonal
         self.stationary = stationary
         self.information_criterion = information_criterion
@@ -73,7 +73,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         self._forecaster = _AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
             max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
-            max_D=max_D, max_Q=max_Q, max_order=max_order, m=m, seasonal=seasonal,
+            max_D=max_D, max_Q=max_Q, max_order=max_order, m=sp, seasonal=seasonal,
             stationary=stationary, information_criterion=information_criterion, alpha=alpha,
             test=test, seasonal_test=seasonal_test, stepwise=stepwise, n_jobs=n_jobs,
             start_params=None, trend=trend, method=method, maxiter=maxiter,
