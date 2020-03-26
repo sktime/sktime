@@ -100,41 +100,6 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         raise NotImplementedError()
 
-    def _get_absolute_fh(self, fh=None):
-        """Convert the user-defined forecasting horizon relative to the end
-        of the observation horizon into the absolute time index.
-
-        Returns
-        -------
-        fh : np.array
-            The absolute time index of the forecasting horizon
-        """
-        # user defined forecasting horizon `fh` is relative to the end of the
-        # observation horizon, i.e. `cutoff`
-        if fh is None:
-            fh = self.fh
-        fh_abs = self.cutoff + fh
-
-        # for in-sample predictions, check if forecasting horizon is still within
-        # observation horizon
-        if any(fh_abs < 0):
-            raise ValueError("Forecasting horizon `fh` includes time points "
-                             "before observation horizon")
-        return np.sort(fh_abs)
-
-    def _get_array_index_fh(self, fh=None):
-        """Convert the step-ahead forecast horizon relative to the end
-        of the observation horizon into the zero-based forecasting horizon
-        for array indexing.
-        Returns
-        -------
-        fh : np.array
-            The zero-based index of the forecasting horizon
-        """
-        if fh is None:
-            fh = self.fh
-        return fh - 1
-
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict
 
@@ -344,7 +309,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         """
         # assert all(fh > 0)
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
-        index = self._get_absolute_fh(fh)
+        index = fh.absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

@@ -3,7 +3,7 @@ __all__ = ["test_set_params"]
 
 import pytest
 from numpy.testing import assert_array_equal
-from sktime.forecasting import ExponentialSmoothing
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
 # load test data

@@ -53,11 +53,6 @@ def test_clone(Forecaster):
     f = _construct_instance(Forecaster)
     clone(f)
 
-    # check cloning of fitted instance
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    clone(f)
-
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_fit_update_set_params_returns_self(Forecaster):

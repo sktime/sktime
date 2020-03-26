@@ -1,3 +1,6 @@
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.theta import ThetaForecaster
+#!/usr/bin/env python3 -u
+# coding: utf-8
+
+__author__ = ["Markus Löning"]
+
+from sktime.forecasting.base.fh import FH

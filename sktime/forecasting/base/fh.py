@@ -2,18 +2,27 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["BaseForecastingHorizon", "AbsoluteForecastingHorizon", "RelativeForecastingHorizon", "ForecastingHorizon"]
+__all__ = ["FH", "AbsoluteFH", "RelativeFH"]
 
-from sktime.utils.validation.forecasting import check_fh
 import numpy as np
+from sktime.utils.validation.forecasting import check_fh_values
 
 
-class BaseForecastingHorizon:
+class FH(np.ndarray):
+    """Forecasting horizon"""
+
     is_relative = None
     _type = None
 
-    def __init__(self, values):
-        self._values = check_fh(values)
+    def __new__(cls, values, is_relative=True):
+        values = check_fh_values(values)
+        if is_relative:
+            klass = RelativeFH
+        else:
+            klass = AbsoluteFH
+            if np.any(values < 0):
+                raise ValueError("FH contains time points before observation horizon")
+        return values.view(klass)
 
     def relative(self, cutoff=None):
         raise NotImplementedError("abstract method")
@@ -43,45 +52,26 @@ class BaseForecastingHorizon:
         """Return zero-based index"""
         return self.relative(cutoff) - 1
 
-    def __repr__(self):
-        name = self.__class__.__name__
-        values = repr(self._values)
-        relative = self.is_relative
-        return f"{name}(values={values}, relative={relative})"
 
-    def __len__(self):
-        return len(self._values)
-
-
-class RelativeForecastingHorizon(BaseForecastingHorizon):
+class RelativeFH(FH):
     is_relative = True
     _type = "relative"
 
     def relative(self, cutoff=None):
-        return self._values
+        return self
 
     def absolute(self, cutoff=None):
         self._check_cutoff(cutoff)
-        values = self._values + cutoff
-        if np.any(values < 0):
-            raise ValueError("ForecastingHorizon contains time points before observation horizon")
-        return AbsoluteForecastingHorizon(values)
+        return AbsoluteFH(self + cutoff)
 
 
-class AbsoluteForecastingHorizon(BaseForecastingHorizon):
+class AbsoluteFH(FH):
     is_relative = False
     _type = "absolute"
 
     def relative(self, cutoff=None):
         self._check_cutoff(cutoff)
-        return self._values - cutoff
+        return RelativeFH(self - cutoff)
 
     def absolute(self, cutoff=None):
-        return self._values
-
-
-def ForecastingHorizon(values, relative=True):
-    if relative:
-        return RelativeForecastingHorizon(values)
-    else:
-        return AbsoluteForecastingHorizon(values)
+        return self
