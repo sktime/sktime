@@ -3,11 +3,9 @@ import numpy as np
 import pandas._testing as tm
 
 from pandas import DataFrame, Series
-from extensionarray.timeframe import TimeFrame
-from extensionarray.array import TimeArray
+from sktime.container import TimeFrame, TimeArray
 
 from functools import partial
-
 numpy64 = partial(np.array, dtype=np.int64)
 
 

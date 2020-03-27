@@ -1,16 +1,17 @@
-
-# pytest Fixtures -----------------------------------------------------------------------------------------------------
-
 import operator
 
 import numpy as np
 from pandas import Series
 from pandas.tests.extension import base as extension_tests
 
-from extensionarray.array import TimeDtype, TimeArray, from_list
+from sktime.container import TimeDtype, TimeArray
+from sktime.container.array import from_list
 
 import pytest
 
+
+
+# pytest Fixtures -----------------------------------------------------------------------------------------------------
 
 @pytest.fixture
 def dtype():
