@@ -407,11 +407,10 @@ class TimeArray(ExtensionArray):
     def tabularise(self, name=None, return_array=False):
         if name is None:
             name = "dim"
-
         if return_array:
             return self.data
-
-        return pd.DataFrame(self.data, columns=[name + "_" + str(i) for i in self.time_index])
+        # TODO: throw a naming error when time indes isn't equal in each row
+        return pd.DataFrame(self.data, columns=[name + "_" + str(i) for i in self.time_index[0]])
 
     def tabularize(self, return_array=False):
         return self.tabularise(return_array)
