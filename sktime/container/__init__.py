@@ -1,0 +1,1 @@
+from sktime.classifiers.interval_based.tsf import TimeSeriesForest
