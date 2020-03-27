@@ -425,11 +425,8 @@ class TimeArray(ExtensionArray):
         return self._equal_index
 
     def slice_time(self, time_index):
-        if len(self.time_index.shape) == 1:
-            sel = np.isin(self.time_index.to_numpy(), time_index)
-            return TimeArray(self.data[:, sel], time_index=self.time_index[sel])
-        elif self._equal_index:
-            sel = np.isin(self.time_index.to_numpy()[0, :], time_index)
-            return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
-        else:
-            raise NotImplementedError("Time slicing that results in unequal lengths has not been implemented yet.")
+        # TODO: this silently assumes that time indices are the same. Decide how this
+        #       function should work if they are not (and the result can be a ragged/
+        #       non-equal length array)
+        sel = np.isin(self.time_index[0, :], time_index)
+        return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
