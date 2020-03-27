@@ -1,29 +1,19 @@
 import numpy as np
 import pandas as pd
-from pandas import DataFrame, Series
-from extensionarray.array import (
-    TimeDtype,
-    TimeArray,
-    from_pandas,
-    from_list
-)
-from extensionarray.timeseries import TimeSeries
-from extensionarray.utils import convert_to_timearray
 
-from sktime.utils.data_container import tabularise
+from sktime.container import TimeDtype, TimeArray, TimeSeries
+from sktime.container.utils import convert_to_timearray
 
 # Pandas imports
 from typing import (
     Optional,
-    Type,
-    Tuple
+    Type
 )
-from pandas._typing import Axes
 
 
 # Main TimeFrame class--------------------------------------------------------------------------------------------------
 
-class TimeFrame(DataFrame):
+class TimeFrame(pd.DataFrame):
     """
     A TimeFrame object is a pandas.DataFrame that has one or more columns
     containing time series.
@@ -44,9 +34,9 @@ class TimeFrame(DataFrame):
 
     def __init__(self,
                  data=None,
-                 index: Optional[Axes] = None,
-                 columns: Optional[Axes] = None,
-                 copy: bool = False):
+                 index= None,
+                 columns=None,
+                 copy=False):
 
         if isinstance(data, dict):
             for key in data.keys():
@@ -63,13 +53,13 @@ class TimeFrame(DataFrame):
                 raise ValueError(f"Only a column index of length 1 allowed if 'data' is provided as TimeArray, " 
                                  f"got {columns}")
 
-        elif isinstance(data, (DataFrame, Series)):
+        elif isinstance(data, (pd.DataFrame, pd.Series)):
             if copy:
                 data = data.copy(True)
                 copy = False  # avoid a second copy in the pandas.DataFrame constructor
 
-            if isinstance(data, Series):
-                data = DataFrame(data, columns)
+            if isinstance(data, pd.Series):
+                data = pd.DataFrame(data, columns)
 
             for col in data.columns:
                 data[col] = convert_to_timearray(data[col])  # TODO: ExtensionArray data gets copied again by DataFrame contructor,
@@ -91,16 +81,16 @@ class TimeFrame(DataFrame):
 
         if isinstance(key, str) and key in ts_cols:
             result.__class__ = TimeSeries
-        elif isinstance(result, DataFrame):
+        elif isinstance(result, pd.DataFrame):
             result.__class__ = TimeFrame
         return result
 
     def to_pandas(self, inplace=False):
         if inplace:
-            self.__class__ = DataFrame
+            self.__class__ = pd.DataFrame
             return self
         else:
-            return DataFrame(self)
+            return pd.DataFrame(self)
 
     def tabularise(self):
         return pd.concat([i.tabularise() if isinstance(i, TimeSeries) else i for _, i in self.items()], axis=1)

@@ -11,11 +11,8 @@ from pandas.api.extensions import (
     register_extension_dtype
 )
 
-from extensionarray.base import (
-    TimeBase,
-    check_data_index,
-    ensure_2d
-)
+from sktime.container import TimeBase
+from sktime.container.base import check_data_index, ensure_2d
 
 
 # -----------------------------------------------------------------------------

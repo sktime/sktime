@@ -1,10 +1,7 @@
 import numpy as np
 import pandas as pd
-from extensionarray.array import (
-    TimeArray,
-    from_list,
-    from_pandas
-)
+from sktime.container import TimeArray
+from sktime.container.array import from_list, from_pandas
 
 def convert_to_timearray(obj, time_index=None):
     """

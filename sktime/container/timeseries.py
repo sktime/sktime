@@ -1,12 +1,8 @@
-import warnings
-
 import numpy as np
 import pandas as pd
-
-from extensionarray.utils import convert_to_timearray
-
-# Pandas imports
 from typing import Type
+
+from sktime.container.utils import convert_to_timearray
 
 
 class TimeSeries(pd.Series):
@@ -40,7 +36,7 @@ class TimeSeries(pd.Series):
 
     @property
     def _constructor_expanddim(self) -> Type["TimeFrame"]:
-        from extensionarray.timeframe import TimeFrame
+        from sktime.container.timeframe import TimeFrame
 
         return TimeFrame
 
