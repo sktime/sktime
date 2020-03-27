@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import Type
 
+from sktime.container.array import TimeDtype
 from sktime.container.utils import convert_to_timearray
 
 
@@ -52,8 +53,18 @@ class TimeSeries(pd.Series):
     # time series functionality
     # -------------------------------------------------------------------------
 
+
+    def is_timedata(self):
+        return isinstance(self.dtype, TimeDtype)
+
     def tabularise(self, return_array=False):
-        return self._values.tabularise(self.name, return_array)
+        if self.is_timedata():
+            return self._values.tabularise(self.name, return_array)
+        else:
+            if return_array:
+                return self.to_numpy()
+            else:
+                return self
 
     def tabularize(self, return_array=False):
         return self.tabularise(return_array)
