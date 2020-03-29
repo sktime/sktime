@@ -206,8 +206,11 @@ class TestSetitem(extension_tests.BaseSetitemTests):
 class TestInterface(extension_tests.BaseInterfaceTests):
     pass
 
-class TestMethods(extension_tests.BaseMethodsTests):
+class TestMissing(extension_tests.BaseMissingTests):
     pass
+
+#class TestMethods(extension_tests.BaseMethodsTests):
+#    pass
 
 class TestCasting(extension_tests.BaseCastingTests):
     pass
