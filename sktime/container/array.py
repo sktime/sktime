@@ -464,8 +464,9 @@ class TimeArray(ExtensionArray):
         elif allow_fill and fill_value is not None:
             TypeError(f"Only TimeBase are allowed as fill values, got {type(fill_value)}")
 
-        if np.all(np.isnan(data)) and np.all(np.isnan(time_index)):
-            # If the take resulted in a completely missing TimeArray
+        if data.shape[0] != 0 and np.all(np.isnan(data)):
+            # If the take resulted in a missing TimeArray (note, this is
+            # different from a length 0 TimeArray)
             # TODO: put in a separate function if needed elsewhere
             return np.array([None for _ in range(data.shape[0])])
 
