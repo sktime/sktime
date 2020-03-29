@@ -21,17 +21,16 @@
 sktime
 ======
 
-sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine
-learning with time series. sktime currently supports:
+sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine learning with time series. sktime currently supports:
 
-* State-of-the-art time series classification and time series regression algorithms,
+* State-of-the-art time series classification and regression algorithms,
 * Classical forecasting including reduction strategies,
 * Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
 
-sktime has a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
+We have a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
 <https://github.com/sktime/sktime-dl>`_.
 
-sktime is under active development and we are looking for contributors.
+sktime is under active development and we are looking for contributors!
 
 Installation
 ------------
@@ -68,6 +67,8 @@ Currently, the package implements:
 * Composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
 * Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
 
+For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.
+
 In addition, sktime includes a experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
 In particular, we introduce:
 
@@ -77,26 +78,23 @@ In particular, we introduce:
 
 Development road map
 --------------------
+1. Time series annotation, including segmentation and outlier detection,
+2. Supervised/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
+3. Unsupervised learning, including time series clustering,
+4. Specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
+5. Probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
 
-1. Development of a time series annotation framework, including segmentation and outlier detection,
-2. Integration of supervised/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
-3. Unsupervised methods including time series clustering,
-4. Design and implementation of a specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
-5. Development of a probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
+For more details, see this `issue <https://github.com/alan-turing-institute/sktime/issues/228>`_.
 
-
-Contributions
--------------
+How to contribute
+-----------------
 We are actively looking for contributors. Please contact @fkiraly or @mloning for volunteering or information on
 paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
 or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
 
-Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `contributing guidelines <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
+Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `guides on how to get started <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
 
-Former and current contributors to the API design and project management include:
-
-* API design: Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Franz Király, Jason Lines, Markus Löning
-* Project management: Anthony Bagnall, Franz Király, Jason Lines, Markus Löning
+You can also check out our `overview of former and current contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
 
 How to cite sktime
@@ -114,4 +112,5 @@ Bibtex entry::
         title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
         date = {2019},
     }
+
 
