@@ -43,6 +43,25 @@
         "test",
         "tutorial"
       ]
+    },
+    {
+      "login": "TonyBagnall",
+      "name": "Tony Bagnall",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/9594042?v=4",
+      "profile": "http://www.timeseriesclassification.com",
+      "contributions": [
+        "code",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk"
+      ]
     }
   ],
   "contributorsPerLine": 7,
