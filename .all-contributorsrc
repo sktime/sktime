@@ -81,6 +81,32 @@
         "review",
         "talk"
       ]
+    },
+    {
+      "login": "mloning",
+      "name": "Markus Löning",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/21020482?v=4",
+      "profile": "https://github.com/mloning",
+      "contributions": [
+        "code",
+        "test",
+        "maintenance",
+        "platform",
+        "review",
+        "infra",
+        "example",
+        "bug",
+        "tutorial",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "talk"
+      ]
     }
   ],
   "contributorsPerLine": 7,
