@@ -182,14 +182,6 @@ class TimeArray(ExtensionArray):
     # -------------------------------------------------------------------------
 
     @classmethod
-    def _from_ndarray(cls, data, copy=False):
-        if copy:
-            data = data.copy()
-        new = TimeArray([])
-        new.data = data
-        return new
-
-    @classmethod
     def _from_sequence(cls, scalars, dtype=None, copy=False):
         if isinstance(scalars, TimeArray):
             return scalars
