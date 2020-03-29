@@ -151,6 +151,19 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "James-Large",
+      "name": "James Large",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/44509982?v=4",
+      "profile": "http://www.timeseriesclassification.com/",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "infra",
+        "maintenance"
+      ]
     }
   ],
   "contributorsPerLine": 7,
