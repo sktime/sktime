@@ -184,6 +184,16 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "aa25desh",
+      "name": "aa25desh",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/29518290?v=4",
+      "profile": "https://github.com/aa25desh",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "contributorsPerLine": 7,
