@@ -28,6 +28,21 @@
         "review",
         "talk"
       ]
+    },
+    {
+      "login": "sajaysurya",
+      "name": "Sajaysurya Ganesh",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/25329624?v=4",
+      "profile": "https://sajay.online",
+      "contributions": [
+        "code",
+        "doc",
+        "design",
+        "example",
+        "ideas",
+        "test",
+        "tutorial"
+      ]
     }
   ],
   "contributorsPerLine": 7,
