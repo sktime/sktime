@@ -62,6 +62,25 @@
         "review",
         "talk"
       ]
+    },
+    {
+      "login": "jasonlines",
+      "name": "Jason Lines",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/38794632?v=4",
+      "profile": "http://www.timeseriesclassification.com",
+      "contributions": [
+        "code",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk"
+      ]
     }
   ],
   "contributorsPerLine": 7,
