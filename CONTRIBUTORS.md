@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -25,6 +25,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/aa25desh"><img src="https://avatars1.githubusercontent.com/u/29518290?v=4" width="100px;" alt=""/><br /><sub><b>aa25desh</b></sub></a><br /><a href="https://github.com/The Alan Turing Institute/sktime/commits?author=aa25desh" title="Code">💻</a> <a href="https://github.com/The Alan Turing Institute/sktime/issues?q=author%3Aaa25desh" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/fkiraly"><img src="https://avatars1.githubusercontent.com/u/7985502?v=4" width="100px;" alt=""/><br /><sub><b>fkiraly</b></sub></a><br /><a href="#business-fkiraly" title="Business development">💼</a> <a href="https://github.com/The Alan Turing Institute/sktime/commits?author=fkiraly" title="Documentation">📖</a> <a href="#design-fkiraly" title="Design">🎨</a> <a href="#eventOrganizing-fkiraly" title="Event Organizing">📋</a> <a href="#financial-fkiraly" title="Financial">💵</a> <a href="#fundingFinding-fkiraly" title="Funding Finding">🔍</a> <a href="#ideas-fkiraly" title="Ideas, Planning, & Feedback">🤔</a> <a href="#projectManagement-fkiraly" title="Project Management">📆</a> <a href="#question-fkiraly" title="Answering Questions">💬</a> <a href="https://github.com/The Alan Turing Institute/sktime/pulls?q=is%3Apr+reviewed-by%3Afkiraly" title="Reviewed Pull Requests">👀</a> <a href="#talk-fkiraly" title="Talks">📢</a></td>
     <td align="center"><a href="https://github.com/jesellier"><img src="https://avatars0.githubusercontent.com/u/51952076?v=4" width="100px;" alt=""/><br /><sub><b>jesellier</b></sub></a><br /><a href="https://github.com/The Alan Turing Institute/sktime/commits?author=jesellier" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/matteogales"><img src="https://avatars0.githubusercontent.com/u/9269326?v=4" width="100px;" alt=""/><br /><sub><b>matteogales</b></sub></a><br /><a href="https://github.com/The Alan Turing Institute/sktime/commits?author=matteogales" title="Code">💻</a> <a href="#design-matteogales" title="Design">🎨</a> <a href="#ideas-matteogales" title="Ideas, Planning, & Feedback">🤔</a></td>
     <td align="center"><a href="https://github.com/simone-pignotti"><img src="https://avatars1.githubusercontent.com/u/44410066?v=4" width="100px;" alt=""/><br /><sub><b>simone-pignotti</b></sub></a><br /><a href="https://github.com/The Alan Turing Institute/sktime/commits?author=simone-pignotti" title="Code">💻</a> <a href="https://github.com/The Alan Turing Institute/sktime/issues?q=author%3Asimone-pignotti" title="Bug reports">🐛</a></td>
   </tr>
 </table>

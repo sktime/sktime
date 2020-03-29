@@ -194,6 +194,17 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "matteogales",
+      "name": "matteogales",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9269326?v=4",
+      "profile": "https://github.com/matteogales",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
