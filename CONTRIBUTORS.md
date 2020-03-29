@@ -1,6 +1,6 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 ## Contributors ✨
 
@@ -21,6 +21,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   </tr>
   <tr>
     <td align="center"><a href="https://github.com/fkiraly"><img src="https://avatars1.githubusercontent.com/u/7985502?v=4" width="100px;" alt=""/><br /><sub><b>fkiraly</b></sub></a><br /><a href="#business-fkiraly" title="Business development">💼</a> <a href="https://github.com/The Alan Turing Institute/sktime/commits?author=fkiraly" title="Documentation">📖</a> <a href="#design-fkiraly" title="Design">🎨</a> <a href="#eventOrganizing-fkiraly" title="Event Organizing">📋</a> <a href="#financial-fkiraly" title="Financial">💵</a> <a href="#fundingFinding-fkiraly" title="Funding Finding">🔍</a> <a href="#ideas-fkiraly" title="Ideas, Planning, & Feedback">🤔</a> <a href="#projectManagement-fkiraly" title="Project Management">📆</a> <a href="#question-fkiraly" title="Answering Questions">💬</a> <a href="https://github.com/The Alan Turing Institute/sktime/pulls?q=is%3Apr+reviewed-by%3Afkiraly" title="Reviewed Pull Requests">👀</a> <a href="#talk-fkiraly" title="Talks">📢</a></td>
+    <td align="center"><a href="https://github.com/jesellier"><img src="https://avatars0.githubusercontent.com/u/51952076?v=4" width="100px;" alt=""/><br /><sub><b>jesellier</b></sub></a><br /><a href="https://github.com/The Alan Turing Institute/sktime/commits?author=jesellier" title="Code">💻</a></td>
   </tr>
 </table>
 
