@@ -205,6 +205,17 @@
         "design",
         "ideas"
       ]
+    },
+    {
+      "login": "prockenschaub",
+      "name": "Patrick Rockenschaub",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/15381732?v=4",
+      "profile": "https://github.com/prockenschaub",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
     }
   ],
   "contributorsPerLine": 7,
