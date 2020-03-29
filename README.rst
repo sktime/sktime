@@ -92,10 +92,9 @@ We are actively looking for contributors. Please contact @fkiraly or @mloning fo
 paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
 or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
 
-Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `guides on how to get started <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
+Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__ and `guide on how to get started <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md>`__.
 
-You can also check out our `overview of former and current contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
-
+For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
 How to cite sktime
 ------------------
