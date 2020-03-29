@@ -3,7 +3,14 @@ import pandas as pd
 
 import numbers
 from collections.abc import Iterable
-from typing import Any, Callable, Optional, Type
+from typing import (
+    Any,
+    Callable,
+    Optional,
+    Sequence,
+    Tuple,
+    Type
+)
 
 from pandas.api.extensions import (
     ExtensionArray,
@@ -103,6 +110,41 @@ def from_pandas(data):
         raise TypeError("Input must be a pandas Series or DataFrame: {0}".format(data))
 
 
+def from_ts(ts):
+    # Note: this is a very(!) preliminary implementation to convert to ts format, used solely
+    #       to allow for factorization and pass pandas implementation tests. This will
+    #       be extended in the future, after TimeArray compatibility with pandas has been
+    #       resolved.
+    # TODO: transfer a full implementation from sktime.utils.load_data.load_from_tsfile_to_dataframe
+    def parse_line(line):
+        line = line.strip("()")
+        points = line.split("),(")
+        index, data = zip(*[x.split(",") for x in points])
+        return np.array(data, dtype=np.float), np.array(index, dtype=np.float)
+
+    return from_list([TimeBase(*parse_line(l)) for l in ts])
+
+def to_ts(obj, include_header=True):
+    # Note: this is a very preliminary implementation to convert to ts format. This will
+    #       be extended in the future, after TimeArray compatibility with pandas has been
+    #       resolved.
+    # TODO: extend to cover all cases
+    if include_header:
+        raise NotImplementedError("Conversion to ts format with headers not supported yet.")
+
+    if not isinstance(obj, (TimeBase, TimeArray)):
+        raise TypeError(f"Can only convert TimeBase or TimeArray objects, got {type(obj)}")
+    elif isinstance(obj, TimeArray):
+        obj = obj.astype(object)
+    else:
+        obj = [obj]
+
+    # TODO: this returns a list which is needed for factorise but we might want to move this
+    #       into a separate function and return a string here
+    return ["(" + "),(".join([str(i) + "," + str(d) for i, d in zip(x.data[0], x.time_index[0])]) + ")" for x in obj]
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Extension Container
@@ -132,14 +174,14 @@ class TimeArray(ExtensionArray):
 
     Parameters
     ----------
-    data : TimeArray or numpy.ndarray
+    data : TimeArray or ndarray
         The measurements at certain time points (columns) for one or more
         timeseries (rows).
-    time_index : numpy.ndarray, optional
+    time_index : ndarray, optional
         A time index for each entry in 'data'. Must be of the same shape as
         data. If None, the time index stored in 'data' will be used if 'data'
         is a TimeArray object, or a default time index of [0, 1, ..., N] will be
-        generated for each row if 'data' is a numpy.ndarray.
+        generated for each row if 'data' is a ndarray.
     copy : bool, default False
         If True, copy the underlying data.
     """
@@ -186,7 +228,7 @@ class TimeArray(ExtensionArray):
     # -------------------------------------------------------------------------
 
     @classmethod
-    def _from_sequence(cls, scalars, dtype=None, copy=False):
+    def _from_sequence(cls, scalars, dtype=None, copy=False) -> Type[None]:
         """
         Construct a new TimeArray from a sequence of scalars.
 
@@ -210,10 +252,42 @@ class TimeArray(ExtensionArray):
             return scalars
         return from_list(scalars)
 
+    def _values_for_factorize(self) -> Tuple[np.ndarray, Any]:
+        """Return an array and missing value suitable for factorization.
+
+        Note: strings following the ts file format are used to make
+              TimeArrays suitable for factorization
+
+        Returns
+        -------
+        values : ndarray
+            An array of type String suitable for factorization.
+        na_value : object
+            The value in `values` to consider missing. Not implemented
+            yet.
+        """
+        # TODO: also consider na_value
+        vals = to_ts(self, False)
+        return vals, None
+
     @classmethod
     def _from_factorized(cls, values, original):
-        raise NotImplementedError("Reconstruction of TimeArray after factorization has not been implemented "
-                                  "yet.")
+        """
+        Reconstruct a TimeArray after factorization.
+
+        Parameters
+        ----------
+        values : ndarray
+            An integer ndarray with the factorized values.
+        original : TimeArray
+            The original TimeArray that factorize was called on.
+
+        See Also
+        --------
+        factorize
+        ExtensionArray.factorize
+        """
+        return from_ts(values)
 
     @classmethod
     def _concat_same_type(cls, to_concat):
@@ -241,6 +315,7 @@ class TimeArray(ExtensionArray):
     # -------------------------------------------------------------------------
     # Interfaces
     # -------------------------------------------------------------------------
+
     def _get_time_index_at(self, row):
         if self.time_index.ndim == 1:
             return self.time_index
