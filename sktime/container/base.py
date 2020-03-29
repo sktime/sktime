@@ -1,5 +1,7 @@
 import numpy as np
 
+# TODO: look into providing indexing for TimeBase
+
 class TimeBase(object):
     def __init__(self, data, time_index):
         if data.ndim > 2 or time_index.ndim > 2:
@@ -28,7 +30,7 @@ class TimeBase(object):
         print_len = min(self.data.shape[1], length)
         list_repr = [f"{self.time_index[0, i]}: {self.data[0, i]}" for i in range(print_len)]
 
-        if print_len != self.data.shape:
+        if print_len != self.data.shape[1]:
             list_repr.append("...")
 
         return "[" + ", ".join(list_repr) + "]"
