@@ -111,18 +111,38 @@ def from_pandas(data):
 # TODO: update docstrings to reflect recent refactoring
 
 class TimeArray(ExtensionArray):
-    """
-    Class wrapping a numpy array of time series and
-    holding the array-based implementations.
+    """Holder for multiple timeseries objects with an equal number of observations.
+
+    TimeArray is a container for storing and manipulating timeseries data. Each
+    observation in TimeArray is a distinct timeseries, i.e. a series of key/value
+    pairs that represent a time point and a corresponding measurement.
+
+    A note on the internal data layout: TimeArray implements a
+    collection of equal length timeseries in which rows correspond to
+    a single observed timeseries. We use a Numpy array to store the
+    individual data points of each time series, i.e. columns relate to
+    specific points in time. The time indices are stored in a separate
+    Numpy array.
+
+    Note on compatibility with pandas:
+    TimeArray aims to to satisfy pandas' extension array interface so it can be
+    stored inside :class:`pandas.Series` and :class:`pandas.DataFrame`. While this
+    works for basic indexing already, many of the more intricate functionality of
+    pandas (e.g. apply or groupby) has not been integrated yet.
+
+    Parameters
+    ----------
+    data : TimeArray or numpy.ndarray
+        The measurements at certain time points (columns) for one or more
+        timeseries (rows).
+    time_index : numpy.ndarray, optional
+        A time index for each entry in 'data'. Must be of the same shape as
+        data. If None, the time index stored in 'data' will be used if 'data'
+        is a TimeArray object, or a default time index of [0, 1, ..., N] will be
+        generated for each row if 'data' is a numpy.ndarray.
+
     """
 
-    # A note on the internal data layout: TimeArray implements a
-    # collection of equal length time series in which rows correspond to
-    # a single observed time series. We use a Numpy array to store the
-    # individual data points of each time series, i.e. columns relate to
-    # specific points in time. The time indices are stored in a separate
-    # Numpy array, either of dimension 1xT for a common index across
-    # time series or NxT for a separate index for each time series.
     _dtype = TimeDtype()
     _can_hold_na = True
 
@@ -130,46 +150,30 @@ class TimeArray(ExtensionArray):
     def _constructor(self) -> Type["TimeArray"]:
         return TimeArray
 
-    def _choose_time_index(self, from_param, from_data):
-        if from_param is None:
-            return from_data
-        return from_param
-
-    def _make_seq(self, data):
-        return np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
-
-
     def __init__(self, data, time_index=None):
-        # TODO: add copying functionality
-        """
-        Initialise a new TimeArray containing equal length time series
-
-        Parameters
-        ----------
-        data :
-        time_index :
-        """
-
         index = None
 
+        # Initialise the data
         if isinstance(data, self.__class__):
             index = data.time_index
             data = data.data
         elif not isinstance(data, np.ndarray):
-            raise TypeError("'data' should be array of equal length timeseries. Use from_list, "
-                            "to construct a TimeArray.")
+            raise TypeError(f"'data' should be TimeArray or numpy.ndarray, got {type(data)}. "
+                            f"Use from_list, to construct a TimeArray from list-like objects.")
         elif not data.ndim == 2:
-            raise ValueError("'data' should be a 2-dimensional array of timeseries, where rows correspond"
-                             "to series and columns to individual observations.")
-
+            raise ValueError("'data' should be a 2-dimensional, where rows correspond"
+                             "to timeseries and columns to individual observations.")
         self.data = data
 
+        # Initialise the time index
         if time_index is not None:
+            if not isinstance(time_index, np.ndarray):
+                raise TypeError(f"'time_index' should be numpy.ndarray, got {type(time_index)}.")
             self.time_index = time_index
         elif index is not None:
             self.time_index = index
         else:
-            self.time_index = self._make_seq(self.data)
+            self.time_index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
 
         check_data_index(self.data, self.time_index)
 
