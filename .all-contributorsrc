@@ -122,6 +122,17 @@
         "example",
         "doc"
       ]
+    },
+    {
+      "login": "ViktorKaz",
+      "name": "ViktorKaz",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/33499138?v=4",
+      "profile": "https://github.com/ViktorKaz",
+      "contributions": [
+        "code",
+        "doc",
+        "design"
+      ]
     }
   ],
   "contributorsPerLine": 7,
