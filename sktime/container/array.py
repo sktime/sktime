@@ -140,7 +140,8 @@ class TimeArray(ExtensionArray):
         data. If None, the time index stored in 'data' will be used if 'data'
         is a TimeArray object, or a default time index of [0, 1, ..., N] will be
         generated for each row if 'data' is a numpy.ndarray.
-
+    copy : bool, default False
+        If True, copy the underlying data.
     """
 
     _dtype = TimeDtype()
@@ -150,7 +151,7 @@ class TimeArray(ExtensionArray):
     def _constructor(self) -> Type["TimeArray"]:
         return TimeArray
 
-    def __init__(self, data, time_index=None):
+    def __init__(self, data, time_index=None, copy=False):
         index = None
 
         # Initialise the data
@@ -163,18 +164,21 @@ class TimeArray(ExtensionArray):
         elif not data.ndim == 2:
             raise ValueError("'data' should be a 2-dimensional, where rows correspond"
                              "to timeseries and columns to individual observations.")
-        self.data = data
 
         # Initialise the time index
         if time_index is not None:
             if not isinstance(time_index, np.ndarray):
                 raise TypeError(f"'time_index' should be numpy.ndarray, got {type(time_index)}.")
-            self.time_index = time_index
-        elif index is not None:
-            self.time_index = index
-        else:
-            self.time_index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
+            index = time_index
+        elif index is None:
+            index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
 
+        if copy:
+            data = data.copy()
+            index = index.copy()
+
+        self.data = data
+        self.time_index = index
         check_data_index(self.data, self.time_index)
 
     # -------------------------------------------------------------------------
@@ -183,6 +187,25 @@ class TimeArray(ExtensionArray):
 
     @classmethod
     def _from_sequence(cls, scalars, dtype=None, copy=False):
+        """
+        Construct a new TimeArray from a sequence of scalars.
+
+        Parameters
+        ----------
+        scalars : Sequence
+            Each element should be a timeseries-like object,
+            see from_list() for a detailed description.
+        dtype : dtype, optional
+            Construct for this particular dtype. This is currently ignored
+            and only included for compatibility
+        copy : bool, default False
+            If True, copy the underlying data.
+
+        Returns
+        -------
+        TimeArray
+        """
+
         if isinstance(scalars, TimeArray):
             return scalars
         return from_list(scalars)
