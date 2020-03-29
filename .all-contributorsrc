@@ -9,6 +9,28 @@
   "imageSize": 100,
   "commit": true,
   "commitConvention": "none",
-  "contributors": [],
-  "contributorsPerLine": 7
+  "contributors": [
+    {
+      "login": "fkiraly",
+      "name": "fkiraly",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
+      "profile": "https://github.com/fkiraly",
+      "contributions": [
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "financial",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "contributorsSortAlphabetically": true,
+  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=flat-square)](#contributors)"
 }
