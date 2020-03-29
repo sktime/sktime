@@ -60,7 +60,8 @@
         "projectManagement",
         "question",
         "review",
-        "talk"
+        "talk",
+        "data"
       ]
     },
     {
@@ -79,7 +80,8 @@
         "projectManagement",
         "question",
         "review",
-        "talk"
+        "talk",
+        "example"
       ]
     },
     {
@@ -106,6 +108,19 @@
         "projectManagement",
         "question",
         "talk"
+      ]
+    },
+    {
+      "login": "goastler",
+      "name": "George Oastler",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7059456?v=4",
+      "profile": "https://github.com/goastler",
+      "contributions": [
+        "code",
+        "test",
+        "platform",
+        "example",
+        "doc"
       ]
     }
   ],
