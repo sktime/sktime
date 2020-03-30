@@ -285,7 +285,7 @@ class TimeArray(ExtensionArray):
         """
         # TODO: also consider na_value
         vals = to_ts(self, False)
-        return vals, None
+        return np.array(vals), None
 
     @classmethod
     def _from_factorized(cls, values, original):
