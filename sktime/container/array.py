@@ -228,7 +228,7 @@ class TimeArray(ExtensionArray):
             if data.shape[0] == 1:
                 tidx = np.arange(data.shape[1])[np.newaxis, :]
             elif data.shape[0] > 1:
-                tidx = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
+                tidx = np.vstack([np.arange(data.shape[1], dtype=np.float) for _ in range(data.shape[0])])
             else:
                 tidx = data.copy()
 
@@ -534,3 +534,12 @@ class TimeArray(ExtensionArray):
         #       non-equal length array)
         sel = np.isin(self.time_index[0, :], time_index)
         return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
+
+    def sort_time(self):
+        d_ord = np.argsort(self.data, axis=1)
+        self.data = np.take_along_axis(self.data, d_ord, axis=1)
+        self.time_index = np.take_along_axis(self.time_index, d_ord, axis=1)
+
+        t_ord = np.argsort(self.time_index, axis=1, kind='stable')
+        self.data = np.take_along_axis(self.data, t_ord, axis=1)
+        self.time_index = np.take_along_axis(self.time_index, t_ord, axis=1)
