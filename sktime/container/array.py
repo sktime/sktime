@@ -324,12 +324,6 @@ class TimeArray(ExtensionArray):
     # Interfaces
     # -------------------------------------------------------------------------
 
-    def _get_time_index_at(self, row):
-        if self.time_index.ndim == 1:
-            return self.time_index
-        else:
-            return self.time_index[row]
-
     def __getitem__(self, idx):
         # validate and convert IntegerArray / BooleanArray
         # keys to numpy array, pass-through non-array-like indexers
