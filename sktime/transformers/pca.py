@@ -1,5 +1,5 @@
-__author__ = "Patrick Rockenschaub"
-__all__ = "PCATransformer"
+__author__ = ["Patrick Rockenschaub"]
+__all__ = ["PCATransformer"]
 
 import pandas as pd
 

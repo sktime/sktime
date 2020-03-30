@@ -1,6 +1,17 @@
 Tutorials
 =========
 
+Our tutorial notebooks will guide you from loading your first time series dataset to applying
+dedicated machine learning algorithms.
+
+All notebooks can be found on `GitHub <https://github.com/alan-turing-institute/sktime/blob/master/examples>`_. You
+can also run them interactively on Binder.
+
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples/
+
+|Binder|_
+
 .. toctree::
    :maxdepth: 1
 

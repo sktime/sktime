@@ -87,14 +87,15 @@ EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
         'pytest-cov',
-        'tsfresh'
+        'tsfresh',
     ],
     'docs': [
         'sphinx',
         'sphinx-gallery',
         'sphinx_rtd_theme',
         'numpydoc',
-        'matplotlib'
+        'matplotlib',
+        'sphinx_bootstrap_theme'
     ]
 }
 

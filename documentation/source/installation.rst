@@ -3,7 +3,9 @@ Installation
 
 sktime is available via PyPI using:
 
-:code:`pip install sktime`
+.. code-block:: bash
+
+    pip install sktime
 
 But note that the package is actively being developed and currently not feature stable.
 
@@ -53,7 +55,9 @@ Retrieving the latest code
 We use `Git <https://git-scm.com/>`_ for version control and
 `GitHub <https://github.com/>`_ for hosting our main repository.
 
-You can check out the latest sources with the command::
+You can check out the latest sources with the command:
+
+.. code-block:: bash
 
     git clone git://github.com/alan-turing-institute/sktime.git
 
@@ -71,7 +75,9 @@ If you run the development version, it is cumbersome to reinstall the
 package each time you update the sources. Therefore it's recommended that you
 install in editable mode, which allows you to edit the code in-place. This
 builds the extension in place and creates a link to the development directory
-(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_):
+
+.. code-block:: bash
 
     pip install --editable .
 
@@ -83,7 +89,9 @@ builds the extension in place and creates a link to the development directory
 
 .. note::
 
-    You will have to re-run::
+    You will have to re-run:
+
+    .. code-block:: bash
 
         pip install --editable .
 
@@ -101,11 +109,15 @@ compiler such as gcc or llvm-clang. Another solution is to enable OpenMP
 support on the default Apple-clang. In the following we present how to
 configure this second option.
 
-You first need to install the OpenMP library::
+You first need to install the OpenMP library:
+
+.. code-block:: bash
 
     brew install libomp
 
-Then you need to set the following environment variables::
+Then you need to set the following environment variables:
+
+.. code-block:: bash
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -122,13 +134,17 @@ FreeBSD
 
 The clang compiler included in FreeBSD 12.0 and 11.2 base systems does not
 include OpenMP support. You need to install the `openmp` library from packages
-(or ports)::
+(or ports):
+
+.. code-block:: bash
 
     sudo pkg install openmp
 
 This will install header files in ``/usr/local/include`` and libs in
 ``/usr/local/lib``. Since these directories are not searched by default, you
-can set the environment variables to these locations::
+can set the environment variables to these locations:
+
+.. code-block:: bash
 
     export CFLAGS="$CFLAGS -I/usr/local/include"
     export CXXFLAGS="$CXXFLAGS -I/usr/local/include"
@@ -149,22 +165,30 @@ Linux
 
 Installing from source without conda requires you to have installed the
 sktime runtime dependencies, Python development headers and a working
-C/C++ compiler. Under Debian-based operating systems, which include Ubuntu::
+C/C++ compiler. Under Debian-based operating systems, which include Ubuntu:
+
+.. code-block:: bash
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                      python3-pip
 
-and then::
+and then:
+
+.. code-block:: bash
 
     pip3 install numpy scipy cython
 
 
 When precompiled wheels are not avalaible for your architecture, you can
-install the system versions::
+install the system versions:
+
+.. code-block:: bash
 
     sudo apt-get install cython3 python3-numpy python3-scipy python3-matplotlib
 
-On Red Hat and clones (e.g. CentOS), install the dependencies using::
+On Red Hat and clones (e.g. CentOS), install the dependencies using:
+
+.. code-block:: bash
 
     sudo yum -y install gcc gcc-c++ python-devel numpy scipy
 
@@ -182,7 +206,9 @@ addition to numpy, scipy and setuptools.
 
 The building command depends on the architecture of the Python interpreter,
 32-bit or 64-bit. You can check the architecture by running the following in
-``cmd`` or ``powershell`` console::
+``cmd`` or ``powershell`` console:
+
+.. code-block:: bash
 
     python -c "import struct; print(struct.calcsize('P') * 8)"
 
@@ -197,7 +223,9 @@ You will need `Build Tools for Visual Studio 2017
 	You only need the "Build Tools for Visual Studio 2019",
 	under "All downloads" -> "Tools for Visual Studio 2019".
 
-For 64-bit Python, configure the build environment with::
+For 64-bit Python, configure the build environment with:
+
+.. code-block:: bash
 
     SET DISTUTILS_USE_SDK=1
     "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" x64
@@ -205,7 +233,9 @@ For 64-bit Python, configure the build environment with::
 Please be aware that the path above might be different from user to user.
 The aim is to point to the "vcvarsall.bat" file.
 
-And build sktime from this environment::
+And build sktime from this environment:
+
+.. code-block:: bash
 
     python setup.py install
 
@@ -215,7 +245,9 @@ Replace ``x64`` by ``x86`` to build for 32-bit Python.
 Building binary packages and installers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``.whl`` package and ``.exe`` installers can be built with::
+The ``.whl`` package and ``.exe`` installers can be built with:
+
+.. code-block:: bash
 
     pip install wheel
     python setup.py bdist_wheel bdist_wininst
@@ -232,7 +264,9 @@ mingw32 can be redistributed as reusable packages as they depend on GCC runtime
 libraries typically not installed on end-users environment.
 
 To force the use of a particular compiler, pass the ``--compiler`` flag to the
-build step::
+build step:
+
+.. code-block:: bash
 
     python setup.py build --compiler=my_compiler install
 

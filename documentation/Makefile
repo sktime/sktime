@@ -6,11 +6,11 @@ AUTOGENDIR    = source/autogen
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
-BUILDDIR      = build_doc_site
+BUILDDIR      = _build
 PROJECTDIR    = "../sktime/"
 
 # exclude unit tests from API reference
-EXCLUDEPATHS = "../*tests* ../*test*"
+EXCLUDEPATHS = "../*tests* ../*test* ../contrib*"
 
 # Put it first so that "make" without argument is like "make help".
 help:

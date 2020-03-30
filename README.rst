@@ -36,7 +36,9 @@ Installation
 ------------
 The package is available via PyPI using:
 
-:code:`pip install sktime`
+.. code-block:: bash
+
+    pip install sktime
 
 But note that the package is actively being developed and currently not feature stable.
 
@@ -76,8 +78,8 @@ In particular, we introduce:
 * Strategy objects that wrap estimators and allow to call fit and predict methods using data and a task object.
 
 
-Development road map
---------------------
+Development roadmap
+-------------------
 1. Time series annotation, including segmentation and outlier detection,
 2. Supervised/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
 3. Unsupervised learning, including time series clustering,
@@ -103,7 +105,9 @@ If you use sktime in a scientific publication, we would appreciate citations to 
 
 `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines, Franz Király (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
 
-Bibtex entry::
+Bibtex entry:
+
+.. code-block:: latex
 
     @inproceedings{sktime,
         author = {L{\"{o}}ning, Markus and Bagnall, Anthony and Ganesh, Sajaysurya and Kazakov, Viktor and Lines, Jason and Kir{\'{a}}ly, Franz J},

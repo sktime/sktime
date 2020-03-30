@@ -8,17 +8,21 @@ Welcome to sktime's documentation!
 
 .. include:: ../../README.rst
 
+
+Navigation
+----------
+
+From here, you can navigate to:
+
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
 
    installation
    examples
-   extension
-   autogen/sktime
-
-Indices and tables
-==================
+   API Reference <autogen/sktime>
+   contributing
+   changelog
+   code_of_conduct
 
 * :ref:`genindex`
 * :ref:`modindex`

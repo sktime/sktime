@@ -6,17 +6,19 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
+import os
+import sys
+
+import sphinx_bootstrap_theme
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath('../..'))
-
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+if not on_rtd:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 # -- Project information -----------------------------------------------------
 project = 'sktime'
@@ -24,10 +26,16 @@ copyright = '2019, The Alan Turing Institute'
 author = ' '
 
 # The short X.Y version
-version = ''
-# The full version, including alpha/beta/rc tags
-release = ''
+import sktime
 
+version = sktime.__version__
+# The full version, including alpha/beta/rc tags
+release = sktime.__version__
+
+numpydoc_show_class_members = True
+numpydoc_class_members_toctree = False
+
+autosummary_generate = True
 
 # -- General configuration ---------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -45,6 +53,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
+    'recommonmark',
     'nbsphinx'  # integrates example notebooks
 ]
 
@@ -53,9 +62,10 @@ templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
-#
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # The master toctree document.
 master_doc = 'index'
@@ -70,24 +80,68 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
-
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-html_theme = 'sphinx_rtd_theme'
+
+# html_theme = 'sphinx_rtd_theme'
+html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+html_theme_options = {
+    # Tab name for entire site. (Default: "Site")
+    'navbar_site_name': "Table of Contents",
+
+    # 'navbar_links': [
+    #     ("Citing sktime", "citing"),
+    # ],
+
+    # Render the next and previous page links in navbar. (Default: true)
+    'navbar_sidebarrel': False,
+
+    # Render the current pages TOC in the navbar. (Default: true)
+    'navbar_pagenav': True,
+
+    # Tab name for the current pages TOC. (Default: "Page")
+    'navbar_pagenav_name': "Current Page",
+
+    # Global TOC depth for "site" navbar tab. (Default: 1)
+    # Switching to -1 shows all levels.
+    'globaltoc_depth': -1,
+
+    # Location of link to source.
+    # Options are "nav" (default), "footer" or anything else to exclude.
+    'source_link_position': "exclude",
+
+    # Bootswatch (http://bootswatch.com/) theme.
+    #
+    # Options are nothing (default) or the name of a valid theme
+    # such as "cosmo" or "sandstone".
+    #
+    # The set of valid themes depend on the version of Bootstrap
+    # that's used (the next config option).
+    #
+    # Currently, the supported themes are:
+    # - Bootstrap 2: https://bootswatch.com/2
+    # - Bootstrap 3: https://bootswatch.com/3
+    # 'bootswatch_theme': "lumen"
+}
+
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
 # html_theme_options = {}
+
+def setup(app):
+    app.add_stylesheet("custom.css")  # also can be a full URL
+
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -109,7 +163,6 @@ html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'sktimedoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -139,7 +192,6 @@ latex_documents = [
      'The Alan Turing Institute', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -148,7 +200,6 @@ man_pages = [
     (master_doc, 'sktime', 'sktime Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -160,7 +211,6 @@ texinfo_documents = [
      author, 'sktime', 'One line description of project.',
      'Miscellaneous'),
 ]
-
 
 # -- Options for Epub output -------------------------------------------------
 
@@ -179,8 +229,31 @@ epub_title = project
 # A list of files that should not be packed into the epub file.
 epub_exclude_files = ['search.html']
 
-
 # -- Extension configuration -------------------------------------------------
+
+# -- Options for nbsphinx extension ---------------------------------------
+nbsphinx_execute = 'never'  # always
+nbsphinx_allow_errors = True  # False
+nbsphinx_timeout = 60
+nbsphinx_prolog = """
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
+
+|Binder|_
+
+You can find the notebook file on `GitHub <https://github.com/alan-turing-institute/sktime/blob/master/{{ env.doc2path( env.docname, base=None) }}>`_. 
+
+----
+"""
+
+nbsphinx_epilog = """
+----
+
+Generated by nbsphinx_ from a Jupyter_ notebook.
+
+.. _nbsphinx: https://nbsphinx.readthedocs.io/
+.. _Jupyter: https://jupyter.org/
+"""
 
 # -- Options for intersphinx extension ---------------------------------------
 
@@ -190,4 +263,4 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = True
+todo_include_todos = False
