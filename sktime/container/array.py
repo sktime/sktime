@@ -148,6 +148,14 @@ def to_ts(obj, include_header=True):
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------------------------------------------------------
+
+def empty(shape, dtype=np.float):
+    return np.full(shape, np.nan, dtype=dtype)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
 # Extension Container
 # ----------------------------------------------------------------------------------------------------------------------
 
@@ -301,33 +309,24 @@ class TimeArray(ExtensionArray):
 
     @classmethod
     def _concat_same_type(cls, to_concat):
-        ref_width = to_concat[0].data.shape[1]
-        ti = []
+        if not np.all([isinstance(x, TimeArray) for x in to_concat]):
+            # TODO: should we also allow to concatenate a np.array of None (i.e. missing)
+            raise TypeError(f"Only TimeArrays can be concatenated, got {type(ta.dtype)}")
 
-        for i in range(len(to_concat)):
-            ta = to_concat[i]
-            if isinstance(ta, np.ndarray) and np.all([x is None for x in ta]):
-                # TODO: consider what happens if first element is None-array
-                data = np.full((ta.shape[0], ref_width), np.nan, dtype=np.float)
-                index = data.copy()
-                to_concat[i] = TimeArray(data, index)
-                ta = to_concat[i]
-            elif not isinstance(ta, TimeArray):
-                raise TypeError(f"Only TimeArrays can be concatenated, got {type(ta.dtype)}")
+        widths = np.array([x.data.shape[1] for x in to_concat])
+        ref_width = np.unique(widths[widths > 0])
 
-            ta_width = ta.data.shape[1]
-            if not ta_width == ref_width:
-                raise ValueError(f"Lengths of concatenated TimeArrays must be compatible, got {ref_width} "
-                                 f"and {ta_width}.")
+        if len(ref_width) == 0:
+            ref_width = 0
+        elif len(ref_width) == 1:
+            ref_width = ref_width[0]
+        else:
+            raise ValueError("Lengths of concatenated TimeArrays must be equal.")
 
-            if ta.time_index.ndim == 1:
-                ti.append(np.broadcast_to(ta.time_index, ta.data.shape))
-            else:
-                ti.append(ta.time_index)
+        data = [empty((x.shape[0], ref_width)) if w == 0 else x.data for w, x in zip(widths, to_concat)]
+        indx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index for w, x in zip(widths, to_concat)]
 
-        data = np.vstack([ta.data for ta in to_concat])
-
-        return TimeArray(data, np.vstack(ti))
+        return TimeArray(np.vstack(data), np.vstack(indx))
 
     # -------------------------------------------------------------------------
     # Interfaces
