@@ -55,7 +55,7 @@ def from_list(data):
 
     out_d = []
     out_i = []
-    widths = np.full((n, ), np.nan, dtype=np.double)
+    widths = np.full((n, ), np.nan, dtype=np.float)
 
     for idx in range(n):
         ts = data[idx]
@@ -83,14 +83,15 @@ def from_list(data):
     # Deal with missing
     mask = np.isnan(widths)
     if np.all(mask):
-        if n == 0:
-            return None
-        return np.array([None for _ in range(n)])
+        #if n <= 1:
+        #    return None
+        #return np.array([None for _ in range(n)])
+        return TimeArray(np.full((n, 0), np.nan, dtype=np.float))[:n]
     elif np.any(mask):
         # TODO: is there a better way to do this?
         w = out_d[int(np.where(~mask)[0][0])].shape[1]
-        out_d = [np.full((1, w), np.nan, np.double) if m else d for m, d in zip(mask, out_d)]
-        out_i = [np.full((1, w), np.nan, np.double) if m else i for m, i in zip(mask, out_i)]
+        out_d = [np.full((1, w), np.nan, np.float) if m else d for m, d in zip(mask, out_d)]
+        out_i = [np.full((1, w), np.nan, np.float) if m else i for m, i in zip(mask, out_i)]
 
     # Ensure that all the widths are equal
     if not np.all(widths[~mask] == widths[~mask][0]):
@@ -197,7 +198,10 @@ class TimeArray(ExtensionArray):
         index = None
 
         # Initialise the data
-        if isinstance(data, self.__class__):
+        if data is None:
+            # TODO: what if data is None by index is passed?
+            data = np.full((1,0), np.nan, dtype=np.float)
+        elif isinstance(data, self.__class__):
             index = data.time_index
             data = data.data
         elif not isinstance(data, np.ndarray):
@@ -213,7 +217,12 @@ class TimeArray(ExtensionArray):
                 raise TypeError(f"'time_index' should be numpy.ndarray, got {type(time_index)}.")
             index = time_index
         elif index is None:
-            index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
+            if data.shape[0] == 1:
+                index = np.arange(data.shape[1])[np.newaxis, :]
+            elif data.shape[0] > 1:
+                index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
+            else:
+                index = data.copy()
 
         if copy:
             data = data.copy()
@@ -299,7 +308,7 @@ class TimeArray(ExtensionArray):
             ta = to_concat[i]
             if isinstance(ta, np.ndarray) and np.all([x is None for x in ta]):
                 # TODO: consider what happens if first element is None-array
-                data = np.full((ta.shape[0], ref_width), np.nan, dtype=np.double)
+                data = np.full((ta.shape[0], ref_width), np.nan, dtype=np.float)
                 index = data.copy()
                 to_concat[i] = TimeArray(data, index)
                 ta = to_concat[i]
@@ -346,16 +355,15 @@ class TimeArray(ExtensionArray):
         # keys to numpy array, pass-through non-array-like indexers
         key = pd.api.indexers.check_array_indexer(self, key)
 
-        if not isinstance(value, (TimeBase, TimeArray)):
+        if value is not None and not isinstance(value, (TimeBase, TimeArray)):
             value = from_list(value)
 
         # TODO: add dimensionality check
 
-        if value is None or \
-                (isinstance(value, np.ndarray) and np.all([x is None for x in value])):
+        if value is None or np.all(value.isna()):
             # This is setting all `key` elements to missing
-            self.data[key] = np.empty((1,), dtype=self.data.dtype)
-            self.time_index[key] = np.empty((1,), dtype=self.data.dtype)
+            self.data[key] = np.full((1, ), np.nan, dtype=np.float)
+            self.time_index[key] = np.full((1, ), np.nan, dtype=np.float)
         else:
             self.data[key] = value.data
             self.time_index[key] = value.time_index
@@ -387,7 +395,7 @@ class TimeArray(ExtensionArray):
 
     def isna(self):
         # TODO: revisit missingness
-        return self.isna_row(self.data)
+        return self.isna_row(self.data) & self.isna_row(self.time_index)
 
     def isna_row(self, arr):
         return np.apply_over_axes(np.all, self.isna_grid(arr), 1).flatten()
@@ -470,7 +478,7 @@ class TimeArray(ExtensionArray):
             # If the take resulted in a missing TimeArray (note, this is
             # different from a length 0 TimeArray)
             # TODO: put in a separate function if needed elsewhere
-            return np.array([None for _ in range(data.shape[0])])
+            return TimeArray(np.full((data.shape[0], 0), np.nan, dtype=np.float))
 
         return self._constructor(data, time_index)
 

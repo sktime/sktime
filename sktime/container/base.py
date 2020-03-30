@@ -41,6 +41,9 @@ class TimeBase(object):
     def __repr__(self):
         return f"ts (n={self.data.shape[1]}): {self._create_repr(5)}"
 
+    def isna(self):
+        return np.all(np.isnan(self.data)) & np.all(np.isnan(self.time_index))
+
 
 # -----------------------------------------------------------------------------
 # Helper functions
