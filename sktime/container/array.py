@@ -287,6 +287,7 @@ class TimeArray(ExtensionArray):
         factorize
         ExtensionArray.factorize
         """
+        # TODO: look into how the original array could be better utilised to avoid duplication
         return from_ts(values)
 
     @classmethod
@@ -294,8 +295,15 @@ class TimeArray(ExtensionArray):
         ref_width = to_concat[0].data.shape[1]
         ti = []
 
-        for ta in to_concat:
-            if not isinstance(ta, TimeArray):
+        for i in range(len(to_concat)):
+            ta = to_concat[i]
+            if isinstance(ta, np.ndarray) and np.all([x is None for x in ta]):
+                # TODO: consider what happens if first element is None-array
+                data = np.full((ta.shape[0], ref_width), np.nan, dtype=np.double)
+                index = data.copy()
+                to_concat[i] = TimeArray(data, index)
+                ta = to_concat[i]
+            elif not isinstance(ta, TimeArray):
                 raise TypeError(f"Only TimeArrays can be concatenated, got {type(ta.dtype)}")
 
             ta_width = ta.data.shape[1]
