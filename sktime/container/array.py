@@ -203,14 +203,14 @@ class TimeArray(ExtensionArray):
         return TimeArray
 
     def __init__(self, data, time_index=None, copy=False):
-        index = None
+        tidx = None
 
         # Initialise the data
         if data is None:
             # TODO: what if data is None by index is passed?
             data = np.full((1,0), np.nan, dtype=np.float)
         elif isinstance(data, self.__class__):
-            index = data.time_index
+            tidx = data.time_index
             data = data.data
         elif not isinstance(data, np.ndarray):
             raise TypeError(f"'data' should be TimeArray or numpy.ndarray, got {type(data)}. "
@@ -223,21 +223,21 @@ class TimeArray(ExtensionArray):
         if time_index is not None:
             if not isinstance(time_index, np.ndarray):
                 raise TypeError(f"'time_index' should be numpy.ndarray, got {type(time_index)}.")
-            index = time_index
-        elif index is None:
+            tidx = time_index
+        elif tidx is None:
             if data.shape[0] == 1:
-                index = np.arange(data.shape[1])[np.newaxis, :]
+                tidx = np.arange(data.shape[1])[np.newaxis, :]
             elif data.shape[0] > 1:
-                index = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
+                tidx = np.vstack([np.arange(data.shape[1]) for _ in range(data.shape[0])])
             else:
-                index = data.copy()
+                tidx = data.copy()
 
         if copy:
             data = data.copy()
-            index = index.copy()
+            tidx = tidx.copy()
 
         self.data = data
-        self.time_index = index
+        self.time_index = tidx
         check_data_index(self.data, self.time_index)
 
     # -------------------------------------------------------------------------
@@ -311,7 +311,7 @@ class TimeArray(ExtensionArray):
     def _concat_same_type(cls, to_concat):
         if not np.all([isinstance(x, TimeArray) for x in to_concat]):
             # TODO: should we also allow to concatenate a np.array of None (i.e. missing)
-            raise TypeError(f"Only TimeArrays can be concatenated, got {type(ta.dtype)}")
+            raise TypeError("Only TimeArrays can be concatenated.")
 
         widths = np.array([x.data.shape[1] for x in to_concat])
         ref_width = np.unique(widths[widths > 0])
@@ -324,9 +324,9 @@ class TimeArray(ExtensionArray):
             raise ValueError("Lengths of concatenated TimeArrays must be equal.")
 
         data = [empty((x.shape[0], ref_width)) if w == 0 else x.data for w, x in zip(widths, to_concat)]
-        indx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index for w, x in zip(widths, to_concat)]
+        tidx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index for w, x in zip(widths, to_concat)]
 
-        return TimeArray(np.vstack(data), np.vstack(indx))
+        return TimeArray(np.vstack(data), np.vstack(tidx))
 
     # -------------------------------------------------------------------------
     # Interfaces
