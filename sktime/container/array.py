@@ -423,6 +423,14 @@ class TimeArray(ExtensionArray):
 
         return self[np.unique(rows)]
 
+    def value_counts(self, dropna=True):
+        if(dropna):
+            factorised, _ = self.dropna()._values_for_factorize()
+        else:
+            factorised, _ = self._values_for_factorize()
+
+        return pd.Series(factorised).value_counts()
+
     # -------------------------------------------------------------------------
     # general array like compat
     # -------------------------------------------------------------------------
@@ -536,6 +544,7 @@ class TimeArray(ExtensionArray):
         return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
 
     def sort_time(self):
+        # TODO: add inplace argument
         d_ord = np.argsort(self.data, axis=1)
         self.data = np.take_along_axis(self.data, d_ord, axis=1)
         self.time_index = np.take_along_axis(self.time_index, d_ord, axis=1)
