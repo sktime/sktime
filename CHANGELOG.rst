@@ -1,5 +1,5 @@
-Change Log
-==========
+Changelog
+=========
 
 All notable changes will be recorded in this file.
 
