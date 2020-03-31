@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from sktime.forecasting import FH
 from sktime.forecasting.tests import TEST_FHS
+from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh_values
 
 TEST_CUTOFFS = [2, 5]
@@ -46,3 +47,9 @@ def test_relative_in_and_out_of_sample(fh, cutoff):
     oos = fh.out_of_sample(cutoff)
     assert all(oos > 0)
 
+
+def test_y_test_index_input():
+    y_train, y_test = make_forecasting_problem()
+    fh = FH(y_test.index, is_relative=False)
+    cutoff = y_train.index[-1]
+    np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)
