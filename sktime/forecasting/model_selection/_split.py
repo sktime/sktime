@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sktime.utils.validation.forecasting import check_cutoffs
 from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_fh_is_relative
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation.forecasting import check_window_length
@@ -40,12 +41,15 @@ class BaseTemporalCrossValidator:
 
         Parameters
         ----------
-        y : index-like
+        y : pd.Series or pd.Index
+            Time series to split
 
         Yields
         ------
         training_window : np.array
+            Training window indices
         test_window : np.array
+            Test window indices
         """
         y = self._check_y(y)
         for training_window, test_window in self._split_windows(y):
@@ -79,7 +83,7 @@ class BaseTemporalCrossValidator:
 
 
 class ManualWindowSplitter(BaseTemporalCrossValidator):
-    """Manual window splitter.
+    """Manual window splitter to split time series at given cutoff points.
 
     Parameters
     ----------
@@ -100,6 +104,8 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
             raise ValueError(f"`cutoffs` are out-of-bounds for given `y`.")
 
         fh = check_fh(self.fh)
+        check_fh_is_relative(fh)
+
         if np.max(cutoffs) + np.max(fh) > len(y):
             raise ValueError(f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length)
@@ -171,6 +177,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(self.window_length)
         fh = check_fh(self.fh)
+        check_fh_is_relative(fh)
 
         end = self._get_end(y)
         start = self._get_start()
@@ -230,6 +237,7 @@ class SingleWindowSplitter(BaseWindowSplitter):
     def _split_windows(self, y):
         window_length = check_window_length(self.window_length)
         fh = check_fh(self.fh)
+        check_fh_is_relative(fh)
 
         end = self._get_end(y) - 1
         start = 0 if window_length is None else end - window_length

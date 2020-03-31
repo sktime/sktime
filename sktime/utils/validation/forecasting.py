@@ -10,7 +10,12 @@ __all__ = [
     "check_consistent_time_index",
     "check_alpha",
     "check_is_fitted_in_transform",
-    "check_fh_values"
+    "check_fh_values",
+    "check_cutoffs",
+    "check_scoring",
+    "check_sp",
+    "check_is_fitted",
+    "check_fh_is_relative"
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -219,6 +224,22 @@ def check_fh(fh):
     if not isinstance(fh, FH):
         fh = FH(fh)
     return fh
+
+
+def check_fh_is_relative(fh):
+    """Check if fh is relative.
+
+    Parameters
+    ----------
+    fh : np.array, list, int or FH
+
+    Raises
+    ------
+    TypeError : if fh is not relative
+    """
+    from sktime.forecasting import FH
+    if isinstance(fh, FH) and not fh.is_relative:
+        raise TypeError("`fh` must be relative, but found absolute `fh`")
 
 
 def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
