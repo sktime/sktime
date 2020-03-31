@@ -130,7 +130,8 @@ class RelativeFH(FH):
         fh : absolute forecasting horizon
         """
         self._check_cutoff(cutoff)
-        return AbsoluteFH(self + cutoff)
+        values = self + cutoff
+        return values.view(AbsoluteFH)
 
 
 class AbsoluteFH(FH):
@@ -149,7 +150,8 @@ class AbsoluteFH(FH):
         fh : relative forecasting horizon
         """
         self._check_cutoff(cutoff)
-        return RelativeFH(self - cutoff)
+        values = self - cutoff
+        return values.view(RelativeFH)
 
     def absolute(self, cutoff=None):
         """Return absolute forecasting horizon values.
