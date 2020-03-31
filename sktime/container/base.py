@@ -21,6 +21,9 @@ class TimeBase(object):
             raise TypeError(f"Cannot compare TimeBase objec to {type(other)}")
 
     def __add__(self, o):
+        if not isinstance(o, TimeBase):
+            return NotImplemented
+
         if np.all(self.time_index != o.time_index):
             raise ValueError("The time indices of two TimeArrays that should be added must be identical.")
 
