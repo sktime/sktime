@@ -4,7 +4,7 @@
 __author__ = ["Markus Löning"]
 __all__ = ["_AutoAR"]
 
-from sktime.forecasting.base.statsmodels import BaseStatsModelsAdapter
+from sktime.forecasting.base._statsmodels import BaseStatsModelsAdapter
 from statsmodels.tsa.ar_model import ar_select_order
 
 

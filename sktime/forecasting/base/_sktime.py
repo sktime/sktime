@@ -8,8 +8,8 @@ from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
-from sktime.forecasting.base.base import BaseForecaster
-from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
 from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
 

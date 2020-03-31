@@ -220,7 +220,7 @@ def check_fh(fh):
     fh : FH
         Checked forecasting horizon.
     """
-    from sktime.forecasting.base.fh import FH
+    from sktime.forecasting.base._fh import FH
     if not isinstance(fh, FH):
         fh = FH(fh)
     return fh

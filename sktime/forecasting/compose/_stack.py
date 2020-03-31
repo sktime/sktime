@@ -10,9 +10,9 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-from sktime.forecasting.base.meta import BaseHeterogenousEnsembleForecaster
-from sktime.forecasting.base.sktime import RequiredForecastingHorizonMixin
-from sktime.forecasting.base.base import DEFAULT_ALPHA
+from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
+from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import SingleWindowSplitter
 
 
@@ -43,11 +43,14 @@ class StackingForecaster(RequiredForecastingHorizonMixin, BaseHeterogenousEnsemb
 
         # fit forecasters on training window
         self._fit_forecasters(forecasters, y_fcst, fh=self.fh, X_train=X_train)
-        y_pred = np.column_stack(self._predict_forecasters(X=X_train))
+        X_meta = np.column_stack(self._predict_forecasters(X=X_train))
 
         # fit final regressor on on validation window
         self.final_regressor_ = clone(self.final_regressor)
-        self.final_regressor_.fit(y_pred, y_meta)
+        self.final_regressor_.fit(X_meta, y_meta)
+
+        # refit forecasters on entire training series
+        self._fit_forecasters(forecasters, y_train, fh=self.fh, X_train=X_train)
 
         self._is_fitted = True
         return self

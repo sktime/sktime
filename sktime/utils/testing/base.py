@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.base.base import BaseForecaster
+from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster

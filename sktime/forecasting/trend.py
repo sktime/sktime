@@ -10,7 +10,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from sktime.forecasting.base.sktime import OptionalForecastingHorizonMixin, BaseSktimeForecaster, DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin, BaseSktimeForecaster, DEFAULT_ALPHA
 
 
 class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):

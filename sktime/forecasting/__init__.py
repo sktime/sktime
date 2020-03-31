@@ -3,4 +3,4 @@
 
 __author__ = ["Markus Löning"]
 
-from sktime.forecasting.base.fh import FH
+from sktime.forecasting.base._fh import FH

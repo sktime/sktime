@@ -16,10 +16,10 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
-from sktime.forecasting.base.sktime import BaseLastWindowForecaster
-from sktime.forecasting.base.base import DEFAULT_ALPHA
-from sktime.forecasting.base.sktime import OptionalForecastingHorizonMixin
-from sktime.forecasting.base.sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base._sktime import BaseLastWindowForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_y, check_window_length, check_step_length
 
