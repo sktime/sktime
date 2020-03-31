@@ -489,6 +489,9 @@ class TimeArray(ExtensionArray):
                (np.all(self.time_index == comp_index))
 
     def __add__(self, o):
+        if not isinstance(o, TimeArray):
+            return NotImplemented
+
         if np.all(self.time_index != o.time_index):
             raise ValueError("The time indices of two TimeArrays that should "
                              "be added must be identical.")
