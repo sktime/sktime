@@ -22,9 +22,9 @@ from sktime.container import TimeBase
 from sktime.container.base import check_data_index, ensure_2d
 
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Extension Type
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 class TimeDtype(ExtensionDtype):
     type = TimeBase
     name = "timeseries"
@@ -36,7 +36,7 @@ class TimeDtype(ExtensionDtype):
         if string == cls.name:
             return cls()
         else:
-            raise TypeError("Cannot construct a 'TimeDtype' from '{}'".format(string))
+            raise TypeError(f"Cannot construct a 'TimeDtype' from '{string}'")
 
     @classmethod
     def construct_array_type(cls):
@@ -46,9 +46,9 @@ class TimeDtype(ExtensionDtype):
 register_extension_dtype(TimeDtype)
 
 
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Constructors / converters to other formats
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def from_list(data):
     n = len(data)
@@ -78,7 +78,7 @@ def from_list(data):
             out_d.append(None)
             out_i.append(None)
         else:
-            raise TypeError("Input must be valid timeseries objects: {0}".format(ts))
+            raise TypeError("Input must be valid timeseries objects: {ts}")
 
     # Deal with missing
     mask = np.isnan(widths)
@@ -90,8 +90,10 @@ def from_list(data):
     elif np.any(mask):
         # TODO: is there a better way to do this?
         w = out_d[int(np.where(~mask)[0][0])].shape[1]
-        out_d = [np.full((1, w), np.nan, np.float) if m else d for m, d in zip(mask, out_d)]
-        out_i = [np.full((1, w), np.nan, np.float) if m else i for m, i in zip(mask, out_i)]
+        out_d = [np.full((1, w), np.nan, np.float) if m else d
+                 for m, d in zip(mask, out_d)]
+        out_i = [np.full((1, w), np.nan, np.float) if m else i
+                 for m, i in zip(mask, out_i)]
 
     # Ensure that all the widths are equal
     if not np.all(widths[~mask] == widths[~mask][0]):
@@ -108,15 +110,16 @@ def from_pandas(data):
         time_index = np.repeat(time_index, data.shape[0], axis=0)
         return TimeArray(data.to_numpy(), time_index)
     else:
-        raise TypeError("Input must be a pandas Series or DataFrame: {0}".format(data))
+        raise TypeError("Input must be a pandas Series or DataFrame: {data}")
 
 
 def from_ts(ts):
-    # Note: this is a very(!) preliminary implementation to convert to ts format, used solely
-    #       to allow for factorization and pass pandas implementation tests. This will
-    #       be extended in the future, after TimeArray compatibility with pandas has been
-    #       resolved.
-    # TODO: transfer a full implementation from sktime.utils.load_data.load_from_tsfile_to_dataframe
+    # Note: this is a very(!) preliminary implementation to convert to ts
+    #       format, used solely to allow for factorization and pass pandas
+    #       implementation tests. This will be extended in the future, after
+    #       TimeArray compatibility with pandas has been resolved.
+    # TODO: transfer a full implementation from
+    #       sktime.utils.load_data.load_from_tsfile_to_dataframe
     def parse_line(line):
         line = line.strip("()")
         points = line.split("),(")
@@ -126,47 +129,53 @@ def from_ts(ts):
     return from_list([TimeBase(*parse_line(l)) for l in ts])
 
 def to_ts(obj, include_header=True):
-    # Note: this is a very preliminary implementation to convert to ts format. This will
-    #       be extended in the future, after TimeArray compatibility with pandas has been
-    #       resolved.
+    # Note: this is a very preliminary implementation to convert to ts format.
+    #       This will be extended in the future, after TimeArray compatibility
+    #       with pandas has been resolved.
     # TODO: extend to cover all cases
     if include_header:
-        raise NotImplementedError("Conversion to ts format with headers not supported yet.")
+        raise NotImplementedError("Conversion to ts format with headers not "
+                                  "supported yet.")
 
     if not isinstance(obj, (TimeBase, TimeArray)):
-        raise TypeError(f"Can only convert TimeBase or TimeArray objects, got {type(obj)}")
+        raise TypeError(f"Can only convert TimeBase or TimeArray objects, "
+                        f"got {type(obj)}")
     elif isinstance(obj, TimeArray):
         obj = obj.astype(object)
     else:
         obj = [obj]
 
-    # TODO: this returns a list which is needed for factorise but we might want to move this
-    #       into a separate function and return a string here
-    return ["(" + "),(".join([str(i) + "," + str(d) for i, d in zip(x.data[0], x.time_index[0])]) + ")" for x in obj]
+    # TODO: this returns a list which is needed for factorise but we might want
+    #       to move thisinto a separate function and return a string here
+    return ["(" + "),(".join([str(i) + "," + str(d)
+                              for i, d in zip(x.data[0], x.time_index[0])])+")"
+            for x in obj]
 
 
 
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Helper functions
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def empty(shape, dtype=np.float):
     return np.full(shape, np.nan, dtype=dtype)
 
 
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 # Extension Container
-# ----------------------------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 # TODO: update docstrings to reflect recent refactoring
 
 class TimeArray(ExtensionArray):
-    """Holder for multiple timeseries objects with an equal number of observations.
+    """
+    Holder for multiple timeseries objects with an equal number of
+    observations.
 
     TimeArray is a container for storing and manipulating timeseries data. Each
-    observation in TimeArray is a distinct timeseries, i.e. a series of key/value
-    pairs that represent a time point and a corresponding measurement.
+    observation in TimeArray is a distinct timeseries, i.e. a series of key/
+    value pairs that represent a time point and a corresponding measurement.
 
     A note on the internal data layout: TimeArray implements a
     collection of equal length timeseries in which rows correspond to
@@ -177,9 +186,9 @@ class TimeArray(ExtensionArray):
 
     Note on compatibility with pandas:
     TimeArray aims to to satisfy pandas' extension array interface so it can be
-    stored inside :class:`pandas.Series` and :class:`pandas.DataFrame`. While this
-    works for basic indexing already, many of the more intricate functionality of
-    pandas (e.g. apply or groupby) has not been integrated yet.
+    stored inside :class:`pandas.Series` and :class:`pandas.DataFrame`. While
+    this works for basic indexing already, many of the more intricate
+    functionality of pandas (e.g. apply or groupby) has not been integrated yet.
 
     Parameters
     ----------
@@ -213,22 +222,29 @@ class TimeArray(ExtensionArray):
             tidx = data.time_index
             data = data.data
         elif not isinstance(data, np.ndarray):
-            raise TypeError(f"'data' should be TimeArray or numpy.ndarray, got {type(data)}. "
-                            f"Use from_list, to construct a TimeArray from list-like objects.")
+            raise TypeError(
+                f"'data' should be TimeArray or numpy.ndarray, got "
+                f"{type(data)}. Use from_list, to construct a TimeArray from "
+                f"list-like objects."
+            )
         elif not data.ndim == 2:
-            raise ValueError("'data' should be a 2-dimensional, where rows correspond"
-                             "to timeseries and columns to individual observations.")
+            raise ValueError(
+                "'data' should be a 2-dimensional, where rows correspond"
+                "to timeseries and columns to individual observations."
+            )
 
         # Initialise the time index
         if time_index is not None:
             if not isinstance(time_index, np.ndarray):
-                raise TypeError(f"'time_index' should be numpy.ndarray, got {type(time_index)}.")
+                raise TypeError(f"'time_index' should be numpy.ndarray, "
+                                f"got {type(time_index)}.")
             tidx = time_index
         elif tidx is None:
             if data.shape[0] == 1:
                 tidx = np.arange(data.shape[1])[np.newaxis, :]
             elif data.shape[0] > 1:
-                tidx = np.vstack([np.arange(data.shape[1], dtype=np.float) for _ in range(data.shape[0])])
+                tidx = np.vstack([np.arange(data.shape[1], dtype=np.float)
+                                  for _ in range(data.shape[0])])
             else:
                 tidx = data.copy()
 
@@ -304,13 +320,15 @@ class TimeArray(ExtensionArray):
         factorize
         ExtensionArray.factorize
         """
-        # TODO: look into how the original array could be better utilised to avoid duplication
+        # TODO: look into how the original array could be better utilised to
+        #       avoid duplication
         return from_ts(values)
 
     @classmethod
     def _concat_same_type(cls, to_concat):
         if not np.all([isinstance(x, TimeArray) for x in to_concat]):
-            # TODO: should we also allow to concatenate a np.array of None (i.e. missing)
+            # TODO: should we also allow to concatenate a np.array of None
+            #       (i.e. missing)
             raise TypeError("Only TimeArrays can be concatenated.")
 
         widths = np.array([x.data.shape[1] for x in to_concat])
@@ -321,16 +339,18 @@ class TimeArray(ExtensionArray):
         elif len(ref_width) == 1:
             ref_width = ref_width[0]
         else:
-            raise ValueError("Lengths of concatenated TimeArrays must be equal.")
+            raise ValueError("Lengths of TimeArrays must be equal.")
 
-        data = [empty((x.shape[0], ref_width)) if w == 0 else x.data for w, x in zip(widths, to_concat)]
-        tidx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index for w, x in zip(widths, to_concat)]
+        data = [empty((x.shape[0], ref_width)) if w == 0 else x.data
+                for w, x in zip(widths, to_concat)]
+        tidx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index
+                for w, x in zip(widths, to_concat)]
 
         return TimeArray(np.vstack(data), np.vstack(tidx))
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # Interfaces
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def __getitem__(self, idx):
         # validate and convert IntegerArray / BooleanArray
@@ -338,8 +358,10 @@ class TimeArray(ExtensionArray):
         idx = pd.api.indexers.check_array_indexer(self, idx)
 
         if isinstance(idx, (int, np.int, numbers.Integral)):
-            if np.all(np.isnan(self.data[idx])) and np.all(np.isnan(self.time_index[idx])):
-                # Return the missing type if both data and time_index are completely missing
+            if np.all(np.isnan(self.data[idx])) and \
+                    np.all(np.isnan(self.time_index[idx])):
+                # Return the missing type if both data and time_index are
+                # completely missing
                 return None
 
             return TimeBase(self.data[idx], self.time_index[idx])
@@ -388,9 +410,9 @@ class TimeArray(ExtensionArray):
         return self.data.nbytes
 
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # Ops
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def isna(self):
         # TODO: revisit missingness
@@ -409,12 +431,14 @@ class TimeArray(ExtensionArray):
                 return self.copy()
             else:
                 return self
-        elif dtype is str or (hasattr(dtype, 'kind') and dtype.kind in {'U', 'S'}):
+        elif dtype is str or \
+                (hasattr(dtype, 'kind') and dtype.kind in {'U', 'S'}):
             return np.array(self).astype(dtype)
-        elif dtype is object or (hasattr(dtype, 'kind') and dtype.kind in {'O'}):
+        elif dtype is object or \
+                (hasattr(dtype, 'kind') and dtype.kind in {'O'}):
             return np.array(self)
-        raise ValueError(f"TimeArray can only be cast to numpy array with type object",
-                         f"got type {dtype}")
+        raise ValueError(f"TimeArray can only be cast to numpy array with type "
+                         f"'object', got type {dtype}")
 
     def unique(self):
         from pandas import factorize
@@ -424,6 +448,7 @@ class TimeArray(ExtensionArray):
         return self[np.unique(rows)]
 
     def value_counts(self, dropna=True):
+        # TODO: review, does it make sense to keep such a function in?
         if(dropna):
             factorised, _ = self.dropna()._values_for_factorize()
         else:
@@ -431,33 +456,42 @@ class TimeArray(ExtensionArray):
 
         return pd.Series(factorised).value_counts()
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # general array like compat
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def __len__(self):
         return self.shape[0]
 
     def __array__(self, dtype=None):
-        return np.array([TimeBase(self.data[i], self.time_index[i]) for i in range(self.data.shape[0])])
+        return np.array([TimeBase(self.data[i], self.time_index[i])
+                         for i in range(self.data.shape[0])])
 
-    def __array_ufunc__(self, ufunc: Callable, method: str, *inputs: Any, **kwargs: Any):
+    def __array_ufunc__(self,
+                        ufunc: Callable,
+                        method: str,
+                        *inputs: Any,
+                        **kwargs: Any):
         raise NotImplementedError("__array_ufunc__ not implemented yet")
 
     def __eq__(self, other):
         if isinstance(other, pd.Series):
-            comp_data = np.broadcast_to(other.values[np.newaxis, :], self.data.shape)
-            comp_index = np.broadcast_to(other.index.values[np.newaxis, :], self.time_index.shape)
+            comp_data = np.broadcast_to(other.values[np.newaxis, :],
+                                        self.data.shape)
+            comp_index = np.broadcast_to(other.index.values[np.newaxis, :],
+                                         self.time_index.shape)
         else:
             comp_data = other.data
             comp_index = other.time_index
         # TODO: sense check for other types
 
-        return (np.all(self.data == comp_data)) & (np.all(self.time_index == comp_index))
+        return (np.all(self.data == comp_data)) & \
+               (np.all(self.time_index == comp_index))
 
     def __add__(self, o):
         if np.all(self.time_index != o.time_index):
-            raise ValueError("The time indices of two TimeArrays that should be added must be identical.")
+            raise ValueError("The time indices of two TimeArrays that should "
+                             "be added must be identical.")
 
         return TimeArray(self.data + o.data, time_index=self.time_index)
 
@@ -465,6 +499,7 @@ class TimeArray(ExtensionArray):
         return TimeArray(self.data.copy(), self.time_index.copy())
 
     def take(self, indices, allow_fill=False, fill_value=None):
+        # TODO: revisit and simplify
         # Use the take implementation from pandas to get the takes separately
         # for the data and the time indices
         from pandas.api.extensions import take
@@ -477,21 +512,23 @@ class TimeArray(ExtensionArray):
             out_of_range = (indices < 0) | (indices >= data.shape[0])
 
             data[self.isna_row(data) & out_of_range] = fill_value.data
-            time_index[self.isna_row(time_index) & out_of_range] = fill_value.time_index
+            time_index[self.isna_row(time_index) & out_of_range] = \
+                fill_value.time_index
         elif allow_fill and fill_value is not None:
-            TypeError(f"Only TimeBase are allowed as fill values, got {type(fill_value)}")
+            TypeError(f"Only TimeBase are allowed as fill values, "
+                      f"got {type(fill_value)}")
 
         if data.shape[0] != 0 and np.all(np.isnan(data)):
             # If the take resulted in a missing TimeArray (note, this is
             # different from a length 0 TimeArray)
             # TODO: put in a separate function if needed elsewhere
-            return TimeArray(np.full((data.shape[0], 0), np.nan, dtype=np.float))
+            return TimeArray(np.full((data.shape[0],0), np.nan, dtype=np.float))
 
         return self._constructor(data, time_index)
 
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # Printing
-    # ------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def __repr__(self) -> str:
         from pandas.io.formats.printing import format_object_summary
@@ -512,9 +549,9 @@ class TimeArray(ExtensionArray):
         return repr
 
 
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
     # time series functionality
-    # -------------------------------------------------------------------------
+    # --------------------------------------------------------------------------
 
     def tabularise(self, name=None, return_array=False):
         if name is None:
@@ -522,7 +559,8 @@ class TimeArray(ExtensionArray):
         if return_array:
             return self.data
         # TODO: throw a naming error when time indes isn't equal in each row
-        return pd.DataFrame(self.data, columns=[name + "_" + str(i) for i in self.time_index[0]])
+        return pd.DataFrame(self.data, columns=[name + "_" + str(i)
+                                                for i in self.time_index[0]])
 
     def tabularize(self, return_array=False):
         return self.tabularise(return_array)
@@ -537,9 +575,9 @@ class TimeArray(ExtensionArray):
         return self._equal_index
 
     def slice_time(self, time_index):
-        # TODO: this silently assumes that time indices are the same. Decide how this
-        #       function should work if they are not (and the result can be a ragged/
-        #       non-equal length array)
+        # TODO: this silently assumes that time indices are the same. Decide how
+        #       this function should work if they are not (and the result can be
+        #       a ragged/non-equal length array)
         sel = np.isin(self.time_index[0, :], time_index)
         return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
 
