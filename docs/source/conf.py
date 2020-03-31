@@ -9,8 +9,6 @@
 import os
 import sys
 
-import sphinx_bootstrap_theme
-
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -21,21 +19,17 @@ if not on_rtd:
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
 
 # -- Project information -----------------------------------------------------
-project = 'sktime'
-copyright = '2019, The Alan Turing Institute'
-author = ' '
+project = u'sktime'
+copyright = u'2019, The Alan Turing Institute'
+author = u' '
+
 
 # The short X.Y version
 import sktime
 
-version = sktime.__version__
+version = '.'.join(sktime.__version__.split('.', 2)[:2])
 # The full version, including alpha/beta/rc tags
 release = sktime.__version__
-
-numpydoc_show_class_members = True
-numpydoc_class_members_toctree = False
-
-autosummary_generate = True
 
 # -- General configuration ---------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -50,10 +44,11 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
-    'sphinx.ext.viewcode',
+    # 'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
+    'sphinx.ext.linkcode',  # link to github, see linkcode_resolve() below
     'sphinx.ext.napoleon',
-    'recommonmark',
+    # 'recommonmark',  # markdown rendering
     'nbsphinx'  # integrates example notebooks
 ]
 
@@ -83,54 +78,84 @@ language = None
 exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = None
+pygments_style = 'sphinx'
+
+# see http://stackoverflow.com/q/12206334/562769
+numpydoc_show_class_members = True
+numpydoc_class_members_toctree = False
+autosummary_generate = True
+
+
+def linkcode_resolve(domain, info):
+    def find_source():
+        # try to find the file and line number, based on code from numpy:
+        # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
+        obj = sys.modules[info['module']]
+        for part in info['fullname'].split('.'):
+            obj = getattr(obj, part)
+        import inspect
+        import os
+        fn = inspect.getsourcefile(obj)
+        fn = os.path.relpath(fn, start=os.path.dirname(sktime.__file__))
+        source, lineno = inspect.getsourcelines(obj)
+        return fn, lineno, lineno + len(source) - 1
+
+    if domain != 'py' or not info['module']:
+        return None
+    try:
+        filename = 'sktime/%s#L%d-L%d' % find_source()
+    except Exception:
+        filename = info['module'].replace('.', '/') + '.py'
+    tag = 'master' if 'dev' in release else ('v' + release)
+    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (tag, filename)
+
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 
-# html_theme = 'sphinx_rtd_theme'
-html_theme = 'bootstrap'
-html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-html_theme_options = {
-    # Tab name for entire site. (Default: "Site")
-    'navbar_site_name': "Table of Contents",
-
-    # 'navbar_links': [
-    #     ("Citing sktime", "citing"),
-    # ],
-
-    # Render the next and previous page links in navbar. (Default: true)
-    'navbar_sidebarrel': False,
-
-    # Render the current pages TOC in the navbar. (Default: true)
-    'navbar_pagenav': True,
-
-    # Tab name for the current pages TOC. (Default: "Page")
-    'navbar_pagenav_name': "Current Page",
-
-    # Global TOC depth for "site" navbar tab. (Default: 1)
-    # Switching to -1 shows all levels.
-    'globaltoc_depth': -1,
-
-    # Location of link to source.
-    # Options are "nav" (default), "footer" or anything else to exclude.
-    'source_link_position': "exclude",
-
-    # Bootswatch (http://bootswatch.com/) theme.
-    #
-    # Options are nothing (default) or the name of a valid theme
-    # such as "cosmo" or "sandstone".
-    #
-    # The set of valid themes depend on the version of Bootstrap
-    # that's used (the next config option).
-    #
-    # Currently, the supported themes are:
-    # - Bootstrap 2: https://bootswatch.com/2
-    # - Bootstrap 3: https://bootswatch.com/3
-    # 'bootswatch_theme': "lumen"
-}
+html_theme = 'sphinx_rtd_theme'
+# html_theme = 'bootstrap'
+# html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
+# html_theme_options = {
+#     # Tab name for entire site. (Default: "Site")
+#     'navbar_site_name': "Table of Contents",
+#
+#     # 'navbar_links': [
+#     #     ("Citing sktime", "citing"),
+#     # ],
+#
+#     # Render the next and previous page links in navbar. (Default: true)
+#     'navbar_sidebarrel': False,
+#
+#     # Render the current pages TOC in the navbar. (Default: true)
+#     'navbar_pagenav': True,
+#
+#     # Tab name for the current pages TOC. (Default: "Page")
+#     'navbar_pagenav_name': "Current Page",
+#
+#     # Global TOC depth for "site" navbar tab. (Default: 1)
+#     # Switching to -1 shows all levels.
+#     'globaltoc_depth': -1,
+#
+#     # Location of link to source.
+#     # Options are "nav" (default), "footer" or anything else to exclude.
+#     'source_link_position': "exclude",
+#
+#     # Bootswatch (http://bootswatch.com/) theme.
+#     #
+#     # Options are nothing (default) or the name of a valid theme
+#     # such as "cosmo" or "sandstone".
+#     #
+#     # The set of valid themes depend on the version of Bootstrap
+#     # that's used (the next config option).
+#     #
+#     # Currently, the supported themes are:
+#     # - Bootstrap 2: https://bootswatch.com/2
+#     # - Bootstrap 3: https://bootswatch.com/3
+#     # 'bootswatch_theme': "lumen"
+# }
 
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -139,8 +164,8 @@ html_theme_options = {
 #
 # html_theme_options = {}
 
-def setup(app):
-    app.add_stylesheet("custom.css")  # also can be a full URL
+# def setup(app):
+#     app.add_stylesheet("custom.css")  # also can be a full URL
 
 
 # Add any paths that contain custom static files (such as style sheets) here,
