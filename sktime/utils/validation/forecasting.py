@@ -9,13 +9,13 @@ __all__ = [
     "check_time_index",
     "check_consistent_time_index",
     "check_alpha",
-    "check_is_fitted_in_transform"
+    "check_is_fitted_in_transform",
+    "check_fh_values"
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
-
 from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation import is_int
 
@@ -207,53 +207,17 @@ def check_fh(fh):
 
     Parameters
     ----------
-    fh : int, list of int, array of int
+    fh : int, list of int, array of int or FH
         Forecasting horizon with steps ahead to predict.
 
     Returns
     -------
-    fh : numpy array of int
-        Sorted and validated forecasting horizon.
+    fh : FH
+        Checked forecasting horizon.
     """
-    # check single integer
-    if is_int(fh):
-        fh = np.array([fh], dtype=np.int)
-
-    # check array
-    elif isinstance(fh, np.ndarray):
-        if fh.ndim > 1:
-            raise ValueError(f"`fh` must be a 1d array, but found shape: "
-                             f"{fh.shape}")
-
-        if not np.issubdtype(fh.dtype, np.integer):
-            raise ValueError(f"If `fh` is passed as an array, it must "
-                             f"be an array of integers, but found an "
-                             f"array of type: {fh.dtype}")
-
-
-
-    # check list
-    elif isinstance(fh, list):
-        if not np.all([is_int(h) for h in fh]):
-            raise ValueError("If `fh` is passed as a list, "
-                             "it has to be a list of integers.")
-        fh = np.array(fh, dtype=np.int)
-
-    else:
-        raise ValueError(f"`fh` has to be either a numpy array or list of integers, "
-                         f"or a single integer, but found: {type(fh)}")
-
-    # check fh is not empty
-    if len(fh) < 1:
-        raise ValueError(f"`fh` cannot be empty, please specify now least one "
-                         f"step to forecast.")
-
-    # check fh does not contain duplicates
-    if len(fh) != len(np.unique(fh)):
-        raise ValueError(f"`fh` should not contain duplicates.")
-
-    # sort fh
-    fh.sort()
+    from sktime.forecasting.base.fh import FH
+    if not isinstance(fh, FH):
+        fh = FH(fh)
     return fh
 
 
@@ -382,3 +346,59 @@ def check_scoring(scoring):
         raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
+
+
+def check_fh_values(values):
+    """Validate forecasting horizon values.
+
+    Parameters
+    ----------
+    values : int, list of int, array of int
+        Forecasting horizon with steps ahead to predict.
+
+    Raises
+    ------
+    TypeError : if values do not meet criteria
+
+    Returns
+    -------
+    fh : numpy array of int
+        Sorted and validated forecasting horizon.
+    """
+    # check single integer
+    if is_int(values):
+        values = np.array([values], dtype=np.int)
+
+    # check array
+    elif isinstance(values, np.ndarray):
+        if values.ndim > 1:
+            raise TypeError(f"`fh` must be a 1d array, but found shape: "
+                            f"{values.shape}")
+
+        if not np.issubdtype(values.dtype, np.integer):
+            raise TypeError(f"If `fh` is passed as an array, it must "
+                            f"be an array of integers, but found an "
+                            f"array of type: {values.dtype}")
+
+    # check list
+    elif isinstance(values, list):
+        if not np.all([is_int(h) for h in values]):
+            raise TypeError("If `fh` is passed as a list, "
+                            "it has to be a list of integers.")
+        values = np.array(values, dtype=np.int)
+
+    else:
+        raise TypeError(f"`fh` has to be either a numpy array, list, "
+                        f"or a single integer, but found: {type(values)}")
+
+    # check fh is not empty
+    if len(values) < 1:
+        raise TypeError(f"`fh` cannot be empty, please specify now least one "
+                        f"step to forecast.")
+
+    # check fh does not contain duplicates
+    if len(values) != len(np.unique(values)):
+        raise TypeError(f"`fh` should not contain duplicates.")
+
+    # sort fh
+    return np.sort(values)

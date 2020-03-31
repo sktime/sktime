@@ -4,7 +4,7 @@ __author__ = ["@big-o", "Markus Löning"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting import ExponentialSmoothing
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.base.base import DEFAULT_ALPHA
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.utils.confidence import zscore
@@ -186,7 +186,7 @@ class ThetaForecaster(ExponentialSmoothing):
         for a in alpha:
             z = zscore(1 - a)
             error = z * sem
-            errors.append(pd.Series(error, index=self._get_absolute_fh()))
+            errors.append(pd.Series(error, index=self.fh.absolute(self.cutoff)))
 
         # for a single alpha value, unwrap list
         if len(errors) == 1:

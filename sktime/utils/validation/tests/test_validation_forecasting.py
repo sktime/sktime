@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from pytest import raises
 
-from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_fh_values
 
 
 bad_input_args = (
@@ -25,5 +25,5 @@ bad_input_args = (
 
 @pytest.mark.parametrize("arg", bad_input_args)
 def test_check_fh_bad_input_args(arg):
-    with raises(ValueError):
-        check_fh(arg)
+    with raises(TypeError):
+        check_fh_values(arg)

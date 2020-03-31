@@ -2,5 +2,5 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
+__all__ = []
 
-from sktime.forecasting.base.fh import FH

@@ -117,7 +117,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             return y_pred_in.append(y_pred_out)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        fh_abs = self._get_absolute_fh(fh)
+        fh_abs = fh.absolute(self.cutoff)
         fh_idx = fh_abs - np.min(fh_abs)
         start = fh_abs[0]
         end = fh_abs[-1]
@@ -140,8 +140,8 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
     def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # make prediction
         n_periods = int(fh[-1])
-        index = self._get_absolute_fh(fh)
-        fh_idx = self._get_array_index_fh(fh)
+        index = fh.absolute(self.cutoff)
+        fh_idx = fh.index_like(self.cutoff)
 
         if return_pred_int:
             y_pred, pred_int = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X,

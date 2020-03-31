@@ -100,41 +100,6 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         raise NotImplementedError()
 
-    def _get_absolute_fh(self, fh=None):
-        """Convert the user-defined forecasting horizon relative to the end
-        of the observation horizon into the absolute time index.
-
-        Returns
-        -------
-        fh : np.array
-            The absolute time index of the forecasting horizon
-        """
-        # user defined forecasting horizon `fh` is relative to the end of the
-        # observation horizon, i.e. `cutoff`
-        if fh is None:
-            fh = self.fh
-        fh_abs = self.cutoff + fh
-
-        # for in-sample predictions, check if forecasting horizon is still within
-        # observation horizon
-        if any(fh_abs < 0):
-            raise ValueError("Forecasting horizon `fh` includes time points "
-                             "before observation horizon")
-        return np.sort(fh_abs)
-
-    def _get_array_index_fh(self, fh=None):
-        """Convert the step-ahead forecast horizon relative to the end
-        of the observation horizon into the zero-based forecasting horizon
-        for array indexing.
-        Returns
-        -------
-        fh : np.array
-            The zero-based index of the forecasting horizon
-        """
-        if fh is None:
-            fh = self.fh
-        return fh - 1
-
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict
 
@@ -312,19 +277,23 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         if return_pred_int:
             raise NotImplementedError()
 
-        is_oos = fh > 0
-        is_ins = np.logical_not(is_oos)
+        fh_oos = fh.out_of_sample(self.cutoff)
+        fh_ins = fh.in_sample(self.cutoff)
 
-        fh_oos = fh[is_oos]
-        fh_ins = fh[is_ins]
+        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
-        if all(is_oos):
-            return self._predict_fixed_cutoff(fh_oos, X=X, return_pred_int=return_pred_int, alpha=alpha)
-        elif all(is_ins):
-            return self._predict_in_sample(fh_ins, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        # all values are out-of-sample
+        if len(fh_oos) == len(fh):
+            return self._predict_fixed_cutoff(fh_oos, **kwargs)
+
+        # all values are in-sample
+        elif len(fh_ins) == len(fh):
+            return self._predict_in_sample(fh_ins, **kwargs)
+
+        # both in-sample and out-of-sample values
         else:
-            y_ins = self._predict_in_sample(fh_ins, X=X, return_pred_int=return_pred_int, alpha=alpha)
-            y_oos = self._predict_fixed_cutoff(fh_oos, X=X, return_pred_int=return_pred_int, alpha=alpha)
+            y_ins = self._predict_in_sample(fh_ins, **kwargs)
+            y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
             return y_ins.append(y_oos)
 
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -344,7 +313,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         """
         # assert all(fh > 0)
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
-        index = self._get_absolute_fh(fh)
+        index = fh.absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):

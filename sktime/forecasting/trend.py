@@ -41,7 +41,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
             raise NotImplementedError()
         self.check_is_fitted()
         self._set_fh(fh)
-        fh_abs = self._get_absolute_fh()
+        fh_abs = self.fh.absolute(self.cutoff)
         x = fh_abs.reshape(-1, 1)
         y_pred = self.regressor_.predict(x)
         return pd.Series(y_pred, index=fh_abs)

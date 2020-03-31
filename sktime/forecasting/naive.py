@@ -111,7 +111,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
                 last_window = np.tile(last_window, reps=reps)
 
             # get zero-based index by subtracting the minimum
-            fh_idx = self._get_array_index_fh(fh)
+            fh_idx = fh.index_like(self.cutoff)
             return last_window[fh_idx]
 
         elif self.strategy == "mean":
