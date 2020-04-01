@@ -54,14 +54,15 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         # Shallow copy
         return list(self.steps)
 
-        # self.forecaster = forecaster
-        # self.transformer = transformer
-        # self.transformer_ = clone(self.transformer)
-        # self.forecaster_ = clone(self.forecaster)
+    def _iter_transformers(self, reverse=False):
 
-    def _iter(self):
-        stop = len(self.steps_) - 1
-        for idx, (name, transformer) in enumerate(islice(self.steps_, 0, stop)):
+        # exclude final forecaster
+        steps = self.steps_[:-1]
+
+        if reverse:
+            steps = reversed(steps)
+
+        for idx, (name, transformer) in enumerate(steps):
             yield idx, name, transformer
 
     def __len__(self):
@@ -82,16 +83,16 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
 
         # transform
         yt = check_y(y_train)
-        for step_idx, name, transformer in self._iter():
-            cloned_transformer = clone(transformer)
-            yt = cloned_transformer.fit_transform(yt)
-            self.steps_[step_idx] = (name, cloned_transformer)
+        for step_idx, name, transformer in self._iter_transformers():
+            t = clone(transformer)
+            yt = t.fit_transform(yt)
+            self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps[-1]
-        cloned_forecaster = clone(forecaster)
-        cloned_forecaster.fit(yt, fh=fh, X_train=X_train)
-        self.steps_[-1] = (name, cloned_forecaster)
+        f = clone(forecaster)
+        f.fit(yt, fh=fh, X_train=X_train)
+        self.steps_[-1] = (name, f)
 
         self._is_fitted = True
         return self
@@ -103,7 +104,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         forecaster = self.steps_[-1][1]
         y_pred = forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
-        for step_idx, name, transformer in self._iter():
+        for step_idx, name, transformer in self._iter_transformers(reverse=True):
             y_pred = transformer.inverse_transform(y_pred)
 
         return y_pred
@@ -112,7 +113,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         self.check_is_fitted()
         self._set_oh(y_new)
 
-        for step_idx, name, transformer in self._iter():
+        for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
                 transformer.update(y_new, update_params=update_params)
                 self.steps_[step_idx] = (name, transformer)
@@ -125,14 +126,14 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
     def transform(self, y):
         self.check_is_fitted()
         yt = check_y(y)
-        for step_idx, name, transformer in self._iter():
+        for step_idx, name, transformer in self._iter_transformers():
             yt = transformer.transform(yt)
         return yt
 
     def inverse_transform(self, y):
         self.check_is_fitted()
         yt = check_y(y)
-        for step_idx, name, transformer in self._iter():
+        for step_idx, name, transformer in self._iter_transformers(reverse=True):
             yt = transformer.inverse_transform(yt)
         return yt
 

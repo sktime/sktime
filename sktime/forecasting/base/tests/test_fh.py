@@ -50,6 +50,8 @@ def test_relative_in_and_out_of_sample(fh, cutoff):
 
 def test_y_test_index_input():
     y_train, y_test = make_forecasting_problem()
+
+    # check if y_test.index can be passed as absolute horizon
     fh = FH(y_test.index, is_relative=False)
     cutoff = y_train.index[-1]
     np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)

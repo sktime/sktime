@@ -27,14 +27,14 @@ class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
         return self
 
     def transform(self, y, X=None):
-        self._check_is_fitted()
+        self.check_is_fitted()
         y = check_y(y)
         fh = self._get_relative_fh(y)
         y_pred = self.forecaster_.predict(fh=fh, X=X)
         return y - y_pred
 
     def inverse_transform(self, y, X=None):
-        self._check_is_fitted()
+        self.check_is_fitted()
         y = check_y(y)
         fh = self._get_relative_fh(y)
         y_pred = self.forecaster_.predict(fh=fh, X=X)

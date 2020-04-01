@@ -65,19 +65,19 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
             return y * seasonal
 
     def transform(self, y, **transform_params):
-        self._check_is_fitted()
+        self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
         return self._detrend(y, seasonal)
 
     def inverse_transform(self, y, **transform_params):
-        self._check_is_fitted()
+        self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
         return self._retrend(y, seasonal)
 
     def update(self, y_new, update_params=False):
-        self._check_is_fitted()
+        self.check_is_fitted()
         y = check_y(y_new)
         self._set_oh_index(y_new)
 
