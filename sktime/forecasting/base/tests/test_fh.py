@@ -16,19 +16,19 @@ FH0 = TEST_FHS[0]
 
 @pytest.mark.parametrize("fh", TEST_FHS)
 def test_relative_relative(fh):
-    fh = FH(fh, is_relative=True)
+    fh = FH(fh, relative=True)
     relative = fh.relative()
     np.testing.assert_array_equal(relative, check_fh_values(fh))
 
 
 def test_relative_absolute_no_cutoff():
-    fh = FH(FH0, is_relative=True)
+    fh = FH(FH0, relative=True)
     with pytest.raises(ValueError):
         fh.absolute()
 
 
 def test_absolute_relative_no_cutoff():
-    fh = FH(FH0, is_relative=False)
+    fh = FH(FH0, relative=False)
     with pytest.raises(ValueError):
         fh.relative()
     with pytest.raises(ValueError):
@@ -52,6 +52,6 @@ def test_y_test_index_input():
     y_train, y_test = make_forecasting_problem()
 
     # check if y_test.index can be passed as absolute horizon
-    fh = FH(y_test.index, is_relative=False)
+    fh = FH(y_test.index, relative=False)
     cutoff = y_train.index[-1]
     np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)

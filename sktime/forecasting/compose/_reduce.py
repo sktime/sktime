@@ -67,10 +67,10 @@ class BaseReducer(BaseLastWindowForecaster):
             y_windows.append(y_window)
 
         # Put into required input format for regression
-        X_train, y_train = self._convert_data(x_windows, y_windows)
+        X_train, y_train = self._format_windows(x_windows, y_windows)
         return X_train, y_train
 
-    def _convert_data(self, x_windows, y_windows=None):
+    def _format_windows(self, x_windows, y_windows=None):
         """Helper function to combine windows from temporal cross-validation into nested
         pd.DataFrame for reduction to time series regression or tabular np.array for
         tabular regression.
@@ -87,24 +87,27 @@ class BaseReducer(BaseLastWindowForecaster):
         y : np.array
             Array of target values.
         """
-        X = self._convert_x_windows(x_windows)
+        X = self._format_x_windows(x_windows)
 
         # during prediction, y=None, so only return X
         if y_windows is None:
             return X
 
-        y = self._convert_y_windows(y_windows)
+        y = self._format_y_windows(y_windows)
         return X, y
 
     @staticmethod
-    def _convert_y_windows(y):
+    def _format_y_windows(y_windows):
+        """Template method for formatting y windows"""
         raise NotImplementedError("abstract method")
 
     @staticmethod
-    def _convert_x_windows(X):
+    def _format_x_windows(x_windows):
+        """Template method for formatting x windows"""
         raise NotImplementedError("abstract method")
 
     def _is_predictable(self, last_window):
+        """Helper function to check if we can make predictions from last window"""
         return len(last_window) == self.window_length_ \
                and np.sum(np.isnan(last_window)) == 0 \
                and np.sum(np.isinf(last_window)) == 0
@@ -114,7 +117,7 @@ class ReducedTimeSeriesRegressorMixin:
     """Mixin class for reducing forecasting to time series regression"""
 
     @staticmethod
-    def _convert_x_windows(x_windows):
+    def _format_x_windows(x_windows):
         """Helper function to combine windows from temporal cross-validation into nested
         pd.DataFrame used for solving forecasting via reduction to time series regression.
 
@@ -131,7 +134,7 @@ class ReducedTimeSeriesRegressorMixin:
         return pd.DataFrame(pd.Series([pd.Series(xi) for xi in x_windows]))
 
     @staticmethod
-    def _convert_y_windows(y_windows):
+    def _format_y_windows(y_windows):
         return np.array([np.asarray(yi) for yi in y_windows])
 
 
@@ -139,7 +142,7 @@ class ReducedTabularRegressorMixin:
     """Mixin class for reducing forecasting to tabular regression"""
 
     @staticmethod
-    def _convert_x_windows(x_windows):
+    def _format_x_windows(x_windows):
         """Helper function to combine windows from temporal cross-validation into nested
         pd.DataFrame used for solving forecasting via reduction to time series regression.
 
@@ -155,7 +158,7 @@ class ReducedTabularRegressorMixin:
         return np.vstack(x_windows)
 
     @staticmethod
-    def _convert_y_windows(y_windows):
+    def _format_y_windows(y_windows):
         return np.vstack(y_windows)
 
 
@@ -201,7 +204,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
-        X_last = self._convert_data([last_window])
+        X_last = self._format_windows([last_window])
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
@@ -263,7 +266,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
-            X_last = self._convert_data([last_window])  # convert data into required input format
+            X_last = self._format_windows([last_window])  # convert data into required input format
             y_pred[i] = self.regressor_.predict(X_last)  # make forecast using fitted regressor
 
             # update last window with previous prediction

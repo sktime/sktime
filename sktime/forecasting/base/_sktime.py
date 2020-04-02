@@ -119,6 +119,56 @@ class BaseSktimeForecaster(BaseForecaster):
         self._set_fh(fh)
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
+    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
+        """Update and make forecasts."
+
+        This method is useful for updating forecasts in a single step, allowing to make use of more efficient
+        updating algorithms than calling update and predict sequentially.
+
+        Parameters
+        ----------
+        y_new
+        fh
+        X
+        update_params
+        return_pred_int
+        alpha
+
+        Returns
+        -------
+
+        """
+        self.check_is_fitted()
+        self._set_fh(fh)
+        return self._update_predict_single(y_new, self.fh, X=X, update_params=update_params,
+                                           return_pred_int=return_pred_int, alpha=alpha)
+
+    def _update_predict_single(self, y_new, fh, X=None, update_params=False, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
+        """Internal method for updating and making forecasts.
+
+        Implements default behaviour of calling update and predict sequentially, but can be overwritten by subclasses
+        to implement more efficient updating algorithms when available.
+
+        Parameters
+        ----------
+        y_new
+        fh
+        X
+        update_params
+        return_pred_int
+        alpha
+
+        Returns
+        -------
+
+        """
+        if X is not None:
+            raise NotImplementedError()
+        self.update(y_new, X_new=X, update_params=update_params)
+        return self.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+
     def update(self, y_new, X_new=None, update_params=False):
         if update_params:
             raise NotImplementedError()
@@ -161,8 +211,11 @@ class BaseSktimeForecaster(BaseForecaster):
             self._set_cutoff(y.index[0] - 1)
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
-                self.update(y_new, update_params=update_params)
-                y_pred = self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+
+                # we cannot use update_predict_single here, as this would re-set the forecasting horizon, instead we use
+                # the internal _update_predict_single method
+                y_pred = self._update_predict_single(y_new, fh, X=X, update_params=update_params,
+                                                     return_pred_int=return_pred_int, alpha=alpha)
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
@@ -173,7 +226,7 @@ class BaseSktimeForecaster(BaseForecaster):
         Parameters
         ----------
         fh : np.array
-        X : pd.DataFrame
+        X : pd.DataFrame, optional (default=None)
         return_pred_int : bool
         alpha : float or list of floats
 
@@ -365,6 +418,31 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
     @staticmethod
     def _predict_nan(fh):
         return np.full(len(fh), np.nan)
+
+    def _update_predict_single(self, y_new, fh, X=None, update_params=False, return_pred_int=False,
+                               alpha=DEFAULT_ALPHA):
+        """Internal method for updating and making forecasts.
+
+        Implements default behaviour of calling update and predict sequentially, but can be overwritten by subclasses
+        to implement more efficient updating algorithms when available.
+
+        Parameters
+        ----------
+        y_new
+        fh
+        X
+        update_params
+        return_pred_int
+        alpha
+
+        Returns
+        -------
+
+        """
+        if X is not None:
+            raise NotImplementedError()
+        self.update(y_new, X_new=X, update_params=update_params)
+        return self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

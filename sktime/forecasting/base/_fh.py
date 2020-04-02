@@ -24,16 +24,16 @@ class FH(np.ndarray):
     is_relative = None
     _type = None
 
-    def __new__(cls, values, is_relative=True):
+    def __new__(cls, values, relative=True):
         """Construct forecasting horizon object"""
 
-        if not is_relative and isinstance(values, pd.Index):
+        if not relative and isinstance(values, pd.Index):
             values = values.values  # accept pandas index for absolute fh
 
         # input checks, returns numpy array
         values = check_fh_values(values)
 
-        if is_relative:
+        if relative:
             klass = RelativeFH
         else:
             klass = AbsoluteFH
