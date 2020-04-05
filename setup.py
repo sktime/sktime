@@ -78,7 +78,9 @@ EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
         'pytest-cov',
-        'tsfresh'
+        'tsfresh',
+        'pmdarima',
+        'scikit-posthocs'
     ],
     'docs': [
         'sphinx',
