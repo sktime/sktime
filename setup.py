@@ -4,6 +4,7 @@
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/d2476fb679f05e80c56e8b151ff0f6d7a470e4ae/setup.py#L20
 
 import codecs
+import importlib
 import os
 import platform
 import re
@@ -13,6 +14,13 @@ import traceback
 from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
+
+MIN_REQUIREMENTS = {
+    "numpy": "1.17.0",
+    "pandas": "0.24.0",
+    "scikit-learn": "0.22.0",
+    "statsmodels": "0.9.0",
+}
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -33,8 +41,6 @@ def find_version(*file_paths):
         raise RuntimeError("Unable to find version string.")
 
 
-NUMPY_MIN_VERSION = "1.17.0"
-
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
 DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
@@ -51,15 +57,10 @@ PROJECT_URLS = {
     'Source Code': 'https://github.com/alan-turing-institute/sktime'
 }
 VERSION = find_version('sktime', '__init__.py')
-INSTALL_REQUIRES = (
-    'numpy',
-    'scipy',
-    'scikit-learn',
-    'pandas',
-    'joblib',
-    'statsmodels',
-    'numba'
-)
+INSTALL_REQUIRES = [
+    f"{package}>={version}"
+    for package, version in MIN_REQUIREMENTS.items()
+]
 CLASSIFIERS = [
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
@@ -78,9 +79,7 @@ EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
         'pytest-cov',
-        'tsfresh',
-        'pmdarima',
-        'scikit-posthocs'
+        'tsfresh'
     ],
     'docs': [
         'sphinx',
@@ -197,24 +196,41 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-def get_numpy_status():
+def check_package_status(package, min_version):
     """
-    Returns a dictionary containing a boolean specifying whether NumPy
+    Returns a dictionary containing a boolean specifying whether given package
     is up-to-date, along with the version string (empty string if
     not installed).
     """
-    numpy_status = {}
+    package_status = {}
     try:
-        import numpy
-        numpy_version = numpy.__version__
-        numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
-        numpy_status['version'] = numpy_version
+        module = importlib.import_module(package)
+        package_version = module.__version__
+        package_status['up_to_date'] = parse_version(
+            package_version) >= parse_version(min_version)
+        package_status['version'] = package_version
     except ImportError:
         traceback.print_exc()
-        numpy_status['up_to_date'] = False
-        numpy_status['version'] = ""
-    return numpy_status
+        package_status['up_to_date'] = False
+        package_status['version'] = ""
+
+    req_str = "scikit-learn requires {} >= {}.\n".format(
+        package, min_version)
+
+    instructions = ("Installation instructions are available on the "
+                    "scikit-learn website: "
+                    "http://scikit-learn.org/stable/install.html\n")
+
+    if package_status['up_to_date'] is False:
+        if package_status['version']:
+            raise ImportError("Your installation of {} "
+                              "{} is out-of-date.\n{}{}"
+                              .format(package, package_status['version'],
+                                      req_str, instructions))
+        else:
+            raise ImportError("{} is not "
+                              "installed.\n{}{}"
+                              .format(package, req_str, instructions))
 
 
 def setup_package():
@@ -236,7 +252,7 @@ def setup_package():
         **extra_setuptools_args
     )
 
-    # For some actions, NumPy is not required.
+    # For these actions, NumPy is not required
     # They are required to succeed without Numpy for example when
     # pip is used to install sktime when Numpy is not yet
     # present in the system.
@@ -253,7 +269,7 @@ def setup_package():
 
         metadata['version'] = VERSION
 
-    # otherwise check Python and NumPy version
+    # otherwise check Python and required package versions
     else:
         if sys.version_info < (3, 6):
             raise RuntimeError(
@@ -261,22 +277,8 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        numpy_status = get_numpy_status()
-        numpy_req_str = "sktime requires NumPy >= {}.\n".format(
-            NUMPY_MIN_VERSION)
-
-        instructions = (f"Installation instructions are available on the "
-                        f"sktime website: {WEBSITE}\n")
-
-        if numpy_status['up_to_date'] is False:
-            if numpy_status['version']:
-                raise ImportError("Your installation of "
-                                  "NumPy {} is out-of-date.\n{}{}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
-            else:
-                raise ImportError("NumPy is not installed.\n{}{}"
-                                  .format(numpy_req_str, instructions))
+        for package, version in MIN_REQUIREMENTS.items():
+            check_package_status(package, version)
 
         from numpy.distutils.core import setup
 

@@ -83,11 +83,12 @@ make_conda() {
 
     # Set up test environment
     conda env create --name testenv --file $TO_INSTALL
-
+  
     # Activate environment
-    conda activate testenv
+    source activate testenv
 }
 
+# requirements file
 TO_INSTALL="requirements.yml"
 make_conda $TO_INSTALL
 
