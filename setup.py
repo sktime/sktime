@@ -33,6 +33,8 @@ def find_version(*file_paths):
         raise RuntimeError("Unable to find version string.")
 
 
+NUMPY_MIN_VERSION = "1.17.0"
+
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
 DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
