@@ -1,13 +1,13 @@
 {
   "projectName": "sktime",
-  "projectOwner": "The Alan Turing Institute",
+  "projectOwner": "la",
   "repoType": "github",
-  "repoHost": "https://github.com",
+  "repoHost": "",
   "files": [
     "CONTRIBUTORS.md"
   ],
   "imageSize": 100,
-  "commit": true,
+  "commit": false,
   "commitConvention": "none",
   "contributors": [
     {
@@ -219,6 +219,6 @@
     }
   ],
   "contributorsPerLine": 7,
-  "contributorsSortAlphabetically": true,
-  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg?style=flat)](#contributors)"
+  "contributorsSortAlphabetically": true
+
 }

@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |pypi|_ |gitter|_ |Binder|_
+|travis|_ |appveyor|_ |pypi|_ |gitter|_ |binder|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime

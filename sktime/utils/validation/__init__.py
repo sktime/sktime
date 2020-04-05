@@ -2,7 +2,7 @@ __all__ = ["check_is_fitted"]
 __author__ = "Markus Löning"
 
 from inspect import isclass
-from sktime.exceptions import NotFittedError
+from sktime.utils.exceptions import NotFittedError
 
 
 def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):

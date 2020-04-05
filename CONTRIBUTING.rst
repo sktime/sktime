@@ -1,74 +1,12 @@
 How to contribute
 =================
 
-Getting started
----------------
+Welcome to our how-to-contribute guide!
 
-Welcome to our how to get started guide! If you get stuck, feel free to `contact us`_.
+If you get stuck, feel free to `contact us`_ or `raise an issue`_.
 
-1. We assume familiarity with `scikit-learn`_. If you haven’t work with
-   scikit-learn before, take a look at their `getting-started guide`_.
-   For more, just search the web, there are plenty of online videos and
-   tutorials! Even if you’ve used scikit-learn before, it may still be
-   useful to read through their `developers’ guide`_.
+sktime follows `scikit-learn`_'s API whenever possible, it'll be useful to a look at their `developers’ guide`_.
 
-2. If you’re familiar with scikit-learn, a good starting point is to run our example notebooks on
-   `Binder`_. This runs the notebooks in the cloud and doesn’t require
-   you to install anything. Play around with the different notebooks to
-   get to know sktime - if something doesn’t look right, `chat to us`_
-   or `raise an issue`_.
-
-3. Install sktime locally. This requires a working Python installation.
-   To install Python, we recommend downloading the `Anaconda Distribution`_ and following their installation instructions `here`_.
-   For the example notebooks, you'll also need Jupyter Notebooks (which should come with the
-   default Anaconda Distribution). Here’s a `guide`_ on how to get
-   started with Jupyter. We also recommend using `conda environments`_.
-   Once you have a working Python environment, you should be able
-   to run ``pip install sktime``.
-
-4. Having installed sktime, you can try to run the example notebooks locally. You need
-   to download or `clone`_ the repository from GitHub. You should then
-   be able to `activate your conda environment`_ and launch Jupyter
-   notebooks by running ``jupyter notebook`` in the root directory of
-   the downloaded repository.
-
-5. In order to contribute to sktime, you need to `fork`_ the repository
-   on GitHub and create a local
-   `clone <https://help.github.com/en/articles/cloning-a-repository>`__
-   of it, following the instructions in our `contributing guidelines`_.
-
-6. You may want install the development version of sktime based on the
-   clone of your sktime fork. Check out our advanced installation
-   instructions
-   `here <https://github.com/alan-turing-institute/sktime/blob/dev/README.rst>`__
-   - again, if you get stuck, simply `chat to us`_.
-
-7. See if you can run the unit tests using `pytest`_ by running
-   ``pytest`` in the root directory of the repository.
-
-Once everything is set up and working, you can start contributing!
-
-.. _Code of Conduct: https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst
-.. _create a PR: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst
-.. _contact us: https://gitter.im/sktime/community
-.. _scikit-learn: https://scikit-learn.org/stable/
-.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
-.. _developers’ guide: https://scikit-learn.org/stable/developers/index.html
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
-.. _chat to us: https://gitter.im/sktime/community
-.. _raise an issue: https://github.com/alan-turing-institute/sktime/issues/new/choose
-.. _Anaconda Distribution: https://www.anaconda.com
-.. _here: https://docs.anaconda.com/anaconda/user-guide/getting-started/
-.. _guide: https://jupyter.org/install.html
-.. _conda environments: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _clone:
-.. _activate your conda environment: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
-.. _fork: https://help.github.com/en/articles/fork-a-repo
-.. _contributing guidelines: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md
-.. _pytest: https://docs.pytest.org/en/latest/contents.html
-
-Contributing
-------------
 
 The preferred workflow for contributing to sktime is to fork the `main
 repository <https://github.com/alan-turing-institute/sktime/>`__ on
@@ -195,4 +133,13 @@ rules before submitting:
    or link to a `gist <https://gist.github.com>`__. If an exception is
    raised, please provide the traceback.
 
+
+.. _contact us: https://gitter.im/sktime/community
+.. _scikit-learn: https://scikit-learn.org/stable/
+.. _getting-started guide: https://scikit-learn.org/stable/getting_started.html
+.. _developers’ guide: https://scikit-learn.org/stable/developers/index.html
+.. _chat to us: https://gitter.im/sktime/community
+.. _raise an issue: https://github.com/alan-turing-institute/sktime/issues/new/choose
+.. _clone:
+.. _fork: https://help.github.com/en/articles/fork-a-repo
 

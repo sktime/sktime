@@ -2,7 +2,8 @@
 
 # You can set these variables from the command line.
 PREPROCESS    = sphinx-apidoc
-AUTOGENDIR    = source/autogen
+APIDOCTEMPLATEDIR = source/_templates/apidoc
+AUTOGENDIR    = source/auto_generated
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
 SOURCEDIR     = source
@@ -10,7 +11,7 @@ BUILDDIR      = _build
 PROJECTDIR    = "../sktime/"
 
 # exclude unit tests from API reference
-EXCLUDEPATHS = "../*tests* ../*test* ../contrib*"
+EXCLUDEPATHS = "../*tests* ../*test* ../*contrib* ../*setup*"
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -22,6 +23,6 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	-rm -rf $(AUTOGENDIR)
-	@$(PREPROCESS) -eMT -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
+	@$(PREPROCESS) -eMT --templatedir $(APIDOCTEMPLATEDIR) -o $(AUTOGENDIR) $(PROJECTDIR) "$(EXCLUDEPATHS)"
 	-rm -rf $(BUILDDIR)
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)

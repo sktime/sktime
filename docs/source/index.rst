@@ -18,11 +18,13 @@ From here, you can navigate to:
    :maxdepth: 1
 
    installation
-   examples
-   API Reference <autogen/sktime>
-   contributing
+   how_to_get_started
+   api_reference
    changelog
+   how_to_contribute
+   contributors
    code_of_conduct
+
 
 * :ref:`genindex`
 * :ref:`modindex`
