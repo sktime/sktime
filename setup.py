@@ -3,7 +3,6 @@
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/d2476fb679f05e80c56e8b151ff0f6d7a470e4ae/setup.py#L20
 
-import setuptools # need this due to versioning of setuptools vs distutils, see https://stackoverflow.com/questions/21136266/typeerror-dist-must-be-a-distribution-instance
 import codecs
 import os
 import platform
@@ -14,15 +13,6 @@ import traceback
 from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
-
-NUMPY_MIN_VERSION = "1.17.0"
-SCIPY_MIN_VERSION = "1.2.0"
-JOBLIB_MIN_VERSION = "0.13"
-PANDAS_MIN_VERSION = "0.24.0"
-SKLEARN_MIN_VERSION = "0.21.0"
-STATSMODELS_MIN_VERSION = "0.9.0"
-SCIKIT_POSTHOCS_MIN_VERSION = "0.5.0"
-NUMBA_MIN_VERSION = "0.47"
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -60,14 +50,13 @@ PROJECT_URLS = {
 }
 VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = (
-    'numpy>={}'.format(NUMPY_MIN_VERSION),
-    'scipy>={}'.format(SCIPY_MIN_VERSION),
-    'scikit-learn>={}'.format(SKLEARN_MIN_VERSION),
-    'pandas>={}'.format(PANDAS_MIN_VERSION),
-    'joblib>={}'.format(JOBLIB_MIN_VERSION),
-    'scikit-posthocs>={}'.format(SCIKIT_POSTHOCS_MIN_VERSION),
-    'statsmodels>={}'.format(STATSMODELS_MIN_VERSION),
-    'numba>={}'.format(NUMBA_MIN_VERSION)
+    'numpy',
+    'scipy',
+    'scikit-learn',
+    'pandas',
+    'joblib',
+    'statsmodels',
+    'numba'
 )
 CLASSIFIERS = [
     'Intended Audience :: Science/Research',
@@ -109,7 +98,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
