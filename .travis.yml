@@ -61,7 +61,7 @@ deploy:
     # on master branch, deploy website and upload compiled files to Github
     - provider: pages
       skip-cleanup: true
-      local_dir: "./documentation/build_doc_site/html"
+      local_dir: "./docs/_build/html"
       github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
       keep-history: false
       on:
