@@ -83,7 +83,7 @@ make_conda() {
 
     # Set up test environment
     conda env create --name testenv --file $TO_INSTALL
-  
+
     # Activate environment
     source activate testenv
 }
