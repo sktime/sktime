@@ -42,14 +42,25 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     """
 
-    def __init__(self, time_contract_in_mins=300, n_classifiers=500):
+    def __init__(self, time_contract_in_mins=300, n_classifiers=500, random_state=None):
         self.time_contract_in_mins = time_contract_in_mins
         self.n_classifiers = n_classifiers
+        self.random_state = random_state
 
-        self.classifier = Pipeline([
-            ('st', ContractedShapeletTransform(time_limit_in_mins=time_contract_in_mins,
-                                               verbose=False)),
-            ('rf', RandomForestClassifier(n_estimators=n_classifiers))
+        self.transform = ContractedShapeletTransform(
+            time_limit_in_mins=time_contract_in_mins,
+            random_state=random_state,
+            verbose=False
+        )
+
+        self.internal_classifier = RandomForestClassifier(
+            n_estimators=n_classifiers,
+            random_state=random_state
+        )
+
+        self.pipeline = Pipeline([
+            ('st', self.transform),
+            ('rf', self.internal_classifier)
         ])
 
     #        self.shapelet_transform=ContractedShapeletTransform(time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
@@ -73,7 +84,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier.fit(X, y)
+        self.pipeline.fit(X, y)
 
         #        self.shapelet_transform.fit(X,y)
         #        print("Shapelet Search complete")
@@ -113,7 +124,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         #        tempX=self.shapelet_transform.transform(X)
         #        X = np.asarray([a.values for a in tempX.iloc[:, 0]])
         validate_X(X)
-        return self.classifier.predict_proba(X)
+        return self.pipeline.predict_proba(X)
 
     #
     # def set_contract_minutes(self, minutes):

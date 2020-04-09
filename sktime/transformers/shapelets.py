@@ -103,6 +103,12 @@ class ShapeletTransform(BaseTransformer):
         if type(self) is ContractedShapeletTransform and self.time_limit <= 0:
             raise ValueError("Error: time limit cannot be equal to or less than 0")
 
+        if self.shapelets is None:
+            print("processing")
+        else:
+            print("already fitted - skipping")
+            return
+
         X_lens = np.array([len(X.iloc[r,0]) for r in range(len(X))]) # note, assumes all dimensions of a case are the same length. A shapelet would not be well defined if indices do not match!
         X = np.array([[X.iloc[r,c].values for c in range(len(X.columns))] for r in range(len(X))]) # may need to pad with nans here for uneq length, look at later
 

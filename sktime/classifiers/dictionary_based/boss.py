@@ -111,7 +111,7 @@ class BOSSEnsemble(BaseEstimator):
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
-        self.time_limit = time_limit*6e+10
+        self.time_limit = time_limit
 
         self.seed = 0
         self.classifiers = []
