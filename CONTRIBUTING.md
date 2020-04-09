@@ -47,6 +47,9 @@ If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend 
 or another contributor for help.
 
+To install the development version, please see our [advanced installation instructions](https://alan-turing-institute.github.io/sktime/installation.html#development-version).
+
+
 Pull Request Checklist
 ----------------------
 
@@ -60,7 +63,7 @@ In addition, we add the following guidelines:
   `nsamples`.
     - Avoid multiple statements on one line. Prefer a line return after a 
   control flow statement (`if`/`for`).
-    - Use relative imports for references inside sktime.
+    - Use absolute imports for references inside sktime.
     - Unit tests are an exception to the previous rule; they should use 
   absolute imports, exactly as client code would. A corollary is that, if 
   `sktime.foo` exports a class or function that is implemented in `sktime.foo.bar.baz`, 
@@ -117,6 +120,4 @@ Coding tips:
 ------------
 
 -  When writing new classes, inherit from appropriate base classes (`BaseTransformer`, `BaseClassifier`, `BaseRegressor`),
-
--  Use relative imports when importing functions or classes from within sktime, except for unit tests where you should use absolute imports.
 

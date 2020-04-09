@@ -1,10 +1,12 @@
 numpy==1.17.*
 scipy==1.2.*
-scikit-learn==0.21.*
-pandas==0.23.*
+scikit-learn==0.22.*
+pandas==0.24.*
 joblib==0.13.*
 scikit-posthocs==0.5.*
 statsmodels==0.9.*
 cython==0.29.*
 pytest
 wheel
+tsfresh
+numba

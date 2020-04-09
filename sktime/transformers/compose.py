@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as skColumnTransformer
-from sklearn.utils.validation import check_is_fitted
+from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import concat_nested_arrays

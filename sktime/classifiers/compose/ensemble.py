@@ -5,28 +5,29 @@ Configurable time series ensembles
 __all__ = ["TimeSeriesForestClassifier"]
 __author__ = "Markus Löning"
 
-
-from warnings import warn
 from warnings import catch_warnings
 from warnings import simplefilter
+from warnings import warn
+
 import numpy as np
+from joblib import Parallel, delayed
+from sklearn.ensemble.base import _partition_estimators
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
 from sklearn.ensemble.forest import _generate_sample_indices
 from sklearn.ensemble.forest import _generate_unsampled_indices
-from sklearn.ensemble.base import _partition_estimators
-from sklearn.utils._joblib import Parallel, delayed
-from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_random_state
-from sklearn.utils import check_array
-from sklearn.utils import compute_sample_weight
-from sklearn.utils.validation import check_is_fitted
+from sklearn.ensemble.forest import _get_n_samples_bootstrap
 from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree._tree import DOUBLE
+from sklearn.utils import check_array
+from sklearn.utils import check_random_state
+from sklearn.utils import compute_sample_weight
 
 from sktime.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
 
 
@@ -44,7 +45,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
     base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
-    n_estimators : integer, optional (default=100)
+    n_estimators : integer, optional (default=200)
         The number of trees in the forest.
     criterion : string, optional (default="gini")
         The function to measure the quality of a split. Supported criteria are
@@ -74,7 +75,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-    max_features : int, float, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
@@ -102,10 +103,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float, (default=1e-7)
+    min_impurity_split : float or None, (default=None)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
-    bootstrap : boolean, optional (default=True)
+    bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
@@ -146,6 +147,13 @@ class TimeSeriesForestClassifier(ForestClassifier):
         For multi-output, the weights of each column of y will be multiplied.
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
+    max_samples : int or float, default=None
+        If bootstrap is True, the number of samples to draw from X
+        to train each base estimator.
+        - If None (default), then draw `X.shape[0]` samples.
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
+          `max_samples` should be in the interval `(0, 1)`.
 
     Attributes
     ----------
@@ -174,7 +182,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=500,
+                 n_estimators=200,
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
@@ -190,7 +198,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 max_samples=None):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
@@ -213,7 +222,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
-        
+        self.max_samples = max_samples
+
         # Rename estimator params according to name in pipeline.
         estimator = base_estimator.steps[-1][0]
         estimator_params = {
@@ -240,7 +250,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight
+            class_weight=class_weight,
+            max_samples=max_samples
         )
 
         # Assign random state to pipeline.
@@ -311,6 +322,12 @@ class TimeSeriesForestClassifier(ForestClassifier):
             else:
                 sample_weight = expanded_class_weight
 
+        # Get bootstrap sample size
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples=X.shape[0],
+            max_samples=self.max_samples
+        )
+
         # Check parameters
         self._validate_estimator()
 
@@ -352,7 +369,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight)
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    n_samples_bootstrap=n_samples_bootstrap)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -433,9 +451,13 @@ class TimeSeriesForestClassifier(ForestClassifier):
         predictions = [np.zeros((n_samples, n_classes_[k]))
                        for k in range(self.n_outputs_)]
 
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples
+        )
+
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
-                estimator.random_state, n_samples)
+                estimator.random_state, n_samples, n_samples_bootstrap)
             p_estimator = estimator.predict_proba(X.iloc[unsampled_indices, :])
 
             if self.n_outputs_ == 1:
@@ -465,7 +487,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
-                          verbose=0, class_weight=None):
+                          verbose=0, class_weight=None,
+                          n_samples_bootstrap=None):
     """Private function used to fit a single tree in parallel, adjusted for pipeline trees."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
@@ -480,7 +503,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(tree.random_state, n_samples)
+        indices = _generate_sample_indices(tree.random_state, n_samples,
+                                           n_samples_bootstrap)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 

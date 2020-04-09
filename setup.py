@@ -18,10 +18,11 @@ from pkg_resources import parse_version
 NUMPY_MIN_VERSION = "1.17.0"
 SCIPY_MIN_VERSION = "1.2.0"
 JOBLIB_MIN_VERSION = "0.13"
-PANDAS_MIN_VERSION = "0.23.0"
+PANDAS_MIN_VERSION = "0.24.0"
 SKLEARN_MIN_VERSION = "0.21.0"
 STATSMODELS_MIN_VERSION = "0.9.0"
 SCIKIT_POSTHOCS_MIN_VERSION = "0.5.0"
+NUMBA_MIN_VERSION = "0.47"
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -44,7 +45,7 @@ def find_version(*file_paths):
 
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible toolbox for learning with time series/panel data'
+DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Király'
@@ -65,7 +66,8 @@ INSTALL_REQUIRES = (
     'pandas>={}'.format(PANDAS_MIN_VERSION),
     'joblib>={}'.format(JOBLIB_MIN_VERSION),
     'scikit-posthocs>={}'.format(SCIKIT_POSTHOCS_MIN_VERSION),
-    'statsmodels>={}'.format(STATSMODELS_MIN_VERSION)
+    'statsmodels>={}'.format(STATSMODELS_MIN_VERSION),
+    'numba>={}'.format(NUMBA_MIN_VERSION)
 )
 CLASSIFIERS = [
     'Intended Audience :: Science/Research',
@@ -84,7 +86,8 @@ CLASSIFIERS = [
 EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
-        'pytest-cov'
+        'pytest-cov',
+        'tsfresh'
     ],
     'docs': [
         'sphinx',
