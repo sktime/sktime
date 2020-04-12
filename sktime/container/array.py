@@ -206,7 +206,22 @@ def empty(shape, dtype=np.float):
     """
     return np.full(shape, np.nan, dtype=dtype)
 
-def rows_na(arr, sum_func=np.all, axis=1):
+def rows_na(arr, sum_func=np.all, axis=0):
+    """
+    Summarise the presence of missing values along an axis in np.ndarray
+
+    Parameters
+    ----------
+    arr : np.ndarray
+    sum_func : function, optional
+        Summary function like np.all, np.any or np.sum
+    axis : int
+        axis along which to summarise
+
+    Returns
+    -------
+    a boolean array
+    """
     return np.apply_over_axes(sum_func, np.isnan(arr), axis).flatten()
 
 # ------------------------------------------------------------------------------
@@ -237,14 +252,14 @@ class TimeArray(ExtensionArray):
 
     Parameters
     ----------
-    data : TimeArray or ndarray
+    data : TimeArray or np.ndarray
         The measurements at certain time points (columns) for one or more
         timeseries (rows).
-    time_index : ndarray, optional
+    time_index : np.ndarray, optional
         A time index for each entry in 'data'. Must be of the same shape as
         data. If None, the time index stored in 'data' will be used if 'data'
         is a TimeArray object, or a default time index of [0, 1, ..., N] will be
-        generated for each row if 'data' is a ndarray.
+        generated for each row if 'data' is a np.ndarray.
     copy : bool, default False
         If True, copy the underlying data.
     """
@@ -314,7 +329,7 @@ class TimeArray(ExtensionArray):
         scalars : Sequence
             Each element should be a timeseries-like object,
             see from_list() for a detailed description.
-        dtype : dtype, optional
+        dtype : type, optional
             Construct for this particular dtype. This is currently ignored
             and only included for compatibility
         copy : bool, default False
@@ -336,7 +351,7 @@ class TimeArray(ExtensionArray):
 
         Returns
         -------
-        values : ndarray
+        values : np.ndarray
             An array of type String suitable for factorization.
         na_value : object
             The value in `values` to consider missing. Not implemented
@@ -353,7 +368,7 @@ class TimeArray(ExtensionArray):
 
         Parameters
         ----------
-        values : ndarray
+        values : np.ndarray
             An integer ndarray with the factorized values.
         original : TimeArray
             The original TimeArray that factorize was called on.
@@ -478,47 +493,6 @@ class TimeArray(ExtensionArray):
         return self.data.nbytes
 
     # --------------------------------------------------------------------------
-    # Ops
-    # --------------------------------------------------------------------------
-
-    def isna(self):
-        # TODO: revisit definition of missingness
-        return rows_na(self.data) & rows_na(self.time_index)
-
-    def hasna(self):
-        # TODO: revisit definition of missingness
-        return rows_na(self.data, np.any)
-
-    def astype(self, dtype, copy=True):
-        if isinstance(dtype, TimeDtype):
-            if copy:
-                return self.copy()
-            else:
-                return self
-        elif dtype is str or \
-                (hasattr(dtype, 'kind') and dtype.kind in {'U', 'S'}):
-            return np.array(self).astype(dtype)
-        elif dtype is object or \
-                (hasattr(dtype, 'kind') and dtype.kind in {'O'}):
-            return np.array(self)
-        raise ValueError(f"TimeArray can only be cast to numpy array with type "
-                         f"'object', got type {dtype}")
-
-    def unique(self):
-        from pandas import factorize
-        rows, _ = factorize(np.array(self).astype(str))
-        return self[np.unique(rows)]
-
-    def value_counts(self, dropna=True):
-        # TODO: review, does it make sense to keep such a function in?
-        if(dropna):
-            factorised, _ = self.dropna()._values_for_factorize()
-        else:
-            factorised, _ = self._values_for_factorize()
-
-        return pd.Series(factorised).value_counts()
-
-    # --------------------------------------------------------------------------
     # general array like compatibility functions
     # --------------------------------------------------------------------------
 
@@ -564,8 +538,62 @@ class TimeArray(ExtensionArray):
     # pandas compatibility functions
     # --------------------------------------------------------------------------
 
-    def copy(self, *args, **kwargs):
-        return TimeArray(self.data.copy(), self.time_index.copy())
+    def isna(self):
+        """
+        Detect missing rows
+
+        Missing rows (i.e. missing information on all data and indices) are
+        detected.
+
+        Returns
+        -------
+        a boolean array of whether rows (i.e. data and index) are completely
+        empty
+        """
+        # TODO: revisit definition of missingness
+        return rows_na(self.data, axis=1) & rows_na(self.time_index, axis=1)
+
+    def hasna(self):
+        """
+        Detect missing values
+
+        Missing values (i.e. missing information on **data**) are detected.
+
+        Returns
+        -------
+        a boolean array of whether any data items in a row are empty
+        """
+        # TODO: revisit definition of missingness
+        return rows_na(self.data, sum_func=np.any, axis=1)
+
+    def astype(self, dtype, copy=True):
+        if isinstance(dtype, TimeDtype):
+            if copy:
+                return self.copy()
+            else:
+                return self
+        elif dtype is str or \
+                (hasattr(dtype, 'kind') and dtype.kind in {'U', 'S'}):
+            return np.array(self).astype(dtype)
+        elif dtype is object or \
+                (hasattr(dtype, 'kind') and dtype.kind in {'O'}):
+            return np.array(self)
+        raise ValueError(f"TimeArray can only be cast to numpy array with type "
+                         f"'object', got type {dtype}")
+
+    def unique(self):
+        from pandas import factorize
+        rows, _ = factorize(np.array(self).astype(str))
+        return self[np.unique(rows)]
+
+    def value_counts(self, dropna=True):
+        # TODO: review, does it make sense to keep such a function in?
+        if (dropna):
+            factorised, _ = self.dropna()._values_for_factorize()
+        else:
+            factorised, _ = self._values_for_factorize()
+
+        return pd.Series(factorised).value_counts()
 
     def take(self, indices, allow_fill=False, fill_value=None):
         # TODO: revisit and simplify
@@ -580,8 +608,8 @@ class TimeArray(ExtensionArray):
             indices = np.asarray(indices, dtype=np.intp)
             out_of_range = (indices < 0) | (indices >= data.shape[0])
 
-            data[rows_na(data) & out_of_range] = fill_value.data
-            time_index[rows_na(time_index) & out_of_range] = \
+            data[rows_na(data, axis=1) & out_of_range] = fill_value.data
+            time_index[rows_na(time_index, axis=1) & out_of_range] = \
                 fill_value.time_index
         elif allow_fill and fill_value is not None:
             TypeError(f"Only TimeBase are allowed as fill values, "
