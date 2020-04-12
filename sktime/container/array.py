@@ -3,10 +3,11 @@ import pandas as pd
 
 import numbers
 from collections.abc import Iterable
+
+# TODO: add typing
 from typing import (
     Any,
     Callable,
-    Optional,
     Sequence,
     Tuple,
     Type
@@ -25,6 +26,8 @@ from sktime.container.base import check_data_index, ensure_2d
 # ------------------------------------------------------------------------------
 # Extension Type
 # ------------------------------------------------------------------------------
+
+
 class TimeDtype(ExtensionDtype):
     type = TimeBase
     name = "timeseries"
@@ -41,6 +44,7 @@ class TimeDtype(ExtensionDtype):
     @classmethod
     def construct_array_type(cls):
         return TimeArray
+
 
 # Register the datatype with pandas
 register_extension_dtype(TimeDtype)
@@ -161,6 +165,7 @@ def from_ts(ts):
 
     return from_list([TimeBase(*parse_line(l)) for l in ts])
 
+
 def to_ts(obj, include_header=True):
     # Note: this is a very preliminary implementation to convert to ts format.
     #       This will be extended in the future, after TimeArray compatibility
@@ -185,11 +190,10 @@ def to_ts(obj, include_header=True):
             for x in obj]
 
 
-
-
 # ------------------------------------------------------------------------------
 # Helper functions
 # ------------------------------------------------------------------------------
+
 
 def empty(shape, dtype=np.float):
     """
@@ -205,6 +209,7 @@ def empty(shape, dtype=np.float):
     np.ndarray
     """
     return np.full(shape, np.nan, dtype=dtype)
+
 
 def rows_na(arr, sum_func=np.all, axis=0):
     """
@@ -224,9 +229,11 @@ def rows_na(arr, sum_func=np.all, axis=0):
     """
     return np.apply_over_axes(sum_func, np.isnan(arr), axis).flatten()
 
+
 # ------------------------------------------------------------------------------
 # Extension Container
 # ------------------------------------------------------------------------------
+
 
 class TimeArray(ExtensionArray):
     """
