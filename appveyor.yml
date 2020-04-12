@@ -20,14 +20,11 @@ environment:
     TEST_DIR: "/tmp/sktime"
 
   matrix:
-    - PYTHON_VERSION: "3.7.5"
+    - PYTHON_VERSION: "3.7"
       MINICONDA: C:\Miniconda37-x64
-      MINICONDA_PATH: "C:\\Miniconda37-x64"
-      image: Visual Studio 2017
     - PYTHON_VERSION: "3.8.2"
       MINICONDA: C:\Miniconda38-x64
-      MINICONDA_PATH: "C:\\Miniconda38-x64"
-      image: Visual Studio 2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
 
 platform:
     - x64
@@ -58,7 +55,7 @@ install:
         throw "There are newer queued builds for this pull request, failing early." }
 
   # Set up conda environment
-  - cmd: SET PATH=%MINICONDA_PATH%;%MINICONDA_PATH%\Scripts;%PATH%
+  - cmd: SET PATH=%MINICONDA%;%MINICONDA%\Scripts;%PATH%
   - cmd: conda config --set always_yes true
   - cmd: conda update --quiet conda
 
