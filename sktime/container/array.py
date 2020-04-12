@@ -51,6 +51,25 @@ register_extension_dtype(TimeDtype)
 # ------------------------------------------------------------------------------
 
 def from_list(data):
+    """
+    Create TimeArray object from list of timeseries-like objects
+
+    Parameters
+    ----------
+    data : list
+        each element in `data` represents a single timeseries that will be
+        converted into a row in the TimeArray. Elements of `data` need to
+        provide a time index and a corresponding value. This can be provided in
+        the form of objects with internal value/index representations (TimeBase,
+        TimeArray, pd.Series), or through a length 2 tuple/list/np.ndarray
+        object of np.ndarrays in which the first entry will be interpreted as
+        values and the second entry as indices.
+
+    Returns
+    -------
+    : TimeArray
+    """
+
     n = len(data)
 
     out_d = []
@@ -83,11 +102,10 @@ def from_list(data):
     # Deal with missing
     mask = np.isnan(widths)
     if np.all(mask):
-        #if n <= 1:
-        #    return None
-        #return np.array([None for _ in range(n)])
+        # All list elements represented missing timeseries
         return TimeArray(np.full((n, 0), np.nan, dtype=np.float))[:n]
     elif np.any(mask):
+        # Some list elements represented missing timeseries
         # TODO: is there a better way to do this?
         w = out_d[int(np.where(~mask)[0][0])].shape[1]
         out_d = [np.full((1, w), np.nan, np.float) if m else d
@@ -103,6 +121,23 @@ def from_list(data):
 
 
 def from_pandas(data):
+    """
+    Create TimeArray object from a nested pd.Series or from a pd.DataFrame
+
+    If data is a nested pd.Series, each sub-series will be interpreted as a row
+    in the TimeArray. If data is a pd.Dataframe, each row in the pd.Dataframe
+    will be interpreted as a row in the TimeArray and the column index will be
+    used as the index.
+
+    Parameters
+    ----------
+    data : pd.Series, pd.DataFrame
+
+    Returns
+    -------
+    : TimeArray
+    """
+
     if isinstance(data, pd.Series):
         return from_list(data)
     elif isinstance(data, pd.DataFrame):
