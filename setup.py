@@ -20,6 +20,7 @@ MIN_REQUIREMENTS = {
     "pandas": "0.24.0",
     "scikit-learn": "0.22.0",
     "statsmodels": "0.9.0",
+    "cython": "0.29.0"
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -58,8 +59,8 @@ PROJECT_URLS = {
 }
 VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = [
-    f"{package}>={version}"
-    for package, version in MIN_REQUIREMENTS.items()
+    *[f"{package}>={version}" for package, version in MIN_REQUIREMENTS.items()],
+    "wheel"
 ]
 CLASSIFIERS = [
     'Intended Audience :: Science/Research',
@@ -92,8 +93,8 @@ EXTRAS_REQUIRE = {
 }
 SETUP_REQUIRES = [
     "wheel",
-    "cython==0.29.*",
 ]
+
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
