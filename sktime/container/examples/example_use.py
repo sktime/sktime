@@ -1,5 +1,6 @@
-import numpy as np
-import pandas as pd
+# Script that shows the basic functionality of TimeFrame based on the gunpoint
+# example dataset
+
 from sktime.datasets import load_gunpoint
 from sktime.container import TimeFrame, TimeSeries
 
@@ -13,5 +14,5 @@ X = TimeFrame(X_nested)
 X.tabularise()
 
 # Segment
-# TODO: current function lives only in TimeArray; this should be passed through in a function of TimeSeries
-X.dim_0.values.slice_time([2, 3, 4])
+X.dim_0.slice_time([2, 3, 4])
+

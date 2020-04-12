@@ -1,10 +1,13 @@
+# Script that includes preliminary re-implementation of some existing
+# Transformers in sktime using an ExtensionArray data container
+
 import numpy as np
 import pandas as pd
 
 from sktime.transformers.segment import IntervalSegmenter, check_is_fitted
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation.supervised import validate_X
 from sklearn.utils import check_random_state
+
 
 class RandomIntervalSegmenter(IntervalSegmenter):
     def __init__(self, n_intervals='sqrt', min_length=2, random_state=None):
@@ -105,7 +108,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         ends = [start + self._rng.randint(self.min_length, len_series - start + 1) for start in starts]
         return np.column_stack([starts, ends])
-
 
 
 class UniversalFunctionTransformer(BaseTransformer):
