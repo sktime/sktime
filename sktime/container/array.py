@@ -749,17 +749,31 @@ class TimeArray(ExtensionArray):
     # Time series functionality
     # --------------------------------------------------------------------------
 
-    def tabularise(self, name=None, return_array=False):
-        if name is None:
-            name = "dim"
+    def tabularise(self, prefix=None, return_array=False):
+        """
+        Convert TimeArray into a 2-dimensional table
+
+        Parameters
+        ----------
+        prefix : str, optional
+            stub used in the column names, of the form stub + index[i]
+        return_array : boolean, default False
+            shall the result be returned as np.ndarray
+
+        Returns
+        -------
+        table
+            if `return_array` is False a pd.DataFrame, else np.ndarray
+        """
+        if prefix is None:
+            prefix = "dim"
         if return_array:
             return self.data
-        # TODO: throw a naming error when time indes isn't equal in each row
-        return pd.DataFrame(self.data, columns=[name + "_" + str(i)
+        # TODO: throw a naming error when time index isn't equal in each row
+        return pd.DataFrame(self.data, columns=[prefix + "_" + str(i)
                                                 for i in self.time_index[0]])
 
-    def tabularize(self, return_array=False):
-        return self.tabularise(return_array)
+    tabularize = tabularise
 
     def check_equal_index(self):
         if self.time_index.ndim == 1 or self.time_index.shape[0] == 0:
