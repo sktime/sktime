@@ -21,10 +21,10 @@ environment:
   matrix:
     - PYTHON_VERSION: "3.7"
       MINICONDA: C:\Miniconda37-x64
-      MINICONDA_LOCATION: "C:\\Miniconda37-x64"
+      MINICONDA_PATH: "C:\\Miniconda37-x64"
     - PYTHON_VERSION: "3.8"
       MINICONDA: C:\Miniconda38-x64
-      MINICONDA_LOCATION: "C:\\Miniconda38-x64"
+      MINICONDA_PATH: "C:\\Miniconda38-x64"
 
 platform:
     - x64
@@ -56,7 +56,8 @@ install:
         throw "There are newer queued builds for this pull request, failing early." }
 
   # Set up conda environment
-  - cmd: SET PATH=%MINICONDA_LOCATION%;%MINICONDA_LOCATION%\Scripts;%PATH%
+  - cmd: SET PATH=%MINICONDA_PATH%;%MINICONDA_PATH%\Scripts;%PATH%
+  - cmd: conda config --set always_yes true
   - cmd: conda update --quiet conda
 
   # Install dependencies

@@ -79,6 +79,7 @@ make_conda() {
     MINICONDA_PATH=$HOME/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
     export PATH=$MINICONDA_PATH/bin:$PATH
+    conda config --set always_yes true
     conda update --quiet conda
 
     # Set up test environment
