@@ -67,7 +67,7 @@ class TimeBase(object):
 
         Returns
         -------
-        repr : str
+        str
         """
         print_len = min(self.data.shape[1], length)
         list_repr = [f"{self.time_index[0, i]}: {self.data[0, i]}"
