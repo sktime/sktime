@@ -776,11 +776,39 @@ class TimeArray(ExtensionArray):
     tabularize = tabularise
 
     def slice_time(self, time_index):
+        """
+        Slice a TimeArray across the time axis.
+
+        Parameters
+        ----------
+        time_index : list, np.ndarray, pd.Index
+            indices to be included in the slice
+
+        Returns
+        -------
+        TimeArray
+
+        Raises
+        ------
+        ValueError
+            If the slice results in a ragged Array because different numbers are
+            selected across rows
+        """
         # TODO: this silently assumes that time indices are the same. Decide how
         #       this function should work if they are not (and the result can be
         #       a ragged/non-equal length array)
-        sel = np.isin(self.time_index[0, :], time_index)
-        return self._constructor(self.data[:, sel], time_index=self.time_index[:, sel])
+        # TODO: currently, this only allows to slice with one condition for all
+        #       rows. We might want to expand that to allow for a separate
+        #       slice condition per row
+        # TODO: add slice as an option for the parameter
+        mask = np.isin(self.time_index, time_index)
+        width = np.unique(np.sum(mask, axis=1))
+        if not len(width) == 1:
+            raise ValueError("slicing resulted in unequal number of elements "
+                             "between rows; must be equal.")
+        data = self.data[mask].reshape(self.shape[0], width[0])
+        indx = self.time_index[mask].reshape(self.shape[0], width[0])
+        return self._constructor(data, indx)
 
     def sort_time(self):
         # TODO: add inplace argument
