@@ -202,6 +202,9 @@ def check_package_status(package, min_version):
     is up-to-date, along with the version string (empty string if
     not installed).
     """
+    if package == "scikit-learn":
+        package = "sklearn"
+    
     package_status = {}
     try:
         module = importlib.import_module(package)

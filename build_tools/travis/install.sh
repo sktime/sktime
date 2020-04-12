@@ -95,10 +95,6 @@ make_conda() {
 TO_INSTALL="requirements.yml"
 make_conda $TO_INSTALL
 
-source activate testenv
-conda list
-which python
-
 if [ "$COVERAGE" == "true" ]
 then
     pip install coverage codecov pytest-cov
