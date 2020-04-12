@@ -421,7 +421,7 @@ class TimeArray(ExtensionArray):
         tidx = [empty((x.shape[0], ref_width)) if w == 0 else x.time_index
                 for w, x in zip(widths, to_concat)]
 
-        return TimeArray(np.vstack(data), np.vstack(tidx))
+        return cls(np.vstack(data), np.vstack(tidx))
 
     # --------------------------------------------------------------------------
     # Interfaces
@@ -532,7 +532,7 @@ class TimeArray(ExtensionArray):
             raise ValueError("The time indices of two TimeArrays that should "
                              "be added must be identical.")
 
-        return TimeArray(self.data + o.data, time_index=self.time_index)
+        return self._constructor(self.data + o.data, time_index=self.time_index)
 
     # --------------------------------------------------------------------------
     # pandas compatibility functions
@@ -636,7 +636,7 @@ class TimeArray(ExtensionArray):
             # If the take resulted in a missing TimeArray (note, this is
             # different from a length 0 TimeArray)
             # TODO: put in a separate function if needed elsewhere
-            return TimeArray(np.full((data.shape[0],0), np.nan, dtype=np.float))
+            return self._constructor(empty((data.shape[0],0)))
 
         return self._constructor(data, time_index)
 
@@ -693,7 +693,7 @@ class TimeArray(ExtensionArray):
         #       this function should work if they are not (and the result can be
         #       a ragged/non-equal length array)
         sel = np.isin(self.time_index[0, :], time_index)
-        return TimeArray(self.data[:, sel], time_index=self.time_index[:, sel])
+        return self._constructor(self.data[:, sel], time_index=self.time_index[:, sel])
 
     def sort_time(self):
         # TODO: add inplace argument
