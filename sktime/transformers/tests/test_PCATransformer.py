@@ -1,5 +1,5 @@
 from sklearn.decomposition import PCA
-from sktime.utils.exceptions import NotFittedError
+from sktime.exceptions import NotFittedError
 from sktime.transformers.pca import PCATransformer
 from sktime.utils.testing.base import generate_df_from_array
 from sktime.utils.data_container import tabularize, detabularize, get_time_index

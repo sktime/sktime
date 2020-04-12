@@ -5,7 +5,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["BaseEstimator"]
 
 from sklearn.base import BaseEstimator as _BaseEstimator
-from sktime.utils.exceptions import NotFittedError
+from sktime.exceptions import NotFittedError
 
 
 class BaseEstimator(_BaseEstimator):

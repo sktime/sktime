@@ -9,7 +9,7 @@ __all__ = [
 ]
 
 from sktime.base import BaseEstimator
-from sktime.utils.exceptions import NotFittedError
+from sktime.exceptions import NotFittedError
 
 DEFAULT_ALPHA = 0.05
 
