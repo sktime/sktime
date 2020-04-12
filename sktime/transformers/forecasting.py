@@ -169,7 +169,8 @@ class Deseasonaliser(BaseTransformer):
         """Fit seasonal decopmosition model and return fitted seasonal components"""
         # statsmodels `seasonal_decompose` expects time series to be in columns, rather than rows, we therefore need to
         # transpose X here
-        res = seasonal_decompose(X.T, model=self.model, period=self.sp, filt=None, two_sided=True, extrapolate_trend=0)
+        res = seasonal_decompose(X.values.T, model=self.model, period=self.sp, filt=None, two_sided=True,
+                                 extrapolate_trend=0)
         seasonal_components = res.seasonal.T
         return np.atleast_2d(seasonal_components)
 
