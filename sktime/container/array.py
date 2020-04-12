@@ -467,6 +467,9 @@ class TimeArray(ExtensionArray):
             value = from_list(value)
 
         # TODO: add dimensionality check
+        # TODO: set underlying array to width 0 when all rows are missing
+        #       as a result of calling __setitem__ to conform with the behaviour
+        #       of __getitem__ when only missing rows are selected
 
         if value is None or np.all(value.isna()):
             # This is setting all `key` elements to missing
@@ -622,11 +625,34 @@ class TimeArray(ExtensionArray):
         return self._constructor(self.data.copy(), self.time_index.copy())
 
     def unique(self):
+        """
+        Compute the TimeArray of unique timeseries.
+        Returns
+        -------
+        uniques : TimeArray
+        """
+        # TODO: review, does it make sense to keep such a function in?
         from pandas import factorize
         rows, _ = factorize(np.array(self).astype(str))
         return self[np.unique(rows)]
 
     def value_counts(self, dropna=True):
+        """
+        Return a Series containing counts of each unique timeseries.
+
+        Parameters
+        ----------
+        dropna : bool, default True
+            Don't include counts of NaN.
+
+        Returns
+        -------
+        counts : Series
+
+        See Also
+        --------
+        Series.value_counts
+        """
         # TODO: review, does it make sense to keep such a function in?
         if (dropna):
             factorised, _ = self.dropna()._values_for_factorize()
@@ -636,6 +662,35 @@ class TimeArray(ExtensionArray):
         return pd.Series(factorised).value_counts()
 
     def take(self, indices, allow_fill=False, fill_value=None):
+        """
+        Take elements (=rows) from the TimeArray.
+
+        Parameters
+        ----------
+        indexer : sequence of int
+            The indices in `self` to take. The meaning of negative values in
+            `indexer` depends on the value of `allow_fill`.
+        allow_fill : bool, default False
+            How to handle negative values in `indexer`.
+            * False: negative values in `indices` indicate positional indices
+              from the right. This is similar to
+              :func:`numpy.take`.
+            * True: negative values in `indices` indicate missing values
+              (the default). These values are set to `fill_value`. Any other
+              other negative values raise a ``ValueError``.
+        fill_value : object
+            The value to use for `indices` that are missing (-1), when
+            ``allow_fill=True``.
+
+        Returns
+        -------
+        TimeArray
+
+        See Also
+        --------
+        Series.take : Similar method for Series.
+        numpy.ndarray.take : Similar method for NumPy arrays.
+        """
         # TODO: revisit and simplify
         # Use the take implementation from pandas to get the takes separately
         # for the data and the time indices
@@ -675,6 +730,9 @@ class TimeArray(ExtensionArray):
     # --------------------------------------------------------------------------
 
     def __repr__(self) -> str:
+        """
+        String representation.
+        """
         from pandas.io.formats.printing import format_object_summary
 
         template = "{class_name}{data}\nLength: {length}, dtype: {dtype}"
@@ -687,14 +745,8 @@ class TimeArray(ExtensionArray):
             class_name=class_name, data=data, length=len(self), dtype=self.dtype
         )
 
-    def _formatter(self, boxed: bool = False) -> Callable[[Any], Optional[str]]:
-        if boxed:
-            return str
-        return repr
-
-
     # --------------------------------------------------------------------------
-    # time series functionality
+    # Time series functionality
     # --------------------------------------------------------------------------
 
     def tabularise(self, name=None, return_array=False):
