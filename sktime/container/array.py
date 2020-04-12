@@ -567,6 +567,17 @@ class TimeArray(ExtensionArray):
         return rows_na(self.data, sum_func=np.any, axis=1)
 
     def astype(self, dtype, copy=True):
+        """
+        Coerce this type to another dtype
+
+        Parameters
+        ----------
+        dtype : numpy dtype or pandas type
+        copy : bool, default True
+            By default, astype always returns a newly allocated object.
+            If copy is set to False and dtype is categorical, the original
+            object is returned.
+        """
         if isinstance(dtype, TimeDtype):
             if copy:
                 return self.copy()
@@ -580,6 +591,12 @@ class TimeArray(ExtensionArray):
             return np.array(self)
         raise ValueError(f"TimeArray can only be cast to numpy array with type "
                          f"'object', got type {dtype}")
+
+    def copy(self, *args, **kwargs):
+        """
+        Copy constructor.
+        """
+        return self._constructor(self.data.copy(), self.time_index.copy())
 
     def unique(self):
         from pandas import factorize
