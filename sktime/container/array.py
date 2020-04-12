@@ -67,7 +67,7 @@ def from_list(data):
 
     Returns
     -------
-    : TimeArray
+    TimeArray
     """
     n = len(data)
 
@@ -102,7 +102,7 @@ def from_list(data):
     mask = np.isnan(widths)
     if np.all(mask):
         # All list elements represented missing timeseries
-        return TimeArray(np.full((n, 0), np.nan, dtype=np.float))[:n]
+        return TimeArray(empty((n, 0)))
     elif np.any(mask):
         # Some list elements represented missing timeseries
         # TODO: is there a better way to do this?
@@ -134,7 +134,7 @@ def from_pandas(data):
 
     Returns
     -------
-    : TimeArray
+    TimeArray
     """
     if isinstance(data, pd.Series):
         return from_list(data)
@@ -202,7 +202,7 @@ def empty(shape, dtype=np.float):
 
     Returns
     -------
-    : np.ndarray
+    np.ndarray
     """
     return np.full(shape, np.nan, dtype=dtype)
 
@@ -435,16 +435,23 @@ class TimeArray(ExtensionArray):
         # keys to numpy array, pass-through non-array-like indexers
         idx = pd.api.indexers.check_array_indexer(self, idx)
 
+        sel_data = self.data[idx]
+        sel_indx = self.time_index[idx]
+
         if isinstance(idx, (int, np.int, numbers.Integral)):
-            if np.all(np.isnan(self.data[idx])) and \
-                    np.all(np.isnan(self.time_index[idx])):
+            if np.all(np.isnan(sel_data)) and np.all(np.isnan(sel_indx)):
                 # Return the missing type if both data and time_index are
                 # completely missing
                 return None
 
-            return TimeBase(self.data[idx], self.time_index[idx])
+            return TimeBase(sel_data, sel_indx)
         elif isinstance(idx, (Iterable, slice)):
-            return self._constructor(self.data[idx], self.time_index[idx])
+            if np.all(np.isnan(sel_data)) and np.all(np.isnan(sel_indx)):
+                # Return the missing type if both data and time_index are
+                # completely missing
+                return from_list([None for _ in range(sel_data.shape[0])])
+
+            return self._constructor(sel_data, sel_indx)
         else:
             raise TypeError("Index type not supported", idx)
 
@@ -500,8 +507,22 @@ class TimeArray(ExtensionArray):
         return self.shape[0]
 
     def __array__(self, dtype=None):
-        return np.array([TimeBase(self.data[i], self.time_index[i])
-                         for i in range(self.data.shape[0])])
+        """
+        The numpy array interface.
+
+        Parameters
+        ----------
+        dtype :
+            only included for compatibility reasons with pandas and ignored.
+
+        Returns
+        -------
+        np.ndarray
+            A numpy array of TimeBase objects
+        """
+        return np.array([None if m else
+                         TimeBase(self.data[i], self.time_index[i])
+                         for m, i in zip(self.isna(), range(self.data.shape[0]))])
 
     def __array_ufunc__(self,
                         ufunc: Callable,
@@ -519,10 +540,12 @@ class TimeArray(ExtensionArray):
         else:
             comp_data = other.data
             comp_index = other.time_index
-        # TODO: sense check for other types
 
-        return (np.all(self.data == comp_data)) & \
-               (np.all(self.time_index == comp_index))
+        # TODO: sense check for other types
+        # TODO: revisit comparison of TimeArrays with
+
+        return np.all(self.data == comp_data) & \
+            np.all(self.time_index == comp_index)
 
     def __add__(self, o):
         if not isinstance(o, TimeArray):
@@ -617,6 +640,13 @@ class TimeArray(ExtensionArray):
         # Use the take implementation from pandas to get the takes separately
         # for the data and the time indices
         from pandas.api.extensions import take
+
+        if not allow_fill and self.data.shape[0] == 0:
+            # Quick-fix to raise the correct error when shape (0,0)
+            # TODO: look into why np.ndarray.take() raises the wrong error when
+            #       it has shape (0,0)
+            raise IndexError("cannot do a non-empty take from an empty axes.")
+
         data = take(self.data, indices, allow_fill=allow_fill)
         time_index = take(self.time_index, indices, allow_fill=allow_fill)
 
