@@ -810,12 +810,34 @@ class TimeArray(ExtensionArray):
         indx = self.time_index[mask].reshape(self.shape[0], width[0])
         return self._constructor(data, indx)
 
-    def sort_time(self):
-        # TODO: add inplace argument
-        d_ord = np.argsort(self.data, axis=1)
-        self.data = np.take_along_axis(self.data, d_ord, axis=1)
-        self.time_index = np.take_along_axis(self.time_index, d_ord, axis=1)
+    def sort_time(self, inplace=False):
+        """
+        Sort rows by their time index
 
-        t_ord = np.argsort(self.time_index, axis=1, kind='stable')
-        self.data = np.take_along_axis(self.data, t_ord, axis=1)
-        self.time_index = np.take_along_axis(self.time_index, t_ord, axis=1)
+        If two elements in one row have the same index, sort them by also by
+        value.
+
+        Parameters
+        ----------
+        inplace : boolean, default False
+            shall the TimeArray be sorted in memory
+
+        Returns
+        -------
+        TimeArray
+        """
+        # TODO: add options to sort in reverse order
+        d_ord = np.argsort(self.data, axis=1)
+        data = np.take_along_axis(self.data, d_ord, axis=1)
+        time_index = np.take_along_axis(self.time_index, d_ord, axis=1)
+
+        t_ord = np.argsort(time_index, axis=1, kind='stable')
+        data = np.take_along_axis(data, t_ord, axis=1)
+        time_index = np.take_along_axis(time_index, t_ord, axis=1)
+
+        if inplace:
+            self.data = data
+            self.time_index = time_index
+            return self
+        else:
+            return self._constructor(data, time_index)
