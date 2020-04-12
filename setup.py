@@ -79,7 +79,8 @@ EXTRAS_REQUIRE = {
     'tests': [
         'pytest',
         'pytest-cov',
-        'tsfresh'
+        'tsfresh',
+        'pmdarima'
     ],
     'docs': [
         'sphinx',
@@ -92,7 +93,7 @@ EXTRAS_REQUIRE = {
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
-# as it monkey-patches the 'setup' function
+# (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
@@ -101,7 +102,7 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-
+    import setuptools
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -204,7 +205,7 @@ def check_package_status(package, min_version):
     """
     if package == "scikit-learn":
         package = "sklearn"
-    
+
     package_status = {}
     try:
         module = importlib.import_module(package)
@@ -251,6 +252,7 @@ def setup_package():
         classifiers=CLASSIFIERS,
         cmdclass=cmdclass,
         python_requires=">=3.6",
+        setup_requires=["wheel"],
         install_requires=INSTALL_REQUIRES,
         **extra_setuptools_args
     )

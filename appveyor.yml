@@ -4,6 +4,11 @@
 # adapted from https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
 # https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
+branches:
+  # whitelist
+  only:
+    - master
+    - dev
 
 environment:
   global:
@@ -15,6 +20,10 @@ environment:
   matrix:
     - PYTHON: "C:\\Python37-x64"
       PYTHON_VERSION: "3.7.0"
+      PYTHON_ARCH: "64"
+      CHECK_WARNINGS: "true"
+    - PYTHON: "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8.0"
       PYTHON_ARCH: "64"
       CHECK_WARNINGS: "true"
 

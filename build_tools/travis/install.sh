@@ -102,6 +102,7 @@ fi
 
 # Build sktime in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
+conda list
 
 # python setup.py develop  # invokes build_ext -i to compile files
 python setup.py bdist_wheel
