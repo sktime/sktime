@@ -86,11 +86,15 @@ make_conda() {
 
     # Activate environment
     source activate testenv
+
+    # List installed environment
+    conda list -n testenv
 }
 
 # requirements file
 TO_INSTALL="requirements.yml"
 make_conda $TO_INSTALL
+
 
 if [ "$COVERAGE" == "true" ]
 then
