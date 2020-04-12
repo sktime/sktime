@@ -11,7 +11,7 @@ import pytest
 
 
 
-# pytest Fixtures -----------------------------------------------------------------------------------------------------
+# pytest Fixtures --------------------------------------------------------------
 
 @pytest.fixture
 def dtype():
@@ -19,7 +19,8 @@ def dtype():
     return TimeDtype()
 
 def make_data():
-    a = np.array([[i + j for j in range(10)] for i in range(100)])
+    a = np.array([[i + j for j in range(10)] for i in range(100)],
+                 dtype=np.float)
     ta = TimeArray(a)
     return ta
 
@@ -42,7 +43,8 @@ def data_for_twos():
 @pytest.fixture
 def data_missing():
     """Length-2 array with [NA, Valid]"""
-    return from_list([[[np.nan, np.nan], [np.nan, np.nan]], [[1, 2], [0, 1]]])
+    return from_list([[[np.nan, np.nan], [np.nan, np.nan]],
+                      [[1., 2.], [0., 1.]]])
 
 
 @pytest.fixture(params=["data", "data_missing"])
@@ -185,11 +187,34 @@ def as_array(request):
     """
     return request.param
 
+_all_arithmetic_operators = [
+    "__add__",
+    "__radd__",
+    # '__sub__', '__rsub__',
+    "__mul__",
+    "__rmul__",
+    "__floordiv__",
+    "__rfloordiv__",
+    "__truediv__",
+    "__rtruediv__",
+    "__pow__",
+    "__rpow__",
+    "__mod__",
+    "__rmod__",
+]
 
 
-# -----------------------------------------------------------------------------
+@pytest.fixture(params=_all_arithmetic_operators)
+def all_arithmetic_operators(request):
+    """
+    Fixture for dunder names for common arithmetic operations
+    Adapted to excluse __sub__, as this is implemented as "difference".
+    """
+    return request.param
+
+# ------------------------------------------------------------------------------
 # Inherited tests
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 class TestDtype(extension_tests.BaseDtypeTests):
     pass
@@ -209,9 +234,6 @@ class TestInterface(extension_tests.BaseInterfaceTests):
 class TestMissing(extension_tests.BaseMissingTests):
     pass
 
-#class TestMethods(extension_tests.BaseMethodsTests):
-#    pass
-
 class TestCasting(extension_tests.BaseCastingTests):
     pass
 
@@ -219,5 +241,17 @@ class TestPrinting(extension_tests.BasePrintingTests):
     pass
 
 
+# Under current development
+#class TestArithmeticOps(extension_tests.BaseArithmeticOpsTests):
+#    pass
 
-# See here for more tests: https://github.com/geopandas/geopandas/blob/master/geopandas/tests/test_extension_array.py
+#class TestMethods(extension_tests.BaseMethodsTests):
+#    pass
+
+# TODO: implement _from_sequence_of_strings
+#class TestParsing(extension_tests.BaseParsingTests):
+#    pass
+
+
+# See here for more tests:
+# https://github.com/geopandas/geopandas/blob/master/geopandas/tests/test_extension_array.py
