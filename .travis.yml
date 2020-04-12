@@ -29,8 +29,10 @@ matrix:
     include:
       - os: linux
         python: 3.7
+      - os: linux
+        python: 3.8
       - os: osx
-        language: generic
+        language: shell  # 'language: python' is an error on Travis CI macOS
 
 addons:
   # travis recommends to specify any additional necessary packages here,

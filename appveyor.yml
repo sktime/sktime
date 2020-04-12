@@ -17,7 +17,7 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script interpreter
     # See: https://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
-    TEST_DIR: "/tmp/sktime"
+    TEST_DIR: /tmp/sktime
 
   matrix:
     - PYTHON_VERSION: "3.7"
