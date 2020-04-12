@@ -48,19 +48,10 @@ then
     export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include"
     export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp"
     export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
-
-    # Install the OpenMP library
-    # brew installs specified in .travis.yml
-    #	brew install libomp
-
-		# Install ccache manually for macOS environments
-		# brew installs specified in .travis.yml
-		# brew install ccache
 		export PATH="/usr/local/opt/ccache/libexec:$PATH"
 fi
 
 make_conda() {
-	TO_INSTALL="$@"
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
     # If Travvis has language=generic (e.g. for macOS), deactivate does not exist. `|| :` will pass.
@@ -83,7 +74,13 @@ make_conda() {
     conda update --quiet conda
 
     # Set up test environment
-    conda env create --name testenv --file $TO_INSTALL
+    conda env create --name testenv --file "$TO_INSTALL"
+
+    # Compile wheels for different Python versions on macOS
+    if [ $TRAVIS_OS_NAME = "osx" ]
+	  then
+		conda install --name testenv python="$PYTHON_VERSION"
+	  fi
 
     # Activate environment
     source activate testenv
@@ -103,7 +100,7 @@ fi
 
 # Build sktime in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
-conda list
+# conda list
 
 # python setup.py develop  # invokes build_ext -i to compile files
 python setup.py bdist_wheel
