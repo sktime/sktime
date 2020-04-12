@@ -22,9 +22,9 @@ environment:
   matrix:
     - PYTHON_VERSION: "3.7"
       MINICONDA: C:\Miniconda37-x64
-    - PYTHON_VERSION: "3.8.2"
+    - PYTHON_VERSION: "3.8"
       MINICONDA: C:\Miniconda38-x64
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
 
 platform:
     - x64
@@ -62,7 +62,7 @@ install:
   # Install dependencies
   - cmd: conda env create --name testenv --file requirements.yml
   - cmd: activate testenv
-  - cmd: conda list  # list packages
+#  - cmd: conda list  # list packages
 
   # Build wheels
   - cmd: python setup.py bdist_wheel bdist_wininst
