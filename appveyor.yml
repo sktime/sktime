@@ -17,21 +17,23 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script interpreter
     # See: https://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
+    TEST_DIR: "/tmp/sktime"
 
   matrix:
-    - PYTHON_VERSION: "3.7"
+    - PYTHON_VERSION: "3.7.5"
       MINICONDA: C:\Miniconda37-x64
       MINICONDA_PATH: "C:\\Miniconda37-x64"
-    - PYTHON_VERSION: "3.8"
+      image: Visual Studio 2017
+    - PYTHON_VERSION: "3.8.2"
       MINICONDA: C:\Miniconda38-x64
       MINICONDA_PATH: "C:\\Miniconda38-x64"
+      image: Visual Studio 2019
 
 platform:
     - x64
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
-  - cmd: python --version
   - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
@@ -81,8 +83,8 @@ install:
 test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - cmd: mkdir "../empty_folder"
-  - cmd: cd "../empty_folder"
+  - cmd: mkdir %TEST_DIR%
+  - cmd: cd %TEST_DIR%
   - ps: >-
         if (Test-Path variable:global:CHECK_WARNINGS) {
             $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
@@ -114,3 +116,4 @@ deploy:
     draft: true
     on:
       branch: master       # release on master branch only
+      APPVEYOR_REPO_TAG: true
