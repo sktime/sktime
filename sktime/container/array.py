@@ -69,7 +69,6 @@ def from_list(data):
     -------
     : TimeArray
     """
-
     n = len(data)
 
     out_d = []
@@ -137,7 +136,6 @@ def from_pandas(data):
     -------
     : TimeArray
     """
-
     if isinstance(data, pd.Series):
         return from_list(data)
     elif isinstance(data, pd.DataFrame):
@@ -213,8 +211,6 @@ def empty(shape, dtype=np.float):
 # Extension Container
 # ------------------------------------------------------------------------------
 
-# TODO: update docstrings to reflect recent refactoring
-
 class TimeArray(ExtensionArray):
     """
     Holder for multiple timeseries objects with an equal number of
@@ -250,7 +246,6 @@ class TimeArray(ExtensionArray):
     copy : bool, default False
         If True, copy the underlying data.
     """
-
     _dtype = TimeDtype()
     _can_hold_na = True
 
@@ -327,7 +322,6 @@ class TimeArray(ExtensionArray):
         -------
         TimeArray
         """
-
         if isinstance(scalars, TimeArray):
             return scalars
         return from_list(scalars)
@@ -373,9 +367,26 @@ class TimeArray(ExtensionArray):
 
     @classmethod
     def _concat_same_type(cls, to_concat):
+        """
+        Concatenate an array/list of TimeArrays.
+
+        All TimeArrays must have compatible data/index shapes, i.e. if the data
+        structure is NxD, all D's must be equal. The arrays are concatenated
+        along axis 0, the final array will have the shape (N1+...+Nc)xD, where
+        c is the number of arrays.
+
+        Parameters
+        ----------
+        to_concat : array/list of TimeArrays
+
+        Returns
+        -------
+        TimeArray
+            A single array
+        """
         if not np.all([isinstance(x, TimeArray) for x in to_concat]):
             # TODO: should we also allow to concatenate a np.array of None
-            #       (i.e. missing)
+            #       (i.e. missing)?
             raise TypeError("Only TimeArrays can be concatenated.")
 
         widths = np.array([x.data.shape[1] for x in to_concat])
@@ -400,6 +411,9 @@ class TimeArray(ExtensionArray):
     # --------------------------------------------------------------------------
 
     def __getitem__(self, idx):
+        """
+        Return an item.
+        """
         # validate and convert IntegerArray / BooleanArray
         # keys to numpy array, pass-through non-array-like indexers
         idx = pd.api.indexers.check_array_indexer(self, idx)
@@ -417,8 +431,10 @@ class TimeArray(ExtensionArray):
         else:
             raise TypeError("Index type not supported", idx)
 
-
     def __setitem__(self, key, value):
+        """
+        Item assignment.
+        """
         # validate and convert IntegerArray / BooleanArray
         # keys to numpy array, pass-through non-array-like indexers
         key = pd.api.indexers.check_array_indexer(self, key)
@@ -446,6 +462,9 @@ class TimeArray(ExtensionArray):
 
     @property
     def shape(self):
+        # Note that a TimeArray's shape is one-dimensional (to conform with
+        # pandas' requirements) and equal to the number of timeseries
+        # TODO: shall we add a second property that returns NxD?
         return (self.data.shape[0], )
 
     @property
@@ -455,7 +474,6 @@ class TimeArray(ExtensionArray):
     @property
     def nbytes(self):
         return self.data.nbytes
-
 
     # --------------------------------------------------------------------------
     # Ops
@@ -489,9 +507,7 @@ class TimeArray(ExtensionArray):
 
     def unique(self):
         from pandas import factorize
-
         rows, _ = factorize(np.array(self).astype(str))
-
         return self[np.unique(rows)]
 
     def value_counts(self, dropna=True):
@@ -504,7 +520,7 @@ class TimeArray(ExtensionArray):
         return pd.Series(factorised).value_counts()
 
     # --------------------------------------------------------------------------
-    # general array like compat
+    # general array like compatibility functions
     # --------------------------------------------------------------------------
 
     def __len__(self):
@@ -544,6 +560,10 @@ class TimeArray(ExtensionArray):
                              "be added must be identical.")
 
         return TimeArray(self.data + o.data, time_index=self.time_index)
+
+    # --------------------------------------------------------------------------
+    # pandas compatibility functions
+    # --------------------------------------------------------------------------
 
     def copy(self, *args, **kwargs):
         return TimeArray(self.data.copy(), self.time_index.copy())
