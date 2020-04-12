@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 # TODO: look into providing indexing for TimeBase
@@ -15,8 +16,7 @@ class TimeBase(object):
     Parameters
     ----------
     data : TimeArray or ndarray
-        The measurements at certain time points (columns) for one or more
-        timeseries (rows).
+        The measurements at certain time points.
     time_index : ndarrays
         A time index for each entry in 'data'. Must be of the same shape as
         data.
@@ -99,10 +99,30 @@ class TimeBase(object):
         """
         return np.all(np.isnan(self.data)) & np.all(np.isnan(self.time_index))
 
+    def to_series(self):
+        """
+        Convert to pandas.Series
 
-# -----------------------------------------------------------------------------
+        Returns
+        -------
+        pd.Series
+        """
+        return pd.Series(self.data[0], self.time_index[0])
+
+    def to_numpy(self):
+        """
+        Convert to Tuple of np.ndarrays
+
+        Returns
+        -------
+        (data, time_index) : (np.ndarray, np.ndarray)
+        """
+        return self.data[0], self.time_index[0]
+
+
+# ------------------------------------------------------------------------------
 # Helper functions
-# -----------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 def check_data_index(data, time_index):
     """
