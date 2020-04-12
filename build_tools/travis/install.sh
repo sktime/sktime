@@ -28,9 +28,9 @@ build_tools/travis/travis_fastfail.sh
 
 echo 'List files from cached directories'
 echo 'pip:'
-ls $HOME/.cache/pip
+ls "$HOME"/.cache/pip
 
-if [ $TRAVIS_OS_NAME = "linux" ]
+if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
 	export CC=/usr/lib/ccache/gcc
 	export CXX=/usr/lib/ccache/g++
@@ -38,7 +38,7 @@ then
 	# export CCACHE_LOGFILE=/tmp/ccache.log
 	# ~60M is used by .ccache when compiling from scratch at the time of writing
 	ccache --max-size 100M --show-stats
-elif [ $TRAVIS_OS_NAME = "osx" ]
+elif [ "$TRAVIS_OS_NAME" = "osx" ]
 then
     # enable OpenMP support for Apple-clang
     export CC=/usr/bin/clang
@@ -58,7 +58,7 @@ make_conda() {
     deactivate || :
 
     # Install miniconda
-    if [ $TRAVIS_OS_NAME = "osx" ]
+    if [ "$TRAVIS_OS_NAME" = "osx" ]
 	  then
 		fname=Miniconda3-latest-MacOSX-x86_64.sh
 	  else
@@ -67,9 +67,9 @@ make_conda() {
 
     wget https://repo.continuum.io/miniconda/$fname \
         -O miniconda.sh
-    MINICONDA_PATH=$HOME/miniconda
-    chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-    export PATH=$MINICONDA_PATH/bin:$PATH
+    MINICONDA=$HOME/miniconda
+    chmod +x miniconda.sh && ./miniconda.sh -b -p "$MINICONDA"
+    export PATH=$MINICONDA/bin:$PATH
     conda config --set always_yes true
     conda update --quiet conda
 
@@ -77,9 +77,9 @@ make_conda() {
     conda env create --name testenv --file "$TO_INSTALL"
 
     # Compile wheels for different Python versions on macOS
-    if [ $TRAVIS_OS_NAME = "osx" ]
+    if [ "$TRAVIS_OS_NAME" = "osx" ]
 	  then
-		conda install --name testenv python="$PYTHON_VERSION"
+		conda install --name testenv --channel conda-forge python="$PYTHON_VERSION"
 	  fi
 
     # Activate environment
@@ -110,7 +110,7 @@ ls dist  # list build artifacts
 pip install --pre --no-index --find-links dist/ sktime
 
 # Useful for debugging how ccache is used
-if [ $TRAVIS_OS_NAME = "linux" ]
+if [ "$TRAVIS_OS_NAME" = "linux" ]
 then
 	ccache --show-stats
 fi
