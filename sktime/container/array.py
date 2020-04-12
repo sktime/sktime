@@ -206,6 +206,8 @@ def empty(shape, dtype=np.float):
     """
     return np.full(shape, np.nan, dtype=dtype)
 
+def rows_na(arr, sum_func=np.all, axis=1):
+    return np.apply_over_axes(sum_func, np.isnan(arr), axis).flatten()
 
 # ------------------------------------------------------------------------------
 # Extension Container
@@ -480,15 +482,12 @@ class TimeArray(ExtensionArray):
     # --------------------------------------------------------------------------
 
     def isna(self):
-        # TODO: revisit missingness
-        return self.isna_row(self.data) & self.isna_row(self.time_index)
+        # TODO: revisit definition of missingness
+        return rows_na(self.data) & rows_na(self.time_index)
 
-    def isna_row(self, arr):
-        return np.apply_over_axes(np.all, self.isna_grid(arr), 1).flatten()
-
-    def isna_grid(self, arr):
-        # TODO: revisit missingness
-        return np.isnan(arr)
+    def hasna(self):
+        # TODO: revisit definition of missingness
+        return rows_na(self.data, np.any)
 
     def astype(self, dtype, copy=True):
         if isinstance(dtype, TimeDtype):
@@ -581,8 +580,8 @@ class TimeArray(ExtensionArray):
             indices = np.asarray(indices, dtype=np.intp)
             out_of_range = (indices < 0) | (indices >= data.shape[0])
 
-            data[self.isna_row(data) & out_of_range] = fill_value.data
-            time_index[self.isna_row(time_index) & out_of_range] = \
+            data[rows_na(data) & out_of_range] = fill_value.data
+            time_index[rows_na(time_index) & out_of_range] = \
                 fill_value.time_index
         elif allow_fill and fill_value is not None:
             TypeError(f"Only TimeBase are allowed as fill values, "
