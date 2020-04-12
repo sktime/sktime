@@ -24,13 +24,13 @@ environment:
       MINICONDA: C:\Miniconda37-x64
     - PYTHON_VERSION: "3.8"
       MINICONDA: C:\Miniconda38-x64
-#      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
 
 platform:
     - x64
 
 init:
-  - "ECHO %PYTHON_VERSION% %MINICONDA%"
+  - ps: echo %PYTHON_VERSION% %MINICONDA%
   - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
@@ -66,9 +66,9 @@ install:
 
   # Build wheels
   - cmd: python setup.py bdist_wheel bdist_wininst
-  - ps: "ls dist"  # list built artifacts
+  - ps: ls dist  # list built artifacts
 
-  # Install the generated wheel package to test it
+  # Install the built wheel package to test it
   - cmd: pip install --pre --no-index --find-links dist/ sktime
 
   # If there is a newer build queued for the same PR, cancel this one.
