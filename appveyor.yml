@@ -1,8 +1,9 @@
 # AppVeyor.com is a Continuous Integration service to build and run tests under
 # Windows
 
-# adapted from https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
-# https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
+# adapted from
+# - https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
+# - https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
 branches:
   # whitelist
@@ -20,11 +21,18 @@ environment:
   matrix:
     - PYTHON_VERSION: "3.7"
       MINICONDA: C:\Miniconda37-x64
+      MINICONDA_LOCATION: "C:\\Miniconda37-x64"
     - PYTHON_VERSION: "3.8"
       MINICONDA: C:\Miniconda38-x64
+      MINICONDA_LOCATION: "C:\\Miniconda38-x64"
+
+platform:
+    - x64
 
 init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
+  - cmd: python --version
+  - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
@@ -48,17 +56,17 @@ install:
         throw "There are newer queued builds for this pull request, failing early." }
 
   # Set up conda environment
-  - cmd: SET PATH=%MINICONDA%;%MINICONDA%\Scripts;%PATH%
-  - cmd: conda config --set always_yes true
+  - cmd: SET PATH=%MINICONDA_LOCATION%;%MINICONDA_LOCATION%\Scripts;%PATH%
   - cmd: conda update --quiet conda
 
   # Install dependencies
   - cmd: conda env create --name testenv --file requirements.yml
   - cmd: activate testenv
+  - cmd: conda list  # list packages
 
   # Build wheels
   - cmd: python setup.py bdist_wheel bdist_wininst
-  - ps: "ls dist"
+  - ps: "ls dist"  # list built artifacts
 
   # Install the generated wheel package to test it
   - cmd: pip install --pre --no-index --find-links dist/ sktime
@@ -72,17 +80,19 @@ install:
 test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - mkdir "../empty_folder"
-  - cd "../empty_folder"
+  - cmd: mkdir "../empty_folder"
+  - cmd: cd "../empty_folder"
   - ps: >-
         if (Test-Path variable:global:CHECK_WARNINGS) {
-            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning"
+            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
         } else {
             $env:PYTEST_ARGS = ""
         }
-  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime"
+  # Run tests
+  - cmd: pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime
+
   # Move back to the project folder
-  - cd "../sktime"
+  - cmd: cd "../sktime"
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
