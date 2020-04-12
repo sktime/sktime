@@ -90,6 +90,10 @@ EXTRAS_REQUIRE = {
         'matplotlib'
     ]
 }
+SETUP_REQUIRES = [
+    "wheel",
+    "cython==0.29.*",
+]
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -252,7 +256,7 @@ def setup_package():
         classifiers=CLASSIFIERS,
         cmdclass=cmdclass,
         python_requires=">=3.6",
-        setup_requires=["wheel"],
+        setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
         **extra_setuptools_args
     )
