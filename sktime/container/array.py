@@ -194,6 +194,18 @@ def to_ts(obj, include_header=True):
 # ------------------------------------------------------------------------------
 
 def empty(shape, dtype=np.float):
+    """
+    Create an empty (i.e. np.nan or dtype equivalent) np.ndarray of given shape
+
+    Parameters
+    ----------
+    shape : Tuple
+    dtype : type
+
+    Returns
+    -------
+    : np.ndarray
+    """
     return np.full(shape, np.nan, dtype=dtype)
 
 
