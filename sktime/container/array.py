@@ -775,15 +775,6 @@ class TimeArray(ExtensionArray):
 
     tabularize = tabularise
 
-    def check_equal_index(self):
-        if self.time_index.ndim == 1 or self.time_index.shape[0] == 0:
-            # TODO: change if one time index isn't allowed anymore
-            self._equal_index = True
-        else:
-            self._equal_index = (self.time_index == self.time_index[0]).all()
-
-        return self._equal_index
-
     def slice_time(self, time_index):
         # TODO: this silently assumes that time indices are the same. Decide how
         #       this function should work if they are not (and the result can be
