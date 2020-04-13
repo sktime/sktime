@@ -94,12 +94,10 @@ EXTRAS_REQUIRE = {
     ]
 }
 SETUP_REQUIRES = [
-    "wheel",
+    "wheel"
 ]
 
 # Optional setuptools features
-# We need to import setuptools early, if we want setuptools features,
-# (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
@@ -108,6 +106,10 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
+    # We need to import setuptools early, if we want setuptools features,
+    # (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
+    import setuptools
+
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -115,6 +117,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
             'alldeps': EXTRAS_REQUIRE
         },
     )
+
 else:
     extra_setuptools_args = dict()
 

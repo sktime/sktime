@@ -17,6 +17,7 @@ environment:
     # /E:ON and /V:ON options are not enabled in the batch script interpreter
     # See: https://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
+
     TEST_DIR: "/tmp/sktime"
     REQUIREMENTS: "requirements.yml"
 
@@ -78,13 +79,13 @@ install:
   # Install the built wheel package to test it
   - cmd: pip install --pre --no-index --find-links dist/ sktime
 
+test_script:
   # If there is a newer build queued for the same PR, cancel this one.
   - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
-        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
-        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
-        throw "There are newer queued builds for this pull request, failing early." }
+      https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+      Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+      throw "There are newer queued builds for this pull request, failing early." }
 
-test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
   - ps: mkdir %TEST_DIR%
