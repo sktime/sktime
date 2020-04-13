@@ -5,7 +5,7 @@ dependencies:
   - python>=3.7
   - pip
   - pandas>=1.0.0
-  - scikit-learn>=0.22.2
+  - scikit-learn=0.22.*
   - statsmodels=0.11.*
   - numba
   # extra dependencies for testing, building and deploying

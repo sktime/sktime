@@ -1,3 +1,5 @@
+# Travis  is a continuous integration service to build, test and deploy the package
+
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master/.travis.yml
 
 # use travis only on the following branches for building
@@ -6,7 +8,7 @@ branches:
         - master
         - dev
 
-language: shell  # 'language: python' is an error on Travis CI macOS
+language: shell  # 'language: python' is an error on Travis CI with macOS
 
 cache:
   directories:
@@ -19,7 +21,7 @@ env:
   global:
     # Directory where tests are run from
     - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
-    - TRAVIS_DEPLOY_JOB_NAME="osx py37"  # job on which to deploy website
+    - TRAVIS_DEPLOY_JOB_NAME="osx-py37"  # job on which to deploy website
 
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
@@ -27,25 +29,25 @@ env:
     - TEST_DIR=/tmp/sktime
     - REQUIREMENTS="requirements.yml"
 
+  # platforms and package environments to test
 jobs:
-    # platforms and package environments to test
-    include:
-      - name: "linux py37"
-        os: linux
-        env:
-        - PYTHON_VERSION=3.7
-        - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
-      - name: "osx py37"
-        os: osx
-        env:
-        - PYTHON_VERSION=3.7
-        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
-      - name: "osx py38"
-        os: osx
-        env:
-        - PYTHON_VERSION=3.8
-        # Check available miniconda version: https://repo.anaconda.com/miniconda/
-        - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
+  include:
+    - name: "linux-py37"
+      os: linux
+      env:
+      - PYTHON_VERSION=3.7
+      - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
+    - name: "osx-py37"
+      os: osx
+      env:
+      - PYTHON_VERSION=3.7
+      - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
+    - name: "osx-py38"
+      os: osx
+      env:
+      - PYTHON_VERSION=3.8
+      # Check available miniconda version: https://repo.anaconda.com/miniconda/
+      - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
 
 addons:
   # travis recommends to specify any additional necessary packages here,

@@ -1,5 +1,4 @@
-# AppVeyor.com is a Continuous Integration service to build and run tests under
-# Windows
+# Appveyor is a continuous integration service to build, test and deploy the package
 
 # adapted from
 # - https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
@@ -23,9 +22,9 @@ environment:
 
   matrix:
     - PYTHON_VERSION: "3.7"
-      MINICONDA: C:\Miniconda37-x64
+      MINICONDA_VERSION: C:\Miniconda37-x64
     - PYTHON_VERSION: "3.8"
-      MINICONDA: C:\Miniconda38-x64
+      MINICONDA_VERSION: C:\Miniconda38-x64
       # For Python 3.8, we need a different image, check out available pre-installed Python
       # and Visual Studio versions: https://www.appveyor.com/docs/linux-images-software/
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
@@ -59,7 +58,7 @@ install:
         throw "There are newer queued builds for this pull request, failing early." }
 
   # Set up conda environment
-  - cmd: SET PATH=%MINICONDA%;%MINICONDA%\Scripts;%PATH%
+  - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
   - cmd: conda config --set always_yes true
   - cmd: conda update --quiet conda
 
