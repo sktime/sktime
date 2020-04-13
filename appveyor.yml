@@ -18,6 +18,7 @@ environment:
     # See: https://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
     TEST_DIR: "/tmp/sktime"
+    REQUIREMENTS: "requirements.yml"
 
   matrix:
     - PYTHON_VERSION: "3.7"
@@ -62,9 +63,13 @@ install:
   - cmd: conda update --quiet conda
 
   # Install dependencies
-  - cmd: conda env create --name testenv --file requirements.yml
+  - cmd: conda create --name testenv python=%PYTHON_VERSION%
+  - cmd: conda env update --name testenv --file %REQUIREMENTS%
   - cmd: activate testenv
-#  - cmd: conda list  # list packages
+
+  # List installed environment
+  - cmd: python --version
+  - cmd: conda list
 
   # Build wheels
   - cmd: python setup.py bdist_wheel bdist_wininst

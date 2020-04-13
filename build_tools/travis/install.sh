@@ -74,24 +74,20 @@ make_conda() {
     conda update --quiet conda
 
     # Set up test environment
-    conda env create --name testenv --file "$TO_INSTALL"
-
-    # Compile wheels for different Python versions on macOS
-    if [ "$TRAVIS_OS_NAME" = "osx" ]
-	  then
-		conda install --name testenv --channel conda-forge python="$PYTHON_VERSION"
-	  fi
+    conda create --name testenv python="$PYTHON_VERSION"
+    conda env update --name testenv --file "$REQUIREMENTS"
 
     # Activate environment
     source activate testenv
 
     # List installed environment
-    # conda list -n testenv
+    python --version
+    conda list -n testenv
 }
 
 # requirements file
-TO_INSTALL="requirements.yml"
-make_conda $TO_INSTALL
+REQUIREMENTS="requirements.yml"
+make_conda $REQUIREMENTS
 
 if [ "$COVERAGE" == "true" ]
 then

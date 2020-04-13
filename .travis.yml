@@ -19,21 +19,25 @@ env:
   global:
     # Directory where tests are run from
     - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
-    - TRAVIS_DEPLOY_OS_NAME="osx"  # os on which to deploy website
+    - TRAVIS_DEPLOY_JOB_NAME="osx python3.7"  # job on which to deploy website
     - TEST_DIR=/tmp/sktime
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
 
-matrix:
+jobs:
     # platforms and package environments to test
     include:
-      - os: linux
+      - name: "linux python3.7"
+        os: linux
         python: 3.7
-      - os: osx
+        env: PYTHON_VERSION=3.7
+      - name: "osx python3.7"
+        os: osx
         language: shell  # 'language: python' is an error on Travis CI macOS
         env: PYTHON_VERSION=3.7
-      - os: osx
-        language: shell  # 'language: python' is an error on Travis CI macOS
+      - name: "osx python3.8"
+        os: osx
+        language: shell
         env: PYTHON_VERSION=3.8
 
 addons:
@@ -57,7 +61,7 @@ after_success:
     - source build_tools/travis/after_success.sh
 
 before_deploy:
-- cd $TRAVIS_BUILD_DIR
+    - cd $TRAVIS_BUILD_DIR
 
 deploy:
     # on master branch, deploy website and upload compiled files to Github
@@ -68,7 +72,7 @@ deploy:
       keep-history: false
       on:
           branch: $TRAVIS_DEPLOY_BRANCH
-          condition: $TRAVIS_OS_NAME = $TRAVIS_DEPLOY_OS_NAME  # deploy only on macOS build
+          condition: $TRAVIS_JOB_NAME = $TRAVIS_DEPLOY_JOB_NAME  # deploy only on macOS build
     - provider: releases
       api_key: $GITHUB_TOKEN
       skip_cleanup: true  # skip clean up which would delete build artifacts

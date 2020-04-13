@@ -2,7 +2,7 @@ channels:
   - conda-forge
 dependencies:
   # core dependencies
-  - python=3.7
+  - python>=3.7
   - pip
   - numpy=1.18.*
   - pandas=1.0.*
@@ -11,6 +11,7 @@ dependencies:
   - numba
   # extra dependencies for testing, building and deploying
   - pytest
+  - cython>=0.29.0
   # soft dependencies
   - tsfresh
   - pip:

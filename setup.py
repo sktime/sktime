@@ -16,10 +16,10 @@ from distutils.command.clean import clean as Clean
 from pkg_resources import parse_version
 
 MIN_REQUIREMENTS = {
-    "numpy": "1.17.0",
-    "pandas": "0.24.0",
+    "numpy": "1.18.0",
+    "pandas": "1.0.0",
     "scikit-learn": "0.22.0",
-    "statsmodels": "0.9.0",
+    "statsmodels": "0.11.0",
     "cython": "0.29.0"
 }
 
