@@ -6,7 +6,7 @@ branches:
         - master
         - dev
 
-language: python
+language: shell  # 'language: python' is an error on Travis CI macOS
 
 cache:
   directories:
@@ -19,7 +19,7 @@ env:
   global:
     # Directory where tests are run from
     - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
-    - TRAVIS_DEPLOY_JOB_NAME="osx python3.7"  # job on which to deploy website
+    - TRAVIS_DEPLOY_JOB_NAME="osx py37"  # job on which to deploy website
 
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
@@ -30,18 +30,22 @@ env:
 jobs:
     # platforms and package environments to test
     include:
-      - name: "linux python3.7"
+      - name: "linux py37"
         os: linux
-        python: 3.7
-        env: PYTHON_VERSION=3.7
-      - name: "osx python3.7"
+        env:
+        - PYTHON_VERSION=3.7
+        - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
+      - name: "osx py37"
         os: osx
-        language: shell  # 'language: python' is an error on Travis CI macOS
-        env: PYTHON_VERSION=3.7
-      - name: "osx python3.8"
+        env:
+        - PYTHON_VERSION=3.7
+        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
+      - name: "osx py38"
         os: osx
-        language: shell
-        env: PYTHON_VERSION=3.8
+        env:
+        - PYTHON_VERSION=3.8
+        # Check available miniconda version: https://repo.anaconda.com/miniconda/
+        - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
 
 addons:
   # travis recommends to specify any additional necessary packages here,

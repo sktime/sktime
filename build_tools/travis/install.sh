@@ -16,13 +16,6 @@
 
 set -e
 
-# brew installs specified in .travis.yml
-# if [ $TRAVIS_OS_NAME = "macos" ]
-#then
-#  # Install jq for travis_fastfail.sh script
-#  brew install jq
-#fi
-
 # Fail fast
 build_tools/travis/travis_fastfail.sh
 
@@ -58,15 +51,7 @@ make_conda() {
     deactivate || :
 
     # Install miniconda
-    if [ "$TRAVIS_OS_NAME" = "osx" ]
-	  then
-		fname=Miniconda3-latest-MacOSX-x86_64.sh
-	  else
-		fname=Miniconda3-latest-Linux-x86_64.sh
-	  fi
-
-    wget https://repo.continuum.io/miniconda/$fname \
-        -O miniconda.sh
+    wget https://repo.continuum.io/miniconda/"$MINICONDA_VERSION" -O miniconda.sh
     MINICONDA=$HOME/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p "$MINICONDA"
     export PATH=$MINICONDA/bin:$PATH
