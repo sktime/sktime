@@ -20,9 +20,12 @@ env:
     # Directory where tests are run from
     - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
     - TRAVIS_DEPLOY_JOB_NAME="osx python3.7"  # job on which to deploy website
-    - TEST_DIR=/tmp/sktime
+
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
+
+    - TEST_DIR=/tmp/sktime
+    - REQUIREMENTS="requirements.yml"
 
 jobs:
     # platforms and package environments to test

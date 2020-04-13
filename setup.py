@@ -1,7 +1,9 @@
 #! /usr/bin/env python
 """Install script for sktime"""
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/d2476fb679f05e80c56e8b151ff0f6d7a470e4ae/setup.py#L20
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/setup.py
+
+__author__ = ["Markus Löning"]
 
 import codecs
 import importlib
@@ -15,12 +17,12 @@ from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
 
+MIN_PYTHON_VERSION = "3.7"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
     "scikit-learn": "0.22.0",
-    "statsmodels": "0.11.0",
-    "cython": "0.29.0"
+    "statsmodels": "0.11.0"
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -59,7 +61,7 @@ PROJECT_URLS = {
 }
 VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = [
-    *[f"{package}>={version}" for package, version in MIN_REQUIREMENTS.items()],
+    *["{}>={}".format(package, version) for package, version in MIN_REQUIREMENTS.items()],
     "wheel"
 ]
 CLASSIFIERS = [
@@ -95,7 +97,6 @@ SETUP_REQUIRES = [
     "wheel",
 ]
 
-
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
@@ -107,7 +108,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
@@ -256,7 +256,7 @@ def setup_package():
         long_description=LONG_DESCRIPTION,
         classifiers=CLASSIFIERS,
         cmdclass=cmdclass,
-        python_requires=">=3.6",
+        python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
         **extra_setuptools_args
@@ -281,11 +281,11 @@ def setup_package():
 
     # otherwise check Python and required package versions
     else:
-        if sys.version_info < (3, 6):
+        if sys.version_info < tuple([int(i) for i in MIN_PYTHON_VERSION.split(".")]):
             raise RuntimeError(
-                "sktime requires Python 3.6 or later. The current"
+                "sktime requires Python %s or later. The current"
                 " Python version is %s installed in %s."
-                % (platform.python_version(), sys.executable))
+                % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable))
 
         for package, version in MIN_REQUIREMENTS.items():
             check_package_status(package, version)

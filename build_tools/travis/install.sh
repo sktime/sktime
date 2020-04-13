@@ -86,7 +86,6 @@ make_conda() {
 }
 
 # requirements file
-REQUIREMENTS="requirements.yml"
 make_conda $REQUIREMENTS
 
 if [ "$COVERAGE" == "true" ]
