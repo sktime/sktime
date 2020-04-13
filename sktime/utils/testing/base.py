@@ -6,7 +6,7 @@ __author__ = ["Markus Löning"]
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sklearn.preprocessing import StandardScaler
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
@@ -15,13 +15,14 @@ from sktime.forecasting.compose import RecursiveRegressionForecaster
 from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.transformers.compose import Tabulariser
-from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import Detrender, SingleSeriesTransformAdaptor
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 
 REGRESSOR = LinearRegression()
@@ -49,7 +50,8 @@ DEFAULT_INSTANTIATIONS = {
         "cv": SingleWindowSplitter(fh=1),
         "param_grid": {"window_length": [2, 5]},
         "scoring": sMAPE(),
-    }
+    },
+    SingleSeriesTransformAdaptor: {"transformer": StandardScaler()}
 }
 
 
