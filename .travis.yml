@@ -36,6 +36,11 @@ jobs:
       env:
       - PYTHON_VERSION=3.7
       - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
+    - name: "osx-py36"
+      os: osx
+      env:
+        - PYTHON_VERSION=3.6
+        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
     - name: "osx-py37"
       os: osx
       env:

@@ -21,6 +21,8 @@ environment:
     REQUIREMENTS: "requirements.yml"
 
   matrix:
+    - PYTHON_VERSION: "3.6"
+      MINICONDA_VERSION: C:\Miniconda36-x64
     - PYTHON_VERSION: "3.7"
       MINICONDA_VERSION: C:\Miniconda37-x64
     - PYTHON_VERSION: "3.8"

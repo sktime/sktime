@@ -17,7 +17,7 @@ from distutils.command.clean import clean as Clean
 
 from pkg_resources import parse_version
 
-MIN_PYTHON_VERSION = "3.7"
+MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
@@ -76,7 +76,8 @@ CLASSIFIERS = [
     'Operating System :: Unix',
     'Operating System :: MacOS',
     'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7'
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8'
 ]
 EXTRAS_REQUIRE = {
     'tests': [
