@@ -35,7 +35,7 @@ platform:
     - x64
 
 init:
-  - ps: echo %PYTHON_VERSION% %MINICONDA%
+  - cmd: echo %PYTHON_VERSION% %MINICONDA%
   - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
