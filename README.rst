@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |pypi|_ |gitter|_ |binder|_
+|travis|_ |appveyor|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -15,7 +15,10 @@
 .. _gitter: https://gitter.im/sktime/community
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
+.. _binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
+
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg
+.. _zenodo: https://doi.org/10.5281/zenodo.3749000
 
 
 sktime
