@@ -13,6 +13,8 @@ pys=(/opt/python/*/bin)
 # Print list of Python's available
 echo "All Pythons: ${pys[@]}"
 
+ls -lh /io/build_tools
+
 # Filter out Python versions
 pys=("${pys[@]//*27*/}")
 pys=("${pys[@]//*34*/}")
