@@ -5,17 +5,17 @@ steps:
 - script: |
     docker run --rm \
       -e NPY_NUM_BUILD_JOBS=4 \
-      -e PLAT=$(plat) \
-      -e package_name=$(package_name) \
-      -e requirements='$(requirements)' \
+      -e PLAT="$(plat)" \
+      -e package_name="$(package_name)" \
+      -e requirements="$(requirements)" \
 #      -e test_requirements_file='$(test_requirements_file)' \
-      -v $PWD:/io \
-      $(image) \
+      -v "$(PWD)":/io \
+      "$(image)" \
       /io/build_tools/azure/build-wheels.sh
   displayName: Build wheels
 
 - script: |
     ls -lh wheelhouse/
     mkdir -p dist
-    cp wheelhouse/$(package_name)*.whl dist/.
+    cp wheelhouse/"$(package_name)"*.whl dist/.
   displayName: Show and copy wheels
