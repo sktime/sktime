@@ -37,7 +37,7 @@ done
 
 # Bundle external shared libraries into the wheels using the auditwheel library
 for wheel in dist/sktime-*.whl; do
-    auditwheel repair --plat "$PLATFORM" "$wheel" -w dist/
+    auditwheel repair --plat "$PLATFORM" --wheel-dir dist/ "$wheel"
 done
 
 # Install built whee wheel and test
