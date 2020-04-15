@@ -3,7 +3,6 @@
 
 steps:
 - script: |
-    chmod +x build_tools/azure/build_wheels.sh
     docker run --rm \
       -e NPY_NUM_BUILD_JOBS=4 \
       -e PLAT="$(plat)" \
@@ -11,7 +10,7 @@ steps:
       -e requirements="$(requirements)" \
       -v "$PWD":/io \
       "$(image)" \
-      /io/build_tools/azure/build_wheels.sh
+      /bin/bash -c "chmod +x build_tools/azure/build_wheels.sh && /io/build_tools/azure/build_wheels.sh"
   displayName: Build wheels
 
 - script: |
