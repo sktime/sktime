@@ -27,12 +27,7 @@ done
 echo "Included Python versions: ${PYTHON_VERSIONS[@]}"
 
 # Build wheels
-export CC=/usr/lib/ccache/gcc
-export CXX=/usr/lib/ccache/g++
-
-# Change directory
-cd /io/
-
+cd /io/  # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     # Install requirements
