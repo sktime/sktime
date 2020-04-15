@@ -29,8 +29,8 @@ jobs:
           plat: manylinux1_i686
           image: quay.io/pypa/manylinux1_i686
           python.architecture: x86
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - template: build_tools/azure/build_manylinux_wheels.yml
+    pool:
+      - vmImage: 'ubuntu-latest'
+    steps:
+      - template: build_tools/azure/build_manylinux_wheels.yml
 
