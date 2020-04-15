@@ -7,7 +7,7 @@ steps:
 - script: |
     docker run --rm \
       -e NPY_NUM_BUILD_JOBS=4 \
-      -e PLAT="$(PLATFORM)" \
+      -e PLATFORM="$(PLATFORM)" \
       -e REQUIREMENTS="$(REQUIREMENTS)" \
       -e EXCLUDE_PYTHON_VERSIONS="$(EXCLUDE_PYTHON_VERSIONS)" \
       -v "$PWD":/io \
