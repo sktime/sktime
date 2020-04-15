@@ -1,15 +1,17 @@
 __all__ = ["ThetaForecaster"]
 __author__ = ["@big-o", "Markus Löning"]
 
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
-from sktime.utils.validation.forecasting import check_alpha, check_y
+from sktime.utils.validation.forecasting import check_alpha
+from sktime.utils.validation.forecasting import check_sp
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -36,9 +38,8 @@ class ThetaForecaster(ExponentialSmoothing):
         The alpha value of the simple exponential smoothing, if the value is set then
         this will be used, otherwise it will be estimated from the data.
 
-    deseasonaliser : :class:`sktime.transformers.Deseasonaliser`, optional (default=None)
-        A transformer to use for seasonal adjustments. Overrides the
-        ``seasonal_periods`` parameter.
+    deseasonalise : bool, optional (default=True)
+        If True, data is seasonally adjusted.
 
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
@@ -73,17 +74,12 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
 
-    def __init__(self, smoothing_level=None, deseasonaliser=None, sp=1):
+    def __init__(self, smoothing_level=None, deseasonalise=True, sp=1):
 
-        self.deseasonaliser = deseasonaliser
+        self.sp = sp
+        self.deseasonalise = deseasonalise
 
-        if deseasonaliser is not None:
-            self._deseasonaliser = deseasonaliser
-        else:
-            if sp is not None:
-                # default deseasonaliser
-                self._deseasonaliser = Deseasonaliser(model="multiplicative", sp=sp)
-
+        self.deseasonaliser_ = None
         self.trend_ = None
         self.smoothing_level_ = None
         self.drift_ = None
@@ -107,16 +103,21 @@ class ThetaForecaster(ExponentialSmoothing):
 
         self : returns an instance of self.
         """
-        # de-seasonalise
-        yt = self._deseasonaliser.fit_transform(y_train)
+        sp = check_sp(self.sp)
+        if sp > 1 and not self.deseasonalise:
+            warn("`sp` is ignored when `deseasonalise`=False")
+
+        if self.deseasonalise:
+            self.deseasonaliser_ = Deseasonaliser(sp=self.sp, model="multiplicative")
+            y_train = self.deseasonaliser_.fit_transform(y_train)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super(ThetaForecaster, self).fit(yt, fh=fh)
+        super(ThetaForecaster, self).fit(y_train, fh=fh)
         self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
-        self.trend_ = self._compute_trend(yt)
+        self.trend_ = self._compute_trend(y_train)
         self._is_fitted = True
         return self
 
@@ -142,7 +143,9 @@ class ThetaForecaster(ExponentialSmoothing):
         # Add drift.
         drift = self._compute_drift()
         y_pred += drift
-        y_pred = self._deseasonaliser.inverse_transform(y_pred)
+
+        if self.deseasonalise:
+            y_pred = self.deseasonaliser_.inverse_transform(y_pred)
 
         if return_pred_int:
             pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
@@ -198,7 +201,8 @@ class ThetaForecaster(ExponentialSmoothing):
     def update(self, y_new, X_new=None, update_params=True):
         super(ThetaForecaster, self).update(y_new, X_new=X_new, update_params=update_params)
         if update_params:
-            y_new = self._deseasonaliser.transform(y_new)
+            if self.deseasonalise:
+                y_new = self.deseasonaliser_.transform(y_new)
             self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y_new)
         return self
@@ -232,4 +236,3 @@ class ThetaForecaster(ExponentialSmoothing):
 
         # otherwise return list of pd.DataFrames
         return pred_int
-

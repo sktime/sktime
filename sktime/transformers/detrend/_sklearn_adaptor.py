@@ -49,12 +49,12 @@ class SingleSeriesTransformAdaptor(BaseSeriesToSeriesTransformer):
 
     @staticmethod
     def _tabularise(y):
-        """Helper function to convert single series into tabular array"""
+        """Helper function to convert single series into single-column tabular array"""
         return y.values.reshape(-1, 1)
 
     @staticmethod
     def _detabularise(y, index):
-        """Helper function to convert tabular array to single series"""
+        """Helper function to convert single-column tabular array to single series"""
         return pd.Series(y.ravel(), index=index)
 
     def transform(self, y, **transform_params):

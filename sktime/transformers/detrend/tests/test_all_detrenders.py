@@ -5,12 +5,16 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 import pytest
-from sktime.transformers.detrend import Detrender, Deseasonaliser, SingleSeriesTransformAdaptor
+from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import Deseasonaliser
+from sktime.transformers.detrend import SingleSeriesTransformAdaptor
+from sktime.transformers.detrend import ConditionalDeseasonaliser
 from sktime.utils.testing.base import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
 DETRENDERS = [
     Deseasonaliser,
+    ConditionalDeseasonaliser,
     Detrender,
     SingleSeriesTransformAdaptor
 ]
