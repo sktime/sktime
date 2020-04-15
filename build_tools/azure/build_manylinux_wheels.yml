@@ -9,7 +9,7 @@ steps:
       -e package_name="$(package_name)" \
       -e requirements="$(requirements)" \
 #      -e test_requirements_file='$(test_requirements_file)' \
-      -v `pwd`:/io \
+      -v "$Build.SourcesDirectory":/io \
       "$(image)" \
       /io/build_tools/azure/build-wheels.sh
   displayName: Build wheels
