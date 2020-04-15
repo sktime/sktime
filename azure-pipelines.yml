@@ -27,11 +27,16 @@ jobs:
           PLATFORM: manylinux1_x86_64
           IMAGE: quay.io/pypa/manylinux1_x86_64
           PYTHON_ARCHITECTURE: x64
-        86x:  # 32 bit
-          ARCH: i686
-          PLATFORM: manylinux1_i686
-          IMAGE: quay.io/pypa/manylinux1_i686
-          PYTHON_ARCHITECTURE: x86
+#        86x:  # 32 bit
+#          ARCH: i686
+#          PLATFORM: manylinux1_i686
+#          IMAGE: quay.io/pypa/manylinux1_i686
+#          PYTHON_ARCHITECTURE: x86
+#        64x2014:  # 32 bit
+#          ARCH: x86_64
+#          PLATFORM: manylinux2014_x86_64
+#          IMAGE: quay.io/pypa/manylinux2014_x86_64
+#          PYTHON_ARCHITECTURE: x86
     pool:
       vmImage: 'ubuntu-latest'
     steps:
