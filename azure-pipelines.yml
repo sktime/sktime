@@ -2,31 +2,35 @@
 # - https://iscinumpy.gitlab.io/post/azure-devops-intro/
 # - https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 
+variables:
+  PACKAGE_NAME: sktime
+  REQUIREMENTS: requirements.yml
+
 trigger:
 - master
 - dev
 
-pool:
-  vmImage: 'ubuntu-latest'
-strategy:
-  matrix:
-    Python36:
-      python.version: '3.6'
-    Python37:
-      python.version: '3.7'
+jobs:
+  - job: manylinux
+    strategy:
+      matrix:
+        64x2010:  # 64 bit 2010
+          arch: x86_64
+          plat: manylinux2010_x86_64
+          image: quay.io/pypa/manylinux2010_x86_64
+          python.architecture: x64
+        64x:  # 64 bit
+          arch: x86_64
+          plat: manylinux1_x86_64
+          image: quay.io/pypa/manylinux1_x86_64
+          python.architecture: x64
+        86x:  # 32 bit
+          arch: i686
+          plat: manylinux1_i686
+          image: quay.io/pypa/manylinux1_i686
+          python.architecture: x86
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - template: build_tools/azure/build_manylinux_wheels.yml
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
-
-- script: |
-    python -m pip install --upgrade pip
-    pip install -r requirements.txt
-  displayName: 'Install dependencies'
-
-- script: |
-    pip install pytest pytest-azurepipelines
-    pytest
-  displayName: 'pytest'
