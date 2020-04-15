@@ -32,7 +32,7 @@ done
 
 # Bundle external shared libraries into the wheels using the auditwheel library
 for WHL in wheelhouse/sktime-*.whl; do
-    auditwheel repair --plat $PLATFORM "$WHL" -w /io/wheelhouse/
+    auditwheel repair --plat "$PLATFORM" "$WHL" -w /io/wheelhouse/
 done
 
 # Install built wheel and test
