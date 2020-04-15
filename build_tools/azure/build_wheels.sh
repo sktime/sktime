@@ -5,42 +5,38 @@
 # - https://github.com/pypa/python-manylinux-demo/blob/master/travis/build-wheels.sh
 
 set -e -x
-echo "$requirements"
+echo "$REQUIREMENTS"
+echo "$EXCLUDE_PYTHON_VERSIONS"
 
-# Collect the pythons
+# Collect the available Pythons versions
 pys=(/opt/python/*/bin)
-
-# Print list of Python's available
-echo "All Pythons: ${pys[@]}"
-
-ls -lh /io/build_tools
+echo "All Python versions: ${pys[@]}"
 
 # Filter out Python versions
-pys=("${pys[@]//*27*/}")
-pys=("${pys[@]//*34*/}")
-pys=("${pys[@]//*35*/}")
+echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
+for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
+  VERSION="${VERSION//.}"  # strip dot from version number
+  pys=(${pys[@]//*"$VERSION"*/})  # remove versions
+done
+echo "Included Python versions: ${pys[@]}"
 
-# Print list of Python's being used
-echo "Using Python versions: ${pys[@]}"
+#pys=(${pys[@]//*27*/})
+#pys=(${pys[@]//*34*/})
+#pys=(${pys[@]//*35*/})
 
-# Compile wheels
-for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/pip" install -r /io/"$requirements"
-    "${PYBIN}/pip" wheel -v /io/ -w wheelhouse/
+# Build wheels
+for PYTHON in "${pys[@]}"; do
+    "${PYTHON}/pip" install -r /io/"$REQUIREMENTS"
+    "${PYTHON}/pip" wheel -v /io/ -w wheelhouse/
 done
 
 # Bundle external shared libraries into the wheels using the auditwheel library
-for whl in wheelhouse/"$PACKAGE_NAME"-*.whl; do
-    auditwheel repair --plat $PLAT "$whl" -w /io/wheelhouse/
+for WHL in wheelhouse/sktime-*.whl; do
+    auditwheel repair --plat $PLATFORM "$WHL" -w /io/wheelhouse/
 done
 
-# Install packages and test
-for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/pip" install -r /io/$test_requirements_file
-    "${PYBIN}/pip" install "$PACKAGE_NAME" --no-index -f /io/wheelhouse
-    if [ -d "/io/tests" ]; then
-        "${PYBIN}/pytest" /io/tests
-    else
-        "${PYBIN}/pytest" --pyargs "$PACKAGE_NAME"
-    fi
+# Install built wheel and test
+for PYTHON in "${pys[@]}"; do
+    "${PYTHON}/pip" install --pre --no-index --find-links /io/wheelhouse sktime
+    "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
 done
