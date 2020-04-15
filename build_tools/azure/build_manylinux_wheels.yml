@@ -18,6 +18,3 @@ steps:
     mkdir -p dist
     cp wheelhouse/"$(package_name)"*.whl dist/.
   displayName: Show and copy wheels
-
-
-# /bin/bash -c "chmod +x /io/build_tools/azure/build_wheels.sh && /io/build_tools/azure/build_wheels.sh"

@@ -3,7 +3,7 @@
 
 variables:
   package_name: sktime
-  requirements: requirements.txt
+  requirements: build_tools/requirements.txt
 
 trigger:
   - master

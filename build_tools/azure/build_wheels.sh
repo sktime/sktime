@@ -23,7 +23,7 @@ echo "Using Python versions: ${pys[@]}"
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/pip" install -r /io/"$requirements"
+    "${PYBIN}/pip" install -r /io/build_tools/"$requirements"
     "${PYBIN}/pip" wheel -v /io/ -w wheelhouse/
 done
 
