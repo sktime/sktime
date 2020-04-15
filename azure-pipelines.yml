@@ -1,5 +1,4 @@
 # adapted from
-# - https://iscinumpy.gitlab.io/post/azure-devops-intro/
 # - https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 
 variables:
