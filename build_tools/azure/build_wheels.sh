@@ -9,29 +9,36 @@ echo "$REQUIREMENTS"
 echo "$EXCLUDE_PYTHON_VERSIONS"
 
 # Collect the available Pythons versions
-pys=(/opt/python/*/bin)
-echo "All Python versions: ${pys[@]}"
+PYTHON_VERSIONS=(/opt/python/*/bin)
+# echo "All Python versions: ${PYTHON_VERSIONS[@]}"
 
 # Filter out Python versions
-#echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
-for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
-  VERSION="${VERSION//.}"  # strip dot from version number
-  pys=(${pys[@]//*"$VERSION"*/})  # remove versions
-done
-echo "Included Python versions: ${pys[@]}"
+# echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
+# split string by comma into array
+IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<< "$EXCLUDE_PYTHON_VERSIONS"
 
-#pys=(${pys[@]//*27*/})
-#pys=(${pys[@]//*34*/})
-#pys=(${pys[@]//*35*/})
+for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
+  # remove dot and whitespace from version number
+  VERSION="$(echo -e "${VERSION//.}" | tr -d '[:space:]')"
+
+  # remove versions
+  PYTHON_VERSIONS=(${PYTHON_VERSIONS[@]//*"$VERSION"*/})
+done
+echo "Included Python versions: ${PYTHON_VERSIONS[@]}"
 
 # Build wheels
 export CC=/usr/lib/ccache/gcc
 export CXX=/usr/lib/ccache/g++
 
+# Change directory
 cd /io/
 
-for PYTHON in "${pys[@]}"; do
+
+for PYTHON in "${PYTHON_VERSIONS[@]}"; do
+    # Install requirements
     "${PYTHON}/pip" install -r "$REQUIREMENTS"
+
+    # Build wheel
     "${PYTHON}/python" setup.py bdist_wheel
 done
 
@@ -41,7 +48,10 @@ for wheel in dist/sktime-*.whl; do
 done
 
 # Install built whee wheel and test
-for PYTHON in "${pys[@]}"; do
+for PYTHON in "${PYTHON_VERSIONS[@]}"; do
+    # Install from wheel
     "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
+
+    # Run tests
     "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
 done

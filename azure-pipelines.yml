@@ -2,8 +2,8 @@
 # - https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 
 variables:
-  REQUIREMENT: build_tools/requirements.txt
-  EXCLUDE_PYTHON_VERSIONS: (2.7, 3.5)
+  REQUIREMENTS: build_tools/requirements.txt
+  EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
 
 trigger:
   - master
