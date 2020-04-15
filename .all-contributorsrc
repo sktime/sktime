@@ -9,6 +9,9 @@
   "imageSize": 100,
   "commit": false,
   "commitConvention": "none",
+  "contributorsPerLine": 7,
+  "contributorsSortAlphabetically": true,
+  "skipCi": "true",
   "contributors": [
     {
       "login": "fkiraly",
@@ -217,8 +220,5 @@
         "ideas"
       ]
     }
-  ],
-  "contributorsPerLine": 7,
-  "contributorsSortAlphabetically": true
-
+  ]
 }

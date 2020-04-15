@@ -262,9 +262,10 @@ epub_exclude_files = ['search.html']
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for nbsphinx extension ---------------------------------------
-nbsphinx_execute = 'never'  # always
+nbsphinx_execute = 'always'  # always
 nbsphinx_allow_errors = True  # False
-nbsphinx_timeout = 60
+nbsphinx_timeout = -1  # set to -1 to disable
+
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
