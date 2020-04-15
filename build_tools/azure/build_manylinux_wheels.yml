@@ -8,7 +8,7 @@ steps:
       -e PLAT="$(plat)" \
       -e package_name="$(package_name)" \
       -e requirements="$(requirements)" \
-      -v "$Build.SourcesDirectory":/io \
+      -v "$PWD":/io \
       "$(image)" \
       /io/build_tools/azure/build-wheels.sh
   displayName: Build wheels
