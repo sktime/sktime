@@ -31,6 +31,7 @@ cd /io/  # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     # Install requirements
+    "${PYTHON}/pip" install freetype-py  # required to build matplotlib from source
     "${PYTHON}/pip" install -r "$REQUIREMENTS"
 
     # Build wheel
