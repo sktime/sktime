@@ -7,7 +7,7 @@ steps:
       -e NPY_NUM_BUILD_JOBS=4 \
       -e PLAT=$(plat) \
       -e package_name=$(package_name) \
-      -e dev_requirements_file='$(REQUIREMENTS)' \
+      -e requirements='$(requirements)' \
 #      -e test_requirements_file='$(test_requirements_file)' \
       -v $PWD:/io \
       $(image) \

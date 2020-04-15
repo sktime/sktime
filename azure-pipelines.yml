@@ -3,12 +3,12 @@
 # - https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 
 variables:
-  PACKAGE_NAME: sktime
-  REQUIREMENTS: requirements.yml
+  package_name: sktime
+  requirements: requirements.yml
 
 trigger:
-- master
-- dev
+  - master
+  - dev
 
 jobs:
   - job: manylinux

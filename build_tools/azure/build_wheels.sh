@@ -5,7 +5,7 @@
 # - https://github.com/pypa/python-manylinux-demo/blob/master/travis/build-wheels.sh
 
 set -e -x
-echo "$REQUIREMENTS"
+echo "$requirements"
 
 # Collect the pythons
 pys=(/opt/python/*/bin)
@@ -22,7 +22,7 @@ echo "Using Python versions: ${pys[@]}"
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
-    "${PYBIN}/pip" install -r /io/"$REQUIREMENTS"
+    "${PYBIN}/pip" install -r /io/"$requirements"
     "${PYBIN}/pip" wheel -v /io/ -w wheelhouse/
 done
 
