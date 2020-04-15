@@ -4,11 +4,15 @@
 
 variables:
   package_name: sktime
-  requirements: requirements.yml
+  requirements: requirements.txt
 
 trigger:
   - master
   - dev
+
+pr:
+  # Cancel if new commits are pushed to the same PR
+  autoCancel: true
 
 jobs:
   - job: manylinux

@@ -13,7 +13,8 @@ pys=(/opt/python/*/bin)
 # Print list of Python's available
 echo "All Pythons: ${pys[@]}"
 
-# Filter out Python 3.4 and 3.5
+# Filter out Python versions
+pys=("${pys[@]//*27*/}")
 pys=("${pys[@]//*34*/}")
 pys=("${pys[@]//*35*/}")
 
