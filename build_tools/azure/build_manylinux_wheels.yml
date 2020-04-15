@@ -3,6 +3,7 @@
 
 steps:
 - script: |
+    chmod +x build_tools/azure/build_wheels.sh
     docker run --rm \
       -e NPY_NUM_BUILD_JOBS=4 \
       -e PLAT="$(plat)" \
