@@ -24,6 +24,12 @@ Simple (or first-degree) transformations:
 | ------ | ------- | ------ | ------- |
 | e.g. Fourier transform | | |
 
+#### Nested data frame to nested data frame 
+| Name | Class | Maintainer | References |
+| ------ | ------- | ------ | ------- |
+| Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
+| Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
+
 #### Nested data frame to tabular data frame 
 
 | Name | Class | Maintainer | References |
@@ -31,8 +37,6 @@ Simple (or first-degree) transformations:
 | Tabularise (UK)  | transformers.compose.Tabulariser | @mloning  |  |
 | Tabularize (US)  | transformers.compose.Tabularizer | @mloning  |  |
 | Auto-correlation function  | transformers.spectral_based.AutoCorrelationFourierTransformer | @jsellier  |  |
-| Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
-| Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
 | Cosine Transform  | transformers.spectral_based.CosineTransformer | @jsellier  |  |
 | Discrete Fourier Transform  | transformers.spectral_based.DiscreteFourierTransformer | @jsellier  |  |
 | Power Spectrum | transformers.spectral_based.PowerSpectrumTransformer | @jsellier  |  |
