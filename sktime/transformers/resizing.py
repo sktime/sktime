@@ -3,6 +3,8 @@ import pandas as pd
 from scipy import interpolate
 
 from sktime.transformers.base import BaseTransformer
+from sktime.utils.validation.supervised import validate_X
+
 
 class TSResizeTransform(BaseTransformer):
     """Transformer that get casual dataframe of time series and resizes 
@@ -41,4 +43,5 @@ class TSResizeTransform(BaseTransformer):
         Xt : pandas DataFrame
           Transformed pandas DataFrame with same number of rows and columns
         """
+        validate_X(X)
         return X.apply(self._resize_col)
