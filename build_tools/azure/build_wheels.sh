@@ -44,6 +44,8 @@ for wheel in dist/sktime-*.whl; do
 done
 
 # Install built whee wheel and test
+
+
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     # Install from wheel
     "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime

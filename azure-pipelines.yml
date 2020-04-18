@@ -42,3 +42,32 @@ jobs:
     steps:
       - template: build_tools/azure/build_manylinux_wheels.yml
 
+  - job: publish_artifacts
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    displayName: 'Publish artifacts'
+    steps:
+      - task: CopyFiles@2
+          inputs:
+            targetFolder: $(Build.ArtifactStagingDirectory)
+      - task: PublishBuildArtifacts@1
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'dist'
+          publishLocation: 'Container'
+
+  - job: deploy_to_pypi
+    displayName: 'Deploy to PyPI'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    steps:
+      - script: |
+          pip install twine
+        displayName: 'Install twine'
+      # Python twine upload authenticate V1
+      # See https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/package/twine-authenticate?view=azure-devops#publish-python-distribution-to-azure-artifacts-feed
+      - task: TwineAuthenticate@1
+        displayName: 'Authenticate twine'
+        inputs:
+          artifactFeed: sktime/feed # <Project Name>/<Feed Name>
+      - script: |
+          twine upload -r "feed" --skip-existing --config-file $(PYPIRC_PATH) --verbose ./dist/*.whl
+        displayName: 'Uploading to PyPI'

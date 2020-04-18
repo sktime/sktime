@@ -19,6 +19,9 @@ environment:
 
     TEST_DIR: "/tmp/sktime"
     REQUIREMENTS: "requirements.yml"
+    PYPI_PASSWORD:
+      secure: "nZ6K3G+V4O3mBT6prI28OfGXFWRR4ZPqcC6YJ4yQP0E1evCINRH5j/k+Vz0+LbwM7e7G3zcnOFm+q1HhAKw1tEIuVTythuPsgPrmEhxh//gfgS6SWWoAXSV+5NATCQGkZ2Yiwti5bwyocki2tU2pqxI1rRWK2v/UMeEpzDZPOXpC+ATXLewPr5zsFn3aehHMjNm4RFqDCGSXk2uyEFIytvNMFu5bld6+enejtCjHR9J6nNUcQXrYRZrzCm8xPC1hB+cK0rlLLjUW903mPslHFQ=="
+    PYPI_USER: "__token__"
 
   matrix:
     - PYTHON_VERSION: "3.6"
@@ -90,6 +93,7 @@ test_script:
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
   - ps: mkdir %TEST_DIR%
+  - ps: cp setup.cfg %TEST_DIR%
   - ps: cd %TEST_DIR%
   - ps: >-
         if (Test-Path variable:global:CHECK_WARNINGS) {
@@ -112,14 +116,28 @@ artifacts:
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
 
+# deploy wheels to PyPI on tagged commits
+after_test:
+  - ps: >-
+      if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+      ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$') ) {
+        Write-Output ("Deploying " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
+        pip install --upgrade twine
+        twine upload --username %PYPI_USER% --password %PYPI_PASSWORD% --skip-existing --verbose dist/*.whl
+        Write-Output ("Done.")
+      } else {
+        Write-Output ("Not deploying to PyPI as this is not a tagged commit.")
+      }
+
 # upload artifacts to Github releases
 deploy:
   - provider: GitHub
     description: 'Appveyor build artifacts'
     auth_token:
       secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
-    artifact: /.*\.whl/            # upload all wheel packages to release assets
+    artifact: /.*\.whl/  # upload all wheel packages to release assets
     draft: true
     on:
-      branch: master       # release on master branch only
+      branch: master  # release on master branch only
       APPVEYOR_REPO_TAG: true
+
