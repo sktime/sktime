@@ -104,7 +104,7 @@ SETUPTOOLS_COMMANDS = {
     'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed',
+    '--single-version-externally-managed', 'sdist'
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     # We need to import setuptools early, if we want setuptools features,
