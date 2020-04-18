@@ -25,10 +25,6 @@ fi
 # Build website on master branch
 if [[ "$TRAVIS_OS_NAME" == "$TRAVIS_DEPLOY_OS_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
 then
-  # install pandoc to generate html versions of Jupyter notebooks
-  # brew installs specified in .travis.yml
-  # brew install pandoc
-
   # Add packages for website generation
   pip install sphinx_rtd_theme
   pip install nbsphinx
@@ -36,7 +32,7 @@ then
   pip install jupyter
 
   # cd into documentation folder 
-  cd documentation || :
+  cd docs || :
   make html
 fi
 
