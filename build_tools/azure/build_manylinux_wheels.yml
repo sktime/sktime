@@ -17,10 +17,3 @@ steps:
           /io/build_tools/azure/build_wheels.sh
       displayName: 'Build and test wheels'
 
-    - task: PublishTestResults@2
-      displayName: 'Publish test results'
-      inputs:
-        testResultsFiles: '$(TEST_DIR)/$(PYTEST_RESULTS)'
-        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
-      condition: succeededOrFailed()
-
