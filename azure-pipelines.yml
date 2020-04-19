@@ -41,15 +41,7 @@ jobs:
       vmImage: 'ubuntu-latest'
     steps:
       - template: build_tools/azure/build_manylinux_wheels.yml
-
-  - job: publish_artifacts
-    condition: succeeded()
-    displayName: 'Publish artifacts'
-    steps:
-      - task: PublishPipelineArtifact@0
-        inputs:
-          artifactName: 'wheels'
-          targetPath: 'io/dist'
+      - template: build_tools/azure/publish.yml
 
   - job: deploy_to_pypi
     displayName: 'Deploy to PyPI'
