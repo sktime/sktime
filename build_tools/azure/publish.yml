@@ -2,9 +2,13 @@
 # - https://github.com/scikit-hep/azure-wheel-helpers/blob/master/azure-publish-dist.yml
 
 steps:
-- task: PublishPipelineArtifact@0
-  condition: succeeded()
-  displayName: 'Publish artifacts'
-  inputs:
-    artifactName: 'wheel_$(Agent.OS)_$(Agent.JobName)_$(PYTHON_ARCHITECTURE)'
-    targetPath: 'dist'
+    condition: succeeded()
+    - script: |
+        ls -lh dist/
+      displayName: 'List wheels'
+
+    - task: PublishPipelineArtifact@0
+      displayName: 'Publish wheels'
+      inputs:
+        artifactName: 'wheel_$(Agent.OS)_$(Agent.JobName)_$(PYTHON_ARCHITECTURE)'
+        targetPath: 'dist'

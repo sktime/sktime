@@ -4,6 +4,7 @@
 variables:
   REQUIREMENTS: build_tools/requirements.txt
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
+  PYTEST_RESULTS: 'pytest-results.xml'
 
 trigger:
   - master

@@ -10,11 +10,15 @@ steps:
           -e PLATFORM="$(PLATFORM)" \
           -e REQUIREMENTS="$(REQUIREMENTS)" \
           -e EXCLUDE_PYTHON_VERSIONS="$(EXCLUDE_PYTHON_VERSIONS)" \
+          -e PYTEST_RESULTS="$(PYTEST_RESULTS)" \
           -v "$PWD":/io \
           "$(IMAGE)" \
           /io/build_tools/azure/build_wheels.sh
       displayName: 'Build and test wheels'
 
-    - script: |
-        ls -lh dist/
-      displayName: 'List built wheels'
+     - task: PublishTestResults@2
+          inputs:
+            testResultsFiles: '$(TEST_DIR)/$(PYTEST_RESULTS)'
+            testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+          displayName: 'Publish test results'
+          condition: succeededOrFailed()
