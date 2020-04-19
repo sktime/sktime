@@ -60,17 +60,20 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              source: 'current' # Options: current, specific
-              runVersion: 'latest' # Required when source == Specific# Options: latest, latestFromBranch, specific
+              source: 'current'
+              path: '$(Pipeline.Workspace)/dist/'
+              runVersion: 'latest'
+#              source: 'specific'
+#              runVersion: 'latestFromBranch'
 #              runBranch: 'refs/heads/master'
 #              tags: '^v[0-9]\.[0-9]\.[0-9]$'
-              patterns: '*manylinux*.whl'
-              #path: '$(Pipeline.Workspace)'
-          - script: 'python -m pip install twine'
-            displayName: 'Install twine'
+#              patterns: '*manylinux*.whl'
           - script: |
-              ls -lh *alan-turing-institute.sktime/wheels_*/*
+              ls -lh $(Pipeline.Workspace)/dist/*.whl
             displayName: 'List wheels'
+          - script: |
+              python -m pip install twine
+            displayName: 'Install twine'
           - task: TwineAuthenticate@1
             displayName: 'Twine Authenticate'
             inputs:
