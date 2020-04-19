@@ -48,11 +48,11 @@ stages:
 #              PYTHON_ARCHITECTURE: x86
 
 
-  - stage: 'deploy_to_pypi'
+  - stage: 'deploy'
     dependsOn: 'build'
     condition: succeeded('build')
     jobs:
-      - job: 'Deploy to PyPI'
+      - job: 'deploy_to_pypi'
 #        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
         pool:
           vmImage: 'ubuntu-latest'
