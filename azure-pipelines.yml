@@ -8,11 +8,13 @@ variables:
   PYTEST_RESULTS: 'pytest-results.xml'
 
 trigger:
-  - branches:
-      include:
-        - master
-        - dev
-
+  branches:
+    include:
+      - master
+      - dev
+  tags:
+    include:
+    - '*'
 pr:
   # Cancel if new commits are pushed to the same PR
   autoCancel: true
