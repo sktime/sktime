@@ -49,7 +49,7 @@ jobs:
       - task: PublishPipelineArtifact@0
         inputs:
           artifactName: 'wheels'
-          targetPath: 'dist'
+          targetPath: 'io/dist'
 
   - job: deploy_to_pypi
     displayName: 'Deploy to PyPI'
