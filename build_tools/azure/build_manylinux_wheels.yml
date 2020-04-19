@@ -10,6 +10,7 @@ steps:
           -e PLATFORM="$(PLATFORM)" \
           -e REQUIREMENTS="$(REQUIREMENTS)" \
           -e EXCLUDE_PYTHON_VERSIONS="$(EXCLUDE_PYTHON_VERSIONS)" \
+          -e TEST_DIR="$(TEST_DIR)" \
           -e PYTEST_RESULTS="$(PYTEST_RESULTS)" \
           -v "$PWD":/io \
           "$(IMAGE)" \
@@ -22,3 +23,4 @@ steps:
         testResultsFiles: '$(TEST_DIR)/$(PYTEST_RESULTS)'
         testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       condition: succeededOrFailed()
+

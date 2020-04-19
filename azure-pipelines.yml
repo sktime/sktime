@@ -4,6 +4,7 @@
 variables:
   REQUIREMENTS: build_tools/requirements.txt
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
+  TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
   PYTEST_RESULTS: 'pytest-results.xml'
 
 trigger:

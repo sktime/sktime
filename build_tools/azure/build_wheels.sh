@@ -31,7 +31,7 @@ cd /io/  # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     # Install requirements
-    "${PYTHON}/pip" install freetype-py  # required to build matplotlib from source
+#    "${PYTHON}/pip" install freetype-py  # required to build matplotlib from source
     "${PYTHON}/pip" install -r "$REQUIREMENTS"
 
     # Build wheel
@@ -49,5 +49,5 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
 
     # Run tests
-    "${PYTHON}/pytest" --showlocals --durations=20 --junitxml="$PYTEST_RESULTS" --pyargs sktime
+    "${PYTHON}/pytest" --showlocals --durations=20 --junitxml="$TEST_DIR"/"$PYTEST_RESULTS" --pyargs sktime
 done
