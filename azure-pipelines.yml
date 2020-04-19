@@ -18,7 +18,7 @@ pr:
 stages:
   - stage: 'build'
     jobs:
-      - job: 'manylinux'
+      - job: 'build_manylinux'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -74,8 +74,10 @@ stages:
           - task: TwineAuthenticate@1
             displayName: 'Twine Authenticate'
             inputs:
+              # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
               pythonUploadServiceConnection: PyPI
           - script: |
               cat $(PYPIRC_PATH)
-#             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose *dist/wheels_*/*
+              ls -lh dist/*.whl
+#             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'
