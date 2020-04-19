@@ -2,7 +2,6 @@
 # - https://github.com/scikit-hep/azure-wheel-helpers/blob/master/azure-publish-dist.yml
 
 steps:
-    condition: succeeded()
     - script: |
         ls -lh dist/
       displayName: 'List wheels'
