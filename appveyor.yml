@@ -81,7 +81,7 @@ install:
   - ps: ls dist  # list built artifacts
 
   # Install the built wheel package to test it
-  - cmd: pip install --pre --no-index --find-links dist/ sktime
+  - cmd: pip install --pre --no-index --no-deps --find-links dist/ sktime
 
 test_script:
   # If there is a newer build queued for the same PR, cancel this one.

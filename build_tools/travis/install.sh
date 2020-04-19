@@ -87,7 +87,7 @@ python setup.py bdist_wheel
 ls dist  # list build artifacts
 
 # Install from built wheels
-pip install --pre --no-index --find-links dist/ sktime
+pip install --pre --no-index --no-deps --find-links dist/ sktime
 
 # Useful for debugging how ccache is used
 if [ "$TRAVIS_OS_NAME" = "linux" ]

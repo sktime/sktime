@@ -56,19 +56,20 @@ stages:
             displayName: 'Collect wheels'
             inputs:
               source: 'current'
-              path: '$(Pipeline.Workspace)/dist/'
+              path: '$(Pipeline.Workspace)/download/'
               runVersion: 'latest'
 #              source: 'specific'
 #              runVersion: 'latestFromBranch'
 #              runBranch: 'refs/heads/master'
 #              tags: '^v[0-9]\.[0-9]\.[0-9]$'
-              artifactName: 'wheels_*'
-              patterns: '*manylinux*.whl'
+              patterns: 'wheels_*'
           - script: |
-              ls -lh $(Pipeline.Workspace)/dist/
-            displayName: 'List wheels'
+              mkdir dist
+              cp $(Pipeline.Workspace)/download/wheels_*/*manylinux*.whl dist/
+              ls -lh dist/
+            displayName: 'Select and list wheels'
           - script: |
-              python -m pip install twine
+              pip install --upgrade twine
             displayName: 'Install twine'
           - task: TwineAuthenticate@1
             displayName: 'Twine Authenticate'
@@ -76,5 +77,5 @@ stages:
               pythonUploadServiceConnection: PyPI
           - script: |
               cat $(PYPIRC_PATH)
-#             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose *mloning/stkime/wheels_*/*
+#             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose *dist/wheels_*/*
             displayName: 'Upload wheels to PyPI'
