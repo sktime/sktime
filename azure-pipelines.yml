@@ -43,17 +43,13 @@ jobs:
       - template: build_tools/azure/build_manylinux_wheels.yml
 
   - job: publish_artifacts
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: succeeded()
     displayName: 'Publish artifacts'
     steps:
-      - task: CopyFiles@2
+      - task: PublishPipelineArtifact@0
         inputs:
-          targetFolder: $(Build.ArtifactStagingDirectory)
-      - task: PublishBuildArtifacts@1
-        inputs:
-          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-          ArtifactName: 'dist'
-          publishLocation: 'Container'
+          artifactName: 'wheels'
+          targetPath: 'dist'
 
   - job: deploy_to_pypi
     displayName: 'Deploy to PyPI'
