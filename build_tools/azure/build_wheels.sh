@@ -49,5 +49,5 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
     "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
 
     # Run tests
-    "${PYTHON}/pytest" --showlocals --durations=20 --junitxml="$TEST_DIR"/"$PYTEST_RESULTS" --pyargs sktime
+    "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
 done
