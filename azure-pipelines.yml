@@ -67,9 +67,9 @@ stages:
 #              runVersion: 'latestFromBranch'
 #              runBranch: 'refs/heads/master'
 #              tags: '^v[0-9]\.[0-9]\.[0-9]$'
-#              patterns: '*manylinux*.whl'
+              patterns: 'wheels_*/*manylinux*.whl'
           - script: |
-              ls -lh $(Pipeline.Workspace)/dist/*.whl
+              ls -lh $(Pipeline.Workspace)/dist/
             displayName: 'List wheels'
           - script: |
               python -m pip install twine
