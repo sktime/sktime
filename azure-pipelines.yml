@@ -27,33 +27,28 @@ stages:
         strategy:
           matrix:
             64x2010:  # 64 bit 2010
-              ARCH: x86_64
               PLATFORM: manylinux2010_x86_64
               IMAGE: quay.io/pypa/manylinux2010_x86_64
               PYTHON_ARCHITECTURE: x64
             64x:  # 64 bit
-              ARCH: x86_64
               PLATFORM: manylinux1_x86_64
               IMAGE: quay.io/pypa/manylinux1_x86_64
               PYTHON_ARCHITECTURE: x64
 #            86x:  # 32 bit
-#              ARCH: i686
 #              PLATFORM: manylinux1_i686
 #              IMAGE: quay.io/pypa/manylinux1_i686
 #              PYTHON_ARCHITECTURE: x86
-#            64x2014:  # 32 bit
-#              ARCH: x86_64
-#              PLATFORM: manylinux2014_x86_64
-#              IMAGE: quay.io/pypa/manylinux2014_x86_64
-#              PYTHON_ARCHITECTURE: x86
-
+            64x2014:  # 64 bit
+              PLATFORM: manylinux2014_x86_64
+              IMAGE: quay.io/pypa/manylinux2014_x86_64
+              PYTHON_ARCHITECTURE: x86
 
   - stage: 'deploy'
     dependsOn: 'build'
     condition: succeeded('build')
+#        condition: and(succeeded('build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
     jobs:
       - job: 'deploy_to_pypi'
-#        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -67,7 +62,8 @@ stages:
 #              runVersion: 'latestFromBranch'
 #              runBranch: 'refs/heads/master'
 #              tags: '^v[0-9]\.[0-9]\.[0-9]$'
-              patterns: 'wheels_*/*manylinux*.whl'
+              artifactName: 'wheels_*'
+              patterns: '*manylinux*.whl'
           - script: |
               ls -lh $(Pipeline.Workspace)/dist/
             displayName: 'List wheels'
