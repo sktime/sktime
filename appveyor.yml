@@ -36,6 +36,7 @@ environment:
 
 platform:
     - x64
+    - x86
 
 init:
   - cmd: echo %PYTHON_VERSION% %MINICONDA%

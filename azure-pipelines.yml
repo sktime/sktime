@@ -8,8 +8,10 @@ variables:
   PYTEST_RESULTS: 'pytest-results.xml'
 
 trigger:
-  - master
-  - dev
+  - branches:
+      include:
+        - master
+        - dev
 
 pr:
   # Cancel if new commits are pushed to the same PR
@@ -34,10 +36,10 @@ stages:
               PLATFORM: manylinux1_x86_64
               IMAGE: quay.io/pypa/manylinux1_x86_64
               PYTHON_ARCHITECTURE: x64
-#            86x:  # 32 bit
-#              PLATFORM: manylinux1_i686
-#              IMAGE: quay.io/pypa/manylinux1_i686
-#              PYTHON_ARCHITECTURE: x86
+            86x:  # 32 bit
+              PLATFORM: manylinux1_i686
+              IMAGE: quay.io/pypa/manylinux1_i686
+              PYTHON_ARCHITECTURE: x86
             64x2014:  # 64 bit
               PLATFORM: manylinux2014_x86_64
               IMAGE: quay.io/pypa/manylinux2014_x86_64
@@ -55,17 +57,17 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              source: 'current'
-              path: '$(Pipeline.Workspace)/download/'
-              runVersion: 'latest'
-#              source: 'specific'
-#              runVersion: 'latestFromBranch'
-#              runBranch: 'refs/heads/master'
-#              tags: '^v[0-9]\.[0-9]\.[0-9]$'
+#              source: 'current'
+#              runVersion: 'latest'
+              source: 'specific'
+              runVersion: 'latestFromBranch'
+              runBranch: 'refs/heads/master'
+              tags: '^v[0-9]\.[0-9]\.[0-9]$'
               patterns: 'wheels_*/*manylinux*.whl'
+              path: 'download/'
           - script: |
               mkdir dist
-              cp $(Pipeline.Workspace)/download/wheels_*/*manylinux*.whl dist/
+              cp download/wheels_*/*manylinux*.whl dist/
               ls -lh dist/
             displayName: 'Select and list wheels'
           - script: |
@@ -77,7 +79,6 @@ stages:
               # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
               pythonUploadServiceConnection: PyPI
           - script: |
-              cat $(PYPIRC_PATH)
               ls -lh dist/*.whl
 #             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'
