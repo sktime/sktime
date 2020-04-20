@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__all__ = ["SlidingWindowSplitter", "ManualWindowSplitter", "SingleWindowSplitter", "temporal_train_test_split"]
+__all__ = ["SlidingWindowSplitter", "CutoffSplitter", "SingleWindowSplitter", "temporal_train_test_split"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
@@ -19,10 +19,8 @@ DEFAULT_WINDOW_LENGTH = 10
 DEFAULT_FH = 1
 
 
-class BaseTemporalCrossValidator:
-    """Rolling window iterator that allows to split time series index into two windows,
-    one containing observations used as feature data and one containing observations used as
-    target data to be predicted. The target window has the length of the given forecasting horizon.
+class BaseSplitter:
+    """Base class for splitting time series during temporal cross-validation
 
     Parameters
     ----------
@@ -37,7 +35,7 @@ class BaseTemporalCrossValidator:
         self.fh = fh
 
     def split(self, y):
-        """Split `y`.
+        """Split y into windows.
 
         Parameters
         ----------
@@ -56,22 +54,19 @@ class BaseTemporalCrossValidator:
             yield training_window[training_window >= 0], test_window[test_window >= 0]
 
     def _split_windows(self, y):
+        """Internal split method"""
         raise NotImplementedError("abstract method")
 
     def get_n_splits(self, y=None):
-        """
-        Return the number of splits.
-        """
+        """Return the number of splits."""
         raise NotImplementedError("abstract method")
 
     def get_cutoffs(self, y=None):
-        """
-        Return the cutoff points in time at which `y` is split.
-        """
+        """Return the cutoff points in time at which y is split."""
         raise NotImplementedError("abstract method")
 
     def get_fh(self):
-        """Forecasting horizon"""
+        """Return the forecasting horizon"""
         return check_fh(self.fh)
 
     @staticmethod
@@ -82,7 +77,7 @@ class BaseTemporalCrossValidator:
         return check_time_index(y)
 
 
-class ManualWindowSplitter(BaseTemporalCrossValidator):
+class CutoffSplitter(BaseSplitter):
     """Manual window splitter to split time series at given cutoff points.
 
     Parameters
@@ -95,7 +90,7 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
 
     def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
         self.cutoffs = cutoffs
-        super(ManualWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super(CutoffSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split_windows(self, y):
         # cutoffs
@@ -116,13 +111,16 @@ class ManualWindowSplitter(BaseTemporalCrossValidator):
             yield training_window, test_window
 
     def get_n_splits(self, y=None):
+        """Return the number of splits"""
         return len(self.cutoffs)
 
     def get_cutoffs(self, y=None):
+        """Return the cutoff points"""
         return check_cutoffs(self.cutoffs)
 
 
-class BaseWindowSplitter(BaseTemporalCrossValidator):
+class BaseWindowSplitter(BaseSplitter):
+    """Base class for window splits"""
 
     def __init__(self, fh=None, window_length=None):
         super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
@@ -153,6 +151,17 @@ class BaseWindowSplitter(BaseTemporalCrossValidator):
 
 
 class SlidingWindowSplitter(BaseWindowSplitter):
+    """Sliding window splitter
+
+    Parameters
+    ----------
+    fh : int, list or np.array
+        Forecasting horizon
+    window_length : int
+    step_length : int
+    initial_window : int
+    start_with_window : bool, optional (default=True)
+    """
 
     def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH, step_length=DEFAULT_STEP_LENGTH,
                  initial_window=None, start_with_window=False):
@@ -163,17 +172,6 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         super(SlidingWindowSplitter, self).__init__(fh=fh, window_length=window_length)
 
     def _split_windows(self, y):
-        """Split `y` using sliding window cross-validation
-
-        Parameters
-        ----------
-        y : index-like
-
-        Yields
-        ------
-        training_window : np.array
-        test_window : np.array
-        """
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(self.window_length)
         fh = check_fh(self.fh)
@@ -187,6 +185,20 @@ class SlidingWindowSplitter(BaseWindowSplitter):
             yield training_window, test_window
 
     def split_initial(self, y):
+        """Split initial window
+
+        This is useful during forecasting model selection where we want to fit the forecaster on some part of the
+        data first before doing temporal cross-validation
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        intial_training_window : np.array
+        initial_test_window : np.array
+        """
         if self.initial_window is None:
             raise ValueError(f"Please specify initial window, found: `initial_window`=None")
 
@@ -198,6 +210,16 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         return initial_training_window, initial_test_window
 
     def get_n_splits(self, y=None):
+        """Return number of splits
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+
+        Returns
+        -------
+        n_splits : int
+        """
         if y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
         return len(self.get_cutoffs(y))
@@ -207,7 +229,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
         Parameters
         ----------
-        y : index-like
+        y : pd.Series or pd.Index, optional (default=None)
 
         Returns
         -------
@@ -230,6 +252,15 @@ class SlidingWindowSplitter(BaseWindowSplitter):
 
 
 class SingleWindowSplitter(BaseWindowSplitter):
+    """Single window splitter
+
+    Split time series once into a training and test window.
+
+    Parameters
+    ----------
+    fh : int, list or np.array
+    window_length : int
+    """
 
     def __init__(self, fh, window_length=None):
         super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
@@ -246,15 +277,49 @@ class SingleWindowSplitter(BaseWindowSplitter):
         yield training_window, test_window
 
     def get_n_splits(self, y=None):
+        """Return number of splits
+
+        Parameters
+        ----------
+        y : pd.Series, optional (default=None)
+
+        Returns
+        -------
+        n_splits : int
+        """
         return 1
 
     def get_cutoffs(self, y=None):
+        """Get the cutoff time points.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.Index, optional (default=None)
+
+        Returns
+        -------
+        cutoffs : np.array
+        """
         if y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
         training_window, _ = next(self._split_windows(y))
         return training_window[-1:]  # array outpu
 
     def split_initial(self, y):
+        """Split initial window
+
+        This is useful during forecasting model selection where we want to fit the forecaster on some part of the
+        data first before doing temporal cross-validation
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        intial_training_window : np.array
+        initial_test_window : np.array
+        """
         # the single window splitter simply returns the single split
         training_window, _ = next(self._split_windows(y))
         test_window = np.arange(training_window[-1] + 1, len(y))

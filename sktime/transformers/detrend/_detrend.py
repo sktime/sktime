@@ -43,5 +43,16 @@ class Detrender(MetaForecasterMixin, BaseSeriesToSeriesTransformer):
         return y.index.values - self.forecaster_.cutoff
 
     def update(self, y_new, update_params=False):
+        """Update fitted parameters
+
+         Parameters
+         ----------
+         y_new : pd.Series
+         update_params : bool, optional (default=False)
+
+         Returns
+         -------
+         self : an instance of self
+         """
         self.forecaster_.update(y_new, update_params=update_params)
         return self

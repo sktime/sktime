@@ -9,8 +9,6 @@ __all__ = [
     "ConditionalDeseasonalizer"
 ]
 
-from warnings import warn
-
 import numpy as np
 from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
 from sktime.utils.seasonality import autocorrelation_seasonality_test
@@ -49,6 +47,18 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
     def fit(self, y, **fit_params):
+        """Fit to data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+        fit_params : dict
+
+        Returns
+        -------
+        self : an instance of self
+        """
+
         y = check_y(y)
         self._set_oh_index(y)
         sp = check_sp(self.sp)
@@ -70,21 +80,58 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
             return y * seasonal
 
     def transform(self, y, **transform_params):
+        """Transform data.
+        Returns a transformed version of y.
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        yt : pd.Series
+            Transformed time series.
+        """
         self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
         return self._detrend(y, seasonal)
 
     def inverse_transform(self, y, **transform_params):
+        """Inverse transform data.
+        Returns a transformed version of y.
+
+        Parameters
+        ----------
+        y : pd.Series
+
+        Returns
+        -------
+        yt : pd.Series
+            Transformed time series.
+        """
         self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
         return self._retrend(y, seasonal)
 
     def update(self, y_new, update_params=False):
+        """Update fitted parameters
+
+         Parameters
+         ----------
+         y_new : pd.Series
+         X_new : pd.DataFrame
+         update_params : bool, optional (default=False)
+
+         Returns
+         -------
+         self : an instance of self
+         """
         self.check_is_fitted()
         y_new = check_y(y_new)
         self._set_oh_index(y_new)
+        return self
 
 
 Deseasonalizer = Deseasonaliser
@@ -121,20 +168,21 @@ class ConditionalDeseasonaliser(Deseasonaliser):
                              f"but found: {type(is_seasonal)}")
         return is_seasonal
 
-    def fit(self, y, **fit_params):
-        """Fit.
+    def fit(self, y_train, **fit_params):
+        """Fit to data.
 
         Parameters
         ----------
-        y : pd.Series
+        y_train : pd.Series
         fit_params : dict
 
         Returns
         -------
-        self
+        self : an instance of self
         """
-        y = check_y(y)
-        self._set_oh_index(y)
+
+        y_train = check_y(y_train)
+        self._set_oh_index(y_train)
         sp = check_sp(self.sp)
 
         # set default condition
@@ -142,11 +190,11 @@ class ConditionalDeseasonaliser(Deseasonaliser):
             self.seasonality_test = autocorrelation_seasonality_test
 
         # check if data meets condition
-        self.is_seasonal_ = self._check_condition(y)
+        self.is_seasonal_ = self._check_condition(y_train)
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
-            self.seasonal_ = seasonal_decompose(y, model=self.model, period=sp, filt=None, two_sided=True,
+            self.seasonal_ = seasonal_decompose(y_train, model=self.model, period=sp, filt=None, two_sided=True,
                                                 extrapolate_trend=0).seasonal.iloc[:sp]
         else:
             # otherwise, set idempotent seasonal components
@@ -156,6 +204,17 @@ class ConditionalDeseasonaliser(Deseasonaliser):
         return self
 
     def update(self, y_new, update_params=False):
+        """Update fitted paramters
+
+         Parameters
+         ----------
+         y_new : pd.Series
+         update_params : bool, optional (default=False)
+
+         Returns
+         -------
+         self : an instance of self
+         """
         raise NotImplementedError()
 
 

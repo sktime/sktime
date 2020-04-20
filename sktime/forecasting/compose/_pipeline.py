@@ -77,6 +77,20 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         return dict(self.steps)
 
     def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self.steps_ = self._check_steps()
         self._set_oh(y_train)
         self._set_fh(fh)
@@ -110,6 +124,18 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         return y_pred
 
     def update(self, y_new, X_new=None, update_params=False):
+        """Update fitted paramters
+
+        Parameters
+        ----------
+        y_new : pd.Series
+        X_new : pd.DataFrame
+        update_params : bool, optional (default=False)
+
+        Returns
+        -------
+        self : an instance of self
+        """
         self.check_is_fitted()
         self._set_oh(y_new)
 

@@ -57,9 +57,10 @@ class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecast
         return names, forecasters
 
     def _fit_forecasters(self, forecasters, y_train, fh=None, X_train=None):
-        """Helper function to fit all forecasters"""
+        """Fit all forecasters in parallel"""
 
         def _fit_forecaster(forecaster, y_train, fh, X_train):
+            """Fit single forecaster"""
             return forecaster.fit(y_train, fh=fh, X_train=X_train)
 
         self.forecasters_ = Parallel(n_jobs=self.n_jobs)(

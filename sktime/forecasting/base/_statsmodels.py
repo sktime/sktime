@@ -9,7 +9,8 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
-
+    """Base class for interfacing statsmodels forecasting algorithms
+    """
     _fitted_param_names = ()
 
     def __init__(self):
@@ -18,16 +19,15 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         super(BaseStatsModelsAdapter, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
-        """
-        Fit to training data.
+        """Fit to training data.
 
         Parameters
         ----------
         y_train : pd.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=[1])
+        fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : None
+        X_train : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
@@ -42,6 +42,7 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         return self
 
     def _fit_forecaster(self, y_train, X_train=None):
+        """Internal fit"""
         raise NotImplementedError("abstract method")
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -72,9 +73,16 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         return y_pred.loc[fh_abs]
 
     def get_fitted_params(self):
+        """Get fitted parameters
+
+        Returns
+        -------
+        fitted_params : dict
+        """
         self.check_is_fitted()
         return {name: self._fitted_forecaster.params.get(name)
                 for name in self._get_fitted_param_names()}
 
     def _get_fitted_param_names(self):
+        """Get names of fitted parameters"""
         return self._fitted_param_names

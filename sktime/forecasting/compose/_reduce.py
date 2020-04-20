@@ -40,6 +40,18 @@ class BaseReducer(BaseLastWindowForecaster):
         self._cv = None
 
     def update(self, y_new, X_new=None, update_params=False):
+        """Update fitted paramters
+
+        Parameters
+        ----------
+        y_new : pd.Series
+        X_new : pd.DataFrame
+        update_params : bool, optional (default=False)
+
+        Returns
+        -------
+        self : an instance of self
+        """
         if X_new is not None or update_params:
             raise NotImplementedError()
         self.check_is_fitted()
@@ -171,6 +183,20 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "direct"
 
     def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         # input checks
         if X_train is not None:
             raise NotImplementedError()
@@ -228,7 +254,20 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
     def fit(self, y_train, fh=None, X_train=None):
-        """Fit forecaster"""
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         # input checks
         if X_train is not None:
             raise NotImplementedError()

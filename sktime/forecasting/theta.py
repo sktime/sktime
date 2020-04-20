@@ -87,20 +87,18 @@ class ThetaForecaster(ExponentialSmoothing):
         super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
     def fit(self, y_train, fh=None, X_train=None):
-        """
-        Fit to training data.
+        """Fit to training data.
 
         Parameters
         ----------
-
-        y_train : pandas.Series
+        y_train : pd.Series
             Target time series to which to fit the forecaster.
-        fh : array-like, optional (default=[1])
+        fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
         Returns
         -------
-
         self : returns an instance of self.
         """
         sp = check_sp(self.sp)

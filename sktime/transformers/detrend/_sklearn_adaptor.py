@@ -12,12 +12,15 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class SingleSeriesTransformAdaptor(BaseSeriesToSeriesTransformer):
-    """Adaptor for scikit-learn-like tabular transformers to single series setting
+    """Adaptor for scikit-learn-like tabular transformers to single series setting.
+
+    This is useful for applying scikit-learn transformers to single series, but only works with transformers that
+    do not require multiple instances for fitting.
 
     Parameters
     ----------
     transformer : Estimator
-        Transformer to fit and apply to single series
+        scikit-learn-like transformer to fit and apply to single series
     """
 
     _required_parameters = ["transformer"]
@@ -49,16 +52,17 @@ class SingleSeriesTransformAdaptor(BaseSeriesToSeriesTransformer):
 
     @staticmethod
     def _tabularise(y):
-        """Helper function to convert single series into single-column tabular array"""
+        """Convert single series into single-column tabular array"""
         return y.values.reshape(-1, 1)
 
     @staticmethod
     def _detabularise(y, index):
-        """Helper function to convert single-column tabular array to single series"""
+        """Convert single-column tabular array to single series"""
         return pd.Series(y.ravel(), index=index)
 
     def transform(self, y, **transform_params):
         """Transform data.
+        Returns a transformed version of y.
 
         Parameters
         ----------
@@ -97,4 +101,15 @@ class SingleSeriesTransformAdaptor(BaseSeriesToSeriesTransformer):
         return self._detabularise(xt, index=y.index)
 
     def update(self, y_new, update_params=False):
+        """Update fitted parameters
+
+         Parameters
+         ----------
+         y_new : pd.Series
+         update_params : bool, optional (default=False)
+
+         Returns
+         -------
+         self : an instance of self
+         """
         raise NotImplementedError("update is not implemented yet")

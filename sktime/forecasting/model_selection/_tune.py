@@ -177,7 +177,7 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
-        """Call predict on the forecaster with the best found parameters.
+        """Call update_predict on the forecaster with the best found parameters.
         """
         self.check_is_fitted("update_predict")
         return self.best_forecaster_.update_predict(y_test, cv=cv, X_test=X_test, update_params=update_params,
@@ -201,13 +201,20 @@ class BaseGridSearch(BaseForecaster):
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, **transform_params):
+        """Call transform on the forecaster with the best found parameters.
+        """
         self.check_is_fitted("transform")
         return self.best_forecaster_.transform(y, **transform_params)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
-        """Call transform on the forecaster with the best found parameters.
+        """Get fitted parameters
+
+        Returns
+        -------
+        fitted_params : dict
         """
+
         self.check_is_fitted("get_fitted_params")
         return self.best_forecaster_.get_fitted_params()
 
@@ -315,7 +322,20 @@ class BaseGridSearch(BaseForecaster):
                 self.best_forecaster_.check_is_fitted()
 
     def fit(self, y_train, fh=None, X_train=None, **fit_params):
-        """Internal fit"""
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         y_train = check_y(y_train)
 
         # validate cross-validator

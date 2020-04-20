@@ -6,7 +6,7 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pytest
 from sktime.forecasting.model_selection import SingleWindowSplitter
-from sktime.forecasting.model_selection import SlidingWindowSplitter, ManualWindowSplitter
+from sktime.forecasting.model_selection import SlidingWindowSplitter, CutoffSplitter
 from sktime.forecasting.tests import TEST_STEP_LENGTHS, TEST_WINDOW_LENGTHS, TEST_FHS, TEST_YS
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
@@ -137,7 +137,7 @@ def test_single_window_split(y, fh, window_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_manual_window_split(y, cutoffs, fh, window_length):
     # initiate rolling window cv iterator
-    cv = ManualWindowSplitter(cutoffs, fh=fh, window_length=window_length)
+    cv = CutoffSplitter(cutoffs, fh=fh, window_length=window_length)
 
     # generate and keep splits
     training_windows, test_windows, n_splits, _ = generate_and_check_windows(y, cv)

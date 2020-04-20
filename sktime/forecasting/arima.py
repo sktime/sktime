@@ -86,6 +86,20 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         )
 
     def fit(self, y_train, fh=None, X_train=None, **fit_args):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         self._set_oh(y_train)
         self._set_fh(fh)
         self._forecaster.fit(y_train, exogenous=X_train, **fit_args)
@@ -155,6 +169,12 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             return pd.Series(y_pred[fh_idx], index=index)
 
     def get_fitted_params(self):
+        """Get fitted parameters
+
+        Returns
+        -------
+        fitted_params : dict
+        """
         self.check_is_fitted()
         names = self._get_fitted_param_names()
         params = self._forecaster.model_.arima_res_._results.params

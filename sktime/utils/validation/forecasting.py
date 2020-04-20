@@ -95,8 +95,8 @@ def check_cv(cv):
     ValueError
         if cv does not have the required attributes.
     """
-    from sktime.forecasting.model_selection._split import BaseTemporalCrossValidator
-    allowed_base_class = BaseTemporalCrossValidator
+    from sktime.forecasting.model_selection._split import BaseSplitter
+    allowed_base_class = BaseSplitter
     if not isinstance(cv, allowed_base_class):
         raise TypeError(f"`cv` is not an instance of {allowed_base_class}")
     return cv

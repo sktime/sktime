@@ -23,6 +23,20 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
         super(PolynomialTrendForecaster, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         if X_train is not None:
             raise NotImplementedError()
         self._set_oh(y_train)
@@ -37,6 +51,22 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
         return self
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make forecasts
+
+        Parameters
+        ----------
+        fh : int, list or np.array
+        X : pd.DataFrame, optional (default=None)
+        return_pred_int : bool, optional (default=False)
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame
+            Prediction intervals
+        """
         if return_pred_int or X is not None:
             raise NotImplementedError()
         self.check_is_fitted()

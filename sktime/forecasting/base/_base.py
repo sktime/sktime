@@ -9,7 +9,6 @@ __all__ = [
 ]
 
 from sktime.base import BaseEstimator
-from sktime.exceptions import NotFittedError
 
 DEFAULT_ALPHA = 0.05
 
@@ -24,21 +23,80 @@ class BaseForecaster(BaseEstimator):
         super(BaseEstimator, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
         raise NotImplementedError("abstract method")
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Make forecasts
+
+        Parameters
+        ----------
+        fh : int, list or np.array
+        X : pd.DataFrame, optional (default=None)
+        return_pred_int : bool, optional (default=False)
+        alpha : float or list, optional (default=0.95)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame
+            Prediction intervals
+        """
         raise NotImplementedError("abstract method")
 
     def update(self, y_new, X_new=None, update_params=False):
+        """Update fitted paramters
+
+        Parameters
+        ----------
+        y_new : pd.Series
+        X_new : pd.DataFrame
+        update_params : bool, optional (default=False)
+
+        Returns
+        -------
+        self : an instance of self
+        """
         raise NotImplementedError("abstract method")
 
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
+        """Make and update predictions iteratively over the test set.
+
+        Parameters
+        ----------
+        y_test : pd.Series
+        cv : cross-validation generator, optional (default=None)
+        X_test : pd.DataFrame, optional (default=None)
+        update_params : bool, optional (default=False)
+        return_pred_int : bool, optional (default=False)
+        alpha : int or list of ints, optional (default=None)
+
+        Returns
+        -------
+        y_pred : pd.Series
+            Point predictions
+        y_pred_int : pd.DataFrame
+            Prediction intervals
+        """
         raise NotImplementedError("abstract method")
 
     def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
                               alpha=DEFAULT_ALPHA):
-        """Allows for more efficient update-predict routines than calling them sequentially"""
         # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
         # passed to update, the remaining time points of X are passed to predict
         if X is not None or return_pred_int:
@@ -48,20 +106,22 @@ class BaseForecaster(BaseEstimator):
         return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def score(self, y_test, fh=None, X=None):
-        """
-        Returns the SMAPE on the given forecast horizon.
+        """Compute the sMAPE loss for the given forecasting horizon.
+
         Parameters
         ----------
-        y_test : pandas.Series
+        y_test : pd.Series
             Target time series to which to compare the forecasts.
-        fh : int or array-like, optional (default=None)
+        fh : int, list or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
+        X : pd.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
+
         Returns
         -------
         score : float
-            SMAPE score of self.predict(fh=fh, X=X) with respect to y.
+            sMAPE loss of self.predict(fh=fh, X=X) with respect to y_test.
+
         See Also
         --------
         :meth:`sktime.performance_metrics.forecasting.smape_loss`.`
@@ -72,6 +132,12 @@ class BaseForecaster(BaseEstimator):
         return smape_loss(y_test, self.predict(fh=fh, X=X))
 
     def get_fitted_params(self):
+        """Get fitted parameters
+
+        Returns
+        -------
+        fitted_params : dict
+        """
         raise NotImplementedError("abstract method")
 
 

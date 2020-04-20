@@ -16,7 +16,7 @@ class FH(np.ndarray):
     ----------
     values : np.array, list or int
         Values of forecasting horizon
-    is_relative : bool, optional (default=True)
+    relative : bool, optional (default=True)
         - If True, values are relative to end of training series.
         - If False, values are absolute.
     """

@@ -46,8 +46,20 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self.sp_ = None
 
     def fit(self, y_train, fh=None, X_train=None):
-        """Fit"""
-        # X_train is ignored
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """        # X_train is ignored
         self._set_oh(y_train)
         self._set_fh(fh)
 
