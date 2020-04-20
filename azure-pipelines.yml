@@ -21,7 +21,19 @@ pr:
   autoCancel: true
 
 stages:
+  - stage: 'linting'
+    - job: 'linting'
+      pool:
+        - vmImage: 'ubuntu-latest'
+      steps:
+        - script: pip install flake8
+          displayName: 'Installing flake8'
+        - template: maint_tools/linting.sh
+          displayName: 'Run linting'
+
   - stage: 'build'
+    dependsOn: 'linting'
+    condition: and(succeeded('linting')
     jobs:
       - job: 'build_manylinux'
         pool:

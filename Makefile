@@ -25,6 +25,9 @@ install: ## Install for the current user using the default python command
 test: ## Run unit tests
 	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
 
+lint:  ## Run linting
+	maint_tools/linting.sh
+
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
 	rm -rf ./build
