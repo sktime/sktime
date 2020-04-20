@@ -50,8 +50,9 @@ stages:
 
   - stage: 'deploy'
     dependsOn: 'build'
-    condition: succeeded('build')
-    #        condition: and(succeeded('build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded('build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith
+    (variables['Build.SourceBranch'], 'refs/tags/'), eq(git tag --sort=-creatordate | head -n 1, '^v[0-9]\.[0-9]\
+    .[0-9]$')
     jobs:
       - job: 'deploy_to_pypi'
         pool:
@@ -60,7 +61,9 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              source: 'current'
+              source: 'specific'
+              project: 'sktime'
+              pipeline: 'alan-turing-institute.sktime'
               runVersion: 'latestFromBranch'
               runBranch: 'refs/heads/master'
               tags: '^v[0-9]\.[0-9]\.[0-9]$'
