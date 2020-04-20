@@ -59,9 +59,7 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              #              source: 'current'
-              #              runVersion: 'latest'
-              source: 'specific'
+              source: 'current'
               runVersion: 'latestFromBranch'
               runBranch: 'refs/heads/master'
               tags: '^v[0-9]\.[0-9]\.[0-9]$'
