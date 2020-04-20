@@ -13,6 +13,16 @@ import numpy as np
 def autocorrelation_seasonality_test(y, sp):
     """Seasonality test used in M4 competition
 
+    Parameters
+    ----------
+    sp : int
+        Seasonal periodicity
+
+    Returns
+    -------
+    is_seasonal : bool
+        Test result
+
     References
     ----------
     ..[1]  https://github.com/Mcompetitions/M4-methods/blob/master/Benchmarks%20and%20Evaluation.R
