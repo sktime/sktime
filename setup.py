@@ -110,7 +110,7 @@ SETUPTOOLS_COMMANDS = {
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     # We need to import setuptools early, if we want setuptools features,
     # (e.g. "bdist_wheel") as it monkey-patches the 'setup' function
-    import setuptools
+    import setuptools  # noqa
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file

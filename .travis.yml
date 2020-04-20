@@ -12,8 +12,8 @@ language: shell  # 'language: python' is an error on Travis CI with macOS
 
 cache:
   directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/.ccache
 
 dist: xenial  # Ubuntu 16.04
 
@@ -35,8 +35,8 @@ jobs:
     - name: "linux-py37"
       os: linux
       env:
-      - PYTHON_VERSION=3.7
-      - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
+        - PYTHON_VERSION=3.7
+        - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
     - name: "osx-py36"
       os: osx
       env:
@@ -45,14 +45,14 @@ jobs:
     - name: "osx-py37"
       os: osx
       env:
-      - PYTHON_VERSION=3.7
-      - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
+        - PYTHON_VERSION=3.7
+        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
     - name: "osx-py38"
       os: osx
       env:
-      - PYTHON_VERSION=3.8
-      # Check available miniconda version: https://repo.anaconda.com/miniconda/
-      - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
+        - PYTHON_VERSION=3.8
+        # Check available miniconda version: https://repo.anaconda.com/miniconda/
+        - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
 
 addons:
   # travis recommends to specify any additional necessary packages here,

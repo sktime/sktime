@@ -15,11 +15,11 @@ PYTHON_VERSIONS=(/opt/python/*/bin)
 # Filter out Python versions
 # echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
 # split string by comma into array
-IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<< "$EXCLUDE_PYTHON_VERSIONS"
+IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<<"$EXCLUDE_PYTHON_VERSIONS"
 
 for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
   # remove dot and whitespace from version number
-  VERSION="$(echo -e "${VERSION//.}" | tr -d '[:space:]')"
+  VERSION="$(echo -e "${VERSION//./}" | tr -d '[:space:]')"
 
   # remove versions
   PYTHON_VERSIONS=(${PYTHON_VERSIONS[@]//*"$VERSION"*/})
@@ -27,27 +27,26 @@ done
 echo "Included Python versions: ${PYTHON_VERSIONS[@]}"
 
 # Build wheels
-cd /io/  # Change directory
+cd /io/ # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
-    # Install requirements
-#    "${PYTHON}/pip" install freetype-py  # required to build matplotlib from source
-    "${PYTHON}/pip" install -r "$REQUIREMENTS"
+  # Install requirements
+  "${PYTHON}/pip" install -r "$REQUIREMENTS"
 
-    # Build wheel
-    "${PYTHON}/python" setup.py bdist_wheel
+  # Build wheel
+  "${PYTHON}/python" setup.py bdist_wheel
 done
 
 # Bundle external shared libraries into the wheels using the auditwheel library
 for wheel in dist/sktime-*.whl; do
-    auditwheel repair --plat "$PLATFORM" --wheel-dir dist/ "$wheel"
+  auditwheel repair --plat "$PLATFORM" --wheel-dir dist/ "$wheel"
 done
 
 # Install built whee wheel and test
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
-    # Install from wheel
-    "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
+  # Install from wheel
+  "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
 
-    # Run tests
-    "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
+  # Run tests
+  "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
 done

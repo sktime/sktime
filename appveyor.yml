@@ -25,33 +25,17 @@ environment:
 
   matrix:
     - PYTHON_VERSION: "3.6"
-      platform: x64
       MINICONDA_VERSION: C:\Miniconda36-x64
     - PYTHON_VERSION: "3.7"
-      platform: x64
       MINICONDA_VERSION: C:\Miniconda37-x64
     - PYTHON_VERSION: "3.8"
-      platform: x64
       MINICONDA_VERSION: C:\Miniconda38-x64
       # For Python 3.8, we need a different image, check out available pre-installed Python
       # and Visual Studio versions: https://www.appveyor.com/docs/linux-images-software/
       APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-    - PYTHON_VERSION: "3.6"
-      platform: x86
-      MINICONDA_VERSION: C:\Miniconda36
-    - PYTHON_VERSION: "3.7"
-      platform: x86
-      MINICONDA_VERSION: C:\Miniconda37
-    - PYTHON_VERSION: "3.8"
-      platform: x86
-      MINICONDA_VERSION: C:\Miniconda38
-      # For Python 3.8, we need a different image, check out available pre-installed Python
-      # and Visual Studio versions: https://www.appveyor.com/docs/linux-images-software/
-      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
-
 
 init:
-  - cmd: echo %PYTHON_VERSION% %MINICONDA%
+  - cmd: echo %PYTHON_VERSION% %MINICONDA_VERSION%
   - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
@@ -59,7 +43,7 @@ init:
 # PR. The following option cancels pending jobs in a given PR after the first
 # job failure in that specific PR.
 matrix:
-    fast_finish: true
+  fast_finish: true
 
 # Not a .NET project, we build sktime in the install step instead
 build: false
@@ -71,9 +55,9 @@ install:
   # directly to master instead of just PR builds.
   # credits: JuliaLang developers.
   - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
-        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
-        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
-        throw "There are newer queued builds for this pull request, failing early." }
+      https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+      Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+      throw "There are newer queued builds for this pull request, failing early." }
 
   # Set up conda environment
   - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
@@ -109,11 +93,11 @@ test_script:
   - ps: cp setup.cfg %TEST_DIR%
   - ps: cd %TEST_DIR%
   - ps: >-
-        if (Test-Path variable:global:CHECK_WARNINGS) {
-            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
-        } else {
-            $env:PYTEST_ARGS = ""
-        }
+      if (Test-Path variable:global:CHECK_WARNINGS) {
+          $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
+      } else {
+          $env:PYTEST_ARGS = ""
+      }
   # Run tests
   - cmd: pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime
 
