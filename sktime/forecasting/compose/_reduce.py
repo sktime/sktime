@@ -47,6 +47,11 @@ class BaseReducer(BaseLastWindowForecaster):
         return self
 
     def transform(self, y_train, X_train=None):
+        # we need to call fit first to make sure that self._cv is properly set
+        self.check_is_fitted()
+        return self._transform(y_train, X_train=X_train)
+
+    def _transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
         if X_train is not None:
             raise NotImplementedError()
@@ -184,7 +189,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
                                          start_with_window=True)
 
         # transform data using rolling window split
-        X_train, Y_train = self.transform(y_train, X_train)
+        X_train, Y_train = self._transform(y_train, X_train)
 
         # iterate over forecasting horizon
         self.regressors_ = []
@@ -242,7 +247,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
                                          start_with_window=True)
 
         # transform data into tabular form
-        X_train_tab, y_train_tab = self.transform(y_train, X_train)
+        X_train_tab, y_train_tab = self._transform(y_train, X_train)
 
         # fit base regressor
         regressor = clone(self.regressor)
