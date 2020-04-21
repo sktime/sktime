@@ -33,12 +33,10 @@ stages:
               versionSpec: 3.x
           - script: pip install flake8
             displayName: 'Installing flake8'
-          - task: ShellScript@2
+          - task: Bash@3
             displayName: 'Linting'
             inputs:
-              scriptPath: maint_tools/linting.sh
-              cwd: $(Agent.WorkFolder)
-              failOnStandardError: true
+              filePath: maint_tools/linting.sh
 
   - stage: 'build'
     dependsOn: 'linting'
