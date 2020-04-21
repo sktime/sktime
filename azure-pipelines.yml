@@ -37,8 +37,8 @@ stages:
             displayName: 'Linting'
             inputs:
               scriptPath: maint_tools/linting.sh
-            cwd: $(Agent.WorkFolder)
-            failOnStandardError: true
+              cwd: $(Agent.WorkFolder)
+              failOnStandardError: true
 
   - stage: 'build'
     dependsOn: 'linting'
