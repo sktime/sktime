@@ -3,6 +3,7 @@
 
 __author__ = ["Markus Löning"]
 
+from sktime.transformers.detrend._boxcox import BoxCoxTransformer
 from sktime.transformers.detrend._deseasonalise import Deseasonaliser, ConditionalDeseasonaliser
 from sktime.transformers.detrend._deseasonalise import Deseasonalizer, ConditionalDeseasonalizer
 from sktime.transformers.detrend._detrend import Detrender

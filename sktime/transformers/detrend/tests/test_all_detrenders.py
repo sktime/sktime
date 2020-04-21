@@ -9,6 +9,7 @@ from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.transformers.detrend import SingleSeriesTransformAdaptor
 from sktime.transformers.detrend import ConditionalDeseasonaliser
+from sktime.transformers.detrend import BoxCoxTransformer
 from sktime.utils.testing.base import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
@@ -16,7 +17,8 @@ DETRENDERS = [
     Deseasonaliser,
     ConditionalDeseasonaliser,
     Detrender,
-    SingleSeriesTransformAdaptor
+    SingleSeriesTransformAdaptor,
+    BoxCoxTransformer
 ]
 
 # testing data
