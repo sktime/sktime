@@ -28,6 +28,7 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - task: UsePythonVersion@0
+            displayName: 'Use Python version'
             inputs:
               versionSpec: 3.x
           - script: pip install flake8
@@ -36,6 +37,8 @@ stages:
             displayName: 'Linting'
             inputs:
               scriptPath: maint_tools/linting.sh
+            cwd: $(Agent.WorkFolder)
+            failOnStandardError: true
 
   - stage: 'build'
     dependsOn: 'linting'
