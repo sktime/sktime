@@ -29,7 +29,10 @@ stages:
         steps:
           - script: pip install flake8
             displayName: 'Installing flake8'
-          - template: maint_tools/linting.sh
+          - task: ShellScript@2
+            displayName: 'Linting'
+            inputs:
+              scriptPath: maint_tools/linting.sh
 
   - stage: 'build'
     dependsOn: 'linting'
