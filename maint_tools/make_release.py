@@ -127,6 +127,11 @@ class RunTests(Step):
         self.do_cmd("make test")
 
 
+class RunLinting(Step):
+    def action(self, context):
+        self.do_cmd("make lint")
+
+
 class UpdateChangelog(Step):
     def action(self, context):
         self.instruct(f"Update CHANGELOG for version: {context['version']}")
@@ -262,6 +267,7 @@ def main():
     steps = [
         ConfirmGitStatus(),
         MakeClean(),
+        RunLinting(),
         RunTests(),
         MakeDocs(),
         CheckLocalDocs(),

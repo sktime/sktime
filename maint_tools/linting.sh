@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# author: Markus Löning
+# code quality check using flake8
+
 set -e -x
 set -o pipefail
 

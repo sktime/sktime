@@ -26,7 +26,7 @@ test: ## Run unit tests
 	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
 
 lint:  ## Run linting
-	maint_tools/linting.sh
+	$(MAINT_DIR)/linting.sh
 
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
@@ -44,8 +44,8 @@ clean: ## Clean build dist and egg directories left after install
 dist: ## Make Python source distribution
 	python setup.py sdist
 
-docs: doc
-
-doc: ## Build documentation with Sphinx
+doc: ## Build documentation with sphinx
 	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
+
+docs: doc
