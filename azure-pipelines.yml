@@ -25,12 +25,11 @@ stages:
     jobs:
       - job: 'linting'
         pool:
-          - vmImage: 'ubuntu-latest'
+          vmImage: 'ubuntu-latest'
         steps:
           - script: pip install flake8
             displayName: 'Installing flake8'
           - template: maint_tools/linting.sh
-            displayName: 'Run linting'
 
   - stage: 'build'
     dependsOn: 'linting'
@@ -41,9 +40,7 @@ stages:
           vmImage: 'ubuntu-latest'
         steps:
           - template: build_tools/azure/build_manylinux_wheels.yml
-            displayName: 'Build and test wheels'
           - template: build_tools/azure/publish.yml
-            displayName: 'Publish wheels'
         strategy:
           matrix:
             64x2010:  # 64 bit 2010
