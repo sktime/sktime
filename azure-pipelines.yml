@@ -8,6 +8,9 @@ variables:
   REQUIREMENTS: build_tools/requirements.txt
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
 
+  # to avoid re-generating of report, https://github.com/microsoft/azure-pipelines-tasks/issues/10354
+  disable.coverage.autogenerate: 'true'
+
 trigger:
   branches:
     include:
@@ -101,5 +104,5 @@ stages:
               pythonUploadServiceConnection: PyPI
           - script: |
               ls -lh dist/*.whl
-            #             twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
+            # twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'

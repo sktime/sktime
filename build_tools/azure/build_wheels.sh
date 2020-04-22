@@ -50,8 +50,3 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Run tests
   "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=sktime --cov-report=xml --cov-report=html --pyargs sktime
 done
-
-pwd
-
-ls -lh
-ls -lh junit/
