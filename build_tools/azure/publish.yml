@@ -26,5 +26,6 @@ steps:
       condition: succeededOrFailed()
       inputs:
         codeCoverageTool: Cobertura
+        pathToSources: '$(System.DefaultWorkingDirectory)/sktime/'
         summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
         reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
