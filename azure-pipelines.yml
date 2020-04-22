@@ -9,7 +9,7 @@ variables:
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
 
   # to avoid re-generating of report, https://github.com/microsoft/azure-pipelines-tasks/issues/10354
-  disable.coverage.autogenerate: 'true'
+#  disable.coverage.autogenerate: 'true'
 
 trigger:
   branches:

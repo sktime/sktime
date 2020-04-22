@@ -22,23 +22,12 @@ steps:
         testResultsFiles: '**/test-*.xml'
         testRunTitle: 'pytest_$(Agent.OS)_$(Agent.JobName)_$(PYTHON_ARCHITECTURE)'
 
-    # https://github.com/microsoft/azure-pipelines-tasks/issues/8762
-    - script: |
-        ls -lh
-
-        mkdir -p coverage/summary$(Build.BuildId)
-        chmod 777 coverage/summary$(Build.BuildId) -R
-
-        chmod 777 htmlcov -R
-        mkdir htmlcov/summary$(Build.BuildId)
-        chmod 777 htmlcov/summary$(Build.BuildId) -R
-      displayName: 'Fix permissions'
-
     - task: PublishCodeCoverageResults@1
       condition: succeededOrFailed()
       displayName: 'Publish coverage results'
       inputs:
         codeCoverageTool: Cobertura
+        pathToSources: '$(System.DefaultWorkingDirectory)/sktime/'
         summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
         reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
