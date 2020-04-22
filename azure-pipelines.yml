@@ -7,8 +7,6 @@
 variables:
   REQUIREMENTS: build_tools/requirements.txt
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
-  TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
-  PYTEST_RESULTS: 'pytest-results.xml'
 
 trigger:
   branches:
@@ -23,9 +21,9 @@ pr:
   autoCancel: true
 
 stages:
-  - stage: 'linting'
+  - stage: 'Linting'
     jobs:
-      - job: 'linting'
+      - job: 'Linting'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -40,9 +38,9 @@ stages:
             inputs:
               filePath: maint_tools/linting.sh
 
-  - stage: 'build'
-    dependsOn: 'linting'
-    condition: succeeded('linting')
+  - stage: 'Build and test'
+    dependsOn: 'Linting'
+    condition: succeeded('Linting')
     jobs:
       - job: 'build_manylinux'
         pool:
@@ -69,9 +67,10 @@ stages:
               IMAGE: quay.io/pypa/manylinux2014_x86_64
               PYTHON_ARCHITECTURE: x86
 
-  - stage: 'deploy'
-    dependsOn: 'build'
-    condition: and(succeeded('build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  - stage: 'Deploy'
+    dependsOn: 'Build and test'
+    condition: and(succeeded('build and test'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith
+    (variables['Build.SourceBranch'], 'refs/tags/'))
     jobs:
       - job: 'deploy_to_pypi'
         pool:

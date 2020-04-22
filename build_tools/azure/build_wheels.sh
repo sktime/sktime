@@ -48,7 +48,7 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
 
   # Run tests
-  "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html --pyargs sktime
+  "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=sktime --cov-report=xml --cov-report=html --pyargs sktime
 done
 
 pwd
