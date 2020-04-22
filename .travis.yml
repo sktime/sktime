@@ -29,14 +29,9 @@ env:
     - REQUIREMENTS="requirements.yml"
     - COVERAGE=false
 
-  # platforms and package environments to test
+# platforms and package environments to test
 jobs:
   include:
-    - name: "linux-py37"
-      os: linux
-      env:
-        - PYTHON_VERSION=3.7
-        - MINICONDA_VERSION=Miniconda3-latest-Linux-x86_64.sh
     - name: "osx-py36"
       os: osx
       env:
@@ -97,7 +92,7 @@ deploy:
     file: dist/*  # files to upload
     on:
       tags: true  # deploy only on tags
-      condition: $TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH # deploy only on master
+      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
 
   # pipy is deployed only on tagged commits on master
   - provider: pypi

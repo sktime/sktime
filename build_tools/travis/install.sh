@@ -71,7 +71,7 @@ make_conda() {
 }
 
 # requirements file
-make_conda $REQUIREMENTS
+make_conda "$REQUIREMENTS"
 
 if [ "$COVERAGE" == "true" ]
 then

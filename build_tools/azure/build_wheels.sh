@@ -15,16 +15,16 @@ PYTHON_VERSIONS=(/opt/python/*/bin)
 # Filter out Python versions
 # echo "${EXCLUDE_PYTHON_VERSIONS[@]}"
 # split string by comma into array
-IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<<"$EXCLUDE_PYTHON_VERSIONS"
+IFS=',' read -ra EXCLUDE_PYTHON_VERSIONS <<< "$EXCLUDE_PYTHON_VERSIONS"
 
 for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
   # remove dot and whitespace from version number
   VERSION="$(echo -e "${VERSION//./}" | tr -d '[:space:]')"
 
   # remove versions
-  PYTHON_VERSIONS=(${PYTHON_VERSIONS[@]//*"$VERSION"*/})
+  PYTHON_VERSIONS=("${PYTHON_VERSIONS[@]//*"$VERSION"*/}")
 done
-echo "Included Python versions: ${PYTHON_VERSIONS[@]}"
+echo "Included Python versions: " "${PYTHON_VERSIONS[@]}"
 
 # Build wheels
 cd /io/ # Change directory

@@ -39,7 +39,6 @@ stages:
             displayName: 'Linting'
             inputs:
               filePath: maint_tools/linting.sh
-              failOnStderr: false  # set to true to enforce linting
 
   - stage: 'build'
     dependsOn: 'linting'
