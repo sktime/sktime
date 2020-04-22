@@ -22,7 +22,7 @@ for VERSION in "${EXCLUDE_PYTHON_VERSIONS[@]}"; do
   VERSION="$(echo -e "${VERSION//./}" | tr -d '[:space:]')"
 
   # remove versions
-  PYTHON_VERSIONS=("${PYTHON_VERSIONS[@]//*"$VERSION"*/}")
+  PYTHON_VERSIONS=(${PYTHON_VERSIONS[@]//*"$VERSION"*/})
 done
 echo "Included Python versions: " "${PYTHON_VERSIONS[@]}"
 
@@ -48,5 +48,10 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
 
   # Run tests
-  "${PYTHON}/pytest" --showlocals --durations=20 --pyargs sktime
+  "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html --pyargs sktime
 done
+
+pwd
+
+ls -lh
+ls -lh junit/
