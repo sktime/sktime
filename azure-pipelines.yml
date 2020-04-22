@@ -38,11 +38,11 @@ stages:
             inputs:
               filePath: maint_tools/linting.sh
 
-  - stage: 'Build and test'
+  - stage: 'Build'
     dependsOn: 'Linting'
     condition: succeeded('Linting')
     jobs:
-      - job: 'build_manylinux'
+      - job: 'manylinux'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -68,8 +68,8 @@ stages:
               PYTHON_ARCHITECTURE: x86
 
   - stage: 'Deploy'
-    dependsOn: 'Build and test'
-    condition: and(succeeded('Build and test'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    dependsOn: 'Build'
+    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
     jobs:
       - job: 'deploy_to_pypi'
         pool:
