@@ -24,7 +24,7 @@ steps:
 
     # https://github.com/microsoft/azure-pipelines-tasks/issues/8762
     - script: |
-        mkdir coverage/summary$(Build.BuildId)
+        mkdir -p coverage/summary$(Build.BuildId)
         chmod 777 coverage/summary$(Build.BuildId) -R
       displayName: 'Fix permissions'
 
