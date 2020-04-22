@@ -24,11 +24,13 @@ steps:
 
     # https://github.com/microsoft/azure-pipelines-tasks/issues/8762
     - script: |
+        ls -lh
+
         mkdir -p coverage/summary$(Build.BuildId)
         chmod 777 coverage/summary$(Build.BuildId) -R
 
-        mkdir -p htmlcov/summary$(Build.BuildId)
-        chmod 777 htmlcov/summary$(Build.BuildId) -R
+#        mkdir -p htmlcov/summary$(Build.BuildId)
+#        chmod 777 htmlcov/summary$(Build.BuildId) -R
       displayName: 'Fix permissions'
 
     - task: PublishCodeCoverageResults@1
