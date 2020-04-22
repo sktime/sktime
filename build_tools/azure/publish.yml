@@ -22,12 +22,13 @@ steps:
         testResultsFiles: '**/test-*.xml'
         testRunTitle: 'pytest_$(Agent.OS)_$(Agent.JobName)_$(PYTHON_ARCHITECTURE)'
 
-    - task: PublishCodeCoverageResults@1
-      condition: succeededOrFailed()
-      displayName: 'Publish coverage results'
-      inputs:
-        codeCoverageTool: Cobertura
-        pathToSources: '$(System.DefaultWorkingDirectory)/sktime/'
-        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-        reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+# # to avoid re-generating of report, https://github.com/microsoft/azure-pipelines-tasks/issues/10354
+#    - task: PublishCodeCoverageResults@1
+#      condition: succeededOrFailed()
+#      displayName: 'Publish coverage results'
+#      inputs:
+#        codeCoverageTool: Cobertura
+#        pathToSources: '$(System.DefaultWorkingDirectory)/sktime/'
+#        summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+#        reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
