@@ -60,10 +60,12 @@ make_conda() {
 
     # Set up test environment
     conda create --name testenv python="$PYTHON_VERSION"
-    conda env update --name testenv --file "$REQUIREMENTS"
 
     # Activate environment
     source activate testenv
+
+    # Install requirements from inside conda environment
+    pip install -r "$REQUIREMENTS"
 
     # List installed environment
     python --version
