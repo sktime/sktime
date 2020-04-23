@@ -26,7 +26,7 @@ env:
     - OPENBLAS_NUM_THREADS=4
 
     - TEST_DIR=/tmp/sktime  # Directory where tests are run from
-    - REQUIREMENTS="requirements.yml"
+    - REQUIREMENTS=build_tools/requirements.txt
     - COVERAGE=false
 
 # platforms and package environments to test
