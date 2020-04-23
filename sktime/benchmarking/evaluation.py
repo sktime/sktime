@@ -6,7 +6,6 @@ import itertools
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scikit_posthocs as sp
 from scipy import stats
 from scipy.stats import ranksums
 from scipy.stats import ttest_ind
@@ -342,13 +341,16 @@ class Evaluator:
         For more information see `Nemenyi test <https://en.wikipedia.org/wiki/Nemenyi_test>`_.
         Implementation used `scikit-posthocs <https://github.com/maximtrp/scikit-posthocs>`_.
         """
+        # lazy import to avoid hard dependency
+        from scikit_posthocs import posthoc_nemenyi
+
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
         metrics_per_estimator_dataset = self._get_metrics_per_estimator_dataset(metric_name)
 
         strategy_dict = pd.DataFrame(metrics_per_estimator_dataset)
         strategy_dict = strategy_dict.melt(var_name="groups", value_name="values")
-        nemenyi = sp.posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
+        nemenyi = posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
 
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
