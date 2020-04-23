@@ -18,7 +18,7 @@ environment:
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
 
     TEST_DIR: "/tmp/sktime"
-    REQUIREMENTS: "requirements.yml"
+    REQUIREMENTS: "build_tools/requirements.txt"
     PYPI_PASSWORD:
       secure: "nZ6K3G+V4O3mBT6prI28OfGXFWRR4ZPqcC6YJ4yQP0E1evCINRH5j/k+Vz0+LbwM7e7G3zcnOFm+q1HhAKw1tEIuVTythuPsgPrmEhxh//gfgS6SWWoAXSV+5NATCQGkZ2Yiwti5bwyocki2tU2pqxI1rRWK2v/UMeEpzDZPOXpC+ATXLewPr5zsFn3aehHMjNm4RFqDCGSXk2uyEFIytvNMFu5bld6+enejtCjHR9J6nNUcQXrYRZrzCm8xPC1hB+cK0rlLLjUW903mPslHFQ=="
     PYPI_USER: "__token__"
@@ -63,11 +63,11 @@ install:
   - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
   - cmd: conda config --set always_yes true
   - cmd: conda update --quiet conda
-
-  # Install dependencies
   - cmd: conda create --name testenv python=%PYTHON_VERSION%
-  - cmd: conda env update --name testenv --file %REQUIREMENTS%
+
+  # Install requirements from inside conda environment
   - cmd: activate testenv
+  - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment
   - cmd: python --version
