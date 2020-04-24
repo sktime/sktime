@@ -1,9 +1,14 @@
-# AppVeyor.com is a Continuous Integration service to build and run tests under
-# Windows
+# Appveyor is a continuous integration service to build, test and deploy the package
 
-# adapted from https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
-# https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
+# adapted from
+# - https://packaging.python.org/guides/supporting-windows-using-appveyor/ and
+# - https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
+branches:
+  # whitelist
+  only:
+    - master
+    - dev
 
 environment:
   global:
@@ -12,74 +17,92 @@ environment:
     # See: https://stackoverflow.com/a/13751649/163740
     CMD_IN_ENV: "cmd /E:ON /V:ON /C .\\build_tools\\appveyor\\run_with_env.cmd"
 
+    TEST_DIR: "/tmp/sktime"
+    REQUIREMENTS: "build_tools/requirements.txt"
+    PYPI_PASSWORD:
+      secure: "nZ6K3G+V4O3mBT6prI28OfGXFWRR4ZPqcC6YJ4yQP0E1evCINRH5j/k+Vz0+LbwM7e7G3zcnOFm+q1HhAKw1tEIuVTythuPsgPrmEhxh//gfgS6SWWoAXSV+5NATCQGkZ2Yiwti5bwyocki2tU2pqxI1rRWK2v/UMeEpzDZPOXpC+ATXLewPr5zsFn3aehHMjNm4RFqDCGSXk2uyEFIytvNMFu5bld6+enejtCjHR9J6nNUcQXrYRZrzCm8xPC1hB+cK0rlLLjUW903mPslHFQ=="
+    PYPI_USER: "__token__"
+
   matrix:
-    - PYTHON: "C:\\Python37-x64"
-      PYTHON_VERSION: "3.7.0"
-      PYTHON_ARCH: "64"
-      CHECK_WARNINGS: "true"
+    - PYTHON_VERSION: "3.6"
+      MINICONDA_VERSION: C:\Miniconda36-x64
+    - PYTHON_VERSION: "3.7"
+      MINICONDA_VERSION: C:\Miniconda37-x64
+    - PYTHON_VERSION: "3.8"
+      MINICONDA_VERSION: C:\Miniconda38-x64
+      # For Python 3.8, we need a different image, check out available pre-installed Python
+      # and Visual Studio versions: https://www.appveyor.com/docs/linux-images-software/
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
+
+init:
+  - cmd: echo %PYTHON_VERSION% %MINICONDA_VERSION%
+  - cmd: python -c "import struct; print(struct.calcsize('P') * 8)"
 
 # Because we only have a single worker, we don't want to waste precious
 # appveyor CI time and make other PRs wait for repeated failures in a failing
 # PR. The following option cancels pending jobs in a given PR after the first
 # job failure in that specific PR.
 matrix:
-    fast_finish: true
-
-
-install:
-  # If there is a newer build queued for the same PR, cancel this one.
-  # The AppVeyor 'rollout builds' option is supposed to serve the same
-  # purpose but is problematic because it tends to cancel builds pushed
-  # directly to master instead of just PR builds.
-  # credits: JuliaLang developers.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
-        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
-        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
-        throw "There are newer queued builds for this pull request, failing early." }
-
-  # Install Python (from the official .msi of https://python.org) and pip when
-  # not already installed.
-  - "powershell ./build_tools/appveyor/install.ps1"
-  - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
-  - "python -m pip install -U pip"
-
-  # Check that we have the expected version and architecture for Python
-  - "python --version"
-  - "python -c \"import struct; print(struct.calcsize('P') * 8)\""
-  - "pip --version"
-
-  # Install the build and runtime dependencies of the project.
-  - "%CMD_IN_ENV% pip install --timeout=60 --trusted-host 28daf2247a33ed269873-7b1aad3fab3cc330e1fd9d109892382a.r6.cf2.rackcdn.com -r requirements.txt"
-  - "%CMD_IN_ENV% python setup.py bdist_wheel bdist_wininst"
-  - ps: "ls dist"
-
-  # Install the generated wheel package to test it
-  - "pip install --pre --no-index --find-links dist/ sktime"
-
-  # If there is a newer build queued for the same PR, cancel this one.
-  # credits: JuliaLang developers.
-  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
-        https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
-        Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
-        throw "There are newer queued builds for this pull request, failing early." }
+  fast_finish: true
 
 # Not a .NET project, we build sktime in the install step instead
 build: false
 
+install:
+  # If there is a newer build queued for the same PR, cancel this one.
+  # The AppVeyor 'rolling builds' option is supposed to serve the same
+  # purpose but is problematic because it tends to cancel builds pushed
+  # directly to master instead of just PR builds.
+  # credits: JuliaLang developers.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+      https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+      Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+      throw "There are newer queued builds for this pull request, failing early." }
+
+  # Set up conda environment
+  - cmd: SET PATH=%MINICONDA_VERSION%;%MINICONDA_VERSION%\Scripts;%PATH%
+  - cmd: conda config --set always_yes true
+  - cmd: conda update --quiet conda
+  - cmd: conda create --name testenv python=%PYTHON_VERSION%
+
+  # Install requirements from inside conda environment
+  - cmd: activate testenv
+  - cmd: pip install -r %REQUIREMENTS%
+
+  # List installed environment
+  - cmd: python --version
+  - cmd: conda list
+
+  # Build wheels
+  - cmd: python setup.py bdist_wheel bdist_wininst
+  - ps: ls dist  # list built artifacts
+
+  # Install the built wheel package to test it
+  - cmd: pip install --pre --no-index --no-deps --find-links dist/ sktime
+
 test_script:
+  # If there is a newer build queued for the same PR, cancel this one.
+  - ps: if ($env:APPVEYOR_PULL_REQUEST_NUMBER -and $env:APPVEYOR_BUILD_NUMBER -ne ((Invoke-RestMethod `
+      https://ci.appveyor.com/api/projects/$env:APPVEYOR_ACCOUNT_NAME/$env:APPVEYOR_PROJECT_SLUG/history?recordsNumber=500).builds | `
+      Where-Object pullRequestId -eq $env:APPVEYOR_PULL_REQUEST_NUMBER)[0].buildNumber) { `
+      throw "There are newer queued builds for this pull request, failing early." }
+
   # Change to a non-source folder to make sure we run the tests on the
   # installed library.
-  - mkdir "../empty_folder"
-  - cd "../empty_folder"
+  - ps: mkdir %TEST_DIR%
+  - ps: cp setup.cfg %TEST_DIR%
+  - ps: cd %TEST_DIR%
   - ps: >-
-        if (Test-Path variable:global:CHECK_WARNINGS) {
-            $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning"
-        } else {
-            $env:PYTEST_ARGS = ""
-        }
-  - "pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime"
+      if (Test-Path variable:global:CHECK_WARNINGS) {
+          $env:PYTEST_ARGS = "-Werror::DeprecationWarning -Werror::FutureWarning -Werror::UserWarning"
+      } else {
+          $env:PYTEST_ARGS = ""
+      }
+  # Run tests
+  - cmd: pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime
+
   # Move back to the project folder
-  - cd "../sktime"
+  - ps: cd "../sktime"
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
@@ -90,13 +113,30 @@ artifacts:
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
 
+# deploy wheels to PyPI on tagged commits
+after_test:
+  - ps: >-
+      if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+      ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$') ) {
+        Write-Output ("Deploying " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
+        pip install --upgrade twine
+        twine upload --username %PYPI_USER% --password %PYPI_PASSWORD% --skip-existing --verbose dist/*.whl
+        Write-Output ("Done.")
+      } else {
+        Write-Output ("Not deploying to PyPI as this is not a tagged commit.")
+      }
+
 # upload artifacts to Github releases
 deploy:
   - provider: GitHub
     description: 'Appveyor build artifacts'
     auth_token:
       secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
-    artifact: /.*\.whl/            # upload all wheel packages to release assets
+    artifact: /.*\.whl/  # upload all wheel packages to release assets
     draft: true
     on:
-      branch: master       # release on master branch only
+      branch: master  # release on master branch only
+      APPVEYOR_REPO_TAG: true
+      condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
+

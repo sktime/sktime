@@ -5,6 +5,7 @@
 
 PACKAGE=sktime
 DOC_DIR='./docs/'
+MAINT_DIR = './maint_tools/'
 
 .PHONY: help cover dist venv
 
@@ -16,18 +17,23 @@ help:
 		 %s\n", $$1, $$2}'
 
 release: ## Make a release
-	python make_release.py
+	python $(MAINT_DIR)/make_release.py
 
 install: ## Install for the current user using the default python command
-	python setup.py build_ext --inplace && \
-		python setup.py install --user
+	python setup.py build_ext --inplace && python setup.py install --user
 
 test: ## Run unit tests
-	pytest
+	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
+
+lint:  ## Run linting
+	$(MAINT_DIR)/linting.sh
 
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
 	rm -rf ./build
+	rm -rf ./pytest_cache
+	rm -rf ./htmlcov
+	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
 	rm -rf ./cover
 	rm -rf $(VENV_DIR)
@@ -44,3 +50,4 @@ docs: doc
 doc: ## Build documentation with Sphinx
 	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
+

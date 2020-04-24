@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
+|travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -19,6 +19,9 @@
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg
 .. _zenodo: https://doi.org/10.5281/zenodo.3749000
+
+.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/sktime/1/ci?logo=azure-pipelines
+.. _azure: https://dev.azure.com/mloning/sktime/_build/latest?definitionId=1&branchName=master
 
 
 sktime
