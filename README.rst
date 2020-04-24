@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |pypi|_ |gitter|_ |Binder|_
+|travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |Binder|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -16,6 +16,9 @@
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath=examples
+
+.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/sktime/1/ci?logo=azure-pipelines
+.. _azure: https://dev.azure.com/mloning/sktime/_build/latest?definitionId=1&branchName=master
 
 
 sktime
