@@ -16,13 +16,13 @@ from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric, AggregateMetric
 from sktime.benchmarking.orchestration import Orchestrator
 from sktime.benchmarking.results import RAMResults, HDDResults
-from sktime.classifiers.compose.ensemble import TimeSeriesForestClassifier
-from sktime.classifiers.distance_based.proximity_forest import ProximityForest
+from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifier
+from sktime.classification.distance_based.proximity_forest import ProximityForest
 from sktime.datasets import load_gunpoint, load_arrow_head
 from sktime.highlevel.strategies import TSCStrategy
 from sktime.highlevel.tasks import TSCTask
-from sktime.model_selection import SingleSplit
-from sktime.pipeline import Pipeline
+from sktime.series_as_features.model_selection import SingleSplit
+from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser
 
 # get data path for testing dataset loading from hard drive

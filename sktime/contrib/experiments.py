@@ -46,25 +46,25 @@ import pandas as pd
 from sklearn import preprocessing
 
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import cross_val_predict, train_test_split
+from sklearn.model_selection import cross_val_predict
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-import sktime.classifiers.compose.ensemble as ensemble
-import sktime.classifiers.dictionary_based.boss as db
-import sktime.classifiers.frequency_based.rise as fb
-import sktime.classifiers.interval_based.tsf as ib
-import sktime.classifiers.distance_based.elastic_ensemble as dist
-import sktime.classifiers.distance_based.time_series_neighbors as nn
-import sktime.classifiers.distance_based.proximity_forest as pf
-import sktime.classifiers.shapelet_based.stc as st
+import sktime.series_as_features.compose.ensemble as ensemble
+import sktime.classification.dictionary_based.boss as db
+import sktime.classification.frequency_based.rise as fb
+import sktime.classification.interval_based.tsf as ib
+import sktime.classification.distance_based.elastic_ensemble as dist
+import sktime.classification.distance_based.time_series_neighbors as nn
+import sktime.classification.distance_based.proximity_forest as pf
+import sktime.classification.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import Tabulariser
-from sktime.pipeline import Pipeline
-from sktime.pipeline import FeatureUnion
+from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.compose.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 

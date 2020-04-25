@@ -1,0 +1,2 @@
+from sktime.classification.shapelet_based.stc import ShapeletTransformClassifier
+from sktime.classification.shapelet_based.mrseql.mrseql import MrSEQLClassifier

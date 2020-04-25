@@ -4,8 +4,8 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.pipeline import FeatureUnion
-from sktime.pipeline import Pipeline
+from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor

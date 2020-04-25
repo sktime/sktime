@@ -7,7 +7,7 @@ from sktime.datasets import load_gunpoint
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
-from sktime.pipeline import Pipeline, FeatureUnion
+from sktime.series_as_features.compose.pipeline import Pipeline, FeatureUnion
 import pytest
 
 

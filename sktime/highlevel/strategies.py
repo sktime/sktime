@@ -13,9 +13,9 @@ from sklearn.base import RegressorMixin
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-from sktime.classifiers.base import BaseClassifier
+from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.regressors.base import BaseRegressor
+from sktime.regression.base import BaseRegressor
 
 # TODO implement task-strategy-estimator compatibility lookup registry using strategy traits
 REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)

@@ -4,7 +4,6 @@ os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["OMP_NUM_THREADS"] = "1"  # must be done before numpy import!!
 
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 import numpy as np
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
@@ -12,16 +11,15 @@ from statsmodels.tsa.stattools import acf
 
 from sktime.transformers.compose import RowwiseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.transformers.compose import ColumnTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.pipeline import Pipeline
-from sktime.pipeline import FeatureUnion
-from sktime.classifiers.compose import TimeSeriesForestClassifier
+from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sktime.series_as_features.compose import TimeSeriesForestClassifier
 from sktime.utils.time_series import time_series_slope
-import sktime.classifiers.interval_based.tsf as ib
-import sktime.classifiers.frequency_based.rise as fb
-import sktime.classifiers.dictionary_based.boss as db
-import sktime.classifiers.distance_based.time_series_neighbors as dist
+import sktime.classification.interval_based.tsf as ib
+import sktime.classification.frequency_based.rise as fb
+import sktime.classification.dictionary_based.boss as db
+import sktime.classification.distance_based.time_series_neighbors as dist
 import sktime.contrib.experiments as exp
 
 #method 1
