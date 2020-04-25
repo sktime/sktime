@@ -2,16 +2,15 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["_AutoAR"]
+__all__ = ["AutoAR"]
 
 from sktime.forecasting.base._statsmodels import BaseStatsModelsAdapter
 from statsmodels.tsa.ar_model import ar_select_order
 
 
-# TODO remove leading underscore to include it in tests once statsmodels bug fix is released
-class _AutoAR(BaseStatsModelsAdapter):
+class AutoAR(BaseStatsModelsAdapter):
     """
-    Autoregressive AR-X(p) model.
+    Autor-egressive AR-X(p) model.
 
     Estimate an AR-X model using Conditional Maximum Likelihood (OLS)
     and automatically selecting the value for p.
@@ -65,7 +64,7 @@ class _AutoAR(BaseStatsModelsAdapter):
         self.missing = missing
         self.glob = glob
         self.ic = ic
-        super(_AutoAR, self).__init__()
+        super(AutoAR, self).__init__()
 
     def _fit_forecaster(self, y_train, X_train=None):
         self._fitted_estimator = ar_select_order(
