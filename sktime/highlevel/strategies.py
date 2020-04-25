@@ -1,7 +1,7 @@
 """
 Unified high-level interface for various time series related learning strategies.
 """
-__all__ = ["TSCStrategy", "TSRStrategy", "ForecastingStrategy"]
+__all__ = ["TSCStrategy", "TSRStrategy"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 import pandas as pd
@@ -23,7 +23,7 @@ CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
 FORECASTER_TYPES = (BaseSktimeForecaster,)
 ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES
 
-CASES = ("TSR", "TSC", "Forecasting")
+CASES = ("TSR", "TSC")
 
 
 class BaseStrategy(BaseEstimator):

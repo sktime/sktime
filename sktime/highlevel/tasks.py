@@ -131,11 +131,6 @@ class BaseTask:
                 raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
                                  f"found: {metadata.shape[0]} samples")
 
-        if isinstance(self, ForecastingTask):
-            if metadata.shape[0] > 1:
-                raise ValueError(f"For task of type: {type(self)}, only a single sample (row) can be given, but found: "
-                                 f"{metadata.shape[0]} rows")
-
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the task"""
@@ -216,37 +211,3 @@ class TSRTask(BaseTask):
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSR'
         super(TSRTask, self).__init__(target, features=features, metadata=metadata)
-
-
-class ForecastingTask(BaseTask):
-    """
-    Time series forecasters task.
-
-    A task encapsulates metadata information such as the feature and target
-    variable which to fit the data to and additional necessary instructions on how to fit and predict.
-
-
-    Parameters
-    ----------
-    target : str
-        The column name for the target variable to be predicted.
-    features : list of str, optional, (default=None)
-        The column name(s) for the exogenous feature variable. If None, every column apart from target will be used as
-        a feature.
-    metadata : pandas.DataFrame, optional (default=None)
-        Contains the metadata that the task is expected to work with.
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
-    """
-
-    def __init__(self, target, fh=1, features=None, metadata=None):
-        self._case = "Forecasting"
-        self._fh = check_fh(fh)
-        super(ForecastingTask, self).__init__(target, features=features, metadata=metadata)
-
-    @property
-    def fh(self):
-        """
-        Makes attribute read-only.
-        """
-        return self._fh
