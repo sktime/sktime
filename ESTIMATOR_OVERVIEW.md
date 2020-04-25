@@ -155,8 +155,9 @@
 
 | name | sktime class | maintainer | literature
 | ------ | ------- | ------ | ------- |
-|  |  |  |  |
-
+| Dummy forecaster | DummyForecaster | @mloning | 
+| Holt-Winters exponential smoothing forecaster | ExpSmoothingForecaster | @mloning, @big-o | 
+| Theta forecaster | ThetaForecaster | @big-o | [Unmasking the Theta method](https://www.sciencedirect.com/science/article/pii/S0169207001001431)
 ### Multivariate Time Series Forecasting
 
 | name | sktime class | maintainer | literature
@@ -170,5 +171,10 @@
 |  |  |  |  |
 
 ## Higher-order building blocks
+
+
+# Forecasters
+| name | sktime class | maintainer | literature
+| ------ | ------- | ------ | ------- |
 
 ### Reduction

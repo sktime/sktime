@@ -23,6 +23,7 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
+from sklearn.utils.validation import check_is_fitted
 
 from sktime.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
