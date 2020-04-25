@@ -7,7 +7,7 @@ from sktime.utils.validation import check_is_fitted
 from sklearn.decomposition import PCA
 
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
 from sktime.utils.data_container import tabularise, detabularise, check_equal_index
 
 

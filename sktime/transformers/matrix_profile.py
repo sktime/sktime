@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
 
 def sliding_dot_products(q, t, q_len, t_len):
     """
@@ -185,8 +185,9 @@ class MatrixProfile(BaseTransformer):
         of rows as X, but each row has the matrix profile for the corresponding time series.
     """
 
-    def __init__(self, subs_len):
-        self.m = subs_len  # subsequence length
+    def __init__(self, m=10):
+        self.m = m  # subsequence length
+        super(MatrixProfile, self).__init__()
 
     def transform(self, X):
         """

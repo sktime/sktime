@@ -8,8 +8,8 @@ import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.supervised import validate_X
-from sktime.utils.validation.supervised import validate_y
+from sktime.utils.validation.series_as_features import validate_X
+from sktime.utils.validation.series_as_features import validate_y
 
 
 class BaseTSFreshFeatureExtractor(BaseTransformer):

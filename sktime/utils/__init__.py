@@ -14,15 +14,14 @@ def all_estimators(scitype=None):
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
 
-
     Not included are: the base classes themselves, classes defined in test modules.
 
     Parameters
     ----------
-    scitype : string, list of string,  or None, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'transformer' and 'forecaster' to get
+    scitype : string, list of string, optional (default=None)
+        Which kind of estimators should be returned.
+        - If None, no filter is applied and all estimators are returned.
+        - Possible values are 'classifier', 'regressor', 'transformer' and 'forecaster' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
 
@@ -30,7 +29,7 @@ def all_estimators(scitype=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
+        and ``class`` is the actual class.
 
     References
     ----------
@@ -39,12 +38,10 @@ def all_estimators(scitype=None):
 
     # lazy import to avoid circular imports
     import warnings
-    from sktime.forecasting.base._base import BaseForecaster
+    from sktime.forecasting.base import BaseForecaster
     from sktime.classification.base import BaseClassifier
     from sktime.regression.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer
-
-    from sklearn.base import ClassifierMixin, RegressorMixin, TransformerMixin
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -77,9 +74,9 @@ def all_estimators(scitype=None):
 
     # only keep classes that inherit from base classes
     base_classes = {
-        "classifier": (BaseClassifier, ClassifierMixin),
-        "regressor": (BaseRegressor, RegressorMixin),
-        "transformer": (BaseTransformer, TransformerMixin),
+        "classifier": BaseClassifier,
+        "regressor": BaseRegressor,
+        "transformer": BaseTransformer,
         "forecaster": BaseForecaster,
     }
     estimators = [c for c in all_classes
@@ -91,7 +88,7 @@ def all_estimators(scitype=None):
 
     if scitype is not None:
         if not isinstance(scitype, list):
-            scitype = [scitype]
+            scitype = [scitype]  # make iterable
         else:
             scitype = list(scitype)  # copy
         filtered_estimators = []
@@ -103,7 +100,7 @@ def all_estimators(scitype=None):
                                             if issubclass(est[1], base_class)])
         estimators = filtered_estimators
 
-        # raise error if any filter names are left
+        # raise error if any filter names are still left
         allowed_filters = ("classifier", "regressor", "transformer", "forecaster")
         if scitype:
             raise ValueError(f"Parameter type_filter must be one or a list of {allowed_filters} or "

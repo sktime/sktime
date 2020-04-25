@@ -9,7 +9,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import Tabulariser
 from sktime.series_as_features.compose.pipeline import Pipeline
@@ -150,9 +150,9 @@ def tsf_benchmarking():
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
             ('transform', FeatureUnion([
-                ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-                ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
-                ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
+                ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+                ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+                ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
             ])),
             ('clf', DecisionTreeClassifier())
         ]
@@ -172,8 +172,8 @@ def rise_benchmarking():
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
             ('transform', FeatureUnion([
-                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
-                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+                ('acf', RowTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
             ])),
             ('tabularise', Tabulariser()),
             ('clf', DecisionTreeClassifier())

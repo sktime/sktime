@@ -6,13 +6,15 @@ import sys
 from sktime.transformers.dictionary_based.SAX import BitWord
 from sktime.transformers.base import BaseTransformer
 
+__author__ = ["Matthew Middlehurst"]
+__all__ = ["SFA"]
+
 
 # TO DO: Finish comments
 
 
 class SFA(BaseTransformer):
-    __author__ = "Matthew Middlehurst"
-    """ SFA Transformer, as described in 
+    """ SFA Transformer, as described in
 
     @inproceedings{schafer2012sfa,
       title={SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets},
@@ -50,8 +52,8 @@ class SFA(BaseTransformer):
 """
 
     def __init__(self,
-                 word_length,
-                 alphabet_size,
+                 word_length=8,
+                 alphabet_size=4,
                  window_size=0,
                  norm=False,
                  remove_repeat_words=False,
@@ -72,6 +74,7 @@ class SFA(BaseTransformer):
         self.save_words = save_words
         self.num_insts = 0
         self.num_atts = 0
+        super(SFA, self).__init__()
 
     def fit(self, X, y=None):
         """Calculate word breakpoints using MCB

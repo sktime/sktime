@@ -5,7 +5,7 @@ Proximity Forest: an effective and scalable distance-based classifier for time s
 Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
 """
 __author__ = 'George Oastler (linkedin.com/goastler; github.com/goastler)'
-__all__ = ["ProximityForest","CachedTransformer","ProximityStump","ProximityTree"]
+__all__ = ["ProximityForest", "_CachedTransformer", "ProximityStump", "ProximityTree"]
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ from sktime.distances.elastic_cython import dtw_distance, erp_distance, lcss_dis
     wdtw_distance
 from sktime.transformers.summarise import DerivativeSlopeTransformer
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation.supervised import validate_X, validate_X_y
+from sktime.utils.validation.series_as_features import validate_X, validate_X_y
 from sktime.classification.base import BaseClassifier
 
 # todo unit tests / sort out current unit tests
@@ -30,7 +30,7 @@ from sktime.classification.base import BaseClassifier
 # todo duck-type functions
 
 
-class CachedTransformer(BaseTransformer):
+class _CachedTransformer(BaseTransformer):
     """Transformer container that transforms data and adds the transformed version to a cache.
     If the transformation is called again on already seen data the data is fetched
     from the cache rather than performing the expensive transformation.
@@ -42,11 +42,14 @@ class CachedTransformer(BaseTransformer):
     ----------
     cache       : location to store transforms seen before for fast look up
 
-        """
+    """
+
+    _required_parameters = ["transformer"]
 
     def __init__(self, transformer):
         self.cache = {}
         self.transformer = transformer
+        super(_CachedTransformer, self).__init__()
 
     def clear(self):
         """
@@ -453,7 +456,7 @@ def setup_all_distance_measure_getter(proximity):
     :param proximity: a PT / PF / PS
     :return: a list of distance measure getters
     """
-    transformer = CachedTransformer(DerivativeSlopeTransformer())
+    transformer = _CachedTransformer(DerivativeSlopeTransformer())
     distance_measure_getters = [
         euclidean_distance_measure_getter,
         dtw_distance_measure_getter,

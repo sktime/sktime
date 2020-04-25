@@ -9,7 +9,7 @@ __all__ = [
 
 from joblib import Parallel, delayed
 from sklearn.base import clone
-from sktime.base import BaseComposition
+from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import is_forecaster
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
@@ -20,7 +20,7 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecaster, BaseComposition):
+class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster, BaseHeterogenousMetaEstimator):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -75,3 +75,10 @@ class BaseHeterogenousEnsembleForecaster(MetaForecasterMixin, BaseSktimeForecast
         #                                     for forecaster in self.forecasters_)
         return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
                 for forecaster in self.forecasters_]
+
+    def get_params(self, deep=True):
+        return self._get_params("forecasters", deep=deep)
+
+    def set_params(self, **params):
+        self._set_params("forecasters", **params)
+        return self

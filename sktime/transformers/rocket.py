@@ -6,7 +6,7 @@ from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import nested_to_3d_numpy
-from sktime.utils.validation.supervised import validate_X
+from sktime.utils.validation.series_as_features import validate_X
 
 __author__ = "Angus Dempster"
 __all__ = ["ROCKET"]

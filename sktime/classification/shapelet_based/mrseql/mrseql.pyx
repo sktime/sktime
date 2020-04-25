@@ -1,6 +1,6 @@
 STUFF = "Hi"
 
-from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate
+from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.dictionary_based.SFA import SFA
 
@@ -12,7 +12,7 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 from libcpp.string cimport string
 
-__author__ = "Thach Le Nguyen"
+__author__ = ["Thach Le Nguyen"]
 
 ######################### SAX and SFA #########################
 

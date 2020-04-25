@@ -1,8 +1,8 @@
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
-from sktime.utils.testing.base import generate_df_from_array
+from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.datasets import load_gunpoint
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sklearn.preprocessing import FunctionTransformer
@@ -89,7 +89,7 @@ def test_different_implementations():
 
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
-    tran2 = RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))
+    tran2 = RowTransformer(FunctionTransformer(func=np.mean, validate=False))
     A = tran2.fit_transform(tran1.fit_transform(X_train))
 
     tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_seed)
@@ -105,9 +105,9 @@ def test_different_pipelines():
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
         ('transform', FeatureUnion([
-            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
-            ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False))),
+            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+            ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False))),
         ])),
     ]
     pipe = Pipeline(steps, random_state=random_seed)

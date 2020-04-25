@@ -4,16 +4,16 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import FunctionTransformer, StandardScaler
 
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
+from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowTransformer
 from sktime.datasets import load_gunpoint, load_basic_motions
 from sktime.utils.data_container import tabularise
-from sktime.utils.testing.base import generate_df_from_array
+from sktime.utils.testing import generate_df_from_array
 
 
 def test_rowwise_transformer_function_transformer_series_to_primitives():
     X, y = load_gunpoint(return_X_y=True)
     ft = FunctionTransformer(func=np.mean, validate=False)
-    t = RowwiseTransformer(ft)
+    t = RowTransformer(ft)
     Xt = t.fit_transform(X, y)
     assert Xt.shape == X.shape
     assert isinstance(Xt.iloc[0, 0], float)  # check series-to-primitive transforms
@@ -29,7 +29,7 @@ def test_rowwise_transformer_function_transformer_series_to_series():
         return ps[:ps.shape[0] // 2]
 
     ft = FunctionTransformer(func=powerspectrum, validate=False)
-    t = RowwiseTransformer(ft)
+    t = RowTransformer(ft)
     Xt = t.fit_transform(X, y)
     assert Xt.shape == X.shape
     assert isinstance(Xt.iloc[0, 0], (pd.Series, np.ndarray))  # check series-to-series transforms
@@ -40,7 +40,7 @@ def test_rowwise_transformer_sklearn_transfomer():
     sd = 5
     X = generate_df_from_array(np.random.normal(loc=mu, scale=5, size=(100,)), n_rows=10, n_cols=1)
     t = StandardScaler(with_mean=True, with_std=True)
-    r = RowwiseTransformer(t)
+    r = RowTransformer(t)
 
     Xt = r.fit_transform(X)
     assert Xt.shape == X.shape
@@ -51,7 +51,7 @@ def test_rowwise_transformer_sklearn_transfomer():
 
 def test_rowwise_transformer_transform_inverse_transform():
     X, y = load_gunpoint(return_X_y=True)
-    t = RowwiseTransformer(StandardScaler())
+    t = RowTransformer(StandardScaler())
     Xt = t.fit_transform(X)
     Xit = t.inverse_transform(Xt)
     assert Xit.shape == X.shape
@@ -115,7 +115,7 @@ def test_RowwiseTransformer_pipeline():
 
     # using sktime with sklearn pipeline
     transformer = ColumnTransformer([
-        ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False)), ['dim_0']),
+        ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False)), ['dim_0']),
         ('first', FunctionTransformer(func=rowwise_first, validate=False), ['dim_1'])
     ])
     estimator = RandomForestClassifier(n_estimators=2, random_state=1)

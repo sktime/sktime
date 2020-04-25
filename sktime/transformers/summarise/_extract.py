@@ -5,11 +5,12 @@ import numpy as np
 import pandas as pd
 from joblib import Parallel, delayed
 from sklearn.base import clone
+from sktime.base import MetaEstimatorMixin
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
 
 
 class PlateauFinder(BaseTransformer):
@@ -31,6 +32,7 @@ class PlateauFinder(BaseTransformer):
 
         self._starts = []
         self._lengths = []
+        super(PlateauFinder, self).__init__()
 
     def transform(self, X, y=None):
         """Transform X.
@@ -221,12 +223,15 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         return Xt
 
 
-class FittedParamExtractor(BaseTransformer):
+class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
+
+    _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster
         self.param_names = param_names
         self.n_jobs = n_jobs
+        super(FittedParamExtractor, self).__init__()
 
     def fit(self, X, y=None):
         validate_X(X)

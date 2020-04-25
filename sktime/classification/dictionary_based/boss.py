@@ -5,26 +5,23 @@ dictionary based BOSS classifiers based on SFA transform. Contains a single BOSS
 __author__ = "Matthew Middlehurst"
 __all__ = ["BOSSEnsemble", "BOSSIndividual", "boss_distance"]
 
-import numpy as np
+import math
 import random
 import sys
-import pandas as pd
 import time
-import math
-
 from itertools import compress
-from sklearn.base import BaseEstimator
+
+import numpy as np
+import pandas as pd
 from sklearn.utils.multiclass import class_distribution
+from sktime.classification.base import BaseClassifier
 from sktime.transformers.dictionary_based.SFA import SFA
 
 
 # TO DO: Make more efficient
 
 
-
-
-class BOSSEnsemble(BaseEstimator):
-
+class BOSSEnsemble(BaseClassifier):
     """ Bag of SFA Symbols (BOSS)
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from Schafer:
@@ -111,7 +108,7 @@ class BOSSEnsemble(BaseEstimator):
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
-        self.time_limit = time_limit*6e+10
+        self.time_limit = time_limit
 
         self.seed = 0
         self.classifiers = []
@@ -128,6 +125,7 @@ class BOSSEnsemble(BaseEstimator):
         self.norm_options = norm_options
         self.alphabet_size = alphabet_size
         self.min_window = min_window
+        super(BOSSEnsemble, self).__init__()
 
     def fit(self, X, y):
         """Build an ensemble of BOSS classifiers from the training set (X, y), either through randomising over the para
@@ -144,6 +142,7 @@ class BOSSEnsemble(BaseEstimator):
         -------
         self : object
          """
+        self.time_limit = self.time_limit * 6e+10
 
         if isinstance(X, pd.DataFrame):
             if X.shape[1] > 1:
@@ -366,7 +365,7 @@ class BOSSEnsemble(BaseEstimator):
         return correct / train_size
 
 
-class BOSSIndividual(BaseEstimator):
+class BOSSIndividual(BaseClassifier):
     """ Single Bag of SFA Symbols (BOSS) classifier
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
@@ -374,10 +373,10 @@ class BOSSIndividual(BaseEstimator):
     """
 
     def __init__(self,
-                 window_size,
-                 word_length,
-                 alphabet_size,
-                 norm
+                 window_size=10,
+                 word_length=8,
+                 alphabet_size=4,
+                 norm=False
                  ):
         self.window_size = window_size
         self.word_length = word_length
@@ -393,6 +392,7 @@ class BOSSIndividual(BaseEstimator):
         self.num_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
+        super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
         sfa = self.transform.fit_transform(X)

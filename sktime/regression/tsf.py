@@ -1,7 +1,6 @@
 __author__ = "Markus Löning"
 __all__ = ["TimeSeriesForestRegressor"]
 
-
 from warnings import warn
 
 import numpy as np
@@ -15,16 +14,17 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils._joblib import Parallel, delayed
-from sktime.utils.validation import check_is_fitted
-
+from sktime.base import MetaEstimatorMixin
+from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.compose.ensemble import _parallel_build_trees
-from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.supervised import validate_X, validate_X_y
+from sktime.utils.validation import check_is_fitted
+from sktime.utils.validation.series_as_features import validate_X, validate_X_y
 
 
-class TimeSeriesForestRegressor(ForestRegressor):
+class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random forest

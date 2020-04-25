@@ -1,4 +1,4 @@
-from sklearn.base import BaseEstimator
+from sktime.base import BaseEstimator
 
 __all__ = ["BaseTransformer"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
@@ -8,14 +8,16 @@ class BaseTransformer(BaseEstimator):
     """
     Base class for transformers, for identification.
     """
+
+    def __init__(self):
+        super(BaseTransformer, self).__init__()
+
     def fit(self, X, y=None):
         """
         empty fit function, which inheriting transformers can override
         if need be.
         """
-        # let the model know that it is fitted
-        self.is_fitted_ = True
-        # `fit` should always return `self`
+        self._is_fitted = True
         return self
 
     def fit_transform(self, X, y=None, **fit_params):

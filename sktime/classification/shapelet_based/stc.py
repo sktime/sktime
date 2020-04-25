@@ -14,7 +14,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.shapelets import ContractedShapeletTransform
-from sktime.utils.validation.supervised import validate_X_y, validate_X
+from sktime.utils.validation.series_as_features import validate_X_y, validate_X
 
 
 class ShapeletTransformClassifier(BaseClassifier):

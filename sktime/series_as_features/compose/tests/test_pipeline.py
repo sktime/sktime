@@ -6,7 +6,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 
@@ -25,8 +25,8 @@ def test_FeatureUnion_pipeline():
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=3)),
         ('transform', FeatureUnion([
-            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
+            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False)))
         ])),
         ('clf', DecisionTreeClassifier())
     ]
@@ -69,7 +69,7 @@ def test_Pipeline_random_state():
 
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=3)),
-        ('extract', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
+        ('extract', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
         ('clf', DecisionTreeClassifier())
     ]
     pipe = Pipeline(steps, random_state=rs)
@@ -86,10 +86,10 @@ def test_Pipeline_random_state():
 def test_FeatureUnion():
     X, y = load_gunpoint(return_X_y=True)
     ft = FunctionTransformer(func=np.mean, validate=False)
-    t = RowwiseTransformer(ft)
+    t = RowTransformer(ft)
     fu = FeatureUnion([
         ('mean', t),
-        ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
+        ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False)))
     ])
     Xt = fu.fit_transform(X, y)
     assert Xt.shape == (X.shape[0], X.shape[1] * len(fu.transformer_list))

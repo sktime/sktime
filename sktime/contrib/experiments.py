@@ -60,7 +60,7 @@ import sktime.classification.distance_based.time_series_neighbors as nn
 import sktime.classification.distance_based.proximity_forest as pf
 import sktime.classification.shapelet_based.stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.transformers.compose import Tabulariser
 from sktime.series_as_features.compose.pipeline import Pipeline
@@ -272,8 +272,8 @@ def set_classifier(cls, resampleId):
         steps = [
             ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
             ('transform', FeatureUnion([
-                ('acf', RowwiseTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
-                ('ps', RowwiseTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
+                ('acf', RowTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
+                ('ps', RowTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
             ])),
             ('tabularise', Tabulariser()),
             ('clf', DecisionTreeClassifier())

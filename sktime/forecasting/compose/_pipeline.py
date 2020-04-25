@@ -6,7 +6,7 @@ __all__ = ["TransformedTargetForecaster"]
 
 from itertools import islice
 from sklearn.base import clone
-from sktime.base import BaseComposition
+from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._meta import MetaForecasterMixin
@@ -17,7 +17,7 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizonMixin, BaseSktimeForecaster,
-                                  BaseComposition):
+                                  BaseHeterogenousMetaEstimator):
     """Meta-estimator for forecasting transformed time series."""
 
     _required_parameters = ("steps",)

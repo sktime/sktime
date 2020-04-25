@@ -6,24 +6,25 @@ transformers as building blocks.
 import numpy as np
 import pandas as pd
 from scipy import sparse
-from sklearn.compose import ColumnTransformer as skColumnTransformer
+from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
+from sktime.base import MetaEstimatorMixin
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
 from sktime.utils.validation.forecasting import check_is_fitted_in_transform
-from sktime.utils.validation.supervised import validate_X
+from sktime.utils.validation.series_as_features import validate_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 __all__ = ['ColumnTransformer',
-           'RowwiseTransformer',
+           'RowTransformer',
            'Tabularizer',
            'Tabulariser',
            'ColumnConcatenator']
 
 
-class ColumnTransformer(skColumnTransformer):
+class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
@@ -110,6 +111,8 @@ class ColumnTransformer(skColumnTransformer):
         of the individual transformers and the `sparse_threshold` keyword.
     """
 
+    _required_parameters = ["transformers"]
+
     def __init__(
             self,
             transformers,
@@ -159,7 +162,7 @@ class ColumnTransformer(skColumnTransformer):
                         name))
 
 
-class RowwiseTransformer(BaseTransformer):
+class RowTransformer(MetaEstimatorMixin, BaseTransformer):
     """A convenience wrapper for row-wise transformers to apply transformation to all rows.
 
     This estimator allows to create a transformer that works on all rows from a passed transformer that works on a
@@ -172,8 +175,11 @@ class RowwiseTransformer(BaseTransformer):
         must support `fit` and `transform`
     """
 
+    _required_parameters = ["transformer"]
+
     def __init__(self, transformer):
         self.transformer = transformer
+        super(RowTransformer, self).__init__()
 
     def fit(self, X, y=None):
         """
@@ -350,7 +356,7 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single column
         """
 
-        check_is_fitted(self, 'is_fitted_')
+        self.check_is_fitted()
 
         if not isinstance(X, pd.DataFrame):
             raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")

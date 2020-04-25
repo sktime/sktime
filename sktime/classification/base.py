@@ -1,8 +1,7 @@
-from sklearn.base import BaseEstimator
-from sklearn.metrics import accuracy_score
+from sktime.base import BaseEstimator
 
 from sktime.utils import comparison
-from sktime.utils.validation.supervised import validate_X, validate_X_y
+from sktime.utils.validation.series_as_features import validate_X
 
 
 class BaseClassifier(BaseEstimator):
@@ -13,11 +12,11 @@ class BaseClassifier(BaseEstimator):
     label_encoder = None
     random_state = None
 
-    def fit(self, X, y, input_checks=True):
-        raise NotImplementedError('this is an abstract method')
+    def fit(self, X, y):
+        raise NotImplementedError("abstract method")
 
-    def predict_proba(self, X, input_checks=True):
-        raise NotImplementedError('this is an abstract method')
+    def predict_proba(self, X):
+        raise NotImplementedError("abstract method")
 
     def predict(self, X, input_checks=True):
         """
@@ -47,7 +46,5 @@ class BaseClassifier(BaseEstimator):
         return predictions
 
     def score(self, X, y):
-        validate_X_y(X, y)
-        predictions = self.predict(X)
-        acc = accuracy_score(y, predictions, normalize=True)
-        return acc
+        from sklearn.metrics import accuracy_score
+        return accuracy_score(y, self.predict(X), normalize=True)

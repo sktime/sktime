@@ -33,7 +33,7 @@ from sktime.forecasting.tests import TEST_YS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.exceptions import NotFittedError
-from sktime.utils.testing.base import _construct_instance
+from sktime.utils.testing.construct import _construct_instance
 from sktime.utils.testing.forecasting import assert_correct_pred_time_index
 from sktime.utils.testing.forecasting import compute_expected_index_from_update_predict
 from sktime.utils.testing.forecasting import make_forecasting_problem

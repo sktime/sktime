@@ -1,5 +1,5 @@
 from sklearn.model_selection import GridSearchCV
-from sklearn.base import BaseEstimator
+from sktime.base import BaseEstimator
 
 from sktime.classification.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand

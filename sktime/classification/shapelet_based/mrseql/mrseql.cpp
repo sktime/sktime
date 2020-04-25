@@ -1687,7 +1687,7 @@ static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __red
 static const char __pyx_k_seql_mode_should_be_either_clf_o[] = "seql_mode should be either clf or fs.";
 static const char __pyx_k_sktime_classification_shapelet_b[] = "sktime.classification.shapelet_based.mrseql.mrseql";
 static const char __pyx_k_sktime_transformers_dictionary_b[] = "sktime.transformers.dictionary_based.SFA";
-static const char __pyx_k_sktime_utils_validation_supervis[] = "sktime.utils.validation.supervised";
+static const char __pyx_k_sktime_utils_validation_series_a[] = "sktime.utils.validation.series_as_features";
 static const char __pyx_k_sktime_classification_shapelet_b_2[] = "sktime/classification/shapelet_based/mrseql/mrseql.pyx";
 static PyObject *__pyx_kp_b_;
 static PyObject *__pyx_n_s_AdaptedSFA;
@@ -1867,7 +1867,7 @@ static PyObject *__pyx_n_s_sktime_classification_base;
 static PyObject *__pyx_n_s_sktime_classification_shapelet_b;
 static PyObject *__pyx_kp_s_sktime_classification_shapelet_b_2;
 static PyObject *__pyx_n_s_sktime_transformers_dictionary_b;
-static PyObject *__pyx_n_s_sktime_utils_validation_supervis;
+static PyObject *__pyx_n_s_sktime_utils_validation_series_a;
 static PyObject *__pyx_n_s_solver;
 static PyObject *__pyx_n_s_sqrt;
 static PyObject *__pyx_n_s_sqs;
@@ -12618,7 +12618,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_sktime_classification_shapelet_b, __pyx_k_sktime_classification_shapelet_b, sizeof(__pyx_k_sktime_classification_shapelet_b), 0, 0, 1, 1},
   {&__pyx_kp_s_sktime_classification_shapelet_b_2, __pyx_k_sktime_classification_shapelet_b_2, sizeof(__pyx_k_sktime_classification_shapelet_b_2), 0, 0, 1, 0},
   {&__pyx_n_s_sktime_transformers_dictionary_b, __pyx_k_sktime_transformers_dictionary_b, sizeof(__pyx_k_sktime_transformers_dictionary_b), 0, 0, 1, 1},
-  {&__pyx_n_s_sktime_utils_validation_supervis, __pyx_k_sktime_utils_validation_supervis, sizeof(__pyx_k_sktime_utils_validation_supervis), 0, 0, 1, 1},
+  {&__pyx_n_s_sktime_utils_validation_series_a, __pyx_k_sktime_utils_validation_series_a, sizeof(__pyx_k_sktime_utils_validation_series_a), 0, 0, 1, 1},
   {&__pyx_n_s_solver, __pyx_k_solver, sizeof(__pyx_k_solver), 0, 0, 1, 1},
   {&__pyx_n_s_sqrt, __pyx_k_sqrt, sizeof(__pyx_k_sqrt), 0, 0, 1, 1},
   {&__pyx_n_s_sqs, __pyx_k_sqs, sizeof(__pyx_k_sqs), 0, 0, 1, 1},
@@ -13411,14 +13411,14 @@ if (!__Pyx_RefNanny) {
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":1
  * STUFF = "Hi"             # <<<<<<<<<<<<<<
  * 
- * from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate
+ * from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
  */
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_STUFF, __pyx_n_u_Hi) < 0) __PYX_ERR(1, 1, __pyx_L1_error)
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":3
  * STUFF = "Hi"
  * 
- * from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate             # <<<<<<<<<<<<<<
+ * from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate             # <<<<<<<<<<<<<<
  * from sktime.classification.base import BaseClassifier
  * from sktime.transformers.dictionary_based.SFA import SFA
  */
@@ -13433,7 +13433,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_check_X_is_univariate);
   __Pyx_GIVEREF(__pyx_n_s_check_X_is_univariate);
   PyList_SET_ITEM(__pyx_t_1, 2, __pyx_n_s_check_X_is_univariate);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_sktime_utils_validation_supervis, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_sktime_utils_validation_series_a, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_validate_X); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 3, __pyx_L1_error)
@@ -13452,7 +13452,7 @@ if (!__Pyx_RefNanny) {
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":4
  * 
- * from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate
+ * from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
  * from sktime.classification.base import BaseClassifier             # <<<<<<<<<<<<<<
  * from sktime.transformers.dictionary_based.SFA import SFA
  * 
@@ -13472,7 +13472,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":5
- * from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate
+ * from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
  * from sktime.classification.base import BaseClassifier
  * from sktime.transformers.dictionary_based.SFA import SFA             # <<<<<<<<<<<<<<
  * 
@@ -13540,11 +13540,17 @@ if (!__Pyx_RefNanny) {
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":15
  * from libcpp.string cimport string
  * 
- * __author__ = "Thach Le Nguyen"             # <<<<<<<<<<<<<<
+ * __author__ = ["Thach Le Nguyen"]             # <<<<<<<<<<<<<<
  * 
  * ######################### SAX and SFA #########################
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_author, __pyx_kp_u_Thach_Le_Nguyen) < 0) __PYX_ERR(1, 15, __pyx_L1_error)
+  __pyx_t_1 = PyList_New(1); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 15, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __Pyx_INCREF(__pyx_kp_u_Thach_Le_Nguyen);
+  __Pyx_GIVEREF(__pyx_kp_u_Thach_Le_Nguyen);
+  PyList_SET_ITEM(__pyx_t_1, 0, __pyx_kp_u_Thach_Le_Nguyen);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_author, __pyx_t_1) < 0) __PYX_ERR(1, 15, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":55
  * 
@@ -13936,7 +13942,7 @@ if (!__Pyx_RefNanny) {
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":1
  * STUFF = "Hi"             # <<<<<<<<<<<<<<
  * 
- * from sktime.utils.validation.supervised import validate_X, validate_y, check_X_is_univariate
+ * from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
  */
   __pyx_t_2 = __Pyx_PyDict_NewPresized(0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 1, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);

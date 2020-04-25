@@ -6,7 +6,7 @@ __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 import pandas as pd
 from joblib import dump, load
-from sklearn.base import BaseEstimator
+from sktime.base import BaseEstimator
 from sklearn.base import _pprint
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
@@ -117,10 +117,7 @@ class BaseStrategy(BaseEstimator):
         else:
             raise AttributeError(f"Required estimator type not found")
 
-        # Check estimator compatibility with required type
-        if not isinstance(estimator, BaseEstimator):
-            raise ValueError(f"Estimator must inherit from BaseEstimator")
-
+        # # Check estimator compatibility with required type
         # If pipeline, check compatibility of final estimator
         if isinstance(estimator, Pipeline):
             final_estimator = estimator.steps[-1][1]

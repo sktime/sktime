@@ -7,11 +7,11 @@ from sklearn.preprocessing import FunctionTransformer
 
 from sktime.series_as_features.compose.pipeline import FeatureUnion, Pipeline
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier as KNNTSC
 from sktime.datasets import load_basic_motions
 from sktime.classification.dictionary_based import BOSSEnsemble
-from sktime.series_as_features.compose import ColumnEnsembleClassifier, HomogeneousColumnEnsembleClassifier
+from sktime.series_as_features.compose import ColumnEnsembleClassifier
 
 
 def test_univariate_column_ensembler_init():
@@ -19,16 +19,6 @@ def test_univariate_column_ensembler_init():
         [("KNN1", KNNTSC(n_neighbors=1), [1]),
          ("KNN2", KNNTSC(n_neighbors=1), [2])]
     )
-
-
-def test_homogeneous_column_ensembler():
-    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
-    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
-
-    cts = HomogeneousColumnEnsembleClassifier(KNNTSC(n_neighbors=1))
-
-    cts.fit(X_train, y_train)
-    cts.score(X_test, y_test) == 1.0
 
 
 def test_homogeneous_pipeline_column_ensmbler():
@@ -52,8 +42,8 @@ def test_heterogenous_pipeline_column_ensmbler():
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
         ('transform', FeatureUnion([
-            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False)))
+            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False)))
         ])),
         ('clf', DecisionTreeClassifier())
     ]

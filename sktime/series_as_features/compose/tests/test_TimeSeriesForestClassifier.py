@@ -1,8 +1,8 @@
 from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifier
-from sktime.utils.testing.base import generate_df_from_array
+from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np
-from sktime.transformers.compose import RowwiseTransformer
+from sktime.transformers.compose import RowTransformer
 from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier
@@ -74,9 +74,9 @@ def test_pipeline_predictions(n_intervals, n_estimators):
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
         ('transform', FeatureUnion([
-            ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
-            ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
+            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+            ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
         ])),
         ('clf', DecisionTreeClassifier())
     ]

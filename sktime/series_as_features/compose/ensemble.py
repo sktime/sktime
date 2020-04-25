@@ -29,7 +29,7 @@ from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
+from sktime.utils.validation.series_as_features import validate_X_y, check_X_is_univariate, validate_X
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
