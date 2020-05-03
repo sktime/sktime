@@ -74,7 +74,8 @@ def test_fit_non_stateful(Forecaster):
     a = f.predict()
 
     # refit without reconstructing
-    f.fit(y_train, FH0)
+    f = _construct_instance(Forecaster)
+    f.fit(y_train, FH0).fit(y_train, FH0)
     b = f.predict()
     np.testing.assert_array_equal(a, b)
 

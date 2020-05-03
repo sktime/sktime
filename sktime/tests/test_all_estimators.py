@@ -29,8 +29,7 @@ def test_params_set_get(Estimator):
     assert isinstance(params, dict)
 
     # check set params returns self
-    ret = estimator.set_params(**params)
-    assert ret is estimator
+    assert estimator.set_params(**params) is estimator
 
 
 @pytest.mark.parametrize("Estimator", ALL_ESTIMATORS)
