@@ -6,36 +6,60 @@ __all__ = ["check_estimator"]
 
 import numbers
 import types
+from copy import deepcopy
 from inspect import signature
 
 import joblib
 import numpy as np
+import pytest
 from sklearn import clone
 from sklearn.utils.estimator_checks import \
     check_get_params_invariance as _check_get_params_invariance
 from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
+from sklearn.utils.testing import set_random_state
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.base import is_classifier
+from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import BaseRegressor
+from sktime.regression.base import is_regressor
 from sktime.transformers.base import BaseTransformer
+from sktime.transformers.base import is_transformer
 from sktime.utils.testing.construct import _construct_instance
+from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.testing.inspect import _get_args
+from sktime.utils.testing.series_as_features import make_classification_problem
+from sktime.utils.testing.series_as_features import make_regression_problem
 
-IMPLEMENTED_BASE_ESTIMATORS = [
-    BaseClassifier,
-    BaseRegressor,
-    BaseForecaster,
-    BaseTransformer
-]
+# TODO add to NON_STATE_CHANGING_METHODS: transform, inverse_transform,
+#  decision_function
+NON_STATE_CHANGING_METHODS = ["predict", "predict_proba"]
+
+
+def check_estimator(Estimator):
+    for check in yield_estimator_checks():
+        check(Estimator)
 
 
 def yield_estimator_checks():
     checks = [
+        check_inheritance,
+        # check_meta_estimator,
         check_has_common_interface,
+        check_constructor,
         check_get_params,
+        check_set_params,
         check_clone,
+        check_repr,
+        check_fit_updates_state,
+        check_fit_returns_self,
+        check_raises_not_fitted_error,
+        check_fit_idempotent,
+        check_fit_does_not_overwrite_hyper_params,
+        check_non_state_changing_methods_do_not_change_state,
     ]
     for check in checks:
         yield check
@@ -49,20 +73,39 @@ def check_meta_estimators(Estimator):
 
 
 def check_inheritance(Estimator):
-    assert issubclass(Estimator, BaseEstimator)
-
     # check that inherits from one and only one task-specific estimator
-    assert sum(issubclass(Estimator, base_estimator)
-               for base_estimator in IMPLEMENTED_BASE_ESTIMATORS) == 1
+
+    # class checks
+    base_classes = [
+        BaseClassifier,
+        BaseRegressor,
+        BaseForecaster,
+        BaseTransformer
+    ]
+    assert issubclass(Estimator, BaseEstimator)
+    assert sum([issubclass(Estimator, base_class) for base_class in
+                base_classes]) == 1
+
+    # instance type checks
+    is_type_checks = [
+        is_classifier,
+        is_regressor,
+        is_forecaster,
+        is_transformer
+    ]
+    estimator = _construct_instance(Estimator)
+    assert isinstance(estimator, BaseEstimator)
+    assert sum([is_type_check(estimator) for is_type_check in
+                is_type_checks]) == 1
 
 
 def check_has_common_interface(Estimator):
-    assert hasattr(Estimator, "is_fitted")
+    # check class for type of attribute
     assert isinstance(Estimator.is_fitted, property)
 
     # check instance
     estimator = _construct_instance(Estimator)
-    methods = [
+    common_attrs = [
         "fit",
         "check_is_fitted",
         "is_fitted",
@@ -70,9 +113,10 @@ def check_has_common_interface(Estimator):
         "set_params",
         "get_params"
     ]
-    for method in methods:
-        assert hasattr(estimator, method)
-    assert (hasattr(estimator, "predict") or hasattr(estimator, "transform"))
+    for attr in common_attrs:
+        assert hasattr(estimator, attr)
+    assert (hasattr(estimator, "predict")
+            or hasattr(estimator, "transform"))
 
 
 def check_get_params(Estimator):
@@ -155,27 +199,158 @@ def check_constructor(Estimator):
                 assert param_value == param.default, param.name
 
 
-# def _fit(estimator):
-#     if isinstance(estimator, BaseForecaster):
-#         y_train, _, fh = make_forecasting_problem()
-#         return estimator.fit(y, fh)
-#
-#     elif isinstance(estimator, BaseClassifier):
-#         X, y = make_classification_problem()
-#         return estimator.fit(X, y)
-#
-#     elif isinstance(estimator, BaseRegressor):
-#         X, y = make_regression_problem()
-#         return estimator.fit(X, y)
-#
-#     else:
-#         raise ValueError("estimator type not supported")
+def check_fit_updates_state(Estimator):
+    is_fitted_states = ["_is_fitted", "is_fitted"]
+
+    estimator = _construct_instance(Estimator)
+    # check it's not fitted before calling fit
+    for state in is_fitted_states:
+        assert not getattr(estimator, state), (
+            f"Estimator: {estimator} does not initiate state: {state} to "
+            f"False")
+
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
+
+    # check states are updated after calling fit
+    for state in is_fitted_states:
+        assert getattr(estimator, state), (
+            f"Estimator: {estimator} does not update state: {state} "
+            f"during fit")
 
 
-def _predict(estimator):
-    pass
+def check_fit_returns_self(Estimator):
+    estimator = _construct_instance(Estimator)
+    fit_args = _make_args(estimator, "fit")
+    assert estimator.fit(*fit_args) is estimator, (
+        f"Estimator: {estimator} does not return self when calling "
+        f"fit")
 
 
-def check_estimator(Estimator):
-    for check in yield_estimator_checks():
-        check(Estimator)
+def check_raises_not_fitted_error(Estimator):
+    estimator = _construct_instance(Estimator)
+
+    # call methods without prior fitting and check that they raise our
+    # NotFittedError
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            args = _make_args(estimator, method)
+            with pytest.raises(NotFittedError):
+                getattr(estimator, method)(*args)
+
+
+def check_fit_idempotent(Estimator):
+    estimator = _construct_instance(Estimator)
+    set_random_state(estimator)
+
+    # Fit for the first time
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
+
+    results = dict()
+    args = dict()
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            args[method] = _make_args(estimator, method)
+            results[method] = getattr(estimator, method)(*args[method])
+
+    # Fit again
+    set_random_state(estimator)
+    estimator.fit(*fit_args)
+
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            new_result = getattr(estimator, method)(*args[method])
+            np.testing.assert_array_almost_equal(
+                results[method], new_result,
+                err_msg=f"Idempotency check failed for method {method}")
+
+
+def check_fit_does_not_overwrite_hyper_params(Estimator):
+    estimator = _construct_instance(Estimator)
+    set_random_state(estimator)
+
+    # Make a physical copy of the original estimator parameters before fitting.
+    params = estimator.get_params()
+    original_params = deepcopy(params)
+
+    # Fit the model
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
+
+    # Compare the state of the model parameters with the original parameters
+    new_params = estimator.get_params()
+    for param_name, original_value in original_params.items():
+        new_value = new_params[param_name]
+
+        # We should never change or mutate the internal state of input
+        # parameters by default. To check this we use the joblib.hash function
+        # that introspects recursively any subobjects to compute a checksum.
+        # The only exception to this rule of immutable constructor parameters
+        # is possible RandomState instance but in this check we explicitly
+        # fixed the random_state params recursively to be integer seeds.
+        assert joblib.hash(new_value) == joblib.hash(original_value), (
+                "Estimator %s should not change or mutate "
+                " the parameter %s from %s to %s during fit."
+                % (estimator.__class__.__name__, param_name, original_value,
+                   new_value))
+
+
+def check_non_state_changing_methods_do_not_change_state(Estimator):
+    estimator = _construct_instance(Estimator)
+    set_random_state(estimator)
+
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
+
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            args = _make_args(estimator, method)
+            dict_before = estimator.__dict__.copy()
+            getattr(estimator, method)(args)
+            assert estimator.__dict__ == dict_before, (
+                f"Estimator: {estimator} changes __dict__ during {method}")
+
+
+def _make_args(estimator, method, *args, **kwargs):
+    if method == "fit":
+        return _make_fit_args(estimator, *args, **kwargs)
+
+    elif method == "predict":
+        return _make_predict_args(estimator, *args, **kwargs)
+
+    else:
+        raise ValueError(f"Method: {method} not supported")
+
+
+def _make_fit_args(estimator, random_state=None):
+    if is_forecaster(estimator):
+        y = make_forecasting_problem(random_state=random_state)
+        fh = 1
+        return y, fh
+
+    elif is_classifier(estimator):
+        return make_classification_problem(random_state=random_state)
+
+    elif is_regressor(estimator):
+        return make_regression_problem(random_state=random_state)
+
+    else:
+        raise ValueError(f"Estimator type: {type(estimator)} not supported")
+
+
+def _make_predict_args(estimator, random_state=None):
+    if is_forecaster(estimator):
+        fh = 1
+        return fh
+
+    elif is_classifier(estimator):
+        X, y = make_classification_problem(random_state=random_state)
+        return X
+
+    elif is_regressor(estimator):
+        X, y = make_regression_problem(random_state=random_state)
+        return X
+
+    else:
+        raise ValueError("estimator type not supported")

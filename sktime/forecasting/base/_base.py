@@ -154,4 +154,4 @@ def is_forecaster(estimator):
     out : bool
         True if estimator is a forecaster and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "forecaster"
+    return isinstance(estimator, BaseForecaster)

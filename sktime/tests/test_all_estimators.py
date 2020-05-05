@@ -3,6 +3,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
+    "test_estimator"
 ]
 
 import pytest

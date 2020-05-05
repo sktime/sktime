@@ -6,6 +6,7 @@ __all__ = []
 
 import numpy as np
 import pytest
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_SPS
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.utils.testing.forecasting import make_forecasting_problem
@@ -13,7 +14,8 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]
 
-y_train, y_test = make_forecasting_problem()
+y = make_forecasting_problem()
+y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
 @pytest.mark.parametrize("sp", TEST_SPS)

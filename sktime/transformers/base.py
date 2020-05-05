@@ -1,6 +1,6 @@
 from sktime.base import BaseEstimator
 
-__all__ = ["BaseTransformer"]
+__all__ = ["BaseTransformer", "is_transformer"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 
 
@@ -42,3 +42,19 @@ class BaseTransformer(BaseEstimator):
             return self.fit(X, **fit_params).transform(X)
         # fit method of arity 2 (supervised transformation)
         return self.fit(X, y, **fit_params).transform(X)
+
+
+def is_transformer(estimator):
+    """Return True if the given estimator is (probably) a transformer.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a transformer and False otherwise.
+    """
+    return isinstance(estimator, BaseTransformer)

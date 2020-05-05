@@ -5,11 +5,12 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 import pytest
-from sktime.transformers.detrend import Detrender
-from sktime.transformers.detrend import Deseasonaliser
-from sktime.transformers.detrend import SingleSeriesTransformAdaptor
-from sktime.transformers.detrend import ConditionalDeseasonaliser
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformers.detrend import BoxCoxTransformer
+from sktime.transformers.detrend import ConditionalDeseasonaliser
+from sktime.transformers.detrend import Deseasonaliser
+from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import SingleSeriesTransformAdaptor
 from sktime.utils.testing.construct import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
@@ -22,7 +23,8 @@ DETRENDERS = [
 ]
 
 # testing data
-y_train, y_test = make_forecasting_problem()
+y = make_forecasting_problem()
+y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
 @pytest.mark.parametrize("Transformer", DETRENDERS)

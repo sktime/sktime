@@ -14,14 +14,16 @@ def all_estimators(scitype=None):
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
 
-    Not included are: the base classes themselves, classes defined in test modules.
+    Not included are: the base classes themselves, classes defined in test
+    modules.
 
     Parameters
     ----------
     scitype : string, list of string, optional (default=None)
         Which kind of estimators should be returned.
         - If None, no filter is applied and all estimators are returned.
-        - Possible values are 'classifier', 'regressor', 'transformer' and 'forecaster' to get
+        - Possible values are 'classifier', 'regressor', 'transformer' and
+        'forecaster' to get
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
 
@@ -33,7 +35,8 @@ def all_estimators(scitype=None):
 
     References
     ----------
-    ..[1]   Modified version from scikit-learn's `all_estimators()` in sklearn.utils.__init__.py
+    ..[1]   Modified version from scikit-learn's `all_estimators()` in
+    sklearn.utils.__init__.py
     """
 
     # lazy import to avoid circular imports
@@ -54,20 +57,24 @@ def all_estimators(scitype=None):
     modules_to_ignore = {"tests", "setup", "contrib"}
     root = str(Path(__file__).parent.parent)  # sktime package
 
-    # Ignore deprecation warnings triggered at import time and from walking packages
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
-        for importer, modname, ispkg in pkgutil.walk_packages(path=[root], prefix="sktime."):
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix="sktime."):
             mod_parts = modname.split(".")
 
             # filter modules
-            if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
+            if any(part in modules_to_ignore for part in
+                   mod_parts) or "._" in modname:
                 continue
 
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
             classes = [(name, klass) for name, klass in classes
-                       if not (name.startswith("_") or name.startswith("Base"))]
+                       if
+                       not (name.startswith("_") or name.startswith("Base"))]
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
@@ -101,10 +108,13 @@ def all_estimators(scitype=None):
         estimators = filtered_estimators
 
         # raise error if any filter names are still left
-        allowed_filters = ("classifier", "regressor", "transformer", "forecaster")
+        allowed_filters = (
+        "classifier", "regressor", "transformer", "forecaster")
         if scitype:
-            raise ValueError(f"Parameter type_filter must be one or a list of {allowed_filters} or "
-                             f"None, but found: {repr(scitype)}")
+            raise ValueError(
+                f"Parameter type_filter must be one or a list of "
+                f"{allowed_filters} or "
+                f"None, but found: {repr(scitype)}")
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
