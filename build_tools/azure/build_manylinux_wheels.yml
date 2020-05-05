@@ -1,0 +1,17 @@
+# adapted from
+# - https://github.com/scikit-hep/azure-wheel-helpers/blob/master/azure-manylinux-wheels.yml
+
+steps:
+  # run bash script inside docker image with
+  # passed variables and linked directory
+  - script: |
+      docker run --rm \
+        -e NPY_NUM_BUILD_JOBS=4 \
+        -e PLATFORM="$(PLATFORM)" \
+        -e REQUIREMENTS="$(REQUIREMENTS)" \
+        -e EXCLUDE_PYTHON_VERSIONS="$(EXCLUDE_PYTHON_VERSIONS)" \
+        -v "$PWD":/io \
+        "$(IMAGE)" \
+        /io/build_tools/azure/build_wheels.sh
+    displayName: 'Build and test wheels'
+

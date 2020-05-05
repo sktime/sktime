@@ -126,8 +126,8 @@ def check_openmp_support():
           command. Note however that some estimators will run in sequential
           mode and their `n_jobs` parameter will have no effect anymore.
           
-        - See scikit-learn installation instructions for more info: 
-                https://scikit-learn.org/dev/developers/advanced_installation.html
+        - See sktime advanced installation instructions for more info: 
+                https://alan-turing-institute.github.io/sktime/installation.html
                             ***
         """)
 

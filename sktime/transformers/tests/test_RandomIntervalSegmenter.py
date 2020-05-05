@@ -1,5 +1,5 @@
 from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils.testing.base import generate_df_from_array
 from sktime.utils.data_container import tabularize
 import pytest
 import pandas as pd
@@ -9,12 +9,11 @@ N_ITER = 10
 
 
 # Test output format and dimensions.
-
 @pytest.mark.parametrize("n_instances", [1, 3])
-@pytest.mark.parametrize("len_series", [2, 10])
+@pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [0.1, 1.0, 1, 3, 10, 'sqrt', 'random', 'log'])
-def test_output_format_dim(len_series, n_instances, n_intervals):
-    X = generate_df_from_array(np.ones(len_series), n_rows=n_instances, n_cols=1)
+def test_output_format_dim(n_timepoints, n_instances, n_intervals):
+    X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
 
     trans = RandomIntervalSegmenter(n_intervals=n_intervals)
     Xt = trans.fit_transform(X)
@@ -26,13 +25,13 @@ def test_output_format_dim(len_series, n_instances, n_intervals):
     # Check number of generated intervals/columns.
     if n_intervals != 'random':
         if np.issubdtype(type(n_intervals), np.floating):
-            assert Xt.shape[1] == np.maximum(1, int(len_series * n_intervals))
+            assert Xt.shape[1] == np.maximum(1, int(n_timepoints * n_intervals))
         elif np.issubdtype(type(n_intervals), np.integer):
             assert Xt.shape[1] == n_intervals
         elif n_intervals == 'sqrt':
-            assert Xt.shape[1] == np.maximum(1, int(np.sqrt(len_series)))
+            assert Xt.shape[1] == np.maximum(1, int(np.sqrt(n_timepoints)))
         elif n_intervals == 'log':
-            assert Xt.shape[1] == np.maximum(1, int(np.log(len_series)))
+            assert Xt.shape[1] == np.maximum(1, int(np.log(n_timepoints)))
 
 
 # Check that exception is raised for bad input args.
