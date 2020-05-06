@@ -14,7 +14,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.shapelets import ContractedShapeletTransform
-from sktime.utils.validation.series_as_features import validate_X_y, validate_X
+from sktime.utils.validation.series_as_features import check_X_y, check_X
 
 
 class ShapeletTransformClassifier(BaseClassifier):
@@ -69,7 +69,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         self : object
          """
 
-        validate_X_y(X, y)
+        check_X_y(X, y)
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
@@ -112,7 +112,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         """
         #        tempX=self.shapelet_transform.transform(X)
         #        X = np.asarray([a.values for a in tempX.iloc[:, 0]])
-        validate_X(X)
+        check_X(X)
         return self.classifier.predict_proba(X)
 
     #

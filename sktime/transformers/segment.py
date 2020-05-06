@@ -5,7 +5,7 @@ from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
-from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
 from sktime.utils.data_container import get_time_index
 from sktime.utils.time_series import compute_relative_to_n_timepoints
 
@@ -44,8 +44,8 @@ class IntervalSegmenter(BaseTransformer):
         self : an instance of self.
         """
 
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         self.input_shape_ = X.shape
 
@@ -82,7 +82,7 @@ class IntervalSegmenter(BaseTransformer):
 
         # Check inputs.
         check_is_fitted(self, 'intervals_')
-        validate_X(X)
+        check_X(X)
 
         # Check that the input is of the same shape as the one passed
         # during fit.
@@ -185,7 +185,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             This estimator
         """
 
-        validate_X(X)
+        check_X(X)
 
         self.input_shape_ = X.shape
 

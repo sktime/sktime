@@ -11,7 +11,7 @@ from sktime.transformers.detrend import ConditionalDeseasonaliser
 from sktime.transformers.detrend import Deseasonaliser
 from sktime.transformers.detrend import Detrender
 from sktime.transformers.detrend import SingleSeriesTransformAdaptor
-from sktime.utils.testing.construct import _construct_instance
+from sktime.utils.testing import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
 DETRENDERS = [

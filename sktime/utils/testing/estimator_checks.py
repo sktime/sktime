@@ -5,6 +5,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["check_estimator"]
 
 import numbers
+import pickle
 import types
 from copy import deepcopy
 from inspect import signature
@@ -28,11 +29,9 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.base import is_transformer
-from sktime.utils.testing.construct import _construct_instance
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.utils.testing import _construct_instance
+from sktime.utils.testing import _make_args
 from sktime.utils.testing.inspect import _get_args
-from sktime.utils.testing.series_as_features import make_classification_problem
-from sktime.utils.testing.series_as_features import make_regression_problem
 
 # TODO add to NON_STATE_CHANGING_METHODS: transform, inverse_transform,
 #  decision_function
@@ -72,6 +71,7 @@ def yield_estimator_checks():
         check_fit_idempotent,
         check_fit_does_not_overwrite_hyper_params,
         check_non_state_changing_methods_do_not_change_state,
+        check_persistence_via_pickle,
     ]
     yield from checks
 
@@ -347,51 +347,21 @@ def check_persistence_via_pickle(Estimator):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
+    results = dict()
+    args = dict()
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+            args[method] = _make_args(estimator, method)
+            results[method] = getattr(estimator, method)(*args[method])
+
+    # Pickle and unpickle
+    pickled_estimator = pickle.dumps(estimator)
+    if estimator.__module__.startswith('sktime.'):
+        assert b"version" in pickled_estimator
+    unpickled_estimator = pickle.loads(pickled_estimator)
+
+    for method in results:
+        unpickled_result = getattr(unpickled_estimator, method)(args[method])
+        np.testing.assert_array_almost_equal(results[method], unpickled_result)
 
 
-
-
-def _make_args(estimator, method, *args, **kwargs):
-    """Helper function to generate appropriate arguments for testing different
-    estimator types and their methods"""
-    if method == "fit":
-        return _make_fit_args(estimator, *args, **kwargs)
-
-    elif method == "predict":
-        return _make_predict_args(estimator, *args, **kwargs)
-
-    else:
-        raise ValueError(f"Method: {method} not supported")
-
-
-def _make_fit_args(estimator, random_state=None):
-    if is_forecaster(estimator):
-        y = make_forecasting_problem(random_state=random_state)
-        fh = 1
-        return y, fh
-
-    elif is_classifier(estimator):
-        return make_classification_problem(random_state=random_state)
-
-    elif is_regressor(estimator):
-        return make_regression_problem(random_state=random_state)
-
-    else:
-        raise ValueError(f"Estimator type: {type(estimator)} not supported")
-
-
-def _make_predict_args(estimator, random_state=None):
-    if is_forecaster(estimator):
-        fh = 1
-        return fh
-
-    elif is_classifier(estimator):
-        X, y = make_classification_problem(random_state=random_state)
-        return X
-
-    elif is_regressor(estimator):
-        X, y = make_regression_problem(random_state=random_state)
-        return X
-
-    else:
-        raise ValueError(f"Estimator type: {type(estimator)} not supported")

@@ -2,7 +2,10 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["make_classification_problem", "make_regression_problem"]
+__all__ = [
+    "make_classification_problem",
+    "make_regression_problem",
+]
 
 import pandas as pd
 from sklearn.utils.validation import check_random_state

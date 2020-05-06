@@ -10,7 +10,7 @@ from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
 
 
 class PlateauFinder(BaseTransformer):
@@ -47,8 +47,8 @@ class PlateauFinder(BaseTransformer):
         """
 
         # input checks
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         # get column name
         column_name = X.columns[0]
@@ -175,8 +175,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         """
         # Check is fit had been called
         check_is_fitted(self, 'intervals_')
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         # Check that the input is of the same shape as the one passed
         # during fit.
@@ -234,13 +234,13 @@ class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
         super(FittedParamExtractor, self).__init__()
 
     def fit(self, X, y=None):
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
         return self
 
     def transform(self, X, y=None):
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 

@@ -21,7 +21,7 @@ from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import validate_X, validate_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
 class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegressor):
@@ -264,7 +264,7 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         -------
         self : object
         """
-        validate_X_y(X, y)
+        check_X_y(X, y)
 
         # Validate or convert input data
         if sample_weight is not None:
@@ -371,7 +371,7 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         """
         check_is_fitted(self, 'estimators_')
         # Check data
-        validate_X(X)
+        check_X(X)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs

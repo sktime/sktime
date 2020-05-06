@@ -1,6 +1,6 @@
 STUFF = "Hi"
 
-from sktime.utils.validation.series_as_features import validate_X, validate_y, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.dictionary_based.SFA import SFA
 
@@ -308,8 +308,8 @@ class MrSEQLClassifier(BaseClassifier):
         '''
         Check if X input is correct. Convert X to 2d numpy array.        
         '''
-        validate_X(X)
-        check_X_is_univariate(X)  
+        check_X(X)
+        _enforce_X_univariate(X)
 
         return np.asarray([a.values for a in X.iloc[:, 0]])
 
@@ -328,7 +328,7 @@ class MrSEQLClassifier(BaseClassifier):
         """
         if input_checks:
             X = self._X_check(X)
-            validate_y(y)
+            check_y(y)
 
         # transform time series to multiple symbolic representations
         mr_seqs = self._transform_time_series(X)

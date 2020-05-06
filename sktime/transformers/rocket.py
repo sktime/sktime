@@ -6,7 +6,7 @@ from sktime.utils.validation import check_is_fitted
 
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import nested_to_3d_numpy
-from sktime.utils.validation.series_as_features import validate_X
+from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Angus Dempster"
 __all__ = ["ROCKET"]
@@ -47,7 +47,7 @@ class Rocket(BaseTransformer):
         -------
         self
         """
-        validate_X(X)
+        check_X(X)
         _, self.n_columns = X.shape
         n_timepoints = X.applymap(lambda series : series.size).max().max()
         self.kernels = _generate_kernels(n_timepoints, self.num_kernels, self.n_columns, self.seed)
@@ -67,7 +67,7 @@ class Rocket(BaseTransformer):
         pandas DataFrame, transformed features
         """
         check_is_fitted(self, "_is_fitted")
-        validate_X(X)
+        check_X(X)
         _X = nested_to_3d_numpy(X)
         if self.normalise:
             _X = (_X - _X.mean(axis = -1, keepdims = True)) / (_X.std(axis = -1, keepdims = True) + 1e-8)

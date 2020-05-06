@@ -7,7 +7,7 @@ from sktime.utils.validation import check_is_fitted
 from sklearn.decomposition import PCA
 
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
 from sktime.utils.data_container import tabularise, detabularise, check_equal_index
 
 
@@ -43,8 +43,8 @@ class PCATransformer(BaseTransformer):
         self : an instance of self.
         """
 
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
@@ -70,8 +70,8 @@ class PCATransformer(BaseTransformer):
         """
 
         check_is_fitted(self.pca, 'n_components_')
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         # Transform X using the fitted PCA
         Xtab = tabularise(X)

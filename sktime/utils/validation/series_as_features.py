@@ -1,17 +1,27 @@
+__author__ = ["Markus Löning"]
+__all__ = [
+    "check_X",
+    "check_y",
+    "check_X_y",
+    "_enforce_X_univariate",
+    "_enforce_min_instances"
+]
+
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-__author__ = "Markus Löning"
-__all__ = ["validate_X", "check_X_is_univariate", "validate_y", "validate_X_y"]
 
-
-def validate_X(X):
+def check_X(X, enforce_univariate=False, enforce_min_instances=1):
     """Validate input data.
 
     Parameters
     ----------
     X : pandas DataFrame
+    enforce_univariate : bool, optional (default=False)
+        Enforce that X is univariate.
+    enforce_min_instances : int, optional (default=1)
+        Enforce minimum number of instances.
 
     Returns
     -------
@@ -23,20 +33,30 @@ def validate_X(X):
         If X is an invalid input
     """
     if not isinstance(X, pd.DataFrame):
-        raise ValueError(f"X must be a pandas.DataFrame, but found:"
+        raise ValueError(f"X must be a pandas.DataFrame, but found: "
                          f"{(type(X))}")
+    if enforce_univariate:
+        _enforce_X_univariate(X)
+
+    if enforce_min_instances > 0:
+        _enforce_min_instances(X, min_instances=enforce_min_instances)
+
+    return X
 
 
-def validate_y(y):
+def check_y(y, enforce_min_instances=1):
     """Validate input data.
 
     Parameters
     ----------
-    y : pandas Series or numpy ndarray
+    y : pd.Series or np.array
+    enforce_min_instances : int, optional (default=1)
+        Enforce minimum number of instances.
+
 
     Returns
     -------
-    None
+    y : pd.Series or np.array
 
     Raises
     ------
@@ -44,17 +64,27 @@ def validate_y(y):
         If y is an invalid input
     """
     if not isinstance(y, (pd.Series, np.ndarray)):
-        raise ValueError(f"y must be either a pandas.Series or a numpy.ndarray, "
-                         f"but found type: {type(y)}")
+        raise ValueError(
+            f"y must be either a pd.Series or a np.ndarray, "
+            f"but found type: {type(y)}")
+
+    if enforce_min_instances > 0:
+        _enforce_min_instances(y, min_instances=enforce_min_instances)
+
+    return y
 
 
-def validate_X_y(X, y):
+def check_X_y(X, y, enforce_univariate=False, enforce_min_instances=1):
     """Validate input data.
 
     Parameters
     ----------
-    X : pandas DataFrame
-    y : pandas Series or numpy ndarray
+    X : pd.DataFrame
+    y : pd.Series or np.array
+    enforce_univariate : bool, optional (default=False)
+        Enforce that X is univariate.
+    enforce_min_instances : int, optional (default=1)
+        Enforce minimum number of instances.
 
     Returns
     -------
@@ -66,12 +96,19 @@ def validate_X_y(X, y):
         If y is an invalid input
     """
 
-    validate_X(X)
-    validate_y(y)
+    check_X(X, enforce_univariate=enforce_univariate)
+    check_y(y)
     check_consistent_length(X, y)
 
+    # Since we have already checked for consistent lengths, we only need to
+    # check of the data containers for the minimum number of instances
+    if enforce_min_instances > 0:
+        _enforce_min_instances(y, min_instances=enforce_min_instances)
 
-def check_X_is_univariate(X):
+    return X, y
+
+
+def _enforce_X_univariate(X):
     """Validate input data.
 
     Parameters
@@ -88,8 +125,23 @@ def check_X_is_univariate(X):
         If X has more than one column
     """
     if X.shape[1] > 1:
-        raise NotImplementedError(f"X must be univariate with X.shape[1] == 1, "
-                                  f"but found: X.shape[1] == {X.shape[1]}. For "
-                                  f"multivariate please use compositor classes. "
-                                  f"Estimator-specific multivariate approaches are "
-                                  f"not implemented yet.")
+        raise ValueError(
+            f"X must be univariate with X.shape[1] == 1, "
+            f"but found: X.shape[1] == {X.shape[1]}. For "
+            f"multivariate problems please use compositor classes. "
+            f"Estimator-specific multivariate approaches are "
+            f"not implemented yet.")
+
+
+def _enforce_min_instances(x, min_instances=1):
+    if hasattr(x, "shape"):
+        n_instances = x.shape[0]
+    else:
+        x = np.asarray(x)
+        n_instances = x.shape[0]
+
+    if min_instances > 0:
+        if n_instances < min_instances:
+            raise ValueError(
+                f"Found array with {n_instances} instances(s) "
+                f"but a minimum of {min_instances} is required.")

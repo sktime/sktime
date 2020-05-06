@@ -24,7 +24,7 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils import all_estimators
-from sktime.utils.testing.construct import _construct_instance
+from sktime.utils.testing import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
 # get all forecasters

@@ -8,8 +8,8 @@ import pandas as pd
 from sklearn.utils.validation import check_is_fitted
 from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.series_as_features import validate_X
-from sktime.utils.validation.series_as_features import validate_y
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_y
 
 
 class BaseTSFreshFeatureExtractor(BaseTransformer):
@@ -45,7 +45,7 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         -------
         self : an instance of self
         """
-        validate_X(X)
+        check_X(X)
         self._set_extraction_defaults()
         self._is_fitted = True
         return self
@@ -114,7 +114,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
           Transformed pandas DataFrame
         """
         # input checks
-        validate_X(X)
+        check_X(X)
 
         # tsfresh requires unique index, returns only values for
         # unique index values
@@ -213,10 +213,10 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         from tsfresh.transformers.feature_selector import FeatureSelector
 
         # input checks
-        validate_X(X)
+        check_X(X)
         if y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-        validate_y(y)
+        check_y(y)
         self._set_extraction_defaults()
         self._set_selection_defaults()
 
@@ -262,7 +262,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
           Transformed pandas DataFrame
         """
         check_is_fitted(self, ["feature_selector_", "feature_extractor_"])
-        validate_X(X)
+        check_X(X)
         Xt = self.feature_extractor_.transform(X)
         Xt = self.feature_selector_.transform(Xt)
         return Xt

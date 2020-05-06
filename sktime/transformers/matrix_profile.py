@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.utils.validation.series_as_features import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
 
 def sliding_dot_products(q, t, q_len, t_len):
     """
@@ -208,8 +208,8 @@ class MatrixProfile(BaseTransformer):
         """
 
         # Input checks
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
 
         n_instances = X.shape[0]
 

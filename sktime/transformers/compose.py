@@ -14,7 +14,7 @@ from sktime.base import MetaEstimatorMixin
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import tabularize, detabularize, get_time_index
 from sktime.utils.validation.forecasting import check_is_fitted_in_transform
-from sktime.utils.validation.series_as_features import validate_X
+from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 __all__ = ['ColumnTransformer',
@@ -196,7 +196,7 @@ class RowTransformer(MetaEstimatorMixin, BaseTransformer):
         self : object
             Returns self.
         """
-        validate_X(X)
+        check_X(X)
 
         # fitting - this transformer needs no fitting
         self._is_fitted = True
@@ -220,7 +220,7 @@ class RowTransformer(MetaEstimatorMixin, BaseTransformer):
     def _apply_rowwise(self, func, X, y=None):
         """Helper function to apply transform or inverse_transform function on each row of data container"""
         check_is_fitted(self, '_is_fitted')
-        validate_X(X)
+        check_X(X)
 
         # 1st attempt: apply, relatively fast but not robust
         # try and except, but sometimes breaks in other cases than excepted ValueError
@@ -299,7 +299,7 @@ class Tabularizer(BaseTransformer):
         """
 
         if self.check_input:
-            validate_X(X)
+            check_X(X)
 
         self._columns = X.columns
         self._index = X.index
@@ -327,7 +327,7 @@ class Tabularizer(BaseTransformer):
 
         # TODO check if for each column, all rows have equal-index series
         if self.check_input:
-            validate_X(X)
+            check_X(X)
 
         Xit = detabularize(X, index=self._index, time_index=self._time_index)
         return Xit

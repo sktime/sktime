@@ -29,7 +29,7 @@ from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import validate_X_y, check_X_is_univariate, validate_X
+from sktime.utils.validation.series_as_features import check_X_y, _enforce_X_univariate, check_X
 
 
 class TimeSeriesForestClassifier(ForestClassifier):
@@ -289,8 +289,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
         """
 
         # Validate or convert input data
-        validate_X_y(X, y)
-        check_X_is_univariate(X)
+        check_X_y(X, y)
+        _enforce_X_univariate(X)
 
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
@@ -409,8 +409,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
         check_is_fitted(self, 'estimators_')
 
         # Check data
-        validate_X(X)
-        check_X_is_univariate(X)
+        check_X(X)
+        _enforce_X_univariate(X)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -441,8 +441,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
-        validate_X_y(X, y)
-        check_X_is_univariate(X)
+        check_X_y(X, y)
+        _enforce_X_univariate(X)
 
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
