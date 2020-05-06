@@ -3,7 +3,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "test_estimator"
+    "test_basic_estimator_interface"
 ]
 
 import pytest
@@ -14,6 +14,6 @@ ALL_ESTIMATORS = [e[1] for e in all_estimators()]
 
 
 @pytest.mark.parametrize("Estimator", ALL_ESTIMATORS)
-def test_estimator(Estimator):
+def test_basic_estimator_interface(Estimator):
     check_estimator(Estimator)
 

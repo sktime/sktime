@@ -8,20 +8,27 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sktime.classification.interval_based import TimeSeriesForest
-from sktime.forecasting.compose import DirectRegressionForecaster, RecursiveRegressionForecaster, \
-    DirectTimeSeriesRegressionForecaster, RecursiveTimeSeriesRegressionForecaster, TransformedTargetForecaster, \
-    EnsembleForecaster, StackingForecaster
+from sktime.forecasting.arima import AutoARIMA
+from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import ForecastingGridSearchCV, SingleWindowSplitter
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.series_as_features.compose import ColumnEnsembleClassifier
+from sktime.transformers.compose import ColumnTransformer
 from sktime.transformers.compose import RowTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.transformers.detrend import Detrender, SingleSeriesTransformAdaptor
+from sktime.transformers.detrend import Detrender
+from sktime.transformers.detrend import SingleSeriesTransformAdaptor
 from sktime.transformers.summarise import FittedParamExtractor
-from sktime.transformers.compose import ColumnTransformer
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [
@@ -68,11 +75,18 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     SingleSeriesTransformAdaptor:
         {"transformer": StandardScaler()},
     ColumnEnsembleClassifier:
-        {"estimators": [(name, estimator, i) for i, (name, estimator) in enumerate(TIME_SERIES_CLASSIFIERS)]},
+        {"estimators": [(name, estimator, i) for i, (name, estimator) in
+                        enumerate(TIME_SERIES_CLASSIFIERS)]},
     FittedParamExtractor:
         {"forecaster": FORECASTER, "param_names": ["smoothing_level"]},
     RowTransformer:
         {"transformer": TRANSFORMER},
     ColumnTransformer:
-        {"transformers": [(name, estimator, i) for i, (name, estimator) in enumerate(TRANSFORMERS)]}
+        {"transformers": [(name, estimator, i) for i, (name, estimator) in
+                          enumerate(TRANSFORMERS)]},
+    # pmdarima, which we interface for AutoARIMA, fails for full in-sample
+    # predictions when d > start where start = 0 for full in-sample
+    # predictions
+    AutoARIMA:
+        {"max_D": 0}
 }

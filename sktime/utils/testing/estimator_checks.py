@@ -40,14 +40,26 @@ NON_STATE_CHANGING_METHODS = ["predict", "predict_proba"]
 
 
 def check_estimator(Estimator):
+    """Check whether estimator complies with common interface.
+
+    Parameters
+    ----------
+    Estimator : Estimator class
+
+    Raises
+    ------
+    AssertionError
+        If Estimator does not comply
+    """
     for check in yield_estimator_checks():
         check(Estimator)
 
 
 def yield_estimator_checks():
+    """Iterator to yield estimator checks"""
     checks = [
         check_inheritance,
-        # check_meta_estimator,
+        check_meta_estimator,
         check_has_common_interface,
         check_constructor,
         check_get_params,
@@ -61,21 +73,23 @@ def yield_estimator_checks():
         check_fit_does_not_overwrite_hyper_params,
         check_non_state_changing_methods_do_not_change_state,
     ]
-    for check in checks:
-        yield check
+    yield from checks
 
 
-def check_meta_estimators(Estimator):
-    if hasattr(Estimator, "_required_parameters"):
-        params = Estimator._required_parameters
+def check_meta_estimator(Estimator):
+    # Check common meta-estimator interface
+    estimator = _construct_instance(Estimator)
+    if hasattr(estimator, "_required_parameters"):
+        params = getattr(estimator, "_required_parameters")
         assert isinstance(params, list)
         assert all([isinstance(param, str) for param in params])
 
 
 def check_inheritance(Estimator):
-    # check that inherits from one and only one task-specific estimator
+    # Check that estimator inherits from one and only one task-specific
+    # estimator
 
-    # class checks
+    # Class checks
     base_classes = [
         BaseClassifier,
         BaseRegressor,
@@ -86,7 +100,7 @@ def check_inheritance(Estimator):
     assert sum([issubclass(Estimator, base_class) for base_class in
                 base_classes]) == 1
 
-    # instance type checks
+    # Instance type checks
     is_type_checks = [
         is_classifier,
         is_regressor,
@@ -100,10 +114,12 @@ def check_inheritance(Estimator):
 
 
 def check_has_common_interface(Estimator):
-    # check class for type of attribute
+    # Check estimator implements the common interface
+
+    # Check class for type of attribute
     assert isinstance(Estimator.is_fitted, property)
 
-    # check instance
+    # Check instance
     estimator = _construct_instance(Estimator)
     common_attrs = [
         "fit",
@@ -120,6 +136,7 @@ def check_has_common_interface(Estimator):
 
 
 def check_get_params(Estimator):
+    # Check get params works correctly
     estimator = _construct_instance(Estimator)
     params = estimator.get_params()
     assert isinstance(params, dict)
@@ -127,7 +144,7 @@ def check_get_params(Estimator):
 
 
 def check_set_params(Estimator):
-    # check set_params returns self
+    # Check set_params works correctly
     estimator = _construct_instance(Estimator)
     params = estimator.get_params()
     assert estimator.set_params(**params) is estimator
@@ -135,16 +152,19 @@ def check_set_params(Estimator):
 
 
 def check_clone(Estimator):
+    # Check we can call clone from scikit-learn
     estimator = _construct_instance(Estimator)
     clone(estimator)
 
 
 def check_repr(Estimator):
+    # Check we can call repr
     estimator = _construct_instance(Estimator)
     repr(estimator)
 
 
 def check_constructor(Estimator):
+    # Check that the constructor behaves correctly
     estimator = _construct_instance(Estimator)
 
     # Check that init does not construct object of other class than itself
@@ -200,10 +220,11 @@ def check_constructor(Estimator):
 
 
 def check_fit_updates_state(Estimator):
+    # Check that fit updates the is-fitted states
     is_fitted_states = ["_is_fitted", "is_fitted"]
 
     estimator = _construct_instance(Estimator)
-    # check it's not fitted before calling fit
+    # Check it's not fitted before calling fit
     for state in is_fitted_states:
         assert not getattr(estimator, state), (
             f"Estimator: {estimator} does not initiate state: {state} to "
@@ -212,7 +233,7 @@ def check_fit_updates_state(Estimator):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
-    # check states are updated after calling fit
+    # Check states are updated after calling fit
     for state in is_fitted_states:
         assert getattr(estimator, state), (
             f"Estimator: {estimator} does not update state: {state} "
@@ -220,6 +241,7 @@ def check_fit_updates_state(Estimator):
 
 
 def check_fit_returns_self(Estimator):
+    # Check that fit returns self
     estimator = _construct_instance(Estimator)
     fit_args = _make_args(estimator, "fit")
     assert estimator.fit(*fit_args) is estimator, (
@@ -228,6 +250,7 @@ def check_fit_returns_self(Estimator):
 
 
 def check_raises_not_fitted_error(Estimator):
+    # Check that we raise appropriate error for unfitted estimators
     estimator = _construct_instance(Estimator)
 
     # call methods without prior fitting and check that they raise our
@@ -240,6 +263,7 @@ def check_raises_not_fitted_error(Estimator):
 
 
 def check_fit_idempotent(Estimator):
+    # Check that calling fit twice is equivalent to calling it once
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
 
@@ -267,6 +291,7 @@ def check_fit_idempotent(Estimator):
 
 
 def check_fit_does_not_overwrite_hyper_params(Estimator):
+    # Check that we do not overwrite hyper-parameters in fit
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
 
@@ -297,6 +322,9 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
 
 
 def check_non_state_changing_methods_do_not_change_state(Estimator):
+    # Check that methods that are not supposed to change attributes of the
+    # estimators do not change anything (including hyper-parameters and
+    # fitted parameters)
     estimator = _construct_instance(Estimator)
     set_random_state(estimator)
 
@@ -312,7 +340,20 @@ def check_non_state_changing_methods_do_not_change_state(Estimator):
                 f"Estimator: {estimator} changes __dict__ during {method}")
 
 
+def check_persistence_via_pickle(Estimator):
+    # Check that we can pickle all estimators
+    estimator = _construct_instance(Estimator)
+    set_random_state(estimator)
+    fit_args = _make_args(estimator, "fit")
+    estimator.fit(*fit_args)
+
+
+
+
+
 def _make_args(estimator, method, *args, **kwargs):
+    """Helper function to generate appropriate arguments for testing different
+    estimator types and their methods"""
     if method == "fit":
         return _make_fit_args(estimator, *args, **kwargs)
 
@@ -353,4 +394,4 @@ def _make_predict_args(estimator, random_state=None):
         return X
 
     else:
-        raise ValueError("estimator type not supported")
+        raise ValueError(f"Estimator type: {type(estimator)} not supported")
