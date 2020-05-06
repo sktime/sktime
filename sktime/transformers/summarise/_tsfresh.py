@@ -18,7 +18,7 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
     def __init__(self, default_fc_parameters="comprehensive", kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
                  impute_function=None, profiling=None, profiling_filename=None,
-                 profiling_sorting=None, distributor=None, keep_time_series=False):
+                 profiling_sorting=None, distributor=None):
         self.default_fc_parameters = default_fc_parameters
         self.kind_to_fc_parameters = kind_to_fc_parameters
         self.n_jobs = n_jobs
@@ -30,7 +30,6 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         self.profiling_sorting = profiling_sorting
         self.profiling_filename = profiling_filename
         self.distributor = distributor
-        self.keep_original = keep_time_series
 
     def fit(self, X, y=None):
         """Fit.
@@ -134,11 +133,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
                               impute_function=self.impute_function, profile=self.profiling,
                               profiling_filename=self.profiling_filename, profiling_sorting=self.profiling_sorting,
                               distributor=self.distributor)
-
-        if self.keep_original:
-            return pd.merge(X, Xt, left_index=True, right_index=True, how="left")
-        else:
-            return Xt
+        return Xt
 
 
 class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
@@ -170,7 +165,6 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
             profiling_filename=profiling_filename,
             profiling_sorting=profiling_sorting,
             distributor=distributor,
-            keep_time_series=keep_time_series,
         )
         self.test_for_binary_target_binary_feature = test_for_binary_target_binary_feature
         self.test_for_binary_target_real_feature = test_for_binary_target_real_feature
@@ -235,8 +229,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
             disable_progressbar=self.disable_progressbar,
             profiling=self.profiling,
             profiling_filename=self.profiling_filename,
-            profiling_sorting=self.profiling_sorting,
-            keep_time_series=False,
+            profiling_sorting=self.profiling_sorting
         )
         self.feature_selector_ = FeatureSelector(
             test_for_binary_target_binary_feature=self.test_for_binary_target_binary_feature,
@@ -272,7 +265,4 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         validate_X(X)
         Xt = self.feature_extractor_.transform(X)
         Xt = self.feature_selector_.transform(Xt)
-        if self.keep_original:
-            return pd.merge(X, Xt, left_index=True, right_index=True, how="left")
-        else:
-            return Xt
+        return Xt

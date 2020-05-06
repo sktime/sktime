@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *.c
+*.cpp
 
 # Distribution / packaging
 .Python
@@ -113,6 +114,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.pyre_configuration
+
+# Pytype type checker
+.pytype/
 
 # IDE files
 *.prefs

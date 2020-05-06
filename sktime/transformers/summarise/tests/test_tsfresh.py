@@ -27,4 +27,3 @@ def test_tsfresh_extractor(Transformer, load_data, default_fc_parameters):
     Xt = t.transform(X_test, y_test)
     assert isinstance(Xt, pd.DataFrame)
     assert Xt.shape[0] == X_test.shape[0]
-
