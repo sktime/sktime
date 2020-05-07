@@ -7,8 +7,11 @@ from sktime.utils.validation.supervised import validate_X
 
 
 class TSResizeTransform(BaseTransformer):
-    """Transformer that get casual dataframe of time series and resizes 
-            Series to user length via scipy interp1d between received points.
+    """Transformer that rescales series for another number of points. 
+        For each cell in datadrame transformer fits scipy linear interp1d 
+        and samples user defined number of points. Points are generated 
+        by numpy.linspace. After transformation each cell will be a numpy.array
+        of defined size.
     """
 
     def __init__(self, length):
@@ -24,14 +27,37 @@ class TSResizeTransform(BaseTransformer):
         super(TSResizeTransform).__init__()
         
     def _resize_cell(self, cell):
-        f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), list(cell))
+        """Resizes the array. Firstly 1d linear interpolation is fitted on 
+           original array as y and numpy.linspace(0, 1, len(cell)) as x.
+           Then user defined number of points is sampled in 
+           numpy.linspace(0, 1, length) and returned into cell as numpy array.
+
+        Parameters
+        ----------
+        cell : array-like
+
+        Returns
+        -------
+        numpy.array : with user defined size
+        """
+        f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
         return f(np.linspace(0, 1, self.length))
     
     def _resize_col(self, coll):
+        """Resizes column cell-wise.
+
+        Parameters
+        ----------
+        coll : pandas.Series : a column with array-like objects in each cell
+
+        Returns
+        -------
+        pandas.Series : a column with numpy.array in each cell with user defined size
+        """
         return coll.apply(self._resize_cell)
     
     def transform(self, X, y=None):
-        """Resizes time series in each cell of dataframe and returns it.
+        """Takes series in each cell, train linear interpolation and samples n.
 
         Parameters
         ----------
@@ -40,8 +66,7 @@ class TSResizeTransform(BaseTransformer):
 
         Returns
         -------
-        Xt : pandas DataFrame
-          Transformed pandas DataFrame with same number of rows and columns
+        pandas DataFrame : Transformed pandas DataFrame with same number of rows and columns
         """
         validate_X(X)
         return X.apply(self._resize_col)
