@@ -1,38 +1,53 @@
+# Travis  is a continuous integration service to build, test and deploy the package
+
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master/.travis.yml
 
 # use travis only on the following branches for building
 branches:
-    only:
-        - master
-        - dev
+  only:
+    - master
+    - dev
 
-language: python
+language: shell  # 'language: python' is an error on Travis CI with macOS
 
 cache:
   directories:
-  - $HOME/.cache/pip
-  - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/.ccache
 
-dist: xenial
+dist: xenial  # Ubuntu 16.04
 
 env:
   global:
-    # Directory where tests are run from
     - TRAVIS_DEPLOY_BRANCH="master"  # branch on which to deploy build artifacts and website
-    - TRAVIS_DEPLOY_OS_NAME="osx"  # os on which to deploy website
-    - TEST_DIR=/tmp/sktime
+    - TRAVIS_DEPLOY_JOB_NAME="osx-py37"  # job on which to deploy website
+
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
-    - PYTHON_VERSION="3.7" NUMPY_VERSION="1.17" SCIPY_VERSION="1.2" SKLEARN_VERSION="0.22" JOBLIB_VERSION="0.13"
-      CYTHON_VERSION="0.29" PANDAS_VERSION="0.24" STATSMODELS_VERSION="0.9" SCIKIT_POSTHOCS_VERSION="0.5.0" NUMBA_VERSION="0.47"
 
-matrix:
-    # platforms and package environments to test
-    include:
-      - os: linux
-        python: 3.7
-      - os: osx
-        language: generic
+    - TEST_DIR=/tmp/sktime  # Directory where tests are run from
+    - REQUIREMENTS=build_tools/requirements.txt
+    - COVERAGE=false
+
+# platforms and package environments to test
+jobs:
+  include:
+    - name: "osx-py36"
+      os: osx
+      env:
+        - PYTHON_VERSION=3.6
+        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
+    - name: "osx-py37"
+      os: osx
+      env:
+        - PYTHON_VERSION=3.7
+        - MINICONDA_VERSION=Miniconda3-latest-MacOSX-x86_64.sh
+    - name: "osx-py38"
+      os: osx
+      env:
+        - PYTHON_VERSION=3.8
+        # Check available miniconda version: https://repo.anaconda.com/miniconda/
+        - MINICONDA_VERSION=Miniconda3-py38_4.8.2-MacOSX-x86_64.sh
 
 addons:
   # travis recommends to specify any additional necessary packages here,
@@ -46,32 +61,45 @@ addons:
     update: true
 
 install:
-    - source build_tools/travis/install.sh  # build environment
+  - source build_tools/travis/install.sh  # build environment
 
 script:
-    - bash build_tools/travis/test_script.sh  # run unit tests
+  - bash build_tools/travis/test_script.sh  # run unit tests
 
 after_success:
-    - source build_tools/travis/after_success.sh
+  - source build_tools/travis/after_success.sh
 
 before_deploy:
-- cd $TRAVIS_BUILD_DIR
+  - cd $TRAVIS_BUILD_DIR
 
 deploy:
-    # on master branch, deploy website and upload compiled files to Github
-    - provider: pages
-      skip-cleanup: true
-      local_dir: "./documentation/build_doc_site/html"
-      github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
-      keep-history: false
-      on:
-          branch: $TRAVIS_DEPLOY_BRANCH
-          condition: $TRAVIS_OS_NAME = $TRAVIS_DEPLOY_OS_NAME  # deploy only on macOS build
-    - provider: releases
-      api_key: $GITHUB_TOKEN
-      skip_cleanup: true  # skip clean up which would delete build artifacts
-      draft: true
-      file_glob: true  # enable wildcards in file
-      file: dist/*  # files to upload
-      on:
-          branch: $TRAVIS_DEPLOY_BRANCH
+  # website is always deployed on master branch
+  - provider: pages
+    skip-cleanup: true  # skip clean up which would delete build artifacts
+    local_dir: "./documentation/build_doc_site/html"
+    github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
+    keep-history: false
+    on:
+      branch: $TRAVIS_DEPLOY_BRANCH  # deploy only on master
+      condition: $TRAVIS_JOB_NAME = $TRAVIS_DEPLOY_JOB_NAME  # deploy only on macOS build
+
+  # release is deployed only on tagged commits on master
+  - provider: releases
+    skip_cleanup: true
+    api_key: $GITHUB_TOKEN
+    draft: true
+    file_glob: true  # enable wildcards in file
+    file: dist/*  # files to upload
+    on:
+      tags: true  # deploy only on tags
+      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
+
+  # pipy is deployed only on tagged commits on master
+  - provider: pypi
+    skip_cleanup: true
+    user: "__token__"
+    password: $PYPI_PASSWORD
+    skip_existing: true
+    on:
+      tags: true  # deploy only on tags
+      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)

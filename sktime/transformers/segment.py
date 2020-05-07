@@ -7,6 +7,7 @@ from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 from sktime.utils.data_container import get_time_index
+from sktime.utils.time_series import compute_relative_to_n_timepoints
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -58,7 +59,7 @@ class IntervalSegmenter(BaseTransformer):
             self.intervals_ = np.array_split(self._time_index, self.intervals)
 
         else:
-            raise ValueError(f"Intervals must be either an integer, a single array with "
+            raise ValueError(f"Intervals must be either an integer, an array with "
                              f"start and end points, but found: {self.intervals}")
 
         return self
@@ -242,7 +243,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         Parameters
         ----------
-        x : array_like, shape = [n_observations]
+        x : array_like, shape = [n_observations,]
             Array containing the time-series index.
         n_intervals : 'sqrt', 'log', float or int
 
@@ -252,27 +253,14 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             2d array containing start and end points of intervals
         """
 
-        len_series = len(x)
+        n_timepoints = len(x)
         # compute number of random intervals relative to series length (m)
         # TODO use smarter dispatch at construction to avoid evaluating if-statements here each time function is called
-        if np.issubdtype(type(n_intervals), np.integer) and (n_intervals >= 1):
-            pass
-        elif n_intervals == 'sqrt':
-            n_intervals = int(np.sqrt(len_series))
-        elif n_intervals == 'log':
-            n_intervals = int(np.log(len_series))
-        elif np.issubdtype(type(n_intervals), np.floating) and (n_intervals > 0) and (n_intervals <= 1):
-            n_intervals = int(len_series * n_intervals)
-        else:
-            raise ValueError(f'Number of intervals must be either "random", "sqrt", a positive integer, or a float '
-                             f'value between 0 and 1, but found {n_intervals}.')
+        n_intervals = compute_relative_to_n_timepoints(n_timepoints, n=n_intervals)
 
-        # make sure there is at least one interval
-        n_intervals = np.maximum(1, n_intervals)
-
-        starts = self._rng.randint(len_series - self.min_length + 1, size=n_intervals)
+        # get start and end points of intervals
+        starts = self._rng.randint(n_timepoints - self.min_length + 1, size=n_intervals)
         if n_intervals == 1:
             starts = [starts]  # make it an iterable
-
-        ends = [start + self._rng.randint(self.min_length, len_series - start + 1) for start in starts]
+        ends = [start + self._rng.randint(self.min_length, n_timepoints - start + 1) for start in starts]
         return np.column_stack([starts, ends])

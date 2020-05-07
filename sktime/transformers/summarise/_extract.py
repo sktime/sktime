@@ -3,10 +3,12 @@
 
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import check_is_fitted
+from joblib import Parallel, delayed
+from sklearn.base import clone
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
+from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
 
 
@@ -217,3 +219,47 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
         return Xt
+
+
+class FittedParamExtractor(BaseTransformer):
+
+    def __init__(self, forecaster, param_names, n_jobs=None):
+        self.forecaster = forecaster
+        self.param_names = param_names
+        self.n_jobs = n_jobs
+
+    def fit(self, X, y=None):
+        validate_X(X)
+        check_X_is_univariate(X)
+        return self
+
+    def transform(self, X, y=None):
+        validate_X(X)
+        check_X_is_univariate(X)
+        param_names = self._check_param_names(self.param_names)
+        n_instances = X.shape[0]
+
+        def _fit_extract(forecaster, x, param_names):
+            forecaster.fit(x)
+            params = forecaster.get_fitted_params()
+            return np.hstack([params[name] for name in param_names])
+
+        # iterate over rows
+        extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(_fit_extract)(
+            clone(self.forecaster), X.iloc[i, 0], param_names) for i in range(n_instances))
+
+        return pd.DataFrame(extracted_params, index=X.index, columns=param_names)
+
+    @staticmethod
+    def _check_param_names(param_names):
+        if isinstance(param_names, str):
+            param_names = [param_names]
+        elif isinstance(param_names, (list, tuple)):
+            for param in param_names:
+                if not isinstance(param, str):
+                    raise ValueError(f"All elements of `param_names` must be strings, "
+                                     f"but found: {type(param)}")
+        else:
+            raise ValueError(f"`param_names` must be str, or a list or tuple of strings, "
+                             f"but found: {type(param_names)}")
+        return param_names

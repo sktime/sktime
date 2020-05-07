@@ -1,8 +1,12 @@
-__all__ = ["check_is_fitted"]
+__all__ = [
+    "check_is_fitted",
+    "is_int"
+]
 __author__ = "Markus Löning"
 
 from inspect import isclass
 from sktime.exceptions import NotFittedError
+import numpy as np
 
 
 def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
@@ -52,7 +56,7 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
 
     References
     ----------
-    ..[1]   Based on scikit-learn's `check_is_fitted` function
+    ..[1] Based on scikit-learn's `check_is_fitted` function
     """
     if isclass(estimator):
         raise TypeError("{} is a class, not an instance.".format(estimator))
@@ -73,3 +77,9 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
 
     if not attrs:
         raise NotFittedError(msg % {'name': type(estimator).__name__})
+
+
+def is_int(x):
+    """Check if x is of integer type, but not boolean"""
+    # boolean are subclasses of integers in Python, so explicitly exclude them
+    return isinstance(x, (int, np.integer)) and not isinstance(x, bool)
