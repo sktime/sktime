@@ -20,19 +20,25 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
     Parameters
     ----------
-    strategy : str{"last", "mean", "seasonal_last"}, optional (default="last")
+    seasonal : True or False or None, optional (default=None)
+        Seasonal used to determine forecasts:
+        *True : forecast the seasonal type of given strategy
+        *False : forecast the given strategy itself
+
+    strategy : str{"last", "mean"}, optional (default="last")
         Strategy used to make forecasts:
 
         * "last": forecast the last value in the training series
         * "mean": forecast the mean of (a given window) of the training series
-        * "seasonal_last": forecasts the last value of the same season in the training series
-
+        *  seasonal is True and "last": forecasts the last value of the same season in the training series
+        * seasonal is True and "mean": forecast the mean (of a given window) of the same season in the training series
+    
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
             series will be used.
     """
 
-    def __init__(self, strategy="last", ,seasonal,window_length=None, sp=None):
+    def __init__(self, strategy="last",seasonal=None,window_length=None, sp=None):
         super(NaiveForecaster, self).__init__()
         # input checks
         # allowed strategies to include: last, constant, seasonal-last, mean, median
@@ -40,9 +46,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
-        allowed_seasonal=(True,False,None)
-        if seasonal not in allowed_seasonal:
-            raise ValueError(f"Unknown seasonal: {seasonal}; expected one of {allowed_seasonal}")            
+        allowed_seasonals = (True,False,None)
+        if seasonal not in allowed_seasonals:
+            raise ValueError(f"Unknown seasonal: {seasonal}; expected one of {allowed_seasonals}")            
         self.seasonal = seasonal
         self.sp = sp
         self.window_length = window_length
@@ -67,26 +73,20 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self._set_oh(y_train)
         self._set_fh(fh)
 
-        if self.strategy in ("last") and self.seasonal != True:
+        if self.strategy in ("last") :
             if self.window_length is not None:
                 warn("For the `last` strategy, "
                      "the `window_length_` value will be ignored.")
 
-        if self.strategy in ("last") and self.seasonal == True:
-            if self.window_length is not None:
-                warn("For the seasonal `last` strategy, "
-                     "the `window_length_` value will be ignored.")
-
-
-        if self.strategy in ("last", "mean") and self.seasonal != True:
+        if self.strategy in ("last", "mean") and self.seasonal is not True:
             if self.sp is not None:
-                warn("For the `last` and `mean` strategy, "
+                warn("For the non seasonal `last` and `mean` strategies, "
                      "the `sp` value will be ignored.")
 
         if self.strategy == "last":
             self.window_length_ = 1
 
-        if self.strategy == "seasonal_last":
+        if self.strategy in ("last","mean") and self.seasonal is True:
             if self.sp is None:
                 raise NotImplementedError("Automatic estimation of the seasonal periodicity `sp` "
                                           "from the data is not implemented yet; "
@@ -106,7 +106,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
         # check window length
         if self.window_length_ > len(self.oh):
-            param = "sp" if self.strategy == "seasonal_last" else "window_length_"
+            param = "sp" if self.strategy == "last" and self.seasonal is True else "window_length_"
             raise ValueError(f"The {param}: {self.window_length_} is larger than "
                              f"the training series.")
 
@@ -121,10 +121,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif self.strategy == "last":
+        elif self.strategy == "last" and self.seasonal is not True:
             return np.repeat(last_window[-1], len(fh))
 
-        elif self.strategy == "seasonal_last":
+        elif self.strategy == "last" and self.seasonal is True:
             # we need to replicate the last window if max(fh) is larger than sp,
             # so that we still make forecasts by repeating the last value for that season,
             # assume fh is sorted, i.e. max(fh) == fh[-1]
