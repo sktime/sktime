@@ -32,14 +32,18 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             series will be used.
     """
 
-    def __init__(self, strategy="last", window_length=None, sp=None):
+    def __init__(self, strategy="last", ,seasonal,window_length=None, sp=None):
         super(NaiveForecaster, self).__init__()
         # input checks
         # allowed strategies to include: last, constant, seasonal-last, mean, median
-        allowed_strategies = ("last", "mean", "seasonal_last")
+        allowed_strategies = ("last", "mean")
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
+        allowed_seasonal=(True,False,None)
+        if seasonal not in allowed_seasonal:
+            raise ValueError(f"Unknown seasonal: {seasonal}; expected one of {allowed_seasonal}")            
+        self.seasonal = seasonal
         self.sp = sp
         self.window_length = window_length
 
@@ -63,12 +67,18 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         self._set_oh(y_train)
         self._set_fh(fh)
 
-        if self.strategy in ("last", "seasonal_last"):
+        if self.strategy in ("last") and self.seasonal != True:
             if self.window_length is not None:
-                warn("For the `last` and `seasonal_last` strategy, "
+                warn("For the `last` strategy, "
                      "the `window_length_` value will be ignored.")
 
-        if self.strategy in ("last", "mean"):
+        if self.strategy in ("last") and self.seasonal == True:
+            if self.window_length is not None:
+                warn("For the seasonal `last` strategy, "
+                     "the `window_length_` value will be ignored.")
+
+
+        if self.strategy in ("last", "mean") and self.seasonal != True:
             if self.sp is not None:
                 warn("For the `last` and `mean` strategy, "
                      "the `sp` value will be ignored.")
