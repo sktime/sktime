@@ -26,6 +26,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
         * "last": forecast the last value in the training series
         * "mean": forecast the mean of (a given window) of the training series
         * "seasonal_last": forecasts the last value of the same season in the training series
+        * "seasonal_mean": forecasts the mean of the last value of the same season in the training series
 
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
