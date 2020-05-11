@@ -6,9 +6,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.compose import RowTransformer
-from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.transformers.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
 
 # load data
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)

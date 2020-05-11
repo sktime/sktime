@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformers.detrend import Deseasonaliser
+from sktime.transformers.single_series.detrend import Deseasonaliser
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_alpha

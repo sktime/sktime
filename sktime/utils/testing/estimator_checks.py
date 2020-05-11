@@ -27,8 +27,8 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
-from sktime.transformers.base import BaseTransformer
-from sktime.transformers.base import is_transformer
+from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import is_transformer
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing import _make_args
 from sktime.utils.testing.inspect import _get_args

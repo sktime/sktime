@@ -12,7 +12,7 @@ from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._meta import MetaForecasterMixin
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.transformers.detrend._base import BaseSeriesToSeriesTransformer
+from sktime.transformers.single_series.base import BaseSeriesToSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 

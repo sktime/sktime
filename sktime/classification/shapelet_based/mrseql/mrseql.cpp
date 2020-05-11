@@ -1689,7 +1689,7 @@ static const char __pyx_k_The_mapping_only_works_on_fs_mod[] = "The mapping only
 static const char __pyx_k_no_default___reduce___due_to_non[] = "no default __reduce__ due to non-trivial __cinit__";
 static const char __pyx_k_seql_mode_should_be_either_clf_o[] = "seql_mode should be either clf or fs.";
 static const char __pyx_k_sktime_classification_shapelet_b[] = "sktime.classification.shapelet_based.mrseql.mrseql";
-static const char __pyx_k_sktime_transformers_dictionary_b[] = "sktime.transformers.dictionary_based.SFA";
+static const char __pyx_k_sktime_transformers_series_as_fe[] = "sktime.transformers.series_as_features.dictionary_based";
 static const char __pyx_k_sktime_utils_validation_series_a[] = "sktime.utils.validation.series_as_features";
 static const char __pyx_k_sktime_classification_shapelet_b_2[] = "sktime/classification/shapelet_based/mrseql/mrseql.pyx";
 static PyObject *__pyx_kp_b_;
@@ -1873,7 +1873,7 @@ static PyObject *__pyx_n_s_sklearn_linear_model;
 static PyObject *__pyx_n_s_sktime_classification_base;
 static PyObject *__pyx_n_s_sktime_classification_shapelet_b;
 static PyObject *__pyx_kp_s_sktime_classification_shapelet_b_2;
-static PyObject *__pyx_n_s_sktime_transformers_dictionary_b;
+static PyObject *__pyx_n_s_sktime_transformers_series_as_fe;
 static PyObject *__pyx_n_s_sktime_utils_data_container;
 static PyObject *__pyx_n_s_sktime_utils_validation_series_a;
 static PyObject *__pyx_n_s_solver;
@@ -12681,7 +12681,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_sktime_classification_base, __pyx_k_sktime_classification_base, sizeof(__pyx_k_sktime_classification_base), 0, 0, 1, 1},
   {&__pyx_n_s_sktime_classification_shapelet_b, __pyx_k_sktime_classification_shapelet_b, sizeof(__pyx_k_sktime_classification_shapelet_b), 0, 0, 1, 1},
   {&__pyx_kp_s_sktime_classification_shapelet_b_2, __pyx_k_sktime_classification_shapelet_b_2, sizeof(__pyx_k_sktime_classification_shapelet_b_2), 0, 0, 1, 0},
-  {&__pyx_n_s_sktime_transformers_dictionary_b, __pyx_k_sktime_transformers_dictionary_b, sizeof(__pyx_k_sktime_transformers_dictionary_b), 0, 0, 1, 1},
+  {&__pyx_n_s_sktime_transformers_series_as_fe, __pyx_k_sktime_transformers_series_as_fe, sizeof(__pyx_k_sktime_transformers_series_as_fe), 0, 0, 1, 1},
   {&__pyx_n_s_sktime_utils_data_container, __pyx_k_sktime_utils_data_container, sizeof(__pyx_k_sktime_utils_data_container), 0, 0, 1, 1},
   {&__pyx_n_s_sktime_utils_validation_series_a, __pyx_k_sktime_utils_validation_series_a, sizeof(__pyx_k_sktime_utils_validation_series_a), 0, 0, 1, 1},
   {&__pyx_n_s_solver, __pyx_k_solver, sizeof(__pyx_k_solver), 0, 0, 1, 1},
@@ -13483,7 +13483,7 @@ if (!__Pyx_RefNanny) {
  * 
  * from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate             # <<<<<<<<<<<<<<
  * from sktime.classification.base import BaseClassifier
- * from sktime.transformers.dictionary_based.SFA import SFA
+ * from sktime.transformers.series_as_features.dictionary_based import SFA
  */
   __pyx_t_1 = PyList_New(3); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 3, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
@@ -13517,7 +13517,7 @@ if (!__Pyx_RefNanny) {
  * 
  * from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
  * from sktime.classification.base import BaseClassifier             # <<<<<<<<<<<<<<
- * from sktime.transformers.dictionary_based.SFA import SFA
+ * from sktime.transformers.series_as_features.dictionary_based import SFA
  * from sktime.utils.data_container import detabularize
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 4, __pyx_L1_error)
@@ -13537,7 +13537,7 @@ if (!__Pyx_RefNanny) {
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":5
  * from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
  * from sktime.classification.base import BaseClassifier
- * from sktime.transformers.dictionary_based.SFA import SFA             # <<<<<<<<<<<<<<
+ * from sktime.transformers.series_as_features.dictionary_based import SFA             # <<<<<<<<<<<<<<
  * from sktime.utils.data_container import detabularize
  * from sklearn.linear_model import LogisticRegression
  */
@@ -13546,7 +13546,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_INCREF(__pyx_n_s_SFA);
   __Pyx_GIVEREF(__pyx_n_s_SFA);
   PyList_SET_ITEM(__pyx_t_1, 0, __pyx_n_s_SFA);
-  __pyx_t_2 = __Pyx_Import(__pyx_n_s_sktime_transformers_dictionary_b, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_Import(__pyx_n_s_sktime_transformers_series_as_fe, __pyx_t_1, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(1, 5, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __pyx_t_1 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_SFA); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 5, __pyx_L1_error)
@@ -13557,7 +13557,7 @@ if (!__Pyx_RefNanny) {
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":6
  * from sktime.classification.base import BaseClassifier
- * from sktime.transformers.dictionary_based.SFA import SFA
+ * from sktime.transformers.series_as_features.dictionary_based import SFA
  * from sktime.utils.data_container import detabularize             # <<<<<<<<<<<<<<
  * from sklearn.linear_model import LogisticRegression
  * import pandas as pd
@@ -13577,7 +13577,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
   /* "sktime/classification/shapelet_based/mrseql/mrseql.pyx":7
- * from sktime.transformers.dictionary_based.SFA import SFA
+ * from sktime.transformers.series_as_features.dictionary_based import SFA
  * from sktime.utils.data_container import detabularize
  * from sklearn.linear_model import LogisticRegression             # <<<<<<<<<<<<<<
  * import pandas as pd

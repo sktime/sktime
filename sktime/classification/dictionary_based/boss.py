@@ -13,11 +13,9 @@ import time
 from itertools import compress
 
 import numpy as np
-import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.dictionary_based.SFA import SFA
-from sktime.utils.data_container import tabularize
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X_y, check_X
 
 

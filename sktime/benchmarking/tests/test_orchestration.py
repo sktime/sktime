@@ -23,7 +23,7 @@ from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.compose import Tabulariser
+from sktime.transformers.series_as_features.reduce import Tabulariser
 
 # get data path for testing dataset loading from hard drive
 import sktime

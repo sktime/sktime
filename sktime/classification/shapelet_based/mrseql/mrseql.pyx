@@ -2,7 +2,7 @@ STUFF = "Hi"
 
 from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.dictionary_based.SFA import SFA
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.data_container import detabularize
 from sklearn.linear_model import LogisticRegression
 import pandas as pd

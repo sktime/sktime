@@ -19,7 +19,7 @@ from sktime.base import MetaEstimatorMixin
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.compose.ensemble import _parallel_build_trees
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y

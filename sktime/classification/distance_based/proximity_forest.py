@@ -27,8 +27,8 @@ from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wdtw_distance
-from sktime.transformers.base import BaseTransformer
-from sktime.transformers.summarise import DerivativeSlopeTransformer
+from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.summarise import DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
 from sktime.utils.data_container import tabularise

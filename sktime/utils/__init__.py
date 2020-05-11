@@ -44,7 +44,7 @@ def all_estimators(scitype=None):
     from sktime.forecasting.base import BaseForecaster
     from sktime.classification.base import BaseClassifier
     from sktime.regression.base import BaseRegressor
-    from sktime.transformers.base import BaseTransformer
+    from sktime.transformers.series_as_features.base import BaseTransformer
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):

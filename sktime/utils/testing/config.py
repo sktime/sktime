@@ -26,12 +26,12 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.series_as_features.compose import ColumnEnsembleClassifier
-from sktime.transformers.compose import ColumnTransformer
-from sktime.transformers.compose import RowTransformer
-from sktime.transformers.compose import Tabulariser
-from sktime.transformers.detrend import Detrender
-from sktime.transformers.detrend import SingleSeriesTransformAdaptor
-from sktime.transformers.summarise import FittedParamExtractor
+from sktime.transformers.series_as_features.compose import ColumnTransformer
+from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.single_series.detrend import Detrender
+from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
+from sktime.transformers.series_as_features.summarise import FittedParamExtractor
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [

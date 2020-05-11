@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformers.detrend import Detrender
+from sktime.transformers.single_series.detrend import Detrender
 
 
 def compute_expected_coefs(y, degree, with_intercept=True):

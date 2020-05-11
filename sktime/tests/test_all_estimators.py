@@ -25,7 +25,7 @@ EXCLUDED = [
     "TimeSeriesForestClassifier",
     "TimeSeriesForestRegressor"
 ]
-from sktime.transformers.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseTransformer
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
                   e[0] not in EXCLUDED and
                   not issubclass(e[1], BaseTransformer)]

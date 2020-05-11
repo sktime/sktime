@@ -2,12 +2,12 @@ from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifie
 from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np
-from sktime.transformers.compose import RowTransformer
+from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier
-from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.transformers.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
 import pytest
