@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from numba import prange
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
@@ -10,7 +10,7 @@ __author__ = "Angus Dempster"
 __all__ = ["Rocket"]
 
 
-class Rocket(BaseTransformer):
+class Rocket(BaseSeriesAsFeaturesTransformer):
     """ROCKET
 
     RandOm Convolutional KErnel Transform

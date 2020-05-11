@@ -28,10 +28,15 @@ from sktime.performance_metrics.forecasting import sMAPE
 from sktime.series_as_features.compose import ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.series_as_features.reduce import Tabularizer
+from sktime.transformers.series_as_features.shapelets import \
+    ContractedShapeletTransform
+from sktime.transformers.series_as_features.shapelets import ShapeletTransform
+from sktime.transformers.series_as_features.summarize import \
+    FittedParamExtractor
+from sktime.transformers.single_series.adapt import \
+    SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
-from sktime.transformers.series_as_features.summarise import FittedParamExtractor
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [
@@ -59,9 +64,9 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     RecursiveRegressionForecaster:
         {"regressor": REGRESSOR},
     DirectTimeSeriesRegressionForecaster:
-        {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
+        {"regressor": make_pipeline(Tabularizer(), REGRESSOR)},
     RecursiveTimeSeriesRegressionForecaster:
-        {"regressor": make_pipeline(Tabulariser(), REGRESSOR)},
+        {"regressor": make_pipeline(Tabularizer(), REGRESSOR)},
     TransformedTargetForecaster:
         {"steps": STEPS},
     EnsembleForecaster:
@@ -87,10 +92,13 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     ColumnTransformer:
         {"transformers": [(name, estimator, i) for i, (name, estimator) in
                           enumerate(TRANSFORMERS)]},
-    # pmdarima, which we interface for AutoARIMA, fails for full in-sample
-    # predictions when d > start where start = 0 for full in-sample
-    # predictions
+    # ARIMA requires d > start where start = 0 for full in-sample predictions
     AutoARIMA:
-        {"max_D": 0, "suppress_warnings": True},
-    ShapeletTransformClassifier: {"time_contract_in_mins": 0.1}
+        {"d": 0, "suppress_warnings": True},
+    ShapeletTransformClassifier:
+        {"time_contract_in_mins": 0.1},
+    ContractedShapeletTransform:
+        {"time_contract_in_mins": 0.1},
+    ShapeletTransform:
+        {"max_shapelets_to_store_per_class": 1}
 }

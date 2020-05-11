@@ -7,13 +7,13 @@ from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
-class PlateauFinder(BaseTransformer):
+class PlateauFinder(BaseSeriesAsFeaturesTransformer):
     """Transformer that finds segments of the same given value, plateau in
     the time series, and
     returns the starting indices and lengths.
@@ -93,7 +93,7 @@ class PlateauFinder(BaseTransformer):
         return Xt
 
 
-class DerivativeSlopeTransformer(BaseTransformer):
+class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
         self.check_is_fitted()
@@ -144,7 +144,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
     features: list of functions, optional (default=None)
         Applies each function to random intervals to extract features.
-        If None, only the mean is extracted.
+        If None, the mean is extracted.
 
     random_state: : int, RandomState instance, optional (default=None)
         - If int, random_state is the seed used by the random number generator;
@@ -160,19 +160,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
             min_length=min_length,
             random_state=random_state,
         )
-
-        # Check input of feature calculators, i.e list of functions to be
-        # applied to time-series
-        if features is None:
-            self.features = [np.mean]
-        elif isinstance(features, list) and all(
-                [callable(func) for func in features]):
-            self.features = features
-        else:
-            raise ValueError(
-                'Features must be list containing only functions (callables) '
-                'to be '
-                'applied to the data columns')
+        self.features = features
 
     def transform(self, X, y=None):
         """
@@ -193,6 +181,19 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         """
         # Check is fit had been called
         self.check_is_fitted()
+
+        # Check input of feature calculators, i.e list of functions to be
+        # applied to time-series
+        if self.features is None:
+            features = [np.mean]
+        elif isinstance(self.features, list) and all(
+                [callable(func) for func in self.features]):
+            features = self.features
+        else:
+            raise ValueError(
+                'Features must be list containing only functions (callables) '
+                'to be applied to the data columns')
+
         X = check_X(X, enforce_univariate=True)
 
         # Check that the input is of the same shape as the one passed
@@ -204,12 +205,11 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         # Input validation
         # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx,
         # fit_idx in zip(check_equal_index(X),
-        #                                                                              self._time_index)]):
         #     raise ValueError('Indexes of input time-series are different
         #     from what was seen in `fit`')
 
         n_rows, n_columns = X.shape
-        n_features = len(self.features)
+        n_features = len(features)
 
         n_intervals = len(self.intervals_)
 
@@ -225,7 +225,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         # TODO generalise to non-equal-index cases
         arr = tabularize(X, return_array=True)
         i = 0
-        for func in self.features:
+        for func in features:
             # TODO generalise to series-to-series functions and function kwargs
             for start, end in self.intervals_:
                 interval = arr[:, start:end]
@@ -235,8 +235,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                 try:
                     Xt[:, i] = func(interval, axis=1)
                 except TypeError as e:
-                    if str(
-                            e) == f"{func.__name__}() got an unexpected " \
+                    if str(e) == f"{func.__name__}() got an unexpected " \
                                   f"keyword argument 'axis'":
                         Xt[:, i] = np.apply_along_axis(func, 1, interval)
                     else:
@@ -250,7 +249,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         return Xt
 
 
-class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
+class FittedParamExtractor(MetaEstimatorMixin, BaseSeriesAsFeaturesTransformer):
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):

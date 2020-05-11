@@ -2,16 +2,16 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["Tabularizer", "Tabulariser"]
+__all__ = ["Tabularizer"]
 
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import get_time_index
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
-class Tabularizer(BaseTransformer):
+class Tabularizer(BaseSeriesAsFeaturesTransformer):
     """
     A transformer that turns time series/panel data into tabular data.
 
@@ -22,6 +22,13 @@ class Tabularizer(BaseTransformer):
     time-series/panel data into a format that is accepted by standard
     validation learning algorithms (as in sklearn).
     """
+
+    def fit(self, X, y=None):
+        self._columns = X.columns
+        self._index = X.index
+        self._time_index = get_time_index(X)
+        self._is_fitted = True
+        return self
 
     def transform(self, X, y=None):
         """Transform nested pandas dataframe into tabular dataframe.
@@ -39,10 +46,6 @@ class Tabularizer(BaseTransformer):
         """
         self.check_is_fitted()
         X = check_X(X)
-
-        self._columns = X.columns
-        self._index = X.index
-        self._time_index = get_time_index(X)
         return tabularize(X)
 
     def inverse_transform(self, X, y=None):
@@ -62,6 +65,3 @@ class Tabularizer(BaseTransformer):
         self.check_is_fitted()
         X = check_X(X)
         return detabularize(X, index=self._index, time_index=self._time_index)
-
-
-Tabulariser = Tabularizer

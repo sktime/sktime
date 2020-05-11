@@ -3,13 +3,13 @@ __all__ = ["PCATransformer"]
 
 import pandas as pd
 from sklearn.decomposition import PCA
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import detabularise
 from sktime.utils.data_container import tabularise
 from sktime.utils.validation.series_as_features import check_X
 
 
-class PCATransformer(BaseTransformer):
+class PCATransformer(BaseSeriesAsFeaturesTransformer):
     """ Transformer that applies Principle Components Analysis to a
     univariate time series.
 

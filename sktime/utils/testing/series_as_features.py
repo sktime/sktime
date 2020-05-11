@@ -11,14 +11,16 @@ import pandas as pd
 from sklearn.utils.validation import check_random_state
 
 
-def _make_series_as_features_X(n_instances, n_columns, n_timepoints,
+def _make_series_as_features_X(y, n_columns, n_timepoints,
                                random_state=None):
+    n_instances = len(y)
     rng = check_random_state(random_state)
     columns = []
     for i in range(n_columns):
         rows = []
         for j in range(n_instances):
-            row = pd.Series(rng.normal(size=n_timepoints))
+            # we use the y value for the mean of the generated time series
+            row = pd.Series(rng.normal(loc=y.iloc[j] * 10, size=n_timepoints))
             rows.append(row)
         column = pd.Series(rows)
         columns.append(column)
@@ -27,18 +29,20 @@ def _make_series_as_features_X(n_instances, n_columns, n_timepoints,
 
 def make_classification_problem(n_instances=20, n_columns=1,
                                 n_timepoints=20, random_state=None):
-    X = _make_series_as_features_X(n_instances, n_columns, n_timepoints,
-                                   random_state=random_state)
-
     rng = check_random_state(random_state)
     y = pd.Series(rng.randint(0, 2, size=n_instances))
+
+    X = _make_series_as_features_X(y, n_columns, n_timepoints,
+                                   random_state=random_state)
+
     return X, y
 
 
 def make_regression_problem(n_instances=20, n_columns=1, n_timepoints=20,
                             random_state=None):
-    X = _make_series_as_features_X(n_instances, n_columns, n_timepoints,
-                                   random_state=random_state)
     rng = check_random_state(random_state)
     y = pd.Series(rng.normal(size=n_instances))
+
+    X = _make_series_as_features_X(y, n_columns, n_timepoints,
+                                   random_state=random_state)
     return X, y

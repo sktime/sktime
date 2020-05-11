@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -41,7 +41,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #
 # TO-DO: add CI tests, comments, documentation, etc.
 
-class ShapeletTransform(BaseTransformer):
+class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     """Shapelet Transform.
 
     Original journal publication:
@@ -121,7 +121,7 @@ class ShapeletTransform(BaseTransformer):
 
         if type(
                 self) is ContractedShapeletTransform and \
-                self.time_limit_in_mins <= 0:
+                self.time_contract_in_mins <= 0:
             raise ValueError(
                 "Error: time limit cannot be equal to or less than 0")
 
@@ -422,7 +422,7 @@ class ShapeletTransform(BaseTransformer):
                 # time to not exceed the time_limit (not exact, but likely a
                 # good guess).
                 if hasattr(self,
-                           'time_limit_in_mins') and self.time_limit_in_mins \
+                           'time_contract_in_mins') and self.time_contract_in_mins \
                         > 0:
                     time_now = time_taken()
                     time_this_shapelet = (time_now - time_last_shapelet)
@@ -431,7 +431,7 @@ class ShapeletTransform(BaseTransformer):
                     time_last_shapelet = time_now
                     if (
                             time_now + max_time_calc_shapelet) > \
-                            self.time_limit_in_mins * 60:
+                            self.time_contract_in_mins * 60:
                         if self.verbose > 0:
                             print(
                                 "No more time available! It's been {0:02d}:{"
@@ -448,14 +448,14 @@ class ShapeletTransform(BaseTransformer):
                                     "Candidate finished. {0:02d}:{1:02} "
                                     "remaining".format(
                                         int(round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3)),
                                         int((round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3) - int(round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3))) * 60)))
                             else:
@@ -463,14 +463,14 @@ class ShapeletTransform(BaseTransformer):
                                     "Candidate rejected. {0:02d}:{1:02} "
                                     "remaining".format(
                                         int(round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3)),
                                         int((round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3) - int(round(
-                                            self.time_limit_in_mins -
+                                            self.time_contract_in_mins -
                                             time_now / 60,
                                             3))) * 60)))
 
@@ -482,7 +482,7 @@ class ShapeletTransform(BaseTransformer):
 
             if case_idx >= num_series_to_visit:
                 if hasattr(self,
-                           'time_limit_in_mins') and time_finished is not True:
+                           'time_contract_in_mins') and time_finished is not True:
                     case_idx = 0
             elif case_idx >= num_series_to_visit or time_finished:
                 if self.verbose > 0:
@@ -848,7 +848,7 @@ class ContractedShapeletTransform(ShapeletTransform):
     shapelet lengths (default = inf or series length)
     max_shapelets_to_store_per_class    : int, upper bound on number of 
     shapelets to retain from each distinct class (default = 200)
-    time_limit_in_mins                  : float, the number of minutes 
+    time_contract_in_mins                  : float, the number of minutes 
     allowed for shapelet extraction (default = 60)
     num_candidates_to_sample_per_case   : int, number of candidate shapelets 
     to assess per training series before moving on to 
@@ -874,7 +874,7 @@ class ContractedShapeletTransform(ShapeletTransform):
             min_shapelet_length=3,
             max_shapelet_length=np.inf,
             max_shapelets_to_store_per_class=200,
-            time_limit_in_mins=60,
+            time_contract_in_mins=60,
             num_candidates_to_sample_per_case=20,
             random_state=None,
             verbose=0,
@@ -882,7 +882,7 @@ class ContractedShapeletTransform(ShapeletTransform):
     ):
         self.num_candidates_to_sample_per_case = \
             num_candidates_to_sample_per_case
-        self.time_limit_in_mins = time_limit_in_mins
+        self.time_contract_in_mins = time_contract_in_mins
 
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None

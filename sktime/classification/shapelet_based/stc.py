@@ -45,21 +45,25 @@ class ShapeletTransformClassifier(BaseClassifier):
     }
     """
 
-    def __init__(self, time_contract_in_mins=300, n_classifiers=500):
+    def __init__(
+            self,
+            time_contract_in_mins=300,
+            n_estimators=500
+    ):
         self.time_contract_in_mins = time_contract_in_mins
-        self.n_classifiers = n_classifiers
+        self.n_estimators = n_estimators
 
         self.classifier = Pipeline([
             ('st', ContractedShapeletTransform(
-                time_limit_in_mins=time_contract_in_mins,
+                time_contract_in_mins=time_contract_in_mins,
                 verbose=False)),
-            ('rf', RandomForestClassifier(n_estimators=n_classifiers))
+            ('rf', RandomForestClassifier(n_estimators=n_estimators))
         ])
 
     #        self.shapelet_transform=ContractedShapeletTransform(
     #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
     #        self.classifier=RandomForestClassifier(
-    #        n_estimators=self.n_classifiers,criterion="entropy")
+    #        n_estimators=self.n_estimators,criterion="entropy")
     #        self.st_X=None;
         super(ShapeletTransformClassifier, self).__init__()
 

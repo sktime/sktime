@@ -8,9 +8,16 @@ import pandas as pd
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import is_regressor
+from sktime.transformers.series_as_features.base import \
+    is_series_as_features_transformer
+from sktime.transformers.single_series.base import is_single_series_transformer
+from sktime.utils.testing.config import TEST_CONSTRUCT_CONFIG_LOOKUP
 from sktime.utils.testing.config import TEST_CONSTRUCT_CONFIG_LOOKUP
 from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.testing.series_as_features import make_classification_problem
+from sktime.utils.testing.series_as_features import make_classification_problem
+from sktime.utils.testing.series_as_features import make_regression_problem
 from sktime.utils.testing.series_as_features import make_regression_problem
 
 
@@ -23,10 +30,7 @@ def generate_df_from_array(array, n_rows=10, n_cols=1):
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
 
-    # some estimators require parameters during construction
-    required_parameters = getattr(Estimator, "_required_parameters", [])
-
-    # construct with test parameters
+    # construct with parameter configuration for testing
     if Estimator in TEST_CONSTRUCT_CONFIG_LOOKUP:
         params = TEST_CONSTRUCT_CONFIG_LOOKUP[Estimator]
         estimator = Estimator(**params)
@@ -54,8 +58,11 @@ def _make_args(estimator, method, *args, **kwargs):
     if method == "fit":
         return _make_fit_args(estimator, *args, **kwargs)
 
-    elif method in ("predict", "predict_proba"):
+    elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, *args, **kwargs)
+
+    elif method in ("transform", "inverse_transform"):
+        return _make_transform_args(estimator, *args, **kwargs)
 
     else:
         raise ValueError(f"Method: {method} not supported")
@@ -73,6 +80,13 @@ def _make_fit_args(estimator, random_state=None):
     elif is_regressor(estimator):
         return make_regression_problem(random_state=random_state)
 
+    elif is_series_as_features_transformer(estimator):
+        return make_classification_problem(random_state=random_state)
+
+    elif is_single_series_transformer(estimator):
+        y = make_forecasting_problem(random_state=random_state)
+        return (y,)
+
     else:
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
@@ -89,6 +103,18 @@ def _make_predict_args(estimator, random_state=None):
     elif is_regressor(estimator):
         X, y = make_regression_problem(random_state=random_state)
         return (X,)
+
+    else:
+        raise ValueError(f"Estimator type: {type(estimator)} not supported")
+
+
+def _make_transform_args(estimator, random_state=None):
+    if is_series_as_features_transformer(estimator):
+        return make_classification_problem(random_state=random_state)
+
+    elif is_single_series_transformer(estimator) or is_forecaster(estimator):
+        y = make_forecasting_problem(random_state=random_state)
+        return (y,)
 
     else:
         raise ValueError(f"Estimator type: {type(estimator)} not supported")

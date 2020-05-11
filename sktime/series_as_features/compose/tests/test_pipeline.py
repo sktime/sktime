@@ -8,7 +8,7 @@ from sktime.series_as_features.compose.pipeline import FeatureUnion
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
 
 # load data
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)

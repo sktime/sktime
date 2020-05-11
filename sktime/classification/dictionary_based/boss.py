@@ -89,7 +89,7 @@ class BOSSEnsemble(BaseClassifier):
     ----------
     n_classes               : extracted from the data
     n_instances             : extracted from the data
-    n_classifiers           : The final number of classifiers used (
+    n_estimators           : The final number of classifiers used (
     <=max_ensemble_size)
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
@@ -137,7 +137,7 @@ class BOSSEnsemble(BaseClassifier):
         self.n_classes = 0
         self.classes_ = []
         self.class_dictionary = {}
-        self.n_classifiers = 0
+        self.n_estimators = 0
         self.series_length = 0
         self.n_instances = 0
 
@@ -289,7 +289,7 @@ class BOSSEnsemble(BaseClassifier):
 
             self.weights = [1 for n in range(len(self.classifiers))]
 
-        self.n_classifiers = len(self.classifiers)
+        self.n_estimators = len(self.classifiers)
         self.weight_sum = np.sum(self.weights)
 
         self._is_fitted = True
@@ -362,7 +362,7 @@ class BOSSEnsemble(BaseClassifier):
                 sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
                 self.weights[n]
 
-            dists = sums / (np.ones(self.n_classes) * self.n_classifiers)
+            dists = sums / (np.ones(self.n_classes) * self.n_estimators)
             c = dists.argmax()
 
             if c == self.class_dictionary.get(y[i], -1):

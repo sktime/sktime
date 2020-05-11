@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseTransformer
-from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -189,7 +189,7 @@ def stomp_self(ts, m):
     return mp
 
 
-class MatrixProfile(BaseTransformer):
+class MatrixProfile(BaseSeriesAsFeaturesTransformer):
     """
         Takes as input a time series dataset and returns the matrix profile and
         index profile for each time series of the dataset.
@@ -231,7 +231,7 @@ class MatrixProfile(BaseTransformer):
         n_instances = X.shape[0]
 
         # Convert into tabular format
-        tabulariser = Tabulariser()
+        tabulariser = Tabularizer()
         X = tabulariser.fit_transform(X)
 
         Xt = pd.DataFrame(stomp_self(np.array([X.iloc[i]]), self.m) for i in

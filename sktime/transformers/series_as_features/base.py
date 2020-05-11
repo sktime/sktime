@@ -1,10 +1,11 @@
 from sktime.base import BaseEstimator
 
-__all__ = ["BaseTransformer", "is_transformer"]
+__all__ = ["BaseSeriesAsFeaturesTransformer",
+           "is_series_as_features_transformer"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 
 
-class BaseTransformer(BaseEstimator):
+class BaseSeriesAsFeaturesTransformer(BaseEstimator):
     """
     Base class for transformers, for identification.
     """
@@ -41,8 +42,9 @@ class BaseTransformer(BaseEstimator):
         return self.fit(X, y, **fit_params).transform(X)
 
 
-def is_transformer(estimator):
-    """Return True if the given estimator is (probably) a transformer.
+def is_series_as_features_transformer(estimator):
+    """Return True if the given estimator is (probably) a series-as-features
+    transformer.
 
     Parameters
     ----------
@@ -52,6 +54,7 @@ def is_transformer(estimator):
     Returns
     -------
     out : bool
-        True if estimator is a transformer and False otherwise.
+        True if estimator is a series-as-features transformer and False
+        otherwise.
     """
-    return isinstance(estimator, BaseTransformer)
+    return isinstance(estimator, BaseSeriesAsFeaturesTransformer)

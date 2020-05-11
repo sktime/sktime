@@ -63,7 +63,7 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 
-from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.series_as_features.compose.pipeline import FeatureUnion
 
@@ -276,7 +276,7 @@ def set_classifier(cls, resampleId):
                 ('acf', RowTransformer(FunctionTransformer(func=acf_coefs, validate=False))),
                 ('ps', RowTransformer(FunctionTransformer(func=powerspectrum, validate=False)))
             ])),
-            ('tabularise', Tabulariser()),
+            ('tabularise', Tabularizer()),
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)

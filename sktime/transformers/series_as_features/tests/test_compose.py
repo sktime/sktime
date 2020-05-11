@@ -8,7 +8,7 @@ from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.utils.data_container import tabularise
 from sktime.utils.testing import generate_df_from_array
 
@@ -81,7 +81,7 @@ def test_ColumnTransformer_pipeline():
     ])
     steps = [
         ('extract', column_transformer),
-        ('tabularise', Tabulariser()),
+        ('tabularise', Tabularizer()),
         ('classify', RandomForestClassifier(n_estimators=2, random_state=1))]
     model = Pipeline(steps=steps)
     model.fit(X_train, y_train)

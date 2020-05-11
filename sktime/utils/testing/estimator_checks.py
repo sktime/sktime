@@ -9,7 +9,7 @@ import pickle
 import types
 from copy import deepcopy
 from inspect import signature
-from sktime.utils.testing import TEST_CONSTRUCT_CONFIG_LOOKUP
+
 import joblib
 import numpy as np
 import pytest
@@ -27,15 +27,24 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
-from sktime.transformers.series_as_features.base import BaseTransformer
-from sktime.transformers.series_as_features.base import is_transformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    is_series_as_features_transformer
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import is_single_series_transformer
+from sktime.utils.testing import TEST_CONSTRUCT_CONFIG_LOOKUP
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing import _make_args
 from sktime.utils.testing.inspect import _get_args
 
-# TODO add to NON_STATE_CHANGING_METHODS: transform, inverse_transform,
-#  decision_function
-NON_STATE_CHANGING_METHODS = ["predict", "predict_proba"]
+NON_STATE_CHANGING_METHODS = [
+    "predict",
+    "predict_proba",
+    "decision_function"
+    "transform",
+    "inverse_transform"
+]
 
 
 def check_estimator(Estimator):
@@ -58,7 +67,7 @@ def yield_estimator_checks():
     """Iterator to yield estimator checks"""
     checks = [
         check_inheritance,
-        check_meta_estimator,
+        check_required_params,
         check_has_common_interface,
         check_constructor,
         check_get_params,
@@ -76,13 +85,15 @@ def yield_estimator_checks():
     yield from checks
 
 
-def check_meta_estimator(Estimator):
+def check_required_params(Estimator):
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
         params = getattr(Estimator, "_required_parameters")
+
         assert isinstance(params, list), (
             f"For estimator: {Estimator}, `_required_parameters` must be a "
             f"list, but found type: {type(params)}")
+
         assert all([isinstance(param, str) for param in params]), (
             f"For estimator: {Estimator}, elements of `_required_parameters` "
             f"list must be strings")
@@ -97,7 +108,8 @@ def check_inheritance(Estimator):
         BaseClassifier,
         BaseRegressor,
         BaseForecaster,
-        BaseTransformer
+        BaseSeriesAsFeaturesTransformer,
+        BaseSingleSeriesTransformer
     ]
     assert issubclass(Estimator, BaseEstimator), (f"Estimator: {Estimator} "
                                                   f"is not a sub-class of "
@@ -112,7 +124,8 @@ def check_inheritance(Estimator):
         is_classifier,
         is_regressor,
         is_forecaster,
-        is_transformer
+        is_series_as_features_transformer,
+        is_single_series_transformer
     ]
     estimator = _construct_instance(Estimator)
     assert isinstance(estimator, BaseEstimator), (
@@ -135,8 +148,8 @@ def check_has_common_interface(Estimator):
     common_attrs = [
         "fit",
         "check_is_fitted",
-        "is_fitted",
-        "_is_fitted",
+        "is_fitted",  # read-only property
+        "_is_fitted",  # underlying estimator state
         "set_params",
         "get_params"
     ]

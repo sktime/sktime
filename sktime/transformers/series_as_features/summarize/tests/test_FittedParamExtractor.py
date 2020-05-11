@@ -7,7 +7,7 @@ __all__ = []
 import pytest
 from sktime.datasets import load_gunpoint
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformers.series_as_features.summarise import FittedParamExtractor
+from sktime.transformers.series_as_features.summarize import FittedParamExtractor
 
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
 

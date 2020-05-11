@@ -7,7 +7,7 @@ from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion, Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils.time_series import time_series_slope
 import pytest

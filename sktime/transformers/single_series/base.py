@@ -2,16 +2,16 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = [
+    "BaseSingleSeriesTransformer",
+    "is_single_series_transformer"
+]
 
 from sktime.base import BaseEstimator
 
 
-class BaseSeriesToSeriesTransformer(BaseEstimator):
+class BaseSingleSeriesTransformer(BaseEstimator):
     """Base class for series-to-series tranformers"""
-
-    def __init__(self):
-        super(BaseSeriesToSeriesTransformer, self).__init__()
 
     def fit(self, y_train, **fit_params):
         """Fit to data.
@@ -86,3 +86,20 @@ class BaseSeriesToSeriesTransformer(BaseEstimator):
          self : an instance of self
          """
         raise NotImplementedError("abstract method")
+
+
+def is_single_series_transformer(estimator):
+    """Return True if the given estimator is (probably) a single-series
+    transformer.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a single series transformer and False otherwise.
+    """
+    return isinstance(estimator, BaseSingleSeriesTransformer)

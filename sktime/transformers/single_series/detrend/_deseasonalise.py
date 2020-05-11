@@ -3,22 +3,25 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "Deseasonaliser",
     "Deseasonalizer",
-    "ConditionalDeseasonaliser",
+    "Deseasonalizer",
+    "ConditionalDeseasonalizer",
     "ConditionalDeseasonalizer"
 ]
 
 import numpy as np
 from sktime.transformers.single_series.base import \
-    BaseSeriesToSeriesTransformer
+    BaseSingleSeriesTransformer
 from sktime.utils.seasonality import autocorrelation_seasonality_test
-from sktime.utils.validation.forecasting import check_sp, check_y, check_time_index
+from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.forecasting import check_y
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 
-class Deseasonaliser(BaseSeriesToSeriesTransformer):
-    """A transformer that removes a seasonal and trend components from time series
+class Deseasonalizer(BaseSingleSeriesTransformer):
+    """A transformer that removes a seasonal and trend components from time
+    series
 
     Parameters
     ----------
@@ -37,7 +40,7 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
         self.model = model
         self._oh_index = None
         self.seasonal_ = None
-        super(Deseasonaliser, self).__init__()
+        super(Deseasonalizer, self).__init__()
 
     def _set_oh_index(self, y):
         self._oh_index = check_time_index(y.index)
@@ -63,8 +66,10 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
         y = check_y(y)
         self._set_oh_index(y)
         sp = check_sp(self.sp)
-        self.seasonal_ = seasonal_decompose(y, model=self.model, period=sp, filt=None, two_sided=True,
-                                            extrapolate_trend=0).seasonal.iloc[:sp]
+        self.seasonal_ = seasonal_decompose(y, model=self.model, period=sp,
+                                            filt=None, two_sided=True,
+                                            extrapolate_trend=0).seasonal.iloc[
+                         :sp]
         self._is_fitted = True
         return self
 
@@ -135,16 +140,15 @@ class Deseasonaliser(BaseSeriesToSeriesTransformer):
         return self
 
 
-Deseasonalizer = Deseasonaliser
-
-
-class ConditionalDeseasonaliser(Deseasonaliser):
-    """A transformer that removes a seasonal and trend components from time series, conditional on seasonality test.
+class ConditionalDeseasonalizer(Deseasonalizer):
+    """A transformer that removes a seasonal and trend components from time
+    series, conditional on seasonality test.
 
     Parameters
     ----------
     seasonality_test : callable, optional (default=None)
-        Callable that tests for seasonality and returns True when data is seasonal and False otherwise. If None,
+        Callable that tests for seasonality and returns True when data is
+        seasonal and False otherwise. If None,
         90% autocorrelation seasonality test is used.
     sp : int, optional (default=1)
         Seasonal periodicity
@@ -155,15 +159,17 @@ class ConditionalDeseasonaliser(Deseasonaliser):
     def __init__(self, seasonality_test=None, sp=1, model="additive"):
         self.seasonality_test = seasonality_test
         self.is_seasonal_ = None
-        super(ConditionalDeseasonaliser, self).__init__(sp=sp, model=model)
+        super(ConditionalDeseasonalizer, self).__init__(sp=sp, model=model)
 
     def _check_condition(self, y):
         """Check if y meets condition"""
 
-        if not callable(self.seasonality_test):
-            raise ValueError(f"`func` must be a function/callable, but found: {type(self.seasonality_test)}")
+        if not callable(self.seasonality_test_):
+            raise ValueError(
+                f"`func` must be a function/callable, but found: "
+                f"{type(self.seasonality_test_)}")
 
-        is_seasonal = self.seasonality_test(y, sp=self.sp)
+        is_seasonal = self.seasonality_test_(y, sp=self.sp)
         if not isinstance(is_seasonal, (bool, np.bool_)):
             raise ValueError(f"Return type of `func` must be boolean, "
                              f"but found: {type(is_seasonal)}")
@@ -188,18 +194,24 @@ class ConditionalDeseasonaliser(Deseasonaliser):
 
         # set default condition
         if self.seasonality_test is None:
-            self.seasonality_test = autocorrelation_seasonality_test
+            self.seasonality_test_ = autocorrelation_seasonality_test
+        else:
+            self.seasonality_test_ = self.seasonality_test
 
         # check if data meets condition
         self.is_seasonal_ = self._check_condition(y_train)
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
-            self.seasonal_ = seasonal_decompose(y_train, model=self.model, period=sp, filt=None, two_sided=True,
-                                                extrapolate_trend=0).seasonal.iloc[:sp]
+            self.seasonal_ = seasonal_decompose(y_train, model=self.model,
+                                                period=sp, filt=None,
+                                                two_sided=True,
+                                                extrapolate_trend=0).seasonal.iloc[
+                             :sp]
         else:
             # otherwise, set idempotent seasonal components
-            self.seasonal_ = np.zeros(self.sp) if self.model == "additive" else np.ones(self.sp)
+            self.seasonal_ = np.zeros(
+                self.sp) if self.model == "additive" else np.ones(self.sp)
 
         self._is_fitted = True
         return self
@@ -217,6 +229,3 @@ class ConditionalDeseasonaliser(Deseasonaliser):
          self : an instance of self
          """
         raise NotImplementedError()
-
-
-ConditionalDeseasonalizer = ConditionalDeseasonaliser

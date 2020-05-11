@@ -8,7 +8,7 @@ from operator import itemgetter
 from pathlib import Path
 
 
-def all_estimators(scitype=None):
+def all_estimators(estimator_type=None):
     """Get a list of all estimators from sktime.
 
     This function crawls the module and gets all classes that inherit
@@ -19,7 +19,7 @@ def all_estimators(scitype=None):
 
     Parameters
     ----------
-    scitype : string, list of string, optional (default=None)
+    estimator_type : string, list of string, optional (default=None)
         Which kind of estimators should be returned.
         - If None, no filter is applied and all estimators are returned.
         - Possible values are 'classifier', 'regressor', 'transformer' and
@@ -44,7 +44,8 @@ def all_estimators(scitype=None):
     from sktime.forecasting.base import BaseForecaster
     from sktime.classification.base import BaseClassifier
     from sktime.regression.base import BaseRegressor
-    from sktime.transformers.series_as_features.base import BaseTransformer
+    from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+    from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -83,7 +84,8 @@ def all_estimators(scitype=None):
     base_classes = {
         "classifier": BaseClassifier,
         "regressor": BaseRegressor,
-        "transformer": BaseTransformer,
+        "series_as_features_transformer": BaseSeriesAsFeaturesTransformer,
+        "single_series_transformer": BaseSingleSeriesTransformer,
         "forecaster": BaseForecaster,
     }
     estimators = [c for c in all_classes
@@ -93,28 +95,33 @@ def all_estimators(scitype=None):
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
-    if scitype is not None:
-        if not isinstance(scitype, list):
-            scitype = [scitype]  # make iterable
+    if estimator_type is not None:
+        if not isinstance(estimator_type, list):
+            estimator_type = [estimator_type]  # make iterable
         else:
-            scitype = list(scitype)  # copy
+            estimator_type = list(estimator_type)  # copy
         filtered_estimators = []
 
         for name, base_class in base_classes.items():
-            if name in scitype:
-                scitype.remove(name)
+            if name in estimator_type:
+                estimator_type.remove(name)
                 filtered_estimators.extend([est for est in estimators
                                             if issubclass(est[1], base_class)])
         estimators = filtered_estimators
 
         # raise error if any filter names are still left
         allowed_filters = (
-        "classifier", "regressor", "transformer", "forecaster")
-        if scitype:
+            "classifier",
+            "regressor",
+            "single_series_transformer",
+            "series_as_features_transformer",
+            "forecaster"
+        )
+        if estimator_type:
             raise ValueError(
                 f"Parameter type_filter must be one or a list of "
                 f"{allowed_filters} or "
-                f"None, but found: {repr(scitype)}")
+                f"None, but found: {repr(estimator_type)}")
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of

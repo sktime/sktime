@@ -12,7 +12,7 @@ from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._meta import MetaForecasterMixin
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.transformers.single_series.base import BaseSeriesToSeriesTransformer
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -37,7 +37,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         transformers = estimators[:-1]
         forecaster = estimators[-1]
 
-        allowed_transformer_type = BaseSeriesToSeriesTransformer
+        allowed_transformer_type = BaseSingleSeriesTransformer
         for t in transformers:
             # Transformers must be endog/exog transformers
             if not isinstance(t, allowed_transformer_type):

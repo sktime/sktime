@@ -4,7 +4,7 @@
 __author__ = ["Markus Löning"]
 
 from sktime.transformers.single_series.detrend._deseasonalise import \
-    ConditionalDeseasonaliser
+    ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend._deseasonalise import \
-    Deseasonaliser
+    Deseasonalizer
 from sktime.transformers.single_series.detrend._detrend import Detrender

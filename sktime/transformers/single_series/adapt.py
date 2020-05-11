@@ -8,11 +8,11 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sktime.transformers.single_series.base import \
-    BaseSeriesToSeriesTransformer
+    BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
-class SingleSeriesTransformAdaptor(BaseSeriesToSeriesTransformer):
+class SingleSeriesTransformAdaptor(BaseSingleSeriesTransformer):
     """Adaptor for scikit-learn-like tabular transformers to single series setting.
 
     This is useful for applying scikit-learn transformers to single series, but only works with transformers that

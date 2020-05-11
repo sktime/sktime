@@ -5,16 +5,18 @@ __author__ = ["Ayushmaan Seth", "Markus Löning"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_nested_to_long
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from warnings import warn
 
 
-class BaseTSFreshFeatureExtractor(BaseTransformer):
+class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
     """Base adapter class for tsfresh transformers"""
 
-    def __init__(self, default_fc_parameters="comprehensive",
+    def __init__(self, default_fc_parameters="efficient",
                  kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
                  impute_function=None, profiling=None, profiling_filename=None,
@@ -30,6 +32,9 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         self.profiling_sorting = profiling_sorting
         self.profiling_filename = profiling_filename
         self.distributor = distributor
+
+        self.default_fc_parameters_ = None
+
         super(BaseTSFreshFeatureExtractor, self).__init__()
 
     def fit(self, X, y=None):
@@ -47,11 +52,11 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
         self : an instance of self
         """
         check_X(X)
-        self._set_extraction_defaults()
+        self.default_fc_parameters_ = self._set_default_fc_params()
         self._is_fitted = True
         return self
 
-    def _set_extraction_defaults(self):
+    def _set_default_fc_params(self):
         """Helper function to set default parameters from tsfresh
         """
         # lazy imports to avoid hard dependency
@@ -82,23 +87,20 @@ class BaseTSFreshFeatureExtractor(BaseTransformer):
             if getattr(self, attr) is None:
                 setattr(self, attr, value)
 
-        allowed_default_fc_parameter_strings = {
+        extraction_configs = {
             "minimal": MinimalFCParameters(),
             "efficient": EfficientFCParameters(),
             "comprehensive": ComprehensiveFCParameters()
         }
         if isinstance(self.default_fc_parameters, str):
-            if self.default_fc_parameters not in \
-                    allowed_default_fc_parameter_strings:
+            if self.default_fc_parameters not in extraction_configs:
                 raise ValueError(
                     f"If `default_fc_parameters` is passed as a string, "
                     f"it must be one of"
-                    f" {allowed_default_fc_parameter_strings}, but found: "
+                    f" {extraction_configs.keys()}, but found: "
                     f"{self.default_fc_parameters}")
             else:
-                self.default_fc_parameters = \
-                    allowed_default_fc_parameter_strings[
-                        self.default_fc_parameters]
+                return extraction_configs[self.default_fc_parameters]
 
 
 class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
@@ -116,6 +118,8 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         ----------
         X : pd.DataFrame
             nested pandas DataFrame of shape [n_samples, n_columns]
+        y : pd.Series, optional (default=None)
+
         Returns
         -------
         Xt : pandas DataFrame
@@ -128,26 +132,34 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         # tsfresh requires unique index, returns only values for
         # unique index values
         if X.index.nunique() < X.shape[0]:
+            warn("Found non-unique index, replaced with unique index.")
             X = X.reset_index(drop=True)
 
         Xt = from_nested_to_long(X)
 
         # lazy imports to avoid hard dependency
         from tsfresh import extract_features
-        Xt = extract_features(Xt, column_id="index", column_value="value",
-                              column_kind="column",
-                              column_sort="time_index",
-                              default_fc_parameters=self.default_fc_parameters,
-                              kind_to_fc_parameters=self.kind_to_fc_parameters,
-                              n_jobs=self.n_jobs,
-                              show_warnings=self.show_warnings,
-                              disable_progressbar=self.disable_progressbar,
-                              impute_function=self.impute_function,
-                              profile=self.profiling,
-                              profiling_filename=self.profiling_filename,
-                              profiling_sorting=self.profiling_sorting,
-                              distributor=self.distributor)
-        return Xt
+        Xt = extract_features(
+            Xt,
+            column_id="index",
+            column_value="value",
+            column_kind="column",
+            column_sort="time_index",
+            default_fc_parameters=self.default_fc_parameters_,
+            kind_to_fc_parameters=self.kind_to_fc_parameters,
+            n_jobs=self.n_jobs,
+            show_warnings=self.show_warnings,
+            disable_progressbar=self.disable_progressbar,
+            impute_function=self.impute_function,
+            profile=self.profiling,
+            profiling_filename=self.profiling_filename,
+            profiling_sorting=self.profiling_sorting,
+            distributor=self.distributor)
+
+        # When using the long input format, tsfresh seems to sort the index,
+        # here we make sure we return the dataframe in the sort order as the
+        # input data
+        return Xt.reindex(X.index)
 
 
 class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
@@ -158,7 +170,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
     ..[1]  https://github.com/blue-yonder/tsfresh
     """
 
-    def __init__(self, default_fc_parameters="comprehensive",
+    def __init__(self, default_fc_parameters="efficient",
                  kind_to_fc_parameters=None, chunksize=None,
                  n_jobs=None, show_warnings=None, disable_progressbar=None,
                  impute_function=None, profiling=None, profiling_filename=None,
@@ -195,7 +207,8 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self.hypotheses_independent = hypotheses_independent
         self.ml_task = ml_task
 
-    def _set_selection_defaults(self):
+    @staticmethod
+    def _set_selection_defaults():
         """Helper function to set default values from tsfresh
         """
         # lazy imports to avoid hard dependency
@@ -216,9 +229,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
                 TEST_FOR_REAL_TARGET_REAL_FEATURE,
             "fdr_level": FDR_LEVEL
         }
-        for attr, value in defaults.items():
-            if getattr(self, attr) is None:
-                setattr(self, attr, value)
+        return defaults
 
     def fit(self, X, y=None):
         """Fit.
@@ -243,11 +254,9 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
                 f"{self.__class__.__name__} requires `y` in `fit`.")
         X, y = check_X_y(X, y)
 
-        self._set_extraction_defaults()
-        self._set_selection_defaults()
-
-        self.feature_extractor_ = TSFreshFeatureExtractor(
-            default_fc_parameters=self.default_fc_parameters,
+        default_fc_parameters = self._set_default_fc_params()
+        self.extractor_ = TSFreshFeatureExtractor(
+            default_fc_parameters=default_fc_parameters,
             kind_to_fc_parameters=self.kind_to_fc_parameters,
             chunksize=self.chunksize,
             n_jobs=self.n_jobs,
@@ -257,23 +266,18 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
             profiling_filename=self.profiling_filename,
             profiling_sorting=self.profiling_sorting
         )
-        self.feature_selector_ = FeatureSelector(
-            test_for_binary_target_binary_feature=self
-                .test_for_binary_target_binary_feature,
-            test_for_binary_target_real_feature=self
-                .test_for_binary_target_real_feature,
-            test_for_real_target_binary_feature=self
-                .test_for_real_target_binary_feature,
-            test_for_real_target_real_feature=self
-                .test_for_real_target_real_feature,
-            fdr_level=self.fdr_level,
+
+        selector_params = self._set_selection_defaults()
+        self.selector_ = FeatureSelector(
             hypotheses_independent=self.hypotheses_independent,
             n_jobs=self.n_jobs,
             chunksize=self.chunksize,
-            ml_task=self.ml_task
+            ml_task=self.ml_task,
+            **selector_params,
         )
-        Xt = self.feature_extractor_.fit_transform(X)
-        self.feature_selector_.fit(Xt, y)
+
+        Xt = self.extractor_.fit_transform(X)
+        self.selector_.fit(Xt, y)
         self._is_fitted = True
         return self
 
@@ -294,6 +298,6 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         """
         self.check_is_fitted()
         X = check_X(X)
-        Xt = self.feature_extractor_.transform(X)
-        Xt = self.feature_selector_.transform(Xt)
-        return Xt
+        Xt = self.extractor_.transform(X)
+        Xt = self.selector_.transform(Xt)
+        return Xt.reindex(X.index)

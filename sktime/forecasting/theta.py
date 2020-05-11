@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformers.single_series.detrend import Deseasonaliser
+from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_alpha
@@ -106,7 +106,7 @@ class ThetaForecaster(ExponentialSmoothing):
             warn("`sp` is ignored when `deseasonalise`=False")
 
         if self.deseasonalise:
-            self.deseasonaliser_ = Deseasonaliser(sp=self.sp, model="multiplicative")
+            self.deseasonaliser_ = Deseasonalizer(sp=self.sp, model="multiplicative")
             y_train = self.deseasonaliser_.fit_transform(y_train)
 
         # fit exponential smoothing forecaster

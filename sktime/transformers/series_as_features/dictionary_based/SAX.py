@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import scipy.stats
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
 from sktime.utils.data_container import tabularize
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
@@ -14,7 +14,7 @@ from sktime.utils.validation.series_as_features import check_X
 __author__ = "Matthew Middlehurst"
 
 
-class SAX(BaseTransformer):
+class SAX(BaseSeriesAsFeaturesTransformer):
     """ SAX (Symbolic Aggregate approXimation) Transformer, as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"

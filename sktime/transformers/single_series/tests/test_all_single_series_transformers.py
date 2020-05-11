@@ -7,16 +7,16 @@ import numpy as np
 import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.transformers.single_series.boxcox import BoxCoxTransformer
-from sktime.transformers.single_series.detrend import ConditionalDeseasonaliser
-from sktime.transformers.single_series.detrend import Deseasonaliser
+from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
+from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
 from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 
-DETRENDERS = [
-    Deseasonaliser,
-    ConditionalDeseasonaliser,
+SINGLE_SERIES_TRANSFORMERS = [
+    Deseasonalizer,
+    ConditionalDeseasonalizer,
     Detrender,
     SingleSeriesTransformAdaptor,
     BoxCoxTransformer
@@ -27,7 +27,7 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
-@pytest.mark.parametrize("Transformer", DETRENDERS)
+@pytest.mark.parametrize("Transformer", SINGLE_SERIES_TRANSFORMERS)
 def test_transform_time_index(Transformer):
     t = _construct_instance(Transformer)
     t.fit(y_train)
@@ -35,7 +35,7 @@ def test_transform_time_index(Transformer):
     np.testing.assert_array_equal(yt.index, y_test.index)
 
 
-@pytest.mark.parametrize("Transformer", DETRENDERS)
+@pytest.mark.parametrize("Transformer", SINGLE_SERIES_TRANSFORMERS)
 def test_inverse_transform_time_index(Transformer):
     t = _construct_instance(Transformer)
     t.fit(y_train)
@@ -43,7 +43,7 @@ def test_inverse_transform_time_index(Transformer):
     np.testing.assert_array_equal(yit.index, y_test.index)
 
 
-@pytest.mark.parametrize("Transformer", DETRENDERS)
+@pytest.mark.parametrize("Transformer", SINGLE_SERIES_TRANSFORMERS)
 def test_transform_inverse_transform_equivalence(Transformer):
     t = _construct_instance(Transformer)
     t.fit(y_train)

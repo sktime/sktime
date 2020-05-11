@@ -1,4 +1,4 @@
-from sktime.transformers.series_as_features.summarise import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.testing import generate_df_from_array
 import pandas as pd
 import numpy as np

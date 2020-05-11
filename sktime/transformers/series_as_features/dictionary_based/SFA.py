@@ -3,7 +3,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based.SAX import _BitWord
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
@@ -12,7 +12,7 @@ __author__ = ["Matthew Middlehurst"]
 __all__ = ["SFA"]
 
 
-class SFA(BaseTransformer):
+class SFA(BaseSeriesAsFeaturesTransformer):
     """ SFA Transformer, as described in
 
     @inproceedings{schafer2012sfa,

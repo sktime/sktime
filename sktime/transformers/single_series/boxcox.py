@@ -8,12 +8,12 @@ import pandas as pd
 from scipy.special import boxcox
 from scipy.special import inv_boxcox
 from sktime.transformers.single_series.base import \
-    BaseSeriesToSeriesTransformer
+    BaseSingleSeriesTransformer
 from sktime.utils.boxcox import boxcox_normmax
 from sktime.utils.validation.forecasting import check_y
 
 
-class BoxCoxTransformer(BaseSeriesToSeriesTransformer):
+class BoxCoxTransformer(BaseSingleSeriesTransformer):
 
     def __init__(self, bounds=None, method="mle"):
         self.bounds = bounds

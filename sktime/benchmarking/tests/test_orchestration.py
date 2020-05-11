@@ -23,7 +23,7 @@ from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.series_as_features.reduce import Tabulariser
+from sktime.transformers.series_as_features.reduce import Tabularizer
 
 # get data path for testing dataset loading from hard drive
 import sktime
@@ -34,7 +34,7 @@ DATAPATH = os.path.join(REPOPATH, "datasets/data/")
 def make_reduction_pipeline(estimator):
     """Helper function to use tabular estimators in time series setting"""
     pipeline = Pipeline([
-        ("transform", Tabulariser()),
+        ("transform", Tabularizer()),
         ("clf", estimator)
     ])
     return pipeline

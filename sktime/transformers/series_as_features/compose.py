@@ -8,7 +8,7 @@ import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import tabularize
@@ -20,7 +20,7 @@ __all__ = ["ColumnTransformer",
            "ColumnConcatenator"]
 
 
-class ColumnTransformer(_ColumnTransformer, BaseTransformer,
+class ColumnTransformer(_ColumnTransformer, BaseSeriesAsFeaturesTransformer,
                         MetaEstimatorMixin):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply
@@ -177,7 +177,7 @@ class ColumnTransformer(_ColumnTransformer, BaseTransformer,
         return Xt
 
 
-class RowTransformer(BaseTransformer, MetaEstimatorMixin):
+class RowTransformer(BaseSeriesAsFeaturesTransformer, MetaEstimatorMixin):
     """A convenience wrapper for row-wise transformers to apply
     transformation to all rows.
 
@@ -268,7 +268,7 @@ class RowTransformer(BaseTransformer, MetaEstimatorMixin):
         return Xt
 
 
-class ColumnConcatenator(BaseTransformer):
+class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
     """Transformer that concatenates multivariate time series/panel data
     into long univiariate time series/panel
         data by simply concatenating times series in time.

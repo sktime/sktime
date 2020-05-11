@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformers.series_as_features.summarise import PlateauFinder
+from sktime.transformers.series_as_features.summarize import PlateauFinder
 
 
 @pytest.mark.parametrize("value", [np.nan, -10, 10, -0.5, 0.5])

@@ -29,7 +29,7 @@ from sktime.utils.testing.forecasting import make_forecasting_problem
 
 # get all forecasters
 FORECASTERS = [forecaster for (name, forecaster) in
-               all_estimators(scitype="forecaster")
+               all_estimators(estimator_type="forecaster")
                if issubclass(forecaster, BaseSktimeForecaster)]
 FH0 = 1
 

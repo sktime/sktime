@@ -1,6 +1,6 @@
 import pandas as pd
 
-from sktime.transformers.series_as_features.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.data_container import tabularize
@@ -8,7 +8,7 @@ from sktime.utils.data_container import tabularize
 __author__ = "Matthew Middlehurst"
 
 
-class PAA(BaseTransformer):
+class PAA(BaseSeriesAsFeaturesTransformer):
     """ (PAA) Piecewise Aggregate Approximation Transformer, as described in
  Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra. 
  Dimensionality reduction for fast similarity search in large time series

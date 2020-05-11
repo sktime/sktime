@@ -5,14 +5,11 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "test_clone",
-    "test_not_fitted_error",
+    "test_raises_not_fitted_error",
     "test_score",
     "test_predict_time_index",
     "test_update_predict_predicted_indices",
     "test_bad_y_input",
-    "test_fit_non_stateful",
-    "test_fit_update_set_params_returns_self",
     "test_fitted_params",
     "test_predict_in_sample",
     "test_predict_pred_interval",
@@ -22,7 +19,6 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
-from sklearn.base import clone
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -43,44 +39,12 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FORECASTERS = [forecaster for (name, forecaster) in
-               all_estimators(scitype="forecaster")]
+               all_estimators(estimator_type="forecaster")]
 FH0 = 1
 
 # testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
-
-
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_clone(Forecaster):
-    f = _construct_instance(Forecaster)
-    clone(f)
-
-
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_fit_update_set_params_returns_self(Forecaster):
-    f = _construct_instance(Forecaster)
-    fitted_f = f.fit(y_train, FH0)
-    assert fitted_f == f
-
-    fitted_f = f.update(y_test, update_params=False)
-    assert fitted_f == f
-
-    fitted_f = f.set_params()
-    assert fitted_f == f
-
-
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_fit_non_stateful(Forecaster):
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
-    a = f.predict()
-
-    # refit without reconstructing
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0).fit(y_train, FH0)
-    b = f.predict()
-    np.testing.assert_array_equal(a, b)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -96,10 +60,8 @@ def test_fitted_params(Forecaster):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_not_fitted_error(Forecaster):
+def test_raises_not_fitted_error(Forecaster):
     f = _construct_instance(Forecaster)
-    with pytest.raises(NotFittedError):
-        f.predict(fh=1)
 
     with pytest.raises(NotFittedError):
         f.update(y_test, update_params=False)
