@@ -46,7 +46,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     Parameters
     ----------
-    n_trees         : int, ensemble size, optional (default = 200)
+    n_estimators         : int, ensemble size, optional (default = 200)
     random_state    : int, seed for random, integer, optional (default to no
     seed)
     min_interval    : int, minimum width of an interval, optional (default =
@@ -59,8 +59,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     Attributes
     ----------
     n_classes    : int, extracted from the data
-    classifiers    : array of shape = [n_trees] of DecisionTree classifiers
-    intervals      : array of shape = [n_trees][2] stores indexes of  start
+    classifiers    : array of shape = [n_estimators] of DecisionTree classifiers
+    intervals      : array of shape = [n_estimators][2] stores indexes of  start
     and end points for all classifiers
 
     TO DO: handle missing values, unequal length series and multivariate
@@ -69,7 +69,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """
 
     def __init__(self,
-                 n_trees=200,
+                 n_estimators=200,
                  random_state=None,
                  min_interval=16,
                  acf_lag=100,
@@ -77,8 +77,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                  ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(),
-            n_estimators=n_trees)
-        self.n_trees = n_trees
+            n_estimators=n_estimators)
+        self.n_estimators = n_estimators
         self.random_state = random_state
         random.seed(random_state)
         self.min_interval = min_interval
@@ -119,10 +119,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        self.intervals = np.zeros((self.n_trees, 2), dtype=int)
+        self.intervals = np.zeros((self.n_estimators, 2), dtype=int)
         self.intervals[0][0] = 0
         self.intervals[0][1] = self.series_length
-        for i in range(1, self.n_trees):
+        for i in range(1, self.n_estimators):
             self.intervals[i][0] = random.randint(
                 self.series_length - self.min_interval)
             self.intervals[i][1] = random.randint(
@@ -132,8 +132,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.acf_lag = self.series_length - self.acf_min_values
         if self.acf_lag < 0:
             self.acf_lag = 1
-        self.lags = np.zeros(self.n_trees, dtype=int)
-        for i in range(0, self.n_trees):
+        self.lags = np.zeros(self.n_estimators, dtype=int)
+        for i in range(0, self.n_estimators):
             temp_lag = self.acf_lag
             if temp_lag > self.intervals[i][1] - self.intervals[i][
                 0] - self.acf_min_values:
@@ -203,7 +203,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                 "that in the test data")
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
-        for i in range(0, self.n_trees):
+        for i in range(0, self.n_estimators):
             acf_x = np.empty(shape=(n_cases, self.lags[i]))
             ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
             ps_x = np.empty(shape=(n_cases, int(ps_len)))

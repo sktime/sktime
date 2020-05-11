@@ -54,7 +54,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     
     Parameters
     ----------
-    n_trees         : int, ensemble size, optional (default = 200)
+    n_estimators         : int, ensemble size, optional (default = 200)
     random_state    : int, seed for random, optional (default to no seed,
     I think!)
     min_interval    : int, minimum width of an interval, optional (default
@@ -65,8 +65,8 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     n_classes    : int, extracted from the data
     num_atts       : int, extracted from the data
     n_intervals  : int, sqrt(num_atts)
-    classifiers    : array of shape = [n_trees] of DecisionTree classifiers
-    intervals      : array of shape = [n_trees][n_intervals][2] stores
+    classifiers    : array of shape = [n_estimators] of DecisionTree classifiers
+    intervals      : array of shape = [n_estimators][n_intervals][2] stores
     indexes of all start and end points for all classifiers
     dim_to_use     : int, the column of the panda passed to use (can be
     passed a multidimensional problem, but will only use one)
@@ -76,14 +76,14 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     def __init__(self,
                  random_state=None,
                  min_interval=3,
-                 n_trees=200
+                 n_estimators=200
                  ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_trees)
+            n_estimators=n_estimators)
 
         self.random_state = random_state
-        self.n_trees = n_trees
+        self.n_estimators = n_estimators
         self.min_interval = min_interval
         # The following set in method fit
         self.n_classes = 0
@@ -127,9 +127,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
-        self.intervals = np.zeros((self.n_trees, 3 * self.n_intervals, 2),
+        self.intervals = np.zeros((self.n_estimators, 3 * self.n_intervals, 2),
                                   dtype=int)
-        for i in range(0, self.n_trees):
+        for i in range(0, self.n_estimators):
             transformed_x = np.empty(shape=(3 * self.n_intervals, n_instances))
             # Find the random intervals for classifier i and concatentate
             # features
@@ -213,7 +213,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
                 " ERROR number of attributes in the train does not match "
                 "that in the test data")
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
-        for i in range(0, self.n_trees):
+        for i in range(0, self.n_estimators):
             transformed_x = np.empty(
                 shape=(3 * self.n_intervals, n_test_instances),
                 dtype=np.float32)

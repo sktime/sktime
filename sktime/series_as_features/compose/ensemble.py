@@ -501,13 +501,13 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         self.oob_score_ = oob_score / self.n_outputs_
 
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_estimators,
                           verbose=0, class_weight=None,
                           n_samples_bootstrap=None):
     """Private function used to fit a single tree in parallel, adjusted for
     pipeline trees."""
     if verbose > 1:
-        print("building tree %d of %d" % (tree_idx + 1, n_trees))
+        print("building tree %d of %d" % (tree_idx + 1, n_estimators))
 
     # name of step of final estimator in pipeline
     estimator = tree.steps[-1][0]

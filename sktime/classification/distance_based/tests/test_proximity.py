@@ -37,7 +37,7 @@ def test_proximity_tree_on_gunpoint():
 
 
 def test_proximity_forest_on_gunpoint():
-    classifier = ProximityForest(random_state=0, n_trees=3, find_stump=best_of_n_stumps(1))
+    classifier = ProximityForest(random_state=0, n_estimators=3, find_stump=best_of_n_stumps(1))
     run_classifier_on_dataset(classifier, load_gunpoint, forest_gunpoint_predict_probas, forest_gunpoint_predictions)
 
 
@@ -95,7 +95,7 @@ forest_gunpoint_predictions = np.array(['1','1','1','2','2','1','2','1','1','2']
 #
 # if __name__ == "__main__":
 # #    change below to prox stump / tree / forest as required
-# #     classifier = ProximityForest(verbosity=1, random_state = 0, n_trees = 3, find_stump = best_of_n_stumps(1))
+# #     classifier = ProximityForest(verbosity=1, random_state = 0, n_estimators = 3, find_stump = best_of_n_stumps(1))
 #     classifier = ProximityTree(verbosity=1, random_state = 0, find_stump = best_of_n_stumps(5))
 #     # classifier = ProximityStump(verbosity=1, random_state = 0)
 #     X_train, y_train = load_gunpoint(split = 'TRAIN', return_X_y = True)

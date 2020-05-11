@@ -144,7 +144,7 @@ def tsf_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
-        tsf = ib.TimeSeriesForest(n_trees=100)
+        tsf = ib.TimeSeriesForest(n_estimators=100)
         exp.run_experiment(overwrite=False, problem_path=data_dir, results_path=results_dir, cls_name="PythonTSF",
                            classifier=tsf,dataset=dataset, train_file=False)
         steps = [
@@ -166,7 +166,7 @@ def rise_benchmarking():
     for i in range(0, len(benchmark_datasets)):
         dataset = benchmark_datasets[i]
         print(str(i)+" problem = "+dataset)
-        rise = fb.RandomIntervalSpectralForest(n_trees=100)
+        rise = fb.RandomIntervalSpectralForest(n_estimators=100)
         exp.run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name="PythonRISE",
                            classifier=rise,dataset=dataset, train_file=False)
         steps = [

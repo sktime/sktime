@@ -1104,7 +1104,7 @@ class ProximityForest(BaseClassifier):
 
     def __init__(self,
                  random_state=None,
-                 n_trees=100,
+                 n_estimators=100,
                  distance_measure=None,
                  get_distance_measure=None,
                  get_exemplars=get_one_exemplar_per_class_proximity,
@@ -1137,7 +1137,7 @@ class ProximityForest(BaseClassifier):
         a node
         :param n_stump_evaluations: number of stump evaluations to do if
         find_stump method is None
-        :param n_trees: number of trees to construct
+        :param n_estimators: number of trees to construct
         """
         self.is_leaf = is_leaf
         self.verbosity = verbosity
@@ -1145,7 +1145,7 @@ class ProximityForest(BaseClassifier):
         self.get_exemplars = get_exemplars
         self.get_gain = get_gain
         self.random_state = random_state
-        self.n_trees = n_trees
+        self.n_estimators = n_estimators
         self.n_jobs = n_jobs
         self.n_stump_evaluations = n_stump_evaluations
         self.get_distance_measure = get_distance_measure
@@ -1226,13 +1226,13 @@ class ProximityForest(BaseClassifier):
             parallel = Parallel(self.n_jobs)
             self.trees = parallel(delayed(self._fit_tree)(X, y, index,
                                                           self.random_state.randint(
-                                                              0, self.n_trees))
-                                  for index in range(self.n_trees))
+                                                              0, self.n_estimators))
+                                  for index in range(self.n_estimators))
         else:
             self.trees = [self._fit_tree(X, y, index,
                                          self.random_state.randint(0,
-                                                                   self.n_trees))
-                          for index in range(self.n_trees)]
+                                                                   self.n_estimators))
+                          for index in range(self.n_estimators)]
         self._is_fitted = True
         return self
 

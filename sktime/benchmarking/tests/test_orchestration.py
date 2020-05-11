@@ -160,7 +160,7 @@ def test_stat():
 
     fc = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
     strategy_fc = TSCStrategy(fc, name="tsf")
-    pf = ProximityForest(n_trees=1, random_state=1)
+    pf = ProximityForest(n_estimators=1, random_state=1)
     strategy_pf = TSCStrategy(pf, name="pf")
 
     # result backend
