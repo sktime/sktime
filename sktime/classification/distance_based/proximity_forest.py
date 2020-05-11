@@ -792,8 +792,6 @@ class ProximityStump(BaseClassifier):
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
-        input_checks: boolean
-            whether to check the X and y parameters
         Returns
         -------
         self : object
@@ -866,8 +864,6 @@ class ProximityStump(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
-        input_checks: boolean
-            whether to check the X parameter
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -979,8 +975,6 @@ class ProximityTree(BaseClassifier):
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
-        input_checks: boolean
-            whether to check the X and y parameters
         Returns
         -------
         self : object
@@ -1040,8 +1034,7 @@ class ProximityTree(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
-        input_checks: boolean
-            whether to check the X parameter
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
@@ -1201,7 +1194,7 @@ class ProximityForest(BaseClassifier):
         tree.fit(X, y)
         return tree
 
-    def fit(self, X, y, input_checks=True):
+    def fit(self, X, y):
         """
         Build the classifier on the training set (X, y)
         ----------
@@ -1210,8 +1203,7 @@ class ProximityForest(BaseClassifier):
             column 0 is extracted.
         y : array-like, shape = [n_instances]
             The class labels.
-        input_checks: boolean
-            whether to check the X and y parameters
+
         Returns
         -------
         self : object
@@ -1265,7 +1257,7 @@ class ProximityForest(BaseClassifier):
         """
         return tree.predict_proba(X)
 
-    def predict_proba(self, X, input_checks=True):
+    def predict_proba(self, X):
         """
         Find probability estimates for each class for all cases in X.
         Parameters
@@ -1278,8 +1270,7 @@ class ProximityForest(BaseClassifier):
             If not, an exception is thrown, since this classifier does not
             yet have
             multivariate capability.
-        input_checks: boolean
-            whether to check the X parameter
+
         Returns
         -------
         output : array of shape = [n_instances, n_classes] of probabilities

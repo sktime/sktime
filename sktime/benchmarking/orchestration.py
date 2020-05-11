@@ -3,7 +3,7 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 
 from sklearn.base import clone
 
-from sktime.highlevel.tasks import TSCTask, TSRTask
+from sktime.benchmarking.tasks import TSCTask, TSRTask
 
 
 class Orchestrator:

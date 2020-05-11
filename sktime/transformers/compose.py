@@ -281,13 +281,6 @@ class Tabularizer(BaseTransformer):
     cells. This is useful for transforming
     time-series/panel data into a format that is accepted by standard
     validation learning algorithms (as in sklearn).
-
-    Parameters
-    ----------
-    check_input: bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are
-        assumed to be valid
-        and no checks are performed. Use with caution.
     """
 
     def transform(self, X, y=None):

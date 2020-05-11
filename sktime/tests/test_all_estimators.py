@@ -11,7 +11,6 @@ from sktime.utils import all_estimators
 from sktime.utils.testing.estimator_checks import check_estimator
 
 # TODO fix estimators to pass all tests
-from sktime.transformers.base import BaseTransformer
 EXCLUDED = [
     "BOSSEnsemble",
     "BOSSIndividual",
@@ -26,6 +25,7 @@ EXCLUDED = [
     "TimeSeriesForestClassifier",
     "TimeSeriesForestRegressor"
 ]
+from sktime.transformers.base import BaseTransformer
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
                   e[0] not in EXCLUDED and
                   not issubclass(e[1], BaseTransformer)]

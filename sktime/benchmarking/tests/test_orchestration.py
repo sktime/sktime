@@ -19,8 +19,8 @@ from sktime.benchmarking.results import RAMResults, HDDResults
 from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifier
 from sktime.classification.distance_based.proximity_forest import ProximityForest
 from sktime.datasets import load_gunpoint, load_arrow_head
-from sktime.highlevel.strategies import TSCStrategy
-from sktime.highlevel.tasks import TSCTask
+from sktime.benchmarking.strategies import TSCStrategy
+from sktime.benchmarking.tasks import TSCTask
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.compose import Tabulariser

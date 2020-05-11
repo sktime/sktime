@@ -52,12 +52,6 @@ class Pipeline(_Pipeline, BaseEstimator, MetaEstimatorMixin):
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
         by `np.random`.
-    check_input: boolean, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are
-        assumed to be valid
-        and no checks are performed in any step of the pipeline. Use with
-        caution.
-
 
     Attributes
     ----------

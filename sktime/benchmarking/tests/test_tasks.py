@@ -5,9 +5,9 @@ from pytest import raises
 
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_shampoo_sales
-from sktime.highlevel.tasks import BaseTask
-from sktime.highlevel.tasks import TSCTask
-from sktime.highlevel.tasks import TSRTask
+from sktime.benchmarking.tasks import BaseTask
+from sktime.benchmarking.tasks import TSCTask
+from sktime.benchmarking.tasks import TSRTask
 
 TASKS = (TSCTask, TSRTask)
 

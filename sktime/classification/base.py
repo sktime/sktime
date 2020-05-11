@@ -27,8 +27,6 @@ class BaseClassifier(BaseEstimator):
         ----
         X : panda dataframe
             instances of the dataset
-        input_checks : boolean
-            whether to verify the dataset (e.g. dimensions, etc)
         ----
         Returns
         ----
