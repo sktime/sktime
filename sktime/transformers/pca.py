@@ -1,33 +1,36 @@
-__author__ = "Patrick Rockenschaub"
-__all__ = "PCATransformer"
+__author__ = ["Patrick Rockenschaub"]
+__all__ = ["PCATransformer"]
 
 import pandas as pd
-
-from sktime.utils.validation import check_is_fitted
 from sklearn.decomposition import PCA
-
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
-from sktime.utils.data_container import tabularise, detabularise, check_equal_index
+from sktime.utils.data_container import detabularise
+from sktime.utils.data_container import tabularise
+from sktime.utils.validation.series_as_features import check_X
 
 
 class PCATransformer(BaseTransformer):
-    """ Transformer that applies Principle Components Analysis to a univariate time series.
+    """ Transformer that applies Principle Components Analysis to a
+    univariate time series.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
 
     Parameters
     ----------
     n_components : int, float, str or None (default None)
-        Number of principle components to retain. By default, all components are retained. See
-        ``sklearn.decomposition.PCA`` documentation for a detailed description of all options.
+        Number of principle components to retain. By default, all components
+        are retained. See
+        ``sklearn.decomposition.PCA`` documentation for a detailed
+        description of all options.
     **kwargs
-        Additional parameters passed on to ``sklearn.decomposition.PCA``. See ``sklearn.decomposition.PCA``
+        Additional parameters passed on to ``sklearn.decomposition.PCA``.
+        See ``sklearn.decomposition.PCA``
         documentation for a detailed description of all options.
     """
 
     def __init__(self, n_components=None, **kwargs):
         self.pca = PCA(n_components, **kwargs)
+        super(PCATransformer, self).__init__()
 
     def fit(self, X, y=None):
         """
@@ -42,20 +45,19 @@ class PCATransformer(BaseTransformer):
         -------
         self : an instance of self.
         """
-
-        check_X(X)
-        _enforce_X_univariate(X)
+        X = check_X(X, enforce_univariate=True)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
         Xtab = tabularise(X)
         self.pca.fit(Xtab)
-
+        self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
         """
-        Transform X, transforms univariate time-series using sklearn's PCA class
+        Transform X, transforms univariate time-series using sklearn's PCA
+        class
 
         Parameters
         ----------
@@ -65,13 +67,13 @@ class PCATransformer(BaseTransformer):
         Returns
         -------
         Xt : pandas DataFrame
-          Transformed pandas DataFrame with the same number of rows and the (potentially reduced) PCA transformed
-          column. Time indices of the original column are replaced with 0:(n_components - 1).
+          Transformed pandas DataFrame with the same number of rows and the
+          (potentially reduced) PCA transformed
+          column. Time indices of the original column are replaced with 0:(
+          n_components - 1).
         """
-
-        check_is_fitted(self.pca, 'n_components_')
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
 
         # Transform X using the fitted PCA
         Xtab = tabularise(X)
@@ -82,5 +84,4 @@ class PCATransformer(BaseTransformer):
         # Back-transform into time series data format
         Xt = detabularise(Xpca, index=X.index)
         Xt.columns = X.columns
-
         return Xt

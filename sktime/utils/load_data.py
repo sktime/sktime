@@ -221,7 +221,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
                                     if len(instance_list) < (this_line_num_dimensions + 1):
                                         instance_list.append([])
 
-                                    instance_list[this_line_num_dimensions].append(pd.Series())
+                                    instance_list[this_line_num_dimensions].append(pd.Series(dtype="object"))
                                     this_line_num_dimensions += 1
 
                                     has_another_value = False
@@ -402,7 +402,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
                             if len(instance_list) < (this_line_num_dimensions + 1):
                                 instance_list.append([])
 
-                            instance_list[this_line_num_dimensions].append(pd.Series())
+                            instance_list[this_line_num_dimensions].append(pd.Series(dtype="object"))
                             this_line_num_dimensions += 1
                             num_dimensions = this_line_num_dimensions
 
@@ -455,7 +455,7 @@ def load_from_tsfile_to_dataframe(full_file_path_and_name, return_separate_X_and
                                 instance_list[dim].append(pd.Series(data_series))
 
                             else:
-                                instance_list[dim].append(pd.Series())
+                                instance_list[dim].append(pd.Series(dtype="object"))
 
                         if class_labels:
                             class_val_list.append(dimensions[num_dimensions].strip())

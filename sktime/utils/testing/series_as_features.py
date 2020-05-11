@@ -31,7 +31,7 @@ def make_classification_problem(n_instances=20, n_columns=1,
                                    random_state=random_state)
 
     rng = check_random_state(random_state)
-    y = pd.Series(rng.randint(0, 1, size=n_instances))
+    y = pd.Series(rng.randint(0, 2, size=n_instances))
     return X, y
 
 

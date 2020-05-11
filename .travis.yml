@@ -75,7 +75,7 @@ before_deploy:
 deploy:
   # website is always deployed on master branch
   - provider: pages
-    skip-cleanup: true  # skip clean up which would delete build artifacts
+    skip-cleanup: true  # skip _clean up which would delete build artifacts
     local_dir: "./documentation/build_doc_site/html"
     github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
     keep-history: false

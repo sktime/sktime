@@ -84,15 +84,15 @@ def test_results(n_instances, n_timepoints, n_intervals):
 
 # Test against equivalent pipelines.
 def test_different_implementations():
-    random_seed = 1233
+    random_state = 1233
     X_train, y_train = load_gunpoint(return_X_y=True)
 
     # Compare with chained transformations.
-    tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_seed)
+    tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_state)
     tran2 = RowTransformer(FunctionTransformer(func=np.mean, validate=False))
     A = tran2.fit_transform(tran1.fit_transform(X_train))
 
-    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_seed)
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_state)
     B = tran.fit_transform(X_train)
 
     np.testing.assert_array_equal(A, B)
@@ -100,7 +100,7 @@ def test_different_implementations():
 
 # Compare with transformer pipeline using TSFeatureUnion.
 def test_different_pipelines():
-    random_seed = 1233
+    random_state = 1233
     X_train, y_train = load_gunpoint(return_X_y=True)
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
@@ -110,10 +110,10 @@ def test_different_pipelines():
             ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False))),
         ])),
     ]
-    pipe = Pipeline(steps, random_state=random_seed)
+    pipe = Pipeline(steps, random_state=random_state)
     a = pipe.fit_transform(X_train)
     tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean, np.std, time_series_slope],
-                                          random_state=random_seed)
+                                          random_state=random_state)
     b = tran.fit_transform(X_train)
     np.testing.assert_array_equal(a, b)
     np.testing.assert_array_equal(pipe.steps[0][1].intervals_, tran.intervals_)

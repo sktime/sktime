@@ -1,25 +1,26 @@
-import numpy as np
-import pandas as pd
 import math
 import sys
 
-from sktime.transformers.dictionary_based.SAX import BitWord
+import numpy as np
+import pandas as pd
 from sktime.transformers.base import BaseTransformer
+from sktime.transformers.dictionary_based.SAX import _BitWord
+from sktime.utils.data_container import tabularize
+from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["SFA"]
-
-
-# TO DO: Finish comments
 
 
 class SFA(BaseTransformer):
     """ SFA Transformer, as described in
 
     @inproceedings{schafer2012sfa,
-      title={SFA: a symbolic fourier approximation and index for similarity search in high dimensional datasets},
+      title={SFA: a symbolic fourier approximation and index for similarity
+      search in high dimensional datasets},
       author={Sch{\"a}fer, Patrick and H{\"o}gqvist, Mikael},
-      booktitle={Proceedings of the 15th International Conference on Extending Database Technology},
+      booktitle={Proceedings of the 15th International Conference on
+      Extending Database Technology},
       pages={516--527},
       year={2012},
       organization={ACM}
@@ -36,12 +37,18 @@ class SFA(BaseTransformer):
 
     Parameters
     ----------
-        word_length:         int, length of word to shorten window to (using PAA) (default 8)
-        alphabet_size:       int, number of values to discretise each value to (default to 4)
-        window_size:         int, size of window for sliding. If 0, uses the whole series (default to 0)
-        norm:                boolean, whether to mean normalise words by dropping first fourier coefficient
-        remove_repeat_words: boolean, whether to use numerosity reduction (default False)
-        save_words:          boolean, whether to save the words generated for each series (default False)
+        word_length:         int, length of word to shorten window to (using
+        PAA) (default 8)
+        alphabet_size:       int, number of values to discretise each value
+        to (default to 4)
+        window_size:         int, size of window for sliding. If 0, uses the
+        whole series (default to 0)
+        norm:                boolean, whether to mean normalise words by
+        dropping first fourier coefficient
+        remove_repeat_words: boolean, whether to use numerosity reduction (
+        default False)
+        save_words:          boolean, whether to save the words generated
+        for each series (default False)
 
     Attributes
     ----------
@@ -49,7 +56,7 @@ class SFA(BaseTransformer):
         breakpoints: = []
         num_insts = 0
         num_atts = 0
-"""
+    """
 
     def __init__(self,
                  word_length=8,
@@ -72,17 +79,18 @@ class SFA(BaseTransformer):
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
-        self.num_insts = 0
-        self.num_atts = 0
+        self.n_instances = 0
+        self.n_columns = 0
         super(SFA, self).__init__()
 
     def fit(self, X, y=None):
-        """Calculate word breakpoints using MCB
+        """Calculate word breakpoints using _mcb
 
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column _dim_to_use is extracted
+            The training input samples.  If a Pandas data frame is passed,
+            the column _dim_to_use is extracted
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The class labels.
 
@@ -92,63 +100,48 @@ class SFA(BaseTransformer):
          """
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:
-            raise RuntimeError("Alphabet size must be an integer between 2 and 4")
+            raise ValueError(
+                "Alphabet size must be an integer between 2 and 4")
 
         if self.word_length < 1 or self.word_length > 16:
-            raise RuntimeError("Word length must be an integer between 1 and 16")
+            raise ValueError(
+                "Word length must be an integer between 1 and 16")
 
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("SFA cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0, 0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series "
-                    "objects (TSF cannot yet handle multivariate problems")
+        X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
-        self.num_insts, self.num_atts = X.shape
+        self.n_instances, self.n_columns = X.shape
 
         if self.window_size == 0:
-            self.window_size = self.num_atts
+            self.window_size = self.n_columns
             self.inverse_sqrt_win_size = 1 / math.sqrt(self.window_size)
 
-        self.breakpoints = self.MCB(X)
+        self.breakpoints = self._mcb(X)
 
-        self.is_fitted_ = True
-
+        self._is_fitted = True
         return self
 
-    def transform(self, X):
-        if not self.is_fitted_:
-            raise RuntimeError("The fit method must be called before calling transform")
+    def transform(self, X, y=None):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("SFA cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0, 0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:, 0]])
-            else:
-                raise TypeError(
-                    "Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series "
-                    "objects (TSF cannot yet handle multivariate problems")
-
-        self.num_insts = X.shape[0]
+        self.n_instances = X.shape[0]
 
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.num_insts):
-            dfts = self.MFT(X[i, :])
+        for i in range(self.n_instances):
+            dfts = self._mft(X[i, :])
             bag = {}
             lastWord = None
 
             words = []
 
             for window in range(dfts.shape[0]):
-                word = self.create_word(dfts[window])
+                word = self._create_word(dfts[window])
                 words.append(word)
-                lastWord = self.add_to_bag(bag, word, lastWord)
+                lastWord = self._add_to_bag(bag, word, lastWord)
 
             if self.save_words:
                 self.words.append(words)
@@ -159,36 +152,38 @@ class SFA(BaseTransformer):
 
         return bags
 
-    def MCB(self, X):
-        """
+    def _mcb(self, X):
+        num_windows_per_inst = math.ceil(self.n_columns / self.window_size)
+        dft = np.array([self._mcb_dft(X[i, :], num_windows_per_inst) for i in
+                        range(self.n_instances)])
 
-
-        :param X: the training data
-        :return:
-        """
-        num_windows_per_inst = math.ceil(self.num_atts / self.window_size)
-        dft = np.array([self.MCB_DFT(X[i, :], num_windows_per_inst) for i in range(self.num_insts)])
-
-        # dft = np.zeros((self.num_insts, num_windows_per_inst, int((self.word_length / 2) * 2)))
+        # dft = np.zeros((self.num_insts, num_windows_per_inst,
+        # int((self.word_length / 2) * 2)))
         #
         # for i in range(self.num_insts):
-        #     split = np.split(X[i, :], np.linspace(self.window_size, self.window_size * (num_windows_per_inst - 1),
-        #                                           num_windows_per_inst - 1, dtype=np.int_))
+        #     split = np.split(X[i, :], np.linspace(self.window_size,
+        #     self.window_size * (num_windows_per_inst - 1),
+        #                                           num_windows_per_inst -
+        #                                           1, dtype=np.int_))
         #     split[-1] = X[i, self.num_atts - self.window_size:self.num_atts]
-        #     dft[i] = np.array([self.discrete_fourier_transform(row) for n, row in enumerate(split)])
+        #     dft[i] = np.array([self._discrete_fourier_transform(row) for n,
+        #     row in enumerate(split)])
 
-        total_num_windows = self.num_insts * num_windows_per_inst
+        total_num_windows = self.n_instances * num_windows_per_inst
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
         for letter in range(self.word_length):
-            column = np.sort(np.array([round(dft[inst][window][letter] * 100) / 100
-                                       for window in range(num_windows_per_inst) for inst in range(self.num_insts)]))
+            column = np.sort(
+                np.array([round(dft[inst][window][letter] * 100) / 100
+                          for window in range(num_windows_per_inst) for inst in
+                          range(self.n_instances)]))
 
             # column = np.zeros(total_num_windows)
             #
             # for inst in range(self.num_insts):
             #     for window in range(num_windows_per_inst):
-            #         column[(inst * num_windows_per_inst) + window] = round(dft[inst][window][letter] * 100) / 100
+            #         column[(inst * num_windows_per_inst) + window] =
+            #         round(dft[inst][window][letter] * 100) / 100
             #
             # column = np.sort(column)
 
@@ -203,25 +198,33 @@ class SFA(BaseTransformer):
 
         return breakpoints
 
-    def MCB_DFT(self, series, num_windows_per_inst):
-        # Splits individual time series into windows and returns the DFT for each
-        split = np.split(series, np.linspace(self.window_size, self.window_size * (num_windows_per_inst - 1),
-                                             num_windows_per_inst - 1, dtype=np.int_))
-        split[-1] = series[self.num_atts - self.window_size:self.num_atts]
-        return [self.discrete_fourier_transform(row) for n, row in enumerate(split)]
+    def _mcb_dft(self, series, num_windows_per_inst):
+        # Splits individual time series into windows and returns the DFT for
+        # each
+        split = np.split(series, np.linspace(self.window_size,
+                                             self.window_size * (
+                                                     num_windows_per_inst - 1),
+                                             num_windows_per_inst - 1,
+                                             dtype=np.int_))
+        split[-1] = series[self.n_columns - self.window_size:self.n_columns]
+        return [self._discrete_fourier_transform(row) for n, row in
+                enumerate(split)]
 
-    def discrete_fourier_transform(self, series, normalise=True):
-        """ Performs a discrete fourier transform using standard O(n^2) transform
+    def _discrete_fourier_transform(self, series, normalise=True):
+        """ Performs a discrete fourier transform using standard O(n^2)
+        transform
         if self.norm is True, then the first term of the DFT is ignored
 
         TO DO: Use a fast fourier transform
         Input
         -------
-        X : The training input samples.  array-like or sparse matrix of shape = [n_samps, num_atts]
+        X : The training input samples.  array-like or sparse matrix of
+        shape = [n_samps, num_atts]
 
         Returns
         -------
-        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length num_atts or
+        1D array of fourier term, real_0,imag_0, real_1, imag_1 etc, length
+        num_atts or
         num_atts-2 if if self.norm is True
         """
 
@@ -235,9 +238,11 @@ class SFA(BaseTransformer):
             if s != 0:
                 std = s
 
-        dft = np.array([np.sum([[series[n] * math.cos(2 * math.pi * n * i / length),
-                                 -series[n] * math.sin(2 * math.pi * n * i / length)] for n in range(length)], axis=0)
-                        for i in range(start, start + output_length)]).flatten()
+        dft = np.array(
+            [np.sum([[series[n] * math.cos(2 * math.pi * n * i / length),
+                      -series[n] * math.sin(2 * math.pi * n * i / length)] for
+                     n in range(length)], axis=0)
+             for i in range(start, start + output_length)]).flatten()
 
         # dft = np.zeros(output_length * 2)
         #
@@ -245,15 +250,17 @@ class SFA(BaseTransformer):
         #     idx = (i - start) * 2
         #
         #     for n in range(length):
-        #         dft[idx] += series[n] * math.cos(2 * math.pi * n * i / length)
-        #         dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i / length)
+        #         dft[idx] += series[n] * math.cos(2 * math.pi * n * i /
+        #         length)
+        #         dft[idx + 1] += -series[n] * math.sin(2 * math.pi * n * i
+        #         / length)
 
         if normalise:
             dft *= self.inverse_sqrt_win_size / std
 
         return dft
 
-    def MFT(self, series):
+    def _mft(self, series):
         """
 
         :param series:
@@ -262,9 +269,13 @@ class SFA(BaseTransformer):
         start_offset = 2 if self.norm else 0
         length = self.word_length + self.word_length % 2
 
-        phis = np.array([[math.cos(2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size),
-                          -math.sin(2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size)]
-                         for i in range(0, int(length / 2))]).flatten()
+        phis = np.array([[math.cos(
+            2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size),
+            -math.sin(2 * math.pi * (-((
+                                               i * 2) +
+                                       start_offset) / 2) /
+                      self.window_size)]
+            for i in range(0, int(length / 2))]).flatten()
 
         # phis = np.zeros(length)
         #
@@ -274,26 +285,30 @@ class SFA(BaseTransformer):
         #     phis[i + 1] = -math.sin(2 * math.pi * half / self.window_size)
 
         end = max(1, len(series) - self.window_size + 1)
-        stds = self.calc_incremental_mean_std(series, end)
+        stds = self._calc_incremental_mean_std(series, end)
         transformed = np.zeros((end, length))
         mft_data = np.array([])
 
         for i in range(end):
             if i > 0:
                 for n in range(0, length, 2):
-                    real = mft_data[n] + series[i + self.window_size - 1] - series[i - 1]
+                    real = mft_data[n] + series[i + self.window_size - 1] - \
+                           series[i - 1]
                     imag = mft_data[n + 1]
                     mft_data[n] = real * phis[n] - imag * phis[n + 1]
                     mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
             else:
-                mft_data = self.discrete_fourier_transform(series[0:self.window_size], normalise=False)
+                mft_data = self._discrete_fourier_transform(
+                    series[0:self.window_size], normalise=False)
 
-            normalising_factor = (1 / stds[i] if stds[i] > 0 else 1) * self.inverse_sqrt_win_size
+            normalising_factor = (1 / stds[i] if stds[
+                                                     i] > 0 else 1) * \
+                                 self.inverse_sqrt_win_size
             transformed[i] = mft_data * normalising_factor
 
         return transformed
 
-    def calc_incremental_mean_std(self, series, end):
+    def _calc_incremental_mean_std(self, series, end):
         means = np.zeros(end)
         stds = np.zeros(end)
 
@@ -316,15 +331,16 @@ class SFA(BaseTransformer):
         for w in range(1, end):
             series_sum += series[w + self.window_size - 1] - series[w - 1]
             means[w] = series_sum * r_window_length
-            square_sum += series[w + self.window_size - 1] * series[w + self.window_size - 1] - series[w - 1] * series[
-                w - 1]
+            square_sum += series[w + self.window_size - 1] * series[
+                w + self.window_size - 1] - series[w - 1] * series[
+                              w - 1]
             buf = square_sum * r_window_length - means[w] * means[w]
             stds[w] = math.sqrt(buf) if buf > 0 else 0
 
         return stds
 
-    def create_word(self, dft):
-        word = BitWord()
+    def _create_word(self, dft):
+        word = _BitWord()
 
         for i in range(self.word_length):
             for bp in range(self.alphabet_size):
@@ -334,18 +350,18 @@ class SFA(BaseTransformer):
 
         return word
 
-    def shorten_bags(self, word_len):
+    def _shorten_bags(self, word_len):
         new_bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.num_insts):
+        for i in range(self.n_instances):
             bag = {}
             last_word = -1
 
             for n, word in enumerate(self.words[i]):
-                new_word = BitWord(word=word.word, length=word.length)
+                new_word = _BitWord(word=word.word, length=word.length)
                 new_word.shorten(16 - word_len)
-                last_word = self.add_to_bag(bag, new_word, last_word)
+                last_word = self._add_to_bag(bag, new_word, last_word)
 
             dim.append(pd.Series(bag))
 
@@ -353,7 +369,7 @@ class SFA(BaseTransformer):
 
         return new_bags
 
-    def add_to_bag(self, bag, word, last_word):
+    def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word.word == last_word:
             return last_word
 

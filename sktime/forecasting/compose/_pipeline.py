@@ -20,7 +20,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
                                   BaseHeterogenousMetaEstimator):
     """Meta-estimator for forecasting transformed time series."""
 
-    _required_parameters = ("steps",)
+    _required_parameters = ["steps"]
 
     def __init__(self, steps):
         self.steps = steps

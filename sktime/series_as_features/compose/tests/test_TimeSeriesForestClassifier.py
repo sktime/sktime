@@ -105,9 +105,9 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     # steps = [
     #     ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
     #     ('transform', FeatureUnion([
-    #         ('mean', RowwiseTransformer(FunctionTransformer(func=np.mean, validate=False))),
-    #         ('std', RowwiseTransformer(FunctionTransformer(func=np.std, validate=False))),
-    #         ('slope', RowwiseTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
+    #         ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+    #         ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+    #         ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
     #     ])),
     #     ('clf', DecisionTreeClassifier())
     # ]

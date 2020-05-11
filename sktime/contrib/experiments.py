@@ -423,8 +423,8 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
                                 predicted_class_vals=preds, actual_probas=probs, dataset_name=dataset, actual_class_vals=testY, split='TEST')
     if train_file:
         start = int(round(time.time() * 1000))
-        if build_test and hasattr(classifier,"get_train_probs"):    #Normally Can only do this if test has been built ... well not necessarily true, but will do for now
-            train_probs = classifier.get_train_probs(trainX)
+        if build_test and hasattr(classifier,"_get_train_probs"):    #Normally Can only do this if test has been built ... well not necessarily true, but will do for now
+            train_probs = classifier._get_train_probs(trainX)
         else:
             train_probs = cross_val_predict(classifier, X=trainX, y=trainY, cv=10, method='predict_proba')
         train_time = int(round(time.time() * 1000)) - start

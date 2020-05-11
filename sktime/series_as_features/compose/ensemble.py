@@ -3,14 +3,15 @@ Configurable time series ensembles
 """
 
 __all__ = ["TimeSeriesForestClassifier"]
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning"]
 
 from warnings import catch_warnings
 from warnings import simplefilter
 from warnings import warn
 
 import numpy as np
-from joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sklearn.ensemble.base import _partition_estimators
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.ensemble.forest import MAX_INT
@@ -23,23 +24,27 @@ from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-from sklearn.utils.validation import check_is_fitted
-
+from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import check_X_y, _enforce_X_univariate, check_X
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X_y
 
 
-class TimeSeriesForestClassifier(ForestClassifier):
+class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
     """Time-Series Forest Classifier.
 
-    A time series forest is a meta estimator and an adaptation of the random forest
-    for time-series/panel data that fits a number of decision tree classifiers on
-    various sub-samples of a transformed dataset and uses averaging to improve the
-    predictive accuracy and control over-fitting. The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if `bootstrap=True` (default).
+    A time series forest is a meta estimator and an adaptation of the random
+    forest
+    for time-series/panel data that fits a number of decision tree
+    classifiers on
+    various sub-samples of a transformed dataset and uses averaging to
+    improve the
+    predictive accuracy and control over-fitting. The sub-sample size is
+    always the same as the original
+    input sample size but the samples are drawn with replacement if
+    `bootstrap=True` (default).
 
     Parameters
     ----------
@@ -204,16 +209,23 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
+            steps = [('transform',
+                      RandomIntervalFeatureExtractor(n_intervals='sqrt',
+                                                     features=features)),
                      ('clf', DecisionTreeClassifier())]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
-            raise ValueError('Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
-            raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1],
+                            DecisionTreeClassifier):
+            raise ValueError(
+                'Last step in base estimator pipeline must be '
+                'DecisionTreeClassifier.')
 
-        # Assign values, even though passed on to base estimator below, necessary here for cloning
+        # Assign values, even though passed on to base estimator below,
+        # necessary here for cloning
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -238,7 +250,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
             "min_impurity_decrease": min_impurity_decrease,
             "min_impurity_split": min_impurity_split,
         }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in
+                            estimator_params.items()}
 
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
@@ -256,7 +269,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
         )
 
         # Assign random state to pipeline.
-        base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
+        base_estimator.set_params(
+            **{'random_state': random_state})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
@@ -289,8 +303,7 @@ class TimeSeriesForestClassifier(ForestClassifier):
         """
 
         # Validate or convert input data
-        check_X_y(X, y)
-        _enforce_X_univariate(X)
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
@@ -365,8 +378,10 @@ class TimeSeriesForestClassifier(ForestClassifier):
             # Parallel loop: for standard random forests, the threading
             # backend is preferred as the Cython code for fitting the trees
             # is internally releasing the Python GIL making threading more
-            # efficient than multiprocessing in that case. However, in this case,
-            # for fitting pipelines in parallel, multiprocessing is more efficient.
+            # efficient than multiprocessing in that case. However, in this
+            # case,
+            # for fitting pipelines in parallel, multiprocessing is more
+            # efficient.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
@@ -385,13 +400,15 @@ class TimeSeriesForestClassifier(ForestClassifier):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        self._is_fitted = True
         return self
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
+        class probability of a single tree is the fraction of samples of the
+        same
         class in a leaf.
         Parameters
         ----------
@@ -406,17 +423,17 @@ class TimeSeriesForestClassifier(ForestClassifier):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
-
         # Check data
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(e.predict_proba)(X) for e in self.estimators_)
 
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
@@ -441,9 +458,6 @@ class TimeSeriesForestClassifier(ForestClassifier):
 
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
-        check_X_y(X, y)
-        _enforce_X_univariate(X)
-
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
@@ -490,7 +504,8 @@ class TimeSeriesForestClassifier(ForestClassifier):
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                           verbose=0, class_weight=None,
                           n_samples_bootstrap=None):
-    """Private function used to fit a single tree in parallel, adjusted for pipeline trees."""
+    """Private function used to fit a single tree in parallel, adjusted for
+    pipeline trees."""
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 

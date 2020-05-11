@@ -26,22 +26,23 @@ def _construct_instance(Estimator):
     # some estimators require parameters during construction
     required_parameters = getattr(Estimator, "_required_parameters", [])
 
-    # construct with parameters
-    if len(required_parameters) > 0:
-        # look up default instantiations for estimators which require
-        # arguments during constructions
-        parameters = {}
-        if Estimator in TEST_CONSTRUCT_CONFIG_LOOKUP:
-            parameters = TEST_CONSTRUCT_CONFIG_LOOKUP[Estimator]
-        if len(parameters) == 0:
-            raise ValueError(
-                f"Estimator: {Estimator} requires parameters for "
-                f"construction, "
-                f"but no test configuration has been found.")
-        estimator = Estimator(**parameters)
+    # construct with test parameters
+    if Estimator in TEST_CONSTRUCT_CONFIG_LOOKUP:
+        params = TEST_CONSTRUCT_CONFIG_LOOKUP[Estimator]
+        estimator = Estimator(**params)
 
-    # construct without parameters if none are required
+    # otherwise construct with default parameters
     else:
+        # if non-default parameters are required, but none have been found,
+        # raise error
+        if hasattr(Estimator, "_required_parameters"):
+            required_parameters = getattr(Estimator, "required_parameters", [])
+            if len(required_parameters) > 0:
+                raise ValueError(f"Estimator: {Estimator} requires "
+                                 f"non-default parameters for construction, "
+                                 f"but none have been found")
+
+        # construct with default parameters if none are required
         estimator = Estimator()
 
     return estimator
@@ -53,7 +54,7 @@ def _make_args(estimator, method, *args, **kwargs):
     if method == "fit":
         return _make_fit_args(estimator, *args, **kwargs)
 
-    elif method == "predict":
+    elif method in ("predict", "predict_proba"):
         return _make_predict_args(estimator, *args, **kwargs)
 
     else:
@@ -79,15 +80,15 @@ def _make_fit_args(estimator, random_state=None):
 def _make_predict_args(estimator, random_state=None):
     if is_forecaster(estimator):
         fh = 1
-        return fh
+        return (fh,)
 
     elif is_classifier(estimator):
         X, y = make_classification_problem(random_state=random_state)
-        return X
+        return (X,)
 
     elif is_regressor(estimator):
         X, y = make_regression_problem(random_state=random_state)
-        return X
+        return (X,)
 
     else:
         raise ValueError(f"Estimator type: {type(estimator)} not supported")

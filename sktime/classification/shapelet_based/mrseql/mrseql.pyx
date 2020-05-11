@@ -3,7 +3,7 @@ STUFF = "Hi"
 from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.dictionary_based.SFA import SFA
-
+from sktime.utils.data_container import detabularize
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
@@ -61,10 +61,11 @@ class AdaptedSFA:
         self.sfa = SFA(w, a, N, norm=True, remove_repeat_words=True)
 
     def fit(self, train_x):
+        train_x = detabularize(pd.DataFrame(train_x))
         self.sfa.fit(train_x)
 
     def timeseries2SFAseq(self, ts):
-        dfts = self.sfa.MFT(ts)
+        dfts = self.sfa._mft(ts)
         sfa_str = b''
         for window in range(dfts.shape[0]):
             if sfa_str:

@@ -9,9 +9,6 @@ class BaseTransformer(BaseEstimator):
     Base class for transformers, for identification.
     """
 
-    def __init__(self):
-        super(BaseTransformer, self).__init__()
-
     def fit(self, X, y=None):
         """
         empty fit function, which inheriting transformers can override

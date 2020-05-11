@@ -7,13 +7,12 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
-from sktime.utils.validation import check_is_fitted
-
-from sktime.transformers.base import BaseTransformer
 from sktime.base import MetaEstimatorMixin
+from sktime.transformers.base import BaseTransformer
 from sktime.utils.data_container import concat_nested_arrays
-from sktime.utils.data_container import tabularize, detabularize, get_time_index
-from sktime.utils.validation.forecasting import check_is_fitted_in_transform
+from sktime.utils.data_container import detabularize
+from sktime.utils.data_container import get_time_index
+from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
@@ -24,9 +23,11 @@ __all__ = ['ColumnTransformer',
            'ColumnConcatenator']
 
 
-class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer):
+class ColumnTransformer(_ColumnTransformer, BaseTransformer,
+                        MetaEstimatorMixin):
     """
-    Applies transformers to columns of an array or pandas DataFrame. Simply takes the column transformer from sklearn
+    Applies transformers to columns of an array or pandas DataFrame. Simply
+    takes the column transformer from sklearn
     and adds capability to handle pandas dataframe.
 
     This estimator allows different columns or column subsets of the input
@@ -49,7 +50,8 @@ class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer)
             strings 'drop' and 'passthrough' are accepted as well, to
             indicate to drop the columns or to pass them through untransformed,
             respectively.
-        column(s) : str or int, array-like of string or int, slice, boolean mask array or callable
+        column(s) : str or int, array-like of string or int, slice, boolean
+        mask array or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
@@ -110,7 +112,6 @@ class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer)
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
     """
-
     _required_parameters = ["transformers"]
 
     def __init__(
@@ -122,27 +123,29 @@ class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer)
             transformer_weights=None,
             preserve_dataframe=True,
     ):
-
-        self.preserve_dataframe = preserve_dataframe
         super(ColumnTransformer, self).__init__(
             transformers=transformers,
             remainder=remainder,
             sparse_threshold=sparse_threshold,
             n_jobs=n_jobs,
-            transformer_weights=transformer_weights,
+            transformer_weights=transformer_weights
         )
+        self.preserve_dataframe = preserve_dataframe
+        self._is_fitted = False
 
     def _hstack(self, Xs):
         """
         Stacks X horizontally.
 
-        Supports input types (X): list of numpy arrays, sparse arrays and DataFrames
+        Supports input types (X): list of numpy arrays, sparse arrays and
+        DataFrames
         """
         types = set(type(X) for X in Xs)
 
         if self.sparse_output_:
             return sparse.hstack(Xs).tocsr()
-        if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
+        if self.preserve_dataframe and (
+                pd.Series in types or pd.DataFrame in types):
             return pd.concat(Xs, axis="columns")
         return np.hstack(Xs)
 
@@ -158,20 +161,39 @@ class ColumnTransformer(MetaEstimatorMixin, _ColumnTransformer, BaseTransformer)
         for Xs, name in zip(result, names):
             if not (getattr(Xs, 'ndim', 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
-                    "The output of the '{0}' transformer should be 2D (scipy " "matrix, array, or pandas DataFrame).".format(
+                    "The output of the '{0}' transformer should be 2D (scipy "
+                    "" "matrix, array, or pandas DataFrame).".format(
                         name))
 
+    def fit(self, X, y=None):
+        super(ColumnTransformer, self).fit(X, y)
+        self._is_fitted = True
+        return self
 
-class RowTransformer(MetaEstimatorMixin, BaseTransformer):
-    """A convenience wrapper for row-wise transformers to apply transformation to all rows.
+    def transform(self, X):
+        self.check_is_fitted()
+        return super(ColumnTransformer, self).transform(X)
 
-    This estimator allows to create a transformer that works on all rows from a passed transformer that works on a
-    single row. This is useful for applying transformers to the time-series in the rows.
+    def fit_transform(self, X, y=None):
+        Xt = super(ColumnTransformer, self).fit_transform(X, y)
+        self._is_fitted = True
+        return Xt
+
+
+class RowTransformer(BaseTransformer, MetaEstimatorMixin):
+    """A convenience wrapper for row-wise transformers to apply
+    transformation to all rows.
+
+    This estimator allows to create a transformer that works on all rows
+    from a passed transformer that works on a
+    single row. This is useful for applying transformers to the time-series
+    in the rows.
 
     Parameters
     ----------
     transformer : estimator
-        An estimator that can work on a row (i.e. a univariate time-series in form of a numpy array or pandas Series.
+        An estimator that can work on a row (i.e. a univariate time-series
+        in form of a numpy array or pandas Series.
         must support `fit` and `transform`
     """
 
@@ -180,27 +202,6 @@ class RowTransformer(MetaEstimatorMixin, BaseTransformer):
     def __init__(self, transformer):
         self.transformer = transformer
         super(RowTransformer, self).__init__()
-
-    def fit(self, X, y=None):
-        """
-        Empty fit function that does nothing.
-
-        Parameters
-        ----------
-        X : 1D array-like, pandas Series, shape (n_samples, 1)
-            The training input samples. Shoould not be a DataFrame.
-        y : None, as it is transformer on X
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        check_X(X)
-
-        # fitting - this transformer needs no fitting
-        self._is_fitted = True
-        return self
 
     def transform(self, X, y=None):
         """Apply the `fit_transform()` method of the transformer on each row.
@@ -212,30 +213,36 @@ class RowTransformer(MetaEstimatorMixin, BaseTransformer):
         """Apply the `fit_transform()` method of the transformer on each row.
         """
         if not hasattr(self.transformer, 'inverse_transform'):
-            raise AttributeError("Transformer does not have an inverse transform method")
-
+            raise AttributeError(
+                "Transformer does not have an inverse transform method")
         func = self.transformer.inverse_transform
         return self._apply_rowwise(func, X, y)
 
     def _apply_rowwise(self, func, X, y=None):
-        """Helper function to apply transform or inverse_transform function on each row of data container"""
-        check_is_fitted(self, '_is_fitted')
-        check_X(X)
+        """Helper function to apply transform or inverse_transform function
+        on each row of data container"""
+        self.check_is_fitted()
+        X = check_X(X)
 
         # 1st attempt: apply, relatively fast but not robust
-        # try and except, but sometimes breaks in other cases than excepted ValueError
-        # Works on single column, but on multiple columns only if columns have equal-length series.
+        # try and except, but sometimes breaks in other cases than excepted
+        # ValueError
+        # Works on single column, but on multiple columns only if columns
+        # have equal-length series.
         # try:
         #     Xt = X.apply(self.transformer.fit_transform)
         #
         # # Otherwise call apply on each column separately.
         # except ValueError as e:
         #     if str(e) == 'arrays must all be same length':
-        #         Xt = pd.concat([pd.Series(col.apply(self.transformer.fit_transform)) for _, col in X.items()], axis=1)
+        #         Xt = pd.concat([pd.Series(col.apply(
+        #         self.transformer.fit_transform)) for _, col in X.items()],
+        #         axis=1)
         #     else:
         #         raise
 
-        # 2nd attempt: apply but iterate over columns, still relatively fast but still not very robust
+        # 2nd attempt: apply but iterate over columns, still relatively fast
+        # but still not very robust
         # but column is not 2d and thus breaks if transformer expects 2d input
         try:
             Xt = pd.concat([pd.Series(col.apply(func))
@@ -254,7 +261,8 @@ class RowTransformer(MetaEstimatorMixin, BaseTransformer):
                 cols_t.append(rows_t)  # append transformed columns
 
             # if series-to-series transform, flatten transformed series
-            Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
+            Xt = concat_nested_arrays(
+                cols_t)  # concatenate transformed columns
 
             # tabularise/unnest series-to-primitive transforms
             xt = Xt.iloc[0, 0]
@@ -267,21 +275,20 @@ class Tabularizer(BaseTransformer):
     """
     A transformer that turns time series/panel data into tabular data.
 
-    This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
-    dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard validation learning algorithms (as in sklearn).
+    This estimator converts nested pandas dataframe containing
+    time-series/panel data with numpy arrays or pandas Series in
+    dataframe cells into a tabular pandas dataframe with only primitives in
+    cells. This is useful for transforming
+    time-series/panel data into a format that is accepted by standard
+    validation learning algorithms (as in sklearn).
 
     Parameters
     ----------
     check_input: bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
+        When set to ``True``, inputs will be validated, otherwise inputs are
+        assumed to be valid
         and no checks are performed. Use with caution.
     """
-
-    # TODO: allow to keep column names, but unclear how to handle multivariate data
-
-    def __init__(self, check_input=True):
-        self.check_input = check_input
 
     def transform(self, X, y=None):
         """Transform nested pandas dataframe into tabular dataframe.
@@ -297,16 +304,13 @@ class Tabularizer(BaseTransformer):
         Xt : pandas DataFrame
             Transformed dataframe with only primitives in cells.
         """
-
-        if self.check_input:
-            check_X(X)
+        self.check_is_fitted()
+        X = check_X(X)
 
         self._columns = X.columns
         self._index = X.index
         self._time_index = get_time_index(X)
-
-        Xt = tabularize(X)
-        return Xt
+        return tabularize(X)
 
     def inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
@@ -322,27 +326,23 @@ class Tabularizer(BaseTransformer):
         Xt : pandas DataFrame
             Transformed dataframe with series in cells.
         """
-
-        check_is_fitted_in_transform(self, '_time_index')
-
-        # TODO check if for each column, all rows have equal-index series
-        if self.check_input:
-            check_X(X)
-
-        Xit = detabularize(X, index=self._index, time_index=self._time_index)
-        return Xit
+        self.check_is_fitted()
+        X = check_X(X)
+        return detabularize(X, index=self._index, time_index=self._time_index)
 
 
 Tabulariser = Tabularizer
 
 
 class ColumnConcatenator(BaseTransformer):
-    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
+    """Transformer that concatenates multivariate time series/panel data
+    into long univiariate time series/panel
         data by simply concatenating times series in time.
     """
 
     def transform(self, X, y=None):
-        """Concatenate multivariate time series/panel data into long univiariate time series/panel
+        """Concatenate multivariate time series/panel data into long
+        univiariate time series/panel
         data by simply concatenating times series in time.
 
         Parameters
@@ -353,13 +353,12 @@ class ColumnConcatenator(BaseTransformer):
         Returns
         -------
         Xt : pandas DataFrame
-          Transformed pandas DataFrame with same number of rows and single column
+          Transformed pandas DataFrame with same number of rows and single
+          column
         """
-
         self.check_is_fitted()
+        X = check_X(X)
 
-        if not isinstance(X, pd.DataFrame):
-            raise ValueError(f"Expected input is a pandas DataFrame, but found {type(X)}")
-
-        Xt = detabularize(tabularize(X))
-        return Xt
+        # We concatenate by tabularizing all columns and then detabularizing
+        # them into a single column
+        return detabularize(tabularize(X))

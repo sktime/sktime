@@ -3,18 +3,19 @@
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sklearn.base import clone
 from sktime.base import MetaEstimatorMixin
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.segment import RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
-from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
+from sktime.utils.validation.series_as_features import check_X
 
 
 class PlateauFinder(BaseTransformer):
-    """Transformer that finds segments of the same given value, plateau in the time series, and
+    """Transformer that finds segments of the same given value, plateau in
+    the time series, and
     returns the starting indices and lengths.
 
     Parameters
@@ -23,7 +24,8 @@ class PlateauFinder(BaseTransformer):
         Value for which to find segments
     min_length : int
         Minimum lengths of segments with same value to include.
-        If min_length is set to 1, the transformer can be used as a value finder.
+        If min_length is set to 1, the transformer can be used as a value
+        finder.
     """
 
     def __init__(self, value=np.nan, min_length=2):
@@ -47,8 +49,8 @@ class PlateauFinder(BaseTransformer):
         """
 
         # input checks
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
 
         # get column name
         column_name = X.columns[0]
@@ -84,7 +86,8 @@ class PlateauFinder(BaseTransformer):
 
         # put into dataframe
         Xt = pd.DataFrame()
-        column_prefix = "%s_%s" % (column_name, "nan" if np.isnan(self.value) else str(self.value))
+        column_prefix = "%s_%s" % (
+        column_name, "nan" if np.isnan(self.value) else str(self.value))
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
         return Xt
@@ -93,6 +96,9 @@ class PlateauFinder(BaseTransformer):
 class DerivativeSlopeTransformer(BaseTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
         for dim in range(num_dim):
@@ -108,7 +114,8 @@ class DerivativeSlopeTransformer(BaseTransformer):
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+                der.append(
+                    ((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
@@ -119,16 +126,20 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
     Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
 
-    n_intervals: str{'sqrt', 'log', 'random'}, int or float, optional (default='sqrt')
-        Number of random intervals to generate, where m is length of time series:
+    n_intervals: str{'sqrt', 'log', 'random'}, int or float, optional (
+    default='sqrt')
+        Number of random intervals to generate, where m is length of time
+        series:
         - If "log", log of m is used.
         - If "sqrt", sqrt of m is used.
         - If "random", random number of intervals is generated.
         - If int, n_intervals intervals are generated.
-        - If float, int(n_intervals * m) is used with n_intervals giving the fraction of intervals of the
+        - If float, int(n_intervals * m) is used with n_intervals giving the
+        fraction of intervals of the
         time series length.
 
-        For all arguments relative to the length of the time series, the generated number of intervals is
+        For all arguments relative to the length of the time series,
+        the generated number of intervals is
         always at least 1.
 
     features: list of functions, optional (default=None)
@@ -142,25 +153,31 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         by `np.random`.
     """
 
-    def __init__(self, n_intervals='sqrt', min_length=2, features=None, random_state=None):
+    def __init__(self, n_intervals='sqrt', min_length=2, features=None,
+                 random_state=None):
         super(RandomIntervalFeatureExtractor, self).__init__(
             n_intervals=n_intervals,
             min_length=min_length,
             random_state=random_state,
         )
 
-        # Check input of feature calculators, i.e list of functions to be applied to time-series
+        # Check input of feature calculators, i.e list of functions to be
+        # applied to time-series
         if features is None:
             self.features = [np.mean]
-        elif isinstance(features, list) and all([callable(func) for func in features]):
+        elif isinstance(features, list) and all(
+                [callable(func) for func in features]):
             self.features = features
         else:
-            raise ValueError('Features must be list containing only functions (callables) to be '
-                             'applied to the data columns')
+            raise ValueError(
+                'Features must be list containing only functions (callables) '
+                'to be '
+                'applied to the data columns')
 
     def transform(self, X, y=None):
         """
-        Transform X, segments time-series in each column into random intervals using interval indices generated
+        Transform X, segments time-series in each column into random
+        intervals using interval indices generated
         during `fit` and extracts features from each interval.
 
         Parameters
@@ -171,22 +188,25 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         Returns
         -------
         Xt : pandas.DataFrame
-          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+          Transformed pandas DataFrame with same number of rows and one
+          column for each generated interval.
         """
         # Check is fit had been called
-        check_is_fitted(self, 'intervals_')
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
 
         # Check that the input is of the same shape as the one passed
         # during fit.
         if X.shape[1] != self.input_shape_[1]:
-            raise ValueError('Number of columns of input is different from what was seen'
-                             'in `fit`')
+            raise ValueError(
+                'Number of columns of input is different from what was seen'
+                'in `fit`')
         # Input validation
-        # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx, fit_idx in zip(check_equal_index(X),
+        # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx,
+        # fit_idx in zip(check_equal_index(X),
         #                                                                              self._time_index)]):
-        #     raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
+        #     raise ValueError('Indexes of input time-series are different
+        #     from what was seen in `fit`')
 
         n_rows, n_columns = X.shape
         n_features = len(self.features)
@@ -194,11 +214,14 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         n_intervals = len(self.intervals_)
 
         # Compute features on intervals.
-        Xt = np.zeros((n_rows, n_features * n_intervals))  # Allocate output array for transformed data
+        Xt = np.zeros((n_rows,
+                       n_features * n_intervals))  # Allocate output array
+        # for transformed data
         self.columns_ = []
         colname = X.columns[0]
 
-        # Tabularize each column assuming series have equal indexes in any given column.
+        # Tabularize each column assuming series have equal indexes in any
+        # given column.
         # TODO generalise to non-equal-index cases
         arr = tabularize(X, return_array=True)
         i = 0
@@ -207,16 +230,20 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
             for start, end in self.intervals_:
                 interval = arr[:, start:end]
 
-                # Try to use optimised computations over axis if possible, otherwise iterate over rows.
+                # Try to use optimised computations over axis if possible,
+                # otherwise iterate over rows.
                 try:
                     Xt[:, i] = func(interval, axis=1)
                 except TypeError as e:
-                    if str(e) == f"{func.__name__}() got an unexpected keyword argument 'axis'":
+                    if str(
+                            e) == f"{func.__name__}() got an unexpected " \
+                                  f"keyword argument 'axis'":
                         Xt[:, i] = np.apply_along_axis(func, 1, interval)
                     else:
                         raise
                 i += 1
-                self.columns_.append(f'{colname}_{start}_{end}_{func.__name__}')
+                self.columns_.append(
+                    f'{colname}_{start}_{end}_{func.__name__}')
 
         Xt = pd.DataFrame(Xt)
         Xt.columns = self.columns_
@@ -224,7 +251,6 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
 
 class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
-
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):
@@ -233,14 +259,9 @@ class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
         self.n_jobs = n_jobs
         super(FittedParamExtractor, self).__init__()
 
-    def fit(self, X, y=None):
-        check_X(X)
-        _enforce_X_univariate(X)
-        return self
-
     def transform(self, X, y=None):
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
         param_names = self._check_param_names(self.param_names)
         n_instances = X.shape[0]
 
@@ -251,9 +272,11 @@ class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
 
         # iterate over rows
         extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(_fit_extract)(
-            clone(self.forecaster), X.iloc[i, 0], param_names) for i in range(n_instances))
+            clone(self.forecaster), X.iloc[i, 0], param_names) for i in
+                                                        range(n_instances))
 
-        return pd.DataFrame(extracted_params, index=X.index, columns=param_names)
+        return pd.DataFrame(extracted_params, index=X.index,
+                            columns=param_names)
 
     @staticmethod
     def _check_param_names(param_names):
@@ -262,9 +285,11 @@ class FittedParamExtractor(MetaEstimatorMixin, BaseTransformer):
         elif isinstance(param_names, (list, tuple)):
             for param in param_names:
                 if not isinstance(param, str):
-                    raise ValueError(f"All elements of `param_names` must be strings, "
-                                     f"but found: {type(param)}")
+                    raise ValueError(
+                        f"All elements of `param_names` must be strings, "
+                        f"but found: {type(param)}")
         else:
-            raise ValueError(f"`param_names` must be str, or a list or tuple of strings, "
-                             f"but found: {type(param_names)}")
+            raise ValueError(
+                f"`param_names` must be str, or a list or tuple of strings, "
+                f"but found: {type(param_names)}")
         return param_names

@@ -3,16 +3,19 @@ import sys
 import numpy as np
 import pandas as pd
 import scipy.stats
-
-from sktime.transformers.dictionary_based.PAA import PAA
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.base import BaseTransformer
-#    TO DO: verify this returned pandas is consistent with sktime definition. Timestamps?
+from sktime.transformers.dictionary_based.PAA import PAA
+from sktime.utils.data_container import tabularize
+from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+#    TO DO: verify this returned pandas is consistent with sktime
+#    definition. Timestamps?
+from sktime.utils.validation.series_as_features import check_X
+
+__author__ = "Matthew Middlehurst"
 
 
 class SAX(BaseTransformer):
-    __author__ = "Matthew Middlehurst"
-    """ SAX (Symbolic Aggregate approXimation) Transformer, as described in 
+    """ SAX (Symbolic Aggregate approXimation) Transformer, as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
@@ -24,16 +27,22 @@ class SAX(BaseTransformer):
             discretise the shortened seried into fixed bins
             form a word from these discrete values     
     by default SAX produces a single word per series (window_size=0). 
-    SAX returns a pandas data frame where column 0 is the histogram (sparse pd.series)
+    SAX returns a pandas data frame where column 0 is the histogram (sparse
+    pd.series)
     of each series.
 
     Parameters
     ----------
-        word_length:         int, length of word to shorten window to (using PAA) (default 8)
-        alphabet_size:       int, number of values to discretise each value to (default to 4)
-        window_size:         int, size of window for sliding. If 0, uses the whole series (default to 0)
-        remove_repeat_words: boolean, whether to use numerosity reduction (default False)
-        save_words:          boolean, whether to use numerosity reduction (default False)
+        word_length:         int, length of word to shorten window to (using
+        PAA) (default 8)
+        alphabet_size:       int, number of values to discretise each value
+        to (default to 4)
+        window_size:         int, size of window for sliding. If 0, uses the
+        whole series (default to 0)
+        remove_repeat_words: boolean, whether to use numerosity reduction (
+        default False)
+        save_words:          boolean, whether to use numerosity reduction (
+        default False)
 
     Attributes
     ----------
@@ -43,6 +52,7 @@ class SAX(BaseTransformer):
         num_atts = 0
                     
             """
+
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
@@ -61,30 +71,31 @@ class SAX(BaseTransformer):
 
         self.num_insts = 0
         self.num_atts = 0
+        super(SAX, self).__init__()
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """
 
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, num_atts]
-            The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
+            The training input samples.  If a Pandas data frame is passed,
+            the column 0 is extracted
 
         Returns
         -------
         dims: Pandas data frame with first dimension in column zero
         """
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
+
         if self.alphabet_size < 2 or self.alphabet_size > 4:
-            raise RuntimeError("Alphabet size must be an integer between 2 and 4")
+            raise RuntimeError(
+                "Alphabet size must be an integer between 2 and 4")
         if self.word_length < 1 or self.word_length > 16:
-            raise RuntimeError("Word length must be an integer between 1 and 16")
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("SAX cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
-            else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects (TSF cannot yet handle multivariate problems")
+            raise RuntimeError(
+                "Word length must be an integer between 1 and 16")
 
         self.num_atts = X.shape[1]
 
@@ -104,7 +115,9 @@ class SAX(BaseTransformer):
             words = []
 
             num_windows_per_inst = self.num_atts - self.window_size + 1
-            split = np.array(X[i, np.arange(self.window_size)[None, :] + np.arange(num_windows_per_inst)[:, None]])
+            split = np.array(X[i, np.arange(self.window_size)[None,
+                                  :] + np.arange(num_windows_per_inst)[:,
+                                       None]])
 
             split = scipy.stats.zscore(split, axis=1)
 
@@ -124,11 +137,10 @@ class SAX(BaseTransformer):
             dim.append(pd.Series(bag))
 
         bags[0] = dim
-
         return bags
 
     def create_word(self, pattern):
-        word = BitWord()
+        word = _BitWord()
 
         for i in range(self.word_length):
             for bp in range(self.alphabet_size):
@@ -158,15 +170,20 @@ class SAX(BaseTransformer):
             6: [-0.97, -0.43, 0, 0.43, 0.97, sys.float_info.max],
             7: [-1.07, -0.57, -0.18, 0.18, 0.57, 1.07, sys.float_info.max],
             8: [-1.15, -0.67, -0.32, 0, 0.32, 0.67, 1.15, sys.float_info.max],
-            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22, sys.float_info.max],
-            10: [-1.28, -0.84, -0.52, -0.25, 0.0, 0.25, 0.52, 0.84, 1.28, sys.float_info.max]
+            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22,
+                sys.float_info.max],
+            10: [-1.28, -0.84, -0.52, -0.25, 0.0, 0.25, 0.52, 0.84, 1.28,
+                 sys.float_info.max]
         }[self.alphabet_size]
 
 
-class BitWord:
-    # Used to represent a word for dictionary based classifiers such as BOSS an BOP.
-    # Can currently only handle an alphabet size of <= 4 and word length of <= 16.
-    # Current literature shows little reason to go beyond this, but the class will need changes/expansions
+class _BitWord:
+    # Used to represent a word for dictionary based classifiers such as BOSS
+    # an BOP.
+    # Can currently only handle an alphabet size of <= 4 and word length of
+    # <= 16.
+    # Current literature shows little reason to go beyond this, but the
+    # class will need changes/expansions
     # if this is needed.
 
     def __init__(self,
@@ -175,7 +192,8 @@ class BitWord:
         self.word = word
         self.length = length
         self.bits_per_letter = 2  # this ^2 == max alphabet size
-        self.word_space = 32  # max amount of bits to be stored, max word length == this/bits_per_letter
+        self.word_space = 32  # max amount of bits to be stored, max word
+        # length == this/bits_per_letter
 
     def push(self, letter):
         # add letter to a word
@@ -192,8 +210,10 @@ class BitWord:
         word_list = []
         shift = self.word_space - (self.length * self.bits_per_letter)
 
-        for i in range(self.length-1, -1, -1):
-            word_list.append(self.right_shift(self.word << shift, self.word_space - self.bits_per_letter))
+        for i in range(self.length - 1, -1, -1):
+            word_list.append(self.right_shift(self.word << shift,
+                                              self.word_space -
+                                              self.bits_per_letter))
             shift += self.bits_per_letter
 
         return word_list
@@ -204,8 +224,8 @@ class BitWord:
         word_list = []
         shift = 32 - (length * 2)
 
-        for i in range(length-1, -1, -1):
-            word_list.append(BitWord.right_shift(word << shift, 32 - 2))
+        for i in range(length - 1, -1, -1):
+            word_list.append(_BitWord.right_shift(word << shift, 32 - 2))
             shift += 2
 
         return word_list
@@ -216,17 +236,17 @@ class BitWord:
 
 
 if __name__ == "__main__":
-    testPath="Z:\\ArchiveData\\Univariate_ts\\Chinatown\\Chinatown_TRAIN.ts"
-    train_x, train_y =  load_ts(testPath)
+    testPath = "Z:\\ArchiveData\\Univariate_ts\\Chinatown\\Chinatown_TRAIN.ts"
+    train_x, train_y = load_ts(testPath)
 
     print("Correctness testing for SAX using Chinatown")
     print("First case used for testing")
-    print(train_x.iloc[0,0])
-    p = SAX(window_size=0, alphabet_size=4,word_length=8,save_words=False)
-    print("Test 1: window_size =0, result should be single word for each series")
+    print(train_x.iloc[0, 0])
+    p = SAX(window_size=0, alphabet_size=4, word_length=8, save_words=False)
+    print(
+        "Test 1: window_size =0, result should be single word for each series")
     x2 = p.transform(train_x)
     print("Correct single series SAX for case 1: = b,a,a,b,d,d,d,b")
     print("Transform mean case 1: =")
-    word = BitWord.word_list(x2.iloc[0, 0].keys()[0], 8)
+    word = _BitWord.word_list(x2.iloc[0, 0].keys()[0], 8)
     print(word)
-

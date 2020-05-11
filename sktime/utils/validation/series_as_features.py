@@ -17,7 +17,7 @@ def check_X(X, enforce_univariate=False, enforce_min_instances=1):
 
     Parameters
     ----------
-    X : pandas DataFrame
+    X : pd.DataFrame
     enforce_univariate : bool, optional (default=False)
         Enforce that X is univariate.
     enforce_min_instances : int, optional (default=1)
@@ -25,7 +25,7 @@ def check_X(X, enforce_univariate=False, enforce_min_instances=1):
 
     Returns
     -------
-    None
+    X : pd.DataFrame
 
     Raises
     ------
@@ -33,14 +33,12 @@ def check_X(X, enforce_univariate=False, enforce_min_instances=1):
         If X is an invalid input
     """
     if not isinstance(X, pd.DataFrame):
-        raise ValueError(f"X must be a pandas.DataFrame, but found: "
+        raise ValueError(f"X must be a pd.DataFrame, but found: "
                          f"{(type(X))}")
     if enforce_univariate:
         _enforce_X_univariate(X)
-
     if enforce_min_instances > 0:
         _enforce_min_instances(X, min_instances=enforce_min_instances)
-
     return X
 
 
@@ -88,16 +86,16 @@ def check_X_y(X, y, enforce_univariate=False, enforce_min_instances=1):
 
     Returns
     -------
-    None
+    X : pd.DataFrame
+    y : pd.Series
 
     Raises
     ------
     ValueError
         If y is an invalid input
     """
-
-    check_X(X, enforce_univariate=enforce_univariate)
-    check_y(y)
+    X = check_X(X, enforce_univariate=enforce_univariate)
+    y = check_y(y)
     check_consistent_length(X, y)
 
     # Since we have already checked for consistent lengths, we only need to
@@ -128,7 +126,7 @@ def _enforce_X_univariate(X):
         raise ValueError(
             f"X must be univariate with X.shape[1] == 1, "
             f"but found: X.shape[1] == {X.shape[1]}. For "
-            f"multivariate problems please use compositor classes. "
+            f"multivariate problems please consider compositor classes. "
             f"Estimator-specific multivariate approaches are "
             f"not implemented yet.")
 
@@ -143,5 +141,5 @@ def _enforce_min_instances(x, min_instances=1):
     if min_instances > 0:
         if n_instances < min_instances:
             raise ValueError(
-                f"Found array with {n_instances} instances(s) "
+                f"Found array with {n_instances} instance(s) "
                 f"but a minimum of {min_instances} is required.")

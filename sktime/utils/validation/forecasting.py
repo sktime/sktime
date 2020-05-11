@@ -9,19 +9,16 @@ __all__ = [
     "check_time_index",
     "check_consistent_time_index",
     "check_alpha",
-    "check_is_fitted_in_transform",
     "check_fh_values",
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "check_is_fitted",
     "check_fh_is_relative"
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
-from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation import is_int
 
 
@@ -66,12 +63,15 @@ def check_y(y, allow_empty=False, allow_constant=True):
     """
     # Check if pandas series or numpy array
     if not isinstance(y, pd.Series):
-        raise TypeError(f"`y` must be a pandas Series, but found type: {type(y)}")
+        raise TypeError(
+            f"`y` must be a pandas Series, but found type: {type(y)}")
 
     # check that series is not empty
     if not allow_empty:
         if len(y) < 1:
-            raise ValueError(f"`y` must contain at least some observations, but found empty series: {y}")
+            raise ValueError(
+                f"`y` must contain at least some observations, but found "
+                f"empty series: {y}")
 
     if not allow_constant:
         if np.all(y == y.iloc[0]):
@@ -120,11 +120,13 @@ def check_time_index(time_index):
     supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
     if not isinstance(time_index, supported_index_types):
         raise NotImplementedError(f"{type(time_index)} is not supported, "
-                                  f"please use one of {supported_index_types} instead.")
+                                  f"please use one of "
+                                  f"{supported_index_types} instead.")
 
     if not time_index.is_monotonic:
-        raise ValueError(f"Time index must be sorted (monotonically increasing), "
-                         f"but found: {time_index}")
+        raise ValueError(
+            f"Time index must be sorted (monotonically increasing), "
+            f"but found: {time_index}")
 
     return time_index
 
@@ -148,24 +150,32 @@ def check_X(X):
     if not isinstance(X, pd.DataFrame):
         raise ValueError(f"`X` must a pandas DataFrame, but found: {type(X)}")
     if X.shape[0] > 1:
-        raise ValueError(f"`X` must consist of a single row, but found: {X.shape[0]} rows")
+        raise ValueError(
+            f"`X` must consist of a single row, but found: {X.shape[0]} rows")
 
     # Check if index is the same for all columns.
 
     # Get index from first row, can be either pd.Series or np.array.
-    first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+    first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0],
+                                                'index') else pd.RangeIndex(
+        X.iloc[0, 0].shape[0])
 
-    # Series must contain now least 2 observations, otherwise should be primitive.
+    # Series must contain now least 2 observations, otherwise should be
+    # primitive.
     if len(first_index) < 1:
-        raise ValueError(f'Time series must contain now least 2 observations, but found: '
-                         f'{len(first_index)} observations in column: {X.columns[0]}')
+        raise ValueError(
+            f'Time series must contain now least 2 observations, but found: '
+            f'{len(first_index)} observations in column: {X.columns[0]}')
 
     # Compare with remaining columns
     for c, col in enumerate(X.columns):
-        index = X.iloc[0, c].index if hasattr(X.iloc[0, c], 'index') else pd.RangeIndex(X.iloc[0, 0].shape[0])
+        index = X.iloc[0, c].index if hasattr(X.iloc[0, c],
+                                              'index') else pd.RangeIndex(
+            X.iloc[0, 0].shape[0])
         if not np.array_equal(first_index, index):
-            raise ValueError(f'Found time series with unequal index in column {col}. '
-                             f'Input time-series must have the same index.')
+            raise ValueError(
+                f'Found time series with unequal index in column {col}. '
+                f'Input time-series must have the same index.')
 
     return X
 
@@ -174,8 +184,9 @@ def check_window_length(window_length):
     """Validate window length"""
     if window_length is not None:
         if not is_int(window_length) or window_length < 1:
-            raise ValueError(f"`window_length_` must be a positive integer >= 1 or None, "
-                             f"but found: {window_length}")
+            raise ValueError(
+                f"`window_length_` must be a positive integer >= 1 or None, "
+                f"but found: {window_length}")
     return window_length
 
 
@@ -183,8 +194,9 @@ def check_step_length(step_length):
     """Validate window length"""
     if step_length is not None:
         if not is_int(step_length) or step_length < 1:
-            raise ValueError(f"`step_length` must be a positive integer >= 1 or None, "
-                             f"but found: {step_length}")
+            raise ValueError(
+                f"`step_length` must be a positive integer >= 1 or None, "
+                f"but found: {step_length}")
     return step_length
 
 
@@ -240,42 +252,6 @@ def check_fh_is_relative(fh):
     from sktime.forecasting import FH
     if isinstance(fh, FH) and not fh.is_relative:
         raise TypeError("`fh` must be relative, but found absolute `fh`")
-
-
-def check_is_fitted_in_transform(estimator, attributes, msg=None, all_or_any=all):
-    """Checks if the estimator is fitted during transform by verifying the presence of
-    "all_or_any" of the passed attributes and raises a NotFittedError with the
-    given message.
-
-    Parameters
-    ----------
-    estimator : estimator instance.
-        estimator instance for which the check is performed.
-    attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg.:
-            ``["coef_", "estimator_", ...], "coef_"``
-    msg : string
-        The default error message is, "This %(name)s instance is not fitted
-        yet. Call 'fit' with appropriate arguments before using this method."
-        For custom messages if "%(name)s" is present in the message string,
-        it is substituted for the estimator name.
-        Eg. : "Estimator, %(name)s, must be fitted before sparsifying".
-    all_or_any : callable, {all, any}, default all
-        Specify whether all or any of the given attributes must exist.
-    Returns
-    -------
-    None
-
-    Raises
-    ------
-    NotFittedError
-        If the attributes are not found.    
-    """
-    if msg is None:
-        msg = ("This %(name)s instance has not been fitted yet. Call 'transform' with "
-               "appropriate arguments before using this method.")
-
-    check_is_fitted(estimator, attributes=attributes, msg=msg, all_or_any=all_or_any)
 
 
 def check_consistent_time_index(*ys, y_train=None):
@@ -338,7 +314,8 @@ def check_alpha(alpha):
 
 def check_cutoffs(cutoffs):
     if not isinstance(cutoffs, np.ndarray):
-        raise ValueError(f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
+        raise ValueError(
+            f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
 
     if not all([is_int(cutoff) for cutoff in cutoffs]):
         raise ValueError("All cutoff points must be integers")
@@ -353,7 +330,8 @@ def check_cutoffs(cutoffs):
 
 
 def check_scoring(scoring):
-    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
+    from sktime.performance_metrics.forecasting._classes import \
+        MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
 
     if scoring is None:
@@ -364,7 +342,8 @@ def check_scoring(scoring):
 
     allowed_base_class = MetricFunctionWrapper
     if not isinstance(scoring, allowed_base_class):
-        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
+        raise TypeError(
+            f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
 

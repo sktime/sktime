@@ -2,12 +2,15 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
-__all__ = ["TEST_CONSTRUCT_CONFIG_LOOKUP"]
+__all__ = [
+    "TEST_CONSTRUCT_CONFIG_LOOKUP"
+]
 
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
@@ -36,7 +39,7 @@ TRANSFORMERS = [
     ("t2", TRANSFORMER),
 ]
 REGRESSOR = LinearRegression()
-TIME_SERIES_CLASSIFIER = TimeSeriesForest()
+TIME_SERIES_CLASSIFIER = TimeSeriesForest(random_state=1)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER)
@@ -75,8 +78,8 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     SingleSeriesTransformAdaptor:
         {"transformer": StandardScaler()},
     ColumnEnsembleClassifier:
-        {"estimators": [(name, estimator, i) for i, (name, estimator) in
-                        enumerate(TIME_SERIES_CLASSIFIERS)]},
+        {"estimators": [(name, estimator, 0) for (name, estimator) in
+                        TIME_SERIES_CLASSIFIERS]},
     FittedParamExtractor:
         {"forecaster": FORECASTER, "param_names": ["smoothing_level"]},
     RowTransformer:
@@ -88,5 +91,6 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     # predictions when d > start where start = 0 for full in-sample
     # predictions
     AutoARIMA:
-        {"max_D": 0}
+        {"max_D": 0, "suppress_warnings": True},
+    ShapeletTransformClassifier: {"time_contract_in_mins": 0.1}
 }

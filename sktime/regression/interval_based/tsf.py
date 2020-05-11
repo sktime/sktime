@@ -13,25 +13,32 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
-from sklearn.utils._joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sktime.base import MetaEstimatorMixin
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.compose.ensemble import _parallel_build_trees
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X_y
 
 
-class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegressor):
+class TimeSeriesForestRegressor(BaseRegressor, ForestRegressor,
+                                MetaEstimatorMixin):
     """Time-Series Forest Regressor.
 
-    A time series forest is a meta estimator and an adaptation of the random forest
-    for time-series/panel data that fits a number of decision tree classifiers on
-    various sub-samples of a transformed dataset and uses averaging to improve the
-    predictive accuracy and control over-fitting. The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if `bootstrap=True` (default).
+    A time series forest is a meta estimator and an adaptation of the random
+    forest
+    for time-series/panel data that fits a number of decision tree
+    classifiers on
+    various sub-samples of a transformed dataset and uses averaging to
+    improve the
+    predictive accuracy and control over-fitting. The sub-sample size is
+    always the same as the original
+    input sample size but the samples are drawn with replacement if
+    `bootstrap=True` (default).
 
     Parameters
     ----------
@@ -180,21 +187,27 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
-                 warm_start=False,
-                 check_input=True):
+                 warm_start=False):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
+            steps = [('transform',
+                      RandomIntervalFeatureExtractor(n_intervals='sqrt',
+                                                     features=features)),
                      ('clf', DecisionTreeRegressor())]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
-            raise ValueError('Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeRegressor):
-            raise ValueError('Last step in base estimator pipeline must be DecisionTreeRegressor.')
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1],
+                            DecisionTreeRegressor):
+            raise ValueError(
+                'Last step in base estimator pipeline must be '
+                'DecisionTreeRegressor.')
 
-        # Assign values, even though passed on to base estimator below, necessary here for cloning
+        # Assign values, even though passed on to base estimator below,
+        # necessary here for cloning
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -218,7 +231,8 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
             "min_impurity_decrease": min_impurity_decrease,
             "min_impurity_split": min_impurity_split,
         }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in
+                            estimator_params.items()}
 
         # Pass on params.
         super(TimeSeriesForestRegressor, self).__init__(
@@ -234,12 +248,12 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         )
 
         # Assign random state to pipeline.
-        base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
+        base_estimator.set_params(
+            **{'random_state': random_state})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
-        self.check_input = check_input
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -264,7 +278,7 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         -------
         self : object
         """
-        check_X_y(X, y)
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # Validate or convert input data
         if sample_weight is not None:
@@ -338,8 +352,10 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
             # Parallel loop: for standard random forests, the threading
             # backend is preferred as the Cython code for fitting the trees
             # is internally releasing the Python GIL making threading more
-            # efficient than multiprocessing in that case. However, in this case,
-            # for fitting pipelines in parallel, multiprocessing is more efficient.
+            # efficient than multiprocessing in that case. However, in this
+            # case,
+            # for fitting pipelines in parallel, multiprocessing is more
+            # efficient.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
@@ -352,6 +368,7 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         if self.oob_score:
             self._set_oob_score(X, y)
 
+        self._is_fitted = True
         return self
 
     def predict(self, X):
@@ -369,9 +386,8 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        check_is_fitted(self, 'estimators_')
-        # Check data
-        check_X(X)
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -379,7 +395,7 @@ class TimeSeriesForestRegressor(MetaEstimatorMixin, ForestRegressor, BaseRegress
 
         # Parallel loop
         y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict)(X, check_input=True) for e in self.estimators_)
+            delayed(e.predict)(X) for e in self.estimators_)
 
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 

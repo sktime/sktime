@@ -9,7 +9,7 @@ import pickle
 import types
 from copy import deepcopy
 from inspect import signature
-
+from sktime.utils.testing import TEST_CONSTRUCT_CONFIG_LOOKUP
 import joblib
 import numpy as np
 import pytest
@@ -78,11 +78,14 @@ def yield_estimator_checks():
 
 def check_meta_estimator(Estimator):
     # Check common meta-estimator interface
-    estimator = _construct_instance(Estimator)
-    if hasattr(estimator, "_required_parameters"):
-        params = getattr(estimator, "_required_parameters")
-        assert isinstance(params, list)
-        assert all([isinstance(param, str) for param in params])
+    if hasattr(Estimator, "_required_parameters"):
+        params = getattr(Estimator, "_required_parameters")
+        assert isinstance(params, list), (
+            f"For estimator: {Estimator}, `_required_parameters` must be a "
+            f"list, but found type: {type(params)}")
+        assert all([isinstance(param, str) for param in params]), (
+            f"For estimator: {Estimator}, elements of `_required_parameters` "
+            f"list must be strings")
 
 
 def check_inheritance(Estimator):
@@ -96,9 +99,13 @@ def check_inheritance(Estimator):
         BaseForecaster,
         BaseTransformer
     ]
-    assert issubclass(Estimator, BaseEstimator)
+    assert issubclass(Estimator, BaseEstimator), (f"Estimator: {Estimator} "
+                                                  f"is not a sub-class of "
+                                                  f"BaseEstimator.")
     assert sum([issubclass(Estimator, base_class) for base_class in
-                base_classes]) == 1
+                base_classes]) == 1, (f"Estimator: {Estimator} is a "
+                                      f"sub-class of more than one "
+                                      f"task-specific base estimators.")
 
     # Instance type checks
     is_type_checks = [
@@ -108,9 +115,13 @@ def check_inheritance(Estimator):
         is_transformer
     ]
     estimator = _construct_instance(Estimator)
-    assert isinstance(estimator, BaseEstimator)
+    assert isinstance(estimator, BaseEstimator), (
+        f"Estimator: {estimator.__class__.__name__} "
+        f"does not an instance of BaseEstimator.")
     assert sum([is_type_check(estimator) for is_type_check in
-                is_type_checks]) == 1
+                is_type_checks]) == 1, (
+        f"Estimator: {estimator.__class__.__name__} is an instance of more "
+        f"than one task-specific base estimators.")
 
 
 def check_has_common_interface(Estimator):
@@ -130,7 +141,10 @@ def check_has_common_interface(Estimator):
         "get_params"
     ]
     for attr in common_attrs:
-        assert hasattr(estimator, attr)
+        assert hasattr(estimator, attr), (
+            f"Estimator: {estimator.__class__.__name__} does not implement "
+            f"attribute: {attr}"
+        )
     assert (hasattr(estimator, "predict")
             or hasattr(estimator, "transform"))
 
@@ -176,7 +190,7 @@ def check_constructor(Estimator):
     assert not invalid_attr, (
             "Estimator %s should store all parameters"
             " as an attribute during init. Did not find "
-            "attributes %s."
+            "attributes `%s`."
             % (estimator.__class__.__name__, sorted(invalid_attr)))
 
     # Ensure that init does nothing but set parameters
@@ -192,13 +206,19 @@ def check_constructor(Estimator):
 
     params = estimator.get_params()
 
+    # Filter out required parameters with no default value and parameters
+    # set for running tests
     required_params = getattr(estimator, '_required_parameters', [])
+    test_config_params = TEST_CONSTRUCT_CONFIG_LOOKUP.get(Estimator, {}).keys()
+
     init_params = [param for param in init_params if
-                   param not in required_params]
+                   param.name not in required_params and
+                   param.name not in test_config_params]
 
     for param in init_params:
         assert param.default != param.empty, (
-                "parameter %s for %s has no default value"
+                "parameter `%s` for %s has no default value and is not "
+                "included in `_required_parameters`"
                 % (param.name, estimator.__class__.__name__))
         if type(param.default) is type:
             assert param.default in [np.float64, np.int64]
@@ -335,7 +355,7 @@ def check_non_state_changing_methods_do_not_change_state(Estimator):
         if hasattr(estimator, method):
             args = _make_args(estimator, method)
             dict_before = estimator.__dict__.copy()
-            getattr(estimator, method)(args)
+            getattr(estimator, method)(*args)
             assert estimator.__dict__ == dict_before, (
                 f"Estimator: {estimator} changes __dict__ during {method}")
 
@@ -347,6 +367,7 @@ def check_persistence_via_pickle(Estimator):
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
+    # Generate results before pickling
     results = dict()
     args = dict()
     for method in NON_STATE_CHANGING_METHODS:
@@ -356,12 +377,11 @@ def check_persistence_via_pickle(Estimator):
 
     # Pickle and unpickle
     pickled_estimator = pickle.dumps(estimator)
-    if estimator.__module__.startswith('sktime.'):
-        assert b"version" in pickled_estimator
+    # if estimator.__module__.startswith('sktime.'):
+    #     assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
+    # Compare against results after pickling
     for method in results:
-        unpickled_result = getattr(unpickled_estimator, method)(args[method])
+        unpickled_result = getattr(unpickled_estimator, method)(*args[method])
         np.testing.assert_array_almost_equal(results[method], unpickled_result)
-
-

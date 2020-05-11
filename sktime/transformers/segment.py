@@ -1,13 +1,12 @@
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
-from sktime.utils.validation import check_is_fitted
-
 from sktime.transformers.base import BaseTransformer
-from sktime.utils.data_container import check_equal_index, tabularize, concat_nested_arrays
-from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
+from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import get_time_index
+from sktime.utils.data_container import tabularize
 from sktime.utils.time_series import compute_relative_to_n_timepoints
+from sktime.utils.validation.series_as_features import check_X
 
 
 class IntervalSegmenter(BaseTransformer):
@@ -16,10 +15,12 @@ class IntervalSegmenter(BaseTransformer):
 
     Parameters
     ----------
-    intervals : int, np.ndarray or list of np.ndarrays with one for each column of input data.
+    intervals : int, np.ndarray or list of np.ndarrays with one for each
+    column of input data.
         Intervals to generate.
         - If int, intervals are generated.
-        - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving intervals, the first column giving start points,
+        - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving
+        intervals, the first column giving start points,
         and the second column giving end points of intervals
     """
 
@@ -27,6 +28,7 @@ class IntervalSegmenter(BaseTransformer):
         self.intervals = intervals
         self._time_index = []
         self.input_shape_ = ()
+        super(IntervalSegmenter, self).__init__()
 
     def fit(self, X, y=None):
         """
@@ -43,9 +45,7 @@ class IntervalSegmenter(BaseTransformer):
         -------
         self : an instance of self.
         """
-
-        check_X(X)
-        _enforce_X_univariate(X)
+        X = check_X(X, enforce_univariate=True)
 
         self.input_shape_ = X.shape
 
@@ -59,14 +59,16 @@ class IntervalSegmenter(BaseTransformer):
             self.intervals_ = np.array_split(self._time_index, self.intervals)
 
         else:
-            raise ValueError(f"Intervals must be either an integer, an array with "
-                             f"start and end points, but found: {self.intervals}")
-
+            raise ValueError(
+                f"Intervals must be either an integer, an array with "
+                f"start and end points, but found: {self.intervals}")
+        self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
         """
-        Transform X, segments time-series in each column into random intervals using interval indices generated
+        Transform X, segments time-series in each column into random
+        intervals using interval indices generated
         during `fit`.
 
         Parameters
@@ -77,29 +79,35 @@ class IntervalSegmenter(BaseTransformer):
         Returns
         -------
         Xt : pandas DataFrame
-          Transformed pandas DataFrame with same number of rows and one column for each generated interval.
+          Transformed pandas DataFrame with same number of rows and one
+          column for each generated interval.
         """
 
         # Check inputs.
-        check_is_fitted(self, 'intervals_')
-        check_X(X)
+        self.check_is_fitted()
+        X = check_X(X)
 
         # Check that the input is of the same shape as the one passed
         # during fit.
         if X.shape[1] != self.input_shape_[1]:
-            raise ValueError('Number of columns of input is different from what was seen'
-                             'in `fit`')
+            raise ValueError(
+                'Number of columns of input is different from what was seen'
+                'in `fit`')
         # # Input validation
         # if not all([np.array_equal(fit_idx, trans_idx)
-        #             for trans_idx, fit_idx in zip(check_equal_index(X), self._time_index)]):
-        #     raise ValueError('Indexes of input time-series are different from what was seen in `fit`')
+        #             for trans_idx, fit_idx in zip(check_equal_index(X),
+        #             self._time_index)]):
+        #     raise ValueError('Indexes of input time-series are different
+        #     from what was seen in `fit`')
 
         # Segment into intervals.
         # TODO generalise to non-equal-index cases
         intervals = []
         colname = X.columns[0]
         colnames = []
-        arr = tabularize(X, return_array=True)  # Tabularise assuming series have equal indexes in any given column
+        # Tabularise assuming series
+        arr = tabularize(X,return_array=True)
+        # have equal indexes in any given column
         for start, end in self.intervals_:
             interval = arr[:, start:end]
             intervals.append(interval)
@@ -112,7 +120,8 @@ class IntervalSegmenter(BaseTransformer):
 
 
 class RandomIntervalSegmenter(IntervalSegmenter):
-    """Transformer that segments time-series into random intervals with random starting points and lengths. Some
+    """Transformer that segments time-series into random intervals with
+    random starting points and lengths. Some
     intervals may overlap and may be duplicates.
 
     Parameters
@@ -123,10 +132,12 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         - If "sqrt", sqrt of m is used.
         - If "random", random number of intervals is generated.
         - If int, n_intervals intervals are generated.
-        - If float, int(n_intervals * m) is used with n_intervals giving the fraction of intervals of the
+        - If float, int(n_intervals * m) is used with n_intervals giving the
+        fraction of intervals of the
         time series length.
 
-        For all arguments relative to the length of the time series, the generated number of intervals is
+        For all arguments relative to the length of the time series,
+        the generated number of intervals is
         always at least 1.
 
         Default is "sqrt".
@@ -185,8 +196,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             This estimator
         """
 
-        check_X(X)
-
+        X = check_X(X)
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
@@ -194,19 +204,23 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self._time_index = get_time_index(X)
 
         # Compute random intervals for each column.
-        # TODO if multiple columns are passed, introduce option to compute one set of shared intervals,
+        # TODO if multiple columns are passed, introduce option to compute
+        #  one set of shared intervals,
         #  or rely on ColumnTransformer?
         if self.n_intervals == 'random':
             self.intervals_ = self._rand_intervals_rand_n(self._time_index)
         else:
-            self.intervals_ = self._rand_intervals_fixed_n(self._time_index, n_intervals=self.n_intervals)
-
+            self.intervals_ = self._rand_intervals_fixed_n(
+                self._time_index,
+                n_intervals=self.n_intervals)
+        self._is_fitted = True
         return self
 
     def _rand_intervals_rand_n(self, x):
         """
         Compute a random number of intervals from index (x) with
-        random starting points and lengths. Intervals are unique, but may overlap.
+        random starting points and lengths. Intervals are unique, but may
+        overlap.
 
         Parameters
         ----------
@@ -219,7 +233,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         References
         ----------
-        ..[1] Deng, Houtao, et al. "A time series forest for classification and feature extraction."
+        ..[1] Deng, Houtao, et al. "A time series forest for classification
+        and feature extraction."
             Information Sciences 239 (2013): 142-153.
         """
 
@@ -239,7 +254,8 @@ class RandomIntervalSegmenter(IntervalSegmenter):
     def _rand_intervals_fixed_n(self, x, n_intervals):
         """
         Compute a fixed number (n) of intervals from index (x) with
-        random starting points and lengths. Intervals may overlap and may not be unique.
+        random starting points and lengths. Intervals may overlap and may
+        not be unique.
 
         Parameters
         ----------
@@ -255,12 +271,17 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         n_timepoints = len(x)
         # compute number of random intervals relative to series length (m)
-        # TODO use smarter dispatch at construction to avoid evaluating if-statements here each time function is called
-        n_intervals = compute_relative_to_n_timepoints(n_timepoints, n=n_intervals)
+        # TODO use smarter dispatch at construction to avoid evaluating
+        #  if-statements here each time function is called
+        n_intervals = compute_relative_to_n_timepoints(n_timepoints,
+                                                       n=n_intervals)
 
         # get start and end points of intervals
-        starts = self._rng.randint(n_timepoints - self.min_length + 1, size=n_intervals)
+        starts = self._rng.randint(n_timepoints - self.min_length + 1,
+                                   size=n_intervals)
         if n_intervals == 1:
             starts = [starts]  # make it an iterable
-        ends = [start + self._rng.randint(self.min_length, n_timepoints - start + 1) for start in starts]
+        ends = [start + self._rng.randint(self.min_length,
+                                          n_timepoints - start + 1) for start
+                in starts]
         return np.column_stack([starts, ends])

@@ -9,27 +9,29 @@ __all__ = ["ColumnEnsembleClassifier"]
 from itertools import chain
 
 import numpy as np
+from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 
 
-class BaseColumnEnsembleClassifier(BaseClassifier):
+class BaseColumnEnsembleClassifier(BaseClassifier,
+                                   BaseHeterogenousMetaEstimator):
 
-    def __init__(self, verbose=False):
+    def __init__(self, estimators, verbose=False):
         self.verbose = verbose
-        self.estimators = None
+        self.estimators = estimators
         self.remainder = "drop"
         super(BaseColumnEnsembleClassifier, self).__init__()
 
     @property
     def _estimators(self):
-        return [(name, estim) for name, estim, _ in self.estimators]
+        return [(name, estimator) for name, estimator, _ in self.estimators]
 
     @_estimators.setter
     def _estimators(self, value):
         self.estimators = [
-            (name, estim, col) for ((name, estim), (_, _, col))
+            (name, estimator, col) for ((name, estimator), (_, _, col))
             in zip(value, self.estimators)]
 
     def _validate_estimators(self):
@@ -45,10 +47,11 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
             if t == 'drop':
                 continue
             if not (hasattr(t, "fit") or hasattr(t, "predict_proba")):
-                raise TypeError("All estimators should implement fit and predict proba"
-                                "or can be 'drop' "
-                                "specifiers. '%s' (type %s) doesn't." %
-                                (t, type(t)))
+                raise TypeError(
+                    "All estimators should implement fit and predict proba"
+                    "or can be 'drop' "
+                    "specifiers. '%s' (type %s) doesn't." %
+                    (t, type(t)))
 
     # this check whether the column input was a slice object or a tuple.
     def _validate_column_callables(self, X):
@@ -69,9 +72,11 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
         """
         is_estimator = (hasattr(self.remainder, "fit")
                         or hasattr(self.remainder, "predict_proba"))
-        if (self.remainder not in ('drop')
+        if (self.remainder != 'drop'
                 and not is_estimator):
-            raise ValueError("The remainder keyword needs to be 'drop', '%s' was passed instead" % self.remainder)
+            raise ValueError(
+                "The remainder keyword needs to be 'drop', '%s' was passed "
+                "instead" % self.remainder)
 
         n_columns = X.shape[1]
         cols = []
@@ -83,7 +88,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
 
     def _iter(self, replace_strings=False):
         """
-        Generate (name, trans, column, weight) tuples.
+        Generate (name, estimator, column) tuples.
 
         If fitted=True, use the fitted transformers, else use the
         user specified transformers updated with converted column names
@@ -91,32 +96,38 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
 
         """
 
-        # interleave the validated column specifiers
-        estimators = [
-            (name, estims, column) for (name, estims, _), column
-            in zip(self.estimators, self._columns)
-        ]
+        if self.is_fitted:
+            estimators = self.estimators_
+        else:
+            # interleave the validated column specifiers
+            estimators = [
+                (name, estimator, column) for
+                (name, estimator, _), column
+                in zip(self.estimators, self._columns)
+            ]
+
         # add transformer tuple for remainder
         if self._remainder[2] is not None:
             estimators = chain(estimators, [self._remainder])
 
-        for name, trans, column in estimators:
+        for name, estimator, column in estimators:
             if replace_strings:
                 # skip in case of 'drop'
-                if trans == 'drop':
+                if estimator == 'drop':
                     continue
                 elif _is_empty_column_selection(column):
                     continue
 
-            yield (name, trans, column)
+            yield name, estimator, column
 
-    def fit(self, X, y, input_checks=True):
+    def fit(self, X, y):
         # the data passed in could be an array of dataframes?
         """Fit all estimators, fit the data
 
         Parameters
         ----------
-        X : array-like or DataFrame of shape [n_samples, n_dimensions, n_length]
+        X : array-like or DataFrame of shape [n_samples, n_dimensions,
+        n_length]
             Input data, of which specified subsets are used to fit the
             transformers.
 
@@ -124,7 +135,6 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
             Targets for supervised learning.
 
         """
-
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError('Invalid `estimators` attribute, `estimators`'
                                  ' should be a list of (string, estimator)'
@@ -139,38 +149,39 @@ class BaseColumnEnsembleClassifier(BaseClassifier):
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
 
-        for name, estim, column in self._iter(replace_strings=True):
-            estim.fit(_get_column(X, column), transformed_y)
+        estimators_ = []
+        for name, estimator, column in self._iter(replace_strings=True):
+            estimator = clone(estimator)
+            estimator.fit(_get_column(X, column),
+                          transformed_y)
+            estimators_.append((name, estimator, column))
 
+        self.estimators_ = estimators_
+        self._is_fitted = True
         return self
 
     def _collect_probas(self, X):
         return np.asarray(
-            [estim.predict_proba(_get_column(X, column)) for (name, estim, column) in self._iter(replace_strings=True)])
+            [estimator.predict_proba(_get_column(X, column)) for
+             (name, estimator, column) in self._iter(replace_strings=True)])
 
-    # TODO: check if it is fitted
-    def predict_proba(self, X, input_checks=True):
+    def predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
+        self.check_is_fitted()
         avg = np.average(self._collect_probas(X), axis=0)
         return avg
 
-    def _predict(self, X):
-        """Collect results from clf.predict calls. """
-        return np.asarray(
-            [estim.predict_proba(_get_column(X, column)) for (name, estim, column) in self._iter(replace_strings=True)])
-
-    def predict(self, X, input_checks=True):
+    def predict(self, X):
         maj = np.argmax(self.predict_proba(X), axis=1)
         return self.le_.inverse_transform(maj)
 
 
-class ColumnEnsembleClassifier(BaseHeterogenousMetaEstimator, BaseColumnEnsembleClassifier):
-    _required_parameters = ["estimators"]
-
+class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
     """Applies estimators to columns of an array or pandas DataFrame.
 
         This estimator allows different columns or column subsets of the input
-        to be transformed separately and the features generated by each transformer
+        to be transformed separately and the features generated by each
+        transformer
         will be ensembled to form a single output.
 
         Parameters
@@ -180,8 +191,10 @@ class ColumnEnsembleClassifier(BaseHeterogenousMetaEstimator, BaseColumnEnsemble
             transformer objects to be applied to subsets of the data.
 
             name : string
-                Like in Pipeline and FeatureUnion, this allows the transformer and
-                its parameters to be set using ``set_params`` and searched in grid
+                Like in Pipeline and FeatureUnion, this allows the
+                transformer and
+                its parameters to be set using ``set_params`` and searched
+                in grid
                 search.
             Estimator : estimator or {'drop'}
                 Estimator must support `fit` and `predict_proba`. Special-cased
@@ -195,7 +208,8 @@ class ColumnEnsembleClassifier(BaseHeterogenousMetaEstimator, BaseColumnEnsemble
             By default, only the specified columns in `transformers` are
             transformed and combined in the output, and the non-specified
             columns are dropped. (default of ``'drop'``).
-            By specifying ``remainder='passthrough'``, all remaining columns that
+            By specifying ``remainder='passthrough'``, all remaining columns
+            that
             were not specified in `transformers` will be automatically passed
             through. This subset of columns is concatenated with the output of
             the transformers.
@@ -205,10 +219,11 @@ class ColumnEnsembleClassifier(BaseHeterogenousMetaEstimator, BaseColumnEnsemble
 
     """
 
+    _required_parameters = ["estimators"]
+
     def __init__(self, estimators, remainder='drop', verbose=False):
-        super(ColumnEnsembleClassifier, self).__init__(verbose=verbose)
-        self.estimators = estimators
         self.remainder = remainder
+        super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -267,29 +282,21 @@ def _get_column(X, key):
         column_names = True
     elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool_):
         # boolean mask
-        column_names = False
-        if hasattr(X, 'loc'):
-            # pandas boolean masks don't work with iloc, so take loc path
-            column_names = True
+        column_names = True
     else:
         raise ValueError("No valid specification of the columns. Only a "
                          "scalar, list or slice of all integers or all "
                          "strings, or boolean mask is allowed")
 
+    # ensure that pd.DataFrame is returned rather than
+    # pd.Series
+    if isinstance(key, (int, str)):
+        key = [key]
+
     if column_names:
-        if hasattr(X, 'loc'):
-            # pandas dataframes
-            return X.loc[:, key]
-        else:
-            raise ValueError("Specifying the columns using strings is only "
-                             "supported for pandas DataFrames")
+        return X.loc[:, key]
     else:
-        if hasattr(X, 'iloc'):
-            # pandas dataframes
-            return X.iloc[:, key]
-        else:
-            # numpy arrays, sparse arrays
-            return X[:, key]
+        return X.iloc[:, key]
 
 
 def _check_key_type(key, superclass):

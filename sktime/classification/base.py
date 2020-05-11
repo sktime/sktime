@@ -12,8 +12,6 @@ class BaseClassifier(BaseEstimator):
     Base class for classifiers, for identification.
     """
     _estimator_type = "classifier"
-    label_encoder = None
-    random_state = None
 
     def fit(self, X, y):
         raise NotImplementedError("abstract method")
@@ -21,7 +19,7 @@ class BaseClassifier(BaseEstimator):
     def predict_proba(self, X):
         raise NotImplementedError("abstract method")
 
-    def predict(self, X, input_checks=True):
+    def predict(self, X):
         """
         classify instances
         ----
@@ -37,9 +35,8 @@ class BaseClassifier(BaseEstimator):
         predictions : 1d numpy array
             array of predictions of each instance (class value)
         """
-        if input_checks:
-            check_X(X)
-        distributions = self.predict_proba(X, input_checks=False)
+        X = check_X(X)
+        distributions = self.predict_proba(X)
         predictions = []
         for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]

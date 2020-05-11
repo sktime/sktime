@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.compose import Tabulariser
-from sktime.utils.validation.series_as_features import check_X, _enforce_X_univariate
+from sktime.utils.validation.series_as_features import check_X
+
 
 def sliding_dot_products(q, t, q_len, t_len):
     """
@@ -28,23 +29,25 @@ def sliding_dot_products(q, t, q_len, t_len):
     # Reversing query and padding both query and time series
     t_padded = np.pad(t, (0, t_len))
     q_reversed = np.flipud(q)
-    q_reversed_padded = np.pad(q_reversed, (0, 2*t_len-q_len))
+    q_reversed_padded = np.pad(q_reversed, (0, 2 * t_len - q_len))
 
     # Applying FFT to both query and time series
     t_fft = np.fft.fft(t_padded)
     q_fft = np.fft.fft(q_reversed_padded)
 
-    # Applying inverse FFT to obtain the convolution of the time series by the query
+    # Applying inverse FFT to obtain the convolution of the time series by
+    # the query
     element_wise_mult = np.multiply(t_fft, q_fft)
     inverse_fft = np.fft.ifft(element_wise_mult)
 
     # Returns only the valid dot products from inverse_fft
-    dot_prod = inverse_fft[q_len-1:t_len].real
+    dot_prod = inverse_fft[q_len - 1:t_len].real
 
     return dot_prod
 
 
-def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_t_subs):
+def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len,
+                               n_t_subs):
     """
         Calculates the distance profile for the given query.
 
@@ -57,9 +60,11 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
             q_std: float
                 Standard deviation of elements of the query.
             t_mean: numpy.array
-                Array with the mean of the elements from each subsequence of length(query) from the time series.
+                Array with the mean of the elements from each subsequence of
+                length(query) from the time series.
             t_std: numpy.array
-                Array with the standard deviation of the elements from each subsequence of length(query) from the time series.
+                Array with the standard deviation of the elements from each
+                subsequence of length(query) from the time series.
             q_len: int
                 Length of the query.
             n_t_subs: int
@@ -71,7 +76,8 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
                 Distance profile of query q.
     """
 
-    d = [2 * q_len * (1 - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (q_len * q_std * t_std[i]))) for i in range(0, n_t_subs)]
+    d = [2 * q_len * (1 - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (
+            q_len * q_std * t_std[i]))) for i in range(0, n_t_subs)]
     d = np.absolute(d)
     d = np.sqrt(d)
 
@@ -80,7 +86,8 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
 
 def minimum_distance(mp, ip, dp, i, m, dp_len):
     """
-        Finds the minimum distance in the distance profile, considering the exclusion zone.
+        Finds the minimum distance in the distance profile, considering the
+        exclusion zone.
 
         Parameters
         ----------
@@ -100,9 +107,11 @@ def minimum_distance(mp, ip, dp, i, m, dp_len):
         Output
         ------
             mp: numpy.array
-                Array with the distance between every subsequence and its nearest neighbor from the same time series.
+                Array with the distance between every subsequence and its
+                nearest neighbor from the same time series.
             ip: numpy.array
-                Array with the indexes of the nearest neighbors of each subsequence.
+                Array with the indexes of the nearest neighbors of each
+                subsequence.
     """
 
     # Initialization
@@ -110,7 +119,7 @@ def minimum_distance(mp, ip, dp, i, m, dp_len):
     min_index = -1
 
     for k in range(0, dp_len):
-        if dp[k] < min_value and (k < i-m/2 or k > i+m/2):
+        if dp[k] < min_value and (k < i - m / 2 or k > i + m / 2):
             min_value = dp[k]
             min_index = k
     mp[i] = min_value
@@ -133,7 +142,8 @@ def stomp_self(ts, m):
         Output
         ------
             mp: numpy.array
-                Array with the distance between every subsequence from ts1 to the nearest subsequence with same length from ts2.
+                Array with the distance between every subsequence from ts1
+                to the nearest subsequence with same length from ts2.
             ip: numpy.array
                 Array with the index of the nearest neighbor of ts1 in ts2.
     """
@@ -143,34 +153,41 @@ def stomp_self(ts, m):
     ts_len = ts.shape[0]
 
     # Number of subsequences
-    n_subs = ts_len-m+1
+    n_subs = ts_len - m + 1
 
     # Compute the mean and standard deviation
-    ts_mean = [np.mean(ts[i:i+m]) for i in range(0, n_subs)]
-    ts_std = [np.std(ts[i:i+m]) for i in range(0, n_subs)]
+    ts_mean = [np.mean(ts[i:i + m]) for i in range(0, n_subs)]
+    ts_std = [np.std(ts[i:i + m]) for i in range(0, n_subs)]
 
-    # Compute the dot products between the first subsequence and every other subsequence
+    # Compute the dot products between the first subsequence and every other
+    # subsequence
     dot_prod = sliding_dot_products(ts[0:m], ts, m, ts_len)
     first_dot_prod = np.copy(dot_prod)
 
     # Initialization
-    mp = np.full(n_subs, float('inf')) # matrix profile
-    ip = np.zeros(n_subs) # index profile
+    mp = np.full(n_subs, float('inf'))  # matrix profile
+    ip = np.zeros(n_subs)  # index profile
 
     # Compute the distance profile for the first subsequence
-    dp = calculate_distance_profile(dot_prod, ts_mean[0], ts_std[0], ts_mean, ts_std, m, n_subs)
+    dp = calculate_distance_profile(dot_prod, ts_mean[0], ts_std[0], ts_mean,
+                                    ts_std, m, n_subs)
 
     # Updates the matrix profile
     mp, ip = minimum_distance(mp, ip, dp, 0, m, n_subs)
 
     for i in range(1, n_subs):
-        for j in range(n_subs-1, 0, -1):
-            dot_prod[j] = dot_prod[j-1] - ts[j-1]*ts[i-1] + ts[j-1+m]*ts[i-1+m]  # compute the next dot products using the previous ones
+        for j in range(n_subs - 1, 0, -1):
+            dot_prod[j] = dot_prod[j - 1] - ts[j - 1] * ts[i - 1] + ts[
+                j - 1 + m] * ts[
+                              i - 1 + m]  # compute the next dot products
+            # using the previous ones
         dot_prod[0] = first_dot_prod[i]
-        dp = calculate_distance_profile(dot_prod, ts_mean[i], ts_std[i], ts_mean, ts_std, m, n_subs)
+        dp = calculate_distance_profile(dot_prod, ts_mean[i], ts_std[i],
+                                        ts_mean, ts_std, m, n_subs)
         mp, ip = minimum_distance(mp, ip, dp, i, m, n_subs)
 
     return mp
+
 
 class MatrixProfile(BaseTransformer):
     """
@@ -182,7 +199,8 @@ class MatrixProfile(BaseTransformer):
         X, a pandas DataFrame, is the the dataset.
         m, an integer, is the desired subsequence length to be used.
         Xt is the transformed X, i.e., a pandas DataFrame with the same number
-        of rows as X, but each row has the matrix profile for the corresponding time series.
+        of rows as X, but each row has the matrix profile for the
+        corresponding time series.
     """
 
     def __init__(self, m=10):
@@ -206,19 +224,16 @@ class MatrixProfile(BaseTransformer):
                     The number of columns equals the number of subsequences
                     of the desired length in each time series.
         """
-
         # Input checks
-        check_X(X)
-        _enforce_X_univariate(X)
+        self.check_is_fitted()
+        check_X(X, enforce_univariate=True)
 
         n_instances = X.shape[0]
 
         # Convert into tabular format
         tabulariser = Tabulariser()
-        X = tabulariser.transform(X)
+        X = tabulariser.fit_transform(X)
 
-        n_subs = X.shape[1]-self.m+1
-
-        Xt = pd.DataFrame(stomp_self(np.array([X.iloc[i]]), self.m) for i in range(0, n_instances))
-
+        Xt = pd.DataFrame(stomp_self(np.array([X.iloc[i]]), self.m) for i in
+                          range(n_instances))
         return Xt

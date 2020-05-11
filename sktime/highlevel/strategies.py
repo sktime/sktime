@@ -35,12 +35,11 @@ class BaseStrategy(BaseEstimator):
     data and task.
     """
 
-    def __init__(self, estimator, name=None, check_input=True):
+    def __init__(self, estimator, name=None):
         self._check_estimator_compatibility(estimator)
 
         self._estimator = estimator
         self._name = estimator.__class__.__name__ if name is None else name
-        self.check_input = check_input
         self._task = None
 
     @property
@@ -78,8 +77,7 @@ class BaseStrategy(BaseEstimator):
         -------
         self : an instance of the self
         """
-        if self.check_input:
-            self._validate_data(data)
+        self._validate_data(data)
 
         # Check task compatibility with strategy
         self._check_task_compatibility(task)
@@ -237,15 +235,12 @@ class TSCStrategy(BaseSupervisedLearningStrategy):
         Low-level estimator used in strategy.
     name : str, optional (default=None)
         Name of strategy. If None, class name of estimator is used.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
-    def __init__(self, estimator, name=None, check_input=True):
+    def __init__(self, estimator, name=None):
         self._case = "TSC"
         self._traits = {"required_estimator_type": CLASSIFIER_TYPES}
-        super(TSCStrategy, self).__init__(estimator, name=name, check_input=check_input)
+        super(TSCStrategy, self).__init__(estimator, name=name)
 
 
 class TSRStrategy(BaseSupervisedLearningStrategy):
@@ -258,13 +253,10 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
         Low-level estimator used in strategy.
     name : str, optional (default=None)
         Name of strategy. If None, class name of estimator is used.
-    check_input : bool, optional (default=True)
-        - If True, input are checked.
-        - If False, input are not checked and assumed correct. Use with caution.
     """
 
-    def __init__(self, estimator, name=None, check_input=True):
+    def __init__(self, estimator, name=None):
         self._case = "TSR"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
-        super(TSRStrategy, self).__init__(estimator, name=name, check_input=check_input)
+        super(TSRStrategy, self).__init__(estimator, name=name)
 
