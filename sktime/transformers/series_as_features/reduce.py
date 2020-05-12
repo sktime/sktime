@@ -64,4 +64,6 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
         """
         self.check_is_fitted()
         X = check_X(X)
-        return detabularize(X, index=self._index, time_index=self._time_index)
+        Xt = detabularize(X, index=self._index, time_index=self._time_index)
+        Xt.columns = self._columns
+        return Xt

@@ -31,7 +31,7 @@ from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTran
 from sktime.transformers.series_as_features.summarize import DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
-from sktime.utils.data_container import tabularise
+from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -158,11 +158,11 @@ def cython_wrapper(distance_measure):
 
     def distance(instance_a, instance_b, **params):
         # find distance
-        instance_a = tabularise(instance_a,
+        instance_a = tabularize(instance_a,
                                 return_array=True)  # todo use specific
         # dimension rather than whole
         # thing?
-        instance_b = tabularise(instance_b,
+        instance_b = tabularize(instance_b,
                                 return_array=True)  # todo use specific
         # dimension rather than whole thing?
         instance_a = np.transpose(instance_a)

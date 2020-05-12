@@ -9,7 +9,7 @@ from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.utils.data_container import tabularise
+from sktime.utils.data_container import tabularize
 from sktime.utils.testing import generate_df_from_array
 
 
@@ -65,8 +65,8 @@ def test_row_transformer_transform_inverse_transform():
     assert Xit.shape == X.shape
     assert isinstance(Xit.iloc[0, 0], (
     pd.Series, np.ndarray))  # check series-to-series transforms
-    np.testing.assert_array_almost_equal(tabularise(X).values,
-                                         tabularise(Xit).values, decimal=5)
+    np.testing.assert_array_almost_equal(tabularize(X).values,
+                                         tabularize(Xit).values, decimal=5)
 
 
 def test_ColumnTransformer_pipeline():
@@ -105,7 +105,7 @@ def test_RowTransformer_pipeline():
     def row_first(X):
         if isinstance(X, pd.Series):
             X = pd.DataFrame(X)
-        Xt = pd.concat([pd.Series(tabularise(col).iloc[:, 0])
+        Xt = pd.concat([pd.Series(tabularize(col).iloc[:, 0])
                         for _, col in X.items()], axis=1)
         return Xt
 

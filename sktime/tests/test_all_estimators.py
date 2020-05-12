@@ -12,29 +12,25 @@ from sktime.utils.testing.estimator_checks import check_estimator
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
-    "BOSSEnsemble",
-    "ElasticEnsemble",
-    "KNeighborsTimeSeriesClassifier",
-    "MrSEQLClassifier",
-    "ProximityForest",
-    "ProximityStump",
-    "ProximityTree",
-    "RandomIntervalSpectralForest",
-    "ShapeletTransformClassifier",
-    "TimeSeriesForestClassifier",
-    "TimeSeriesForestRegressor",
-    "ColumnTransformer",
-    "ContractedShapeletTransform",
-    "IntervalSegmenter",
-    "PCATransformer",
-    "Rocket",
-    "RowTransformer",
-    "SFA",
-    "SAX",
-    "ShapeletTransform",
-    "TSFreshFeatureExtractor",
-    "TSFreshRelevantFeatureExtractor",
-    "Tabularizer"
+    'BOSSEnsemble',
+    'ColumnTransformer',
+    'ContractedShapeletTransform',
+    'ElasticEnsemble',
+    'KNeighborsTimeSeriesClassifier',
+    'MrSEQLClassifier',
+    'PCATransformer',
+    'ProximityForest',
+    'ProximityStump',
+    'ProximityTree',
+    'RandomIntervalSpectralForest',
+    'Rocket',
+    'RowTransformer',
+    'SFA',
+    'SAX',
+    'ShapeletTransform',
+    'ShapeletTransformClassifier',
+    'TimeSeriesForestClassifier',
+    'TimeSeriesForestRegressor'
 ]
 
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if

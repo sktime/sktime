@@ -33,9 +33,9 @@ from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.transformers.single_series.base import is_single_series_transformer
-from sktime.utils.testing import TEST_CONSTRUCT_CONFIG_LOOKUP
+from sktime.utils.testing import ESTIMATOR_TEST_PARAMS
 from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import _make_args
+from sktime.utils.testing import _make_args, assert_almost_equal
 from sktime.utils.testing.inspect import _get_args
 
 NON_STATE_CHANGING_METHODS = [
@@ -222,7 +222,7 @@ def check_constructor(Estimator):
     # Filter out required parameters with no default value and parameters
     # set for running tests
     required_params = getattr(estimator, '_required_parameters', [])
-    test_config_params = TEST_CONSTRUCT_CONFIG_LOOKUP.get(Estimator, {}).keys()
+    test_config_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
 
     init_params = [param for param in init_params if
                    param.name not in required_params and
@@ -318,7 +318,7 @@ def check_fit_idempotent(Estimator):
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
-            np.testing.assert_array_almost_equal(
+            assert_almost_equal(
                 results[method], new_result,
                 err_msg=f"Idempotency check failed for method {method}")
 
@@ -397,4 +397,4 @@ def check_persistence_via_pickle(Estimator):
     # Compare against results after pickling
     for method in results:
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
-        np.testing.assert_array_almost_equal(results[method], unpickled_result)
+        assert_almost_equal(results[method], unpickled_result)

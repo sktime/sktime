@@ -115,9 +115,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             words = []
 
             num_windows_per_inst = self.num_atts - self.window_size + 1
-            split = np.array(X[i, np.arange(self.window_size)[None,
-                                  :] + np.arange(num_windows_per_inst)[:,
-                                       None]])
+            split = np.array(X[i, np.arange(self.window_size)[None, :]
+                               + np.arange(num_windows_per_inst)[:, None]])
 
             split = scipy.stats.zscore(split, axis=1)
 

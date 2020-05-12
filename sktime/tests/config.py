@@ -3,7 +3,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "TEST_CONSTRUCT_CONFIG_LOOKUP"
+    "ESTIMATOR_TEST_PARAMS"
 ]
 
 from sklearn.linear_model import LinearRegression
@@ -37,6 +37,8 @@ from sktime.transformers.series_as_features.summarize import \
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
+from sktime.transformers.series_as_features.summarize import \
+    TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [
@@ -58,7 +60,7 @@ STEPS = [
     ("t", Detrender(ThetaForecaster())),
     ("f", NaiveForecaster())
 ]
-TEST_CONSTRUCT_CONFIG_LOOKUP = {
+ESTIMATOR_TEST_PARAMS = {
     DirectRegressionForecaster:
         {"regressor": REGRESSOR},
     RecursiveRegressionForecaster:
@@ -100,5 +102,9 @@ TEST_CONSTRUCT_CONFIG_LOOKUP = {
     ContractedShapeletTransform:
         {"time_contract_in_mins": 0.1},
     ShapeletTransform:
-        {"max_shapelets_to_store_per_class": 1}
+        {"max_shapelets_to_store_per_class": 1},
+    TSFreshFeatureExtractor:
+        {"disable_progressbar": True, "show_warnings": False},
+    TSFreshRelevantFeatureExtractor:
+        {"disable_progressbar": True, "show_warnings": False}
 }

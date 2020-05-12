@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import detabularise
-from sktime.utils.data_container import tabularise
+from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -49,7 +49,7 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
-        Xtab = tabularise(X)
+        Xtab = tabularize(X)
         self.pca.fit(Xtab)
         self._is_fitted = True
         return self
@@ -76,7 +76,7 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
         X = check_X(X, enforce_univariate=True)
 
         # Transform X using the fitted PCA
-        Xtab = tabularise(X)
+        Xtab = tabularize(X)
         Xpca = pd.DataFrame(data=self.pca.transform(Xtab),
                             index=Xtab.index,
                             columns=Xtab.columns[:self.pca.n_components_])
