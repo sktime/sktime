@@ -1,6 +1,8 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
+# adapted from scikit-learn's estimator_checks
+
 __author__ = ["Markus Löning"]
 __all__ = ["check_estimator"]
 
@@ -35,7 +37,8 @@ from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.testing import ESTIMATOR_TEST_PARAMS
 from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import _make_args, assert_almost_equal
+from sktime.utils.testing import _make_args
+from sktime.utils.testing import assert_almost_equal
 from sktime.utils.testing.inspect import _get_args
 
 NON_STATE_CHANGING_METHODS = [
