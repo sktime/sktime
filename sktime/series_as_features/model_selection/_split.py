@@ -40,21 +40,26 @@ class PresplitFilesCV:
         """
         # check input
         if not isinstance(data, pd.DataFrame):
-            raise ValueError(f'Data must be pandas DataFrame, but found {type(data)}')
+            raise ValueError(
+                f'Data must be pandas DataFrame, but found {type(data)}')
         if not np.all(data.index.unique().isin(['train', 'test'])):
             raise ValueError('Train-test split not properly defined in '
                              'index of passed pandas DataFrame')
 
-        # this is a bit of a hack, PresplitFilesCV would need to talk to the data loader during orchestration,
-        # but since this is not possible with sklearn's interface, we load both files separately, combined them
-        # keep the training and test split in the index of the combined dataframe, and split them here again
+        # this is a bit of a hack, PresplitFilesCV would need to talk to the
+        # data loader during orchestration,
+        # but since this is not possible with sklearn's interface, we load
+        # both files separately, combined them
+        # keep the training and test split in the index of the combined
+        # dataframe, and split them here again
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
         train = idx[data.index == 'train']
         test = idx[data.index == 'test']
         yield train, test
 
-        # if additionally a cv iterator is provided, yield the predefined split first, then reshuffle and apply cv,
+        # if additionally a cv iterator is provided, yield the predefined
+        # split first, then reshuffle and apply cv,
         # note that test sets may overlap with the presplit file test set
         if self.cv is not None:
             for train, test in self.cv.split(idx, y=y):
@@ -67,7 +72,8 @@ class PresplitFilesCV:
 
 class SingleSplit:
     """
-    Helper class for orchestration that uses a single split for training and testing. Wrapper for sklearn.model_selection.train_test_split
+    Helper class for orchestration that uses a single split for training and
+    testing. Wrapper for sklearn.model_selection.train_test_split
 
     Parameters
     ----------
@@ -100,7 +106,8 @@ class SingleSplit:
         the class labels.
     """
 
-    def __init__(self, test_size=0.25, train_size=None, random_state=None, shuffle=True, stratify=None):
+    def __init__(self, test_size=0.25, train_size=None, random_state=None,
+                 shuffle=True, stratify=None):
         self._test_size = test_size
         self._train_size = train_size
         self._random_state = random_state

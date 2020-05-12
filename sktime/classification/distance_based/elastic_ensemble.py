@@ -28,7 +28,8 @@ from sktime.distances.elastic_cython import lcss_distance as lcss_c
 from sktime.distances.elastic_cython import msm_distance as msm_c
 from sktime.distances.elastic_cython import wddtw_distance as wddtw_c
 from sktime.distances.elastic_cython import wdtw_distance as wdtw_c
-from sktime.transformers.series_as_features.summarize import DerivativeSlopeTransformer
+from sktime.transformers.series_as_features.summarize import \
+    DerivativeSlopeTransformer
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -173,10 +174,10 @@ class ElasticEnsemble(BaseClassifier):
                 print(
                     "Restricting training cases for parameter optimisation: ",
                     end="")
-            sss = StratifiedShuffleSplit(n_splits=1,
-                                         test_size=1 -
-                                                   self.proportion_train_in_param_finding,
-                                         random_state=rand)
+            sss = StratifiedShuffleSplit(
+                n_splits=1,
+                test_size=1 - self.proportion_train_in_param_finding,
+                random_state=rand)
             for train_index, test_index in sss.split(X, y):
                 param_train_x = X[train_index, :]
                 param_train_y = y[train_index]
@@ -222,10 +223,11 @@ class ElasticEnsemble(BaseClassifier):
                 if self.distance_measures[dm] is ddtw_c or \
                         self.distance_measures[dm] is wddtw_c:
                     print(
-                        "Currently evaluating " + str(self.distance_measures[
-                                                          dm].__name__) + " (implemented as " + str(
-                            this_measure.__name__) + " with pre-transformed "
-                                                     "derivative data)")
+                        "Currently evaluating " +
+                        str(self.distance_measures[dm].__name__) +
+                        " (implemented as " +
+                        str(this_measure.__name__) +
+                        " with pre-transformed derivative data)")
                 else:
                     print("Currently evaluating " + str(
                         self.distance_measures[dm].__name__))
@@ -235,8 +237,9 @@ class ElasticEnsemble(BaseClassifier):
             if self.proportion_of_param_options == 1:
 
                 grid = GridSearchCV(
-                    estimator=KNeighborsTimeSeriesClassifier(metric=this_measure, n_neighbors=1,
-                                     algorithm="brute"),
+                    estimator=KNeighborsTimeSeriesClassifier(
+                        metric=this_measure, n_neighbors=1,
+                        algorithm="brute"),
                     param_grid=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X),
                     cv=LeaveOneOut(),
@@ -249,8 +252,9 @@ class ElasticEnsemble(BaseClassifier):
             # options for each measure
             else:
                 grid = RandomizedSearchCV(
-                    estimator=KNeighborsTimeSeriesClassifier(metric=this_measure, n_neighbors=1,
-                                     algorithm="brute"),
+                    estimator=KNeighborsTimeSeriesClassifier(
+                        metric=this_measure, n_neighbors=1,
+                        algorithm="brute"),
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X),
                     cv=LeaveOneOut(),
@@ -267,10 +271,11 @@ class ElasticEnsemble(BaseClassifier):
             # Note: optimisation potentially possible here if a GridSearchCV
             # was used previously. TO-DO: determine how to extract
             # predictions for the best param option from GridSearchCV)
-            best_model = KNeighborsTimeSeriesClassifier(algorithm="brute", n_neighbors=1,
-                                metric=this_measure,
-                                metric_params=grid.best_params_[
-                                    'metric_params'])
+            best_model = KNeighborsTimeSeriesClassifier(
+                algorithm="brute",
+                n_neighbors=1,
+                metric=this_measure,
+                metric_params=grid.best_params_['metric_params'])
             preds = cross_val_predict(best_model, full_train_to_use, y,
                                       cv=LeaveOneOut())
             acc = accuracy_score(y, preds)
@@ -283,10 +288,11 @@ class ElasticEnsemble(BaseClassifier):
 
             # Finally, reset the classifier for this measure and parameter
             # option, ready to be called for test classification
-            best_model = KNeighborsTimeSeriesClassifier(algorithm="brute", n_neighbors=1,
-                                metric=this_measure,
-                                metric_params=grid.best_params_[
-                                    'metric_params'])
+            best_model = KNeighborsTimeSeriesClassifier(
+                algorithm="brute",
+                n_neighbors=1,
+                metric=this_measure,
+                metric_params=grid.best_params_['metric_params'])
             best_model.fit(full_train_to_use, y)
             end_build_time = time.time()
 
@@ -327,8 +333,8 @@ class ElasticEnsemble(BaseClassifier):
         train_sum = 0
 
         for c in range(0, len(self.estimators_)):
-            if self.distance_measures[c] == ddtw_c or self.distance_measures[
-                c] == wddtw_c:
+            if (self.distance_measures[c] == ddtw_c
+                    or self.distance_measures[c] == wddtw_c):
                 test_X_to_use = der_X
             else:
                 test_X_to_use = X

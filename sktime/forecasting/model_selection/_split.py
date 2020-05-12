@@ -1,7 +1,8 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
 
-__all__ = ["SlidingWindowSplitter", "CutoffSplitter", "SingleWindowSplitter", "temporal_train_test_split"]
+__all__ = ["SlidingWindowSplitter", "CutoffSplitter", "SingleWindowSplitter",
+           "temporal_train_test_split"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
@@ -51,7 +52,8 @@ class BaseSplitter:
         """
         y = self._check_y(y)
         for training_window, test_window in self._split_windows(y):
-            yield training_window[training_window >= 0], test_window[test_window >= 0]
+            yield training_window[training_window >= 0], test_window[
+                test_window >= 0]
 
     def _split_windows(self, y):
         """Internal split method"""
@@ -83,14 +85,17 @@ class CutoffSplitter(BaseSplitter):
     Parameters
     ----------
     cutoffs : np.array
-        cutoff points, positive and integer-index like, usable with pandas .iloc[] indexing
+        cutoff points, positive and integer-index like, usable with pandas
+        .iloc[] indexing
     fh : int, list or np.array
     window_length : int
     """
 
-    def __init__(self, cutoffs, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH):
+    def __init__(self, cutoffs, fh=DEFAULT_FH,
+                 window_length=DEFAULT_WINDOW_LENGTH):
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(fh=fh, window_length=window_length)
+        super(CutoffSplitter, self).__init__(fh=fh,
+                                             window_length=window_length)
 
     def _split_windows(self, y):
         # cutoffs
@@ -102,7 +107,8 @@ class CutoffSplitter(BaseSplitter):
         check_fh_is_relative(fh)
 
         if np.max(cutoffs) + np.max(fh) > len(y):
-            raise ValueError(f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
+            raise ValueError(
+                f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length)
 
         for cutoff in cutoffs:
@@ -123,7 +129,8 @@ class BaseWindowSplitter(BaseSplitter):
     """Base class for window splits"""
 
     def __init__(self, fh=None, window_length=None):
-        super(BaseWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super(BaseWindowSplitter, self).__init__(fh=fh,
+                                                 window_length=window_length)
 
     def split_initial(self, y):
         raise NotImplementedError("abstract method")
@@ -146,7 +153,8 @@ class BaseWindowSplitter(BaseSplitter):
             if window_length is not None:
                 if window_length + fh_max > n_timepoints:
                     raise ValueError(
-                        f"The window length and forecasting horizon are incompatible with the length of `y`")
+                        f"The window length and forecasting horizon are "
+                        f"incompatible with the length of `y`")
         return end
 
 
@@ -163,13 +171,15 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     start_with_window : bool, optional (default=True)
     """
 
-    def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH, step_length=DEFAULT_STEP_LENGTH,
+    def __init__(self, fh=DEFAULT_FH, window_length=DEFAULT_WINDOW_LENGTH,
+                 step_length=DEFAULT_STEP_LENGTH,
                  initial_window=None, start_with_window=False):
 
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
-        super(SlidingWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super(SlidingWindowSplitter, self).__init__(
+            fh=fh, window_length=window_length)
 
     def _split_windows(self, y):
         step_length = check_step_length(self.step_length)
@@ -180,14 +190,16 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         end = self._get_end(y)
         start = self._get_start()
         for split_point in range(start, end, step_length):
-            training_window = np.arange(split_point - window_length, split_point)
+            training_window = np.arange(split_point - window_length,
+                                        split_point)
             test_window = split_point + fh - 1
             yield training_window, test_window
 
     def split_initial(self, y):
         """Split initial window
 
-        This is useful during forecasting model selection where we want to fit the forecaster on some part of the
+        This is useful during forecasting model selection where we want to
+        fit the forecaster on some part of the
         data first before doing temporal cross-validation
 
         Parameters
@@ -200,11 +212,10 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         initial_test_window : np.array
         """
         if self.initial_window is None:
-            raise ValueError(f"Please specify initial window, found: `initial_window`=None")
+            raise ValueError(
+                f"Please specify initial window, found: `initial_window`=None")
 
         initial = check_window_length(self.initial_window)
-        fh = check_fh(self.fh)
-
         initial_training_window = np.arange(initial)
         initial_test_window = np.arange(initial, len(y))
         return initial_training_window, initial_test_window
@@ -221,7 +232,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         n_splits : int
         """
         if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the number of splits.")
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y` to compute the "
+                f"number of splits.")
         return len(self.get_cutoffs(y))
 
     def get_cutoffs(self, y=None):
@@ -236,7 +249,9 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         cutoffs : np.array
         """
         if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y` to compute the "
+                f"cutoffs.")
         y = self._check_y(y)
         end = self._get_end(y)
         start = self._get_start()
@@ -263,7 +278,8 @@ class SingleWindowSplitter(BaseWindowSplitter):
     """
 
     def __init__(self, fh, window_length=None):
-        super(SingleWindowSplitter, self).__init__(fh=fh, window_length=window_length)
+        super(SingleWindowSplitter, self).__init__(fh=fh,
+                                                   window_length=window_length)
 
     def _split_windows(self, y):
         window_length = check_window_length(self.window_length)
@@ -301,14 +317,17 @@ class SingleWindowSplitter(BaseWindowSplitter):
         cutoffs : np.array
         """
         if y is None:
-            raise ValueError(f"{self.__class__.__name__} requires `y` to compute the cutoffs.")
+            raise ValueError(
+                f"{self.__class__.__name__} requires `y` to compute the "
+                f"cutoffs.")
         training_window, _ = next(self._split_windows(y))
         return training_window[-1:]  # array outpu
 
     def split_initial(self, y):
         """Split initial window
 
-        This is useful during forecasting model selection where we want to fit the forecaster on some part of the
+        This is useful during forecasting model selection where we want to
+        fit the forecaster on some part of the
         data first before doing temporal cross-validation
 
         Parameters
@@ -354,7 +373,7 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
 
     References
     ----------
-    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/blob/master/pmdarima/model_selection/_split.py
+    ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
     return train_test_split(
         *arrays,

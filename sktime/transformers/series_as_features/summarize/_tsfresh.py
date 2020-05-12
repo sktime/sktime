@@ -4,13 +4,13 @@
 __author__ = ["Ayushmaan Seth", "Markus Löning"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-import pandas as pd
+from warnings import warn
+
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_nested_to_long
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from warnings import warn
 
 
 class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):

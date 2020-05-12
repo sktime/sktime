@@ -1,11 +1,13 @@
+import numpy as np
+import pandas as pd
+import pytest
 from sklearn.decomposition import PCA
 from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.pca import PCATransformer
+from sktime.utils.data_container import detabularize
+from sktime.utils.data_container import get_time_index
+from sktime.utils.data_container import tabularize
 from sktime.utils.testing import generate_df_from_array
-from sktime.utils.data_container import tabularize, detabularize, get_time_index
-import pytest
-import pandas as pd
-import numpy as np
 
 
 # Check that exception is raised for bad input args.
@@ -47,14 +49,15 @@ def test_early_trans_fail():
 # Test output format and dimensions.
 @pytest.mark.parametrize(
     "n_instances,len_series,n_components", [
-        (5,  2, 1),
+        (5, 2, 1),
         (5, 10, 1),
         (5, 10, 3),
         (5, 10, 5),
     ])
 def test_output_format_dim(len_series, n_instances, n_components):
     np.random.seed(42)
-    X = detabularize(pd.DataFrame(data=np.random.randn(n_instances, len_series)))
+    X = detabularize(
+        pd.DataFrame(data=np.random.randn(n_instances, len_series)))
 
     trans = PCATransformer(n_components=n_components)
     Xt = trans.fit_transform(X)
@@ -67,7 +70,8 @@ def test_output_format_dim(len_series, n_instances, n_components):
     assert tabularize(Xt).shape[1] == min(n_components, tabularize(X).shape[1])
 
 
-# Check that the returned values agree with those produced by ``sklearn.decomposition.PCA``
+# Check that the returned values agree with those produced by
+# ``sklearn.decomposition.PCA``
 @pytest.mark.parametrize("n_components", [1, 5, 0.9, 'mle'])
 def test_pca_results(n_components):
     np.random.seed(42)
@@ -85,17 +89,19 @@ def test_pca_results(n_components):
     assert np.allclose(np.asarray(Xt1), np.asarray(tabularize(Xt2)))
 
 
-# Check output indices (row indices and columns the same, time indices start from 0)
+# Check output indices (row indices and columns the same, time indices start
+# from 0)
 @pytest.mark.parametrize("n_components", [1, 5, None])
 def test_indices(n_components):
     np.random.seed(42)
     X = detabularize(pd.DataFrame(data=np.random.randn(10, 5)))
     X.columns = pd.CategoricalIndex(['col_0'])
-    X.index = pd.Int64Index([i+10 for i in range(10)])
+    X.index = pd.Int64Index([i + 10 for i in range(10)])
 
     pca = PCATransformer(n_components=n_components)
     Xt = pca.fit_transform(X)
 
     assert X.columns.equals(Xt.columns)
     assert X.index.equals(Xt.index)
-    assert get_time_index(Xt).equals(pd.Int64Index(range(pca.pca.n_components_)))
+    assert get_time_index(Xt).equals(
+        pd.Int64Index(range(pca.pca.n_components_)))

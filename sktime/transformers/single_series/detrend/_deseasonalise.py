@@ -203,11 +203,11 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
-            self.seasonal_ = seasonal_decompose(y_train, model=self.model,
-                                                period=sp, filt=None,
-                                                two_sided=True,
-                                                extrapolate_trend=0).seasonal.iloc[
-                             :sp]
+            self.seasonal_ = seasonal_decompose(
+                y_train, model=self.model,
+                period=sp, filt=None,
+                two_sided=True,
+                extrapolate_trend=0).seasonal.iloc[:sp]
         else:
             # otherwise, set idempotent seasonal components
             self.seasonal_ = np.zeros(

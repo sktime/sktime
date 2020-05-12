@@ -13,9 +13,11 @@ from sktime.utils.validation.forecasting import check_y
 
 
 class SingleSeriesTransformAdaptor(BaseSingleSeriesTransformer):
-    """Adaptor for scikit-learn-like tabular transformers to single series setting.
+    """Adaptor for scikit-learn-like tabular transformers to single series
+    setting.
 
-    This is useful for applying scikit-learn transformers to single series, but only works with transformers that
+    This is useful for applying scikit-learn transformers to single series,
+    but only works with transformers that
     do not require multiple instances for fitting.
 
     Parameters

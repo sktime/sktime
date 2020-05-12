@@ -4,29 +4,35 @@ import os
 
 import numpy as np
 import pytest
+# get data path for testing dataset loading from hard drive
+import sktime
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_val_score
-
-from sktime.benchmarking.data import RAMDataset, UEADataset
+from sktime.benchmarking.data import RAMDataset
+from sktime.benchmarking.data import UEADataset
 from sktime.benchmarking.evaluation import Evaluator
-from sktime.benchmarking.metrics import PairwiseMetric, AggregateMetric
+from sktime.benchmarking.metrics import AggregateMetric
+from sktime.benchmarking.metrics import PairwiseMetric
 from sktime.benchmarking.orchestration import Orchestrator
-from sktime.benchmarking.results import RAMResults, HDDResults
-from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifier
-from sktime.classification.distance_based.proximity_forest import ProximityForest
-from sktime.datasets import load_gunpoint, load_arrow_head
+from sktime.benchmarking.results import HDDResults
+from sktime.benchmarking.results import RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.series_as_features.model_selection import SingleSplit
+from sktime.classification.distance_based.proximity_forest import \
+    ProximityForest
+from sktime.datasets import load_arrow_head
+from sktime.datasets import load_gunpoint
+from sktime.series_as_features.compose.ensemble import \
+    TimeSeriesForestClassifier
 from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformers.series_as_features.reduce import Tabularizer
 
-# get data path for testing dataset loading from hard drive
-import sktime
 REPOPATH = os.path.dirname(sktime.__file__)
 DATAPATH = os.path.join(REPOPATH, "datasets/data/")
 
@@ -50,7 +56,8 @@ def test_automated_orchestration_vs_manual(data_loader):
 
     # create strategies
     # clf = TimeSeriesForestClassifier(n_estimators=1, random_state=1)
-    clf = make_reduction_pipeline(RandomForestClassifier(n_estimators=2, random_state=1))
+    clf = make_reduction_pipeline(
+        RandomForestClassifier(n_estimators=2, random_state=1))
     strategy = TSCStrategy(clf)
 
     # result backend
@@ -62,7 +69,9 @@ def test_automated_orchestration_vs_manual(data_loader):
                                 results=results)
 
     orchestrator.fit_predict(save_fitted_strategies=False)
-    result = next(results.load_predictions(cv_fold=0, train_or_test="test"))  # get only first item of iterator
+    result = next(results.load_predictions(cv_fold=0,
+                                           train_or_test="test"))  # get
+    # only first item of iterator
     actual = result.y_pred
 
     # expected output
@@ -99,7 +108,9 @@ def test_automated_orchestration_vs_manual(data_loader):
     DummyClassifier(random_state=1),
     RandomForestClassifier(n_estimators=2, random_state=1),
 ])
-def test_single_dataset_single_strategy_against_sklearn(dataset, cv, metric_func, estimator, results_cls, tmpdir):
+def test_single_dataset_single_strategy_against_sklearn(dataset, cv,
+                                                        metric_func, estimator,
+                                                        results_cls, tmpdir):
     # set up orchestration
     cv = cv(random_state=1)
     task = TSCTask(target="class_val")
@@ -110,7 +121,8 @@ def test_single_dataset_single_strategy_against_sklearn(dataset, cv, metric_func
 
     # result backend
     if results_cls in [HDDResults]:
-        # for hard drive results, create temporary directory using pytest's tmpdir fixture
+        # for hard drive results, create temporary directory using pytest's
+        # tmpdir fixture
         tempdir = tmpdir.mkdir("results/")
         path = tempdir.dirpath()
         results = results_cls(path=path)
@@ -145,7 +157,8 @@ def test_single_dataset_single_strategy_against_sklearn(dataset, cv, metric_func
     data = dataset.load()  # load data
     X = data.loc[:, task.features]
     y = data.loc[:, task.target]
-    expected = cross_val_score(clf, X, y, scoring=make_scorer(metric_func, **kwargs),
+    expected = cross_val_score(clf, X, y,
+                               scoring=make_scorer(metric_func, **kwargs),
                                cv=cv).mean()
 
     # compare results
@@ -178,8 +191,10 @@ def test_stat():
     _ = analyse.evaluate(metric=metric)
 
     ranks = analyse.rank(ascending=True)
-    pf_rank = ranks.loc[ranks.strategy == "pf", "accuracy_mean_rank"].item()  # 1
-    fc_rank = ranks.loc[ranks.strategy == "tsf", "accuracy_mean_rank"].item()  # 2
+    pf_rank = ranks.loc[
+        ranks.strategy == "pf", "accuracy_mean_rank"].item()  # 1
+    fc_rank = ranks.loc[
+        ranks.strategy == "tsf", "accuracy_mean_rank"].item()  # 2
     rank_array = [pf_rank, fc_rank]
     rank_array_test = [1, 2]
     _, sign_test_df = analyse.sign_test()
@@ -189,4 +204,5 @@ def test_stat():
         [sign_test_df["tsf"][0], sign_test_df["tsf"][1]]
     ]
     sign_array_test = [[1, 1], [1, 1]]
-    np.testing.assert_equal([rank_array, sign_array], [rank_array_test, sign_array_test])
+    np.testing.assert_equal([rank_array, sign_array],
+                            [rank_array_test, sign_array_test])

@@ -11,8 +11,8 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils.validation import check_random_state
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.validation import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
@@ -20,7 +20,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 
 
 class TimeSeriesForest(ForestClassifier, BaseClassifier):
-    """ Time-Series Forest Classifier.
+    """Time-Series Forest Classifier.
 
     TimeSeriesForest: Implementation of Deng's Time Series Forest,
     with minor changes
@@ -32,7 +32,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     journal = {Information Sciences},
     volume = {239},
     year = {2013}
-    
+
     Overview: Input n series length m
     for each tree
         sample sqrt(m) intervals
@@ -40,7 +40,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         data set
         build decision tree on new data set
     ensemble the trees with averaged probability estimates
-    
+
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and
     does not use the splitting criteria tiny refinement described in
@@ -51,7 +51,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     TO DO: handle missing values, unequal length series and multivariate
     problems
-    
+
     Parameters
     ----------
     n_estimators         : int, ensemble size, optional (default = 200)
@@ -65,12 +65,13 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     n_classes    : int, extracted from the data
     num_atts       : int, extracted from the data
     n_intervals  : int, sqrt(num_atts)
-    classifiers    : array of shape = [n_estimators] of DecisionTree classifiers
+    classifiers    : array of shape = [n_estimators] of DecisionTree
+    classifiers
     intervals      : array of shape = [n_estimators][n_intervals][2] stores
     indexes of all start and end points for all classifiers
     dim_to_use     : int, the column of the panda passed to use (can be
     passed a multidimensional problem, but will only use one)
-    
+
     """
 
     def __init__(self,

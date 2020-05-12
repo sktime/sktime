@@ -1,23 +1,26 @@
 """
-Unified high-level interface for various time series related learning strategies.
+Unified high-level interface for various time series related learning
+strategies.
 """
 __all__ = ["TSCStrategy", "TSRStrategy"]
 __author__ = ['Markus Löning', 'Sajay Ganesh']
 
 import pandas as pd
-from joblib import dump, load
-from sktime.base import BaseEstimator
-from sklearn.base import _pprint
+from joblib import dump
+from joblib import load
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
-from sklearn.pipeline import Pipeline
+from sklearn.base import _pprint
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.pipeline import Pipeline
+from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.regression.base import BaseRegressor
 
-# TODO implement task-strategy-estimator compatibility lookup registry using strategy traits
+# TODO implement task-strategy-estimator compatibility lookup registry using
+#  strategy traits
 REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)
 CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
 FORECASTER_TYPES = (BaseSktimeForecaster,)
@@ -69,7 +72,8 @@ class BaseStrategy(BaseEstimator):
         Parameters
         ----------
         task : Task
-            Task encapsualting metadata information on feature and target variables to which to fit the data to.
+            Task encapsualting metadata information on feature and target
+            variables to which to fit the data to.
         data : pandas.DataFrame
             Dataframe with feature and target variables as specified in task.
 
@@ -97,7 +101,9 @@ class BaseStrategy(BaseEstimator):
         # TODO replace by task-strategy compatibility lookup registry
         if hasattr(task, '_case'):
             if self._case != task._case:
-                raise ValueError("Strategy <-> task mismatch: The chosen strategy is incompatible with the given task")
+                raise ValueError(
+                    "Strategy <-> task mismatch: The chosen strategy is "
+                    "incompatible with the given task")
         else:
             raise AttributeError("The passed case of the task is unknown")
 
@@ -110,7 +116,8 @@ class BaseStrategy(BaseEstimator):
         # TODO replace with strategy - estimator type registry lookup
         if hasattr(self, '_traits'):
             required = self._traits["required_estimator_type"]
-            if any(estimator_type not in ESTIMATOR_TYPES for estimator_type in required):
+            if any(estimator_type not in ESTIMATOR_TYPES for estimator_type in
+                   required):
                 raise AttributeError(f"Required estimator type unknown")
         else:
             raise AttributeError(f"Required estimator type not found")
@@ -120,20 +127,26 @@ class BaseStrategy(BaseEstimator):
         if isinstance(estimator, Pipeline):
             final_estimator = estimator.steps[-1][1]
             if not isinstance(final_estimator, required):
-                raise ValueError(f"Final estimator of passed pipeline estimator must be of type: {required}, "
-                                 f"but found: {type(final_estimator)}")
+                raise ValueError(
+                    f"Final estimator of passed pipeline estimator must be "
+                    f"of type: {required}, "
+                    f"but found: {type(final_estimator)}")
 
         # If tuning meta-estimator, check compatibility of inner estimator
         elif isinstance(estimator, (GridSearchCV, RandomizedSearchCV)):
             estimator = estimator.estimator
             if not isinstance(estimator, required):
-                raise ValueError(f"Inner estimator of passed meta-estimator must be of type: {required}, "
-                                 f"but found: {type(estimator)}")
+                raise ValueError(
+                    f"Inner estimator of passed meta-estimator must be of "
+                    f"type: {required}, "
+                    f"but found: {type(estimator)}")
 
         # Otherwise check estimator directly
         else:
             if not isinstance(estimator, required):
-                raise ValueError(f"Passed estimator has to be of type: {required}, but found: {type(estimator)}")
+                raise ValueError(
+                    f"Passed estimator has to be of type: {required}, "
+                    f"but found: {type(estimator)}")
 
     @staticmethod
     def _validate_data(data):
@@ -141,13 +154,16 @@ class BaseStrategy(BaseEstimator):
         Helper function to validate input data.
         """
         if not isinstance(data, pd.DataFrame):
-            raise ValueError(f"Data must be pandas DataFrame, but found: {type(data)}")
+            raise ValueError(
+                f"Data must be pandas DataFrame, but found: {type(data)}")
 
-        # TODO add input checks for contents, ie all cells be pandas Series, numpy arrays or primitives,
+        # TODO add input checks for contents, ie all cells be pandas Series,
+        #  numpy arrays or primitives,
         #  ultimately move checks to data container
         # s = y.iloc[0]
         # if not isinstance(s, (np.ndarray, pd.Series)):
-        #     raise ValueError(f'``y`` must contain a pandas Series or numpy array, but found: {type(s)}.')
+        #     raise ValueError(f'``y`` must contain a pandas Series or numpy
+        #     array, but found: {type(s)}.')
 
     def save(self, path):
         dump(self, path)
@@ -171,14 +187,17 @@ class BaseStrategy(BaseEstimator):
         strategy_name = self.__class__.__name__
         estimator_name = self.estimator.__class__.__name__
         return '%s(%s(%s))' % (strategy_name, estimator_name,
-                               _pprint(self.get_params(deep=False), offset=len(strategy_name), ),)
+                               _pprint(self.get_params(deep=False),
+                                       offset=len(strategy_name), ),)
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):
-    """Abstract strategy class for time series supervised learning that accepts a low-level estimator to
+    """Abstract strategy class for time series supervised learning that
+    accepts a low-level estimator to
     perform a given task.
 
-    Implements predict and internal fit methods for time series regression and classification.
+    Implements predict and internal fit methods for time series regression
+    and classification.
     """
 
     def _fit(self, data):
@@ -209,7 +228,8 @@ class BaseSupervisedLearningStrategy(BaseStrategy):
         Parameters
         ----------
         data : a pandas.DataFrame
-            Dataframe with feature and target variables as specified in task passed to ``fit``.
+            Dataframe with feature and target variables as specified in task
+            passed to ``fit``.
 
 
         Returns
@@ -259,4 +279,3 @@ class TSRStrategy(BaseSupervisedLearningStrategy):
         self._case = "TSR"
         self._traits = {"required_estimator_type": REGRESSOR_TYPES}
         super(TSRStrategy, self).__init__(estimator, name=name)
-

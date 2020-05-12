@@ -7,8 +7,10 @@ from sktime.datasets import load_gunpoint
 from sktime.series_as_features.compose.pipeline import FeatureUnion
 from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 
 # load data
 X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
@@ -25,8 +27,10 @@ def test_FeatureUnion_pipeline():
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=3)),
         ('transform', FeatureUnion([
-            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False)))
+            ('mean', RowTransformer(
+                FunctionTransformer(func=np.mean, validate=False))),
+            ('std',
+             RowTransformer(FunctionTransformer(func=np.std, validate=False)))
         ])),
         ('clf', DecisionTreeClassifier())
     ]
@@ -40,7 +44,8 @@ def test_FeatureUnion_pipeline():
 
 
 def test_Pipeline_random_state():
-    steps = [('transform', RandomIntervalFeatureExtractor(features=[np.mean])), ('clf', DecisionTreeClassifier())]
+    steps = [('transform', RandomIntervalFeatureExtractor(features=[np.mean])),
+             ('clf', DecisionTreeClassifier())]
     pipe = Pipeline(steps)
 
     # Check that pipe is initiated without random_state
@@ -52,7 +57,8 @@ def test_Pipeline_random_state():
         assert step[1].random_state is None
         assert step[1].get_params()['random_state'] is None
 
-    # Check that if random state is set, it's set to itself and all its random components
+    # Check that if random state is set, it's set to itself and all its
+    # random components
     rs = 1234
     pipe.set_params(**{'random_state': rs})
 
@@ -69,7 +75,8 @@ def test_Pipeline_random_state():
 
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=3)),
-        ('extract', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
+        ('extract',
+         RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
         ('clf', DecisionTreeClassifier())
     ]
     pipe = Pipeline(steps, random_state=rs)
@@ -89,7 +96,8 @@ def test_FeatureUnion():
     t = RowTransformer(ft)
     fu = FeatureUnion([
         ('mean', t),
-        ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False)))
+        ('std',
+         RowTransformer(FunctionTransformer(func=np.std, validate=False)))
     ])
     Xt = fu.fit_transform(X, y)
     assert Xt.shape == (X.shape[0], X.shape[1] * len(fu.transformer_list))

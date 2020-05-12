@@ -27,8 +27,10 @@ from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wdtw_distance
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.summarize import DerivativeSlopeTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.summarize import \
+    DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
 from sktime.utils.data_container import tabularize
@@ -95,7 +97,7 @@ class _CachedTransformer(BaseSeriesAsFeaturesTransformer):
         for index in X.index.values:
             try:
                 cached_instances[index] = self.cache[index]
-            except:
+            except Exception:
                 uncached_indices.append(index)
         if len(uncached_indices) > 0:
             uncached_instances = X.loc[uncached_indices, :]
@@ -409,9 +411,8 @@ def lcss_distance_measure_getter(X):
         'distance_measure': [cython_wrapper(lcss_distance)],
         'dim_to_use': stats.randint(low=0, high=n_dimensions),
         'epsilon': stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
-        'delta': stats.randint(low=0, high=max_raw_warping_window +
-                                           1)  # scipy stats randint
-        # is exclusive on the max value, hence + 1
+        # scipy stats randint is exclusive on the max value, hence + 1
+        'delta': stats.randint(low=0, high=max_raw_warping_window + 1)
     }
 
 
@@ -776,10 +777,11 @@ class ProximityStump(BaseClassifier):
                                   self.distance_measure)
                                  for index in range(X.shape[0]))
         else:
-            distances = [self._distance_to_exemplars_inst(self.X_exemplar,
-                                                          X.iloc[index, :],
-                                                          self.distance_measure)
-                         for index in range(X.shape[0])]
+            distances = [self._distance_to_exemplars_inst(
+                self.X_exemplar,
+                X.iloc[index, :],
+                self.distance_measure)
+                for index in range(X.shape[0])]
         distances = np.vstack(np.array(distances))
         return distances
 
@@ -801,7 +803,7 @@ class ProximityStump(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        if self.label_encoder == None:
+        if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
             y = self.label_encoder.fit_transform(y)
         self.y = y
@@ -985,7 +987,7 @@ class ProximityTree(BaseClassifier):
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
         # setup label encoding
-        if self.label_encoder == None:
+        if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
             y = self.label_encoder.fit_transform(y)
         self.y = y
@@ -1102,22 +1104,22 @@ class ProximityForest(BaseClassifier):
         trees: list of trees in the forest
     """
 
-    def __init__(self,
-                 random_state=None,
-                 n_estimators=100,
-                 distance_measure=None,
-                 get_distance_measure=None,
-                 get_exemplars=get_one_exemplar_per_class_proximity,
-                 get_gain=gini_gain,
-                 verbosity=0,
-                 max_depth=np.math.inf,
-                 is_leaf=pure,
-                 n_jobs=1,
-                 n_stump_evaluations=5,
-                 find_stump=None,
-                 setup_distance_measure_getter
-                 =setup_all_distance_measure_getter,
-                 ):
+    def __init__(
+            self,
+            random_state=None,
+            n_estimators=100,
+            distance_measure=None,
+            get_distance_measure=None,
+            get_exemplars=get_one_exemplar_per_class_proximity,
+            get_gain=gini_gain,
+            verbosity=0,
+            max_depth=np.math.inf,
+            is_leaf=pure,
+            n_jobs=1,
+            n_stump_evaluations=5,
+            find_stump=None,
+            setup_distance_measure_getter=setup_all_distance_measure_getter,
+    ):
         """
         build a Proximity Forest object
         :param random_state: the random state
@@ -1212,7 +1214,7 @@ class ProximityForest(BaseClassifier):
         self.X = dataset_properties.positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
-        if self.label_encoder == None:
+        if self.label_encoder is None:
             self.label_encoder = LabelEncoder()
             y = self.label_encoder.fit_transform(y)
         self.y = y
@@ -1224,14 +1226,13 @@ class ProximityForest(BaseClassifier):
             self.distance_measure = self.get_distance_measure(self)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
-            self.trees = parallel(delayed(self._fit_tree)(X, y, index,
-                                                          self.random_state.randint(
-                                                              0, self.n_estimators))
+            self.trees = parallel(delayed(self._fit_tree)(
+                X, y, index,
+                self.random_state.randint(0, self.n_estimators))
                                   for index in range(self.n_estimators))
         else:
-            self.trees = [self._fit_tree(X, y, index,
-                                         self.random_state.randint(0,
-                                                                   self.n_estimators))
+            self.trees = [self._fit_tree(
+                X, y, index, self.random_state.randint(0, self.n_estimators))
                           for index in range(self.n_estimators)]
         self._is_fitted = True
         return self

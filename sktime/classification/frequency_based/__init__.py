@@ -1,1 +1,6 @@
-from sktime.classification.frequency_based.rise import RandomIntervalSpectralForest
+__all__ = [
+    "RandomIntervalSpectralForest"
+]
+
+from sktime.classification.frequency_based.rise import \
+    RandomIntervalSpectralForest

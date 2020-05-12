@@ -32,7 +32,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     volume = {12},
     number= {5},
     year = {2018}
-    
+
     Overview: Input n series length m
     for each tree
         sample a random intervals
@@ -40,7 +40,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         build tree on new features
     ensemble the trees through averaging probabilities.
     Need to have a minimum interval for each tree
-    This is from the python github. 
+    This is from the python github.
 
 
 
@@ -59,13 +59,15 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     Attributes
     ----------
     n_classes    : int, extracted from the data
-    classifiers    : array of shape = [n_estimators] of DecisionTree classifiers
-    intervals      : array of shape = [n_estimators][2] stores indexes of  start
+    classifiers    : array of shape = [n_estimators] of DecisionTree
+    classifiers
+    intervals      : array of shape = [n_estimators][2] stores indexes of
+    start
     and end points for all classifiers
 
     TO DO: handle missing values, unequal length series and multivariate
     problems
-    
+
     """
 
     def __init__(self,
@@ -135,8 +137,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.lags = np.zeros(self.n_estimators, dtype=int)
         for i in range(0, self.n_estimators):
             temp_lag = self.acf_lag
-            if temp_lag > self.intervals[i][1] - self.intervals[i][
-                0] - self.acf_min_values:
+            if (temp_lag > self.intervals[i][1] - self.intervals[i][0]
+                    - self.acf_min_values):
                 temp_lag = self.intervals[i][1] - self.intervals[i][
                     0] - self.acf_min_values
             if temp_lag < 0:

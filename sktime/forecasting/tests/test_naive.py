@@ -7,7 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests import TEST_OOS_FHS, TEST_SPS, TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests import TEST_OOS_FHS
+from sktime.forecasting.tests import TEST_SPS
+from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -48,7 +50,8 @@ def test_strategy_seasonal_last(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh), y_pred.index)
+    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
+                                  y_pred.index)
 
     # check values
     fh = check_fh(fh)  # get well formatted fh

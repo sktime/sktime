@@ -10,7 +10,8 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformers.single_series.detrend import Detrender, Deseasonalizer
+from sktime.transformers.single_series.detrend import Deseasonalizer
+from sktime.transformers.single_series.detrend import Detrender
 
 
 def test_pipeline():

@@ -3,9 +3,11 @@
 
 __author__ = "Markus Löning"
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/setup.py
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/setup.py
 
 import os
+
 from setuptools import find_packages
 from sktime._build_utils import maybe_cythonize_extensions
 

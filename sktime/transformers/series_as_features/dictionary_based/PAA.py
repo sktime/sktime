@@ -1,31 +1,32 @@
 import pandas as pd
-
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import tabularize
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.data_container import tabularize
 
 __author__ = "Matthew Middlehurst"
 
 
 class PAA(BaseSeriesAsFeaturesTransformer):
     """ (PAA) Piecewise Aggregate Approximation Transformer, as described in
- Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra. 
- Dimensionality reduction for fast similarity search in large time series
- databases.
- Knowledge and information Systems, 3(3), 263-286, 2001.  
- For each series reduce the dimensionality to num_intervals, where each
- value is the mean of values in
- the interval. 
-TO DO: pythonise it to make it more efficient. Maybe check vs this version
-        http://vigne.sh/posts/piecewise-aggregate-approx/
-Could have: Tune the interval size in fit somehow?
-        
+     Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
+     Dimensionality reduction for fast similarity search in large time series
+     databases.
+     Knowledge and information Systems, 3(3), 263-286, 2001.
+     For each series reduce the dimensionality to num_intervals, where each
+     value is the mean of values in
+     the interval.
+
+    TO DO: pythonise it to make it more efficient. Maybe check vs this version
+            http://vigne.sh/posts/piecewise-aggregate-approx/
+    Could have: Tune the interval size in fit somehow?
+
     Parameters
     ----------
     num_intervals   : int, dimension of the transformed data (default 8)
 
-         """
+    """
 
     def __init__(self,
                  num_intervals=8

@@ -7,8 +7,10 @@ from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -87,7 +89,7 @@ class PlateauFinder(BaseSeriesAsFeaturesTransformer):
         # put into dataframe
         Xt = pd.DataFrame()
         column_prefix = "%s_%s" % (
-        column_name, "nan" if np.isnan(self.value) else str(self.value))
+            column_name, "nan" if np.isnan(self.value) else str(self.value))
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
         return Xt
@@ -236,7 +238,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                     Xt[:, i] = func(interval, axis=1)
                 except TypeError as e:
                     if str(e) == f"{func.__name__}() got an unexpected " \
-                                  f"keyword argument 'axis'":
+                                 f"keyword argument 'axis'":
                         Xt[:, i] = np.apply_along_axis(func, 1, interval)
                     else:
                         raise
@@ -249,7 +251,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         return Xt
 
 
-class FittedParamExtractor(MetaEstimatorMixin, BaseSeriesAsFeaturesTransformer):
+class FittedParamExtractor(MetaEstimatorMixin,
+                           BaseSeriesAsFeaturesTransformer):
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):

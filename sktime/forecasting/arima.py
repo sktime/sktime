@@ -6,10 +6,11 @@ __all__ = [
     "AutoARIMA"
 ]
 
-from sktime.forecasting.base._sktime import BaseSktimeForecaster, OptionalForecastingHorizonMixin
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
 class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
@@ -72,13 +73,19 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         from pmdarima.arima import AutoARIMA as _AutoARIMA
         self._forecaster = _AutoARIMA(
             start_p=start_p, d=d, start_q=start_q, max_p=max_p,
-            max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q, max_P=max_P,
-            max_D=max_D, max_Q=max_Q, max_order=max_order, m=sp, seasonal=seasonal,
-            stationary=stationary, information_criterion=information_criterion, alpha=alpha,
-            test=test, seasonal_test=seasonal_test, stepwise=stepwise, n_jobs=n_jobs,
+            max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q,
+            max_P=max_P,
+            max_D=max_D, max_Q=max_Q, max_order=max_order, m=sp,
+            seasonal=seasonal,
+            stationary=stationary, information_criterion=information_criterion,
+            alpha=alpha,
+            test=test, seasonal_test=seasonal_test, stepwise=stepwise,
+            n_jobs=n_jobs,
             start_params=None, trend=trend, method=method, maxiter=maxiter,
-            offset_test_args=offset_test_args, seasonal_test_args=seasonal_test_args,
-            suppress_warnings=suppress_warnings, error_action=error_action, trace=trace,
+            offset_test_args=offset_test_args,
+            seasonal_test_args=seasonal_test_args,
+            suppress_warnings=suppress_warnings, error_action=error_action,
+            trace=trace,
             random=random, random_state=random_state, n_fits=n_fits,
             out_of_sample_size=out_of_sample_size, scoring=scoring,
             scoring_args=scoring_args, with_intercept=with_intercept,
@@ -113,24 +120,33 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
         # pure out-of-sample prediction
         if np.all(is_out_of_sample):
-            return self._predict_out_of_sample(fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+            return self._predict_out_of_sample(fh, X=X,
+                                               return_pred_int=return_pred_int,
+                                               alpha=DEFAULT_ALPHA)
 
         # pure in-sample prediction
         elif np.all(is_in_sample):
-            return self._predict_in_sample(fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA)
+            return self._predict_in_sample(fh, X=X,
+                                           return_pred_int=return_pred_int,
+                                           alpha=DEFAULT_ALPHA)
 
         # mixed in-sample and out-of-sample prediction
         else:
             fh_in_sample = fh[is_in_sample]
             fh_out_of_sample = fh[is_out_of_sample]
 
-            y_pred_in = self._predict_in_sample(fh_in_sample, X=X, return_pred_int=return_pred_int,
-                                                alpha=DEFAULT_ALPHA)
-            y_pred_out = self._predict_out_of_sample(fh_out_of_sample, X=X, return_pred_int=return_pred_int,
-                                                     alpha=DEFAULT_ALPHA)
+            y_pred_in = self._predict_in_sample(
+                fh_in_sample, X=X,
+                return_pred_int=return_pred_int,
+                alpha=DEFAULT_ALPHA)
+            y_pred_out = self._predict_out_of_sample(
+                fh_out_of_sample, X=X,
+                return_pred_int=return_pred_int,
+                alpha=DEFAULT_ALPHA)
             return y_pred_in.append(y_pred_out)
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False,
+                           alpha=DEFAULT_ALPHA):
         fh_abs = fh.absolute(self.cutoff)
         fh_idx = fh_abs - np.min(fh_abs)
         start = fh_abs[0]
@@ -140,32 +156,46 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
             if isinstance(alpha, (list, tuple)):
                 raise NotImplementedError()
-            y_pred, pred_int = self._forecaster.predict_in_sample(start=start, end=end, exogenous=X,
-                                                                  return_conf_int=return_pred_int, alpha=alpha)
+            y_pred, pred_int = self._forecaster.predict_in_sample(
+                start=start,
+                end=end,
+                exogenous=X,
+                return_conf_int=return_pred_int,
+                alpha=alpha)
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"])
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
+                                    columns=["lower", "upper"])
             return y_pred, pred_int
 
         else:
-            y_pred = self._forecaster.predict_in_sample(start=start, end=end, exogenous=X,
-                                                        return_conf_int=return_pred_int, alpha=alpha)
+            y_pred = self._forecaster.predict_in_sample(
+                start=start, end=end,
+                exogenous=X,
+                return_conf_int=return_pred_int,
+                alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=fh_abs)
 
-    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False,
+                               alpha=DEFAULT_ALPHA):
         # make prediction
         n_periods = int(fh[-1])
         index = fh.absolute(self.cutoff)
         fh_idx = fh.index_like(self.cutoff)
 
         if return_pred_int:
-            y_pred, pred_int = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X,
-                                                               return_conf_int=return_pred_int, alpha=alpha)
+            y_pred, pred_int = self._forecaster.model_.predict(
+                n_periods=n_periods, exogenous=X,
+                return_conf_int=return_pred_int, alpha=alpha)
             y_pred = pd.Series(y_pred[fh_idx], index=index)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=index, columns=["lower", "upper"])
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=index,
+                                    columns=["lower", "upper"])
             return y_pred, pred_int
         else:
-            y_pred = self._forecaster.model_.predict(n_periods=n_periods, exogenous=X, return_conf_int=return_pred_int,
-                                                     alpha=alpha)
+            y_pred = self._forecaster.model_.predict(
+                n_periods=n_periods,
+                exogenous=X,
+                return_conf_int=return_pred_int,
+                alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=index)
 
     def get_fitted_params(self):
@@ -182,6 +212,3 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def _get_fitted_param_names(self):
         return self._forecaster.model_.arima_res_._results.param_names
-
-
-

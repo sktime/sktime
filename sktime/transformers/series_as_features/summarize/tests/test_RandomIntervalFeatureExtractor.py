@@ -1,15 +1,17 @@
-from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
-from sktime.utils.testing import generate_df_from_array
-import pandas as pd
 import numpy as np
-from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.datasets import load_gunpoint
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sklearn.preprocessing import FunctionTransformer
-from sktime.utils.time_series import time_series_slope
-from sktime.series_as_features.compose.pipeline import Pipeline, FeatureUnion
+import pandas as pd
 import pytest
-
+from sklearn.preprocessing import FunctionTransformer
+from sktime.datasets import load_gunpoint
+from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
+from sktime.utils.testing import generate_df_from_array
+from sktime.utils.time_series import time_series_slope
 
 
 # Test output format and dimensions.
@@ -19,9 +21,11 @@ import pytest
 @pytest.mark.parametrize("features", [[np.mean], [np.mean, np.median],
                                       [np.mean, np.median, np.mean]])
 def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
-    X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
+    X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances,
+                               n_cols=1)
     n_rows, n_cols = X.shape
-    trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
+    trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
+                                           features=features)
     Xt = trans.fit_transform(X)
     assert isinstance(Xt, pd.DataFrame)
     assert Xt.shape[0] == n_rows
@@ -35,8 +39,10 @@ def test_bad_n_intervals(bad_n_intervals):
     with pytest.raises(ValueError):
         RandomIntervalFeatureExtractor(n_intervals=bad_n_intervals).fit(X)
 
+
 @pytest.mark.parametrize("bad_features",
-                         [0, 'abc', {'a': 1}, (np.median, np.mean), [0, 'abc']])
+                         [0, 'abc', {'a': 1}, (np.median, np.mean),
+                          [0, 'abc']])
 def test_bad_features(bad_features):
     X, y = load_gunpoint(return_X_y=True)
     with pytest.raises(ValueError):
@@ -48,10 +54,12 @@ def test_random_state():
     N_ITER = 10
     X = generate_df_from_array(np.random.normal(size=20))
     random_state = 1234
-    trans = RandomIntervalFeatureExtractor(n_intervals='random', random_state=random_state)
+    trans = RandomIntervalFeatureExtractor(n_intervals='random',
+                                           random_state=random_state)
     first_Xt = trans.fit_transform(X)
     for _ in range(N_ITER):
-        trans = RandomIntervalFeatureExtractor(n_intervals='random', random_state=random_state)
+        trans = RandomIntervalFeatureExtractor(n_intervals='random',
+                                               random_state=random_state)
         Xt = trans.fit_transform(X)
         assert first_Xt.equals(Xt)
 
@@ -64,7 +72,8 @@ def test_results(n_instances, n_timepoints, n_intervals):
     x = np.random.normal(size=n_timepoints)
     X = generate_df_from_array(x, n_rows=n_instances, n_cols=1)
     t = RandomIntervalFeatureExtractor(n_intervals=n_intervals,
-                                           features=[np.mean, np.std, time_series_slope])
+                                       features=[np.mean, np.std,
+                                                 time_series_slope])
     Xt = t.fit_transform(X)
     # Check results
     intervals = t.intervals_
@@ -75,7 +84,8 @@ def test_results(n_instances, n_timepoints, n_intervals):
 
         actual_means = Xt.filter(like=f'*_{start}_{end}_mean').values
         actual_stds = Xt.filter(like=f'_{start}_{end}_std').values
-        actual_slopes = Xt.filter(like=f'_{start}_{end}_time_series_slope').values
+        actual_slopes = Xt.filter(
+            like=f'_{start}_{end}_time_series_slope').values
 
         assert np.all(actual_means == expected_mean)
         assert np.all(actual_stds == expected_std)
@@ -88,11 +98,14 @@ def test_different_implementations():
     X_train, y_train = load_gunpoint(return_X_y=True)
 
     # Compare with chained transformations.
-    tran1 = RandomIntervalSegmenter(n_intervals='sqrt', random_state=random_state)
+    tran1 = RandomIntervalSegmenter(n_intervals='sqrt',
+                                    random_state=random_state)
     tran2 = RowTransformer(FunctionTransformer(func=np.mean, validate=False))
     A = tran2.fit_transform(tran1.fit_transform(X_train))
 
-    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean], random_state=random_state)
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt',
+                                          features=[np.mean],
+                                          random_state=random_state)
     B = tran.fit_transform(X_train)
 
     np.testing.assert_array_equal(A, B)
@@ -105,14 +118,19 @@ def test_different_pipelines():
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
         ('transform', FeatureUnion([
-            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
-            ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False))),
+            ('mean', RowTransformer(
+                FunctionTransformer(func=np.mean, validate=False))),
+            ('std',
+             RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+            ('slope', RowTransformer(
+                FunctionTransformer(func=time_series_slope, validate=False))),
         ])),
     ]
     pipe = Pipeline(steps, random_state=random_state)
     a = pipe.fit_transform(X_train)
-    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt', features=[np.mean, np.std, time_series_slope],
+    tran = RandomIntervalFeatureExtractor(n_intervals='sqrt',
+                                          features=[np.mean, np.std,
+                                                    time_series_slope],
                                           random_state=random_state)
     b = tran.fit_transform(X_train)
     np.testing.assert_array_equal(a, b)

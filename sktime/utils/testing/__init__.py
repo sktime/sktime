@@ -5,7 +5,6 @@ __all__ = [
 __author__ = ["Markus Löning"]
 
 import numpy as np
-
 import pandas as pd
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base import is_forecaster
@@ -15,12 +14,10 @@ from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
-from sktime.utils.data_container import tabularize, is_nested_dataframe
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.utils.data_container import is_nested_dataframe
+from sktime.utils.data_container import tabularize
 from sktime.utils.testing.forecasting import make_forecasting_problem
 from sktime.utils.testing.series_as_features import make_classification_problem
-from sktime.utils.testing.series_as_features import make_classification_problem
-from sktime.utils.testing.series_as_features import make_regression_problem
 from sktime.utils.testing.series_as_features import make_regression_problem
 
 

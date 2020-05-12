@@ -2,12 +2,11 @@ __author__ = "Markus Löning"
 
 import pytest
 from pytest import raises
-
-from sktime.datasets import load_gunpoint
-from sktime.datasets import load_shampoo_sales
 from sktime.benchmarking.tasks import BaseTask
 from sktime.benchmarking.tasks import TSCTask
 from sktime.benchmarking.tasks import TSRTask
+from sktime.datasets import load_gunpoint
+from sktime.datasets import load_shampoo_sales
 
 TASKS = (TSCTask, TSRTask)
 
@@ -49,4 +48,3 @@ def check_set_metadata(task, target, metadata):
 @pytest.mark.parametrize("task", [TSRTask, TSCTask])
 def test_set_metadata_supervised(task):
     check_set_metadata(task, 'class_val', gunpoint)
-

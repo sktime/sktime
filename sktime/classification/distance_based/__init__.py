@@ -1,3 +1,11 @@
+__all__ = [
+    "ElasticEnsemble",
+    "ProximityTree",
+    "ProximityForest",
+    "ProximityStump",
+    "KNeighborsTimeSeriesClassifier"
+]
+
 from sktime.classification.distance_based.elastic_ensemble import \
     ElasticEnsemble
 from sktime.classification.distance_based.proximity_forest import \

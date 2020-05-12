@@ -3,8 +3,10 @@ import sys
 
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.dictionary_based.SAX import _BitWord
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.dictionary_based.SAX import \
+    _BitWord
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -26,14 +28,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
       organization={ACM}
     }
 
-    Overview: for each series: 
+    Overview: for each series:
         run a sliding window across the series
         for each window
             shorten the series with DFT
             discretise the shortened series into bins set by MFC
-            form a word from these discrete values     
+            form a word from these discrete values
     by default SFA produces a single word per series (window_size=0)
-    if a window is used, it forms a histogram of counts of words. 
+    if a window is used, it forms a histogram of counts of words.
 
     Parameters
     ----------
@@ -301,9 +303,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 mft_data = self._discrete_fourier_transform(
                     series[0:self.window_size], normalise=False)
 
-            normalising_factor = (1 / stds[i] if stds[
-                                                     i] > 0 else 1) * \
-                                 self.inverse_sqrt_win_size
+            normalising_factor = ((1 / stds[i] if stds[i] > 0 else 1) *
+                                  self.inverse_sqrt_win_size)
             transformed[i] = mft_data * normalising_factor
 
         return transformed

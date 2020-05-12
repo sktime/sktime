@@ -37,12 +37,11 @@ def test_row_transformer_function_transformer_series_to_series():
     Xt = t.fit_transform(X, y)
     assert Xt.shape == X.shape
     assert isinstance(Xt.iloc[0, 0], (
-    pd.Series, np.ndarray))  # check series-to-series transforms
+        pd.Series, np.ndarray))  # check series-to-series transforms
 
 
 def test_row_transformer_sklearn_transfomer():
     mu = 10
-    sd = 5
     X = generate_df_from_array(np.random.normal(loc=mu, scale=5, size=(100,)),
                                n_rows=10, n_cols=1)
     t = StandardScaler(with_mean=True, with_std=True)
@@ -51,7 +50,7 @@ def test_row_transformer_sklearn_transfomer():
     Xt = r.fit_transform(X)
     assert Xt.shape == X.shape
     assert isinstance(Xt.iloc[0, 0], (
-    pd.Series, np.ndarray))  # check series-to-series transform
+        pd.Series, np.ndarray))  # check series-to-series transform
     np.testing.assert_almost_equal(Xt.iloc[0, 0].mean(),
                                    0)  # check standardisation
     np.testing.assert_almost_equal(Xt.iloc[0, 0].std(), 1, decimal=2)
@@ -64,7 +63,7 @@ def test_row_transformer_transform_inverse_transform():
     Xit = t.inverse_transform(Xt)
     assert Xit.shape == X.shape
     assert isinstance(Xit.iloc[0, 0], (
-    pd.Series, np.ndarray))  # check series-to-series transforms
+        pd.Series, np.ndarray))  # check series-to-series transforms
     np.testing.assert_array_almost_equal(tabularize(X).values,
                                          tabularize(Xit).values, decimal=5)
 
@@ -74,7 +73,8 @@ def test_ColumnTransformer_pipeline():
     X_test, y_test = load_basic_motions("TEST", return_X_y=True)
 
     # using Identity function transformers (transform series to series)
-    id_func = lambda X: X
+    def id_func(X):
+        return X
     column_transformer = ColumnTransformer([
         ('id0', FunctionTransformer(func=id_func, validate=False), ['dim_0']),
         ('id1', FunctionTransformer(func=id_func, validate=False), ['dim_1'])

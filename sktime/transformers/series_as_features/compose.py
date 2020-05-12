@@ -8,7 +8,8 @@ import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import tabularize
@@ -246,7 +247,7 @@ class RowTransformer(BaseSeriesAsFeaturesTransformer, MetaEstimatorMixin):
                             for _, col in X.items()], axis=1)
 
         # 3rd attempt: explicit for-loops, most robust but very slow
-        except:
+        except Exception:
             cols_t = []
             for c in range(X.shape[1]):  # loop over columns
                 col = X.iloc[:, c]

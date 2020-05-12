@@ -7,7 +7,8 @@ __all__ = [
     "BaseHeterogenousEnsembleForecaster"
 ]
 
-from joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sklearn.base import clone
 from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -20,7 +21,8 @@ class MetaForecasterMixin:
     _required_parameters = ["forecaster"]
 
 
-class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster, BaseHeterogenousMetaEstimator):
+class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster,
+                                         BaseHeterogenousMetaEstimator):
     """Base class for heterogenous ensemble forecasters"""
     _required_parameters = ["forecasters"]
 
@@ -48,10 +50,12 @@ class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster, BaseHeterogenousM
             )
 
         for forecaster in forecasters:
-            if forecaster not in (None, 'drop') and not is_forecaster(forecaster):
+            if forecaster not in (None, 'drop') and not is_forecaster(
+                    forecaster):
                 raise ValueError(
                     "The estimator {} should be a {}.".format(
-                        forecaster.__class__.__name__, is_forecaster.__name__[3:]
+                        forecaster.__class__.__name__,
+                        is_forecaster.__name__[3:]
                     )
                 )
         return names, forecasters
@@ -67,13 +71,17 @@ class BaseHeterogenousEnsembleForecaster(BaseSktimeForecaster, BaseHeterogenousM
             delayed(_fit_forecaster)(clone(forecaster), y_train, fh, X_train)
             for forecaster in forecasters)
 
-    def _predict_forecasters(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict_forecasters(self, fh=None, X=None, return_pred_int=False,
+                             alpha=DEFAULT_ALPHA):
         """Collect results from forecaster.predict() calls."""
         if return_pred_int:
             raise NotImplementedError()
-        # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(fh, X=X)
-        #                                     for forecaster in self.forecasters_)
-        return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        # return Parallel(n_jobs=self.n_jobs)(delayed(forecaster.predict)(
+        # fh, X=X)
+        #                                     for forecaster in
+        #                                     self.forecasters_)
+        return [forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int,
+                                   alpha=alpha)
                 for forecaster in self.forecasters_]
 
     def get_params(self, deep=True):

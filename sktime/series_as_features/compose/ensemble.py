@@ -26,7 +26,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
@@ -501,7 +502,8 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         self.oob_score_ = oob_score / self.n_outputs_
 
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_estimators,
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx,
+                          n_estimators,
                           verbose=0, class_weight=None,
                           n_samples_bootstrap=None):
     """Private function used to fit a single tree in parallel, adjusted for

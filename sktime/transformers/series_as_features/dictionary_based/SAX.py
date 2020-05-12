@@ -3,7 +3,8 @@ import sys
 import numpy as np
 import pandas as pd
 import scipy.stats
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
 from sktime.utils.data_container import tabularize
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
@@ -19,14 +20,13 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
-    
-    Overview: for each series: 
+    Overview: for each series:
         run a sliding window across the series
         for each window
             shorten the series with PAA (Piecewise Approximate Aggregation)
             discretise the shortened seried into fixed bins
-            form a word from these discrete values     
-    by default SAX produces a single word per series (window_size=0). 
+            form a word from these discrete values
+    by default SAX produces a single word per series (window_size=0).
     SAX returns a pandas data frame where column 0 is the histogram (sparse
     pd.series)
     of each series.
@@ -50,8 +50,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         breakpoints: = []
         num_insts = 0
         num_atts = 0
-                    
-            """
+
+    """
 
     def __init__(self,
                  word_length=8,
@@ -203,19 +203,6 @@ class _BitWord:
         # shorten a word by set amount of letters
         self.word = self.right_shift(self.word, amount * self.bits_per_letter)
         self.length -= amount
-
-    def word_list(self):
-        # list of input integers to obtain current word
-        word_list = []
-        shift = self.word_space - (self.length * self.bits_per_letter)
-
-        for i in range(self.length - 1, -1, -1):
-            word_list.append(self.right_shift(self.word << shift,
-                                              self.word_space -
-                                              self.bits_per_letter))
-            shift += self.bits_per_letter
-
-        return word_list
 
     @staticmethod
     def word_list(word, length):

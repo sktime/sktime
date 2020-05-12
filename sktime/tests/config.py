@@ -34,11 +34,13 @@ from sktime.transformers.series_as_features.shapelets import \
 from sktime.transformers.series_as_features.shapelets import ShapeletTransform
 from sktime.transformers.series_as_features.summarize import \
     FittedParamExtractor
+from sktime.transformers.series_as_features.summarize import \
+    TSFreshFeatureExtractor
+from sktime.transformers.series_as_features.summarize import \
+    TSFreshRelevantFeatureExtractor
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshFeatureExtractor, TSFreshRelevantFeatureExtractor
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [

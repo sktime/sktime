@@ -3,11 +3,10 @@ Unified high-level interface for various time series related learning tasks.
 """
 
 from inspect import signature
+
 import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
-
-from sktime.utils.validation.forecasting import check_fh
 
 
 class BaseTask:
@@ -27,7 +26,8 @@ class BaseTask:
     target : str
         The column name for the target variable to be predicted.
     features : list of str, optinal, (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+        The column name(s) for the feature variable. If None, every column
+        apart from target will be used as a feature.
     metadata : pandas.DataFrame
         Contains the metadata that the task is expected to work with.
     """
@@ -37,9 +37,11 @@ class BaseTask:
         self._target = target
         self._features = features if features is None else pd.Index(features)
 
-        self._metadata = None  # initialised as None, properly updated through setter method below
+        self._metadata = None  # initialised as None, properly updated
+        # through setter method below
         if metadata is not None:
-            self.set_metadata(metadata)  # using the modified setter method below
+            self.set_metadata(
+                metadata)  # using the modified setter method below
 
     @property
     def target(self):
@@ -60,14 +62,16 @@ class BaseTask:
         """
         Make attributes read-only.
         """
-        # TODO if metadata is a mutable object itself, its contents may still be mutable
+        # TODO if metadata is a mutable object itself, its contents may
+        #  still be mutable
         return self._metadata
 
     def set_metadata(self, metadata):
         """
         Provide missing metadata information to task if not already set.
 
-        This method is especially useful in orchestration where metadata may not be
+        This method is especially useful in orchestration where metadata may
+        not be
         available when specifying the task.
 
         Parameters
@@ -79,17 +83,23 @@ class BaseTask:
         -------
         self : an instance of self
         """
-        # TODO replace whole pandas data container as input argument with separated metadata container
+        # TODO replace whole pandas data container as input argument with
+        #  separated metadata container
 
-        # only set metadata if metadata is not already set, otherwise raise error
+        # only set metadata if metadata is not already set, otherwise raise
+        # error
         if self._metadata is not None:
-            raise AttributeError('Metadata is already set and can only be set once, create a new task for different '
-                                 'metadata')
+            raise AttributeError(
+                'Metadata is already set and can only be set once, create a '
+                'new task for different '
+                'metadata')
 
-        # check for consistency of information provided in task with given metadata
+        # check for consistency of information provided in task with given
+        # metadata
         self.check_data_compatibility(metadata)
 
-        # set default feature information (all columns but target) using metadata
+        # set default feature information (all columns but target) using
+        # metadata
         if self.features is None:
             self._features = metadata.columns.drop(self.target)
 
@@ -97,8 +107,10 @@ class BaseTask:
         self._metadata = {
             "nrow": metadata.shape[0],
             "ncol": metadata.shape[1],
-            "target_type": {self.target: type(i) for i in metadata[self.target]},
-            "feature_type": {col: {type(i) for i in metadata[col]} for col in self.features}
+            "target_type": {self.target: type(i) for i in
+                            metadata[self.target]},
+            "feature_type": {col: {type(i) for i in metadata[col]} for col in
+                             self.features}
         }
         return self
 
@@ -112,24 +124,31 @@ class BaseTask:
             Metadata container
         """
         if not isinstance(metadata, pd.DataFrame):
-            raise ValueError(f'Metadata must be provided in form of a pandas dataframe, but found: {type(metadata)}')
+            raise ValueError(
+                f'Metadata must be provided in form of a pandas dataframe, '
+                f'but found: {type(metadata)}')
 
         if self.target not in metadata.columns:
             raise ValueError(f"Target: {self.target} not found in metadata")
 
         if self.features is not None:
             if not np.all(self.features.isin(metadata.columns)):
-                raise ValueError(f"Features: {list(self.features)} not found in metadata")
+                raise ValueError(
+                    f"Features: {list(self.features)} not found in metadata")
 
         if isinstance(self, (TSCTask, TSRTask)):
             if self.features is None:
                 if len(metadata.columns.drop(self.target)) == 0:
-                    raise ValueError(f"For task of type: {type(self)}, at least one feature must be given, "
-                                     f"but found none")
+                    raise ValueError(
+                        f"For task of type: {type(self)}, at least one "
+                        f"feature must be given, "
+                        f"but found none")
 
             if metadata.shape[0] <= 1:
-                raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
-                                 f"found: {metadata.shape[0]} samples")
+                raise ValueError(
+                    f"For task of type: {type(self)}, several samples (rows) "
+                    f"must be given, but only "
+                    f"found: {metadata.shape[0]} samples")
 
     @classmethod
     def _get_param_names(cls):
@@ -159,20 +178,24 @@ class BaseTask:
         params : mapping of string to any
             Parameter names mapped to their values.
         """
-        out = {key: getattr(self, key, None) for key in self._get_param_names()}
+        out = {key: getattr(self, key, None) for key in
+               self._get_param_names()}
         return out
 
     def __repr__(self):
         class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name, _pprint(self._get_params(), offset=len(class_name), ),)
+        return '%s(%s)' % (class_name, _pprint(self._get_params(),
+                                               offset=len(class_name), ),)
 
 
 class TSCTask(BaseTask):
     """
     Time series classification task.
 
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
+    A task encapsulates metadata information such as the feature and target
+    variable
+    to which to fit the data to and any additional necessary instructions on
+    how
     to fit and predict.
 
     Parameters
@@ -180,22 +203,26 @@ class TSCTask(BaseTask):
     target : str
         The column name for the target variable to be predicted.
     features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+        The column name(s) for the feature variable. If None, every column
+        apart from target will be used as a feature.
     metadata : pandas.DataFrame, optional (default=None)
         Contains the metadata that the task is expected to work with.
     """
 
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSC'
-        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
+        super(TSCTask, self).__init__(target, features=features,
+                                      metadata=metadata)
 
 
 class TSRTask(BaseTask):
     """
     Time series regression task.
 
-    A task encapsulates metadata information such as the feature and target variable
-    to which to fit the data to and any additional necessary instructions on how
+    A task encapsulates metadata information such as the feature and target
+    variable
+    to which to fit the data to and any additional necessary instructions on
+    how
     to fit and predict.
 
     Parameters
@@ -203,11 +230,13 @@ class TSRTask(BaseTask):
     target : str
         The column name for the target variable to be predicted.
     features : list of str, optinal (default=None)
-        The column name(s) for the feature variable. If None, every column apart from target will be used as a feature.
+        The column name(s) for the feature variable. If None, every column
+        apart from target will be used as a feature.
     metadata : pandas.DataFrame, optional (default=None)
         Contains the metadata that the task is expected to work with.
     """
 
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSR'
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
+        super(TSRTask, self).__init__(target, features=features,
+                                      metadata=metadata)

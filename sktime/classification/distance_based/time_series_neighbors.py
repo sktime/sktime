@@ -42,21 +42,20 @@ from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
 """
-Please note that many aspects of this class are taken from scikit-learn's 
+Please note that many aspects of this class are taken from scikit-learn's
 KNeighborsTimeSeriesClassifier
-class with necessary changes to enable use with time series classification 
+class with necessary changes to enable use with time series classification
 data and distance measures.
 
-TO-DO: add a utility method to set keyword args for distance measure 
+TO-DO: add a utility method to set keyword args for distance measure
 parameters (e.g. handle the parameter
-name(s) that are passed as metric_params automatically, depending on what 
+name(s) that are passed as metric_params automatically, depending on what
 distance measure is used in the
-classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow 
+classifier (e.g. know that it is w for dtw, c for msm, etc.). Also allow
 long-format specification for
 non-standard/user-defined measures
-e.g. set_distance_params(measure_type=None, param_values_to_set=None, 
+e.g. set_distance_params(measure_type=None, param_values_to_set=None,
 param_names=None)
-
 """
 
 

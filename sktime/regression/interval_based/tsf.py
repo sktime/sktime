@@ -4,6 +4,8 @@ __all__ = ["TimeSeriesForestRegressor"]
 from warnings import warn
 
 import numpy as np
+from joblib import Parallel
+from joblib import delayed
 from scipy.sparse import issparse
 from sklearn.ensemble.base import _partition_estimators
 from sklearn.ensemble.forest import ForestRegressor
@@ -13,13 +15,12 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
-from joblib import Parallel
-from joblib import delayed
 from sktime.base import MetaEstimatorMixin
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.compose.ensemble import _parallel_build_trees
 from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y

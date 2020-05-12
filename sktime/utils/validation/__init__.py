@@ -3,8 +3,6 @@ __all__ = [
 ]
 __author__ = ["Markus Löning"]
 
-from inspect import isclass
-from sktime.exceptions import NotFittedError
 import numpy as np
 
 

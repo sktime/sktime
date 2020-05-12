@@ -16,8 +16,10 @@ class MetaEstimatorMixin:
     _required_parameters = []
 
 
-class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for estimtators composed of named estimators.
+class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
+                                    metaclass=ABCMeta):
+    """Handles parameter management for estimtators composed of named
+    estimators.
 
     from sklearn utils.metaestimator.py
     """

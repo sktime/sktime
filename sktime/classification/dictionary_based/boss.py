@@ -16,7 +16,8 @@ import numpy as np
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.utils.validation.series_as_features import check_X_y, check_X
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X_y
 
 
 # TO DO: Make more efficient
@@ -199,8 +200,7 @@ class BOSSEnsemble(BaseClassifier):
                 self.n_parameter_samples = 0
 
             while (train_time < self.time_limit or num_classifiers <
-                    self.n_parameter_samples) and len(
-                    possible_parameters) > 0:
+                   self.n_parameter_samples) and len(possible_parameters) > 0:
                 parameters = possible_parameters.pop(
                     random.randint(0, len(possible_parameters) - 1))
 
@@ -272,13 +272,11 @@ class BOSSEnsemble(BaseClassifier):
 
                         if best_acc_for_win_size > max_acc:
                             max_acc = best_acc_for_win_size
-                            self.classifiers = list(compress(self.classifiers,
-                                                             [
-                                                                 classifier.accuracy >= max_acc * self.threshold
-                                                                 for
-                                                                 c, classifier
-                                                                 in enumerate(
-                                                                 self.classifiers)]))
+                            self.classifiers = list(compress(
+                                self.classifiers, [
+                                    classifier.accuracy >= max_acc *
+                                    self.threshold for c, classifier in
+                                    enumerate(self.classifiers)]))
 
                         min_max_acc, min_acc_ind = self._worst_ensemble_acc()
 
@@ -342,7 +340,7 @@ class BOSSEnsemble(BaseClassifier):
 
             for n, clf in enumerate(self.classifiers):
                 sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                self.weights[n]
+                    self.weights[n]
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -360,7 +358,7 @@ class BOSSEnsemble(BaseClassifier):
 
             for n, clf in enumerate(self.classifiers):
                 sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                self.weights[n]
+                    self.weights[n]
 
             dists = sums / (np.ones(self.n_classes) * self.n_estimators)
             c = dists.argmax()
@@ -529,7 +527,7 @@ def boss_distance(first, second, best_dist=sys.float_info.max):
                 return sys.float_info.max
     else:
         dist = np.sum([0 if first[n] == 0 else (first[n] - second[n]) * (
-                    first[n] - second[n])
+                first[n] - second[n])
                        for n in range(len(first))])
 
     return dist

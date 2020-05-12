@@ -22,7 +22,8 @@ class BoxCoxTransformer(BaseSingleSeriesTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, y_train, **fit_params):
-        self.lambda_ = boxcox_normmax(y_train, bounds=self.bounds, method=self.method)
+        self.lambda_ = boxcox_normmax(y_train, bounds=self.bounds,
+                                      method=self.method)
         self._is_fitted = True
         return self
 

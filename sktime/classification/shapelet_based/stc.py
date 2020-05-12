@@ -14,7 +14,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.shapelets import ContractedShapeletTransform
+from sktime.transformers.series_as_features.shapelets import \
+    ContractedShapeletTransform
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -60,11 +61,11 @@ class ShapeletTransformClassifier(BaseClassifier):
             ('rf', RandomForestClassifier(n_estimators=n_estimators))
         ])
 
-    #        self.shapelet_transform=ContractedShapeletTransform(
-    #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
-    #        self.classifier=RandomForestClassifier(
-    #        n_estimators=self.n_estimators,criterion="entropy")
-    #        self.st_X=None;
+        #        self.shapelet_transform=ContractedShapeletTransform(
+        #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
+        #        self.classifier=RandomForestClassifier(
+        #        n_estimators=self.n_estimators,criterion="entropy")
+        #        self.st_X=None;
         super(ShapeletTransformClassifier, self).__init__()
 
     def fit(self, X, y):

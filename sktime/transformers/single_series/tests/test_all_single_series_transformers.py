@@ -6,11 +6,12 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.transformers.single_series.adapt import \
+    SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.boxcox import BoxCoxTransformer
 from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing.forecasting import make_forecasting_problem
 

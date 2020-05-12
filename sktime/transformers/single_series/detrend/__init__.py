@@ -2,6 +2,11 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
+__all__ = [
+    "Detrender",
+    "Deseasonalizer",
+    "ConditionalDeseasonalizer"
+]
 
 from sktime.transformers.single_series.detrend._deseasonalise import \
     ConditionalDeseasonalizer

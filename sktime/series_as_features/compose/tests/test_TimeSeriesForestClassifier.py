@@ -1,24 +1,28 @@
-from sktime.series_as_features.compose.ensemble import TimeSeriesForestClassifier
-from sktime.utils.testing import generate_df_from_array
-import pandas as pd
 import numpy as np
-from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose.pipeline import FeatureUnion, Pipeline
-from sklearn.tree import DecisionTreeClassifier
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.transformers.series_as_features.summarize import RandomIntervalFeatureExtractor
-from sklearn.preprocessing import FunctionTransformer
-from sktime.utils.time_series import time_series_slope
+import pandas as pd
 import pytest
-
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.tree import DecisionTreeClassifier
+from sktime.datasets import load_gunpoint
+from sktime.series_as_features.compose.ensemble import \
+    TimeSeriesForestClassifier
+from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
+from sktime.utils.testing import generate_df_from_array
+from sktime.utils.time_series import time_series_slope
 
 n_instances = 20
 n_columns = 1
 len_series = 20
 n_classes = 2
 
-X = generate_df_from_array(np.random.normal(size=len_series), n_rows=n_instances, n_cols=n_columns)
+X = generate_df_from_array(np.random.normal(size=len_series),
+                           n_rows=n_instances, n_cols=n_columns)
 y = pd.Series(np.random.choice(np.arange(n_classes) + 1, size=n_instances))
 
 
@@ -67,16 +71,20 @@ random_state = 1234
 def test_pipeline_predictions(n_intervals, n_estimators):
     random_state = 1234
 
-    # Due to tie-breaking/floating point rounding in the final decision tree classifier, the results depend on the
+    # Due to tie-breaking/floating point rounding in the final decision tree
+    # classifier, the results depend on the
     # exact column order of the input data
 
     #  Compare pipeline predictions outside of ensemble.
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
         ('transform', FeatureUnion([
-            ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
-            ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
-            ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
+            ('mean', RowTransformer(
+                FunctionTransformer(func=np.mean, validate=False))),
+            ('std',
+             RowTransformer(FunctionTransformer(func=np.std, validate=False))),
+            ('slope', RowTransformer(
+                FunctionTransformer(func=time_series_slope, validate=False)))
         ])),
         ('clf', DecisionTreeClassifier())
     ]
@@ -85,8 +93,10 @@ def test_pipeline_predictions(n_intervals, n_estimators):
     a = clf1.predict(X_test)
 
     steps = [
-        ('transform', RandomIntervalFeatureExtractor(n_intervals=n_intervals,
-                                                     features=[np.mean, np.std, time_series_slope])),
+        ('transform', RandomIntervalFeatureExtractor(
+            n_intervals=n_intervals,
+            features=[np.mean, np.std,
+                      time_series_slope])),
         ('clf', DecisionTreeClassifier())
     ]
     clf2 = Pipeline(steps, random_state=random_state)
@@ -95,7 +105,8 @@ def test_pipeline_predictions(n_intervals, n_estimators):
     np.array_equal(a, b)
 
 
-# Compare TimeSeriesForest ensemble predictions using pipeline as base_estimator
+# Compare TimeSeriesForest ensemble predictions using pipeline as
+# base_estimator
 @pytest.mark.parametrize("n_intervals", ['log', 'sqrt', 1, 3])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
@@ -105,15 +116,20 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     # steps = [
     #     ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
     #     ('transform', FeatureUnion([
-    #         ('mean', RowTransformer(FunctionTransformer(func=np.mean, validate=False))),
-    #         ('std', RowTransformer(FunctionTransformer(func=np.std, validate=False))),
-    #         ('slope', RowTransformer(FunctionTransformer(func=time_series_slope, validate=False)))
+    #         ('mean', RowTransformer(FunctionTransformer(func=np.mean,
+    #         validate=False))),
+    #         ('std', RowTransformer(FunctionTransformer(func=np.std,
+    #         validate=False))),
+    #         ('slope', RowTransformer(FunctionTransformer(
+    #         func=time_series_slope, validate=False)))
     #     ])),
     #     ('clf', DecisionTreeClassifier())
     # ]
     # base_estimator = Pipeline(steps)
     features = [np.mean, np.std, time_series_slope]
-    steps = [('transform', RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)),
+    steps = [('transform',
+              RandomIntervalFeatureExtractor(n_intervals=n_intervals,
+                                             features=features)),
              ('clf', DecisionTreeClassifier())]
     base_estimator = Pipeline(steps)
 
@@ -123,7 +139,8 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     clf1.fit(X_train, y_train)
     a = clf1.predict_proba(X_test)
 
-    # default, semi-modular implementation using RandomIntervalFeatureExtractor internally
+    # default, semi-modular implementation using
+    # RandomIntervalFeatureExtractor internally
     clf2 = TimeSeriesForestClassifier(random_state=random_state,
                                       n_estimators=n_estimators)
     clf2.set_params(**{'base_estimator__transform__n_intervals': n_intervals})
@@ -131,6 +148,3 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     b = clf2.predict_proba(X_test)
 
     np.testing.assert_array_equal(a, b)
-
-
-

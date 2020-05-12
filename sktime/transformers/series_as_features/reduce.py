@@ -4,7 +4,8 @@
 __author__ = ["Markus Löning"]
 __all__ = ["Tabularizer"]
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import get_time_index
 from sktime.utils.data_container import tabularize

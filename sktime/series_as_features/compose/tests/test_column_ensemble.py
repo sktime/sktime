@@ -1,10 +1,9 @@
 __author__ = 'Aaron Bostrom'
 
-from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.interval_based import TimeSeriesForest
 from sktime.datasets import load_basic_motions
 from sktime.series_as_features.compose import ColumnEnsembleClassifier
-
 
 
 def test_heterogenous_pipeline_column_ensmbler():
@@ -13,9 +12,8 @@ def test_heterogenous_pipeline_column_ensmbler():
 
     # dims 0-3 with alternating classifiers.
     ct = ColumnEnsembleClassifier([
-            ("KNN", KNeighborsTimeSeriesClassifier(n_neighbors=1), [0]),
-            ("TSF", TimeSeriesForest(), [2])
+        ("KNN", KNeighborsTimeSeriesClassifier(n_neighbors=1), [0]),
+        ("TSF", TimeSeriesForest(), [2])
     ])
     ct.fit(X_train, y_train)
     ct.score(X_test, y_test)
-

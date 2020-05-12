@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from numba import prange
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
@@ -16,7 +17,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
     RandOm Convolutional KErnel Transform
 
     @article{dempster_etal_2019,
-      author  = {Dempster, Angus and Petitjean, Fran\c{c}ois and Webb,
+      author  = {Dempster, Angus and Petitjean, Francois and Webb,
       Geoffrey I},
       title   = {ROCKET: Exceptionally fast and accurate time series
       classification using random convolutional kernels},
@@ -78,7 +79,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         _X = nested_to_3d_numpy(X)
         if self.normalise:
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                        _X.std(axis=-1, keepdims=True) + 1e-8)
+                    _X.std(axis=-1, keepdims=True) + 1e-8)
         return pd.DataFrame(_apply_kernels(_X, self.kernels))
 
 
@@ -145,8 +146,8 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         a1 = b1
         a2 = b2
 
-    return weights, lengths, biases, dilations, paddings, \
-           num_channel_indices, channel_indices
+    return (weights, lengths, biases, dilations, paddings, num_channel_indices,
+            channel_indices)
 
 
 @njit(fastmath=True)
@@ -223,8 +224,8 @@ def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding,
     "int32[:],int32[:],int32[:],int32[:])))",
     parallel=True, fastmath=True)
 def _apply_kernels(X, kernels):
-    weights, lengths, biases, dilations, paddings, num_channel_indices, \
-    channel_indices = kernels
+    (weights, lengths, biases, dilations, paddings, num_channel_indices,
+     channel_indices) = kernels
 
     n_instances, n_columns, _ = X.shape
     num_kernels = len(lengths)

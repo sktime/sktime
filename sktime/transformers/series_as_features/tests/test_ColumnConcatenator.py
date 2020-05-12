@@ -1,10 +1,9 @@
-from sktime.transformers.series_as_features.compose import ColumnConcatenator
-from sktime.datasets import load_basic_motions
 import numpy as np
+from sktime.datasets import load_basic_motions
+from sktime.transformers.series_as_features.compose import ColumnConcatenator
 
 
 def test_TimeSeriesConcatenator():
-
     X, y = load_basic_motions(return_X_y=True)
 
     # check that loaded dataframe is multivariate
@@ -24,6 +23,3 @@ def test_TimeSeriesConcatenator():
     # check specific observations
     assert X.iloc[0, -1].iloc[-3] == Xt.iloc[0, 0].iloc[-3]
     assert X.iloc[0, 0].iloc[3] == Xt.iloc[0, 0].iloc[3]
-
-
-

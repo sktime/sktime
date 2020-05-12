@@ -223,7 +223,8 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder='drop', verbose=False):
         self.remainder = remainder
-        super(ColumnEnsembleClassifier, self).__init__(estimators, verbose=verbose)
+        super(ColumnEnsembleClassifier, self).__init__(estimators,
+                                                       verbose=verbose)
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.

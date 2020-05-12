@@ -104,7 +104,7 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
     f = _construct_instance(Forecaster)
     f.fit(y_train, FH0)
     np.testing.assert_array_equal(f.fh, FH0)
-    # updating fh during predict raises error as fitted model depends on fh 
+    # updating fh during predict raises error as fitted model depends on fh
     # seen in fit
     with pytest.raises(ValueError):
         f.predict(fh=FH0 + 1)

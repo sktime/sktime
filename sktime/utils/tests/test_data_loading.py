@@ -2,8 +2,8 @@ import os
 import tempfile
 
 import numpy as np
-
-from sktime.utils.load_data import TsFileParseException, load_from_tsfile_to_dataframe
+from sktime.utils.load_data import TsFileParseException
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
 def test_load_from_tsfile_to_dataframe():
@@ -25,7 +25,8 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -38,14 +39,16 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
@@ -58,19 +61,22 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel false\n@data"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and no data but invalid metadata values is invalid
+    # Test that a file with a complete set of metadata and no data but
+    # invalid metadata values is invalid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -78,19 +84,22 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName\n@timeStamps\n@univariate true\n@classLabel false\n@data"
+            file_contents = "@problemName\n@timeStamps\n@univariate " \
+                            "true\n@classLabel false\n@data"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and a single case/dimension parses correctly
+    # Test that a file with a complete set of metadata and a single
+    # case/dimension parses correctly
 
     fd, path = tempfile.mkstemp()
     try:
@@ -98,7 +107,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2)"
 
             tmp_file.write(file_contents)
@@ -108,7 +119,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 1)
             np.testing.assert_equal(len(df.columns), 1)
@@ -123,7 +135,8 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and 2 cases with 3 dimensions parses correctly
+    # Test that a file with a complete set of metadata and 2 cases with 3
+    # dimensions parses correctly
 
     fd, path = tempfile.mkstemp()
     try:
@@ -131,9 +144,12 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
-            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)     \n"
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " \
+                             "16)     \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -142,7 +158,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 2)
             np.testing.assert_equal(len(df.columns), 3)
@@ -189,7 +206,8 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and time-series of different length parses correctly
+    # Test that a file with a complete set of metadata and time-series of
+    # different length parses correctly
 
     fd, path = tempfile.mkstemp()
     try:
@@ -197,7 +215,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2):(0, 3):(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15)\n"
 
@@ -208,7 +228,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 2)
             np.testing.assert_equal(len(df.columns), 3)
@@ -253,7 +274,8 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data but an inconsistent number of dimensions across cases is classed as invalid
+    # Test that a file with a complete set of metadata and data but an
+    # inconsistent number of dimensions across cases is classed as invalid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -261,7 +283,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14)    \n"
 
@@ -270,12 +294,14 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data but missing values after a tuple is classed as invalid
+    # Test that a file with a complete set of metadata and data but missing
+    # values after a tuple is classed as invalid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -283,7 +309,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5),\n"
 
             tmp_file.write(file_contents)
@@ -291,12 +319,14 @@ def test_load_from_tsfile_to_dataframe():
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data and some empty dimensions is classed as valid
+    # Test that a file with a complete set of metadata and data and some
+    # empty dimensions is classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -304,10 +334,13 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "(0, 1), (1, 2):     :(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14)    :       \n"
-            file_contents += "(0, 21), (1, 22):(0, 23), (1,24)    :   (0,25), (1, 26)    \n"
+            file_contents += "(0, 21), (1, 22):(0, 23), (1,24)    :   (0," \
+                             "25), (1, 26)    \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -316,7 +349,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 3)
             np.testing.assert_equal(len(df.columns), 3)
@@ -374,7 +408,9 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data that contains datetimes as timestamps and has some empty dimensions is classed as valid
+    # Test that a file with a complete set of metadata and data that
+    # contains datetimes as timestamps and has some empty dimensions is
+    # classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -382,10 +418,19 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
-            file_contents += "(01/01/2019 00:00:00, 1),  (01/02/2019 00:00:00, 2)  :                                                      : (01/05/2019 00:00:00, 5), (01/06/2019 00:00:00, 6)\n"
-            file_contents += "(01/01/2020 00:00:00, 11), (01/02/2020 00:00:00, 12) : (01/03/2020 00:00:00, 13), (01/04/2020 00:00:00, 14) :  \n"
-            file_contents += "(01/01/2021 00:00:00, 21), (01/02/2021 00:00:00, 22) : (01/03/2021 00:00:00, 23), (01/04/2021 00:00:00, 24) :  \n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
+            file_contents += "(01/01/2019 00:00:00, 1),  (01/02/2019 " \
+                             "00:00:00, 2)  :                               " \
+                             "                      : (01/05/2019 00:00:00, " \
+                             "5), (01/06/2019 00:00:00, 6)\n"
+            file_contents += "(01/01/2020 00:00:00, 11), (01/02/2020 " \
+                             "00:00:00, 12) : (01/03/2020 00:00:00, 13), " \
+                             "(01/04/2020 00:00:00, 14) :  \n"
+            file_contents += "(01/01/2021 00:00:00, 21), (01/02/2021 " \
+                             "00:00:00, 22) : (01/03/2021 00:00:00, 23), " \
+                             "(01/04/2021 00:00:00, 24) :  \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -394,7 +439,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 3)
             np.testing.assert_equal(len(df.columns), 3)
@@ -458,22 +504,32 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel false\n@data\n"
-            file_contents += "(01/01/2019 00:00:00, 1),  (01/02/2019 00:00:00, 2)  :                                                      : (01/05/2019 00:00:00, 5), (01/06/2019 00:00:00, 6)\n"
-            file_contents += "(00, 11), (1, 12) : (01/03/2020 00:00:00, 13), (01/04/2020 00:00:00, 14) :  \n"
-            file_contents += "(01/01/2021 00:00:00, 21), (01/02/2021 00:00:00, 22) : (01/03/2021 00:00:00, 23), (01/04/2021 00:00:00, 24) :  \n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
+            file_contents += "(01/01/2019 00:00:00, 1),  (01/02/2019 " \
+                             "00:00:00, 2)  :                               " \
+                             "                      : (01/05/2019 00:00:00, " \
+                             "5), (01/06/2019 00:00:00, 6)\n"
+            file_contents += "(00, 11), (1, 12) : (01/03/2020 00:00:00, 13), "\
+                             "(01/04/2020 00:00:00, 14) :  \n"
+            file_contents += "(01/01/2021 00:00:00, 21), (01/02/2021 " \
+                             "00:00:00, 22) : (01/03/2021 00:00:00, 23), " \
+                             "(01/04/2021 00:00:00, 24) :  \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data but missing classes is classed as invalid
+    # Test that a file with a complete set of metadata and data but missing
+    # classes is classed as invalid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -481,21 +537,26 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel true 0 1 2\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel true 0 1 " \
+                            "2\n@data\n"
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
-            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)     \n"
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " \
+                             "16)     \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data but invalid classes is classed as invalid
+    # Test that a file with a complete set of metadata and data but invalid
+    # classes is classed as invalid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -503,21 +564,27 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel true 0 1 2\n@data\n"
-            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6) : 0 \n"
-            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)   : 3  \n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel true 0 1 " \
+                            "2\n@data\n"
+            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, " \
+                             "6) : 0 \n"
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " \
+                             "16)   : 3  \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
 
             # Parse the file and assert that it is invalid
 
-            np.testing.assert_raises(TsFileParseException, load_from_tsfile_to_dataframe, path)
+            np.testing.assert_raises(TsFileParseException,
+                                     load_from_tsfile_to_dataframe, path)
 
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data with classes is classed as valid
+    # Test that a file with a complete set of metadata and data with classes
+    # is classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -525,9 +592,13 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps true\n@univariate true\n@classLabel true 0 1 2\n@data\n"
-            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6): 0\n"
-            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16): 2     \n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "true\n@univariate true\n@classLabel true 0 1 " \
+                            "2\n@data\n"
+            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, " \
+                             "6): 0\n"
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " \
+                             "16): 2     \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -536,7 +607,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df, y = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame of X values returned accurately reflects the data in the file
+            # Test the DataFrame of X values returned accurately reflects
+            # the data in the file
 
             np.testing.assert_equal(len(df), 2)
             np.testing.assert_equal(len(df.columns), 3)
@@ -589,7 +661,8 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data, with no timestamps, is classed as valid
+    # Test that a file with a complete set of metadata and data, with no
+    # timestamps, is classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -597,7 +670,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps false\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "false\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "1,2:3,4:5,6\n"
             file_contents += "11,12:13,14:15,16\n"
             file_contents += "21,22:23,24:25,26\n"
@@ -609,7 +684,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 3)
             np.testing.assert_equal(len(df.columns), 3)
@@ -671,7 +747,8 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data, with no timestamps and some empty dimensions, is classed as valid
+    # Test that a file with a complete set of metadata and data, with no
+    # timestamps and some empty dimensions, is classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
@@ -679,7 +756,9 @@ def test_load_from_tsfile_to_dataframe():
 
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps false\n@univariate true\n@classLabel false\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "false\n@univariate true\n@classLabel " \
+                            "false\n@data\n"
             file_contents += "1,2::5,6\n"
             file_contents += "11,12:13,14:15,16\n"
             file_contents += "21,22:23,24:\n"
@@ -691,7 +770,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame returned accurately reflects the data in the file
+            # Test the DataFrame returned accurately reflects the data in
+            # the file
 
             np.testing.assert_equal(len(df), 3)
             np.testing.assert_equal(len(df.columns), 3)
@@ -749,14 +829,17 @@ def test_load_from_tsfile_to_dataframe():
     finally:
         os.remove(path)
 
-    # Test that a file with a complete set of metadata and data, with no timestamps and some empty dimensions and classes, is classed as valid
+    # Test that a file with a complete set of metadata and data, with no
+    # timestamps and some empty dimensions and classes, is classed as valid
 
     fd, path = tempfile.mkstemp()
     try:
         with os.fdopen(fd, 'w') as tmp_file:
             # Write the contents of the file
 
-            file_contents = "@problemName Test Problem\n@timeStamps false\n@univariate true\n@classLabel true cat bear dog\n@data\n"
+            file_contents = "@problemName Test Problem\n@timeStamps " \
+                            "false\n@univariate true\n@classLabel true cat " \
+                            "bear dog\n@data\n"
             file_contents += "1,2::5,6:cat  \n"
             file_contents += "11,12:13,14:15,16:  dog\n"
             file_contents += "21,22:23,24::   bear   \n"
@@ -768,7 +851,8 @@ def test_load_from_tsfile_to_dataframe():
 
             df, y = load_from_tsfile_to_dataframe(path)
 
-            # Test the DataFrame of X values returned accurately reflects the data in the file
+            # Test the DataFrame of X values returned accurately reflects
+            # the data in the file
 
             np.testing.assert_equal(len(df), 3)
             np.testing.assert_equal(len(df.columns), 3)
