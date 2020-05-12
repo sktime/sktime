@@ -118,9 +118,9 @@ class BaseStrategy(BaseEstimator):
             required = self._traits["required_estimator_type"]
             if any(estimator_type not in ESTIMATOR_TYPES for estimator_type in
                    required):
-                raise AttributeError(f"Required estimator type unknown")
+                raise AttributeError("Required estimator type unknown")
         else:
-            raise AttributeError(f"Required estimator type not found")
+            raise AttributeError("Required estimator type not found")
 
         # # Check estimator compatibility with required type
         # If pipeline, check compatibility of final estimator

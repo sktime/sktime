@@ -38,7 +38,7 @@ def _score(y_test, y_pred, scorer):
 
     # select only test points for which we have made predictions
     if not np.all(np.isin(y_pred.index, y_test.index)):
-        raise IndexError(f"Predicted time points are not in test set")
+        raise IndexError("Predicted time points are not in test set")
     y_test = y_test.loc[y_pred.index]
 
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}

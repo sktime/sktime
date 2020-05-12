@@ -75,7 +75,7 @@ def check_y(y, allow_empty=False, allow_constant=True):
 
     if not allow_constant:
         if np.all(y == y.iloc[0]):
-            raise ValueError(f"All values of `y` are the same")
+            raise ValueError("All values of `y` are the same")
 
     # check time index
     check_time_index(y.index)
@@ -274,13 +274,13 @@ def check_consistent_time_index(*ys, y_train=None):
         check_time_index(y.index)
 
         if not first_index.equals(y.index):
-            raise ValueError(f"Found inconsistent time indices.")
+            raise ValueError("Found inconsistent time indices.")
 
     if y_train is not None:
         check_time_index(y_train.index)
         if y_train.index.max() >= first_index.min():
-            raise ValueError(f"Found `y_train` with time index which is not "
-                             f"before time index of `y_pred`")
+            raise ValueError("Found `y_train` with time index which is not "
+                             "before time index of `y_pred`")
 
 
 def check_alpha(alpha):
@@ -393,12 +393,12 @@ def check_fh_values(values):
 
     # check fh is not empty
     if len(values) < 1:
-        raise TypeError(f"`fh` cannot be empty, please specify now least one "
-                        f"step to forecast.")
+        raise TypeError("`fh` cannot be empty, please specify now least one "
+                        "step to forecast.")
 
     # check fh does not contain duplicates
     if len(values) != len(np.unique(values)):
-        raise TypeError(f"`fh` should not contain duplicates.")
+        raise TypeError("`fh` should not contain duplicates.")
 
     # sort fh
     return np.sort(values)

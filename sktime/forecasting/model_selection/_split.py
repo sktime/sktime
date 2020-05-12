@@ -101,14 +101,14 @@ class CutoffSplitter(BaseSplitter):
         # cutoffs
         cutoffs = check_cutoffs(self.cutoffs)
         if not np.max(cutoffs) < len(y):
-            raise ValueError(f"`cutoffs` are out-of-bounds for given `y`.")
+            raise ValueError("`cutoffs` are out-of-bounds for given `y`.")
 
         fh = check_fh(self.fh)
         check_fh_is_relative(fh)
 
         if np.max(cutoffs) + np.max(fh) > len(y):
             raise ValueError(
-                f"`fh` is out-of-bounds for given `cutoffs` and `y`.")
+                "`fh` is out-of-bounds for given `cutoffs` and `y`.")
         window_length = check_window_length(self.window_length)
 
         for cutoff in cutoffs:
@@ -153,8 +153,8 @@ class BaseWindowSplitter(BaseSplitter):
             if window_length is not None:
                 if window_length + fh_max > n_timepoints:
                     raise ValueError(
-                        f"The window length and forecasting horizon are "
-                        f"incompatible with the length of `y`")
+                        "The window length and forecasting horizon are "
+                        "incompatible with the length of `y`")
         return end
 
 
@@ -213,7 +213,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         """
         if self.initial_window is None:
             raise ValueError(
-                f"Please specify initial window, found: `initial_window`=None")
+                "Please specify initial window, found: `initial_window`=None")
 
         initial = check_window_length(self.initial_window)
         initial_training_window = np.arange(initial)

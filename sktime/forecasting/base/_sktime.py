@@ -373,11 +373,11 @@ class RequiredForecastingHorizonMixin:
                 if not np.array_equal(fh, self._fh):
                     # raise error if existing fh and new one don't match
                     raise ValueError(
-                        f"A different forecasting horizon `fh` has been "
-                        f"provided from "
-                        f"the one seen in `fit`. If you want to change the "
-                        f"forecasting "
-                        f"horizon, please re-fit the forecaster. " + msg)
+                        "A different forecasting horizon `fh` has been "
+                        "provided from "
+                        "the one seen in `fit`. If you want to change the "
+                        "forecasting "
+                        "horizon, please re-fit the forecaster. " + msg)
                 # if existing one and new match, ignore new one
                 pass
             else:

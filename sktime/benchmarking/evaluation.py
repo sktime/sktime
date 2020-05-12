@@ -22,7 +22,7 @@ class Evaluator:
 
     def __init__(self, results):
         if not isinstance(results, BaseResults):
-            raise ValueError(f"`results` must inherit from BaseResults")
+            raise ValueError("`results` must inherit from BaseResults")
         self.results = results
         self._metric_dicts = []
 
