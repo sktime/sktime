@@ -31,25 +31,33 @@ Deprecated
 -
 
 
-[0.4.0] - 2019-04-xx
+[0.4.0] - 2019-05-xx
 --------------------
 
 Added
 ~~~~~
-- Added changelog.
+- Forecasting framework, including encapsulated algorithms (forecasters),
+  composite model building functionality (meta-forecasters), and tools
+  for tuning and model evaluation
+- Consistent unit tests
+- Consistent input checks
+- Enforced PEP8 linting via flake8
+- Changelog
+- Support for Python 3.8
+- Support for manylinux wheels
 
 Changed
 ~~~~~~~
--
+- Revised all estimators to comply with common interface and to ensure
+  scikit-learn compatibility
 
 Removed
 ~~~~~~~
--
+- A few redundant classes (e.g. `Pipeline`) in favour of scikit-learn's
+  implementations
+
 
 Fixed
 ~~~~~
--
-
-Deprecated
-~~~~~~~~~~
--
+- Deprecation and future warnings from scikit-learn
+- User warnings from statsmodels
