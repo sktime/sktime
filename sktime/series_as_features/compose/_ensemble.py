@@ -12,20 +12,20 @@ from warnings import warn
 import numpy as np
 from joblib import Parallel
 from joblib import delayed
-from sklearn.ensemble.base import _partition_estimators
-from sklearn.ensemble.forest import ForestClassifier
-from sklearn.ensemble.forest import MAX_INT
-from sklearn.ensemble.forest import _generate_sample_indices
-from sklearn.ensemble.forest import _generate_unsampled_indices
-from sklearn.ensemble.forest import _get_n_samples_bootstrap
+from sklearn.ensemble._base import _partition_estimators
+from sklearn.ensemble._forest import ForestClassifier
+from sklearn.ensemble._forest import MAX_INT
+from sklearn.ensemble._forest import _generate_sample_indices
+from sklearn.ensemble._forest import _generate_unsampled_indices
+from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sklearn.exceptions import DataConversionWarning
+from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree._tree import DOUBLE
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.compose.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
@@ -211,9 +211,12 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform',
-                      RandomIntervalFeatureExtractor(n_intervals='sqrt',
-                                                     features=features)),
-                     ('clf', DecisionTreeClassifier())]
+                      RandomIntervalFeatureExtractor(
+                          n_intervals='sqrt',
+                          features=features,
+                          random_state=random_state)),
+                     ('clf', DecisionTreeClassifier(
+                         random_state=random_state))]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
@@ -268,10 +271,6 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
             class_weight=class_weight,
             max_samples=max_samples
         )
-
-        # Assign random state to pipeline.
-        base_estimator.set_params(
-            **{'random_state': random_state})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():

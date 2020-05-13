@@ -51,7 +51,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-import sktime.series_as_features.compose.ensemble as ensemble
+import sktime.series_as_features.compose._ensemble as ensemble
 import sktime.classification.dictionary_based.boss as db
 import sktime.classification.frequency_based.rise as fb
 import sktime.classification.interval_based.tsf as ib
@@ -64,8 +64,8 @@ from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 

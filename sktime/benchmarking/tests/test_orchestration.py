@@ -13,6 +13,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_val_score
+from sklearn.pipeline import Pipeline
 from sktime.benchmarking.data import RAMDataset
 from sktime.benchmarking.data import UEADataset
 from sktime.benchmarking.evaluation import Evaluator
@@ -27,9 +28,7 @@ from sktime.classification.distance_based.proximity_forest import \
     ProximityForest
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose.ensemble import \
-    TimeSeriesForestClassifier
-from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.compose import TimeSeriesForestClassifier
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformers.series_as_features.reduce import Tabularizer
 
@@ -93,8 +92,8 @@ def test_automated_orchestration_vs_manual(data_loader):
     UEADataset(path=DATAPATH, name="GunPoint", target_name="class_val"),
 ])
 @pytest.mark.parametrize("cv", [
-    SingleSplit,
-    StratifiedKFold
+    SingleSplit(random_state=1),
+    StratifiedKFold(random_state=1, shuffle=True)
 ])
 @pytest.mark.parametrize("metric_func", [
     accuracy_score,  # pairwise metric
@@ -105,14 +104,13 @@ def test_automated_orchestration_vs_manual(data_loader):
     HDDResults
 ])
 @pytest.mark.parametrize("estimator", [
-    DummyClassifier(random_state=1),
+    DummyClassifier(strategy="most_frequent", random_state=1),
     RandomForestClassifier(n_estimators=2, random_state=1),
 ])
 def test_single_dataset_single_strategy_against_sklearn(dataset, cv,
                                                         metric_func, estimator,
                                                         results_cls, tmpdir):
     # set up orchestration
-    cv = cv(random_state=1)
     task = TSCTask(target="class_val")
 
     # create strategies

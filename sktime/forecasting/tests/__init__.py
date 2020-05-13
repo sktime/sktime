@@ -22,7 +22,8 @@ TEST_ALPHAS = [0.05, 0.1]
 
 n_timepoints = 50
 TEST_YS = [
-    generate_time_series(positive=True),  # zero-based index
-    generate_time_series(positive=True, non_zero_index=True),
-    # non-zero-based index
+    # zero-based index
+    generate_time_series(positive=True),
+    # non-zero-based index, raises warnings in statsmodels
+    # generate_time_series(positive=True, non_zero_index=True),
 ]

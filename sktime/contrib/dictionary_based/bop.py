@@ -3,7 +3,7 @@ from sktime.base import BaseEstimator
 
 from sktime.classification.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
-from sktime.series_as_features.compose.pipeline import Pipeline
+from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.dictionary_based import SAX
 
 

@@ -9,7 +9,7 @@ from copy import deepcopy
 
 import numpy as np
 from numpy import random
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier

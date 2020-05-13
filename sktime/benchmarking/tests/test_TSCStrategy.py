@@ -3,8 +3,7 @@ from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_italy_power_demand
-from sktime.series_as_features.compose.ensemble import \
-    TimeSeriesForestClassifier
+from sktime.series_as_features.compose import TimeSeriesForestClassifier
 
 classifier = TimeSeriesForestClassifier(n_estimators=2)
 

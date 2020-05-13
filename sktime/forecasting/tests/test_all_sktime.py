@@ -43,8 +43,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 def test_oh_setting(Forecaster):
     # check oh and cutoff is None after construction
     f = _construct_instance(Forecaster)
-    assert isinstance(f.oh, pd.Series)
-    assert len(f.oh) == 0
+    assert f.oh is None
     assert f.cutoff is None
 
     # check that oh and cutoff is updated during fit

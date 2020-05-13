@@ -16,13 +16,12 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
-from sklearn.neighbors.base import _check_weights
-from sklearn.neighbors.base import _get_weights
-from sklearn.neighbors.classification import \
-    KNeighborsClassifier as _KNeighborsClassifier
+from sklearn.neighbors._base import _check_weights
+from sklearn.neighbors._base import _get_weights
+from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.utils import Parallel
 from sklearn.utils import delayed
-from sklearn.utils import effective_n_jobs
+from joblib import effective_n_jobs
 from sklearn.utils import gen_even_slices
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode

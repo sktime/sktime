@@ -20,7 +20,7 @@ from sklearn.utils.estimator_checks import \
     check_get_params_invariance as _check_get_params_invariance
 from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
-from sklearn.utils.testing import set_random_state
+from sklearn.utils._testing import set_random_state
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier

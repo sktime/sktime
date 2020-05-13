@@ -4,10 +4,9 @@ import pytest
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose.ensemble import \
-    TimeSeriesForestClassifier
-from sktime.series_as_features.compose.pipeline import FeatureUnion
-from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.compose import TimeSeriesForestClassifier
+from sklearn.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
@@ -77,7 +76,8 @@ def test_pipeline_predictions(n_intervals, n_estimators):
 
     #  Compare pipeline predictions outside of ensemble.
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals=n_intervals)),
+        ('segment', RandomIntervalSegmenter(n_intervals=n_intervals,
+                                            random_state=random_state)),
         ('transform', FeatureUnion([
             ('mean', RowTransformer(
                 FunctionTransformer(func=np.mean, validate=False))),
@@ -86,9 +86,9 @@ def test_pipeline_predictions(n_intervals, n_estimators):
             ('slope', RowTransformer(
                 FunctionTransformer(func=time_series_slope, validate=False)))
         ])),
-        ('clf', DecisionTreeClassifier())
+        ('clf', DecisionTreeClassifier(random_state=random_state))
     ]
-    clf1 = Pipeline(steps, random_state=random_state)
+    clf1 = Pipeline(steps)
     clf1.fit(X_train, y_train)
     a = clf1.predict(X_test)
 
@@ -96,10 +96,11 @@ def test_pipeline_predictions(n_intervals, n_estimators):
         ('transform', RandomIntervalFeatureExtractor(
             n_intervals=n_intervals,
             features=[np.mean, np.std,
-                      time_series_slope])),
-        ('clf', DecisionTreeClassifier())
+                      time_series_slope],
+            random_state=random_state)),
+        ('clf', DecisionTreeClassifier(random_state=random_state))
     ]
-    clf2 = Pipeline(steps, random_state=random_state)
+    clf2 = Pipeline(steps)
     clf2.fit(X_train, y_train)
     b = clf2.predict(X_test)
     np.array_equal(a, b)

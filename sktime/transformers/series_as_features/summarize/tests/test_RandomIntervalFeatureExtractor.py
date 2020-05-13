@@ -1,10 +1,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose.pipeline import FeatureUnion
-from sktime.series_as_features.compose.pipeline import Pipeline
+from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
@@ -116,7 +116,8 @@ def test_different_pipelines():
     random_state = 1233
     X_train, y_train = load_gunpoint(return_X_y=True)
     steps = [
-        ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
+        ('segment', RandomIntervalSegmenter(n_intervals='sqrt',
+                                            random_state=random_state)),
         ('transform', FeatureUnion([
             ('mean', RowTransformer(
                 FunctionTransformer(func=np.mean, validate=False))),
@@ -126,7 +127,7 @@ def test_different_pipelines():
                 FunctionTransformer(func=time_series_slope, validate=False))),
         ])),
     ]
-    pipe = Pipeline(steps, random_state=random_state)
+    pipe = Pipeline(steps)
     a = pipe.fit_transform(X_train)
     tran = RandomIntervalFeatureExtractor(n_intervals='sqrt',
                                           features=[np.mean, np.std,

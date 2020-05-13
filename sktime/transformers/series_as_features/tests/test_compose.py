@@ -5,7 +5,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_basic_motions
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose.pipeline import Pipeline
+from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
