@@ -38,7 +38,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             series will be used.
     """
 
-    def __init__(self, strategy="last",seasonal=False,window_length=None, sp=None):
+    def __init__(self, strategy = "last", seasonal = False, window_length = None, sp = None):
         super(NaiveForecaster, self).__init__()
         # input checks
         # allowed strategies to include: last, constant, mean, median, seasonal-last, seasonal-mean
@@ -139,7 +139,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             return np.repeat(np.nanmean(last_window), len(fh))
 
         elif self.strategy == "mean" and self.seasonal is True:
-            last_window = pd.DataFrame(data = last_window,columns=['data'])
+            last_window = pd.DataFrame(data = last_window, columns=['data'])
             for i in range(self.sp_):
                 if any(last_window.index%self.sp_ == i) is True:
                     last_window.at[last_window[last_window.index%self.sp_ == i].index[-1], 'data'] = last_window[last_window.index%self.sp_ == i].mean()
