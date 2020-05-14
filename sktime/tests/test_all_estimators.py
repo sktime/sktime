@@ -29,7 +29,6 @@ EXCLUDED = [
     'SAX',
     'ShapeletTransform',
     'ShapeletTransformClassifier',
-    'TimeSeriesForestClassifier',
     'TimeSeriesForestRegressor'
 ]
 

@@ -107,7 +107,7 @@ def test_pipeline_predictions(n_intervals, n_estimators):
 
 
 # Compare TimeSeriesForest ensemble predictions using pipeline as
-# base_estimator
+# estimator
 @pytest.mark.parametrize("n_intervals", ['log', 'sqrt', 1, 3])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
@@ -126,15 +126,15 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     #     ])),
     #     ('clf', DecisionTreeClassifier())
     # ]
-    # base_estimator = Pipeline(steps)
+    # estimator = Pipeline(steps)
     features = [np.mean, np.std, time_series_slope]
     steps = [('transform',
-              RandomIntervalFeatureExtractor(n_intervals=n_intervals,
-                                             features=features)),
+              RandomIntervalFeatureExtractor(
+                  random_state=random_state, features=features)),
              ('clf', DecisionTreeClassifier())]
-    base_estimator = Pipeline(steps)
+    estimator = Pipeline(steps)
 
-    clf1 = TimeSeriesForestClassifier(base_estimator=base_estimator,
+    clf1 = TimeSeriesForestClassifier(estimator=estimator,
                                       random_state=random_state,
                                       n_estimators=n_estimators)
     clf1.fit(X_train, y_train)
@@ -144,7 +144,6 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     # RandomIntervalFeatureExtractor internally
     clf2 = TimeSeriesForestClassifier(random_state=random_state,
                                       n_estimators=n_estimators)
-    clf2.set_params(**{'base_estimator__transform__n_intervals': n_intervals})
     clf2.fit(X_train, y_train)
     b = clf2.predict_proba(X_test)
 

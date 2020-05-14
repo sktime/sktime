@@ -280,7 +280,7 @@ def set_classifier(cls, resampleId):
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
+        return ensemble.TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
     else:
         raise Exception('UNKNOWN CLASSIFIER')
 

@@ -5,6 +5,7 @@ Configurable time series ensembles
 __all__ = ["TimeSeriesForestClassifier"]
 __author__ = ["Markus Löning"]
 
+import numbers
 from warnings import catch_warnings
 from warnings import simplefilter
 from warnings import warn
@@ -49,7 +50,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
 
     Parameters
     ----------
-    base_estimator : Pipeline
+    estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
@@ -188,8 +189,8 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
     """
 
     def __init__(self,
-                 base_estimator=None,
-                 n_estimators=200,
+                 estimator=None,
+                 n_estimators=100,
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
@@ -208,25 +209,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
                  class_weight=None,
                  max_samples=None):
 
-        if base_estimator is None:
-            features = [np.mean, np.std, time_series_slope]
-            steps = [('transform',
-                      RandomIntervalFeatureExtractor(
-                          n_intervals='sqrt',
-                          features=features,
-                          random_state=random_state)),
-                     ('clf', DecisionTreeClassifier(
-                         random_state=random_state))]
-            base_estimator = Pipeline(steps)
-
-        elif not isinstance(base_estimator, Pipeline):
-            raise ValueError(
-                'Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1],
-                            DecisionTreeClassifier):
-            raise ValueError(
-                'Last step in base estimator pipeline must be '
-                'DecisionTreeClassifier.')
+        self.estimator = estimator
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -241,27 +224,11 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
-        # Rename estimator params according to name in pipeline.
-        estimator = base_estimator.steps[-1][0]
-        estimator_params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-        }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in
-                            estimator_params.items()}
-
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
-            base_estimator=base_estimator,
+            base_estimator=None,
             n_estimators=n_estimators,
-            estimator_params=tuple(estimator_params.keys()),
+            estimator_params=None,
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -272,8 +239,62 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
             max_samples=max_samples
         )
 
-        # Store renamed estimator params.
-        for pname, pval in estimator_params.items():
+        # We need to add is-fitted state when inheriting from scikit-learn
+        self._is_fitted = False
+
+    def _validate_estimator(self, default=None):
+
+        if not isinstance(self.n_estimators, numbers.Integral):
+            raise ValueError("n_estimators must be an integer, "
+                             "got {0}.".format(type(self.n_estimators)))
+
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than zero, "
+                             "got {0}.".format(self.n_estimators))
+
+        # Set base estimator
+        if self.estimator is None:
+            # Set default time series forest
+            features = [np.mean, np.std, time_series_slope]
+            steps = [('transform',
+                      RandomIntervalFeatureExtractor(
+                          n_intervals='sqrt',
+                          features=features,
+                          random_state=self.random_state)),
+                     ('clf', DecisionTreeClassifier(
+                         random_state=self.random_state))]
+            self.base_estimator_ = Pipeline(steps)
+
+        else:
+            # else check given estimator is a pipeline with prior
+            # transformations and final decision tree
+            if not isinstance(self.estimator, Pipeline):
+                raise ValueError('`estimator` must be '
+                                 'pipeline with transforms.')
+            if not isinstance(self.estimator.steps[-1][1],
+                              DecisionTreeClassifier):
+                raise ValueError('Last step in `estimator` must be '
+                                 'DecisionTreeClassifier.')
+            self.base_estimator_ = self.estimator
+
+        # Set parameters according to naming in pipeline
+        estimator_params = {
+            "criterion": self.criterion,
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split,
+            "min_samples_leaf": self.min_samples_leaf,
+            "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
+            "max_features": self.max_features,
+            "max_leaf_nodes": self.max_leaf_nodes,
+            "min_impurity_decrease": self.min_impurity_decrease,
+            "min_impurity_split": self.min_impurity_split,
+        }
+        final_estimator = self.base_estimator_.steps[-1][0]
+        self.estimator_params = {f'{final_estimator}__{pname}': pval
+                                 for pname, pval in estimator_params.items()}
+
+        # Set renamed estimator parameters
+        for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
     def fit(self, X, y, sample_weight=None):

@@ -165,7 +165,7 @@ def tsf_benchmarking():
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        tsf = TimeSeriesForestClassifier(base_estimator=base_estimator,
+        tsf = TimeSeriesForestClassifier(estimator=base_estimator,
                                          n_estimators=100)
         exp.run_experiment(overwrite=False, problem_path=data_dir,
                            results_path=results_dir,
@@ -193,7 +193,7 @@ def rise_benchmarking():
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        rise = TimeSeriesForestClassifier(base_estimator=base_estimator,
+        rise = TimeSeriesForestClassifier(estimator=base_estimator,
                                           n_estimators=100)
         exp.run_experiment(overwrite=True, problem_path=data_dir,
                            results_path=results_dir,

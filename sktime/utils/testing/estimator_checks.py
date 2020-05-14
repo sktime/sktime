@@ -16,11 +16,11 @@ import joblib
 import numpy as np
 import pytest
 from sklearn import clone
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import \
     check_get_params_invariance as _check_get_params_invariance
 from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
-from sklearn.utils._testing import set_random_state
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier
@@ -91,15 +91,26 @@ def yield_estimator_checks():
 def check_required_params(Estimator):
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
-        params = getattr(Estimator, "_required_parameters")
+        required_params = getattr(Estimator, "_required_parameters")
 
-        assert isinstance(params, list), (
+        assert isinstance(required_params, list), (
             f"For estimator: {Estimator}, `_required_parameters` must be a "
-            f"list, but found type: {type(params)}")
+            f"list, but found type: {type(required_params)}")
 
-        assert all([isinstance(param, str) for param in params]), (
+        assert all([isinstance(param, str) for param in required_params]), (
             f"For estimator: {Estimator}, elements of `_required_parameters` "
             f"list must be strings")
+
+        # check if needless parameters are in _required_parameters
+        init_params = [param.name for param in
+                       signature(Estimator.__init__).parameters.values()]
+        in_required_but_not_init = [param for param in required_params
+                                    if param not in init_params]
+        if len(in_required_but_not_init) > 0:
+            raise ValueError(
+                f"Found parameters in `_required_parameters` which "
+                f"are not in `__init__`: "
+                f"{in_required_but_not_init}")
 
 
 def check_inheritance(Estimator):
