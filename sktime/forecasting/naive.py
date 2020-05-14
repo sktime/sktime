@@ -38,17 +38,16 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
             series will be used.
     """
 
-    def __init__(self, strategy="last",seasonal=None,window_length=None, sp=None):
+    def __init__(self, strategy="last",seasonal=False,window_length=None, sp=None):
         super(NaiveForecaster, self).__init__()
         # input checks
-        # allowed strategies to include: last, constant, seasonal-last, mean, median
+        # allowed strategies to include: last, constant, mean, median, seasonal-last, seasonal-mean
         allowed_strategies = ("last", "mean")
         if strategy not in allowed_strategies:
             raise ValueError(f"Unknown strategy: {strategy}; expected one of {allowed_strategies}")
         self.strategy = strategy
-        allowed_seasonals = (True,False,None)
-        if seasonal not in allowed_seasonals:
-            raise ValueError(f"Unknown seasonal: {seasonal}; expected one of {allowed_seasonals}")            
+        if isinstance(seasonal, bool):
+            raise ValueError(f"Unknown seasonal: {seasonal}; expected one of {(True, False)}")            
         self.seasonal = seasonal
         self.sp = sp
         self.window_length = window_length
@@ -83,7 +82,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
                 warn("For the non seasonal `last` and `mean` strategies, "
                      "the `sp` value will be ignored.")
 
-        if self.strategy == "last":
+        if self.strategy == "last" and self.seasonal is not True:
             self.window_length_ = 1
 
         if self.strategy in ("last","mean") and self.seasonal is True:
@@ -138,4 +137,24 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
 
         elif self.strategy == "mean":
             return np.repeat(np.nanmean(last_window), len(fh))
+
+        elif self.strategy == "mean" and self.seasonal is True:
+            last_window = pd.DataFrame(data = last_window,columns=['data'])
+            for i in range(self.sp_):
+                if any(last_window.index%self.sp_ == i) is True:
+                    last_window.at[last_window[last_window.index%self.sp_ == i].index[-1], 'data'] = last_window[last_window.index%self.sp_ == i].mean()
+            
+            # we need to replicate the last window if max(fh) is larger than sp,
+            # so that we still make forecasts by repeating the last value for that season,
+            # assume fh is sorted, i.e. max(fh) == fh[-1]
+            if fh[-1] > self.sp_:
+                reps = np.int(np.ceil(fh[-1] / self.sp_))
+                last_window = np.tile(last_window.tail(self.sp_).values, reps=reps)
+            else:
+                last_window=last_window.tail(self.sp_).values
+
+            # get zero-based index by subtracting the minimum
+            fh_idx = fh.index_like(self.cutoff)
+            return last_window[fh_idx]    
+
 
