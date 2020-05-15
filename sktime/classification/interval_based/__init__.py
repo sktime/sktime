@@ -2,4 +2,4 @@ __all__ = [
     "TimeSeriesForest"
 ]
 
-from sktime.classification.interval_based.tsf import TimeSeriesForest
+from sktime.classification.interval_based._tsf import TimeSeriesForest

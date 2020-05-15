@@ -16,12 +16,12 @@ from sktime.transformers.series_as_features.segment import \
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.series_as_features.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.utils.time_series import time_series_slope
-import sktime.classification.interval_based.tsf as ib
-import sktime.classification.frequency_based.rise as fb
-import sktime.classification.dictionary_based.boss as db
-import sktime.classification.distance_based.time_series_neighbors as dist
+import sktime.classification.interval_based._tsf as ib
+import sktime.classification.frequency_based._rise as fb
+import sktime.classification.dictionary_based._boss as db
+import sktime.classification.distance_based._time_series_neighbors as dist
 import sktime.contrib.experiments as exp
 
 # method 1

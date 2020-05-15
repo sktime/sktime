@@ -24,11 +24,11 @@ from sktime.benchmarking.results import HDDResults
 from sktime.benchmarking.results import RAMResults
 from sktime.benchmarking.strategies import TSCStrategy
 from sktime.benchmarking.tasks import TSCTask
-from sktime.classification.distance_based.proximity_forest import \
+from sktime.classification.distance_based._proximity_forest import \
     ProximityForest
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformers.series_as_features.reduce import Tabularizer
 

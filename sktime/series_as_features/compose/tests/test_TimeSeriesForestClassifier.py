@@ -4,7 +4,7 @@ import pytest
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from sktime.datasets import load_gunpoint
-from sktime.series_as_features.compose import TimeSeriesForestClassifier
+from sktime.classification.compose import TimeSeriesForestClassifier
 from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import RowTransformer

@@ -1,7 +1,7 @@
 from sklearn.model_selection import GridSearchCV
 from sktime.base import BaseEstimator
 
-from sktime.classification.distance_based.time_series_neighbors import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._time_series_neighbors import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_italy_power_demand
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.dictionary_based import SAX

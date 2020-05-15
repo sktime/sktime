@@ -28,7 +28,6 @@ EXCLUDED = [
     'SAX',
     'ShapeletTransform',
     'ShapeletTransformClassifier',
-    'TimeSeriesForestRegressor'
 ]
 
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
