@@ -22,7 +22,6 @@ EXCLUDED = [
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',
-    'RandomIntervalSpectralForest',
     'Rocket',
     'RowTransformer',
     'SFA',
