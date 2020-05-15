@@ -7,10 +7,10 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("mrseql", parent_package, top_path)
+    config = Configuration("_mrseql", parent_package, top_path)
 
     config.add_extension(
-        name="mrseql",
+        name="_mrseql",
         sources=["mrseql.pyx", "seql_learn.cpp", "SNode.cpp"],
         # sources=["mrseql_wrapper.cpp"],
         extra_compile_args=['-std=c++11'],
