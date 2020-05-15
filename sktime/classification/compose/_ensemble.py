@@ -561,4 +561,3 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx,
         tree.fit(X, y, **fit_params)
 
     return tree
-

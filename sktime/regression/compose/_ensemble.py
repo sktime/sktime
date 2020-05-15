@@ -1,8 +1,8 @@
-w__author__ = "Markus Löning"
+__author__ = "Markus Löning"
 __all__ = ["TimeSeriesForestRegressor"]
 
-import numbers
 from warnings import warn
+import numbers
 
 import numpy as np
 from joblib import Parallel
