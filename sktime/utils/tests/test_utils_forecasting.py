@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.utils.testing import generate_df_from_array, generate_polynomial_series
+from sktime.utils.testing.base import generate_df_from_array
+from sktime.utils.testing.forecasting import generate_polynomial_series
 from sktime.utils.time_series import fit_trend, remove_trend, add_trend
 from sktime.utils.data_container import tabularize
 

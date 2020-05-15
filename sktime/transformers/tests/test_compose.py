@@ -7,7 +7,7 @@ from sktime.pipeline import Pipeline
 from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
 from sktime.datasets import load_gunpoint, load_basic_motions
 from sktime.utils.data_container import tabularise
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils.testing.base import generate_df_from_array
 
 
 def test_rowwise_transformer_function_transformer_series_to_primitives():
