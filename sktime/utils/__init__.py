@@ -48,6 +48,7 @@ def all_estimators(estimator_type=None):
         BaseSeriesAsFeaturesTransformer
     from sktime.transformers.single_series.base import \
         BaseSingleSeriesTransformer
+    from sktime.classification.ensemble import BaseEnsemble
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -89,6 +90,7 @@ def all_estimators(estimator_type=None):
         "series_as_features_transformer": BaseSeriesAsFeaturesTransformer,
         "single_series_transformer": BaseSingleSeriesTransformer,
         "forecaster": BaseForecaster,
+        "ensemble": BaseEnsemble
     }
     estimators = [c for c in all_classes
                   if (issubclass(c[1], tuple(base_classes.values())) and
@@ -117,7 +119,8 @@ def all_estimators(estimator_type=None):
             "regressor",
             "single_series_transformer",
             "series_as_features_transformer",
-            "forecaster"
+            "forecaster",
+            "ensemble"
         )
         if estimator_type:
             raise ValueError(
