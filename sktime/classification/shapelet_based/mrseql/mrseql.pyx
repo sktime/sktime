@@ -1,5 +1,6 @@
 STUFF = "Hi"
 
+
 from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA

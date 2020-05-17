@@ -263,7 +263,7 @@ class TSFRegressor(BaseEnsemble):
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted values.
         """
-        self.check_is_fitted(self, 'estimators_')
+        self.check_is_fitted()
         # Check data
         check_X(X)  
         X = self._validate_X_predict(X)
