@@ -20,7 +20,6 @@ from sktime.base._ensemble import BaseEnsemble, _parallel_build_trees,\
      _generate_sample_indices,_generate_unsampled_indices,\
     _get_n_samples_bootstrap, MAX_INT
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.series_as_features import check_X,check_X_y
 
 class TSFClassifier(BaseEnsemble):
@@ -344,7 +343,7 @@ class TSFClassifier(BaseEnsemble):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        check_is_fitted(self, 'estimators_')
+        self.check_is_fitted()
 
         # Check data
         check_X(X)

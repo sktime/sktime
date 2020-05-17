@@ -20,11 +20,11 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import check_random_state, check_array, \
+    compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
 from sktime.base._base import BaseEstimator
-from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 MAX_INT = np.iinfo(np.int32).max
@@ -396,7 +396,7 @@ class BaseEnsemble(BaseEstimator):
     def _validate_X_predict(self, X):
         """
         Validate X whenever one tries to predict, apply, predict_proba."""
-        check_is_fitted(self)
+        self.check_is_fitted()
         return self.estimators_[0]._validate_X_predict(X, check_input=True)
 
     @property
@@ -411,7 +411,7 @@ class BaseEnsemble(BaseEstimator):
             trees consisting of only the root node, in which case it will be an
             array of zeros.
         """
-        check_is_fitted(self)
+        self.check_is_fitted()
 
         all_importances = Parallel(n_jobs=self.n_jobs,
                                    **_joblib_parallel_args(prefer='threads'))(
