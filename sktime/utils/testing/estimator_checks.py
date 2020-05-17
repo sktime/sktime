@@ -23,11 +23,13 @@ from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
+from sktime.classification.ensemble import BaseEnsemble
 from sktime.classification.base import is_classifier
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import BaseRegressor
+from sktime.regression.ensemble import BaseEnsemble
 from sktime.regression.base import is_regressor
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
@@ -123,7 +125,8 @@ def check_inheritance(Estimator):
         BaseRegressor,
         BaseForecaster,
         BaseSeriesAsFeaturesTransformer,
-        BaseSingleSeriesTransformer
+        BaseSingleSeriesTransformer,
+        BaseEnsemble,
     ]
     assert issubclass(Estimator, BaseEstimator), (f"Estimator: {Estimator} "
                                                   f"is not a sub-class of "
