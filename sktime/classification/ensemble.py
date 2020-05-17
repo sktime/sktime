@@ -12,7 +12,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
 from sklearn.base import clone
-from sklearn.ensemble._base import _partition_estimators, _set_random_states, _parallel_fit_estimator
+from sklearn.ensemble._base import _partition_estimators, _set_random_states
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
@@ -20,7 +20,8 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import check_random_state, check_array, \
+    compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
 from sktime.base._base import BaseEstimator
@@ -28,6 +29,23 @@ from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 MAX_INT = np.iinfo(np.int32).max
+
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
+    """Private function used to fit an estimator within a job."""
+    if sample_weight is not None:
+        try:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        except TypeError as exc:
+            if "unexpected keyword argument 'sample_weight'" in str(exc):
+                raise TypeError(
+                    "Underlying estimator {} does not support sample weights."
+                    .format(estimator.__class__.__name__)
+                ) from exc
+            raise
+    else:
+        estimator.fit(X, y)
+    return estimator
+
 
 def _get_n_samples_bootstrap(n_samples, max_samples):
 
