@@ -70,11 +70,6 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
-    def transform(self, fh=None, X=None):
-        self.check_is_fitted()
-        self._set_fh(fh)
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)
-
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()

@@ -223,10 +223,10 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         rng = check_random_state(self.random_state)
         starts = []
         ends = []
-        m = x.shape[0]  # series length
-        W = rng.randint(1, m, size=int(np.sqrt(m)))
+        n_timepoints = x.shape[0]  # series length
+        W = rng.randint(1, n_timepoints, size=int(np.sqrt(n_timepoints)))
         for w in W:
-            size = m - w + 1
+            size = n_timepoints - w + 1
             start = rng.randint(size, size=int(np.sqrt(size)))
             starts.extend(start)
             for s in start:

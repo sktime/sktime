@@ -3,7 +3,8 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "ESTIMATOR_TEST_PARAMS"
+    "ESTIMATOR_TEST_PARAMS",
+    "EXCLUDED"
 ]
 
 from sklearn.linear_model import LinearRegression
@@ -41,6 +42,25 @@ from sktime.transformers.series_as_features.summarize import \
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
+
+# TODO fix estimators to pass all tests
+EXCLUDED = [
+    'BOSSEnsemble',
+    'ColumnTransformer',
+    'ContractedShapeletTransform',
+    'ElasticEnsemble',
+    'KNeighborsTimeSeriesClassifier',
+    'MrSEQLClassifier',
+    'PCATransformer',
+    'ProximityForest',
+    'ProximityStump',
+    'ProximityTree',
+    'Rocket',
+    'SFA',
+    'SAX',
+    'ShapeletTransform',
+    'ShapeletTransformClassifier',
+]
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [

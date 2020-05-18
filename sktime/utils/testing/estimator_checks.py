@@ -32,6 +32,8 @@ from sktime.regression.base import is_regressor
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.base import \
+    is_non_fittable_series_as_features_transformer
+from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.transformers.single_series.base import is_single_series_transformer
@@ -44,7 +46,7 @@ from sktime.utils.testing.inspect import _get_args
 NON_STATE_CHANGING_METHODS = [
     "predict",
     "predict_proba",
-    "decision_function"
+    "decision_function",
     "transform",
     "inverse_transform"
 ]
@@ -82,7 +84,7 @@ def yield_estimator_checks():
         check_raises_not_fitted_error,
         check_fit_idempotent,
         check_fit_does_not_overwrite_hyper_params,
-        check_non_state_changing_methods_do_not_change_state,
+        check_methods_do_not_change_state,
         check_persistence_via_pickle,
     ]
     yield from checks
@@ -368,7 +370,7 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
                    new_value))
 
 
-def check_non_state_changing_methods_do_not_change_state(Estimator):
+def check_methods_do_not_change_state(Estimator):
     # Check that methods that are not supposed to change attributes of the
     # estimators do not change anything (including hyper-parameters and
     # fitted parameters)
@@ -377,12 +379,20 @@ def check_non_state_changing_methods_do_not_change_state(Estimator):
 
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
+    dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             args = _make_args(estimator, method)
-            dict_before = estimator.__dict__.copy()
             getattr(estimator, method)(*args)
+
+            if is_non_fittable_series_as_features_transformer(estimator) and \
+                    method == "transform":
+                # these transformers fit during transform, as they apply
+                # some function or wrapped transformer to each series,
+                # so transform will actually change the state of the estimator
+                continue
+
             assert estimator.__dict__ == dict_before, (
                 f"Estimator: {estimator} changes __dict__ during {method}")
 

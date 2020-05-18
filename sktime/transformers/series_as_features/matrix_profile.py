@@ -208,7 +208,7 @@ class MatrixProfile(BaseSeriesAsFeaturesTransformer):
         self.m = m  # subsequence length
         super(MatrixProfile, self).__init__()
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """
             Takes as input a time series dataset and returns the matrix profile
             for each single time series of the dataset.

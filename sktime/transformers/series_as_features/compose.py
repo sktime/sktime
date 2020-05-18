@@ -10,6 +10,8 @@ from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.base import MetaEstimatorMixin
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    _NonFittableSeriesAsFeaturesTransformer
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import tabularize
@@ -178,7 +180,8 @@ class ColumnTransformer(_ColumnTransformer, BaseSeriesAsFeaturesTransformer,
         return Xt
 
 
-class RowTransformer(BaseSeriesAsFeaturesTransformer, MetaEstimatorMixin):
+class RowTransformer(_NonFittableSeriesAsFeaturesTransformer,
+                     MetaEstimatorMixin):
     """A convenience wrapper for row-wise transformers to apply
     transformation to all rows.
 

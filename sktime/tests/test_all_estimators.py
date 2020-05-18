@@ -7,28 +7,9 @@ __all__ = [
 ]
 
 import pytest
+from sktime.tests.config import EXCLUDED
 from sktime.utils import all_estimators
 from sktime.utils.testing.estimator_checks import check_estimator
-
-# TODO fix estimators to pass all tests
-EXCLUDED = [
-    'BOSSEnsemble',
-    'ColumnTransformer',
-    'ContractedShapeletTransform',
-    'ElasticEnsemble',
-    'KNeighborsTimeSeriesClassifier',
-    'MrSEQLClassifier',
-    'PCATransformer',
-    'ProximityForest',
-    'ProximityStump',
-    'ProximityTree',
-    'Rocket',
-    'RowTransformer',
-    'SFA',
-    'SAX',
-    'ShapeletTransform',
-    'ShapeletTransformClassifier',
-]
 
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
                   e[0] not in EXCLUDED]

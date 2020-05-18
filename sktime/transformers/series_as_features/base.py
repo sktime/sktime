@@ -58,3 +58,27 @@ def is_series_as_features_transformer(estimator):
         otherwise.
     """
     return isinstance(estimator, BaseSeriesAsFeaturesTransformer)
+
+
+class _NonFittableSeriesAsFeaturesTransformer(BaseSeriesAsFeaturesTransformer):
+    """Base class for transformers which do nothing in fit and if fittable,
+    fit during transform, otherwise only transform data"""
+    pass
+
+
+def is_non_fittable_series_as_features_transformer(estimator):
+    """Return True if the given estimator is (probably) a series-as-features
+    transformer.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a series-as-features transformer and False
+        otherwise.
+    """
+    return isinstance(estimator, _NonFittableSeriesAsFeaturesTransformer)

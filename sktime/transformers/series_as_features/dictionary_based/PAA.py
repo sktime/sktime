@@ -37,7 +37,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
     def set_num_intervals(self, n):
         self.num_intervals = n
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """
 
         Parameters

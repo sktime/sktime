@@ -418,10 +418,10 @@ class BOSSIndividual(BaseClassifier):
         self.alphabet_size = alphabet_size
         self.norm = norm
 
-        self.transform = SFA(word_length, alphabet_size,
-                             window_size=window_size, norm=norm,
-                             remove_repeat_words=True,
-                             save_words=True)
+        self.transformer = SFA(word_length, alphabet_size,
+                               window_size=window_size, norm=norm,
+                               remove_repeat_words=True,
+                               save_words=True)
         self.transformed_data = []
         self.accuracy = 0
 
@@ -432,7 +432,7 @@ class BOSSIndividual(BaseClassifier):
         super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
-        sfa = self.transform.fit_transform(X)
+        sfa = self.transformer.fit_transform(X)
         self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
 
         self.class_vals = y
@@ -451,7 +451,7 @@ class BOSSIndividual(BaseClassifier):
         num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)
 
-        test_bags = self.transform.transform(X)
+        test_bags = self.transformer.transform(X)
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
 
         for i, test_bag in enumerate(test_bags):
@@ -498,8 +498,8 @@ class BOSSIndividual(BaseClassifier):
     def _shorten_bags(self, word_len):
         newBOSS = BOSSIndividual(self.window_size, word_len,
                                  self.alphabet_size, self.norm)
-        newBOSS.transform = self.transform
-        sfa = self.transform._shorten_bags(word_len)
+        newBOSS.transform = self.transformer
+        sfa = self.transformer._shorten_bags(word_len)
         newBOSS.transformed_data = [series.to_dict() for series in
                                     sfa.iloc[:, 0]]
         newBOSS.class_vals = self.class_vals
@@ -507,12 +507,12 @@ class BOSSIndividual(BaseClassifier):
         return newBOSS
 
     def _clean(self):
-        self.transform.words = None
-        self.transform.save_words = False
+        self.transformer.words = None
+        self.transformer.save_words = False
 
     def _set_word_len(self, word_len):
         self.word_length = word_len
-        self.transform.word_length = word_len
+        self.transformer.word_length = word_len
 
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
