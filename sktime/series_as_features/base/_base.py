@@ -4,6 +4,7 @@ __all__ = ["BaseEstimator"]
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sktime.exceptions import NotFittedError
 
+
 class BaseEstimator(_BaseEstimator):
 
     def __init__(self):
@@ -22,5 +23,5 @@ class BaseEstimator(_BaseEstimator):
             if the forecaster has not been fitted yet.
         """
         if not self.is_fitted:
-            raise NotFittedError(f"This instance of {self.__class__.__name__} has not "
-                                 f"been fitted yet; please call `fit` first.")
+            raise NotFittedError(f"This instance of {self.__class__.__name__} \
+                has not "f"been fitted yet; please call `fit` first.")

@@ -1,30 +1,38 @@
-__author__ = ["Markus Löning","Ayushmaan Seth"]
-__all__ = ["TSFClassifier"]
+__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__all__ = ["TSFRegressor"]
 
-from warnings import warn
+from warnings import warn, catch_warnings, simplefilter
+import numbers
+
 import numpy as np
+from scipy.sparse import issparse
+from scipy.sparse import hstack as sparse_hstack
 
-# from sklearn.ensemble._forest import _accumulate_prediction
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.exceptions import DataConversionWarning
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import check_random_state, check_array, \
+    compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.metrics import r2_score
 
-from sktime.pipeline import Pipeline
+from sklearn.pipeline import Pipeline
 from sktime.transformers.summarise import RandomIntervalFeatureExtractor
-from sktime.base._ensemble import BaseEnsemble
-from sktime.base._ensemble import BaseEnsemble,_parallel_build_trees, _generate_sample_indices, _generate_unsampled_indices,_get_n_samples_bootstrap, MAX_INT
+from sktime.base._ensemble import BaseEnsemble, _parallel_build_trees, \
+    _generate_sample_indices, _generate_unsampled_indices, \
+    _get_n_samples_bootstrap, MAX_INT
+from sktime.base._ensemble import DTYPE, DOUBLE
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation import check_is_fitted
 from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
 
-class TSFClassifier(BaseEnsemble):
-    """Time-Series Forest Classifier.
+class TSFRegressor(BaseEnsemble):
+    
+       
+    """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random forest
-    for time-series/panel data that fits a number of decision tree classifiers on
+    for time-series/panel data that fits a number of decision tree regressors on
     various sub-samples of a transformed dataset and uses averaging to improve the
     predictive accuracy and control over-fitting. The sub-sample size is always the same as the original
     input sample size but the samples are drawn with replacement if `bootstrap=True` (default).
@@ -33,13 +41,17 @@ class TSFClassifier(BaseEnsemble):
     ----------
     base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
-        and a decision tree classifier as final estimator.
-    n_estimators : integer, optional (default=200)
+        and a decision tree regressor as final estimator.
+    n_estimators : integer, optional (default=100)
         The number of trees in the forest.
-    criterion : string, optional (default="entropy")
-        The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific. Default is "entropy"
+    criterion : string, optional (default="mse")
+        The function to measure the quality of a split. Supported criteria
+        are "mse" for the mean squared error, which is equal to variance
+        reduction as feature selection criterion and minimizes the L2 loss
+        using the mean of each terminal node, "friedman_mse", which uses mean
+        squared error with Friedman's improvement score for potential splits,
+        and "mae" for the mean absolute error, which minimizes the L1 loss
+        using the median of each terminal node.
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -64,7 +76,7 @@ class TSFClassifier(BaseEnsemble):
         The minimum weighted fraction of the sum total of weights (of all
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
-    max_features : int, float, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
@@ -92,10 +104,10 @@ class TSFClassifier(BaseEnsemble):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    min_impurity_split : float or None, (default=None)
+    min_impurity_split : float, (default=1e-7)
         Threshold for early stopping in tree growth. A node will split
         if its impurity is above the threshold, otherwise it is a leaf.
-    bootstrap : boolean, optional (default=False)
+    bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
@@ -116,8 +128,7 @@ class TSFClassifier(BaseEnsemble):
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
-        None, optional (default=None)
+    None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -136,25 +147,12 @@ class TSFClassifier(BaseEnsemble):
         For multi-output, the weights of each column of y will be multiplied.
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
-    max_samples : int or float, default=None
-        If bootstrap is True, the number of samples to draw from X
-        to train each base estimator.
-        - If None (default), then draw `X.shape[0]` samples.
-        - If int, then draw `max_samples` samples.
-        - If float, then draw `max_samples * X.shape[0]` samples. Thus,
-          `max_samples` should be in the interval `(0, 1)`.
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
-    classes_ : array of shape = [n_classes] or a list of such arrays
-        The classes labels (single output problem), or a list of arrays of
-        class labels (multi-output problem).
-    n_classes_ : int or list
-        The number of classes (single output problem), or a list containing the
-        number of classes for each output (multi-output problem).
-    n_columns : int
+    n_features_ : int
         The number of features when ``fit`` is performed.
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
@@ -168,7 +166,7 @@ class TSFClassifier(BaseEnsemble):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
     """
-  
+
     def __init__(self,
                  base_estimator=None,
                  n_estimators=200,
@@ -193,13 +191,13 @@ class TSFClassifier(BaseEnsemble):
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
-                     ('clf', DecisionTreeClassifier())]
+                     ('clf', DecisionTreeRegressor())]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
             raise ValueError('Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
-            raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
+        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeRegressor):
+            raise ValueError('Last step in base estimator pipeline must be DecisionTreeRegressor.')
 
         # Assign values, even though passed on to base estimator below, necessary here for cloning
         self.criterion = criterion
@@ -229,7 +227,7 @@ class TSFClassifier(BaseEnsemble):
         estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
 
         # Pass on params.
-        super(TSFClassifier, self).__init__(
+        super(TSFRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=tuple(estimator_params.keys()),
@@ -250,85 +248,11 @@ class TSFClassifier(BaseEnsemble):
         for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def check_base_estimator(self):
-        """"""
-        raise NotImplementedError()
-
+    #TODO - Keep this or switch to sklearn implementation?
     def predict(self, X):
-        """
-        Predict class for X.
-        The predicted class of an input sample is a vote by the trees in
-        the forest, weighted by their probability estimates. That is,
-        the predicted class is the one with highest mean probability
-        estimate across the trees.
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
-            The predicted classes.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return self.classes_.take(np.argmax(proba, axis=1), axis=0)
-
-        else:
-            n_samples = proba[0].shape[0]
-            # all dtypes should be the same, so just take the first
-            class_type = self.classes_[0].dtype
-            predictions = np.empty((n_samples, self.n_outputs_),
-                                   dtype=class_type)
-
-            for k in range(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
-                                                                    axis=1),
-                                                          axis=0)
-
-            return predictions
-
-    def predict_log_proba(self, X):
-        """
-        Predict class log-probabilities for X.
-        The predicted class log-probabilities of an input sample is computed as
-        the log of the mean predicted class probabilities of the trees in the
-        forest.
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        p : array of shape (n_samples, n_classes), or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute :term:`classes_`.
-        """
-        proba = self.predict_proba(X)
-
-        if self.n_outputs_ == 1:
-            return np.log(proba)
-
-        else:
-            for k in range(self.n_outputs_):
-                proba[k] = np.log(proba[k])
-
-            return proba
-
-
-    # TODO - Change this to sklearn implementation?
-    def predict_proba(self, X):
-        """Predict class probabilities for X.
-        The predicted class probabilities of an input sample are computed as
-        the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        """Predict regression target for X.
+        The predicted regression target of an input sample is computed as the
+        mean predicted regression targets of the trees in the forest.
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
@@ -337,37 +261,34 @@ class TSFClassifier(BaseEnsemble):
             converted into a sparse ``csr_matrix``.
         Returns
         -------
-        p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
-            The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute `classes_`.
+        y : array of shape = [n_samples] or [n_samples, n_outputs]
+            The predicted values.
         """
         check_is_fitted(self, 'estimators_')
-
         # Check data
         validate_X(X)
-        check_X_is_univariate(X)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
+        # Parallel loop
+        y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(e.predict)(X, check_input=True) for e in self.estimators_)
 
-        return np.sum(all_proba, axis=0) / len(self.estimators_)
-   
+        return np.sum(y_hat, axis=0) / len(self.estimators_)
+
+
+    # TODO - Replace with our custom implementation?
     def _set_oob_score(self, X, y):
-        """Compute out-of-bag score"""
-        validate_X_y(X, y)
-        check_X_is_univariate(X)
+        """
+        Compute out-of-bag scores."""
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
-        n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
-        oob_decision_function = []
-        oob_score = 0.0
-        predictions = [np.zeros((n_samples, n_classes_[k]))
-                       for k in range(self.n_outputs_)]
+        predictions = np.zeros((n_samples, self.n_outputs_))
+        n_predictions = np.zeros((n_samples, self.n_outputs_))
 
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples, self.max_samples
@@ -376,81 +297,35 @@ class TSFClassifier(BaseEnsemble):
         for estimator in self.estimators_:
             unsampled_indices = _generate_unsampled_indices(
                 estimator.random_state, n_samples, n_samples_bootstrap)
-            p_estimator = estimator.predict_proba(X.iloc[unsampled_indices, :])
+            p_estimator = estimator.predict(
+                X[unsampled_indices, :], check_input=False)
 
             if self.n_outputs_ == 1:
-                p_estimator = [p_estimator]
+                p_estimator = p_estimator[:, np.newaxis]
 
-            for k in range(self.n_outputs_):
-                predictions[k][unsampled_indices, :] += p_estimator[k]
+            predictions[unsampled_indices, :] += p_estimator
+            n_predictions[unsampled_indices, :] += 1
 
-        for k in range(self.n_outputs_):
-            if (predictions[k].sum(axis=1) == 0).any():
-                warn("Some inputs do not have OOB scores. "
-                     "This probably means too few trees were used "
-                     "to compute any reliable oob estimates.")
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few trees were used "
+                 "to compute any reliable oob estimates.")
+            n_predictions[n_predictions == 0] = 1
 
-            decision = (predictions[k] /
-                        predictions[k].sum(axis=1)[:, np.newaxis])
-            oob_decision_function.append(decision)
-            oob_score += np.mean(y[:, k] ==
-                                 np.argmax(predictions[k], axis=1), axis=0)
+        predictions /= n_predictions
+        self.oob_prediction_ = predictions
 
         if self.n_outputs_ == 1:
-            self.oob_decision_function_ = oob_decision_function[0]
-        else:
-            self.oob_decision_function_ = oob_decision_function
+            self.oob_prediction_ = \
+                self.oob_prediction_.reshape((n_samples, ))
 
-        self.oob_score_ = oob_score / self.n_outputs_
+        self.oob_score_ = 0.0
 
-
-    def _validate_y_class_weight(self, y):
-        check_classification_targets(y)
-
-        y = np.copy(y)
-        expanded_class_weight = None
-
-        if self.class_weight is not None:
-            y_original = np.copy(y)
-
-        self.classes_ = []
-        self.n_classes_ = []
-
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = \
-                np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes_k)
-            self.n_classes_.append(classes_k.shape[0])
-        y = y_store_unique_indices
+            self.oob_score_ += r2_score(y[:, k],
+                                        predictions[:, k])
 
-        if self.class_weight is not None:
-            valid_presets = ('balanced', 'balanced_subsample')
-            if isinstance(self.class_weight, str):
-                if self.class_weight not in valid_presets:
-                    raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample".'
-                                     'Given "%s".'
-                                     % self.class_weight)
-                if self.warm_start:
-                    warn('class_weight presets "balanced" or '
-                         '"balanced_subsample" are '
-                         'not recommended for warm_start if the fitted data '
-                         'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight '
-                         '("balanced", classes, y). In place of y you can use '
-                         'a large enough sample of the full training set '
-                         'target to properly estimate the class frequency '
-                         'distributions. Pass the resulting weights as the '
-                         'class_weight parameter.')
+        self.oob_score_ /= self.n_outputs_
 
-            if (self.class_weight != 'balanced_subsample' or
-                    not self.bootstrap):
-                if self.class_weight == "balanced_subsample":
-                    class_weight = "balanced"
-                else:
-                    class_weight = self.class_weight
-                expanded_class_weight = compute_sample_weight(class_weight,
-                                                              y_original)
 
-        return y, expanded_class_weight
+
