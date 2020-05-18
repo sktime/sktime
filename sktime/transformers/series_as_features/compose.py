@@ -170,7 +170,7 @@ class ColumnTransformer(_ColumnTransformer, BaseSeriesAsFeaturesTransformer,
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         self.check_is_fitted()
         return super(ColumnTransformer, self).transform(X)
 

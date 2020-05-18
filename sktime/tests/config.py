@@ -46,7 +46,6 @@ from sktime.transformers.single_series.detrend import Detrender
 # TODO fix estimators to pass all tests
 EXCLUDED = [
     'BOSSEnsemble',
-    'ColumnTransformer',
     'ContractedShapeletTransform',
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
@@ -64,8 +63,8 @@ EXCLUDED = [
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [
-    ("t1", TRANSFORMER),
-    ("t2", TRANSFORMER),
+    ("t1", RowTransformer(TRANSFORMER)),
+    ("t2", RowTransformer(TRANSFORMER)),
 ]
 REGRESSOR = LinearRegression()
 TIME_SERIES_CLASSIFIER = TimeSeriesForest(random_state=1)
@@ -114,8 +113,8 @@ ESTIMATOR_TEST_PARAMS = {
     RowTransformer:
         {"transformer": TRANSFORMER},
     ColumnTransformer:
-        {"transformers": [(name, estimator, i) for i, (name, estimator) in
-                          enumerate(TRANSFORMERS)]},
+        {"transformers": [(name, estimator, [0]) for name, estimator in
+                          TRANSFORMERS]},
     # ARIMA requires d > start where start = 0 for full in-sample predictions
     AutoARIMA:
         {"d": 0, "suppress_warnings": True},
