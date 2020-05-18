@@ -23,7 +23,7 @@ def check_X(X, enforce_univariate=False, enforce_min_instances=1):
     enforce_min_instances : int, optional (default=1)
         Enforce minimum number of instances.
 
-    Returns
+    R   eturns
     -------
     X : pd.DataFrame
 

@@ -21,7 +21,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 
 
-from sktime.series_as_features.base._base import BaseEstimator
+from sktime.base._base import BaseEstimator
 from sktime.utils.validation.series_as_features import check_X_y
 
 MAX_INT = np.iinfo(np.int32).max

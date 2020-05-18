@@ -1,34 +1,31 @@
-__author__ = ["Markus Löning","Ayushmaan Seth"]
-__all__ = ["BaseEnsemble"]
+__author__ = ["Markus Löning", "Ayushmaan Seth"]
+__all__ = ["BaseTimeSeriesForest"]
 
 from warnings import warn, catch_warnings, simplefilter
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 import numbers
 
 
 import numpy as np
-from numpy import float32 as DTYPE
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 
 from sklearn.base import clone
-from sklearn.ensemble._base import _partition_estimators, _set_random_states
+from sklearn.ensemble._base import _set_random_states
 from sklearn.utils._joblib import Parallel, delayed
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
-from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
-from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, \
-    compute_sample_weight
-from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils import compute_sample_weight
 
-from sktime.base._base import BaseEstimator
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+
+from sktime.series_as_features.base._base import BaseEstimator
+from sktime.utils.validation.series_as_features import check_X_y
 
 MAX_INT = np.iinfo(np.int32).max
+
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
@@ -142,9 +139,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseEnsemble(BaseEstimator):
-
-    #TODO - Include _validate_estimator and _make_estimator
+class BaseTimeSeriesForest(BaseEstimator):
     """
     Base class for forests of trees.
     """
@@ -162,7 +157,6 @@ class BaseEnsemble(BaseEstimator):
                  warm_start=False,
                  class_weight=None,
                  max_samples=None):
-        
         self.base_estimator = base_estimator
         self.n_estimators = n_estimators
         self.estimator_params = estimator_params
@@ -218,7 +212,6 @@ class BaseEnsemble(BaseEstimator):
             self.estimators_.append(estimator)
 
         return estimator
-
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -316,8 +309,9 @@ class BaseEnsemble(BaseEstimator):
             # Parallel loop: for standard random forests, the threading
             # backend is preferred as the Cython code for fitting the trees
             # is internally releasing the Python GIL making threading more
-            # efficient than multiprocessing in that case. However, in this case,
-            # for fitting pipelines in parallel, multiprocessing is more efficient.
+            # efficient than multiprocessing in that case.
+            # However, in this case,for fitting pipelines in parallel,
+            # multiprocessing is more efficient.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),

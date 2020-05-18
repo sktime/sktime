@@ -1,4 +1,4 @@
-__author__ = ["Markus Löning","Ayushmaan Seth"]
+__author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TSFClassifier"]
 
 from warnings import warn
@@ -6,30 +6,30 @@ import numpy as np
 
 # from sklearn.ensemble._forest import _accumulate_prediction
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, compute_sample_weight
+from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
-
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.base._ensemble import BaseEnsemble
-from sktime.base._ensemble import BaseEnsemble, _parallel_build_trees,\
-     _generate_sample_indices,_generate_unsampled_indices,\
-    _get_n_samples_bootstrap, MAX_INT
-from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X,check_X_y
 
-class TSFClassifier(BaseEnsemble):
+from sktime.classification._compose import _generate_unsampled_indices, \
+    _get_n_samples_bootstrap
+from sktime.classification._compose import BaseTimeSeriesForest
+from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation.series_as_features import check_X, check_X_y
+
+
+class TSFClassifier(BaseTimeSeriesForest):
     """Time-Series Forest Classifier.
 
-    A time series forest is a meta estimator and an adaptation of the random forest
-    for time-series/panel data that fits a number of decision tree classifiers on
-    various sub-samples of a transformed dataset and uses averaging to improve the
-    predictive accuracy and control over-fitting. The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if `bootstrap=True` (default).
+    A time series forest is a meta estimator and an adaptation of the random
+    forest for time-series/panel data that fits a number of decision tree
+    classifiers on various sub-samples of a transformed dataset and uses
+    averaging to improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original input sample size
+    but the samples are drawn with replacement if `bootstrap=True` (default).
 
     Parameters
     ----------
@@ -169,7 +169,7 @@ class TSFClassifier(BaseEnsemble):
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
-    """  
+    """
     def __init__(self,
                  base_estimator=None,
                  n_estimators=200,
@@ -193,16 +193,22 @@ class TSFClassifier(BaseEnsemble):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
+            steps = [('transform',
+                     RandomIntervalFeatureExtractor
+                     (n_intervals='sqrt', features=features)),
                      ('clf', DecisionTreeClassifier())]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
-            raise ValueError('Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeClassifier):
-            raise ValueError('Last step in base estimator pipeline must be DecisionTreeClassifier.')
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(
+                base_estimator.steps[-1][1], DecisionTreeClassifier):
+            raise ValueError('Last step in base estimator pipeline must be \
+                DecisionTreeClassifier.')
 
-        # Assign values, even though passed on to base estimator below, necessary here for cloning
+        # Assign values, even though passed on to base estimator below,
+        # necessary here for cloning
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -227,7 +233,8 @@ class TSFClassifier(BaseEnsemble):
             "min_impurity_decrease": min_impurity_decrease,
             "min_impurity_split": min_impurity_split,
         }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        estimator_params = {f'{estimator}__{pname}': pval for pname, pval
+                            in estimator_params.items()}
 
         # Pass on params.
         super(TSFClassifier, self).__init__(
@@ -245,7 +252,9 @@ class TSFClassifier(BaseEnsemble):
         )
 
         # Assign random state to pipeline.
-        base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
+        base_estimator.set_params(**
+                                  {'random_state': random_state,
+                                   'check_input': False})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
@@ -322,14 +331,12 @@ class TSFClassifier(BaseEnsemble):
 
             return proba
 
-
-    # TODO - Change this to sklearn implementation?
     def predict_proba(self, X):
         """Predict class probabilities for X.
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        class probability of a single tree is the fraction of samples of
+        the same class in a leaf.
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
@@ -352,14 +359,15 @@ class TSFClassifier(BaseEnsemble):
         # Assign chunk of trees to jobs
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(e.predict_proba)(X) for e in self.estimators_)
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)
+        (delayed(e.predict_proba)(X) for e in self.estimators_)
 
         return np.sum(all_proba, axis=0) / len(self.estimators_)
-   
+
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
         check_X_y(X, y)
-        check_X(X,enforce_univariate=True)
+        check_X(X, enforce_univariate=True)
 
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
@@ -402,7 +410,6 @@ class TSFClassifier(BaseEnsemble):
             self.oob_decision_function_ = oob_decision_function
 
         self.oob_score_ = oob_score / self.n_outputs_
-
 
     def _validate_y_class_weight(self, y):
         check_classification_targets(y)

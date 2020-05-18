@@ -1,40 +1,34 @@
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TSFRegressor"]
 
-from warnings import warn, catch_warnings, simplefilter
-import numbers
+from warnings import warn
 
 import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
 
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.exceptions import DataConversionWarning
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils._joblib import Parallel, delayed
-from sklearn.utils import check_random_state, check_array, \
-    compute_sample_weight
-from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils import check_array
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.base._ensemble import BaseEnsemble, _parallel_build_trees, \
-    _generate_sample_indices, _generate_unsampled_indices, \
-    _get_n_samples_bootstrap, MAX_INT
-from sktime.base._ensemble import DTYPE, DOUBLE
+from sktime.regression._compose import BaseTimeSeriesForest, \
+    _get_n_samples_bootstrap, _generate_unsampled_indices
+from sktime.regression._compose import DTYPE
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation.series_as_features import check_X
 
 
-class TSFRegressor(BaseEnsemble):   
+class TSFRegressor(BaseTimeSeriesForest):
     """Time-Series Forest Regressor.
 
-    A time series forest is a meta estimator and an adaptation of the random forest
-    for time-series/panel data that fits a number of decision tree regressors on
-    various sub-samples of a transformed dataset and uses averaging to improve the
-    predictive accuracy and control over-fitting. The sub-sample size is always the same as the original
-    input sample size but the samples are drawn with replacement if `bootstrap=True` (default).
+    A time series forest is a meta estimator and an adaptation of the random
+    forest for time-series/panel data that fits a number of decision tree
+    regressors on various sub-samples of a transformed dataset and uses
+    averaging to improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original input sample size
+    but the samples are drawn with replacement if `bootstrap=True` (default).
 
     Parameters
     ----------
@@ -189,16 +183,21 @@ class TSFRegressor(BaseEnsemble):
 
         if base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(n_intervals='sqrt', features=features)),
+            steps = [('transform', RandomIntervalFeatureExtractor(
+                n_intervals='sqrt', features=features)),
                      ('clf', DecisionTreeRegressor())]
             base_estimator = Pipeline(steps)
 
         elif not isinstance(base_estimator, Pipeline):
-            raise ValueError('Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1], DecisionTreeRegressor):
-            raise ValueError('Last step in base estimator pipeline must be DecisionTreeRegressor.')
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1],
+                            DecisionTreeRegressor):
+            raise ValueError('Last step in base estimator pipeline must be \
+                DecisionTreeRegressor.')
 
-        # Assign values, even though passed on to base estimator below, necessary here for cloning
+        # Assign values, even though passed on to base estimator below,
+        # necessary here for cloning
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -223,7 +222,8 @@ class TSFRegressor(BaseEnsemble):
             "min_impurity_decrease": min_impurity_decrease,
             "min_impurity_split": min_impurity_split,
         }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval in estimator_params.items()}
+        estimator_params = {f'{estimator}__{pname}': pval for pname, pval
+                            in estimator_params.items()}
 
         # Pass on params.
         super(TSFRegressor, self).__init__(
@@ -241,13 +241,13 @@ class TSFRegressor(BaseEnsemble):
         )
 
         # Assign random state to pipeline.
-        base_estimator.set_params(**{'random_state': random_state, 'check_input': False})
+        base_estimator.set_params(**{
+            'random_state': random_state, 'check_input': False})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
 
-    #TODO - Keep this or switch to sklearn implementation?
     def predict(self, X):
         """Predict regression target for X.
         The predicted regression target of an input sample is computed as the
@@ -265,7 +265,7 @@ class TSFRegressor(BaseEnsemble):
         """
         self.check_is_fitted()
         # Check data
-        check_X(X)  
+        check_X(X)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -277,8 +277,6 @@ class TSFRegressor(BaseEnsemble):
 
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 
-
-    # TODO - Replace with our custom implementation?
     def _set_oob_score(self, X, y):
         """
         Compute out-of-bag scores."""
@@ -325,6 +323,3 @@ class TSFRegressor(BaseEnsemble):
                                         predictions[:, k])
 
         self.oob_score_ /= self.n_outputs_
-
-
-

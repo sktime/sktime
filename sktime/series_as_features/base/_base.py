@@ -4,6 +4,7 @@ __all__ = ["BaseEstimator"]
 from sklearn.base import BaseEstimator as _BaseEstimator
 from sktime.utils.exceptions import NotFittedError
 
+
 class BaseEstimator(_BaseEstimator):
 
     def __init__(self):
