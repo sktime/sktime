@@ -121,9 +121,9 @@ def all_estimators(estimator_type=None):
         )
         if estimator_type:
             raise ValueError(
-                f"Parameter type_filter must be one or a list of "
-                f"{allowed_filters} or "
-                f"None, but found: {repr(estimator_type)}")
+                f"Parameter `estimator_type` must be None, a string, "
+                f"or a list of strings. Allowed strings values are: "
+                f"{allowed_filters}. But found: {repr(estimator_type)}")
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of

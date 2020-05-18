@@ -7,6 +7,7 @@ __all__ = [
     "make_regression_problem",
 ]
 
+import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
@@ -28,9 +29,12 @@ def _make_series_as_features_X(y, n_columns, n_timepoints,
 
 
 def make_classification_problem(n_instances=20, n_columns=1,
-                                n_timepoints=20, random_state=None):
+                                n_timepoints=20, n_classes=2,
+                                random_state=None):
     rng = check_random_state(random_state)
-    y = pd.Series(rng.randint(0, 2, size=n_instances))
+    y = pd.Series(np.hstack([np.arange(n_classes),
+                             rng.randint(0, n_classes,
+                                         size=n_instances - n_classes)]))
 
     X = _make_series_as_features_X(y, n_columns, n_timepoints,
                                    random_state=random_state)

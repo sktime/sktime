@@ -167,8 +167,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         output : array of shape = [n_instances]
         """
-        probs = self.predict_proba(X)
-        return [self.classes_[np.argmax(prob)] for prob in probs]
+        proba = self.predict_proba(X)
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
         """

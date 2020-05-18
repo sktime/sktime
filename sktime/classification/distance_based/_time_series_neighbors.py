@@ -178,6 +178,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         """
         X, y = check_X_y(X, y, enforce_univariate=True)
+        y = np.asarray(y)
         X = np.array(
             [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
         check_classification_targets(y)

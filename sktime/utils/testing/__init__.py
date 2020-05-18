@@ -76,23 +76,23 @@ def _make_args(estimator, method, *args, **kwargs):
         raise ValueError(f"Method: {method} not supported")
 
 
-def _make_fit_args(estimator, random_state=None):
+def _make_fit_args(estimator, random_state=None, **kwargs):
     if is_forecaster(estimator):
-        y = make_forecasting_problem(random_state=random_state)
+        y = make_forecasting_problem(random_state=random_state, **kwargs)
         fh = 1
         return y, fh
 
     elif is_classifier(estimator):
-        return make_classification_problem(random_state=random_state)
+        return make_classification_problem(random_state=random_state, **kwargs)
 
     elif is_regressor(estimator):
-        return make_regression_problem(random_state=random_state)
+        return make_regression_problem(random_state=random_state, **kwargs)
 
     elif is_series_as_features_transformer(estimator):
-        return make_classification_problem(random_state=random_state)
+        return make_classification_problem(random_state=random_state, **kwargs)
 
     elif is_single_series_transformer(estimator):
-        y = make_forecasting_problem(random_state=random_state)
+        y = make_forecasting_problem(random_state=random_state, **kwargs)
         return (y,)
 
     else:

@@ -178,7 +178,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_test_instances]
         """
         proba = self.predict_proba(X)
-        return [self.classes_[np.argmax(prob)] for prob in proba]
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
         """

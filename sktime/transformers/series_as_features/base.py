@@ -1,7 +1,8 @@
 from sktime.base import BaseEstimator
 
 __all__ = ["BaseSeriesAsFeaturesTransformer",
-           "is_series_as_features_transformer"]
+           "is_series_as_features_transformer",
+           "is_non_fittable_series_as_features_transformer"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 
 
