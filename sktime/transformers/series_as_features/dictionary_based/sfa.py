@@ -295,7 +295,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         return dft
 
-    def _find_split_points(self, points, start, end, remaining_symbols, splits):
+    def _find_split_points(self, points, start, end, remaining_symbols,
+                           splits):
         out_dict = {}
         in_dict = {}
         for p in range(start, end):
@@ -339,13 +340,15 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                     self._find_split_points(points, best_pos,
                                             int((end - best_pos) / 2),
                                             remaining_symbols, splits)
-                    self._find_split_points(points, int((end - best_pos) / 2),
+                    self._find_split_points(points,
+                                            int((end - best_pos) / 2),
                                             end, remaining_symbols, splits)
                 elif best_pos - start > 4:
                     self._find_split_points(points, start,
                                             int((best_pos - start) / 2),
                                             remaining_symbols, splits)
-                    self._find_split_points(points, int((best_pos - start) / 2),
+                    self._find_split_points(points,
+                                            int((best_pos - start) / 2),
                                             end, remaining_symbols, splits)
 
         return splits
@@ -504,8 +507,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             pos = window_ind + int((self.window_size / 2))
             quadrant = start + (pos / quadrant_size)
 
-            bag[(word.word, quadrant)] = bag.get((word.word, quadrant), 0) \
-                                         + self.level_weights[i]
+            bag[(word.word, quadrant)] = (bag.get((word.word, quadrant), 0)
+                                          + self.level_weights[i])
 
             start += num_quadrants
 

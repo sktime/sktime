@@ -7,13 +7,13 @@ __author__ = "Matthew Middlehurst"
 __all__ = ["BOSSEnsemble", "BOSSIndividual", "boss_distance"]
 
 import math
-import random
 import sys
 import time
 from itertools import compress
 
 import numpy as np
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
@@ -113,7 +113,6 @@ class BOSSEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.random_state = random_state
-        random.seed(random_state)
 
         self.classifiers = []
         self.weights = []
@@ -177,16 +176,17 @@ class BOSSEnsemble(BaseClassifier):
             lowest_acc = 0
             lowest_acc_idx = 0
 
+            rng = check_random_state(self.random_state)
+
             if self.time_limit > 0:
                 self.n_parameter_samples = 0
 
             while (train_time < self.time_limit or num_classifiers <
                    self.n_parameter_samples) and len(possible_parameters) > 0:
                 parameters = possible_parameters.pop(
-                    random.randint(0, len(possible_parameters) - 1))
+                    rng.randint(0, len(possible_parameters)))
 
-                subsample = np.random.randint(self.n_instances,
-                                              size=subsample_size)
+                subsample = rng.randint(self.n_instances, size=subsample_size)
                 X_subsample = X.iloc[subsample, :]
                 y_subsample = y[subsample]
 
@@ -275,7 +275,8 @@ class BOSSEnsemble(BaseClassifier):
         return self
 
     def predict(self, X):
-        return [self.classes_[int(np.random.choice(
+        rng = check_random_state(self.random_state)
+        return [self.classes_[int(rng.choice(
             np.flatnonzero(prob == prob.max())))] for prob
                 in self.predict_proba(X)]
 
@@ -374,13 +375,12 @@ class BOSSIndividual(BaseClassifier):
         self.alphabet_size = alphabet_size
         self.norm = norm
         self.random_state = random_state
-        random.seed(random_state)
 
         self.transformer = SFA(word_length=word_length,
-                             alphabet_size=alphabet_size,
-                             window_size=window_size, norm=norm,
-                             remove_repeat_words=True,
-                             save_words=True)
+                               alphabet_size=alphabet_size,
+                               window_size=window_size, norm=norm,
+                               remove_repeat_words=True,
+                               save_words=True)
         self.transformed_data = []
         self.accuracy = 0
 
@@ -409,6 +409,8 @@ class BOSSIndividual(BaseClassifier):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
+        rng = check_random_state(self.random_state)
+
         num_insts = X.shape[0]
         classes = np.zeros(num_insts, dtype=np.int_)
 
@@ -422,9 +424,8 @@ class BOSSIndividual(BaseClassifier):
             for n, bag in enumerate(self.transformed_data):
                 dist = boss_distance(test_bag, bag, best_dist)
 
-                #todo change random method to pass tests
-                if dist < best_dist: #or (dist == best_dist and
-                                        #random.random() < 0.5):
+                if dist < best_dist or (dist == best_dist and rng.random()
+                                        < 0.5):
                     best_dist = dist
                     nn = self.class_vals[n]
 

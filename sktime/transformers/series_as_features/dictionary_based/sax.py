@@ -7,7 +7,6 @@ from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
 from sktime.utils.data_container import tabularize
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
 from sktime.utils.validation.series_as_features import check_X
@@ -183,7 +182,7 @@ class _BitWord:
     def __init__(self,
                  word=0):
         self.word = word
-        self.bits_per_letter = 2 #alphabet size 4
+        self.bits_per_letter = 2  # alphabet size 4
 
     def push(self, letter):
         # add letter to a word
@@ -211,20 +210,3 @@ class _BitWord:
     @staticmethod
     def right_shift(left, right):
         return (left % 0x100000000) >> right
-
-
-if __name__ == "__main__":
-    testPath = "Z:\\ArchiveData\\Univariate_ts\\Chinatown\\Chinatown_TRAIN.ts"
-    train_x, train_y = load_ts(testPath)
-
-    print("Correctness testing for SAX using Chinatown")
-    print("First case used for testing")
-    print(train_x.iloc[0, 0])
-    p = SAX(window_size=0, alphabet_size=4, word_length=8, save_words=False)
-    print(
-        "Test 1: window_size =0, result should be single word for each series")
-    x2 = p.transform(train_x)
-    print("Correct single series SAX for case 1: = b,a,a,b,d,d,d,b")
-    print("Transform mean case 1: =")
-    word = _BitWord.word_list(x2.iloc[0, 0].keys()[0], 8)
-    print(word)
