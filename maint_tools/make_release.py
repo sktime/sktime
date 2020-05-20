@@ -148,7 +148,7 @@ class BumpVersion(Step):
 
 class MakeClean(Step):
     def action(self, context):
-        self.do_cmd("make _clean")
+        self.do_cmd("make clean")
 
 
 class MakeDocs(Step):

@@ -347,6 +347,7 @@ def load_shampoo_sales():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='M')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data
 
@@ -476,6 +477,7 @@ def load_lynx():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data
 
@@ -520,5 +522,6 @@ def load_airline():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data

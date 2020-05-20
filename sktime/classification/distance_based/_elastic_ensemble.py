@@ -19,7 +19,7 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.classification.distance_based.time_series_neighbors import \
+from sktime.classification.distance_based._time_series_neighbors import \
     KNeighborsTimeSeriesClassifier
 from sktime.distances.elastic_cython import ddtw_distance as ddtw_c
 from sktime.distances.elastic_cython import dtw_distance as dtw_c

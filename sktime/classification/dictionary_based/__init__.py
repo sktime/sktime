@@ -3,5 +3,5 @@ __all__ = [
     "BOSSEnsemble"
 ]
 
-from sktime.classification.dictionary_based.boss import BOSSEnsemble
-from sktime.classification.dictionary_based.boss import BOSSIndividual
+from sktime.classification.dictionary_based._boss import BOSSEnsemble
+from sktime.classification.dictionary_based._boss import BOSSIndividual

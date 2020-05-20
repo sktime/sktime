@@ -10,19 +10,18 @@ from distutils.version import LooseVersion
 from functools import partial
 
 import numpy as np
+from joblib import Parallel
+from joblib import delayed
+from joblib import effective_n_jobs
 from scipy import stats
 from scipy.sparse import issparse
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import LeaveOneOut
-from sklearn.neighbors.base import _check_weights
-from sklearn.neighbors.base import _get_weights
-from sklearn.neighbors.classification import \
-    KNeighborsClassifier as _KNeighborsClassifier
-from sklearn.utils import Parallel
-from sklearn.utils import delayed
-from sklearn.utils import effective_n_jobs
+from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
+from sklearn.neighbors._base import _check_weights
+from sklearn.neighbors._base import _get_weights
 from sklearn.utils import gen_even_slices
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
@@ -179,6 +178,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         """
         X, y = check_X_y(X, y, enforce_univariate=True)
+        y = np.asarray(y)
         X = np.array(
             [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
         check_classification_targets(y)
@@ -220,10 +220,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        temp = check_array.__code__
-        check_array.__code__ = _check_array_ts.__code__
+        temp = check_array.__wrapped__.__code__
+        check_array.__wrapped__.__code__ = _check_array_ts.__code__
         fx = self._fit(X)
-        check_array.__code__ = temp
+        check_array.__wrapped__.__code__ = temp
 
         self._is_fitted = True
         return fx
@@ -255,30 +255,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         ind : array
             Indices of the nearest points in the population matrix.
-
-        Examples
-        --------
-        In the following example, we construct a NeighborsClassifier
-        class from an array representing our data set and ask who's
-        the closest point to [1,1,1]
-
-        >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
-        >>> from sklearn.neighbors import NearestNeighbors
-        >>> neigh = NearestNeighbors(n_neighbors=1)
-        >>> neigh.fit(samples) # doctest: +ELLIPSIS
-        NearestNeighbors(algorithm='auto', leaf_size=30, ...)
-        >>> print(neigh.kneighbors([[1., 1., 1.]])) # doctest: +ELLIPSIS
-        (array([[0.5]]), array([[2]]))
-
-        As you can see, it returns [[0.5]], and [[2]], which means that the
-        element is at distance 0.5 and is the third element of samples
-        (indexes start at 0). You can also query for multiple points:
-
-        >>> X = [[0., 1., 0.], [1., 0., 1.]]
-        >>> neigh.kneighbors(X, return_distance=False) # doctest: +ELLIPSIS
-        array([[1],
-               [2]]...)
-
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
@@ -407,8 +383,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Class labels for each data sample.
         """
         self.check_is_fitted()
-        temp = check_array.__code__
-        check_array.__code__ = _check_array_ts.__code__
+        temp = check_array.__wrapped__.__code__
+        check_array.__wrapped__.__code__ = _check_array_ts.__code__
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
@@ -433,7 +409,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        check_array.__code__ = temp
+        check_array.__wrapped__.__code__ = temp
         return y_pred
 
     def predict_proba(self, X):
@@ -455,8 +431,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        temp = check_array.__code__
-        check_array.__code__ = _check_array_ts.__code__
+        temp = check_array.__wrapped__.__code__
+        check_array.__wrapped__.__code__ = _check_array_ts.__code__
 
         X = check_array(X, accept_sparse='csr')
 
@@ -494,15 +470,16 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             probabilities = probabilities[0]
 
-        check_array.__code__ = temp
+        check_array.__wrapped__.__code__ = temp
         return probabilities
 
 
-# overwrite sklearn internal checks
-def _check_array_ts(array, accept_sparse=False, accept_large_sparse=True,
+# overwrite sklearn internal checks, this is really hacky
+# we now need to replace: check_array.__wrapped__.__code__ since it's
+# wrapped by a future warning decorator
+def _check_array_ts(array, accept_sparse=False, *, accept_large_sparse=True,
                     dtype="numeric", order=None, copy=False,
                     force_all_finite=True,
-                    ensure_2d=True, allow_nd=True, ensure_min_samples=1,
-                    ensure_min_features=1, warn_on_dtype=False,
-                    estimator=None):
+                    ensure_2d=True, allow_nd=False, ensure_min_samples=1,
+                    ensure_min_features=1, estimator=None):
     return array

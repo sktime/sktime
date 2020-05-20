@@ -61,30 +61,38 @@ def _make_args(estimator, method, *args, **kwargs):
     elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, *args, **kwargs)
 
-    elif method in ("transform", "inverse_transform"):
+    elif method == "transform":
         return _make_transform_args(estimator, *args, **kwargs)
+
+    elif method == "inverse_transform":
+        args = _make_transform_args(estimator, *args, **kwargs)
+        if isinstance(estimator, Tabularizer):
+            X, y = args
+            return tabularize(X), y
+        else:
+            return args
 
     else:
         raise ValueError(f"Method: {method} not supported")
 
 
-def _make_fit_args(estimator, random_state=None):
+def _make_fit_args(estimator, random_state=None, **kwargs):
     if is_forecaster(estimator):
-        y = make_forecasting_problem(random_state=random_state)
+        y = make_forecasting_problem(random_state=random_state, **kwargs)
         fh = 1
         return y, fh
 
     elif is_classifier(estimator):
-        return make_classification_problem(random_state=random_state)
+        return make_classification_problem(random_state=random_state, **kwargs)
 
     elif is_regressor(estimator):
-        return make_regression_problem(random_state=random_state)
+        return make_regression_problem(random_state=random_state, **kwargs)
 
     elif is_series_as_features_transformer(estimator):
-        return make_classification_problem(random_state=random_state)
+        return make_classification_problem(random_state=random_state, **kwargs)
 
     elif is_single_series_transformer(estimator):
-        y = make_forecasting_problem(random_state=random_state)
+        y = make_forecasting_problem(random_state=random_state, **kwargs)
         return (y,)
 
     else:
@@ -110,11 +118,7 @@ def _make_predict_args(estimator, random_state=None):
 
 def _make_transform_args(estimator, random_state=None):
     if is_series_as_features_transformer(estimator):
-        if isinstance(estimator, Tabularizer):
-            X, y = make_classification_problem(random_state=random_state)
-            return tabularize(X), y
-        else:
-            return make_classification_problem(random_state=random_state)
+        return make_classification_problem(random_state=random_state)
 
     elif is_single_series_transformer(estimator) or is_forecaster(estimator):
         y = make_forecasting_problem(random_state=random_state)

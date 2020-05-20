@@ -16,11 +16,11 @@ import joblib
 import numpy as np
 import pytest
 from sklearn import clone
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import \
     check_get_params_invariance as _check_get_params_invariance
 from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
-from sklearn.utils.testing import set_random_state
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier
@@ -31,6 +31,8 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    is_non_fittable_series_as_features_transformer
 from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
@@ -44,7 +46,7 @@ from sktime.utils.testing.inspect import _get_args
 NON_STATE_CHANGING_METHODS = [
     "predict",
     "predict_proba",
-    "decision_function"
+    "decision_function",
     "transform",
     "inverse_transform"
 ]
@@ -82,7 +84,7 @@ def yield_estimator_checks():
         check_raises_not_fitted_error,
         check_fit_idempotent,
         check_fit_does_not_overwrite_hyper_params,
-        check_non_state_changing_methods_do_not_change_state,
+        check_methods_do_not_change_state,
         check_persistence_via_pickle,
     ]
     yield from checks
@@ -91,15 +93,26 @@ def yield_estimator_checks():
 def check_required_params(Estimator):
     # Check common meta-estimator interface
     if hasattr(Estimator, "_required_parameters"):
-        params = getattr(Estimator, "_required_parameters")
+        required_params = getattr(Estimator, "_required_parameters")
 
-        assert isinstance(params, list), (
+        assert isinstance(required_params, list), (
             f"For estimator: {Estimator}, `_required_parameters` must be a "
-            f"list, but found type: {type(params)}")
+            f"list, but found type: {type(required_params)}")
 
-        assert all([isinstance(param, str) for param in params]), (
+        assert all([isinstance(param, str) for param in required_params]), (
             f"For estimator: {Estimator}, elements of `_required_parameters` "
             f"list must be strings")
+
+        # check if needless parameters are in _required_parameters
+        init_params = [param.name for param in
+                       signature(Estimator.__init__).parameters.values()]
+        in_required_but_not_init = [param for param in required_params
+                                    if param not in init_params]
+        if len(in_required_but_not_init) > 0:
+            raise ValueError(
+                f"Found parameters in `_required_parameters` which "
+                f"are not in `__init__`: "
+                f"{in_required_but_not_init}")
 
 
 def check_inheritance(Estimator):
@@ -357,7 +370,7 @@ def check_fit_does_not_overwrite_hyper_params(Estimator):
                    new_value))
 
 
-def check_non_state_changing_methods_do_not_change_state(Estimator):
+def check_methods_do_not_change_state(Estimator):
     # Check that methods that are not supposed to change attributes of the
     # estimators do not change anything (including hyper-parameters and
     # fitted parameters)
@@ -366,12 +379,20 @@ def check_non_state_changing_methods_do_not_change_state(Estimator):
 
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
+    dict_before = estimator.__dict__.copy()
 
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             args = _make_args(estimator, method)
-            dict_before = estimator.__dict__.copy()
             getattr(estimator, method)(*args)
+
+            if is_non_fittable_series_as_features_transformer(estimator) and \
+                    method == "transform":
+                # these transformers fit during transform, as they apply
+                # some function or wrapped transformer to each series,
+                # so transform will actually change the state of the estimator
+                continue
+
             assert estimator.__dict__ == dict_before, (
                 f"Estimator: {estimator} changes __dict__ during {method}")
 

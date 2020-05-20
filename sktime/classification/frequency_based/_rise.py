@@ -5,11 +5,11 @@ __author__ = ["Tony Bagnall"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 import math
-from copy import deepcopy
 
 import numpy as np
 from numpy import random
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.base import clone
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
@@ -78,7 +78,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                  acf_min_values=4
                  ):
         super(RandomIntervalSpectralForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(),
+            base_estimator=DecisionTreeClassifier(random_state=random_state),
             n_estimators=n_estimators)
         self.n_estimators = n_estimators
         self.random_state = random_state
@@ -86,13 +86,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
-        # These are all set in fit
-        self.n_classes = 0
-        self.series_length = 0
-        self.classifiers = []
-        self.intervals = []
-        self.lags = []
-        self.classes_ = []
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
@@ -119,6 +112,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
         n_instances, self.series_length = X.shape
 
+        self.estimators_ = []
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.intervals = np.zeros((self.n_estimators, 2), dtype=int)
@@ -131,12 +125,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                 self.intervals[i][0] + self.min_interval, self.series_length)
         # Check lag against global properties
         if self.acf_lag > self.series_length - self.acf_min_values:
-            self.acf_lag = self.series_length - self.acf_min_values
+            self.acf_lag_ = self.series_length - self.acf_min_values
         if self.acf_lag < 0:
-            self.acf_lag = 1
+            self.acf_lag_ = 1
         self.lags = np.zeros(self.n_estimators, dtype=int)
         for i in range(0, self.n_estimators):
-            temp_lag = self.acf_lag
+            temp_lag = self.acf_lag_
             if (temp_lag > self.intervals[i][1] - self.intervals[i][0]
                     - self.acf_min_values):
                 temp_lag = self.intervals[i][1] - self.intervals[i][
@@ -153,9 +147,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                 ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x = np.concatenate((acf_x, ps_x), axis=1)
             #            transformed_x=acf_x
-            tree = deepcopy(self.base_estimator)
+            tree = clone(self.base_estimator)
             tree.fit(transformed_x, y)
-            self.classifiers.append(tree)
+            self.estimators_.append(tree)
 
         self._is_fitted = True
         return self
@@ -173,8 +167,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         output : array of shape = [n_instances]
         """
-        probs = self.predict_proba(X)
-        return [self.classes_[np.argmax(prob)] for prob in probs]
+        proba = self.predict_proba(X)
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
         """
@@ -214,7 +208,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                                self.lags[i])
                 ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x = np.concatenate((acf_x, ps_x), axis=1)
-            sums += self.classifiers[i].predict_proba(transformed_x)
+            sums += self.estimators_[i].predict_proba(transformed_x)
 
         output = sums / (np.ones(self.n_classes) * self.n_estimators)
         return output

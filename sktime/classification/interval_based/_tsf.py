@@ -9,7 +9,7 @@ import math
 
 import numpy as np
 from sklearn.base import clone
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -63,7 +63,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     Attributes
     ----------
     n_classes    : int, extracted from the data
-    num_atts       : int, extracted from the data
+    num_atts     : int, extracted from the data
     n_intervals  : int, sqrt(num_atts)
     classifiers    : array of shape = [n_estimators] of DecisionTree
     classifiers
@@ -128,13 +128,13 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
-        self.intervals = np.zeros((self.n_estimators, 3 * self.n_intervals, 2),
+        self.intervals = np.zeros((self.n_estimators, self.n_intervals, 2),
                                   dtype=int)
-        for i in range(0, self.n_estimators):
+        for i in range(self.n_estimators):
             transformed_x = np.empty(shape=(3 * self.n_intervals, n_instances))
             # Find the random intervals for classifier i and concatentate
             # features
-            for j in range(0, self.n_intervals):
+            for j in range(self.n_intervals):
                 self.intervals[i][j][0] = rng.randint(
                     self.series_length - self.min_interval)
                 length = rng.randint(
@@ -178,7 +178,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_test_instances]
         """
         proba = self.predict_proba(X)
-        return [self.classes_[np.argmax(prob)] for prob in proba]
+        return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
 
     def predict_proba(self, X):
         """

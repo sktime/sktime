@@ -1,11 +1,12 @@
 import numpy as np
 from numpy import testing
-from sktime.classification.distance_based.proximity_forest import \
+from sktime.classification.distance_based._proximity_forest import \
     ProximityForest
-from sktime.classification.distance_based.proximity_forest import \
+from sktime.classification.distance_based._proximity_forest import \
     ProximityStump
-from sktime.classification.distance_based.proximity_forest import ProximityTree
-from sktime.classification.distance_based.proximity_forest import \
+from sktime.classification.distance_based._proximity_forest import \
+    ProximityTree
+from sktime.classification.distance_based._proximity_forest import \
     best_of_n_stumps
 from sktime.datasets import load_gunpoint
 

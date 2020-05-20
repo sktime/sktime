@@ -17,7 +17,7 @@ def compute_expected_coefs(y, degree, with_intercept=True):
     poly_matrix = np.vander(y.index.values, degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
-    return np.linalg.lstsq(poly_matrix, y.values)[0]
+    return np.linalg.lstsq(poly_matrix, y.values, rcond=None)[0]
 
 
 def compute_expected_detrend(y, degree, with_intercept):

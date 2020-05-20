@@ -9,13 +9,15 @@ from sklearn.base import clone
 from sktime.base import MetaEstimatorMixin
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    _NonFittableSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
-class PlateauFinder(BaseSeriesAsFeaturesTransformer):
+class PlateauFinder(_NonFittableSeriesAsFeaturesTransformer):
     """Transformer that finds segments of the same given value, plateau in
     the time series, and
     returns the starting indices and lengths.
@@ -33,9 +35,6 @@ class PlateauFinder(BaseSeriesAsFeaturesTransformer):
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
         self.min_length = min_length
-
-        self._starts = []
-        self._lengths = []
         super(PlateauFinder, self).__init__()
 
     def transform(self, X, y=None):
@@ -56,6 +55,9 @@ class PlateauFinder(BaseSeriesAsFeaturesTransformer):
 
         # get column name
         column_name = X.columns[0]
+
+        self._starts = []
+        self._lengths = []
 
         # find plateaus (segments of the same value)
         for x in X.iloc[:, 0]:
@@ -219,7 +221,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         Xt = np.zeros((n_rows,
                        n_features * n_intervals))  # Allocate output array
         # for transformed data
-        self.columns_ = []
+        columns = []
         colname = X.columns[0]
 
         # Tabularize each column assuming series have equal indexes in any
@@ -243,16 +245,16 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                     else:
                         raise
                 i += 1
-                self.columns_.append(
+                columns.append(
                     f'{colname}_{start}_{end}_{func.__name__}')
 
         Xt = pd.DataFrame(Xt)
-        Xt.columns = self.columns_
+        Xt.columns = columns
         return Xt
 
 
 class FittedParamExtractor(MetaEstimatorMixin,
-                           BaseSeriesAsFeaturesTransformer):
+                           _NonFittableSeriesAsFeaturesTransformer):
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):

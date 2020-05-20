@@ -218,7 +218,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             estimator must support :term:`fit` and :term:`transform`.
 
     """
-
     _required_parameters = ["estimators"]
 
     def __init__(self, estimators, remainder='drop', verbose=False):

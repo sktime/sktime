@@ -6,7 +6,7 @@ from warnings import warn
 import numpy as np
 from sklearn.base import clone
 from sklearn.decomposition import PCA
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.exceptions import DataConversionWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier

@@ -50,7 +50,7 @@ def generate_time_series(n_timepoints=75, positive=True, non_zero_index=False):
     index = np.arange(n_timepoints)
     if non_zero_index:
         index += 30
-    return pd.Series(a, index=index)
+    return pd.Series(a, index=pd.Int64Index(index))
 
 
 def generate_polynomial_series(n, order, coefs=None):
@@ -116,7 +116,7 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100,
 def make_forecasting_problem(n_timepoints=50, random_state=None):
     rng = check_random_state(random_state)
     return pd.Series(rng.random(size=n_timepoints),
-                     index=np.arange(n_timepoints))
+                     index=pd.Int64Index(np.arange(n_timepoints)))
 
 
 def assert_correct_pred_time_index(y_pred, y_train, fh):

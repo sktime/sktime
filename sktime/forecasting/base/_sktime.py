@@ -21,11 +21,9 @@ class BaseSktimeForecaster(BaseForecaster):
     """Base class for forecaster in sktime"""
 
     def __init__(self):
-        self._oh = pd.Series(
-            [])  # observation horizon, i.e. time points seen in fit or update
-        self._cutoff = None  # time point in observation horizon cutoff
-        # which to make forecasts
-        self._fh = None
+        self._oh = None  # observation horizon
+        self._cutoff = None  # reference point for relative forecasting horizon
+        self._fh = None  # forecasting horizon
         super(BaseSktimeForecaster, self).__init__()
 
     @property
@@ -53,10 +51,14 @@ class BaseSktimeForecaster(BaseForecaster):
         if len(y) > 0:
             # for fitting: since no previous observation horizon is present,
             # set new one
-            # for updating: append observation horizon to previous one
-            self._oh = y.combine_first(self.oh)
+            if self._oh is None:
+                self._oh = y
 
-            # by default, set cutoff to the end of the observation horizon
+            # for updating: append observation horizon to previous one
+            else:
+                self._oh = y.combine_first(self.oh)
+
+            # set cutoff to the end of the observation horizon
             self._set_cutoff(y.index[-1])
 
     @property

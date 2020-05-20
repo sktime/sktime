@@ -51,21 +51,21 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-import sktime.series_as_features.compose.ensemble as ensemble
-import sktime.classification.dictionary_based.boss as db
-import sktime.classification.frequency_based.rise as fb
-import sktime.classification.interval_based.tsf as ib
-import sktime.classification.distance_based.elastic_ensemble as dist
-import sktime.classification.distance_based.time_series_neighbors as nn
-import sktime.classification.distance_based.proximity_forest as pf
-import sktime.classification.shapelet_based.stc as st
+import sktime.classification.compose._ensemble as ensemble
+import sktime.classification.dictionary_based._boss as db
+import sktime.classification.frequency_based._rise as fb
+import sktime.classification.interval_based._tsf as ib
+import sktime.classification.distance_based._elastic_ensemble as dist
+import sktime.classification.distance_based._time_series_neighbors as nn
+import sktime.classification.distance_based._proximity_forest as pf
+import sktime.classification.shapelet_based._stc as st
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.series_as_features.compose.pipeline import Pipeline
-from sktime.series_as_features.compose.pipeline import FeatureUnion
+from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
@@ -280,7 +280,7 @@ def set_classifier(cls, resampleId):
             ('clf', DecisionTreeClassifier())
         ]
         base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(base_estimator=base_estimator, n_estimators=100)
+        return ensemble.TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
     else:
         raise Exception('UNKNOWN CLASSIFIER')
 
