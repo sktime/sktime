@@ -63,7 +63,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=5,
+                 window_size=10,
                  norm=False,
                  levels=1,
                  igb=False,
@@ -457,7 +457,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             last_word = -1
             repeat_words = 0
             new_words = []
-
             for window, word in enumerate(self.words[i]):
                 new_word = _BitWord(word=word.word)
                 new_word.shorten(16 - word_len)

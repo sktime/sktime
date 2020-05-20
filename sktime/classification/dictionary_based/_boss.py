@@ -460,16 +460,20 @@ class BOSSIndividual(BaseClassifier):
         return nn
 
     def _shorten_bags(self, word_len):
-        newBOSS = BOSSIndividual(self.window_size, word_len,
-                                 self.alphabet_size, self.norm)
-        newBOSS.transform = self.transformer
+        new_boss = BOSSIndividual(self.window_size, word_len,
+                                  self.alphabet_size, self.norm,
+                                  self.random_state)
+        new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        newBOSS.transformed_data = [series.to_dict() for series in
+        new_boss.transformed_data = [series.to_dict() for series in
                                     sfa.iloc[:, 0]]
-        newBOSS.class_vals = self.class_vals
+        new_boss.class_vals = self.class_vals
+        new_boss.num_classes = self.num_classes
+        new_boss.classes_ = self.classes_
+        new_boss.class_dictionary = self.class_dictionary
 
-        newBOSS._is_fitted = True
-        return newBOSS
+        new_boss._is_fitted = True
+        return new_boss
 
     def _clean(self):
         self.transformer.words = None
