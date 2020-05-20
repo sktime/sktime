@@ -17,7 +17,8 @@ from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.data_container import is_nested_dataframe
 from sktime.utils.data_container import tabularize
 from sktime.utils.testing._forecasting import make_forecasting_problem
-from sktime.utils.testing._series_as_features import make_classification_problem
+from sktime.utils.testing._series_as_features import \
+    make_classification_problem
 from sktime.utils.testing._series_as_features import make_regression_problem
 
 

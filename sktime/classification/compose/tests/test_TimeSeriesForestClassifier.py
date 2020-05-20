@@ -11,7 +11,8 @@ from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.utils.testing._series_as_features import make_classification_problem
+from sktime.utils.testing._series_as_features import \
+    make_classification_problem
 from sktime.utils.time_series import time_series_slope
 
 X, y = make_classification_problem()
