@@ -49,7 +49,6 @@ EXCLUDED = [
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
     'MrSEQLClassifier',
-    'PCATransformer',
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',
