@@ -45,7 +45,6 @@ from sktime.transformers.single_series.detrend import Detrender
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
-    'BOSSEnsemble',
     'ContractedShapeletTransform',
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
@@ -55,8 +54,6 @@ EXCLUDED = [
     'ProximityStump',
     'ProximityTree',
     'Rocket',
-    'SFA',
-    'SAX',
     'ShapeletTransform',
     'ShapeletTransformClassifier',
 ]

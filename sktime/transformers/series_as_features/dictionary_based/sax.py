@@ -68,7 +68,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         self.words = []
         self.breakpoints = []
 
-        self.num_insts = 0
+        self.n_instances = 0
         self.series_length = 0
         super(SAX, self).__init__()
 
@@ -97,12 +97,12 @@ class SAX(BaseSeriesAsFeaturesTransformer):
                 "Word length must be an integer between 1 and 16")
 
         self.breakpoints = self.generate_breakpoints()
-        self.num_insts, self.series_length = X.shape[0]
+        self.n_instances, self.series_length = X.shape[0]
 
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.num_insts):
+        for i in range(self.n_instances):
             bag = {}
             lastWord = None
 
