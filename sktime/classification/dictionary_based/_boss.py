@@ -466,7 +466,7 @@ class BOSSIndividual(BaseClassifier):
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
         new_boss.transformed_data = [series.to_dict() for series in
-                                    sfa.iloc[:, 0]]
+                                     sfa.iloc[:, 0]]
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes
         new_boss.classes_ = self.classes_
