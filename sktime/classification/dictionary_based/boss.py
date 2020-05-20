@@ -63,7 +63,7 @@ class BOSSEnsemble(BaseClassifier):
     Parameters
     ----------
     randomised_ensemble     : bool, turns the option to just randomise the
-    ensemble members rather than cross validate (default=False)
+    ensemble members rather than cross validate (cBOSS) (default=False)
     n_parameter_samples     : int, if search is randomised, number of
     parameter combos to try
     random_state            : int or None, seed for random, integer,
@@ -71,20 +71,17 @@ class BOSSEnsemble(BaseClassifier):
     threshold               : double [0,1]. retain all classifiers within
     threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int or None, retain a maximum number of
-    classifiers, even if within threshold, optional (default = 500)
+    classifiers, even if within threshold, optional
+    (default = 500, recommended 50 for cBOSS)
     alphabet_size           : range of alphabet sizes to try (default to
     single value, 4)
     max_win_len_prop        : maximum window length as a proportion of
     series length (default =1)
     time_limit              : time contract to limit build time in minutes (
     default=0, no limit)
-    word_lengths            : search range for word lengths (default =[16,
-    14, 12, 10, 8])
     alphabet_size           : range of alphabet size to search for (default,
-    a single value a=4),
-    min_window              : minimum window size, (default=10),
-    norm_options            : search space for normalise, not normalise (
-    default [True, False])
+    a single value a=4)
+    min_window              : minimum window size, (default=10)
 
     Attributes
     ----------
@@ -101,37 +98,23 @@ class BOSSEnsemble(BaseClassifier):
     def __init__(self,
                  randomised_ensemble=False,
                  n_parameter_samples=250,
-                 random_state=None,
                  threshold=0.92,
-                 max_ensemble_size=None,
+                 max_ensemble_size=500,
                  max_win_len_prop=1,
                  time_limit=0.0,
-                 word_lengths=None,
                  alphabet_size=4,
                  min_window=10,
-                 norm_options=None
+                 random_state=None
                  ):
-        if word_lengths is None:
-            word_lengths = [16, 14, 12, 10, 8]
-        if norm_options is None:
-            norm_options = [True, False]
-
-        if max_ensemble_size is None:
-            if randomised_ensemble:
-                max_ensemble_size = 50
-            else:
-                max_ensemble_size = 500
-
         self.randomised_ensemble = randomised_ensemble
         self.n_parameter_samples = n_parameter_samples
-        self.random_state = random_state
-        random.seed(random_state)
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
+        self.random_state = random_state
+        random.seed(random_state)
 
-        self.seed = 0
         self.classifiers = []
         self.weights = []
         self.weight_sum = 0
@@ -142,8 +125,8 @@ class BOSSEnsemble(BaseClassifier):
         self.series_length = 0
         self.n_instances = 0
 
-        self.word_lengths = word_lengths
-        self.norm_options = norm_options
+        self.word_lengths = [16, 14, 12, 10, 8]
+        self.norm_options = [True, False]
         self.alphabet_size = alphabet_size
         self.min_window = min_window
         super(BOSSEnsemble, self).__init__()
@@ -156,7 +139,7 @@ class BOSSEnsemble(BaseClassifier):
          of the best
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances, n_columns]
+        X : array-like or sparse matrix of shape = [n_instances, series_length]
             The training input samples.  If a Pandas data frame is passed,
             it must have a single column. BOSS not configured
             to handle multivariate
@@ -186,8 +169,6 @@ class BOSSEnsemble(BaseClassifier):
 
         # cBOSS
         if self.randomised_ensemble:
-            random.seed(self.seed)
-
             possible_parameters = self._unique_parameters(max_window, win_inc)
             num_classifiers = 0
             start_time = time.time_ns()
@@ -207,7 +188,7 @@ class BOSSEnsemble(BaseClassifier):
                 subsample = np.random.randint(self.n_instances,
                                               size=subsample_size)
                 X_subsample = X.iloc[subsample, :]
-                y_subsample = y.iloc[subsample]
+                y_subsample = y[subsample]
 
                 boss = BOSSIndividual(parameters[0], parameters[1],
                                       self.alphabet_size, parameters[2])
@@ -294,8 +275,9 @@ class BOSSEnsemble(BaseClassifier):
         return self
 
     def predict(self, X):
-        return [self.classes_[int(np.argmax(prob))] for prob in
-                self.predict_proba(X)]
+        return [self.classes_[int(np.random.choice(
+            np.flatnonzero(prob == prob.max())))] for prob
+                in self.predict_proba(X)]
 
     def predict_proba(self, X):
         self.check_is_fitted()
@@ -348,33 +330,6 @@ class BOSSEnsemble(BaseClassifier):
 
         return results
 
-    def _find_ensemble_train_acc(self, X, y):
-        num_inst = X.shape[0]
-        results = np.zeros((2 + self.n_classes, num_inst + 1))
-        correct = 0
-
-        for i in range(num_inst):
-            sums = np.zeros(self.n_classes)
-
-            for n, clf in enumerate(self.classifiers):
-                sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                    self.weights[n]
-
-            dists = sums / (np.ones(self.n_classes) * self.n_estimators)
-            c = dists.argmax()
-
-            if c == self.class_dictionary.get(y[i], -1):
-                correct += 1
-
-            results[0][i + 1] = self.class_dictionary.get(y[i], -1)
-            results[1][i + 1] = c
-
-            for n in range(self.n_classes):
-                results[2 + n][i + 1] = dists[n]
-
-        results[0][0] = correct / num_inst
-        return results
-
     def _unique_parameters(self, max_window, win_inc):
         possible_parameters = [[win_size, word_len, normalise] for n, normalise
                                in enumerate(self.norm_options)
@@ -411,14 +366,18 @@ class BOSSIndividual(BaseClassifier):
                  window_size=10,
                  word_length=8,
                  alphabet_size=4,
-                 norm=False
+                 norm=False,
+                 random_state=1
                  ):
         self.window_size = window_size
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.norm = norm
+        self.random_state = random_state
+        random.seed(random_state)
 
-        self.transform = SFA(word_length, alphabet_size,
+        self.transform = SFA(word_length=word_length,
+                             alphabet_size=alphabet_size,
                              window_size=window_size, norm=norm,
                              remove_repeat_words=True,
                              save_words=True)
@@ -432,6 +391,8 @@ class BOSSIndividual(BaseClassifier):
         super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
+        X, y = check_X_y(X, y, enforce_univariate=True)
+
         sfa = self.transform.fit_transform(X)
         self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
 
@@ -455,14 +416,16 @@ class BOSSIndividual(BaseClassifier):
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
 
         for i, test_bag in enumerate(test_bags):
-            bestDist = sys.float_info.max
+            best_dist = sys.float_info.max
             nn = -1
 
             for n, bag in enumerate(self.transformed_data):
-                dist = boss_distance(test_bag, bag, bestDist)
+                dist = boss_distance(test_bag, bag, best_dist)
 
-                if dist < bestDist:
-                    bestDist = dist
+                #todo change random method to pass tests
+                if dist < best_dist: #or (dist == best_dist and
+                                        #random.random() < 0.5):
+                    best_dist = dist
                     nn = self.class_vals[n]
 
             classes[i] = nn
@@ -504,6 +467,7 @@ class BOSSIndividual(BaseClassifier):
                                     sfa.iloc[:, 0]]
         newBOSS.class_vals = self.class_vals
 
+        newBOSS._is_fitted = True
         return newBOSS
 
     def _clean(self):

@@ -37,8 +37,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         PAA) (default 8)
         alphabet_size:       int, number of values to discretise each value
         to (default to 4)
-        window_size:         int, size of window for sliding. If 0, uses the
-        whole series (default to 0)
+        window_size:         int, size of window for sliding. Input series
+        length for whole series transform (default to 5)
         remove_repeat_words: boolean, whether to use numerosity reduction (
         default False)
         save_words:          boolean, whether to use numerosity reduction (
@@ -56,7 +56,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=0,
+                 window_size=5,
                  remove_repeat_words=False,
                  save_words=False
                  ):
@@ -70,7 +70,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         self.breakpoints = []
 
         self.num_insts = 0
-        self.num_atts = 0
+        self.series_length = 0
         super(SAX, self).__init__()
 
     def transform(self, X, y=None):
@@ -97,13 +97,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             raise RuntimeError(
                 "Word length must be an integer between 1 and 16")
 
-        self.num_atts = X.shape[1]
-
-        if self.window_size == 0:
-            self.window_size = self.num_atts
-
         self.breakpoints = self.generate_breakpoints()
-        self.num_insts = X.shape[0]
+        self.num_insts, self.series_length = X.shape[0]
 
         bags = pd.DataFrame()
         dim = []
@@ -114,7 +109,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
             words = []
 
-            num_windows_per_inst = self.num_atts - self.window_size + 1
+            num_windows_per_inst = self.series_length - self.window_size + 1
             split = np.array(X[i, np.arange(self.window_size)[None, :]
                                + np.arange(num_windows_per_inst)[:, None]])
 
@@ -186,23 +181,20 @@ class _BitWord:
     # if this is needed.
 
     def __init__(self,
-                 word=0,
-                 length=0):
+                 word=0):
         self.word = word
-        self.length = length
-        self.bits_per_letter = 2  # this ^2 == max alphabet size
-        self.word_space = 32  # max amount of bits to be stored, max word
-        # length == this/bits_per_letter
+        self.bits_per_letter = 2 #alphabet size 4
 
     def push(self, letter):
         # add letter to a word
         self.word = (self.word << self.bits_per_letter) | letter
-        self.length += 1
 
     def shorten(self, amount):
         # shorten a word by set amount of letters
         self.word = self.right_shift(self.word, amount * self.bits_per_letter)
-        self.length -= amount
+
+    def create_bigram(self, other_word, length):
+        return (self.word << length) | other_word.word
 
     @staticmethod
     def word_list(word, length):
