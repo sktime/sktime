@@ -30,7 +30,8 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
     """
 
     def __init__(self, n_components=None, **kwargs):
-        self.pca = PCA(n_components, **kwargs)
+        self.n_components = n_components
+        self.pca = PCA(self.n_components, **kwargs)
         super(PCATransformer, self).__init__()
 
     def fit(self, X, y=None):
