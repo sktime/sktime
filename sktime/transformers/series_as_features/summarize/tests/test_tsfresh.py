@@ -8,7 +8,7 @@ from sktime.transformers.series_as_features.summarize import \
 from sktime.transformers.series_as_features.summarize import \
     TSFreshRelevantFeatureExtractor
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing.series_as_features import make_classification_problem
+from sktime.utils.testing._series_as_features import make_classification_problem
 
 
 @pytest.mark.parametrize("default_fc_parameters", [

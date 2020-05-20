@@ -11,7 +11,6 @@ class BaseRegressor(BaseEstimator):
     """
     Base class for regressors, for identification.
     """
-    _estimator_type = "regressor"
 
     def fit(self, X_train, y_train):
         raise NotImplementedError("abstract method")

@@ -4,7 +4,7 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
-from sktime.utils.testing.forecasting import generate_time_series
+from sktime.utils.testing._forecasting import generate_time_series
 
 # default parameter testing grid
 TEST_WINDOW_LENGTHS = [1, 5]

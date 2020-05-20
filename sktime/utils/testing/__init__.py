@@ -16,9 +16,9 @@ from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.data_container import is_nested_dataframe
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing.forecasting import make_forecasting_problem
-from sktime.utils.testing.series_as_features import make_classification_problem
-from sktime.utils.testing.series_as_features import make_regression_problem
+from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils.testing._series_as_features import make_classification_problem
+from sktime.utils.testing._series_as_features import make_regression_problem
 
 
 def generate_df_from_array(array, n_rows=10, n_cols=1):

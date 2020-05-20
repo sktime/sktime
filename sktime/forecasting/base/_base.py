@@ -16,8 +16,6 @@ DEFAULT_ALPHA = 0.05
 class BaseForecaster(BaseEstimator):
     """Base forecaster"""
 
-    _estimator_type = "forecaster"
-
     def __init__(self):
         self._is_fitted = False
         super(BaseEstimator, self).__init__()
