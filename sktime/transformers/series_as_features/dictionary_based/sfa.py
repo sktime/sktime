@@ -63,7 +63,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=12,
+                 window_size=20,
                  norm=False,
                  levels=1,
                  igb=False,
