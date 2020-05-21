@@ -41,7 +41,7 @@ from sktime.utils.testing import ESTIMATOR_TEST_PARAMS
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing import _make_args
 from sktime.utils.testing import assert_almost_equal
-from sktime.utils.testing.inspect import _get_args
+from sktime.utils.testing._inspect import _get_args
 
 NON_STATE_CHANGING_METHODS = [
     "predict",

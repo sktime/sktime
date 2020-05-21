@@ -13,7 +13,7 @@ from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
 from sktime.utils.testing import _construct_instance
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.utils.testing._forecasting import make_forecasting_problem
 
 SINGLE_SERIES_TRANSFORMERS = [
     Deseasonalizer,

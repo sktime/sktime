@@ -128,7 +128,7 @@ else:
     extra_setuptools_args = dict()
 
 
-# Custom _clean command to remove build artifacts
+# Custom clean command to remove build artifacts
 class CleanCommand(Clean):
     description = "Remove build artifacts from the source tree"
 
@@ -158,7 +158,7 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'_clean': CleanCommand}
+cmdclass = {'clean': CleanCommand}
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
@@ -281,7 +281,7 @@ def setup_package():
                                     sys.argv[1] in ('--help-commands',
                                                     'egg_info',
                                                     '--version',
-                                                    '_clean'))):
+                                                    'clean'))):
         try:
             from setuptools import setup
         except ImportError:
