@@ -276,9 +276,9 @@ class BOSSEnsemble(BaseClassifier):
 
     def predict(self, X):
         rng = check_random_state(self.random_state)
-        return [self.classes_[int(rng.choice(
+        return np.array([self.classes_[int(rng.choice(
             np.flatnonzero(prob == prob.max())))] for prob
-                in self.predict_proba(X)]
+                in self.predict_proba(X)])
 
     def predict_proba(self, X):
         self.check_is_fitted()

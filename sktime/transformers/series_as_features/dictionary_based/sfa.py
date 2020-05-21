@@ -44,7 +44,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         alphabet_size:       int, number of values to discretise each value
         to (default to 4)
         window_size:         int, size of window for sliding. Input series
-        length for whole series transform (default to 5)
+        length for whole series transform (default to 12)
         norm:                boolean, whether to mean normalise words by
         dropping first fourier coefficient
         remove_repeat_words: boolean, whether to use numerosity reduction (
@@ -63,7 +63,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=10,
+                 window_size=12,
                  norm=False,
                  levels=1,
                  igb=False,
@@ -175,7 +175,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_' + str(0)] = dim
+        bags['dim_0'] = [pd.Series(x, dtype=np.float32) for x in dim]
 
         return bags
 

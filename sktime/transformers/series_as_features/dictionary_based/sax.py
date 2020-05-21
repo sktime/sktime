@@ -37,7 +37,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         alphabet_size:       int, number of values to discretise each value
         to (default to 4)
         window_size:         int, size of window for sliding. Input series
-        length for whole series transform (default to 5)
+        length for whole series transform (default to 12)
         remove_repeat_words: boolean, whether to use numerosity reduction (
         default False)
         save_words:          boolean, whether to use numerosity reduction (
@@ -52,7 +52,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=10,
+                 window_size=12,
                  remove_repeat_words=False,
                  save_words=False
                  ):
@@ -109,7 +109,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             split = scipy.stats.zscore(split, axis=1)
 
             paa = PAA(num_intervals=self.word_length)
-            data = pd.DataFrame(dtype=np.float32)
+            data = pd.DataFrame()
             data["dim_0"] = [pd.Series(x, dtype=np.float32) for x in split]
             patterns = paa.fit_transform(data)
             patterns = np.asarray([a.values for a in patterns.iloc[:, 0]])
@@ -125,7 +125,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags[0] = dim
+        bags['dim_0'] = [pd.Series(x, dtype=np.float32) for x in dim]
+
         return bags
 
     def _create_word(self, pattern, breakpoints):
