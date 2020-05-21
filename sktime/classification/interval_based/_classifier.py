@@ -4,24 +4,24 @@ __all__ = ["TSFClassifier"]
 from warnings import warn
 import numpy as np
 
-# from sklearn.ensemble._forest import _accumulate_prediction
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils._joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.pipeline import Pipeline
+from sklearn.ensemble._forest import _generate_unsampled_indices
+from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-
-from sktime.classification._compose import _generate_unsampled_indices, \
-    _get_n_samples_bootstrap
-from sktime.classification._compose import BaseTimeSeriesForest
+from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.classification.base import BaseClassifier
 
 
-class TSFClassifier(BaseTimeSeriesForest):
+class TSFClassifier(BaseTimeSeriesForest, BaseClassifier):
     """Time-Series Forest Classifier.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -172,7 +172,7 @@ class TSFClassifier(BaseTimeSeriesForest):
     """
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=200,
+                 n_estimators=100,
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
@@ -191,21 +191,7 @@ class TSFClassifier(BaseTimeSeriesForest):
                  class_weight=None,
                  max_samples=None):
 
-        if base_estimator is None:
-            features = [np.mean, np.std, time_series_slope]
-            steps = [('transform',
-                     RandomIntervalFeatureExtractor
-                     (n_intervals='sqrt', features=features)),
-                     ('clf', DecisionTreeClassifier())]
-            base_estimator = Pipeline(steps)
-
-        elif not isinstance(base_estimator, Pipeline):
-            raise ValueError(
-                'Base estimator must be pipeline with transforms.')
-        elif not isinstance(
-                base_estimator.steps[-1][1], DecisionTreeClassifier):
-            raise ValueError('Last step in base estimator pipeline must be \
-                DecisionTreeClassifier.')
+        self.base_estimator = base_estimator
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -220,27 +206,11 @@ class TSFClassifier(BaseTimeSeriesForest):
         self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
-        # Rename estimator params according to name in pipeline.
-        estimator = base_estimator.steps[-1][0]
-        estimator_params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-        }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval
-                            in estimator_params.items()}
-
         # Pass on params.
         super(TSFClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            estimator_params=tuple(estimator_params.keys()),
+            estimator_params=None,
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -250,6 +220,43 @@ class TSFClassifier(BaseTimeSeriesForest):
             class_weight=class_weight,
             max_samples=max_samples
         )
+
+        # We need to add is-fitted state when inheriting from scikit-learn
+        self._is_fitted = False
+
+        if self.base_estimator is None:
+            features = [np.mean, np.std, time_series_slope]
+            steps = [('transform',
+                     RandomIntervalFeatureExtractor
+                     (n_intervals='sqrt', features=features)),
+                     ('clf', DecisionTreeClassifier())]
+            self.base_estimator_ = Pipeline(steps)
+
+        elif not isinstance(self.base_estimator, Pipeline):
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(
+                base_estimator.steps[-1][1], DecisionTreeClassifier):
+            raise ValueError('Last step in base estimator pipeline must be \
+                DecisionTreeClassifier.')
+        else:
+            self.base_estimator_ = self.base_estimator
+
+        # Rename estimator params according to name in pipeline.
+        estimator_params = {
+            "criterion": self.criterion,
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split,
+            "min_samples_leaf": self.min_samples_leaf,
+            "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
+            "max_features": self.max_features,
+            "max_leaf_nodes": self.max_leaf_nodes,
+            "min_impurity_decrease": self.min_impurity_decrease,
+            "min_impurity_split": self.min_impurity_split,
+        }
+        final_estimator = base_estimator.steps[-1][0]
+        self.estimator_params = {f'{final_estimator}__{pname}': pval
+                                 for pname, pval in estimator_params.items()}
 
         # Assign random state to pipeline.
         base_estimator.set_params(**
@@ -353,7 +360,7 @@ class TSFClassifier(BaseTimeSeriesForest):
         self.check_is_fitted()
 
         # Check data
-        check_X(X)
+        check_X(X, enforce_univariate=True)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs

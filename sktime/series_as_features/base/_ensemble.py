@@ -7,24 +7,22 @@ import numbers
 
 
 import numpy as np
+from joblib import Parallel, delayed
+
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-
+from sklearn.ensemble._forest import MAX_INT
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
-from sklearn.utils._joblib import Parallel, delayed
+from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-
-
 from sktime.base._base import BaseEstimator
 from sktime.utils.validation.series_as_features import check_X_y
-
-MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -42,67 +40,6 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     else:
         estimator.fit(X, y)
     return estimator
-
-
-def _get_n_samples_bootstrap(n_samples, max_samples):
-
-    """
-    Get the number of samples in a bootstrap sample.
-    Parameters
-    ----------
-    n_samples : int
-        Number of samples in the dataset.
-    max_samples : int or float
-        The maximum number of samples to draw from the total available:
-            - if float, this indicates a fraction of the total and should be
-              the interval `(0, 1)`;
-            - if int, this indicates the exact number of samples;
-            - if None, this indicates the total number of samples.
-    Returns
-    -------
-    n_samples_bootstrap : int
-        The total number of samples to draw for the bootstrap sample.
-    """
-    if max_samples is None:
-        return n_samples
-
-    if isinstance(max_samples, numbers.Integral):
-        if not (1 <= max_samples <= n_samples):
-            msg = "`max_samples` must be in range 1 to {} but got value {}"
-            raise ValueError(msg.format(n_samples, max_samples))
-        return max_samples
-
-    if isinstance(max_samples, numbers.Real):
-        if not (0 < max_samples < 1):
-            msg = "`max_samples` must be in range (0, 1) but got value {}"
-            raise ValueError(msg.format(max_samples))
-        return int(round(n_samples * max_samples))
-
-    msg = "`max_samples` should be int or float, but got type '{}'"
-    raise TypeError(msg.format(type(max_samples)))
-
-
-def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
-    """
-    Private function used to _parallel_build_trees function."""
-
-    random_instance = check_random_state(random_state)
-    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
-
-    return sample_indices
-
-
-def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
-    """
-    Private function used to forest._set_oob_score function."""
-    sample_indices = _generate_sample_indices(random_state, n_samples,
-                                              n_samples_bootstrap)
-    sample_counts = np.bincount(sample_indices, minlength=n_samples)
-    unsampled_mask = sample_counts == 0
-    indices_range = np.arange(n_samples)
-    unsampled_indices = indices_range[unsampled_mask]
-
-    return unsampled_indices
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
@@ -131,7 +68,7 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
-
+        
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:
         tree.fit(X, y, sample_weight=sample_weight, check_input=False)
@@ -177,9 +114,7 @@ class BaseTimeSeriesForest(BaseEstimator):
         """
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
-        Sets the base_estimator_` attributes.
-        """
+
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
@@ -235,7 +170,7 @@ class BaseTimeSeriesForest(BaseEstimator):
         -------
         self : object
         """
-        check_X_y(X, y)
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # Validate or convert input data
         if sample_weight is not None:
@@ -324,6 +259,12 @@ class BaseTimeSeriesForest(BaseEstimator):
         if self.oob_score:
             self._set_oob_score(X, y)
 
+        # Decapsulate classes_ attributes
+        if hasattr(self, "classes_") and self.n_outputs_ == 1:
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
+
+        self._is_fitted = True
         return self
 
     def apply(self, X):

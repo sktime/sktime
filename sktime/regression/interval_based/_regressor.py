@@ -4,6 +4,7 @@ __all__ = ["TSFRegressor"]
 from warnings import warn
 
 import numpy as np
+from numpy import float32 as DTYPE
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
@@ -13,9 +14,8 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.regression._compose import BaseTimeSeriesForest, \
+from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest, \
     _get_n_samples_bootstrap, _generate_unsampled_indices
-from sktime.regression._compose import DTYPE
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X
 
