@@ -4,23 +4,26 @@ __all__ = ["TSFRegressor"]
 from warnings import warn
 
 import numpy as np
+from joblib import Parallel, delayed
 from numpy import float32 as DTYPE
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.utils._joblib import Parallel, delayed
+
 from sklearn.utils import check_array
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest, \
-    _get_n_samples_bootstrap, _generate_unsampled_indices
+from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest
+from sktime.regression.base import BaseRegressor
+from sklearn.ensemble._forest import _generate_unsampled_indices
+from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
-class TSFRegressor(BaseTimeSeriesForest):
+class TSFRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -181,21 +184,7 @@ class TSFRegressor(BaseTimeSeriesForest):
                  class_weight=None,
                  max_samples=None):
 
-        if base_estimator is None:
-            features = [np.mean, np.std, time_series_slope]
-            steps = [('transform', RandomIntervalFeatureExtractor(
-                n_intervals='sqrt', features=features)),
-                     ('clf', DecisionTreeRegressor())]
-            base_estimator = Pipeline(steps)
-
-        elif not isinstance(base_estimator, Pipeline):
-            raise ValueError(
-                'Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1],
-                            DecisionTreeRegressor):
-            raise ValueError('Last step in base estimator pipeline must be \
-                DecisionTreeRegressor.')
-
+        self.base_estimator = base_estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
         self.criterion = criterion
@@ -209,27 +198,11 @@ class TSFRegressor(BaseTimeSeriesForest):
         self.min_impurity_split = min_impurity_split
         self.max_samples = max_samples
 
-        # Rename estimator params according to name in pipeline.
-        estimator = base_estimator.steps[-1][0]
-        estimator_params = {
-            "criterion": criterion,
-            "max_depth": max_depth,
-            "min_samples_split": min_samples_split,
-            "min_samples_leaf": min_samples_leaf,
-            "min_weight_fraction_leaf": min_weight_fraction_leaf,
-            "max_features": max_features,
-            "max_leaf_nodes": max_leaf_nodes,
-            "min_impurity_decrease": min_impurity_decrease,
-            "min_impurity_split": min_impurity_split,
-        }
-        estimator_params = {f'{estimator}__{pname}': pval for pname, pval
-                            in estimator_params.items()}
-
         # Pass on params.
         super(TSFRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            estimator_params=tuple(estimator_params.keys()),
+            estimator_params=None,
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -240,9 +213,43 @@ class TSFRegressor(BaseTimeSeriesForest):
             max_samples=max_samples
         )
 
-        # Assign random state to pipeline.
-        base_estimator.set_params(**{
-            'random_state': random_state, 'check_input': False})
+        if self.base_estimator is None:
+            features = [np.mean, np.std, time_series_slope]
+            steps = [('transform',
+                     RandomIntervalFeatureExtractor
+                     (n_intervals='sqrt',
+                      features=features,
+                      random_state=self.random_state)),
+                     ('clf', DecisionTreeRegressor(
+                         random_state=self.random_state
+                     ))]
+            self.base_estimator_ = Pipeline(steps)
+
+        elif not isinstance(base_estimator, Pipeline):
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1],
+                            DecisionTreeRegressor):
+            raise ValueError('Last step in base estimator pipeline must be \
+                DecisionTreeRegressor.')
+        else:
+            self.base_estimator_ = self.base_estimator
+
+        # Rename estimator params according to name in pipeline.
+        estimator_params = {
+            "criterion": self.criterion,
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split,
+            "min_samples_leaf": self.min_samples_leaf,
+            "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
+            "max_features": self.max_features,
+            "max_leaf_nodes": self.max_leaf_nodes,
+            "min_impurity_decrease": self.min_impurity_decrease,
+            "min_impurity_split": self.min_impurity_split,
+        }
+        final_estimator = self.base_estimator.steps[-1][0]
+        estimator_params = {f'{final_estimator}__{pname}': pval for pname, pval
+                            in estimator_params.items()}
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
@@ -280,6 +287,8 @@ class TSFRegressor(BaseTimeSeriesForest):
     def _set_oob_score(self, X, y):
         """
         Compute out-of-bag scores."""
+        check_X_y(X, y)
+        check_X(X, enforce_univariate=True)
         X = check_array(X, dtype=DTYPE, accept_sparse='csr')
 
         n_samples = y.shape[0]

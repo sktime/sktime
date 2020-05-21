@@ -1,3 +1,7 @@
+
+"""
+Configurable time series ensembles
+"""
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TSFClassifier"]
 
@@ -228,8 +232,12 @@ class TSFClassifier(BaseTimeSeriesForest, BaseClassifier):
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform',
                      RandomIntervalFeatureExtractor
-                     (n_intervals='sqrt', features=features)),
-                     ('clf', DecisionTreeClassifier())]
+                     (n_intervals='sqrt',
+                      features=features,
+                      random_state=self.random_state)),
+                     ('clf', DecisionTreeClassifier(
+                         random_state=self.random_state
+                     ))]
             self.base_estimator_ = Pipeline(steps)
 
         elif not isinstance(self.base_estimator, Pipeline):
@@ -254,14 +262,9 @@ class TSFClassifier(BaseTimeSeriesForest, BaseClassifier):
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = base_estimator.steps[-1][0]
+        final_estimator = self.base_estimator.steps[-1][0]
         self.estimator_params = {f'{final_estimator}__{pname}': pval
                                  for pname, pval in estimator_params.items()}
-
-        # Assign random state to pipeline.
-        base_estimator.set_params(**
-                                  {'random_state': random_state,
-                                   'check_input': False})
 
         # Store renamed estimator params.
         for pname, pval in estimator_params.items():
