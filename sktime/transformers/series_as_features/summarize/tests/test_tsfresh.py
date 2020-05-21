@@ -5,8 +5,6 @@ import pytest
 from sklearn.model_selection import train_test_split
 from sktime.transformers.series_as_features.summarize import \
     TSFreshFeatureExtractor
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshRelevantFeatureExtractor
 from sktime.utils.data_container import tabularize
 from sktime.utils.testing._series_as_features import \
     make_classification_problem
