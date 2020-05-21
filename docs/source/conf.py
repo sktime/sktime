@@ -42,6 +42,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
     # 'sphinx.ext.viewcode',
@@ -262,9 +263,9 @@ epub_exclude_files = ['search.html']
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for nbsphinx extension ---------------------------------------
-nbsphinx_execute = 'always'  # always
+nbsphinx_execute = 'never'  # always  # whether to run notebooks
 nbsphinx_allow_errors = True  # False
-nbsphinx_timeout = -1  # set to -1 to disable
+nbsphinx_timeout = -1  # set to -1 to disable timeout
 
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg

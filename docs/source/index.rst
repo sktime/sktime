@@ -22,6 +22,7 @@ From here, you can navigate to:
    api_reference
    changelog
    how_to_contribute
+   about
    contributors
    code_of_conduct
 
