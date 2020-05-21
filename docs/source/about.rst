@@ -3,6 +3,15 @@
 About us
 ========
 
+Mission statement
+-----------------
+
+sktime enables understandable and composable machine learning
+with time series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_ compatible algorithms
+and model composition tools for time series related learning tasks,
+with instructive documentation & a friendly community.
+
+
 History
 -------
 
@@ -97,5 +106,5 @@ Infrastructure support
 
 We would also like to thank `Microsoft Azure <https://azure.microsoft
 .com/en-gb/services/devops/>`_, `Travis Cl <https://travis-ci.org/>`_,
-and `AppVeyor <https://www.appveyor.com>`_ for free compute time on their
+and `AppVeyor <https://www.appveyor.com>`_ for the free computing time on their
 Continuous Integration servers.
