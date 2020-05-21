@@ -15,15 +15,11 @@ from sktime.utils.testing._series_as_features import \
 @pytest.mark.parametrize("default_fc_parameters", [
     "minimal"
 ])
-@pytest.mark.parametrize("Transformer", [
-    TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor
-])
-def test_tsfresh_extractor(Transformer, default_fc_parameters):
-    X, y = make_classification_problem(random_state=2)
+def test_tsfresh_extractor(default_fc_parameters):
+    X, y = make_classification_problem()
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    transformer = Transformer(
+    transformer = TSFreshFeatureExtractor(
         default_fc_parameters=default_fc_parameters,
         disable_progressbar=True
     )
