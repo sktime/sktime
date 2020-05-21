@@ -110,7 +110,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
             paa = PAA(num_intervals=self.word_length)
             data = pd.DataFrame()
-            data["dim_0"] = [pd.Series(x, dtype=np.float32) for x in split]
+            data[0] = [pd.Series(x, dtype=np.float32) for x in split]
             patterns = paa.fit_transform(data)
             patterns = np.asarray([a.values for a in patterns.iloc[:, 0]])
 
@@ -125,7 +125,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_0'] = [pd.Series(x, dtype=np.float32) for x in dim]
+        bags[0] = dim
 
         return bags
 

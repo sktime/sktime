@@ -136,12 +136,10 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
 
-        self.n_instances = X.shape[0]
-
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.n_instances):
+        for i in range(X.shape[0]):
             dfts = self._mft(X[i, :])
             bag = {}
             last_word = -1
@@ -175,7 +173,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             dim.append(pd.Series(bag))
 
-        bags['dim_0'] = [pd.Series(x, dtype=np.float32) for x in dim]
+        bags[0] = dim
 
         return bags
 
@@ -452,7 +450,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         new_bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.n_instances):
+        for i in range(len(self.words)):
             bag = {}
             last_word = -1
             repeat_words = 0
@@ -483,7 +481,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             dim.append(pd.Series(bag))
 
-        new_bags['dim_' + str(0)] = dim
+        new_bags[0] = dim
 
         return new_bags
 
