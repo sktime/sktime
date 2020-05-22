@@ -1,52 +1,43 @@
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TimeSeriesForestRegressor"]
 
 from warnings import warn
-import numbers
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
-from scipy.sparse import issparse
-from sklearn.ensemble._forest import ForestRegressor
-from sklearn.ensemble._forest import MAX_INT
-from sklearn.ensemble._forest import _partition_estimators
-from sklearn.exceptions import DataConversionWarning
-from sklearn.pipeline import Pipeline
+from joblib import Parallel, delayed
+from numpy import float32 as DTYPE
+
+from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree._tree import DOUBLE
+
 from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sktime.base import MetaEstimatorMixin
-from sktime.classification.compose._ensemble import _parallel_build_trees
-from sktime.regression.base import BaseRegressor
+from sklearn.metrics import r2_score
+from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
+from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest
+from sktime.regression.base import BaseRegressor
+from sklearn.ensemble._forest import _generate_unsampled_indices
+from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
-class TimeSeriesForestRegressor(ForestRegressor,
-                                BaseRegressor, MetaEstimatorMixin):
+class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
-    forest
-    for time-series/panel data that fits a number of decision tree
-    classifiers on
-    various sub-samples of a transformed dataset and uses averaging to
-    improve the
-    predictive accuracy and control over-fitting. The sub-sample size is
-    always the same as the original
-    input sample size but the samples are drawn with replacement if
-    `bootstrap=True` (default).
+    forest for time-series/panel data that fits a number of decision tree
+    regressors on various sub-samples of a transformed dataset and uses
+    averaging to improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original input sample size
+    but the samples are drawn with replacement if `bootstrap=True` (default).
 
     Parameters
     ----------
-    estimator : Pipeline
+    base_estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
-        and a decision tree classifier as final estimator.
+        and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
         The number of trees in the forest.
     criterion : string, optional (default="mse")
@@ -155,7 +146,7 @@ class TimeSeriesForestRegressor(ForestRegressor,
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
     n_features_ : int
         The number of features when ``fit`` is performed.
@@ -173,9 +164,9 @@ class TimeSeriesForestRegressor(ForestRegressor,
     """
 
     def __init__(self,
-                 estimator=None,
-                 n_estimators=100,
-                 criterion='mse',
+                 base_estimator=None,
+                 n_estimators=200,
+                 criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -190,10 +181,10 @@ class TimeSeriesForestRegressor(ForestRegressor,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
+                 class_weight=None,
                  max_samples=None):
 
-        self.estimator = estimator
-
+        self.base_estimator = base_estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
         self.criterion = criterion
@@ -209,7 +200,7 @@ class TimeSeriesForestRegressor(ForestRegressor,
 
         # Pass on params.
         super(TimeSeriesForestRegressor, self).__init__(
-            base_estimator=None,
+            base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=None,
             bootstrap=bootstrap,
@@ -218,48 +209,33 @@ class TimeSeriesForestRegressor(ForestRegressor,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
+            class_weight=class_weight,
             max_samples=max_samples
         )
 
-        # We need to add is-fitted state when inheriting from scikit-learn
-        self._is_fitted = False
-
-    def _validate_estimator(self, default=None):
-
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
-
-        if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
-
-        # Set base estimator
-        if self.estimator is None:
-            # Set default time series forest
+        if self.base_estimator is None:
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform',
-                      RandomIntervalFeatureExtractor(
-                          n_intervals='sqrt',
-                          features=features,
-                          random_state=self.random_state)),
+                     RandomIntervalFeatureExtractor
+                     (n_intervals='sqrt',
+                      features=features,
+                      random_state=self.random_state)),
                      ('clf', DecisionTreeRegressor(
-                         random_state=self.random_state))]
+                         random_state=self.random_state
+                     ))]
             self.base_estimator_ = Pipeline(steps)
 
+        elif not isinstance(base_estimator, Pipeline):
+            raise ValueError(
+                'Base estimator must be pipeline with transforms.')
+        elif not isinstance(base_estimator.steps[-1][1],
+                            DecisionTreeRegressor):
+            raise ValueError('Last step in base estimator pipeline must be \
+                DecisionTreeRegressor.')
         else:
-            # else check given estimator is a pipeline with prior
-            # transformations and final decision tree
-            if not isinstance(self.estimator, Pipeline):
-                raise ValueError('`estimator` must be '
-                                 'pipeline with transforms.')
-            if not isinstance(self.estimator.steps[-1][1],
-                              DecisionTreeRegressor):
-                raise ValueError('Last step in `estimator` must be '
-                                 'DecisionTreeClassifier.')
-            self.base_estimator_ = self.estimator
+            self.base_estimator_ = self.base_estimator
 
-        # Set parameters according to naming in pipeline
+        # Rename estimator params according to name in pipeline.
         estimator_params = {
             "criterion": self.criterion,
             "max_depth": self.max_depth,
@@ -271,121 +247,13 @@ class TimeSeriesForestRegressor(ForestRegressor,
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.base_estimator_.steps[-1][0]
-        self.estimator_params = {f'{final_estimator}__{pname}': pval
-                                 for pname, pval in estimator_params.items()}
+        final_estimator = self.base_estimator.steps[-1][0]
+        estimator_params = {f'{final_estimator}__{pname}': pval for pname, pval
+                            in estimator_params.items()}
 
-        # Set renamed estimator parameters
-        for pname, pval in self.estimator_params.items():
+        # Store renamed estimator params.
+        for pname, pval in estimator_params.items():
             self.__setattr__(pname, pval)
-
-    def fit(self, X, y, sample_weight=None):
-        """Build a forest of trees from the training set (X, y).
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted
-            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real numbers in
-            regression).
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        Returns
-        -------
-        self : object
-        """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-
-        # Validate or convert input data
-        if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-        if issparse(X):
-            # Pre-sort indices to avoid that each individual tree of the
-            # ensemble sorts the indices.
-            X.sort_indices()
-
-        # Remap output
-        self.n_features_ = X.shape[1] if X.ndim == 2 else 1
-
-        y = np.atleast_1d(y)
-        if y.ndim == 2 and y.shape[1] == 1:
-            warn("A column-vector y was passed when a 1d array was"
-                 " expected. Please change the shape of y to "
-                 "(n_samples,), for example using ravel().",
-                 DataConversionWarning, stacklevel=2)
-
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
-
-        self.n_outputs_ = y.shape[1]
-
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        # Check parameters
-        self._validate_estimator()
-
-        if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available"
-                             " if bootstrap=True")
-
-        random_state = check_random_state(self.random_state)
-
-        if not self.warm_start or not hasattr(self, "estimators_"):
-            # Free allocated memory, if any
-            self.estimators_ = []
-
-        n_more_estimators = self.n_estimators - len(self.estimators_)
-
-        if n_more_estimators < 0:
-            raise ValueError('n_estimators=%d must be larger or equal to '
-                             'len(estimators_)=%d when warm_start==True'
-                             % (self.n_estimators, len(self.estimators_)))
-
-        elif n_more_estimators == 0:
-            warn("Warm-start fitting without increasing n_estimators does not "
-                 "fit new trees.")
-        else:
-            if self.warm_start and len(self.estimators_) > 0:
-                # We draw from the random state to get the random state we
-                # would have got if we hadn't used a warm_start.
-                random_state.randint(MAX_INT, size=len(self.estimators_))
-
-            trees = [self._make_estimator(append=False,
-                                          random_state=random_state)
-                     for i in range(n_more_estimators)]
-
-            # Parallel loop: for standard random forests, the threading
-            # backend is preferred as the Cython code for fitting the trees
-            # is internally releasing the Python GIL making threading more
-            # efficient than multiprocessing in that case. However, in this
-            # case,
-            # for fitting pipelines in parallel, multiprocessing is more
-            # efficient.
-            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight)
-                for i, t in enumerate(trees))
-
-            # Collect newly grown trees
-            self.estimators_.extend(trees)
-
-        if self.oob_score:
-            self._set_oob_score(X, y)
-
-        self._is_fitted = True
-        return self
 
     def predict(self, X):
         """Predict regression target for X.
@@ -403,7 +271,8 @@ class TimeSeriesForestRegressor(ForestRegressor,
             The predicted values.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        # Check data
+        check_X(X)
         X = self._validate_X_predict(X)
 
         # Assign chunk of trees to jobs
@@ -411,28 +280,55 @@ class TimeSeriesForestRegressor(ForestRegressor,
 
         # Parallel loop
         y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict)(X) for e in self.estimators_)
+            delayed(e.predict)(X, check_input=True) for e in self.estimators_)
 
         return np.sum(y_hat, axis=0) / len(self.estimators_)
 
-    def _validate_X_predict(self, X):
-        n_features = X.shape[1] if X.ndim == 2 else 1
-        if self.n_features_ != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_features_, n_features))
-        return X
-
-    def apply(self, X):
-        raise NotImplementedError()
-
-    def decision_path(self, X):
-        raise NotImplementedError()
-
-    @property
-    def feature_importances_(self):
-        raise NotImplementedError()
-
     def _set_oob_score(self, X, y):
-        raise NotImplementedError()
+        """
+        Compute out-of-bag scores."""
+        check_X_y(X, y)
+        check_X(X, enforce_univariate=True)
+        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+
+        n_samples = y.shape[0]
+
+        predictions = np.zeros((n_samples, self.n_outputs_))
+        n_predictions = np.zeros((n_samples, self.n_outputs_))
+
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples, self.max_samples
+        )
+
+        for estimator in self.estimators_:
+            unsampled_indices = _generate_unsampled_indices(
+                estimator.random_state, n_samples, n_samples_bootstrap)
+            p_estimator = estimator.predict(
+                X[unsampled_indices, :], check_input=False)
+
+            if self.n_outputs_ == 1:
+                p_estimator = p_estimator[:, np.newaxis]
+
+            predictions[unsampled_indices, :] += p_estimator
+            n_predictions[unsampled_indices, :] += 1
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few trees were used "
+                 "to compute any reliable oob estimates.")
+            n_predictions[n_predictions == 0] = 1
+
+        predictions /= n_predictions
+        self.oob_prediction_ = predictions
+
+        if self.n_outputs_ == 1:
+            self.oob_prediction_ = \
+                self.oob_prediction_.reshape((n_samples, ))
+
+        self.oob_score_ = 0.0
+
+        for k in range(self.n_outputs_):
+            self.oob_score_ += r2_score(y[:, k],
+                                        predictions[:, k])
+
+        self.oob_score_ /= self.n_outputs_
