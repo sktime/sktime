@@ -2,7 +2,6 @@ import pandas as pd
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import tabularize
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Matthew Middlehurst"
