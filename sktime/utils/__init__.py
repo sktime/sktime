@@ -48,7 +48,7 @@ def all_estimators(estimator_type=None):
         BaseSeriesAsFeaturesTransformer
     from sktime.transformers.single_series.base import \
         BaseSingleSeriesTransformer
-    from sktime.classification._compose import BaseTimeSeriesForest
+    from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):

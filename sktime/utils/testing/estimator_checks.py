@@ -23,7 +23,7 @@ from sklearn.utils.estimator_checks import \
     check_set_params as _check_set_params
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
-from sktime.classification._compose import BaseTimeSeriesForest
+from sktime.series_as_features.base._ensemble import BaseTimeSeriesForest
 from sktime.classification.base import is_classifier
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
