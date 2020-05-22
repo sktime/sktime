@@ -71,9 +71,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, num_atts]
-            The training input samples.  If a Pandas data frame is passed,
-            the column 0 is extracted
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------

@@ -138,10 +138,8 @@ class BOSSEnsemble(BaseClassifier):
          of the best
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances, series_length]
-            The training input samples.  If a Pandas data frame is passed,
-            it must have a single column. BOSS not configured
-            to handle multivariate
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_instances] The class labels.
 
         Returns

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.dictionary_based.sax import \
+from sktime.transformers.series_as_features.dictionary_based._sax import \
     _BitWord
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
@@ -99,9 +99,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samps, num_atts]
-            The training input samples.  If a Pandas data frame is passed,
-            the column _dim_to_use is extracted
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The class labels.
 

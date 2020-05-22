@@ -42,9 +42,8 @@ class PAA(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, num_atts]
-            The training input samples.  If a Pandas data frame is passed,
-            the column 0 is extracted
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
@@ -94,46 +93,3 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         dims[0] = data
 
         return dims
-
-
-if __name__ == "__main__":
-    testPath = "C:\\Users\\ajb\\Dropbox\\Data\\TSCProblems\\Chinatown" \
-               "\\Chinatown_TRAIN.ts"
-    train_x, train_y = load_ts(testPath)
-
-    print("Correctness testing for PAA using Chinatown")
-    #    print("First case used for testing")
-    #    print(train_x.iloc[0,0])
-    p = PAA()
-    print("Test 1: num intervals =1, result should be series mean")
-    p.set_num_intervals(1)
-    x2 = p.transform(train_x)
-    print("Correct mean case 1: =  561.875")
-    print("Transform mean case 1: =")
-    print(x2.iloc[0, 0])
-    print("Test 2: num intervals = series length, series should be unchanged")
-    p.set_num_intervals(24)
-    x2 = p.transform(train_x)
-    print("Before transform: =")
-    print(train_x.iloc[0, 0].shape[0])
-    print(train_x.iloc[0, 0])
-    print("After transform: =")
-    print(x2.iloc[0, 0].shape[0])
-    print(x2.iloc[0, 0])
-    print(
-        "Test 3: Integer interval length (length%num intervals =0). num "
-        "intervals = 6 (gives length =4). ")
-    p.set_num_intervals(6)
-    print("Expected output: = 365.25,36.75,293.5,1202.25,994,479.5")
-    print("Actual output: =")
-    x2 = p.transform(train_x)
-    print(x2.iloc[0, 0])
-
-    print(
-        "Test 4: Non-integer interval length. num intervals = 5 (gives "
-        "length =4.8). ")
-    p.set_num_intervals(5)
-    print("Expected output: for series[0][0][0] = 313.54")
-    print("Actual output: =")
-    x2 = p.transform(train_x)
-    print(x2.iloc[0, 0])
