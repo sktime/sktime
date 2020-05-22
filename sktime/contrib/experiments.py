@@ -259,12 +259,7 @@ def set_classifier(cls, resampleId):
     elif  cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
     elif cls.lower() == 'boss':
-        return db.BOSSEnsemble(random_state=resampleId)
-    elif cls.lower() == 'cboss':
-        return db.BOSSEnsemble(randomised_ensemble=True, max_ensemble_size=50, random_state=resampleId)
-    elif cls.lower() == 'tde':
-        from sktime.classification.dictionary_based.tde import TDE
-        return TDE(random_state=resampleId)
+        return db.BOSSEnsemble()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'dtwcv':
@@ -582,16 +577,16 @@ if __name__ == "__main__":
     else : #Local run
 #        data_dir = "/scratch/univariate_datasets/"
 #        results_dir = "/scratch/results"
-        #data_dir = "/bench/datasets/Univariate2018/"
-        #results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "D:/UEAMachineLearning/tempResults/sktime"
+        data_dir = "/bench/datasets/Univariate2018/"
+        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        # data_dir = "Z:/ArchiveData/Univariate_ts/"
+        # results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
         dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "cboss"
-        resample = 0
+        classifier = "TSF"
+        resample = 1
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]
 # #            print(i)
