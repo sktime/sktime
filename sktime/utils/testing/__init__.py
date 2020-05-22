@@ -129,12 +129,28 @@ def _make_transform_args(estimator, random_state=None):
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
 
-def assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
-    # If input is nested data-container, try to tabularize them first for
-    # comparison
-    if is_nested_dataframe(x):
-        x = tabularize(x)
-        y = tabularize(y)
+def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
+    # we iterate over columns and rows make cell-wise comparisons,
+    # tabularizing the data first would simplify this a bit, but does not
+    # work for unequal length data
 
-    np.testing.assert_array_almost_equal(
-        x, y, decimal=decimal, err_msg=err_msg, verbose=verbose)
+    if is_nested_dataframe(x):
+        # make sure both inputs have the same shape
+        if not x.shape == y.shape:
+            raise ValueError("Found inputs with different shapes")
+
+        # iterate over columns
+        n_columns = x.shape[1]
+        for i in range(n_columns):
+            xc = x.iloc[:, i].tolist()
+            yc = y.iloc[:, i].tolist()
+
+            # iterate over rows, checking if cells are equal
+            for xci, yci in zip(xc, yc):
+                np.testing.assert_array_almost_equal(
+                    xci, yci, decimal=decimal, err_msg=err_msg,
+                    verbose=verbose)
+
+    else:
+        np.testing.assert_array_almost_equal(
+            x, y, decimal=decimal, err_msg=err_msg, verbose=verbose)

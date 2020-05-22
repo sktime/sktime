@@ -40,7 +40,7 @@ from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.testing import ESTIMATOR_TEST_PARAMS
 from sktime.utils.testing import _construct_instance
 from sktime.utils.testing import _make_args
-from sktime.utils.testing import assert_almost_equal
+from sktime.utils.testing import _assert_almost_equal
 from sktime.utils.testing._inspect import _get_args
 
 NON_STATE_CHANGING_METHODS = [
@@ -334,7 +334,7 @@ def check_fit_idempotent(Estimator):
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
-            assert_almost_equal(
+            _assert_almost_equal(
                 results[method], new_result,
                 err_msg=f"Idempotency check failed for method {method}")
 
@@ -421,4 +421,4 @@ def check_persistence_via_pickle(Estimator):
     # Compare against results after pickling
     for method in results:
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
-        assert_almost_equal(results[method], unpickled_result)
+        _assert_almost_equal(results[method], unpickled_result)

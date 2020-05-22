@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def check_equal_index(X):
+def _check_equal_index(X):
     """
     Check if all time-series for a given column in a
     nested pandas DataFrame have the same index.
@@ -54,26 +54,6 @@ def check_equal_index(X):
     return indexes
 
 
-def select_times(X, times):
-    """Select times from time series within cells of nested pandas DataFrame.
-
-    Parameters
-    ----------
-    X : nested pandas DataFrame or nested Series
-    times : numpy ndarray of times to select from time series
-
-    Returns
-    -------
-    Xt : pandas DataFrame
-        pandas DataFrame in nested format containing only selected times
-    """
-    # TODO currently we loose the time index, need to add it back to Xt
-    #  after slicing in time
-    Xt = detabularise(tabularize(X).iloc[:, times])
-    Xt.columns = X.columns
-    return Xt
-
-
 def tabularize(X, return_array=False):
     """Convert nested pandas DataFrames or Series with numpy arrays or
     pandas Series in cells into tabular
@@ -116,6 +96,10 @@ def tabularize(X, return_array=False):
                 Xt = X.iloc[0, 0].values
             else:
                 raise
+
+        if Xt.ndim != 2:
+            raise ValueError("Tabularization failed, it's possible that not "
+                             "all series were of equal length")
 
     else:
         raise ValueError(
