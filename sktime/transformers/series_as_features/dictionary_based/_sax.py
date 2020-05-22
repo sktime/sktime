@@ -7,7 +7,6 @@ from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
 from sktime.utils.data_container import tabularize
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
 from sktime.utils.validation.series_as_features import check_X
@@ -37,8 +36,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         PAA) (default 8)
         alphabet_size:       int, number of values to discretise each value
         to (default to 4)
-        window_size:         int, size of window for sliding. If 0, uses the
-        whole series (default to 0)
+        window_size:         int, size of window for sliding. Input series
+        length for whole series transform (default to 12)
         remove_repeat_words: boolean, whether to use numerosity reduction (
         default False)
         save_words:          boolean, whether to use numerosity reduction (
@@ -47,16 +46,13 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     Attributes
     ----------
         words:      histor = []
-        breakpoints: = []
-        num_insts = 0
-        num_atts = 0
 
     """
 
     def __init__(self,
                  word_length=8,
                  alphabet_size=4,
-                 window_size=0,
+                 window_size=12,
                  remove_repeat_words=False,
                  save_words=False
                  ):
@@ -67,10 +63,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         self.save_words = save_words
 
         self.words = []
-        self.breakpoints = []
 
-        self.num_insts = 0
-        self.num_atts = 0
         super(SAX, self).__init__()
 
     def transform(self, X, y=None):
@@ -78,9 +71,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, num_atts]
-            The training input samples.  If a Pandas data frame is passed,
-            the column 0 is extracted
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
 
         Returns
         -------
@@ -97,38 +89,35 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             raise RuntimeError(
                 "Word length must be an integer between 1 and 16")
 
-        self.num_atts = X.shape[1]
-
-        if self.window_size == 0:
-            self.window_size = self.num_atts
-
-        self.breakpoints = self.generate_breakpoints()
-        self.num_insts = X.shape[0]
+        breakpoints = self._generate_breakpoints()
+        n_instances, series_length = X.shape
 
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(self.num_insts):
+        for i in range(n_instances):
             bag = {}
             lastWord = None
 
             words = []
 
-            num_windows_per_inst = self.num_atts - self.window_size + 1
+            num_windows_per_inst = series_length - self.window_size + 1
             split = np.array(X[i, np.arange(self.window_size)[None, :]
                                + np.arange(num_windows_per_inst)[:, None]])
 
             split = scipy.stats.zscore(split, axis=1)
 
             paa = PAA(num_intervals=self.word_length)
-            patterns = paa.fit_transform(split)
+            data = pd.DataFrame()
+            data[0] = [pd.Series(x, dtype=np.float32) for x in split]
+            patterns = paa.fit_transform(data)
             patterns = np.asarray([a.values for a in patterns.iloc[:, 0]])
 
             for n in range(patterns.shape[0]):
                 pattern = patterns[n, :]
-                word = self.create_word(pattern)
+                word = self._create_word(pattern, breakpoints)
                 words.append(word)
-                lastWord = self.add_to_bag(bag, word, lastWord)
+                lastWord = self._add_to_bag(bag, word, lastWord)
 
             if self.save_words:
                 self.words.append(words)
@@ -136,20 +125,21 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             dim.append(pd.Series(bag))
 
         bags[0] = dim
+
         return bags
 
-    def create_word(self, pattern):
+    def _create_word(self, pattern, breakpoints):
         word = _BitWord()
 
         for i in range(self.word_length):
             for bp in range(self.alphabet_size):
-                if pattern[i] <= self.breakpoints[bp]:
+                if pattern[i] <= breakpoints[bp]:
                     word.push(bp)
                     break
 
         return word
 
-    def add_to_bag(self, bag, word, last_word):
+    def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word.word == last_word:
             return last_word
         if word.word in bag:
@@ -159,7 +149,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
         return word.word
 
-    def generate_breakpoints(self):
+    def _generate_breakpoints(self):
         # Pre-made gaussian curve breakpoints from UEA TSC codebase
         return {
             2: [0, sys.float_info.max],
@@ -186,23 +176,19 @@ class _BitWord:
     # if this is needed.
 
     def __init__(self,
-                 word=0,
-                 length=0):
+                 word=0):
         self.word = word
-        self.length = length
-        self.bits_per_letter = 2  # this ^2 == max alphabet size
-        self.word_space = 32  # max amount of bits to be stored, max word
-        # length == this/bits_per_letter
 
     def push(self, letter):
         # add letter to a word
-        self.word = (self.word << self.bits_per_letter) | letter
-        self.length += 1
+        self.word = (self.word << 2) | letter
 
     def shorten(self, amount):
         # shorten a word by set amount of letters
-        self.word = self.right_shift(self.word, amount * self.bits_per_letter)
-        self.length -= amount
+        self.word = self.right_shift(self.word, amount * 2)
+
+    def create_bigram(self, other_word, length):
+        return (self.word << length) | other_word.word
 
     @staticmethod
     def word_list(word, length):
@@ -219,20 +205,3 @@ class _BitWord:
     @staticmethod
     def right_shift(left, right):
         return (left % 0x100000000) >> right
-
-
-if __name__ == "__main__":
-    testPath = "Z:\\ArchiveData\\Univariate_ts\\Chinatown\\Chinatown_TRAIN.ts"
-    train_x, train_y = load_ts(testPath)
-
-    print("Correctness testing for SAX using Chinatown")
-    print("First case used for testing")
-    print(train_x.iloc[0, 0])
-    p = SAX(window_size=0, alphabet_size=4, word_length=8, save_words=False)
-    print(
-        "Test 1: window_size =0, result should be single word for each series")
-    x2 = p.transform(train_x)
-    print("Correct single series SAX for case 1: = b,a,a,b,d,d,d,b")
-    print("Transform mean case 1: =")
-    word = _BitWord.word_list(x2.iloc[0, 0].keys()[0], 8)
-    print(word)
