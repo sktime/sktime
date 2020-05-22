@@ -7,6 +7,7 @@ __all__ = ["TimeSeriesForestClassifier"]
 
 from warnings import warn
 import numpy as np
+import numbers
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
@@ -228,29 +229,42 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
+    def _validate_estimator(self, default=None):
+
+        if not isinstance(self.n_estimators, numbers.Integral):
+            raise ValueError("n_estimators must be an integer, "
+                             "got {0}.".format(type(self.n_estimators)))
+
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than zero, "
+                             "got {0}.".format(self.n_estimators))
+
+        # Set base estimator
         if self.base_estimator is None:
+            # Set default time series forest
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform',
-                     RandomIntervalFeatureExtractor
-                     (n_intervals='sqrt',
-                      features=features,
-                      random_state=self.random_state)),
+                      RandomIntervalFeatureExtractor(
+                          n_intervals='sqrt',
+                          features=features,
+                          random_state=self.random_state)),
                      ('clf', DecisionTreeClassifier(
-                         random_state=self.random_state
-                     ))]
+                         random_state=self.random_state))]
             self.base_estimator_ = Pipeline(steps)
 
-        elif not isinstance(self.base_estimator, Pipeline):
-            raise ValueError(
-                'Base estimator must be pipeline with transforms.')
-        elif not isinstance(
-                base_estimator.steps[-1][1], DecisionTreeClassifier):
-            raise ValueError('Last step in base estimator pipeline must be \
-                DecisionTreeClassifier.')
         else:
+            # else check given estimator is a pipeline with prior
+            # transformations and final decision tree
+            if not isinstance(self.base_estimator, Pipeline):
+                raise ValueError('`estimator` must be '
+                                 'pipeline with transforms.')
+            if not isinstance(self.base_estimator.steps[-1][1],
+                              DecisionTreeClassifier):
+                raise ValueError('Last step in `estimator` must be '
+                                 'DecisionTreeClassifier.')
             self.base_estimator_ = self.base_estimator
 
-        # Rename estimator params according to name in pipeline.
+        # Set parameters according to naming in pipeline
         estimator_params = {
             "criterion": self.criterion,
             "max_depth": self.max_depth,
@@ -262,12 +276,12 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.base_estimator.steps[-1][0]
+        final_estimator = self.base_estimator_.steps[-1][0]
         self.estimator_params = {f'{final_estimator}__{pname}': pval
                                  for pname, pval in estimator_params.items()}
 
-        # Store renamed estimator params.
-        for pname, pval in estimator_params.items():
+        # Set renamed estimator parameters
+        for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
     def check_base_estimator(self):
