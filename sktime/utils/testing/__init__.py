@@ -100,17 +100,17 @@ def _make_fit_args(estimator, random_state=None, **kwargs):
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
 
-def _make_predict_args(estimator, random_state=None):
+def _make_predict_args(estimator, *args, **kwargs):
     if is_forecaster(estimator):
         fh = 1
         return (fh,)
 
     elif is_classifier(estimator):
-        X, y = make_classification_problem(random_state=random_state)
+        X, y = make_classification_problem(*args, **kwargs)
         return (X,)
 
     elif is_regressor(estimator):
-        X, y = make_regression_problem(random_state=random_state)
+        X, y = make_regression_problem(*args, **kwargs)
         return (X,)
 
     else:
