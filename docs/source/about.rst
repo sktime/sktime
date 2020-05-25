@@ -22,12 +22,14 @@ Lines.
 
 Authors
 -------
+
 For an overview of current and past contributors, please see our
 :ref:`contributors page <contributors>`.
 
 
 Funding
 -------
+
 sktime is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
