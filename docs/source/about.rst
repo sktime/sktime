@@ -8,8 +8,8 @@ Mission statement
 
 sktime enables understandable and composable machine learning
 with time series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_ compatible algorithms
-and model composition tools for time series related learning tasks,
-with instructive documentation & a friendly community.
+and model composition tools, supported by a clear taxonomy of
+learning tasks, with instructive documentation & a friendly community.
 
 
 History
