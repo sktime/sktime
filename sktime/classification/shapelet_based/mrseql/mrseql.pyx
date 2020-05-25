@@ -113,7 +113,7 @@ cdef class PySEQL:
 
 class SEQLCLF:
     '''
-    SEQL in one versus all scenario for multiclass problem.
+    SEQL with multiple symbolic representations of time series.
     '''
 
     def __init__(self):
@@ -213,9 +213,12 @@ class MrSEQLClassifier(BaseClassifier):
 
     Parameters
     ----------
-    seql_mode       : str, either 'clf' or 'fs'. In the 'clf', Mr-SEQL mode trains an ensemble of SEQL models while in the 'fs' mode it uses SEQL to select features for training a logistic regression model.
+    
+    seql_mode       : str, either 'clf' or 'fs'. In the 'clf' mode, Mr-SEQL is an ensemble of SEQL models while in the 'fs' mode Mr-SEQL trains a logistic regression model with features extracted by SEQL from symbolic representations of time series.
+    
     symrep          : list or tuple, should contains only 'sax' or 'sfa' or both. The symbolic representations to be used to transform the input time series.
-    symrep_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
+    
+    custom_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
 
     '''
 
@@ -313,15 +316,6 @@ class MrSEQLClassifier(BaseClassifier):
         full_fm = np.hstack(full_fm)
         return full_fm
 
-    # def _X_check(self, X):
-    #     '''
-    #     Check if X input is correct. Convert X to 2d numpy array.        
-    #     '''
-    #     check_X(X)
-    #     _enforce_X_univariate(X)
-
-    #     return np.asarray([a.values for a in X.iloc[:, 0]])
-
     def fit(self, X, y, input_checks=True):
         """
         Fit the model according to the given training time series data.
@@ -335,9 +329,7 @@ class MrSEQLClassifier(BaseClassifier):
         self
             Fitted estimator.        
         """
-        if input_checks:
-            # X = self._X_check(X)
-            # check_y(y)
+        if input_checks:            
             check_X_y(X,y)
 
         # transform time series to multiple symbolic representations
