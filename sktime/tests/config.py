@@ -48,7 +48,7 @@ EXCLUDED = [
     'ContractedShapeletTransform',
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
-    'MrSEQLClassifier',
+    # 'MrSEQLClassifier',
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',

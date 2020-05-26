@@ -1,9 +1,8 @@
 STUFF = "Hi"
 
-from sktime.utils.validation.series_as_features import check_X, check_y, _enforce_X_univariate
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.utils.data_container import detabularize
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
@@ -60,8 +59,7 @@ class AdaptedSFA:
     def __init__(self, int N, int w, int a):
         self.sfa = SFA(w, a, N, norm=True, remove_repeat_words=True)
 
-    def fit(self, train_x):
-        train_x = detabularize(pd.DataFrame(train_x))
+    def fit(self, train_x):        
         self.sfa.fit(train_x)
 
     def timeseries2SFAseq(self, ts):
@@ -111,54 +109,85 @@ cdef class PySEQL:
 
     def learn(self, vector[string] sequences, vector[double] labels):
         self.thisptr.learn(sequences, labels)
+        return self.thisptr.get_sequence_features(False), self.thisptr.get_coefficients(False)
 
-    def classify(self, string sequence):
-        scr = self.thisptr.brute_classify(sequence, 0.0)
-        return np.array([-scr, scr])  # keep consistent with multiclass case
-
-    def print_model(self):
-        self.thisptr.print_model(100)
-
-    def get_sequence_features(self, bool only_positive=False):
-        return self.thisptr.get_sequence_features(only_positive)
-
-    def get_coefficients(self, bool only_positive=False):
-        return self.thisptr.get_coefficients(only_positive)
-
-
-class OVASEQL:
+class SEQLCLF:
     '''
-    SEQL in one versus all scenario for multiclass problem.
+    SEQL with multiple symbolic representations of time series.
     '''
 
-    def __init__(self, unique_labels):
-        self.labels_ = unique_labels
-        self.models = []
+    def __init__(self):
+        
+        self.features = []
+        self.coefficients = []
 
-    def learn(self, sequences, labels):
-        for l in self.labels_:
-            tmp_labels = [1 if c == l else - 1 for c in labels]
+    def is_binary(self):
+        if len(self.classes_) > 2:
+            return False
+        return True
+
+    def _fit_binary(self, mr_seqs, labels): 
+        # labels have to be 1 and -1
+        features = []
+        coefficients = []
+        for rep in mr_seqs:
             m = PySEQL()
-            m.learn(sequences, tmp_labels)
-            self.models.append(m)
+            f,c = m.learn(rep, labels)
+            features.append(f)
+            coefficients.append(c)
 
-    def classify(self, string sequence):
-        scr = []
-        for m in self.models:
-            scr.append(m.classify(sequence)[1])
-        return np.array(scr)
+        return features, coefficients
 
-    def get_sequence_features(self, bool only_positive=False):
-        sqs = []
-        for m in self.models:
-            sqs.extend(m.get_sequence_features(True))
-        return sqs
+    def _reverse_coef(self,coefs):
+        return [[-f for f in fs] for fs in coefs]
 
-    def get_coefficients(self, bool only_positive=False):
-        coefs = []
-        for m in self.models:
-            coefs.extend(m.get_coefficients(True))
-        return coefs
+    def fit(self, mr_seqs, labels):
+        self.classes_ = np.unique(labels)
+        for ul in self.classes_:
+            tmp_labels = [1 if l == ul else -1 for l in labels]
+            f,c = self._fit_binary(mr_seqs, tmp_labels)
+            self.features.append(f)
+            self.coefficients.append(c)           
+            if self.is_binary():
+                self.features.append(f)
+                self.coefficients.append(self._reverse_coef(c))
+                break
+
+
+    def predict_proba(self, mr_seqs):
+        nrow = len(mr_seqs[0])
+        ncol = len(self.classes_)
+        scores = np.zeros((nrow, ncol))
+        for i in range(0,ncol):        
+            for rep,fs,cs in zip(mr_seqs,self.features[i], self.coefficients[i]):
+                for j in range(0,nrow): 
+                    for f,c in zip(fs,cs):
+                        if f in rep[j]:
+                            scores[j,i] += c                        
+            if self.is_binary():
+                scores[:,1] = -scores[:,0]
+                break
+        proba = 1.0 / (1.0 + np.exp(-scores))
+        # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
+        proba /= proba.sum(axis=1).reshape((proba.shape[0], -1))
+
+        return proba
+
+    def get_sequence_features(self):
+        if self.is_binary():
+            return self.features[0]
+        else:
+            # select only positive features from each set
+            ret_set = []
+            for i in range(0,len(self.features[0])):
+                pos_f = []
+                for j in range(0,len(self.classes_)):
+                    for f,c in zip(self.features[j][i], self.coefficients[j][i]):
+                        if c > 0:
+                            pos_f.append(f)
+                ret_set.append(pos_f)
+            return ret_set
+                
 
 
 ###########################################################################
@@ -184,116 +213,98 @@ class MrSEQLClassifier(BaseClassifier):
 
     Parameters
     ----------
-    seql_mode       : str, either 'clf' or 'fs'. In the 'clf', Mr-SEQL mode trains an ensemble of SEQL models while in the 'fs' mode it uses SEQL to select features for training a logistic regression model.
+    
+    seql_mode       : str, either 'clf' or 'fs'. In the 'clf' mode, Mr-SEQL is an ensemble of SEQL models while in the 'fs' mode Mr-SEQL trains a logistic regression model with features extracted by SEQL from symbolic representations of time series.
+    
     symrep          : list or tuple, should contains only 'sax' or 'sfa' or both. The symbolic representations to be used to transform the input time series.
-    symrep_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
+    
+    custom_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
 
     '''
 
-    def __init__(self, seql_mode='clf', symrep=['sax'], symrepconfig=None):
+    def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
 
-        self.symbolic_methods = symrep
+        if 'sax' in symrep or 'sfa' in symrep:
+            self.symrep = symrep
+        else:
+            raise ValueError('symrep: only sax and sfa supported.')
 
         if seql_mode in ('fs', 'clf'):
             self.seql_mode = seql_mode
         else:
             raise ValueError('seql_mode should be either clf or fs.')
 
-        if symrepconfig is None:
-            self.config = []  # http://effbot.org/zone/default-values.htm
-        else:
-            self.config = symrepconfig
-
-       
-        self.seql_models = []  # seql models
-
-        # all the unique labels in the data
-        # in case of binary data the first one is always the negative class
-        self.classes_ = []
-
-        self.clf = None  # scikit-learn model
-
+        
+        self.custom_config = custom_config
+        self.config = self.custom_config       
+        self.seql_clf = SEQLCLF()  # seql model
+        self.ots_clf = None  # scikit-learn model
         # store fitted sfa for later transformation
         self.sfas = {}
-
-    def _is_multiclass(self):
-        return len(self.classes_) > 2
-
-    
-    def _to_tmp_labels(self, y):
-        # change arbitrary binary labels to -1, 1 labels as SEQL can only work with -1, 1
-        return [1 if l == self.classes_[1] else -1 for l in y]
+        self._is_fitted = False
 
     def _transform_time_series(self, ts_x):
-        multi_tssr = []
+        multi_tssr = []   
+
 
         # generate configuration if not predefined
         if not self.config:
+            self.config = []
             min_ws = 16
-            max_ws = ts_x.shape[1]
-            pars = [[w, 16, 4]
-                    for w in range(min_ws, max_ws, int(np.sqrt(max_ws)))]
+            min_len = max_len = len(ts_x.iloc[0, 0])
+            for a in ts_x.iloc[:, 0]:
+                min_len = min(min_len, len(a)) 
+                max_len = max(max_len, len(a))
+            max_ws = (min_len + max_len)//2
 
-            if 'sax' in self.symbolic_methods:
+            if min_ws < max_ws: 
+                pars = [[w, 16, 4] for w in range(min_ws, max_ws, int(np.sqrt(max_ws)))]
+            else:
+                pars = [[max_ws, 16, 4]]
+
+            if 'sax' in self.symrep:
                 for p in pars:
                     self.config.append(
                         {'method': 'sax', 'window': p[0], 'word': p[1], 'alphabet': p[2]})
 
-            if 'sfa' in self.symbolic_methods:
+            if 'sfa' in self.symrep:
                 for p in pars:
                     self.config.append(
                         {'method': 'sfa', 'window': p[0], 'word': 8, 'alphabet': p[2]})
 
+        
         for cfg in self.config:
+            for dim in ts_x:
+                tssr = []
 
-            tssr = []
+                if cfg['method'] == 'sax':  # convert time series to SAX
+                    ps = PySAX(cfg['window'], cfg['word'], cfg['alphabet'])
+                    for ts in ts_x[dim]:
+                        sr = ps.timeseries2SAXseq(ts)
+                        tssr.append(sr)
 
-            if cfg['method'] == 'sax':  # convert time series to SAX
-                ps = PySAX(cfg['window'], cfg['word'], cfg['alphabet'])
-                for ts in ts_x:
-                    sr = ps.timeseries2SAXseq(ts)
-                    tssr.append(sr)
+                if cfg['method'] == 'sfa':  # convert time series to SFA
+                    if (cfg['window'], cfg['word'], cfg['alphabet']) not in self.sfas:
+                        sfa = AdaptedSFA(
+                            cfg['window'], cfg['word'], cfg['alphabet'])
+                        sfa.fit(pd.DataFrame(ts_x[dim]))
+                        self.sfas[(cfg['window'], cfg['word'],
+                                cfg['alphabet'])] = sfa
+                    for ts in ts_x[dim]:
+                        sr = self.sfas[(cfg['window'], cfg['word'],
+                                        cfg['alphabet'])].timeseries2SFAseq(ts)
+                        tssr.append(sr)
 
-            if cfg['method'] == 'sfa':  # convert time series to SFA
-                if (cfg['window'], cfg['word'], cfg['alphabet']) not in self.sfas:
-                    sfa = AdaptedSFA(
-                        cfg['window'], cfg['word'], cfg['alphabet'])
-                    sfa.fit(ts_x)
-                    self.sfas[(cfg['window'], cfg['word'],
-                               cfg['alphabet'])] = sfa
-                for ts in ts_x:
-                    sr = self.sfas[(cfg['window'], cfg['word'],
-                                    cfg['alphabet'])].timeseries2SFAseq(ts)
-                    tssr.append(sr)
-
-            multi_tssr.append(tssr)
+                multi_tssr.append(tssr)
 
         return multi_tssr
-
-    def _fit_binary_problem(self, mr_seqs, labels):
-        models = []
-        for rep in mr_seqs:
-            m = PySEQL()
-            m.learn(rep, labels)
-            models.append(m)
-        return models
-
-    def _fit_multiclass_problem(self, mr_seqs, labels):
-        models = []
-        for rep in mr_seqs:
-            m = OVASEQL(self.classes_)
-            m.learn(rep, labels)
-            models.append(m)
-        return models
-
     
-
     def _to_feature_space(self, mr_seqs):
         # compute feature vectors
         full_fm = []
 
-        for rep, model in zip(mr_seqs, self.seql_models):
-            seq_features = model.get_sequence_features(False)            
+        for rep, seq_features in zip(mr_seqs, self.sequences):
+                 
             fm = np.zeros((len(rep), len(seq_features)))
 
             for i, s in enumerate(rep):
@@ -304,15 +315,6 @@ class MrSEQLClassifier(BaseClassifier):
 
         full_fm = np.hstack(full_fm)
         return full_fm
-
-    def _X_check(self, X):
-        '''
-        Check if X input is correct. Convert X to 2d numpy array.        
-        '''
-        check_X(X)
-        _enforce_X_univariate(X)
-
-        return np.asarray([a.values for a in X.iloc[:, 0]])
 
     def fit(self, X, y, input_checks=True):
         """
@@ -327,34 +329,31 @@ class MrSEQLClassifier(BaseClassifier):
         self
             Fitted estimator.        
         """
-        if input_checks:
-            X = self._X_check(X)
-            check_y(y)
+        if input_checks:            
+            check_X_y(X,y)
 
         # transform time series to multiple symbolic representations
         mr_seqs = self._transform_time_series(X)
+        
+        
 
-        self.classes_ = np.unique(y)  # because sklearn also uses np.unique
-
-        if self._is_multiclass():  # one versus all
-            self.seql_models = self._fit_multiclass_problem(mr_seqs, y)
-        else:
-            temp_labels = self._to_tmp_labels(y)
-            self.seql_models = self._fit_binary_problem(mr_seqs, temp_labels)
+        self.seql_clf.fit(mr_seqs,y)
+        self.classes_ = self.seql_clf.classes_
+        self.sequences = self.seql_clf.get_sequence_features()
 
         # if seql is being used to select features
         # first computing the feature vectors
         # then fit the new data to a logistic regression model
         if self.seql_mode == 'fs':
             train_x = self._to_feature_space(mr_seqs)
-            self.clf = LogisticRegression(
+            self.ots_clf = LogisticRegression(
                 solver='newton-cg', multi_class='multinomial', class_weight='balanced').fit(train_x, y)
-            self.classes_ = self.clf.classes_  # shouldn't matter
+            self.classes_ = self.ots_clf.classes_ 
 
+        self._is_fitted = True
         return self
 
-    def _compute_proba(self, score):
-        return 1.0 / (1.0 + np.exp(-score))
+   
 
     def predict_proba(self, X, input_checks=True):
         """ 
@@ -371,25 +370,17 @@ class MrSEQLClassifier(BaseClassifier):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
+        self.check_is_fitted()
+
         if input_checks:
-            X = self._X_check(X)
+            check_X(X)
         mr_seqs = self._transform_time_series(X)
 
         if self.seql_mode == 'fs':
             test_x = self._to_feature_space(mr_seqs)            
-            return self.clf.predict_proba(test_x)
-
+            return self.ots_clf.predict_proba(test_x)
         else:
-            scores = np.zeros((len(X), len(self.classes_)))
-            for rep, model in zip(mr_seqs, self.seql_models):
-                for c, seq in enumerate(rep):
-                    scores[c] = scores[c] + model.classify(seq)
-
-            proba = self._compute_proba(scores)
-            # https://github.com/scikit-learn/scikit-learn/blob/bf24c7e3d6d768dddbfad3c26bb3f23bc82c0a18/sklearn/linear_model/_base.py#L300
-            proba /= proba.sum(axis=1).reshape((proba.shape[0], -1))
-
-            return proba
+            return self.seql_clf.predict_proba(mr_seqs)
 
     def predict(self, X, input_checks=True):
         """
@@ -403,7 +394,7 @@ class MrSEQLClassifier(BaseClassifier):
             Predicted class label per sample.
         """
         if input_checks:
-            X = self._X_check(X)
+            check_X(X)
         proba = self.predict_proba(X, False)
         return np.array([self.classes_[np.argmax(prob)] for prob in proba])
 
@@ -422,57 +413,32 @@ class MrSEQLClassifier(BaseClassifier):
 
         Note
         -------
-        Only supports SAX features.
+        Only supports univariate time series and SAX features.
         """
+        self.check_is_fitted()
 
-        if len(self.symbolic_methods) == 1 and self.symbolic_methods[0] == 'sax' and self.seql_mode == 'fs':
+        is_multiclass = len(self.classes_) > 2
+
+        if self.seql_mode == 'fs':
 
             weighted_ts = np.zeros((len(self.classes_), len(ts)))
 
             fi = 0
-            for cfg, m in zip(self.config, self.seql_models):
-                features = m.get_sequence_features()
+            for cfg, features in zip(self.config, self.sequences):                
                 if cfg['method'] == 'sax':
                     ps = PySAX(cfg['window'], cfg['word'], cfg['alphabet'])
-                    if self._is_multiclass():
+                    if is_multiclass:
                         for ci, cl in enumerate(self.classes_):
                             weighted_ts[ci, :] += ps.map_weighted_patterns(
-                                ts, features, self.clf.coef_[ci, fi:(fi+len(features))])
+                                ts, features, self.ots_clf.coef_[ci, fi:(fi+len(features))])
                     else:
                         weighted_ts[0, :] += ps.map_weighted_patterns(
-                            ts, features, self.clf.coef_[0, fi:(fi+len(features))])
+                            ts, features, self.ots_clf.coef_[0, fi:(fi+len(features))])
 
                 fi += len(features)
-            if not self._is_multiclass():
+            if not is_multiclass:
                 weighted_ts[1, :] = -weighted_ts[0, :]
             return weighted_ts
         else:
             print('The mapping only works on fs mode. In addition, only sax features will be mapped to the time series.')
             return None
-
-    def summary(self):
-        """
-        Print description.
-        """
-        print('Symbolic methods: ' + ', '.join(self.symbolic_methods))
-        if not self.config:
-            print('No symbolic parameters found. To be generated later.')
-
-        if self.seql_mode == 'fs':
-            print('Classification Method: SEQL as feature selection')
-        elif self.seql_mode == 'clf':
-            print('Classification Method: Ensemble SEQL')
-
-    def get_all_sequences(self):
-        """
-        Get all the subsequences used as features.
-
-        Returns
-        -------
-        An array of string.
-
-        """
-        rt = []
-        for m in self.seql_models:
-            rt.append([s.decode('ascii') for s in m.get_sequence_features()])
-        return rt
