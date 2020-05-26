@@ -30,7 +30,7 @@ sktime
 sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine learning with time series. sktime currently supports:
 
 * State-of-the-art time series classification and regression algorithms,
-* Classical forecasting including reduction strategies,
+* Classical forecasting including modular reduction strategies to regression,
 * Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
 
 We have a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl

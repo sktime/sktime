@@ -20,7 +20,7 @@ if not on_rtd:
 
 # -- Project information -----------------------------------------------------
 project = u'sktime'
-copyright = u'2019, The Alan Turing Institute'
+copyright = u'2019 - 2020, sktime developers (BSD-3-Clause License)'
 author = u' '
 
 
@@ -172,6 +172,7 @@ html_theme_options = {
 # def setup(app):
 #     app.add_stylesheet("custom.css")  # also can be a full URL
 
+html_favicon = 'images/sktime-favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

@@ -26,6 +26,34 @@ Authors
 For an overview of current and past contributors, please see our
 :ref:`contributors page <contributors>`.
 
+Citing sktime
+-------------
+
+If you use scikit-learn in a scientific publication, we would appreciate
+citations to the following paper:
+
+`Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines, Franz Király (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
+
+Bibtex entry:
+
+.. code-block:: latex
+
+    @inproceedings{sktime,
+        author = {L{\"{o}}ning, Markus and Bagnall, Anthony and Ganesh, Sajaysurya and Kazakov, Viktor and Lines, Jason and Kir{\'{a}}ly, Franz J},
+        booktitle = {Workshop on Systems for ML at NeurIPS 2019},
+        title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
+        date = {2019},
+    }
+
+Artwork
+-------
+
+High quality PNG and SVG logos are available in the `docs/source/images/
+<https://alan-turing-institute.com/sktime/sktime/tree/master/docs/source/images>`_
+source directory.
+
+.. image:: images/sktime-logo-no-text.png
+   :align: center
 
 Funding
 -------
