@@ -87,7 +87,7 @@ class BaseTimeSeriesForest(BaseEstimator):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator,
+                 estimator,
                  n_estimators=100,
                  estimator_params=tuple(),
                  bootstrap=False,
@@ -98,7 +98,7 @@ class BaseTimeSeriesForest(BaseEstimator):
                  warm_start=False,
                  class_weight=None,
                  max_samples=None):
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.n_estimators = n_estimators
         self.estimator_params = estimator_params
         self.bootstrap = bootstrap
@@ -111,7 +111,7 @@ class BaseTimeSeriesForest(BaseEstimator):
         self.max_samples = max_samples
 
     @abstractmethod
-    def check_base_estimator(self):
+    def check_estimator(self):
         """
         Checks if the estimator is a Classifier or a Regressor
         To be implemented by subclasses
@@ -127,20 +127,20 @@ class BaseTimeSeriesForest(BaseEstimator):
             raise ValueError("n_estimators must be greater than zero, "
                              "got {0}.".format(self.n_estimators))
 
-        if self.base_estimator is not None:
-            self.base_estimator_ = self.base_estimator
+        if self.estimator is not None:
+            self.estimator_ = self.estimator
         else:
-            self.base_estimator_ = default
+            self.estimator_ = default
 
-        if self.base_estimator_ is None:
-            raise ValueError("base_estimator cannot be None")
+        if self.estimator_ is None:
+            raise ValueError("estimator cannot be None")
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `base_estimator_` attribute.
+        """Make and configure a copy of the `estimator_` attribute.
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator_)
+        estimator = clone(self.estimator_)
         estimator.set_params(**{p: getattr(self, p)
                                 for p in self.estimator_params})
 
