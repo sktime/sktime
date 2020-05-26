@@ -6,6 +6,7 @@ from warnings import warn
 import numpy as np
 from joblib import Parallel, delayed
 from numpy import float32 as DTYPE
+import numbers
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
@@ -23,7 +24,7 @@ from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
+class TimeSeriesForestRegressor(BaseTimeSeriesForest):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -35,7 +36,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
     Parameters
     ----------
-    base_estimator : Pipeline
+    estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
@@ -164,7 +165,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """
 
     def __init__(self,
-                 base_estimator=None,
+                 estimator=None,
                  n_estimators=200,
                  criterion='entropy',
                  max_depth=None,
@@ -184,7 +185,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                  class_weight=None,
                  max_samples=None):
 
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
         self.criterion = criterion
@@ -200,7 +201,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
 
         # Pass on params.
         super(TimeSeriesForestRegressor, self).__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=None,
             bootstrap=bootstrap,
@@ -213,47 +214,60 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             max_samples=max_samples
         )
 
-        if self.base_estimator is None:
-            features = [np.mean, np.std, time_series_slope]
-            steps = [('transform',
-                     RandomIntervalFeatureExtractor
-                     (n_intervals='sqrt',
-                      features=features,
-                      random_state=self.random_state)),
-                     ('clf', DecisionTreeRegressor(
-                         random_state=self.random_state
-                     ))]
-            self.base_estimator_ = Pipeline(steps)
+        def _validate_estimator(self, default=None):
+            if not isinstance(self.n_estimators, numbers.Integral):
+                raise ValueError("n_estimators must be an integer, "
+                                 "got {0}.".format(type(self.n_estimators)))
 
-        elif not isinstance(base_estimator, Pipeline):
-            raise ValueError(
-                'Base estimator must be pipeline with transforms.')
-        elif not isinstance(base_estimator.steps[-1][1],
-                            DecisionTreeRegressor):
-            raise ValueError('Last step in base estimator pipeline must be \
-                DecisionTreeRegressor.')
-        else:
-            self.base_estimator_ = self.base_estimator
+            if self.n_estimators <= 0:
+                raise ValueError("n_estimators must be greater than zero, "
+                                 "got {0}.".format(self.n_estimators))
 
-        # Rename estimator params according to name in pipeline.
-        estimator_params = {
-            "criterion": self.criterion,
-            "max_depth": self.max_depth,
-            "min_samples_split": self.min_samples_split,
-            "min_samples_leaf": self.min_samples_leaf,
-            "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
-            "max_features": self.max_features,
-            "max_leaf_nodes": self.max_leaf_nodes,
-            "min_impurity_decrease": self.min_impurity_decrease,
-            "min_impurity_split": self.min_impurity_split,
-        }
-        final_estimator = self.base_estimator.steps[-1][0]
-        estimator_params = {f'{final_estimator}__{pname}': pval for pname, pval
-                            in estimator_params.items()}
+            # Set base estimator
+            if self.estimator is None:
+                # Set default time series forest
+                features = [np.mean, np.std, time_series_slope]
+                steps = [('transform',
+                         RandomIntervalFeatureExtractor(
+                            n_intervals='sqrt',
+                            features=features,
+                            random_state=self.random_state)),
+                         ('clf', DecisionTreeRegressor(
+                            random_state=self.random_state))]
+                self.estimator_ = Pipeline(steps)
 
-        # Store renamed estimator params.
-        for pname, pval in estimator_params.items():
-            self.__setattr__(pname, pval)
+            else:
+                # else check given estimator is a pipeline with prior
+                # transformations and final decision tree
+                if not isinstance(self.estimator, Pipeline):
+                    raise ValueError('`estimator` must be '
+                                     'pipeline with transforms.')
+                if not isinstance(self.estimator.steps[-1][1],
+                                  DecisionTreeRegressor):
+                    raise ValueError('Last step in `estimator` must be '
+                                     'DecisionTreeRegressor.')
+                self.estimator_ = self.estimator
+
+            # Set parameters according to naming in pipeline
+            estimator_params = {
+                "criterion": self.criterion,
+                "max_depth": self.max_depth,
+                "min_samples_split": self.min_samples_split,
+                "min_samples_leaf": self.min_samples_leaf,
+                "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
+                "max_features": self.max_features,
+                "max_leaf_nodes": self.max_leaf_nodes,
+                "min_impurity_decrease": self.min_impurity_decrease,
+                "min_impurity_split": self.min_impurity_split,
+            }
+            final_estimator = self.estimator_.steps[-1][0]
+            self.estimator_params = {f'{final_estimator}__{pname}': pval
+                                     for pname, pval
+                                     in estimator_params.items()}
+
+            # Set renamed estimator parameters
+            for pname, pval in self.estimator_params.items():
+                self.__setattr__(pname, pval)
 
     def predict(self, X):
         """Predict regression target for X.

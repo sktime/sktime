@@ -26,7 +26,7 @@ from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 
-class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
+class TimeSeriesForestClassifier(BaseTimeSeriesForest):
     """Time-Series Forest Classifier.
 
     A time series forest is a meta estimator and an adaptation of the random
@@ -38,7 +38,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
     Parameters
     ----------
-    base_estimator : Pipeline
+    estimator : Pipeline
         A pipeline consisting of series-to-tabular transformers
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
@@ -176,7 +176,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         `oob_decision_function_` might contain NaN.
     """
     def __init__(self,
-                 base_estimator=None,
+                 estimator=None,
                  n_estimators=100,
                  criterion='entropy',
                  max_depth=None,
@@ -196,7 +196,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
                  class_weight=None,
                  max_samples=None):
 
-        self.base_estimator = base_estimator
+        self.estimator = estimator
 
         # Assign values, even though passed on to base estimator below,
         # necessary here for cloning
@@ -213,7 +213,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
         # Pass on params.
         super(TimeSeriesForestClassifier, self).__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=None,
             bootstrap=bootstrap,
@@ -240,7 +240,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
                              "got {0}.".format(self.n_estimators))
 
         # Set base estimator
-        if self.base_estimator is None:
+        if self.estimator is None:
             # Set default time series forest
             features = [np.mean, np.std, time_series_slope]
             steps = [('transform',
@@ -250,19 +250,19 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
                           random_state=self.random_state)),
                      ('clf', DecisionTreeClassifier(
                          random_state=self.random_state))]
-            self.base_estimator_ = Pipeline(steps)
+            self.estimator_ = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
             # transformations and final decision tree
-            if not isinstance(self.base_estimator, Pipeline):
+            if not isinstance(self.estimator, Pipeline):
                 raise ValueError('`estimator` must be '
                                  'pipeline with transforms.')
-            if not isinstance(self.base_estimator.steps[-1][1],
+            if not isinstance(self.estimator.steps[-1][1],
                               DecisionTreeClassifier):
                 raise ValueError('Last step in `estimator` must be '
                                  'DecisionTreeClassifier.')
-            self.base_estimator_ = self.base_estimator
+            self.estimator_ = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -276,7 +276,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.base_estimator_.steps[-1][0]
+        final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {f'{final_estimator}__{pname}': pval
                                  for pname, pval in estimator_params.items()}
 
@@ -284,7 +284,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def check_base_estimator(self):
+    def check_estimator(self):
         """"""
         raise NotImplementedError()
 

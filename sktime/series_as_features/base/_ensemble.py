@@ -50,6 +50,9 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     if verbose > 1:
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
+    # name of step of final estimator in pipeline
+    estimator = tree.steps[-1][0]
+
     if forest.bootstrap:
         n_samples = X.shape[0]
         if sample_weight is None:
@@ -68,9 +71,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
-        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
+        fit_params = {f'{estimator}__sample_weight': curr_sample_weight}
+        tree.fit(X, y, **fit_params)
     else:
-        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
+        fit_params = {f'{estimator}__sample_weight': sample_weight}
+        tree.fit(X, y, **fit_params)
 
     return tree
 
