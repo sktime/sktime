@@ -37,7 +37,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
     def __init__(self, num_kernels=10_000, normalise=True, random_state=None):
         self.num_kernels = num_kernels
         self.normalise = normalise
-        self.seed = random_state if isinstance(random_state, int) else None
+        self.random_state = random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
     def fit(self, X, y=None):
@@ -58,7 +58,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         _, self.n_columns = X.shape
         n_timepoints = X.applymap(lambda series: series.size).max().max()
         self.kernels = _generate_kernels(n_timepoints, self.num_kernels,
-                                         self.n_columns, self.seed)
+                                         self.n_columns, self.random_state)
         self._is_fitted = True
         return self
 
