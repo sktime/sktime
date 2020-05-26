@@ -38,7 +38,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         self.num_kernels = num_kernels
         self.normalise = normalise
         self.random_state = \
-        random_state if isinstance(random_state, int) else None
+            random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
     def fit(self, X, y=None):
