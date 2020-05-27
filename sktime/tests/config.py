@@ -52,7 +52,6 @@ EXCLUDED = [
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',
-    'Rocket',
     'ShapeletTransform',
     'ShapeletTransformClassifier',
 ]
