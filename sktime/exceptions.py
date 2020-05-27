@@ -2,10 +2,7 @@
 # coding: utf-8
 
 __author__ = "Markus Löning"
-__all__ = [
-    "NotEvaluatedError",
-    "NotFittedError"
-]
+__all__ = ["NotEvaluatedError", "NotFittedError", "FitFailedWarning"]
 
 
 class NotEvaluatedError(ValueError, AttributeError):
@@ -21,5 +18,20 @@ class NotFittedError(ValueError, AttributeError):
 
     References
     ----------
-    ..[1]   Based on scikit-learn's NotFittedError
+    ..[1] Based on scikit-learn's NotFittedError
+    """
+
+
+class FitFailedWarning(RuntimeWarning):
+    """Warning class used if there is an error while fitting the estimator.
+    This Warning is used in meta estimators GridSearchCV and RandomizedSearchCV
+    and the cross-validation helper function cross_val_score to warn when there
+    is an error while fitting the estimator.
+
+    FitFailedWarning('Estimator fit failed. The score on this train-test
+    partition for these parameters will be set to 0.000000.
+
+    References
+    ----------
+    ..[1] Based on scikit-learn's FitFailedWarning
     """
