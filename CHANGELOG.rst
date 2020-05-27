@@ -36,25 +36,25 @@ Deprecated
 
 Added
 ~~~~~
-- Forecasting framework, including encapsulated algorithms (forecasters),
-  composite model building functionality (meta-forecasters), and tools
-  for tuning and model evaluation
-- Consistent unit tests
+- Forecasting framework, including: forecasting algorithms (forecasters),
+  tools for composite model building (meta-forecasters), tuning and model
+  evaluation
+- Consistent unit testing of all estimators
 - Consistent input checks
 - Enforced PEP8 linting via flake8
 - Changelog
 - Support for Python 3.8
 - Support for manylinux wheels
 
+
 Changed
 ~~~~~~~
-- Revised all estimators to comply with common interface and to ensure
-  scikit-learn compatibility
+- Revised all estimators to comply with common interface and to ensure scikit-learn compatibility
 
 Removed
 ~~~~~~~
-- A few redundant classes (e.g. `Pipeline`) in favour of scikit-learn's
-  implementations
+- A few redundant classes for the series-as-features setting in favour of scikit-learn's implementations: :code:`Pipeline` and :code:`GridSearchCV`
+- :code:`HomogeneousColumnEnsembleClassifier` in favour of more flexible :code:`ColumnEnsembleClassifier`
 
 
 Fixed

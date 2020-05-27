@@ -1,49 +1,56 @@
-from statsmodels.tsa.stattools import acf
+#!/usr/bin/env python3 -u
+# coding: utf-8
+
+__author__ = ["Markus Löning"]
+__all__ = []
+
+from warnings import warn
+
 import numpy as np
+from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.validation.forecasting import check_y
+from statsmodels.tsa.stattools import acf
 
 
-def seasonality_test(x, freq):
+def autocorrelation_seasonality_test(y, sp):
     """Seasonality test used in M4 competition
-
-    # original implementation
-    # def seasonality_test(original_ts, ppy):
-    #
-    # Seasonality test
-    # :param original_ts: time series
-    # :param ppy: periods per year
-    # :return: boolean value: whether the TS is seasonal
-    #
-    # s = acf(original_ts, 1)
-    # for i in range(2, ppy):
-    #     s = s + (acf(original_ts, i) ** 2)
-    #
-    # limit = 1.645 * (sqrt((1 + 2 * s) / len(original_ts)))
-    #
-    # return (abs(acf(original_ts, ppy))) > limit
 
     Parameters
     ----------
-    x : ndarray
-        Time series
-    freq : int
-        Frequency, periods per year (ppy)
+    sp : int
+        Seasonal periodicity
 
     Returns
     -------
-    test : bool
-        Whether or not seasonality is present in data for given frequency
+    is_seasonal : bool
+        Test result
 
     References
     ----------
-    https://github.com/M4Competition/M4-methods/blob/master/ML_benchmarks.py
-
+    ..[1]  https://github.com/Mcompetitions/M4-methods/blob/master
+    /Benchmarks%20and%20Evaluation.R
     """
-    x = np.asarray(x)
-    crit_val = 1.645
+    y = check_y(y)
+    sp = check_sp(sp)
 
-    n = len(x)
-    r = acf(x, nlags=freq)
-    s = r[1] + np.sum(r[2:] ** 2)
-    limit = crit_val * np.sqrt((1 + 2 * s) / n)
+    y = np.asarray(y)
+    n_timepoints = len(y)
 
-    return np.abs(r[freq]) > limit
+    if sp == 1:
+        return False
+
+    if n_timepoints < 3 * sp:
+        warn(
+            "Did not perform seasonality test, as `y`` is too short for the "
+            "given `sp`, returned: False")
+        return False
+
+    else:
+        coefs = acf(y, nlags=sp, fft=False)  # acf coefficients
+        coef = coefs[sp]  # coefficient to check
+
+        tcrit = 1.645  # 90% confidence level
+        limits = tcrit / np.sqrt(n_timepoints) * np.sqrt(
+            np.cumsum(np.append(1, 2 * coefs[1:] ** 2)))
+        limit = limits[sp - 1]  #  zero-based indexing
+        return np.abs(coef) > limit

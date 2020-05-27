@@ -163,9 +163,11 @@ Paired (or second-degree) transformations:
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
-|  |  |  |  |
+| Naive forecaster | NaiveForecaster | @mloning | 
+| Holt-Winters exponential smoothing forecaster | ExpSmoothingForecaster | @mloning, @big-o | 
+| Theta forecaster | ThetaForecaster | @big-o | [Unmasking the Theta method](https://www.sciencedirect.com/science/article/pii/S0169207001001431)
 
-### Exogenous time series forecasters
+### Multivariate Time Series Forecasting
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
@@ -189,6 +191,11 @@ Paired (or second-degree) transformations:
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
 
+
+
+# Forecasters
+| name | sktime class | maintainer | literature
+| ------ | ------- | ------ | ------- |
 
 ### Reduction
 | Name | Class | Maintainer | References |

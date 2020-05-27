@@ -1,18 +1,17 @@
 """
 Utilities useful during the build.
 """
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/_build_utils/__init__.py
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/_build_utils/__init__.py
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
 
-import os
-
-from distutils.version import LooseVersion
 import contextlib
+import os
+from distutils.version import LooseVersion
 
 from .openmp_helpers import check_openmp_support
-
 
 DEFAULT_ROOT = 'sktime'
 # on conda, this is the latest for python 3.5
@@ -49,7 +48,7 @@ def maybe_cythonize_extensions(top_path, config):
     else:
         message = ('Please install Cython with a version >= {0} in order '
                    'to build a sktime development version.').format(
-                       CYTHON_MIN_VERSION)
+            CYTHON_MIN_VERSION)
         try:
             import Cython
             if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
