@@ -4,8 +4,7 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
-import pandas as pd
-from sktime.utils.testing.forecasting import generate_time_series
+from sktime.utils.testing._forecasting import generate_time_series
 
 # default parameter testing grid
 TEST_WINDOW_LENGTHS = [1, 5]
@@ -23,6 +22,8 @@ TEST_ALPHAS = [0.05, 0.1]
 
 n_timepoints = 50
 TEST_YS = [
-    generate_time_series(positive=True),  # zero-based index
-    generate_time_series(positive=True, non_zero_index=True),  # non-zero-based index
+    # zero-based index
+    generate_time_series(positive=True),
+    # non-zero-based index, raises warnings in statsmodels
+    # generate_time_series(positive=True, non_zero_index=True),
 ]

@@ -4,10 +4,10 @@
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
 PACKAGE=sktime
-DOC_DIR='./docs/'
-MAINT_DIR = './maint_tools/'
+DOC_DIR='./docs'
+MAINT_DIR='./maint_tools'
 
-.PHONY: help cover dist venv
+.PHONY: help release install test lint clean dist doc docs
 
 .DEFAULT_GOAL := help
 

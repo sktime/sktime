@@ -8,15 +8,16 @@ import numpy as np
 import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformers.detrend import Detrender
+from sktime.transformers.single_series.detrend import Detrender
 
 
 def compute_expected_coefs(y, degree, with_intercept=True):
-    """Helper function to compute expected coefficients from polynomial regression"""
+    """Helper function to compute expected coefficients from polynomial
+    regression"""
     poly_matrix = np.vander(y.index.values, degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
-    return np.linalg.lstsq(poly_matrix, y.values)[0]
+    return np.linalg.lstsq(poly_matrix, y.values, rcond=None)[0]
 
 
 def compute_expected_detrend(y, degree, with_intercept):
@@ -32,7 +33,8 @@ def check_trend(degree, with_intercept):
     y = load_airline()
     f = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     f.fit(y)
-    a = f.regressor_.steps[-1][1].coef_[::-1]  # intercept is added in reverse order
+    a = f.regressor_.steps[-1][1].coef_[
+        ::-1]  # intercept is added in reverse order
 
     b = compute_expected_coefs(y, degree, with_intercept)
     np.testing.assert_allclose(a, b)

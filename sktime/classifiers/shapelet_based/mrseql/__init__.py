@@ -1,1 +1,0 @@
-from sktime.classifiers.shapelet_based.mrseql.mrseql import MrSEQLClassifier

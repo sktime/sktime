@@ -16,6 +16,7 @@ def positive_dataframe_indices(X):
         X.index = np.arange(0, len(X.index))
     return X
 
+
 # find the standard deviation of the dataset
 def stdp(X):
     sum = 0
@@ -29,12 +30,16 @@ def stdp(X):
             for value in instance:
                 num_values += 1
                 sum += value
-                sum_sq += (value ** 2)  # todo missing values NaN messes this up!
+                sum_sq += (
+                            value ** 2)  # todo missing values NaN messes
+                # this up!
     mean = sum / num_values
     stdp = np.math.sqrt(sum_sq / num_values - mean ** 2)
     return stdp
 
-# convert given instances and class labels into dict of class label mapped to instances
+
+# convert given instances and class labels into dict of class label mapped
+# to instances
 def bin_instances_by_class(X, class_labels):
     bins = {}
     for class_label in np.unique(class_labels):
@@ -48,7 +53,8 @@ def bin_instances_by_class(X, class_labels):
     return bins
 
 
-# find the maximum length of an instance from a set of instances for a given dimension
+# find the maximum length of an instance from a set of instances for a given
+# dimension
 def max_instance_dimension_length(X, dimension):
     num_instances = X.shape[0]
     max = -1
@@ -59,7 +65,8 @@ def max_instance_dimension_length(X, dimension):
     return max
 
 
-# find the maximum length of an instance from a set of instances for all dimensions
+# find the maximum length of an instance from a set of instances for all
+# dimensions
 def max_instance_length(X):
     # todo use all dimensions / uneven length dataset
     max_length = len(X.iloc[0, 0])

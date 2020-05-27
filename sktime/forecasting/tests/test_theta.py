@@ -4,10 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.datasets import load_airline
-from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import TEST_OOS_FHS, TEST_ALPHAS
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.forecasting.tests import TEST_OOS_FHS
+from sktime.forecasting.theta import ThetaForecaster
 from sktime.utils.validation.forecasting import check_fh
 
 

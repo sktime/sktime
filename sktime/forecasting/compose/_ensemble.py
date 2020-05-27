@@ -5,19 +5,21 @@ __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
 import pandas as pd
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
-class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
+class EnsembleForecaster(OptionalForecastingHorizonMixin,
+                         BaseHeterogenousEnsembleForecaster):
     """Ensemble of forecasters
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for fit. None means 1 unless in a joblib.parallel_backend context.
+        The number of jobs to run in parallel for fit. None means 1 unless
+        in a joblib.parallel_backend context.
         -1 means using all processors.
     """
 
@@ -68,12 +70,8 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsemb
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
-    def transform(self, fh=None, X=None):
-        self.check_is_fitted()
-        self._set_fh(fh)
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)
-
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(
+            axis=1)
