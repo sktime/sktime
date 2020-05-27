@@ -17,7 +17,8 @@ History
 
 sktime was started in April 2019 as a collaborative project between
 Franz Király, Markus Löning, Tony Bagnall and Jason
-Lines.
+Lines. In the first year, it grew into a community-driven project with
+contributions from researchers and practitioners from around the globe.
 
 
 Authors
@@ -71,8 +72,10 @@ We would like to thank the following funders.
    <div class="sk-sponsor-div-box">
 
 `The Alan Turing Institute <https://turing.ac.uk>`_
-funded the initial stages via the Strategic Priorities Fund delivered by UK
-Research and Innovation (UKRI).
+funded three months of the initial development via the Strategic Priorities
+Fund delivered by UK Research and Innovation (UKRI), as part of the `Tools,
+Practices and Systems <https://www.turing.ac.uk/events/tools-practices-and-systems-data-science-and-artificial-intelligence-scoping-workshop>`_
+programme.
 
 
 .. raw:: html
