@@ -36,33 +36,56 @@ sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ comp
 We have a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
 <https://github.com/sktime/sktime-dl>`_.
 
-sktime is under active development and we are looking for contributors!
+sktime is open-source project. sktime is under active development and we are
+looking for contributors!
+
+Quick start
+-----------
+
+.. code-block::
+
+    from sktime.classification.interval_based import TimeSeriesForest
+    from sktime.datasets import load_gunpoint
+    from sklearn.model_selection import train_test_split
+
+    X, y = load_gunpoint(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+
+    classifier = TimeSeriesForest()
+    classifier.fit(X_train, y_train)
+    print(classifier.score(X_test, y_test))
+
 
 Installation
 ------------
+
 The package is available via PyPI using:
 
 .. code-block:: bash
 
     pip install sktime
 
-But note that the package is actively being developed and currently not feature stable.
+But note that the package is actively being developed and some features may
+not yet be stable.
 
 Development version
 ~~~~~~~~~~~~~~~~~~~
+
 To install the development version, please see our
 `advanced installation instructions <https://alan-turing-institute.github.io/sktime/extension.html>`__.
 
 
 Documentation
 -------------
-* Read the detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__,
+
 * Check out our `examples notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ or run them interactively on Binder_,
+* Read the detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__,
 * Take a look at our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
 
 API Overview
 ------------
+
 sktime extends the standard scikit-learn API to handle modular machine learning workflows for time series data.
 The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification and forecasting. To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
 
