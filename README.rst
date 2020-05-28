@@ -29,31 +29,14 @@ sktime
 
 sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine learning with time series. sktime currently supports:
 
-* State-of-the-art time series classification and regression algorithms,
-* Classical forecasting including modular reduction strategies to regression,
-* Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
+* Time series classification and regression,
+* Univariate forecasting.
+
+We provide dedicated time series algorithms and tools for composite model
+building, tuning and model evaluation.
 
 We have a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
 <https://github.com/sktime/sktime-dl>`_.
-
-sktime is open-source project. sktime is under active development and we are
-looking for contributors!
-
-Quick start
------------
-
-.. code-block::
-
-    from sktime.classification.interval_based import TimeSeriesForest
-    from sktime.datasets import load_gunpoint
-    from sklearn.model_selection import train_test_split
-
-    X, y = load_gunpoint(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y)
-
-    classifier = TimeSeriesForest()
-    classifier.fit(X_train, y_train)
-    print(classifier.score(X_test, y_test))
 
 
 Installation
@@ -86,31 +69,37 @@ Documentation
 API Overview
 ------------
 
-sktime extends the standard scikit-learn API to handle modular machine learning workflows for time series data.
-The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification and forecasting. To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
+sktime provides a scikit-learn compatible API for multiple distinct, but
+closely related time series learning tasks, such as time series
+classification, regression and forecasting. For more details on these
+problems and how they are related, take a look at our `paper <http://arxiv
+.org/abs/1909.07872>`__.
 
-Currently, the package implements:
+Currently, the package includes dedicated algorithms and tools for composite
+model building, tuning and model evaluation:
 
-* Various state-of-the-art algorithms for time series classification and regression, ported from the Java-based `tsml <https://github.com/uea-machine-learning/tsml/>`__ toolkit,
-* Transformers, including series-to-series transforms (e.g. Fourier transform), series-to-primitives transforms a.k.a. feature extractors (e.g. mean, variance), sub-divided into fittables (on table) and row-wise applicates,
+* State-of-the-art algorithms for time series classification and regression,
+ported from the Java-based `tsml <https://github.com/uea-machine-learning/tsml/>`__ toolkit,
+* Transformers, including single-series transformation (e.g. detrending or
+deseasonalization) and series-as-features transformation (e.g. feature
+extractors, as well as tools to compose different transformers
 * Pipelining, allowing to chain multiple transformers with a final estimator,
-* Meta-estimators such as reduction strategies, grid-search tuners and ensembles, including ensembles for multivariate time series classification,
-* Composite strategies, such as a fully customisable random forest for time-series classification, with interval segmentation and feature extraction,
-* Classical forecasting algorithms and reduction strategies to solve forecasting tasks with time series regression algorithms.
+* Tuning using grid-search CV
+* Ensembling, such as a fully customisable random forest for time-series
+classification and regression, as well as ensembling for multivariate problems,
+* Univariate forecasting algorithms (e.g. exponential smoothing)
 
 For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.
 
 In addition, sktime includes a experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
-In particular, we introduce:
 
-* Task objects that encapsulate meta-data from a dataset and the necessary information about the particular learning task, e.g. the instructions on how to derive the target/labels for classification from the data,
-* Strategy objects that wrap estimators and allow to call fit and predict methods using data and a task object.
 
 
 Development roadmap
 -------------------
 1. Time series annotation, including segmentation and outlier detection,
-2. Supervised/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
+2. Multivariate forecasting based on a modified `pysf
+<https://github.com/alan-turing-institute/pysf/>`__ API,
 3. Unsupervised learning, including time series clustering,
 4. Specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
 5. Probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
