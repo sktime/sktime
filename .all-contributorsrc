@@ -219,6 +219,94 @@
         "design",
         "ideas"
       ]
+    },
+    {
+      "login": "dasgupsa",
+      "name": "Saurabh Dasgupta",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/10398956?v=4",
+      "profile": "https://github.com/dasgupsa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "angus924",
+      "name": "angus924",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/55837131?v=4",
+      "profile": "https://github.com/angus924",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "lnthach",
+      "name": "Thach Le Nguyen",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7788363?v=4",
+      "profile": "https://github.com/lnthach",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Ayushmaanseth",
+      "name": "Ayushmaan Seth",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/29939762?v=4",
+      "profile": "https://www.linkedin.com/in/ayushmaan-seth-4a96364a/",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "ninfueng",
+      "name": "Ninnart Fuengfusin",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/28499769?v=4",
+      "profile": "https://github.com/ninfueng",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "big-o",
+      "name": "big-o",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1134151?v=4",
+      "profile": "https://github.com/big-o",
+      "contributions": [
+        "code",
+        "design",
+        "ideas",
+        "review",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "Kludex",
+      "name": "Marcelo Trylesinski",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/7353520?v=4",
+      "profile": "http://marcelotryle.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "oleskiewicz",
+      "name": "oleskiewicz",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/5682158?v=4",
+      "profile": "https://github.com/oleskiewicz",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "dguijo",
+      "name": "David Guijo Rubio",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/47889499?v=4",
+      "profile": "http://www.uco.es/grupos/ayrna/index.php/es/publicaciones/articulos?publications_view_all=1&theses_view_all=0&projects_view_all=0&task=show&view=member&id=22",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
     }
   ]
 }
