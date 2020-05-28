@@ -97,7 +97,8 @@ EXTRAS_REQUIRE = {
         'sphinx_rtd_theme',
         'numpydoc',
         'matplotlib',
-        'sphinx_bootstrap_theme'
+        'sphinx_bootstrap_theme',
+        'm2r @ git+https://github.com/crossnox/m2r@dev#egg=m2r'
     ]
 }
 SETUP_REQUIRES = [
