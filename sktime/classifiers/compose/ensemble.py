@@ -443,6 +443,9 @@ class TimeSeriesForestClassifier(ForestClassifier):
         """
         # assumes particular structure of clf, with each tree consisting of a particular pipeline, as in modular tsf
 
+        if not isinstance(self.estimators_[0].steps[0][1], RandomIntervalFeatureExtractor):
+            raise NotImplementedError('RandomIntervalFeatureExtractor must be used as the transformer, which must be the first step in the base estimator.')
+
         # get series length, assuming same length series
         tree = self.estimators_[0]
         transformer = tree.steps[0][1]
