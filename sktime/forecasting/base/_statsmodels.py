@@ -4,11 +4,13 @@
 __author__ = ["Markus Löning"]
 __all__ = ["BaseStatsModelsAdapter"]
 
-from sktime.forecasting.base._sktime import BaseSktimeForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin,
+                             BaseSktimeForecaster):
     """Base class for interfacing statsmodels forecasting algorithms
     """
     _fitted_param_names = ()
@@ -52,7 +54,8 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         Parameters
         ----------
         fh : int or array-like, optional (default=1)
-            The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
             i.e. np.array([1])
         X : None
             Exogenous variables are ignored.
@@ -69,7 +72,8 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         # Forecast all periods from start to end of pred horizon,
         # but only return given time points in pred horizon
         fh_abs = fh.absolute(self.cutoff)
-        y_pred = self._fitted_forecaster.predict(start=fh_abs[0], end=fh_abs[-1])
+        y_pred = self._fitted_forecaster.predict(start=fh_abs[0],
+                                                 end=fh_abs[-1])
         return y_pred.loc[fh_abs]
 
     def get_fitted_params(self):

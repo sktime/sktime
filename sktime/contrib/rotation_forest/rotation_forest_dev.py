@@ -1,6 +1,6 @@
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble.forest import _generate_sample_indices, compute_sample_weight
+from sklearn.ensemble._forest import _generate_sample_indices, compute_sample_weight
 import numpy as np
 from numpy import random
 from sklearn.decomposition import PCA
@@ -46,7 +46,7 @@ class RotationForest(ForestClassifier):
 
 
     def fit(self, X, y, sample_weight=None):
-		
+
         n_samps, self._num_atts = X.shape
         self._num_classes = np.unique(y).shape[0]
         self.classes_ = list(set(y))
@@ -82,26 +82,26 @@ class RotationForest(ForestClassifier):
                     if not selected_class:
                         continue
                     #we have to reshape the array in case it's a size 1, and gets squeezed.
-                    for inst in classGrouping[index]:				   
+                    for inst in classGrouping[index]:
                         rot_j.append(inst[grp])
                 #randomly sample 50% of the indices.
-                sample_ind = random.choice(len(rot_j), int((float(len(rot_j))/100.0) * self.remove_percentage), replace=False)              
+                sample_ind = random.choice(len(rot_j), int((float(len(rot_j))/100.0) * self.remove_percentage), replace=False)
                 rot_j = np.array(rot_j).reshape((-1, grp.shape[0]))
                 #only sample if we have lots of instances.
                 if sample_ind.shape[0] > 2:
                     rot_j = rot_j[sample_ind]
-				
+
 				##try to fit the PCA if it fails, remake it, and add 10 random data instances.
                 while True:
 				    #ignore err state on PCA because we account if it fails.
                     with np.errstate(divide='ignore',invalid='ignore'):
                         pca_data = deepcopy(self.base_projectionFilter).fit(rot_j)
-				
+
                     self.addRandomInstance(rot_j, 10)
                     if not np.isnan(pca_data.explained_variance_ratio_).all():
                         break
                     rot_j = self.addRandomInstance(rot_j, 10)
-	
+
                 self._pcas[i].append(pca_data)
 
             #merge all the pca_transformed data into one instance and build a classifier on it.
