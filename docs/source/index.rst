@@ -23,6 +23,10 @@ From here, you can navigate to:
    contributors
    code_of_conduct
 
+.. raw:: html
+
+   <br/>
+
 
 * :ref:`genindex`
 * :ref:`modindex`

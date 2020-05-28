@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # Configuration file for the Sphinx documentation builder.
@@ -23,10 +24,12 @@ project = u'sktime'
 copyright = u'2019 - 2020, sktime developers (BSD-3-Clause License)'
 author = u' '
 
-
 # The short X.Y version
 import sktime
-version = '.'.join(sktime.__version__.split('.', 2)[:2])
+
+# version = '.'.join(sktime.__version__.split('.', 2)[:2])
+version = sktime.__version__
+
 # The full version, including alpha/beta/rc tags
 release = sktime.__version__
 
@@ -45,7 +48,7 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
-    # 'sphinx.ext.viewcode',
+    'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.linkcode',  # link to github, see linkcode_resolve() below
     'sphinx.ext.napoleon',
@@ -77,7 +80,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ['_build', '.ipynb_checkpoints', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -85,7 +88,10 @@ pygments_style = 'sphinx'
 # see http://stackoverflow.com/q/12206334/562769
 numpydoc_show_class_members = True
 numpydoc_class_members_toctree = False
+
+# generate autosummary even if no references
 autosummary_generate = True
+autodoc_default_flags = ['members', 'inherited-members']
 
 
 def linkcode_resolve(domain, info):
@@ -109,7 +115,8 @@ def linkcode_resolve(domain, info):
     except Exception:
         filename = info['module'].replace('.', '/') + '.py'
     tag = 'master' if 'dev' in release else ('v' + release)
-    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (tag, filename)
+    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
+    tag, filename)
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -127,50 +134,6 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'prev_next_buttons_location': None,
 }
-
-# html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
-# html_theme_options = {
-#     # Tab name for entire site. (Default: "Site")
-#     'navbar_site_name': "Table of Contents",
-#
-#     # 'navbar_links': [
-#     #     ("Citing sktime", "citing"),
-#     # ],
-#
-#     # Render the next and previous page links in navbar. (Default: true)
-#     'navbar_sidebarrel': False,
-#
-#     # Render the current pages TOC in the navbar. (Default: true)
-#     'navbar_pagenav': True,
-#
-#     # Tab name for the current pages TOC. (Default: "Page")
-#     'navbar_pagenav_name': "Current Page",
-#
-#     # Global TOC depth for "site" navbar tab. (Default: 1)
-#     # Switching to -1 shows all levels.
-#     'globaltoc_depth': -1,
-#
-#     # Location of link to source.
-#     # Options are "nav" (default), "footer" or anything else to exclude.
-#     'source_link_position': "exclude",
-#
-#     # Bootswatch (http://bootswatch.com/) theme.
-#     #
-#     # Options are nothing (default) or the name of a valid theme
-#     # such as "cosmo" or "sandstone".
-#     #
-#     # The set of valid themes depend on the version of Bootstrap
-#     # that's used (the next config option).
-#     #
-#     # Currently, the supported themes are:
-#     # - Bootstrap 2: https://bootswatch.com/2
-#     # - Bootstrap 3: https://bootswatch.com/3
-#     # 'bootswatch_theme': "lumen"
-# }
-
-
-# def setup(app):
-#     app.add_stylesheet("custom.css")  # also can be a full URL
 
 html_favicon = 'images/sktime-favicon.ico'
 
@@ -221,7 +184,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'sktime.tex', 'sktime Documentation',
-     'The Alan Turing Institute', 'manual'),
+     'sktime developers', 'manual'),
 ]
 
 # -- Options for manual page output ------------------------------------------
@@ -244,22 +207,14 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-# -- Options for Epub output -------------------------------------------------
 
-# Bibliographic Dublin Core info.
-epub_title = project
+def setup(app):
+    def adds(pth):
+        print("Adding stylesheet: %s" % pth)
+        app.add_css_file(pth)
 
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#
-# epub_identifier = ''
+    adds('fields.css')  # for parameters, etc.
 
-# A unique identification for the text.
-#
-# epub_uid = ''
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
 
 # -- Extension configuration -------------------------------------------------
 
@@ -270,7 +225,8 @@ nbsphinx_timeout = -1  # set to -1 to disable timeout
 
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
+?filepath={{ env.doc2path( env.docname, base=None) }}
 
 |Binder|_ 
 """
@@ -280,7 +236,8 @@ nbsphinx_epilog = """
 
 Generated by nbsphinx_. The Jupyter notebook file can be found here_.
 
-.. _here: https://github.com/alan-turing-institute/sktime/blob/master/{{ env.doc2path( env.docname, base=None) }}
+.. _here: https://github.com/alan-turing-institute/sktime/blob/master/{{ 
+env.doc2path( env.docname, base=None) }}
 .. _nbsphinx: https://nbsphinx.readthedocs.io/
 """
 

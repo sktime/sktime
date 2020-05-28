@@ -1,23 +1,27 @@
+
 .. _api_reference:
 
+=============
 API Reference
 =============
 
-The complete sktime project is automatically documented for every module.
+This is the class and function reference for ``sktime``.
 
-.. currentmodule:: sktime
+.. include:: includes/api_css.rst
 
 .. autosummary::
+    :toctree: auto_generated/
 
-   sktime.benchmarking
-   sktime.classifiers
-   sktime.datasets
-   sktime.distances
-   sktime.forecasters
-   sktime.highlevel
-   sktime.metrics
-   sktime.regressors
-   sktime.transformers
-   sktime.utils
-   sktime.model_selection
-   sktime.pipeline
+.. include:: modules/classification.rst
+
+.. include:: modules/regression.rst
+
+.. include:: modules/series_as_features.rst
+
+.. include:: modules/forecasting.rst
+
+.. include:: modules/transformers.rst
+
+.. include:: modules/utils.rst
+
+.. include:: modules/exceptions.rst
