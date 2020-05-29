@@ -1,7 +1,8 @@
 import numpy as np
 from scipy import interpolate
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base \
+    import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 
