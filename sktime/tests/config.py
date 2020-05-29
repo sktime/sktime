@@ -26,7 +26,7 @@ from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.series_as_features.compose import ColumnEnsembleClassifier
+from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer

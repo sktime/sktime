@@ -3,22 +3,30 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to sktime's documentation!
-==================================
-
 .. include:: ../../README.rst
+
+
+Navigation
+----------
+
+From here, you can navigate to:
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
 
    installation
-   examples
-   extension
-   autogen/sktime
+   how_to_get_started
+   api_reference
+   changelog
+   how_to_contribute
+   about
+   contributors
+   code_of_conduct
 
-Indices and tables
-==================
+.. raw:: html
+
+   <br/>
+
 
 * :ref:`genindex`
 * :ref:`modindex`

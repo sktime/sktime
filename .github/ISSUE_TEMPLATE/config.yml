@@ -1,0 +1,4 @@
+contact_links:
+  - name: "All other questions and general chat"
+    url: https://gitter.im/sktime/community
+    about: Chat with the sktime community on Gitter

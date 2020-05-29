@@ -36,7 +36,7 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     References
     ----------
     ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast
-    accuracy", Foresight, Issue 4.
+            accuracy", Foresight, Issue 4.
     """
     # input checks
     y_test = check_y(y_test)
@@ -73,7 +73,7 @@ def smape_loss(y_test, y_pred):
     Returns
     -------
     loss : float
-        SMAPE loss
+        sMAPE loss
     """
     y_test = check_y(y_test)
     y_pred = check_y(y_pred)
