@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from sktime.datasets import load_basic_motions
@@ -17,7 +16,8 @@ def test_resizing():
     # 1) all lengths are equal
     # 2) cut lengths and check that they are really different
     # 3) use transformer for resizing to resize time series to equal length
-    # 4) check that result length are equal to length that was set for transformer
+    # 4) check that result length are equal to length that was set for
+    #       transformer
 
     X, _ = load_basic_motions(split='TRAIN', return_X_y=True)
 
@@ -25,19 +25,20 @@ def test_resizing():
     # all dims in first row) are equal.
     ts_lens_before = [len(X.iloc[0][i]) for i in range(len(X.iloc[0]))]
     # all lengths are equal to first length in array
-    assert(all([l == ts_lens_before[0] for l in ts_lens_before]))
+    assert(all([length == ts_lens_before[0] for length in ts_lens_before]))
 
     # 2) cutting each time series in each cell of X to make lengths different
     cut_X_ts(X)  # operation is inplace
     # get lengths to ensure that they are really different
     ts_lens_after_cut = [len(X.iloc[0][i]) for i in range(len(X.iloc[0]))]
-    assert(not all([l == ts_lens_after_cut[0]
-                    for l in ts_lens_after_cut]))  # are different
+    assert(not all([length == ts_lens_after_cut[0]
+                    for length in ts_lens_after_cut]))  # are different
 
     # 3) make tranformer, set target length `target_len` and apply it
     target_len = 50
     Xt = TSResizeTransform(target_len).transform(X)
 
-    # 4) check that result time series have lengths equal to `target_len` that we set above
+    # 4) check that result time series have lengths equal to `target_len
+    #       that we set above
     ts_lens_after_resize = [len(Xt.iloc[0][i]) for i in range(len(Xt.iloc[0]))]
-    assert(all([l == target_len for l in ts_lens_after_resize]))
+    assert(all([length == target_len for length in ts_lens_after_resize]))
