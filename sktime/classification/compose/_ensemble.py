@@ -11,6 +11,7 @@ from warnings import simplefilter
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 from joblib import Parallel
 from joblib import delayed
 from sklearn.ensemble._base import _partition_estimators
