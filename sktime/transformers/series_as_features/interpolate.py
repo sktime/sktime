@@ -25,7 +25,7 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
             raise ValueError("resizing length must be integer and > 0")
 
         self.length = length
-        super(TSInterpolator).__init__()
+        super(TSInterpolator, self).__init__()
 
     def _resize_cell(self, cell):
         """Resizes the array. Firstly 1d linear interpolation is fitted on
