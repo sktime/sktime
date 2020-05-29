@@ -1,5 +1,6 @@
 import numpy as np
-from sktime.utils.validation.forecasting import check_consistent_time_index, check_y
+from sktime.utils.validation.forecasting import check_consistent_time_index
+from sktime.utils.validation.forecasting import check_y
 
 __author__ = ["Markus Löning"]
 __all__ = ["mase_loss", "smape_loss"]
@@ -8,9 +9,12 @@ __all__ = ["mase_loss", "smape_loss"]
 def mase_loss(y_test, y_pred, y_train, sp=1):
     """Mean absolute scaled error.
 
-    This scale-free error metric can be used to compare forecast methods on a single
-    series and also to compare forecast accuracy between series. This metric is well
-    suited to intermittent-demand series because it never gives infinite or undefined
+    This scale-free error metric can be used to compare forecast methods on
+    a single
+    series and also to compare forecast accuracy between series. This metric
+    is well
+    suited to intermittent-demand series because it never gives infinite or
+    undefined
     values.
 
     Parameters
@@ -31,7 +35,8 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
 
     References
     ----------
-    ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast accuracy", Foresight, Issue 4.
+    ..[1]   Hyndman, R. J. (2006). "Another look at measures of forecast
+            accuracy", Foresight, Issue 4.
     """
     # input checks
     y_test = check_y(y_test)
@@ -68,7 +73,7 @@ def smape_loss(y_test, y_pred):
     Returns
     -------
     loss : float
-        SMAPE loss
+        sMAPE loss
     """
     y_test = check_y(y_test)
     y_pred = check_y(y_pred)

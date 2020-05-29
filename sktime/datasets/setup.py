@@ -3,7 +3,9 @@
 
 __author__ = "Markus Löning"
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/datasets/setup.py
+
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/datasets/setup.py
 
 
 def configuration(parent_package='', top_path=None):
@@ -31,4 +33,5 @@ def configuration(parent_package='', top_path=None):
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
+
     setup(**configuration(top_path='').todict())

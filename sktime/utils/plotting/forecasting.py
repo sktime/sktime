@@ -28,7 +28,8 @@ def plot_ys(*ys, labels=None):
     if labels is not None:
         if len(ys) != len(labels):
             raise ValueError("There must be one label for each time series, "
-                             "but found inconsistent numbers of series and labels.")
+                             "but found inconsistent numbers of series and "
+                             "labels.")
         labels_ = labels
     else:
         labels_ = ["" for _ in range(len(ys))]

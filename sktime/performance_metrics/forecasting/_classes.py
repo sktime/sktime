@@ -1,4 +1,5 @@
-from sktime.performance_metrics.forecasting import mase_loss, smape_loss
+from sktime.performance_metrics.forecasting._functions import mase_loss
+from sktime.performance_metrics.forecasting._functions import smape_loss
 
 __author__ = ['Markus Löning']
 __all__ = ["MetricFunctionWrapper", "make_forecasting_scorer", "MASE", "sMAPE"]
@@ -17,7 +18,8 @@ class MetricFunctionWrapper:
 
 def make_forecasting_scorer(fn, name=None, greater_is_better=False):
     """Factory method for creating metric classes from metric functions"""
-    return MetricFunctionWrapper(fn, name=name, greater_is_better=greater_is_better)
+    return MetricFunctionWrapper(fn, name=name,
+                                 greater_is_better=greater_is_better)
 
 
 class MASE(MetricFunctionWrapper):
@@ -26,7 +28,8 @@ class MASE(MetricFunctionWrapper):
         name = "MASE"
         fn = mase_loss
         greater_is_better = False
-        super(MASE, self).__init__(fn=fn, name=name, greater_is_better=greater_is_better)
+        super(MASE, self).__init__(fn=fn, name=name,
+                                   greater_is_better=greater_is_better)
 
 
 class sMAPE(MetricFunctionWrapper):
@@ -35,4 +38,5 @@ class sMAPE(MetricFunctionWrapper):
         name = "sMAPE"
         fn = smape_loss
         greater_is_better = False
-        super(sMAPE, self).__init__(fn=fn, name=name, greater_is_better=greater_is_better)
+        super(sMAPE, self).__init__(fn=fn, name=name,
+                                    greater_is_better=greater_is_better)

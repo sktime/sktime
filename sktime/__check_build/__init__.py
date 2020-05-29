@@ -2,7 +2,8 @@
 compile sktime properly.
 """
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/__check_build/__init__.py
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/__check_build/__init__.py
 
 import os
 
@@ -42,6 +43,7 @@ If you have installed sktime from source, please do not forget
 to build the package before using it: run `python setup.py install` or
 `make` in the source directory.
 %s""" % (e, local_dir, ''.join(dir_content).strip(), msg))
+
 
 try:
     from ._check_build import check_build  # noqa

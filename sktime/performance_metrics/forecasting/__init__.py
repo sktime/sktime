@@ -2,6 +2,17 @@
 # coding: utf-8
 
 __author__ = ["Markus Löning"]
+__all__ = [
+    "MASE",
+    "sMAPE",
+    "mase_loss",
+    "smape_loss",
+    "make_forecasting_scorer"
+]
 
-from sktime.performance_metrics.forecasting._functions import mase_loss, smape_loss
-from sktime.performance_metrics.forecasting._classes import MASE, sMAPE, make_forecasting_scorer
+from sktime.performance_metrics.forecasting._classes import MASE
+from sktime.performance_metrics.forecasting._classes import \
+    make_forecasting_scorer
+from sktime.performance_metrics.forecasting._classes import sMAPE
+from sktime.performance_metrics.forecasting._functions import mase_loss
+from sktime.performance_metrics.forecasting._functions import smape_loss

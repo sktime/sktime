@@ -6,8 +6,9 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pytest
 from sktime.forecasting import FH
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_FHS
-from sktime.utils.testing.forecasting import make_forecasting_problem
+from sktime.utils.testing._forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh_values
 
 TEST_CUTOFFS = [2, 5]
@@ -49,9 +50,11 @@ def test_relative_in_and_out_of_sample(fh, cutoff):
 
 
 def test_y_test_index_input():
-    y_train, y_test = make_forecasting_problem()
+    y = make_forecasting_problem()
+    y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
     # check if y_test.index can be passed as absolute horizon
     fh = FH(y_test.index, relative=False)
     cutoff = y_train.index[-1]
-    np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)
+    np.testing.assert_array_equal(fh.relative(cutoff),
+                                  np.arange(len(y_test)) + 1)

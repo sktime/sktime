@@ -8,5 +8,6 @@ set -o pipefail
 
 if ! flake8 --verbose --filename=*.py sktime/; then
   echo 'Linting failed.'
-#  exit 1
+  # CI will fail when linting fails
+  exit 1
 fi
