@@ -478,10 +478,16 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
     def feature_importances_(self):
         """Compute feature importances for time series forest classifier
         """
-        # assumes particular structure of clf, with each tree consisting of a particular pipeline, as in modular tsf
+        # assumes particular structure of clf,
+        # with each tree consisting of a particular pipeline,
+        # as in modular tsf
 
-        if not isinstance(self.estimators_[0].steps[0][1], RandomIntervalFeatureExtractor):
-            raise NotImplementedError('RandomIntervalFeatureExtractor must be used as the transformer, which must be the first step in the base estimator.')
+        if not isinstance(self.estimators_[0].steps[0][1],
+                          RandomIntervalFeatureExtractor):
+            raise NotImplementedError("RandomIntervalFeatureExtractor must"
+                                      " be used as the transformer,"
+                                      " which must be the first step"
+                                      " in the base estimator.")
 
         # get series length, assuming same length series
         tree = self.estimators_[0]
@@ -493,7 +499,9 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         feature_names = [feature.__name__ for feature in transformer.features]
         n_features = len(feature_names)
 
-        # get intervals from transformer, the number of intervals is the same for all trees
+        # get intervals from transformer,
+        # the number of intervals is the same for all trees
+
         intervals = transformer.intervals_
         n_intervals = len(intervals)
 
@@ -523,7 +531,9 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
                     # get time index for interval
                     interval_time_points = np.arange(start, end)
 
-                    # get index for feature importances, assuming particular order of features
+                    # get index for feature importances,
+                    # assuming particular order of features
+
                     column_index = (k * n_intervals) + j
 
                     # add feature importance for all time points of interval
