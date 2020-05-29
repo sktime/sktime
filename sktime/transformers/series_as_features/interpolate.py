@@ -1,11 +1,11 @@
 import numpy as np
 from scipy import interpolate
 
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 
-class TSInterpolator(BaseSingleSeriesTransformer):
+class TSInterpolator(BaseSeriesAsFeaturesTransformer):
     """Transformer that rescales series for another number of points.
         For each cell in datadrame transformer fits scipy linear interp1d
         and samples user defined number of points. Points are generated

@@ -1,7 +1,7 @@
 import pandas as pd
 
 from sktime.datasets import load_basic_motions
-from sktime.transformers.interpolate import TSInterpolator
+from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 
 def cut_X_ts(X):

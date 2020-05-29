@@ -42,7 +42,7 @@ from sktime.transformers.series_as_features.summarize import \
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.resizing import TSResizeTransform
+from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
@@ -124,5 +124,5 @@ ESTIMATOR_TEST_PARAMS = {
         {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False},
-    TSResizeTransform: {"length": 10}
+    TSInterpolator: {"length": 10}
 }
