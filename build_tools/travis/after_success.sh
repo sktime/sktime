@@ -23,7 +23,6 @@ fi
 # Build website on master branch
 if [[ "$TRAVIS_OS_NAME" == "$TRAVIS_DEPLOY_OS_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
 then
-
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
 
