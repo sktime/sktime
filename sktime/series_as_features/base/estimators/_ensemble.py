@@ -97,20 +97,20 @@ class BaseTimeSeriesForest(BaseForest):
                  warm_start=False,
                  class_weight=None,
                  max_samples=None):
-        super(BaseForest, self).__init__(
+        super(BaseTimeSeriesForest, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
-            estimator_params=estimator_params,
+            estimator_params=estimator_params
         )
 
-        self.bootstrap = False
-        self.oob_score = False
-        self.n_jobs = None
-        self.random_state = None
-        self.verbose = 0
-        self.warm_start = False
-        self.class_weight = None
-        self.max_samples = None
+        self.bootstrap = bootstrap
+        self.oob_score = oob_score
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+        self.verbose = verbose
+        self.warm_start = warm_start
+        self.class_weight = class_weight
+        self.max_samples = max_samples
 
     @abstractmethod
     def check_estimator(self):
