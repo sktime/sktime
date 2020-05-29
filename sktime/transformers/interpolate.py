@@ -1,11 +1,11 @@
 import numpy as np
 from scipy import interpolate
 
-from sktime.transformers.base import BaseTransformer
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 
-class TSResizeTransform(BaseTransformer):
+class TSInterpolator(BaseSingleSeriesTransformer):
     """Transformer that rescales series for another number of points.
         For each cell in datadrame transformer fits scipy linear interp1d
         and samples user defined number of points. Points are generated
@@ -24,7 +24,7 @@ class TSResizeTransform(BaseTransformer):
             raise ValueError("resizing length must be integer and > 0")
 
         self.length = length
-        super(TSResizeTransform).__init__()
+        super(TSInterpolator).__init__()
 
     def _resize_cell(self, cell):
         """Resizes the array. Firstly 1d linear interpolation is fitted on

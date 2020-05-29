@@ -1,7 +1,7 @@
 import pandas as pd
 
 from sktime.datasets import load_basic_motions
-from sktime.transformers.resizing import TSResizeTransform
+from sktime.transformers.interpolate import TSInterpolator
 
 
 def cut_X_ts(X):
@@ -36,7 +36,7 @@ def test_resizing():
 
     # 3) make tranformer, set target length `target_len` and apply it
     target_len = 50
-    Xt = TSResizeTransform(target_len).transform(X)
+    Xt = TSInterpolator(target_len).transform(X)
 
     # 4) check that result time series have lengths equal to `target_len
     #       that we set above
