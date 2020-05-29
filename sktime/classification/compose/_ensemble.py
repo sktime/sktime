@@ -20,11 +20,11 @@ from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.series_as_features.base.estimators._ensemble import \
-    BaseTimeSeriesForest
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
+from sktime.series_as_features.base.estimators._ensemble import \
+    BaseTimeSeriesForest
 
 
 class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
