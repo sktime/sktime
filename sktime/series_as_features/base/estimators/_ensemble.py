@@ -13,15 +13,16 @@ from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from sklearn.ensemble._forest import MAX_INT
+from sklearn.ensemble._forest import BaseForest
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import _generate_sample_indices
+from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-from sktime.base._base import BaseEstimator
 from sktime.utils.validation.series_as_features import check_X_y
 
 
@@ -80,14 +81,14 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
     return tree
 
 
-class BaseTimeSeriesForest(BaseEstimator):
+class BaseTimeSeriesForest(BaseForest):
     """
     Base class for forests of trees.
     """
 
     @abstractmethod
     def __init__(self,
-                 estimator,
+                 base_estimator,
                  n_estimators=100,
                  estimator_params=tuple(),
                  bootstrap=False,
@@ -98,17 +99,20 @@ class BaseTimeSeriesForest(BaseEstimator):
                  warm_start=False,
                  class_weight=None,
                  max_samples=None):
-        self.estimator = estimator
-        self.n_estimators = n_estimators
-        self.estimator_params = estimator_params
-        self.bootstrap = bootstrap
-        self.oob_score = oob_score
-        self.n_jobs = n_jobs
-        self.random_state = random_state
-        self.verbose = verbose
-        self.warm_start = warm_start
-        self.class_weight = class_weight
-        self.max_samples = max_samples
+        super(BaseForest, self).__init__(
+            base_estimator,
+            n_estimators=n_estimators,
+            estimator_params=estimator_params,
+        )
+
+        self.bootstrap = False
+        self.oob_score = False
+        self.n_jobs = None
+        self.random_state = None
+        self.verbose = 0
+        self.warm_start = False
+        self.class_weight = None
+        self.max_samples = None
 
     @abstractmethod
     def check_estimator(self):
@@ -117,6 +121,7 @@ class BaseTimeSeriesForest(BaseEstimator):
         To be implemented by subclasses
         """
 
+    @abstractmethod
     def _validate_estimator(self, default=None):
 
         if not isinstance(self.n_estimators, numbers.Integral):
@@ -185,6 +190,7 @@ class BaseTimeSeriesForest(BaseEstimator):
             X.sort_indices()
 
         # Remap output
+        self.n_columns = X.shape[1]
         self.n_features_ = X.shape[1] if X.ndim == 2 else 1
 
         y = np.atleast_1d(y)
@@ -211,6 +217,12 @@ class BaseTimeSeriesForest(BaseEstimator):
                 sample_weight = sample_weight * expanded_class_weight
             else:
                 sample_weight = expanded_class_weight
+
+        # Get bootstrap sample size
+        n_samples_bootstrap = _get_n_samples_bootstrap(
+            n_samples=X.shape[0],
+            max_samples=self.max_samples
+        )
 
         # Check parameters
         self._validate_estimator()
@@ -254,7 +266,8 @@ class BaseTimeSeriesForest(BaseEstimator):
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
                     t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight)
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    n_samples_bootstrap=n_samples_bootstrap)
                 for i, t in enumerate(trees))
 
             # Collect newly grown trees
@@ -334,33 +347,11 @@ class BaseTimeSeriesForest(BaseEstimator):
         return y, None
 
     def _validate_X_predict(self, X):
-        """
-        Validate X whenever one tries to predict, apply, predict_proba."""
-        self.check_is_fitted()
-        return self.estimators_[0]._validate_X_predict(X, check_input=True)
+        n_features = X.shape[1] if X.ndim == 2 else 1
+        if self.n_columns != n_features:
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is %s and "
+                             "input n_features is %s "
+                             % (self.n_columns, n_features))
 
-    @property
-    def feature_importances_(self):
-        """
-        Return the feature importances (the higher, the more important the
-           feature).
-        Returns
-        -------
-        feature_importances_ : array, shape = [n_features]
-            The values of this array sum to 1, unless all trees are single node
-            trees consisting of only the root node, in which case it will be an
-            array of zeros.
-        """
-        self.check_is_fitted()
-
-        all_importances = Parallel(n_jobs=self.n_jobs,
-                                   **_joblib_parallel_args(prefer='threads'))(
-            delayed(getattr)(tree, 'feature_importances_')
-            for tree in self.estimators_ if tree.tree_.node_count > 1)
-
-        if not all_importances:
-            return np.zeros(self.n_features_, dtype=np.float64)
-
-        all_importances = np.mean(all_importances,
-                                  axis=0, dtype=np.float64)
-        return all_importances / np.sum(all_importances)
+        return X
