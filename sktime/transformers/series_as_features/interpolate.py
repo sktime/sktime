@@ -74,5 +74,6 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
         pandas DataFrame : Transformed pandas DataFrame with same number
                             of rows and columns
         """
+        self.check_is_fitted()
         check_X(X)
         return X.apply(self._resize_col)
