@@ -4,8 +4,6 @@ __all__ = ["BaseTimeSeriesForest"]
 from warnings import warn, catch_warnings, simplefilter
 from abc import abstractmethod
 import numbers
-
-
 import numpy as np
 from joblib import Parallel, delayed
 
