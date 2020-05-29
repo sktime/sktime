@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.decomposition import PCA
+
 from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.pca import PCATransformer
 from sktime.utils.data_container import detabularize

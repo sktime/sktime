@@ -33,6 +33,7 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./build
 	rm -rf ./pytest_cache
 	rm -rf ./htmlcov
+	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
 	rm -rf ./cover
 	rm -rf $(VENV_DIR)
@@ -44,8 +45,9 @@ clean: ## Clean build dist and egg directories left after install
 dist: ## Make Python source distribution
 	python setup.py sdist
 
-doc: ## Build documentation with sphinx
+docs: doc
+
+doc: ## Build documentation with Sphinx
 	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
 
-docs: doc
