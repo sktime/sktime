@@ -21,7 +21,7 @@ X_train, y_train = make_classification_problem()
 # single interval from different but equivalent implementations
 
 
-def test_elementary_case():
+def test_feature_importances_single_feature_interval_and_estimator():
     random_state = 1234
 
     # Compute using default method
