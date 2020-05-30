@@ -65,7 +65,7 @@ def test_feature_importances_single_feature_interval_and_estimator():
 
 @pytest.mark.parametrize("n_intervals", [1, 2])
 @pytest.mark.parametrize("n_estimators", [1, 2])
-def test_feature_importances_(n_intervals, n_estimators):
+def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimators):
 
     random_state = 1234
     n_features = 3
