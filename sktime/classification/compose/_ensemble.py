@@ -1,52 +1,41 @@
+
 """
 Configurable time series ensembles
 """
-
+__author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TimeSeriesForestClassifier"]
-__author__ = ["Markus Löning"]
 
-import numbers
-from warnings import catch_warnings
-from warnings import simplefilter
 from warnings import warn
-
 import numpy as np
+import numbers
 from joblib import Parallel
 from joblib import delayed
+
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.ensemble._forest import ForestClassifier
-from sklearn.ensemble._forest import MAX_INT
-from sklearn.ensemble._forest import _generate_sample_indices
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import compute_sample_weight
+from sklearn.utils.multiclass import check_classification_targets
+from sklearn.pipeline import Pipeline
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sklearn.exceptions import DataConversionWarning
-from sklearn.pipeline import Pipeline
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sklearn.utils import compute_sample_weight
-from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.classification.base import BaseClassifier
+from sktime.series_as_features.base.estimators._ensemble import \
+    BaseTimeSeriesForest
 
 
-class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
+class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     """Time-Series Forest Classifier.
 
     A time series forest is a meta estimator and an adaptation of the random
-    forest
-    for time-series/panel data that fits a number of decision tree
-    classifiers on
-    various sub-samples of a transformed dataset and uses averaging to
-    improve the
-    predictive accuracy and control over-fitting. The sub-sample size is
-    always the same as the original
-    input sample size but the samples are drawn with replacement if
-    `bootstrap=True` (default).
+    forest for time-series/panel data that fits a number of decision tree
+    classifiers on various sub-samples of a transformed dataset and uses
+    averaging to improve the predictive accuracy and control over-fitting.
+    The sub-sample size is always the same as the original input sample size
+    but the samples are drawn with replacement if `bootstrap=True` (default).
 
     Parameters
     ----------
@@ -55,10 +44,10 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
         The number of trees in the forest.
-    criterion : string, optional (default="gini")
+    criterion : string, optional (default="entropy")
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
-        Note: this parameter is tree-specific.
+        Note: this parameter is tree-specific. Default is "entropy"
     max_depth : integer or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -187,7 +176,6 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
     """
-
     def __init__(self,
                  estimator=None,
                  n_estimators=100,
@@ -242,7 +230,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def _validate_estimator(self, default=None):
+    def _validate_estimator(self):
 
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "
@@ -263,7 +251,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
                           random_state=self.random_state)),
                      ('clf', DecisionTreeClassifier(
                          random_state=self.random_state))]
-            self.base_estimator_ = Pipeline(steps)
+            self.estimator_ = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
@@ -275,7 +263,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
                               DecisionTreeClassifier):
                 raise ValueError('Last step in `estimator` must be '
                                  'DecisionTreeClassifier.')
-            self.base_estimator_ = self.estimator
+            self.estimator_ = self.estimator
 
         # Set parameters according to naming in pipeline
         estimator_params = {
@@ -289,7 +277,7 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
             "min_impurity_decrease": self.min_impurity_decrease,
             "min_impurity_split": self.min_impurity_split,
         }
-        final_estimator = self.base_estimator_.steps[-1][0]
+        final_estimator = self.estimator_.steps[-1][0]
         self.estimator_params = {f'{final_estimator}__{pname}': pval
                                  for pname, pval in estimator_params.items()}
 
@@ -297,132 +285,72 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def fit(self, X, y, sample_weight=None):
-        """Build a forest of trees from the training set (X, y).
-
+    def predict(self, X):
+        """
+        Predict class for X.
+        The predicted class of an input sample is a vote by the trees in
+        the forest, weighted by their probability estimates. That is,
+        the predicted class is the one with highest mean probability
+        estimate across the trees.
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted
-            to ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real numbers in
-            regression).
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
         Returns
         -------
-        self : object
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+            The predicted classes.
         """
+        proba = self.predict_proba(X)
 
-        # Validate or convert input data
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        if self.n_outputs_ == 1:
+            return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
-        if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
-
-        # Remap output
-        self.n_columns = X.shape[1]
-
-        y = np.atleast_1d(y)
-        if y.ndim == 2 and y.shape[1] == 1:
-            warn("A column-vector y was passed when a 1d array was"
-                 " expected. Please change the shape of y to "
-                 "(n_samples,), for example using ravel().",
-                 DataConversionWarning, stacklevel=2)
-
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
-
-        self.n_outputs_ = y.shape[1]
-
-        y, expanded_class_weight = self._validate_y_class_weight(y)
-
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        if expanded_class_weight is not None:
-            if sample_weight is not None:
-                sample_weight = sample_weight * expanded_class_weight
-            else:
-                sample_weight = expanded_class_weight
-
-        # Get bootstrap sample size
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples=X.shape[0],
-            max_samples=self.max_samples
-        )
-
-        # Check parameters
-        self._validate_estimator()
-
-        if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available"
-                             " if bootstrap=True")
-
-        random_state = check_random_state(self.random_state)
-
-        if not self.warm_start or not hasattr(self, "estimators_"):
-            # Free allocated memory, if any
-            self.estimators_ = []
-
-        n_more_estimators = self.n_estimators - len(self.estimators_)
-
-        if n_more_estimators < 0:
-            raise ValueError('n_estimators=%d must be larger or equal to '
-                             'len(estimators_)=%d when warm_start==True'
-                             % (self.n_estimators, len(self.estimators_)))
-
-        elif n_more_estimators == 0:
-            warn("Warm-start fitting without increasing n_estimators does not "
-                 "fit new trees.")
         else:
-            if self.warm_start and len(self.estimators_) > 0:
-                # We draw from the random state to get the random state we
-                # would have got if we hadn't used a warm_start.
-                random_state.randint(MAX_INT, size=len(self.estimators_))
+            n_samples = proba[0].shape[0]
+            # all dtypes should be the same, so just take the first
+            class_type = self.classes_[0].dtype
+            predictions = np.empty((n_samples, self.n_outputs_),
+                                   dtype=class_type)
 
-            trees = [self._make_estimator(append=False,
-                                          random_state=random_state)
-                     for _ in range(n_more_estimators)]
+            for k in range(self.n_outputs_):
+                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
+                                                                    axis=1),
+                                                          axis=0)
 
-            # Parallel loop: for standard random forests, the threading
-            # backend is preferred as the Cython code for fitting the trees
-            # is internally releasing the Python GIL making threading more
-            # efficient than multiprocessing in that case. However, in this
-            # case,
-            # for fitting pipelines in parallel, multiprocessing is more
-            # efficient.
-            trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                delayed(_parallel_build_trees)(
-                    t, self, X, y, sample_weight, i, len(trees),
-                    verbose=self.verbose, class_weight=self.class_weight,
-                    n_samples_bootstrap=n_samples_bootstrap)
-                for i, t in enumerate(trees))
+            return predictions
 
-            # Collect newly grown trees
-            self.estimators_.extend(trees)
+    def predict_log_proba(self, X):
+        """
+        Predict class log-probabilities for X.
+        The predicted class log-probabilities of an input sample is computed as
+        the log of the mean predicted class probabilities of the trees in the
+        forest.
+        Parameters
+        ----------
+        X : array-like or sparse matrix of shape (n_samples, n_features)
+            The input samples. Internally, its dtype will be converted to
+            ``dtype=np.float32``. If a sparse matrix is provided, it will be
+            converted into a sparse ``csr_matrix``.
+        Returns
+        -------
+        p : array of shape (n_samples, n_classes), or a list of n_outputs
+            such arrays if n_outputs > 1.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        proba = self.predict_proba(X)
 
-        if self.oob_score:
-            self._set_oob_score(X, y)
+        if self.n_outputs_ == 1:
+            return np.log(proba)
 
-        # Decapsulate classes_ attributes
-        if hasattr(self, "classes_") and self.n_outputs_ == 1:
-            self.n_classes_ = self.n_classes_[0]
-            self.classes_ = self.classes_[0]
+        else:
+            for k in range(self.n_outputs_):
+                proba[k] = np.log(proba[k])
 
-        self._is_fitted = True
-        return self
+            return proba
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
@@ -458,27 +386,11 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
 
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
-    def _validate_X_predict(self, X):
-        n_features = X.shape[1] if X.ndim == 2 else 1
-        if self.n_columns != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_columns, n_features))
-        return X
-
-    def apply(self, X):
-        raise NotImplementedError()
-
-    def decision_path(self, X):
-        raise NotImplementedError()
-
-    @property
-    def feature_importances_(self):
-        raise NotImplementedError()
-
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
+        check_X_y(X, y)
+        check_X(X, enforce_univariate=True)
+
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
@@ -521,43 +433,53 @@ class TimeSeriesForestClassifier(ForestClassifier, BaseClassifier):
 
         self.oob_score_ = oob_score / self.n_outputs_
 
+    def _validate_y_class_weight(self, y):
+        check_classification_targets(y)
 
-def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx,
-                          n_estimators,
-                          verbose=0, class_weight=None,
-                          n_samples_bootstrap=None):
-    """Private function used to fit a single tree in parallel, adjusted for
-    pipeline trees."""
-    if verbose > 1:
-        print("building tree %d of %d" % (tree_idx + 1, n_estimators))
+        y = np.copy(y)
+        expanded_class_weight = None
 
-    # name of step of final estimator in pipeline
-    estimator = tree.steps[-1][0]
+        if self.class_weight is not None:
+            y_original = np.copy(y)
 
-    if forest.bootstrap:
-        n_samples = X.shape[0]
-        if sample_weight is None:
-            curr_sample_weight = np.ones((n_samples,), dtype=np.float64)
-        else:
-            curr_sample_weight = sample_weight.copy()
+        self.classes_ = []
+        self.n_classes_ = []
 
-        indices = _generate_sample_indices(tree.random_state, n_samples,
-                                           n_samples_bootstrap)
-        sample_counts = np.bincount(indices, minlength=n_samples)
-        curr_sample_weight *= sample_counts
+        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
+        for k in range(self.n_outputs_):
+            classes_k, y_store_unique_indices[:, k] = \
+                np.unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes_k)
+            self.n_classes_.append(classes_k.shape[0])
+        y = y_store_unique_indices
 
-        if class_weight == 'subsample':
-            with catch_warnings():
-                simplefilter('ignore', DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight('auto', y, indices)
-        elif class_weight == 'balanced_subsample':
-            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
+        if self.class_weight is not None:
+            valid_presets = ('balanced', 'balanced_subsample')
+            if isinstance(self.class_weight, str):
+                if self.class_weight not in valid_presets:
+                    raise ValueError('Valid presets for class_weight include '
+                                     '"balanced" and "balanced_subsample".'
+                                     'Given "%s".'
+                                     % self.class_weight)
+                if self.warm_start:
+                    warn('class_weight presets "balanced" or '
+                         '"balanced_subsample" are '
+                         'not recommended for warm_start if the fitted data '
+                         'differs from the full dataset. In order to use '
+                         '"balanced" weights, use compute_class_weight '
+                         '("balanced", classes, y). In place of y you can use '
+                         'a large enough sample of the full training set '
+                         'target to properly estimate the class frequency '
+                         'distributions. Pass the resulting weights as the '
+                         'class_weight parameter.')
 
-        fit_params = {f'{estimator}__sample_weight': curr_sample_weight}
-        tree.fit(X, y, **fit_params)
+            if (self.class_weight != 'balanced_subsample' or
+                    not self.bootstrap):
+                if self.class_weight == "balanced_subsample":
+                    class_weight = "balanced"
+                else:
+                    class_weight = self.class_weight
+                expanded_class_weight = compute_sample_weight(class_weight,
+                                                              y_original)
 
-    else:
-        fit_params = {f'{estimator}__sample_weight': sample_weight}
-        tree.fit(X, y, **fit_params)
-
-    return tree
+        return y, expanded_class_weight
