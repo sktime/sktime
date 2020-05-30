@@ -9,14 +9,12 @@ from joblib import Parallel, delayed
 
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
 from sklearn.ensemble._forest import MAX_INT
 from sklearn.ensemble._forest import BaseForest
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
@@ -258,58 +256,10 @@ class BaseTimeSeriesForest(BaseForest):
         return self
 
     def apply(self, X):
-        """
-        Apply trees in the forest to X, return leaf indices.
-        Parameters
-        ----------
-        X : {array-like or sparse matrix} of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
-            For each datapoint x in X and for each tree in the forest,
-            return the index of the leaf x ends up in.
-        """
-        X = self._validate_X_predict(X)
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           **_joblib_parallel_args(prefer="threads"))(
-            delayed(tree.apply)(X, check_input=False)
-            for tree in self.estimators_)
-
-        return np.array(results).T
+        raise NotImplementedError()
 
     def decision_path(self, X):
-        """
-        Return the decision path in the forest.
-        .. versionadded:: 0.18
-        Parameters
-        ----------
-        X : {array-like or sparse matrix} of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        indicator : sparse csr array, shape = [n_samples, n_nodes]
-            Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
-        n_nodes_ptr : array of size (n_estimators + 1, )
-            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
-            gives the indicator value for the i-th estimator.
-        """
-        X = self._validate_X_predict(X)
-        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              **_joblib_parallel_args(prefer='threads'))(
-            delayed(tree.decision_path)(X, check_input=False)
-            for tree in self.estimators_)
-
-        n_nodes = [0]
-        n_nodes.extend([i.shape[1] for i in indicators])
-        n_nodes_ptr = np.array(n_nodes).cumsum()
-
-        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
+        raise NotImplementedError()
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
