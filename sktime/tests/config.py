@@ -123,6 +123,7 @@ ESTIMATOR_TEST_PARAMS = {
     TSFreshFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor:
-        {"disable_progressbar": True, "show_warnings": False},
+        {"disable_progressbar": True, "show_warnings": False,
+         "ml_task": "classification", },
     TSInterpolator: {"length": 10}
 }

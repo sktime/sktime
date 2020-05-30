@@ -21,7 +21,8 @@ def _make_series_as_features_X(y, n_columns, n_timepoints,
         rows = []
         for j in range(n_instances):
             # we use the y value for the mean of the generated time series
-            row = pd.Series(rng.normal(loc=y.iloc[j] * 10, size=n_timepoints))
+            row = pd.Series(rng.normal(loc=y.iloc[j] * 20, scale=0.5,
+                                       size=n_timepoints))
             rows.append(row)
         column = pd.Series(rows)
         columns.append(column)
