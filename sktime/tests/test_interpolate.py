@@ -36,7 +36,7 @@ def test_resizing():
 
     # 3) make tranformer, set target length `target_len` and apply it
     target_len = 50
-    Xt = TSInterpolator(target_len).transform(X)
+    Xt = TSInterpolator(target_len).fit_transform(X)
 
     # 4) check that result time series have lengths equal to `target_len
     #       that we set above
