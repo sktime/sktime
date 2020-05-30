@@ -14,10 +14,54 @@ from sktime.transformers.series_as_features.summarize._extract import \
     RandomIntervalFeatureExtractor
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
 
+X_train, y_train = load_gunpoint(split="TRAIN", return_X_y=True)
 
-# Compare simple cases of feature importances results obtained
-# directly from TimeSeriesForestClassifier with pipeline implementation
-# on the same intervals using the same DecisionTreeClassifier
+
+# Check results of a simple case of single estimator, single feature and
+# single interval from different but equivalent implementations
+
+
+def test_elementary_case():
+    random_state = 1234
+
+    # Compute using default method
+    features = [np.mean]
+    steps = [('transform', RandomIntervalFeatureExtractor(
+                n_intervals=1,
+                features=features,
+                random_state=random_state)),
+             ('clf', DecisionTreeClassifier())]
+    base_estimator = Pipeline(steps)
+    clf1 = TimeSeriesForestClassifier(estimator=base_estimator,
+                                      random_state=random_state,
+                                      n_estimators=1)
+    clf1.fit(X_train, y_train)
+
+    # Extract the interval and the estimator, and compute using pipelines
+    intervals = clf1.estimators_[0].steps[0][1].intervals_
+    steps = [
+        ('segment', IntervalSegmenter(intervals)),
+        ('transform', FeatureUnion([
+            ('mean', RowTransformer(
+                FunctionTransformer(func=np.mean, validate=False)))
+            ])),
+        ('clf', clone(clf1.estimators_[0].steps[-1][1]))
+    ]
+    clf2 = Pipeline(steps)
+    clf2.fit(X_train, y_train)
+
+    # Check for feature importances obtained from the estimators
+    fi1 = clf1.estimators_[0].steps[-1][1].feature_importances_
+    fi2 = clf2.steps[-1][1].feature_importances_
+    np.testing.assert_array_equal(fi1, fi2)
+
+
+# Check for 4 more complex cases with 3 features, with both numbers of
+# intervals and estimators varied from 1 to 2.
+# Feature importances from each estimator on each interval, and
+# normalised feature values of the time series are checked using
+# different but equivalent implementations
+
 
 @pytest.mark.parametrize("n_intervals", [1, 2])
 @pytest.mark.parametrize("n_estimators", [1, 2])
@@ -25,7 +69,6 @@ def test_feature_importances_(n_intervals, n_estimators):
 
     random_state = 1234
     n_features = 3
-    X_train, y_train = load_gunpoint(split="TRAIN", return_X_y=True)
 
     # Compute feature importances using the default method
     features = [np.mean, np.std, time_series_slope]
@@ -67,9 +110,12 @@ def test_feature_importances_(n_intervals, n_estimators):
         fi2[i, :] = clf2.steps[-1][1].feature_importances_
         np.testing.assert_array_equal(fi1[i, :], fi2[i, :])
 
-    # Compute and check for final feature importances
+    # Compute normalised feature values of the time series using the
+    # default property
     fis1 = clf1.feature_importances_
 
+    # Compute normalised feature values of the time series from the pipeline
+    # implementation
     n_timepoints = len(clf1.estimators_[0].steps[0][1]._time_index)
     fis2 = np.zeros((n_timepoints, n_features))
 
