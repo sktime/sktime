@@ -285,10 +285,6 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         for pname, pval in self.estimator_params.items():
             self.__setattr__(pname, pval)
 
-    def check_estimator(self):
-        """"""
-        raise NotImplementedError()
-
     def predict(self, X):
         """
         Predict class for X.

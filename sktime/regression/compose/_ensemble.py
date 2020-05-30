@@ -5,13 +5,10 @@ from warnings import warn
 
 import numpy as np
 from joblib import Parallel, delayed
-from numpy import float32 as DTYPE
 import numbers
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
-
-from sklearn.utils import check_array
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
@@ -163,12 +160,16 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         set. If n_estimators is small it might be possible that a data point
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
+    class_weight: dict, list of dicts, "balanced", "balanced_subsample" or \
+        None, optional (default=None)
+        Not needed here, added in the constructor to align with base class \
+            sharing both Classifier and Regressor parameters.
     """
 
     def __init__(self,
                  estimator=None,
                  n_estimators=100,
-                 criterion='entropy',
+                 criterion='mse',
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
@@ -211,7 +212,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
-            class_weight=class_weight,
             max_samples=max_samples
         )
 
@@ -239,7 +239,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                             random_state=self.random_state)),
                          ('clf', DecisionTreeRegressor(
                             random_state=self.random_state))]
-                self.estimator_ = Pipeline(steps)
+                self.base_estimator_ = Pipeline(steps)
 
             else:
                 # else check given estimator is a pipeline with prior
@@ -251,7 +251,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                                   DecisionTreeRegressor):
                     raise ValueError('Last step in `estimator` must be '
                                      'DecisionTreeRegressor.')
-                self.estimator_ = self.estimator
+                self.base_estimator_ = self.estimator
 
             # Set parameters according to naming in pipeline
             estimator_params = {
@@ -306,9 +306,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     def _set_oob_score(self, X, y):
         """
         Compute out-of-bag scores."""
-        check_X_y(X, y)
-        check_X(X, enforce_univariate=True)
-        X = check_array(X, dtype=DTYPE, accept_sparse='csr')
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         n_samples = y.shape[0]
 

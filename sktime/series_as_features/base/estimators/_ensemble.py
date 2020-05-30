@@ -3,7 +3,6 @@ __all__ = ["BaseTimeSeriesForest"]
 
 from warnings import warn, catch_warnings, simplefilter
 from abc import abstractmethod
-import numbers
 import numpy as np
 from joblib import Parallel, delayed
 
@@ -102,7 +101,6 @@ class BaseTimeSeriesForest(BaseForest):
             n_estimators=n_estimators,
             estimator_params=estimator_params
         )
-
         self.bootstrap = bootstrap
         self.oob_score = oob_score
         self.n_jobs = n_jobs
@@ -111,32 +109,6 @@ class BaseTimeSeriesForest(BaseForest):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
-
-    @abstractmethod
-    def check_estimator(self):
-        """
-        Checks if the estimator is a Classifier or a Regressor
-        To be implemented by subclasses
-        """
-
-    @abstractmethod
-    def _validate_estimator(self, default=None):
-
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
-
-        if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
-
-        if self.estimator is not None:
-            self.estimator_ = self.estimator
-        else:
-            self.estimator_ = default
-
-        if self.estimator_ is None:
-            raise ValueError("estimator cannot be None")
 
     def _make_estimator(self, append=True, random_state=None):
         """Make and configure a copy of the `estimator_` attribute.
@@ -154,6 +126,13 @@ class BaseTimeSeriesForest(BaseForest):
             self.estimators_.append(estimator)
 
         return estimator
+
+    @abstractmethod
+    def _validate_estimator(self, default=None):
+        """Check the estimator and the n_estimator attribute.
+        Sets the base_estimator_` attributes.
+        To be implemented by subclasses
+        """
 
     def fit(self, X, y, sample_weight=None):
         """
