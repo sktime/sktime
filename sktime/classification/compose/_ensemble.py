@@ -230,7 +230,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def _validate_estimator(self, default=None):
+    def _validate_estimator(self):
 
         if not isinstance(self.n_estimators, numbers.Integral):
             raise ValueError("n_estimators must be an integer, "

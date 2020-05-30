@@ -184,7 +184,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None,
                  max_samples=None):
 
         self.estimator = estimator
@@ -218,61 +217,61 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-        def _validate_estimator(self, default=None):
+    def _validate_estimator(self):
 
-            if not isinstance(self.n_estimators, numbers.Integral):
-                raise ValueError("n_estimators must be an integer, "
-                                 "got {0}.".format(type(self.n_estimators)))
+        if not isinstance(self.n_estimators, numbers.Integral):
+            raise ValueError("n_estimators must be an integer, "
+                             "got {0}.".format(type(self.n_estimators)))
 
-            if self.n_estimators <= 0:
-                raise ValueError("n_estimators must be greater than zero, "
-                                 "got {0}.".format(self.n_estimators))
+        if self.n_estimators <= 0:
+            raise ValueError("n_estimators must be greater than zero, "
+                             "got {0}.".format(self.n_estimators))
 
-            # Set base estimator
-            if self.estimator is None:
-                # Set default time series forest
-                features = [np.mean, np.std, time_series_slope]
-                steps = [('transform',
-                         RandomIntervalFeatureExtractor(
-                            n_intervals='sqrt',
-                            features=features,
-                            random_state=self.random_state)),
-                         ('clf', DecisionTreeRegressor(
-                            random_state=self.random_state))]
-                self.base_estimator_ = Pipeline(steps)
+        # Set base estimator
+        if self.estimator is None:
+            # Set default time series forest
+            features = [np.mean, np.std, time_series_slope]
+            steps = [('transform',
+                     RandomIntervalFeatureExtractor(
+                        n_intervals='sqrt',
+                        features=features,
+                        random_state=self.random_state)),
+                     ('clf', DecisionTreeRegressor(
+                        random_state=self.random_state))]
+            self.estimator_ = Pipeline(steps)
 
-            else:
-                # else check given estimator is a pipeline with prior
-                # transformations and final decision tree
-                if not isinstance(self.estimator, Pipeline):
-                    raise ValueError('`estimator` must be '
-                                     'pipeline with transforms.')
-                if not isinstance(self.estimator.steps[-1][1],
-                                  DecisionTreeRegressor):
-                    raise ValueError('Last step in `estimator` must be '
-                                     'DecisionTreeRegressor.')
-                self.base_estimator_ = self.estimator
+        else:
+            # else check given estimator is a pipeline with prior
+            # transformations and final decision tree
+            if not isinstance(self.estimator, Pipeline):
+                raise ValueError('`estimator` must be '
+                                 'pipeline with transforms.')
+            if not isinstance(self.estimator.steps[-1][1],
+                              DecisionTreeRegressor):
+                raise ValueError('Last step in `estimator` must be '
+                                 'DecisionTreeRegressor.')
+            self.estimator_ = self.estimator
 
-            # Set parameters according to naming in pipeline
-            estimator_params = {
-                "criterion": self.criterion,
-                "max_depth": self.max_depth,
-                "min_samples_split": self.min_samples_split,
-                "min_samples_leaf": self.min_samples_leaf,
-                "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
-                "max_features": self.max_features,
-                "max_leaf_nodes": self.max_leaf_nodes,
-                "min_impurity_decrease": self.min_impurity_decrease,
-                "min_impurity_split": self.min_impurity_split,
-            }
-            final_estimator = self.base_estimator_.steps[-1][0]
-            self.estimator_params = {f'{final_estimator}__{pname}': pval
-                                     for pname, pval
-                                     in estimator_params.items()}
+        # Set parameters according to naming in pipeline
+        estimator_params = {
+            "criterion": self.criterion,
+            "max_depth": self.max_depth,
+            "min_samples_split": self.min_samples_split,
+            "min_samples_leaf": self.min_samples_leaf,
+            "min_weight_fraction_leaf": self.min_weight_fraction_leaf,
+            "max_features": self.max_features,
+            "max_leaf_nodes": self.max_leaf_nodes,
+            "min_impurity_decrease": self.min_impurity_decrease,
+            "min_impurity_split": self.min_impurity_split,
+        }
+        final_estimator = self.estimator_.steps[-1][0]
+        self.estimator_params = {f'{final_estimator}__{pname}': pval
+                                 for pname, pval
+                                 in estimator_params.items()}
 
-            # Set renamed estimator parameters
-            for pname, pval in self.estimator_params.items():
-                self.__setattr__(pname, pval)
+        # Set renamed estimator parameters
+        for pname, pval in self.estimator_params.items():
+            self.__setattr__(pname, pval)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -349,3 +348,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
                                         predictions[:, k])
 
         self.oob_score_ /= self.n_outputs_
+
+    def _validate_y_class_weight(self, y):
+        # in regression, we don't validate class weights
+        # TODO remove from regression
+        return y, None

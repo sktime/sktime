@@ -127,13 +127,6 @@ class BaseTimeSeriesForest(BaseForest):
 
         return estimator
 
-    @abstractmethod
-    def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
-        Sets the base_estimator_` attributes.
-        To be implemented by subclasses
-        """
-
     def fit(self, X, y, sample_weight=None):
         """
         Build a forest of trees from the training set (X, y).
@@ -314,14 +307,6 @@ class BaseTimeSeriesForest(BaseForest):
         n_nodes_ptr = np.array(n_nodes).cumsum()
 
         return sparse_hstack(indicators).tocsr(), n_nodes_ptr
-
-    @abstractmethod
-    def _set_oob_score(self, X, y):
-        """
-        Calculate out of bag predictions and score.
-        """
-    def _validate_y_class_weight(self, y):
-        return y, None
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
