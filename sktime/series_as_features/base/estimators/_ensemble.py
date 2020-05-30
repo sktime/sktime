@@ -4,6 +4,7 @@ __all__ = ["BaseTimeSeriesForest"]
 from warnings import warn, catch_warnings, simplefilter
 from abc import abstractmethod
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 
 from numpy import float64 as DOUBLE
@@ -21,6 +22,8 @@ from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -317,3 +320,75 @@ class BaseTimeSeriesForest(BaseForest):
                              % (self.n_columns, n_features))
 
         return X
+
+    @property
+    def feature_importances_(self):
+        """Compute feature importances for time series forest
+        """
+        # assumes particular structure of clf,
+        # with each tree consisting of a particular pipeline,
+        # as in modular tsf
+
+        if not isinstance(self.estimators_[0].steps[0][1],
+                          RandomIntervalFeatureExtractor):
+            raise NotImplementedError("RandomIntervalFeatureExtractor must"
+                                      " be used as the transformer,"
+                                      " which must be the first step"
+                                      " in the base estimator.")
+
+        # get series length, assuming same length series
+        tree = self.estimators_[0]
+        transformer = tree.steps[0][1]
+        time_index = transformer._time_index
+        n_timepoints = len(time_index)
+
+        # get feature names, features are the same for all trees
+        feature_names = [feature.__name__ for feature in transformer.features]
+        n_features = len(feature_names)
+
+        # get intervals from transformer,
+        # the number of intervals is the same for all trees
+
+        intervals = transformer.intervals_
+        n_intervals = len(intervals)
+
+        # get number of estimators
+        n_estimators = len(self.estimators_)
+
+        # preallocate array for feature importances
+        fis = np.zeros((n_timepoints, n_features))
+
+        for i in range(n_estimators):
+            # select tree
+            tree = self.estimators_[i]
+            transformer = tree.steps[0][1]
+            classifier = tree.steps[-1][1]
+
+            # get intervals from transformer
+            intervals = transformer.intervals_
+
+            # get feature importances from classifier
+            fi = classifier.feature_importances_
+
+            for k in range(n_features):
+                for j in range(n_intervals):
+                    # get start and end point from interval
+                    start, end = intervals[j]
+
+                    # get time index for interval
+                    interval_time_points = np.arange(start, end)
+
+                    # get index for feature importances,
+                    # assuming particular order of features
+
+                    column_index = (k * n_intervals) + j
+
+                    # add feature importance for all time points of interval
+                    fis[interval_time_points, k] += fi[column_index]
+
+        # normalise by number of estimators and number of intervals
+        fis = fis / n_estimators / n_intervals
+
+        # format output
+        fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+        return fis
