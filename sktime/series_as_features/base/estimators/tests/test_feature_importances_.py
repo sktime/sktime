@@ -6,21 +6,20 @@ from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import FunctionTransformer
-from sktime.datasets import load_gunpoint
 from sktime.utils.time_series import time_series_slope
 from sktime.transformers.series_as_features.segment import IntervalSegmenter
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.summarize._extract import \
     RandomIntervalFeatureExtractor
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
+from sktime.utils.testing._series_as_features import \
+    make_classification_problem
 
 X_train, y_train = make_classification_problem()
 
 
 # Check results of a simple case of single estimator, single feature and
 # single interval from different but equivalent implementations
-
-
 def test_feature_importances_single_feature_interval_and_estimator():
     random_state = 1234
 
@@ -51,9 +50,9 @@ def test_feature_importances_single_feature_interval_and_estimator():
     clf2.fit(X_train, y_train)
 
     # Check for feature importances obtained from the estimators
-    fi1 = clf1.estimators_[0].steps[-1][1].feature_importances_
-    fi2 = clf2.steps[-1][1].feature_importances_
-    np.testing.assert_array_equal(fi1, fi2)
+    fi_expected = clf1.estimators_[0].steps[-1][1].feature_importances_
+    fi_actual = clf2.steps[-1][1].feature_importances_
+    np.testing.assert_array_equal(fi_actual, fi_expected)
 
 
 # Check for 4 more complex cases with 3 features, with both numbers of
@@ -61,12 +60,10 @@ def test_feature_importances_single_feature_interval_and_estimator():
 # Feature importances from each estimator on each interval, and
 # normalised feature values of the time series are checked using
 # different but equivalent implementations
-
-
 @pytest.mark.parametrize("n_intervals", [1, 2])
 @pytest.mark.parametrize("n_estimators", [1, 2])
-def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimators):
-
+def test_feature_importances_multi_intervals_estimators(n_intervals,
+                                                        n_estimators):
     random_state = 1234
     n_features = 3
 
@@ -83,8 +80,8 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
                                       n_estimators=n_estimators)
     clf1.fit(X_train, y_train)
 
-    fi1 = np.zeros([n_estimators, n_intervals*n_features])
-    fi2 = np.zeros([n_estimators, n_intervals*n_features])
+    fi_expected = np.zeros([n_estimators, n_intervals*n_features])
+    fi_actual = np.zeros([n_estimators, n_intervals*n_features])
 
     # Obtain intervals and decision trees from fitted classifier
     for i in range(n_estimators):
@@ -106,24 +103,25 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
         clf2.fit(X_train, y_train)
 
         # Compute and check for individual feature importances
-        fi1[i, :] = clf1.estimators_[i].steps[-1][1].feature_importances_
-        fi2[i, :] = clf2.steps[-1][1].feature_importances_
-        np.testing.assert_array_equal(fi1[i, :], fi2[i, :])
+        fi_expected[i, :] = clf1.estimators_[i].steps[-1][1].\
+            feature_importances_
+        fi_actual[i, :] = clf2.steps[-1][1].feature_importances_
+        np.testing.assert_array_equal(fi_actual[i, :], fi_expected[i, :])
 
     # Compute normalised feature values of the time series using the
     # default property
-    fis1 = clf1.feature_importances_
+    fis_expacted = clf1.feature_importances_
 
     # Compute normalised feature values of the time series from the pipeline
     # implementation
     n_timepoints = len(clf1.estimators_[0].steps[0][1]._time_index)
-    fis2 = np.zeros((n_timepoints, n_features))
+    fis_actual = np.zeros((n_timepoints, n_features))
 
     for i in range(n_estimators):
         intervals = clf1.estimators_[i].steps[0][1].intervals_
         for j in range(n_features):
             for k in range(n_intervals):
                 start, end = intervals[k]
-                fis2[start:end, j] += fi2[i, (j * n_intervals) + k]
-    fis2 = fis2 / n_estimators / n_intervals
-    np.testing.assert_array_equal(fis1, fis2)
+                fis_actual[start:end, j] += fi_actual[i, (j * n_intervals) + k]
+    fis_actual = fis_actual / n_estimators / n_intervals
+    np.testing.assert_array_equal(fis_actual, fis_expacted)
