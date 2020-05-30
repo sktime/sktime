@@ -1,6 +1,6 @@
-
 import numpy as np
 import pytest
+
 from sklearn.base import clone
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
@@ -8,10 +8,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import FunctionTransformer
 from sktime.datasets import load_gunpoint
 from sktime.utils.time_series import time_series_slope
-from sktime.transformers.series_as_features.segment import \
-    IntervalSegmenter
-from sktime.transformers.series_as_features.compose import \
-    RowTransformer
+from sktime.transformers.series_as_features.segment import IntervalSegmenter
+from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.summarize._extract import \
     RandomIntervalFeatureExtractor
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
