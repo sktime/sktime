@@ -387,21 +387,6 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
-    def _validate_X_predict(self, X):
-        n_features = X.shape[1] if X.ndim == 2 else 1
-        if self.n_columns != n_features:
-            raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is %s and "
-                             "input n_features is %s "
-                             % (self.n_columns, n_features))
-        return X
-
-    def apply(self, X):
-        raise NotImplementedError()
-
-    def decision_path(self, X):
-        raise NotImplementedError()
-
     def _set_oob_score(self, X, y):
         """Compute out-of-bag score"""
         check_X_y(X, y)
