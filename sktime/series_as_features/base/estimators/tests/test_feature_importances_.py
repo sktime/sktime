@@ -14,7 +14,7 @@ from sktime.transformers.series_as_features.summarize._extract import \
     RandomIntervalFeatureExtractor
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
 
-X_train, y_train = load_gunpoint(split="TRAIN", return_X_y=True)
+X_train, y_train = make_classification_problem()
 
 
 # Check results of a simple case of single estimator, single feature and
