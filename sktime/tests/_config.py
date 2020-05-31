@@ -126,6 +126,5 @@ ESTIMATOR_TEST_PARAMS = {
         {"disable_progressbar": True, "show_warnings": False,
          "ml_task": "classification", },
     RandomIntervalSpectralForest: {
-        "acf_lag": 10
-    }
+        "acf_lag": 10}
 }

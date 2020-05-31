@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import is_regressor
-from sktime.tests._test_config import ESTIMATOR_TEST_PARAMS
+from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.series_as_features.reduce import Tabularizer

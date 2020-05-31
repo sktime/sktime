@@ -7,7 +7,7 @@ __all__ = []
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests._test_config import EXCLUDED
+from sktime.tests._config import EXCLUDED
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
