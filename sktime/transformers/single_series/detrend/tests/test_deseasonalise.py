@@ -9,7 +9,7 @@ import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_SPS
 from sktime.transformers.single_series.detrend import Deseasonalizer
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import make_forecasting_problem
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]

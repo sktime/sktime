@@ -8,7 +8,7 @@ from sktime.transformers.series_as_features.pca import PCATransformer
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import get_time_index
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils._testing import generate_df_from_array
 
 
 # Check that exception is raised for bad input args.

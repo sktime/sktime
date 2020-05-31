@@ -4,9 +4,9 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
-from sktime.utils.testing._forecasting import generate_time_series
+from sktime.utils._testing.forecasting import generate_time_series
 
-# default parameter testing grid
+# default parameter _testing grid
 TEST_WINDOW_LENGTHS = [1, 5]
 TEST_STEP_LENGTHS = [1, 5]
 TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample

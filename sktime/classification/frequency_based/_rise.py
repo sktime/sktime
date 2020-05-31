@@ -124,6 +124,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.intervals[i][1] = random.randint(
                 self.intervals[i][0] + self.min_interval, self.series_length)
         # Check lag against global properties
+        self.acf_lag_ = self.acf_lag
         if self.acf_lag > self.series_length - self.acf_min_values:
             self.acf_lag_ = self.series_length - self.acf_min_values
         if self.acf_lag < 0:
@@ -218,7 +219,7 @@ def acf(x, max_lag):
     """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
-    found it, worth testing for speed and correctness
+    found it, worth _testing for speed and correctness
     HOWEVER, for long series, it may not give much benefit, as we do not use
     that many ACF terms
 
@@ -266,7 +267,7 @@ def matrix_acf(x, num_cases, max_lag):
     """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
-    found it, worth testing for speed and correctness
+    found it, worth _testing for speed and correctness
     HOWEVER, for long series, it may not give much benefit, as we do not use
     that many ACF terms
 

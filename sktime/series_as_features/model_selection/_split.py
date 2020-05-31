@@ -73,7 +73,7 @@ class PresplitFilesCV:
 class SingleSplit:
     """
     Helper class for orchestration that uses a single split for training and
-    testing. Wrapper for sklearn.model_selection.train_test_split
+    _testing. Wrapper for sklearn.model_selection.train_test_split
 
     Parameters
     ----------

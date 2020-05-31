@@ -11,5 +11,5 @@ def test_loading():
 
 if __name__ == "__main__":
     """
-    Example simple usage, with arguments input via script or hard coded for testing
+    Example simple usage, with arguments input via script or hard coded for _testing
     """

@@ -247,7 +247,7 @@ class Evaluator:
 
     def ranksum_test(self, metric_name=None):
         """
-        Non-parametric test for testing consistent differences between pairs
+        Non-parametric test for _testing consistent differences between pairs
         of obeservations.
         The test counts the number of observations that are greater, smaller
         and equal to the mean

@@ -24,8 +24,8 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils import all_estimators
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 # get all forecasters
 FORECASTERS = [forecaster for (name, forecaster) in
@@ -33,7 +33,7 @@ FORECASTERS = [forecaster for (name, forecaster) in
                if issubclass(forecaster, BaseSktimeForecaster)]
 FH0 = 1
 
-# testing data
+# _testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
@@ -71,7 +71,7 @@ FORECASTERS_OPTIONAL = [f for f in FORECASTERS if
                         issubclass(f, OptionalForecastingHorizonMixin)]
 
 
-# testing Forecasters which require fh during fitting
+# _testing Forecasters which require fh during fitting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_no_fh_in_fit_req(Forecaster):
     f = _construct_instance(Forecaster)
@@ -109,7 +109,7 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
         f.predict(fh=FH0 + 1)
 
 
-# testing Forecasters which take fh either during fitting or predicting
+# _testing Forecasters which take fh either during fitting or predicting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_no_fh_opt(Forecaster):
     f = _construct_instance(Forecaster)

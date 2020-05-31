@@ -69,7 +69,7 @@ from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism used in Java,
+""" Prototype mechanism for _testing classifiers on the UCR format. This mirrors the mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
@@ -557,7 +557,7 @@ def test_loading():
 
 if __name__ == "__main__":
     """
-    Example simple usage, with arguments input via script or hard coded for testing
+    Example simple usage, with arguments input via script or hard coded for _testing
     """
 
 #    test_loading()

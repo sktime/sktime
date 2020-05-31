@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 from sktime.tests.test_all_estimators import EXCLUDED
 from sktime.utils import all_estimators
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import _make_args
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing import _make_args
 
 ALL_SERIES_AS_FEATURES_TRANSFORMERS = [
     e[1] for e in all_estimators("series_as_features_transformer")

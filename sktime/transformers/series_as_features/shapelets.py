@@ -25,7 +25,7 @@ from sktime.utils.validation.series_as_features import check_X
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
-# TO-DO: thorough testing (some initial testing completed, but passing the
+# TO-DO: thorough _testing (some initial _testing completed, but passing the
 # code to David to develop
 #        before everything has been fully verified)
 

@@ -12,8 +12,8 @@ from sktime.transformers.single_series.boxcox import BoxCoxTransformer
 from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 SINGLE_SERIES_TRANSFORMERS = [
     Deseasonalizer,
@@ -23,7 +23,7 @@ SINGLE_SERIES_TRANSFORMERS = [
     BoxCoxTransformer
 ]
 
-# testing data
+# _testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 

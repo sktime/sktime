@@ -1,6 +1,7 @@
 __all__ = [
     "_construct_instance",
-    "_make_args"
+    "_make_args",
+    "_assert_almost_equal"
 ]
 __author__ = ["Markus Löning"]
 
@@ -9,17 +10,17 @@ import pandas as pd
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import is_regressor
-from sktime.tests.config import ESTIMATOR_TEST_PARAMS
+from sktime.tests._test_config import ESTIMATOR_TEST_PARAMS
 from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.data_container import is_nested_dataframe
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing._forecasting import make_forecasting_problem
-from sktime.utils.testing._series_as_features import \
+from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.series_as_features import \
     make_classification_problem
-from sktime.utils.testing._series_as_features import make_regression_problem
+from sktime.utils._testing.series_as_features import make_regression_problem
 
 
 def generate_df_from_array(array, n_rows=10, n_cols=1):
@@ -31,7 +32,7 @@ def generate_df_from_array(array, n_rows=10, n_cols=1):
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
 
-    # construct with parameter configuration for testing
+    # construct with parameter configuration for _testing
     if Estimator in ESTIMATOR_TEST_PARAMS:
         params = ESTIMATOR_TEST_PARAMS[Estimator]
         estimator = Estimator(**params)
@@ -54,7 +55,7 @@ def _construct_instance(Estimator):
 
 
 def _make_args(estimator, method, *args, **kwargs):
-    """Helper function to generate appropriate arguments for testing different
+    """Helper function to generate appropriate arguments for _testing different
     estimator types and their methods"""
     if method == "fit":
         return _make_fit_args(estimator, *args, **kwargs)
