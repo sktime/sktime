@@ -274,12 +274,12 @@ class MrSEQLClassifier(BaseClassifier):
 
         
         for cfg in self.config:
-            for dim in ts_x:
+            for i in range(ts_x.shape[1]):
                 tssr = []
 
                 if cfg['method'] == 'sax':  # convert time series to SAX
                     ps = PySAX(cfg['window'], cfg['word'], cfg['alphabet'])
-                    for ts in ts_x[dim]:
+                    for ts in ts_x.iloc[:,i]:
                         sr = ps.timeseries2SAXseq(ts)
                         tssr.append(sr)
 
@@ -287,12 +287,12 @@ class MrSEQLClassifier(BaseClassifier):
                     if (cfg['window'], cfg['word'], cfg['alphabet']) not in self.sfas:
                         sfa = AdaptedSFA(
                             cfg['window'], cfg['word'], cfg['alphabet'])
-                        sfa.fit(pd.DataFrame(ts_x[dim]))
+                        sfa.fit(ts_x.iloc[:,[i]])
                         self.sfas[(cfg['window'], cfg['word'],
                                 cfg['alphabet'])] = sfa
-                    for ts in ts_x[dim]:
+                    for ts in ts_x.iloc[:,i]:
                         sr = self.sfas[(cfg['window'], cfg['word'],
-                                        cfg['alphabet'])].timeseries2SFAseq(ts)
+                                        cfg['alphabet'])].timeseries2SFAseq(ts.values)
                         tssr.append(sr)
 
                 multi_tssr.append(tssr)
