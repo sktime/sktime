@@ -4,23 +4,24 @@ __all__ = ["BaseTimeSeriesForest"]
 from warnings import warn, catch_warnings, simplefilter
 from abc import abstractmethod
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
 from sklearn.ensemble._forest import MAX_INT
 from sklearn.ensemble._forest import BaseForest
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 
 
 def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
@@ -255,58 +256,10 @@ class BaseTimeSeriesForest(BaseForest):
         return self
 
     def apply(self, X):
-        """
-        Apply trees in the forest to X, return leaf indices.
-        Parameters
-        ----------
-        X : {array-like or sparse matrix} of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        X_leaves : array_like, shape = [n_samples, n_estimators]
-            For each datapoint x in X and for each tree in the forest,
-            return the index of the leaf x ends up in.
-        """
-        X = self._validate_X_predict(X)
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                           **_joblib_parallel_args(prefer="threads"))(
-            delayed(tree.apply)(X, check_input=False)
-            for tree in self.estimators_)
-
-        return np.array(results).T
+        raise NotImplementedError()
 
     def decision_path(self, X):
-        """
-        Return the decision path in the forest.
-        .. versionadded:: 0.18
-        Parameters
-        ----------
-        X : {array-like or sparse matrix} of shape (n_samples, n_features)
-            The input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csr_matrix``.
-        Returns
-        -------
-        indicator : sparse csr array, shape = [n_samples, n_nodes]
-            Return a node indicator matrix where non zero elements
-            indicates that the samples goes through the nodes.
-        n_nodes_ptr : array of size (n_estimators + 1, )
-            The columns from indicator[n_nodes_ptr[i]:n_nodes_ptr[i+1]]
-            gives the indicator value for the i-th estimator.
-        """
-        X = self._validate_X_predict(X)
-        indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                              **_joblib_parallel_args(prefer='threads'))(
-            delayed(tree.decision_path)(X, check_input=False)
-            for tree in self.estimators_)
-
-        n_nodes = [0]
-        n_nodes.extend([i.shape[1] for i in indicators])
-        n_nodes_ptr = np.array(n_nodes).cumsum()
-
-        return sparse_hstack(indicators).tocsr(), n_nodes_ptr
+        raise NotImplementedError()
 
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
@@ -317,3 +270,75 @@ class BaseTimeSeriesForest(BaseForest):
                              % (self.n_columns, n_features))
 
         return X
+
+    @property
+    def feature_importances_(self):
+        """Compute feature importances for time series forest
+        """
+        # assumes particular structure of clf,
+        # with each tree consisting of a particular pipeline,
+        # as in modular tsf
+
+        if not isinstance(self.estimators_[0].steps[0][1],
+                          RandomIntervalFeatureExtractor):
+            raise NotImplementedError("RandomIntervalFeatureExtractor must"
+                                      " be used as the transformer,"
+                                      " which must be the first step"
+                                      " in the base estimator.")
+
+        # get series length, assuming same length series
+        tree = self.estimators_[0]
+        transformer = tree.steps[0][1]
+        time_index = transformer._time_index
+        n_timepoints = len(time_index)
+
+        # get feature names, features are the same for all trees
+        feature_names = [feature.__name__ for feature in transformer.features]
+        n_features = len(feature_names)
+
+        # get intervals from transformer,
+        # the number of intervals is the same for all trees
+
+        intervals = transformer.intervals_
+        n_intervals = len(intervals)
+
+        # get number of estimators
+        n_estimators = len(self.estimators_)
+
+        # preallocate array for feature importances
+        fis = np.zeros((n_timepoints, n_features))
+
+        for i in range(n_estimators):
+            # select tree
+            tree = self.estimators_[i]
+            transformer = tree.steps[0][1]
+            classifier = tree.steps[-1][1]
+
+            # get intervals from transformer
+            intervals = transformer.intervals_
+
+            # get feature importances from classifier
+            fi = classifier.feature_importances_
+
+            for k in range(n_features):
+                for j in range(n_intervals):
+                    # get start and end point from interval
+                    start, end = intervals[j]
+
+                    # get time index for interval
+                    interval_time_points = np.arange(start, end)
+
+                    # get index for feature importances,
+                    # assuming particular order of features
+
+                    column_index = (k * n_intervals) + j
+
+                    # add feature importance for all time points of interval
+                    fis[interval_time_points, k] += fi[column_index]
+
+        # normalise by number of estimators and number of intervals
+        fis = fis / n_estimators / n_intervals
+
+        # format output
+        fis = pd.DataFrame(fis, columns=feature_names, index=time_index)
+        return fis

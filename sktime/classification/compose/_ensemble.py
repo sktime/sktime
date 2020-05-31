@@ -166,8 +166,9 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         The number of features when ``fit`` is performed.
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
-    feature_importances_ : array of shape = [n_features]
-        The feature importances (the higher, the more important the feature).
+    feature_importances_ : data frame of shape = [n_timepoints, n_features]
+        The normalised feature values at each time index of
+        the time series forest
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
     oob_decision_function_ : array of shape = [n_samples, n_classes]
