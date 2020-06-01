@@ -34,7 +34,7 @@ FORECASTERS = [forecaster for (name, forecaster) in
                if issubclass(forecaster, BaseSktimeForecaster)]
 FH0 = 1
 
-# _testing data
+# testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
@@ -72,7 +72,7 @@ FORECASTERS_OPTIONAL = [f for f in FORECASTERS if
                         issubclass(f, OptionalForecastingHorizonMixin)]
 
 
-# _testing Forecasters which require fh during fitting
+# testing Forecasters which require fh during fitting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_no_fh_in_fit_req(Forecaster):
     f = _construct_instance(Forecaster)
@@ -110,7 +110,7 @@ def test_different_fh_in_fit_and_predict_req(Forecaster):
         f.predict(fh=FH0 + 1)
 
 
-# _testing Forecasters which take fh either during fitting or predicting
+# testing Forecasters which take fh either during fitting or predicting
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_no_fh_opt(Forecaster):
     f = _construct_instance(Forecaster)

@@ -32,7 +32,7 @@ def generate_df_from_array(array, n_rows=10, n_cols=1):
 def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
 
-    # construct with parameter configuration for _testing
+    # construct with parameter configuration for testing
     if Estimator in ESTIMATOR_TEST_PARAMS:
         params = ESTIMATOR_TEST_PARAMS[Estimator]
         estimator = Estimator(**params)
@@ -55,7 +55,7 @@ def _construct_instance(Estimator):
 
 
 def _make_args(estimator, method, *args, **kwargs):
-    """Helper function to generate appropriate arguments for _testing different
+    """Helper function to generate appropriate arguments for testing different
     estimator types and their methods"""
     if method == "fit":
         return _make_fit_args(estimator, *args, **kwargs)

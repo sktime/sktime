@@ -24,7 +24,7 @@ SINGLE_SERIES_TRANSFORMERS = [
     BoxCoxTransformer
 ]
 
-# _testing data
+# testing data
 y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 

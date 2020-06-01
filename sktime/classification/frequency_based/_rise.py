@@ -219,7 +219,7 @@ def acf(x, max_lag):
     """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
-    found it, worth _testing for speed and correctness
+    found it, worth testing for speed and correctness
     HOWEVER, for long series, it may not give much benefit, as we do not use
     that many ACF terms
 
@@ -267,7 +267,7 @@ def matrix_acf(x, num_cases, max_lag):
     """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
-    found it, worth _testing for speed and correctness
+    found it, worth testing for speed and correctness
     HOWEVER, for long series, it may not give much benefit, as we do not use
     that many ACF terms
 

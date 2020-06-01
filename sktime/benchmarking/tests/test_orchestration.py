@@ -4,7 +4,7 @@ import os
 
 import numpy as np
 import pytest
-# get data path for _testing dataset loading from hard drive
+# get data path for testing dataset loading from hard drive
 import sktime
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
