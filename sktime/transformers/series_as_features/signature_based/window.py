@@ -7,6 +7,8 @@ Introduces the Window module that is used when splitting the path over:
     - Expanding
     - Dyadic
 window types.
+
+Code based on window code written by Patrick Kidger.
 """
 import collections as co
 
@@ -15,57 +17,75 @@ _Pair = co.namedtuple('Pair', ('start', 'end'))
 
 
 def window_getter(string, **kwargs):
-    """Gets the window method correspondent to the given string
+    """Gets the window method correspondent to the given string and initialises with specified parameters.
 
-    Args:
-        string (str): String such that string.title() corresponds to a window method.
-        *args: Arguments that will be supplied to the window method.
+    Parameters
+    ----------
+    string : str
+             String from ['global', 'sliding', 'expanding', 'dyadic'] used to access the window method.
+    kwargs : dict
+             Dictionary of key-word arguments to be passed to the window method.
 
-    Returns:
-        Window: An initialised Window method.
+    Returns
+    -------
+    list:
+        A list of lists where the inner lists are lists of tuples that denote the start and end indexes of each window.
     """
-    return globals()[string](**kwargs)
+    # Setup all available windows here
+    window_dict = {
+        'global': Global,
+        'sliding': Sliding,
+        'expanding': Expanding,
+        'dyadic': Dyadic,
+    }
+
+    assert string in window_dict.keys(), "Window name must be one of: {}. Got: {}.".format(window_dict.keys(), string)
+
+    return window_dict[string](**kwargs)
 
 
 class Window:
     """Abstract base class for windows.
 
-    Each subclass should implement __call__, which returns a list of list of 2-tuples. Each 2-tuple specifies the start
-    and end of a window. These are then grouped together into a list, and these lists are then grouped together again
-    into another list. (Really for the sake of the Dyadic window, which considers windows at multiple scales, so the
-    different scales of windows should be grouped together but not grouped with each other.)
+    Each subclass must implement a __call__ method that returns a list of lists of 2-tuples. Each 2-tuple specifies the
+    start and end of each window. These windows are grouped into a list that will (usually) cover the full time series.
+    These lists are grouped into another list for situations where we consider windows of multiple scales.
     """
-    def __init__(self):
-        if self.__class__ is Window:
-            raise NotImplementedError  # abstract base class
-
     def num_windows(self, length):
-        """ Gets the total number of windows produced by the given window method.
+        """Method that returns the total number of windows in the set.
 
-        Args:
-            length (int): Length of the time series.
+        Parameters
+        ----------
+        length : int
+                 The length of the input path.
 
-        Returns:
-            int: Number of windows.
+        Returns
+        -------
+        int:
+            The number of windows.
         """
-        all_windows = self(length)
-        num_windows = 0
-        for window_group in all_windows:
-            num_windows += len(window_group)
-        return num_windows
+        return sum([len(w) for w in self(length)])
 
 
 class Global(Window):
-    """A single window over the whole data."""
+    """ A single window over the full data. """
     def __call__(self, length=None):
         return [[_Pair(None, None)]]
 
 
 class _ExpandingSliding(Window):
     def __init__(self, initial_length, start_step, end_step):
+        """
+        Parameters
+        ----------
+        initial_length : int
+                         Initial length of the input window.
+        start_step : int
+                     Initial step size.
+        end_step : int
+                   Final step size.
+        """
         super(_ExpandingSliding, self).__init__()
-        if self.__class__ is _ExpandingSliding:
-            raise NotImplementedError  # abstract base class
         self.initial_length = initial_length
         self.start_step = start_step
         self.end_step = end_step
@@ -82,24 +102,53 @@ class _ExpandingSliding(Window):
 
 
 class Sliding(_ExpandingSliding):
-    """A window starting at zero and going to some point that increases between windows."""
+    """ A window starting at zero and going to some point that increases between windows. """
     def __init__(self, length, step):
+        """
+        Parameters
+        ----------
+        length : int
+                 The length of the window.
+        step : int
+               The sliding step size.
+        """
         super(Sliding, self).__init__(initial_length=length, start_step=step, end_step=step)
 
 
 class Expanding(_ExpandingSliding):
-    """A window of fixed length, slid along the dataset."""
+    """ A window of fixed length, slid along the dataset. """
     def __init__(self, length, step):
+        """
+        Parameters
+        ----------
+        length : int
+            The length of each window.
+        step : int
+            The step size.
+        """
         super(Expanding, self).__init__(initial_length=length, start_step=0, end_step=step)
 
 
 class Dyadic(Window):
-    """First the global window over the whole thing. Then the window of the first half and the second. Then the window
-    over the first quarter, then the second quarter, then the third quarter, then the fourth quarter, etc. down to
-    some specified depth. Make sure the depth isn't too high for the length of the dataset, lest we end up with trivial
-    windows that we can't compute a signature over.
+    """Windows generated 'dyadically'.
+
+    These are successive windows of increasing fineness. The windows are as follows:
+        Depth 1: The global window over the full data.
+        Depth 2: The windows of the first and second halves of the dataset.
+        Depth 3: The dataset is split into quarters, and we take the windows of each quater.
+        ...
+        Depth n: For a dataset of length L, we generate windows [0:L/(2^n), L/(2^n):(2L)/(2^n), ..., (2^(n-1))L/2^n:L].
+    Each depth also contains all previous depths.
+
+    Note: Ensure the depth, n, is chosen such that L/(2^n) >= 1, else it will be too high for the dataset.
     """
     def __init__(self, depth):
+        """
+        Parameters
+        ----------
+        depth : int
+            The depth of the dyadic window, noted in the class description.
+        """
         super(Dyadic, self).__init__()
         self.depth = depth
 

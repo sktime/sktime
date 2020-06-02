@@ -1,5 +1,5 @@
-import numpy as np
-from sklearn.base import BaseEstimator, TransformerMixin
+import torch
+from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
 
 
@@ -33,7 +33,7 @@ def get_augmentation_pipeline(aug_list):
         'ir': InvisibilityReset(),
         'addtime': AddTime(),
         'cumsum': CumulativeSum(),
-        'basepoint': Basepoint()
+        'basepoint': BasePoint()
     }
 
     pipeline = Pipeline([
@@ -43,11 +43,11 @@ def get_augmentation_pipeline(aug_list):
     return pipeline
 
 
-class AddTime(BaseEstimator, TransformerMixin):
+class AddTime(TransformerMixin):
     """Add time component to each path.
 
-    For a path of shape [N, L, C] this adds a time channel of length L running in [0, 1]. The output shape is thus
-    [N, L, C + 1] with time being the first channel.
+    For a path of shape [B, L, C] this adds a time channel to be placed at the first index. The time channel will be of
+    length L and scaled to exist in [0, 1].
     """
     def fit(self, data, labels=None):
         return self
@@ -57,9 +57,9 @@ class AddTime(BaseEstimator, TransformerMixin):
         B, L = data.shape[0], data.shape[1]
 
         # Time scaled to 0, 1
-        time_scaled = np.linspace(0, 1, L).repeat(B, 1).view(B, L, 1)
+        time_scaled = torch.linspace(0, 1, L).repeat(B, 1).view(B, L, 1)
 
-        return np.concatenate((time_scaled, data), 2)
+        return torch.cat((time_scaled, data), 2)
 
 
 class InvisibilityReset(TransformerMixin):
@@ -75,16 +75,16 @@ class InvisibilityReset(TransformerMixin):
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
 
         # Add in a dimension of ones
-        X_pendim = np.concatenate((np.ones(B, L, 1), X), 2)
+        X_pendim = torch.cat((torch.ones(B, L, 1), X), 2)
 
         # Add pen down to 0
         pen_down = X_pendim[:, [-1], :]
         pen_down[:, :, 0] = 0
-        X_pendown = np.concatenate((X_pendim, pen_down), 1)
+        X_pendown = torch.cat((X_pendim, pen_down), 1)
 
         # Add home
-        home = np.concatenate(B, 1, C + 1)
-        X_penoff = np.concatenate((X_pendown, home), 1)
+        home = torch.zeros(B, 1, C + 1)
+        X_penoff = torch.cat((X_pendown, home), 1)
 
         return X_penoff
 
@@ -105,7 +105,6 @@ class LeadLag(TransformerMixin):
 
     def transform(self, X):
         # Interleave
-        # Change to X.repeat(2, dim=1)
         X_repeat = X.repeat_interleave(2, dim=1)
 
         # Split out lead and lag
@@ -113,7 +112,7 @@ class LeadLag(TransformerMixin):
         lag = X_repeat[:, :-1, :]
 
         # Combine
-        X_leadlag = np.concatenate((lead, lag), 2)
+        X_leadlag = torch.cat((lead, lag), 2)
 
         return X_leadlag
 
@@ -131,11 +130,11 @@ class CumulativeSum(TransformerMixin):
 
     def transform(self, X):
         if self.append_zero:
-            X = Basepoint().transform(X)
-        return np.cumsum(X, 1)
+            X = BasePoint().transform(X)
+        return torch.cumsum(X, 1)
 
 
-class Basepoint(TransformerMixin):
+class BasePoint(TransformerMixin):
     """Appends a zero starting vector to every path.
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
@@ -144,11 +143,9 @@ class Basepoint(TransformerMixin):
         return self
 
     def transform(self, X):
-        zero_vec = np.zeros(size=(X.size(0), 1, X.size(2)))
-        return np.concatenate((zero_vec, X), dim=1)
+        zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
+        return torch.cat((zero_vec, X), dim=1)
 
 
 
-if __name__ == '__main__':
-    a = np.random.randn(10, 5, 7)
-    a = LeadLag()
+
