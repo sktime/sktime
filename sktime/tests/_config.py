@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = [
@@ -10,6 +11,8 @@ __all__ = [
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sktime.classification.compose import ColumnEnsembleClassifier
+from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
@@ -26,7 +29,6 @@ from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
@@ -123,5 +125,7 @@ ESTIMATOR_TEST_PARAMS = {
         {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False,
-         "ml_task": "classification", }
+         "ml_task": "classification", },
+    RandomIntervalSpectralForest: {
+        "acf_lag": 10}
 }

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 
 import numpy as np
-from sktime.utils.testing._forecasting import generate_time_series
+from sktime.utils._testing.forecasting import generate_time_series
 
 # default parameter testing grid
 TEST_WINDOW_LENGTHS = [1, 5]

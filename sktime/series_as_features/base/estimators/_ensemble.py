@@ -1,44 +1,30 @@
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["BaseTimeSeriesForest"]
 
-from warnings import warn, catch_warnings, simplefilter
 from abc import abstractmethod
+from warnings import catch_warnings
+from warnings import simplefilter
+from warnings import warn
+
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
-
+from joblib import Parallel
+from joblib import delayed
 from numpy import float64 as DOUBLE
 from scipy.sparse import issparse
-from sklearn.ensemble._forest import MAX_INT
-from sklearn.ensemble._forest import BaseForest
 from sklearn.base import clone
 from sklearn.ensemble._base import _set_random_states
+from sklearn.ensemble._forest import BaseForest
+from sklearn.ensemble._forest import MAX_INT
 from sklearn.ensemble._forest import _generate_sample_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-from sktime.utils.validation.series_as_features import check_X_y
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-
-
-def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
-    """Private function used to fit an estimator within a job."""
-    if sample_weight is not None:
-        try:
-            estimator.fit(X, y, sample_weight=sample_weight)
-        except TypeError as exc:
-            if "unexpected keyword argument 'sample_weight'" in str(exc):
-                raise TypeError(
-                    "Underlying estimator {} does not support sample weights."
-                    .format(estimator.__class__.__name__)
-                ) from exc
-            raise
-    else:
-        estimator.fit(X, y)
-    return estimator
+from sktime.utils.validation.series_as_features import check_X_y
 
 
 def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
@@ -50,7 +36,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         print("building tree %d of %d" % (tree_idx + 1, n_trees))
 
     # name of step of final estimator in pipeline
-    estimator = tree.steps[-1][0]
+    final_estimator = tree.steps[-1][1]
+    final_estimator_name = tree.steps[-1][0]
 
     if forest.bootstrap:
         n_samples = X.shape[0]
@@ -59,7 +46,8 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(tree.random_state, n_samples,
+        indices = _generate_sample_indices(final_estimator.random_state,
+                                           n_samples,
                                            n_samples_bootstrap)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
@@ -70,10 +58,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
                 curr_sample_weight *= compute_sample_weight('auto', y, indices)
         elif class_weight == 'balanced_subsample':
             curr_sample_weight *= compute_sample_weight('balanced', y, indices)
-        fit_params = {f'{estimator}__sample_weight': curr_sample_weight}
+        fit_params = {
+            f'{final_estimator_name}__sample_weight': curr_sample_weight}
         tree.fit(X, y, **fit_params)
     else:
-        fit_params = {f'{estimator}__sample_weight': sample_weight}
+        fit_params = {f'{final_estimator_name}__sample_weight': sample_weight}
         tree.fit(X, y, **fit_params)
 
     return tree
