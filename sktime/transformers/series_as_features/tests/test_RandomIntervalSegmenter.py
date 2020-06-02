@@ -4,7 +4,7 @@ import pytest
 from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils._testing import generate_df_from_array
 
 N_ITER = 10
 

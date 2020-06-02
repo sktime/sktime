@@ -10,7 +10,7 @@ from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils._testing import generate_df_from_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():

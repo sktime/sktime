@@ -12,7 +12,7 @@ from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.summarize._extract import \
     RandomIntervalFeatureExtractor
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
-from sktime.utils.testing._series_as_features import \
+from sktime.utils._testing.series_as_features import \
     make_classification_problem
 
 X_train, y_train = make_classification_problem()

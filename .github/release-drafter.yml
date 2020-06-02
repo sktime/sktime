@@ -1,0 +1,8 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+template: |
+  ## What's New
+
+  $CHANGES
+
+  All contributors: $CONTRIBUTORS

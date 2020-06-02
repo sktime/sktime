@@ -25,8 +25,8 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils import all_estimators
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 # get all forecasters
 FORECASTERS = [forecaster for (name, forecaster) in
