@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -9,7 +10,7 @@ import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_SPS
 from sktime.transformers.single_series.detrend import Deseasonalizer
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import make_forecasting_problem
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 MODELS = ["additive", "multiplicative"]
