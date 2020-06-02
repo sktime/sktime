@@ -44,6 +44,7 @@ from sktime.transformers.series_as_features.summarize import \
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
+from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
@@ -126,6 +127,7 @@ ESTIMATOR_TEST_PARAMS = {
     TSFreshRelevantFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False,
          "ml_task": "classification", },
+    TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {
         "acf_lag": 10}
 }
