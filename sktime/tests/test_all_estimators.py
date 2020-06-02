@@ -8,9 +8,9 @@ __all__ = [
 ]
 
 import pytest
-from sktime.tests.config import EXCLUDED
+from sktime.tests._config import EXCLUDED
 from sktime.utils import all_estimators
-from sktime.utils.testing.estimator_checks import check_estimator
+from sktime.utils._testing.estimator_checks import check_estimator
 
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
                   e[0] not in EXCLUDED]

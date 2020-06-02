@@ -8,10 +8,10 @@ __all__ = []
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests.config import EXCLUDED
+from sktime.tests._config import EXCLUDED
 from sktime.utils import all_estimators
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import _make_args
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing import _make_args
 
 ALL_CLASSIFIERS = [e[1] for e in
                    all_estimators(estimator_type="classifier")

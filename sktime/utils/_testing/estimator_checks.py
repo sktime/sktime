@@ -17,7 +17,7 @@ import joblib
 import numpy as np
 import pytest
 from sklearn import clone
-from sklearn.utils._testing import set_random_state
+from sklearn.utils.testing import set_random_state
 from sklearn.utils.estimator_checks import \
     check_get_params_invariance as _check_get_params_invariance
 from sklearn.utils.estimator_checks import \
@@ -38,11 +38,11 @@ from sktime.transformers.series_as_features.base import \
     is_series_as_features_transformer
 from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.transformers.single_series.base import is_single_series_transformer
-from sktime.utils.testing import ESTIMATOR_TEST_PARAMS
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing import _make_args
-from sktime.utils.testing import _assert_almost_equal
-from sktime.utils.testing._inspect import _get_args
+from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing import _make_args
+from sktime.utils._testing import _assert_almost_equal
+from sktime.utils._testing.inspect import _get_args
 
 NON_STATE_CHANGING_METHODS = [
     "predict",

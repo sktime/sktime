@@ -10,7 +10,7 @@ from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils._testing import generate_df_from_array
 from sktime.utils.time_series import time_series_slope
 
 
