@@ -7,6 +7,7 @@ import torch
 import signatory
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._window import window_getter
+from sktime.transformers.series_as_features.signature_based._rescaling import rescale_path, rescale_signature
 
 
 class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
@@ -16,16 +17,31 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     will compute the signatures over each window (for the given signature options) and concatenate the results into a
     tensor of shape [N, num_sig_features * num_windows].
     """
-    def __init__(self, sig_tfm, depth, window_name, window_kwargs):
-        self.sig_tfm = sig_tfm
-        self.depth = depth
+    def __init__(self, window_name, window_kwargs, sig_tfm, depth, rescaling=None):
         self.window_name = window_name
         self.window_kwargs = window_kwargs
-        self.window = window_getter(self.window_name, **self.window_kwargs)
+        self.sig_tfm = sig_tfm
+        self.depth = depth
+        self.rescaling = rescaling
 
-    def transform(self, X):
+        self.window = window_getter(self.window_name, **self.window_kwargs)
+        self.set_rescaling()
+
+    def set_rescaling(self):
+        # Setup rescaling options
+        self.pre_rescaling = lambda path, depth: path
+        self.post_rescaling = lambda signature, channels, depth: signature
+        if self.rescaling == 'pre':
+            self.pre_rescaling = rescale_path
+        elif self.rescaling == 'post':
+            self.post_rescaling = rescale_signature
+
+    def transform(self, data):
+        # Path rescaling
+        data = self.pre_rescaling(data, self.depth)
+
         # Prepare for signature computation
-        path_obj = signatory.Path(X, self.depth)
+        path_obj = signatory.Path(data, self.depth)
         transform = getattr(path_obj, self.sig_tfm)
         length = path_obj.size(1)
 
@@ -34,8 +50,12 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         for window_group in self.window(length):
             signature_group = []
             for window in window_group:
+                # Signature computation step
                 signature = transform(window.start, window.end)
-                signature_group.append(signature)
+                # Rescale if specified
+                rescaled_signature = self.post_rescaling(signature, data.size(2), self.depth)
+
+                signature_group.append(rescaled_signature)
             signatures.append(signature_group)
 
         # We are currently not considering deep models and so return all the features concatenated together

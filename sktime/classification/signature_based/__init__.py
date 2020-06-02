@@ -1,0 +1,5 @@
+__all__ = [
+    "SignatureClassifier",
+]
+
+from sktime.classification.signature_based._signature_method import SignatureClassifier
