@@ -1,10 +1,13 @@
-from sklearn.base import TransformerMixin
+import torch
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.signature_based.compute import WindowSignatureTransform
-from sktime.transformers.series_as_features.signature_based.augmentations import get_augmentation_pipeline
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.signature_based._compute import WindowSignatureTransform
+from sktime.transformers.series_as_features.signature_based._augmentations import get_augmentation_pipeline
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.data_container import nested_to_3d_numpy
 
 
-class GeneralisedSignatureMethod(TransformerMixin):
+class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     """The generalised signature method of feature extraction.
 
     [https://arxiv.org/pdf/2006.00873.pdf]
@@ -36,7 +39,17 @@ class GeneralisedSignatureMethod(TransformerMixin):
         ])
 
     def fit(self, data, labels=None):
+        self._is_fitted = True
         return self
 
     def transform(self, data):
-        return self.signature_method.transform(data)
+        # sktime checks
+        self.check_is_fitted()
+        data = check_X(data, enforce_univariate=False)
+
+        # Signature functionality requires torch tensors
+        tensor_data = torch.Tensor(nested_to_3d_numpy(data)).transpose(1, 2)
+
+        return self.signature_method.transform(tensor_data)
+
+

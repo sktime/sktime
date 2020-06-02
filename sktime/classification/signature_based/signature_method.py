@@ -10,7 +10,8 @@ according to the best practices and methodologies described in the paper:
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.signature_based.signature_method import GeneralisedSignatureMethod
+from sktime.transformers.series_as_features.signature_based import GeneralisedSignatureMethod
+from sktime.utils.validation.series_as_features import check_X
 
 
 class SignatureClassifier(BaseEstimator, ClassifierMixin):
@@ -52,6 +53,19 @@ class SignatureClassifier(BaseEstimator, ClassifierMixin):
         ])
 
     def fit(self, data, labels):
+        # sktime checks
+        data = check_X(data, enforce_univariate=False)
+
+        # Fit the pipeline
         self.pipeline.fit(data, labels)
+
         return self
+
+
+if __name__ == '__main__':
+    from sktime.utils.load_data import load_from_tsfile_to_dataframe
+    train_x, train_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TRAIN.ts")
+    test_x, test_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TEST.ts")
+    classifier = SignatureClassifier().fit(train_x, train_y)
+
 

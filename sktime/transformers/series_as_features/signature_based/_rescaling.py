@@ -5,11 +5,11 @@ Signature rescaling methods. This implements the pre- and post- signature rescal
 methods along feature dimensions of 3D tensors.
 """
 import torch
-from sklearn.base import TransformerMixin
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, FunctionTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 
-class TrickScaler(TransformerMixin):
+class TrickScaler(BaseSeriesAsFeaturesTransformer):
     """Tricks an sklearn scaler so that it uses the correct dimensions.
 
     This class was created out of a desire to use sklearn scaling functionality on 3D tensors. Sklearn operates on a
@@ -47,6 +47,7 @@ class TrickScaler(TransformerMixin):
 
     def fit(self, X, y=None):
         self.scaler.fit(self._trick(X), y)
+        self._is_fitted = True
         return self
 
     def transform(self, X):

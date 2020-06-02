@@ -5,11 +5,11 @@ Class for signature computation over windows.
 """
 import torch
 import signatory
-from sklearn.base import TransformerMixin
-from sktime.transformers.series_as_features.signature_based.window import window_getter
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.signature_based._window import window_getter
 
 
-class WindowSignatureTransform(TransformerMixin):
+class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     """Performs the signature transform over given windows.
 
     Given data of shape [N, L, C] and specification of a window method from the signatures window module, this class
@@ -22,9 +22,6 @@ class WindowSignatureTransform(TransformerMixin):
         self.window_name = window_name
         self.window_kwargs = window_kwargs
         self.window = window_getter(self.window_name, **self.window_kwargs)
-
-    def fit(self, X, y=None):
-        return self
 
     def transform(self, X):
         # Prepare for signature computation

@@ -1,6 +1,6 @@
 import torch
-from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 
 def get_augmentation_pipeline(aug_list):
@@ -43,15 +43,12 @@ def get_augmentation_pipeline(aug_list):
     return pipeline
 
 
-class AddTime(TransformerMixin):
+class AddTime(BaseSeriesAsFeaturesTransformer):
     """Add time component to each path.
 
     For a path of shape [B, L, C] this adds a time channel to be placed at the first index. The time channel will be of
     length L and scaled to exist in [0, 1].
     """
-    def fit(self, data, labels=None):
-        return self
-
     def transform(self, data):
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
@@ -62,14 +59,11 @@ class AddTime(TransformerMixin):
         return torch.cat((time_scaled, data), 2)
 
 
-class InvisibilityReset(TransformerMixin):
+class InvisibilityReset(BaseSeriesAsFeaturesTransformer):
     """Adds an 'invisibility-reset' dimension to the path. This adds sensitivity to translation.
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
-    def fit(self, X, y=None):
-        return self
-
     def transform(self, X):
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
@@ -89,7 +83,7 @@ class InvisibilityReset(TransformerMixin):
         return X_penoff
 
 
-class LeadLag(TransformerMixin):
+class LeadLag(BaseSeriesAsFeaturesTransformer):
     """Applies the lead-lag transformation to each path.
 
     We take the lead of an input stream, and augment it with the lag of the input stream. This enables us to capture the
@@ -100,9 +94,6 @@ class LeadLag(TransformerMixin):
         - https://arxiv.org/pdf/1310.4054.pdf
         - https://arxiv.org/pdf/1307.7244.pdf
     """
-    def fit(self, X, y=None):
-        return self
-
     def transform(self, X):
         # Interleave
         X_repeat = X.repeat_interleave(2, dim=1)
@@ -117,7 +108,7 @@ class LeadLag(TransformerMixin):
         return X_leadlag
 
 
-class CumulativeSum(TransformerMixin):
+class CumulativeSum(BaseSeriesAsFeaturesTransformer):
     """Cumulatively sums the values in the stream.
 
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
@@ -125,23 +116,17 @@ class CumulativeSum(TransformerMixin):
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
 
-    def fit(self, X, y=None):
-        return self
-
     def transform(self, X):
         if self.append_zero:
             X = BasePoint().transform(X)
         return torch.cumsum(X, 1)
 
 
-class BasePoint(TransformerMixin):
+class BasePoint(BaseSeriesAsFeaturesTransformer):
     """Appends a zero starting vector to every path.
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
-    def fit(self, X, y=None):
-        return self
-
     def transform(self, X):
         zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
         return torch.cat((zero_vec, X), dim=1)
