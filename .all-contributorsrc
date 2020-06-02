@@ -323,6 +323,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "Mo-Saif",
+      "name": "Mohammed Saif Kazamel",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/27867617?v=4",
+      "profile": "https://mo-saif.github.io/",
+      "contributions": [
+        "bug"
+      ]
     }
   ]
 }
