@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
-from sktime.datasets import load_gunpoint
+from sktime.utils._testing import make_classification_problem
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import \
@@ -35,7 +35,7 @@ def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
 # Check that exception is raised for bad input args.
 @pytest.mark.parametrize("bad_n_intervals", [0, 'abc', 1.1, -1])
 def test_bad_n_intervals(bad_n_intervals):
-    X, y = load_gunpoint(return_X_y=True)
+    X, y = make_classification_problem()
     with pytest.raises(ValueError):
         RandomIntervalFeatureExtractor(n_intervals=bad_n_intervals).fit(X)
 
@@ -44,24 +44,9 @@ def test_bad_n_intervals(bad_n_intervals):
                          [0, 'abc', {'a': 1}, (np.median, np.mean),
                           [0, 'abc']])
 def test_bad_features(bad_features):
-    X, y = load_gunpoint(return_X_y=True)
+    X, y = make_classification_problem()
     with pytest.raises(ValueError):
         RandomIntervalFeatureExtractor(n_intervals=bad_features).fit(X)
-
-
-# Check if random state always gives same results
-def test_random_state():
-    N_ITER = 10
-    X = generate_df_from_array(np.random.normal(size=20))
-    random_state = 1234
-    trans = RandomIntervalFeatureExtractor(n_intervals='random',
-                                           random_state=random_state)
-    first_Xt = trans.fit_transform(X)
-    for _ in range(N_ITER):
-        trans = RandomIntervalFeatureExtractor(n_intervals='random',
-                                               random_state=random_state)
-        Xt = trans.fit_transform(X)
-        assert first_Xt.equals(Xt)
 
 
 # Check specific results
@@ -95,7 +80,7 @@ def test_results(n_instances, n_timepoints, n_intervals):
 # Test against equivalent pipelines.
 def test_different_implementations():
     random_state = 1233
-    X_train, y_train = load_gunpoint(return_X_y=True)
+    X_train, y_train = make_classification_problem()
 
     # Compare with chained transformations.
     tran1 = RandomIntervalSegmenter(n_intervals='sqrt',
@@ -114,7 +99,7 @@ def test_different_implementations():
 # Compare with transformer pipeline using TSFeatureUnion.
 def test_different_pipelines():
     random_state = 1233
-    X_train, y_train = load_gunpoint(return_X_y=True)
+    X_train, y_train = make_classification_problem()
     steps = [
         ('segment', RandomIntervalSegmenter(n_intervals='sqrt',
                                             random_state=random_state)),

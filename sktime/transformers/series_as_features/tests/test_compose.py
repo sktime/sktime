@@ -69,8 +69,8 @@ def test_row_transformer_transform_inverse_transform():
 
 
 def test_ColumnTransformer_pipeline():
-    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
-    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 
     # using Identity function transformers (transform series to series)
     def id_func(X):
@@ -91,8 +91,8 @@ def test_ColumnTransformer_pipeline():
 
 
 def test_RowTransformer_pipeline():
-    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
-    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 
     # using pure sklearn
     def row_mean(X):
