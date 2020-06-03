@@ -32,8 +32,8 @@ def _load_dataset(name, split, return_X_y):
     Helper function to load time series classification datasets.
     """
 
-    if split in ["train", "test"]:
-        fname = name + '_' + split + '.ts'
+    if split in ("train", "test"):
+        fname = name + '_' + split.capitalize() + '.ts'
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
@@ -42,13 +42,13 @@ def _load_dataset(name, split, return_X_y):
         X = pd.DataFrame(dtype="object")
         y = pd.Series(dtype="object")
         for split in ("train", "test"):
-            fname = name + '_' + split + '.ts'
+            fname = name + '_' + split.capitalize() + '.ts'
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid split value")
+        raise ValueError("Invalid `split` value")
 
     # Return appropriately
     if return_X_y:
