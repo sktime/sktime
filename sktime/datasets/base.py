@@ -33,7 +33,7 @@ def _load_dataset(name, split, return_X_y):
     """
 
     if split in ("train", "test"):
-        fname = name + '_' + split.capitalize() + '.ts'
+        fname = name + '_' + split.upper() + '.ts'
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
@@ -42,7 +42,7 @@ def _load_dataset(name, split, return_X_y):
         X = pd.DataFrame(dtype="object")
         y = pd.Series(dtype="object")
         for split in ("train", "test"):
-            fname = name + '_' + split.capitalize() + '.ts'
+            fname = name + '_' + split.upper() + '.ts'
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
