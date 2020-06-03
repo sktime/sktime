@@ -26,7 +26,6 @@ having to install anything.
     examples/mrseql.ipynb
     examples/rocket.ipynb
     examples/plateau_finder.ipynb
-    examples/resizing_tutorial.ipynb
     examples/loading_data.ipynb
 
 .. _scikit-learn: https://scikit-learn.org/stable/

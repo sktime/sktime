@@ -30,16 +30,15 @@ sktime
 sktime is Python toolbox for machine learning with time series. We currently
 support:
 
-* Forecasting
-* Time series classification
-* Time series regression
+* Forecasting,
+* Time series classification,
+* Time series regression.
 
-sktime provide dedicated time series algorithms and `scikit-learn
+sktime provides dedicated time series algorithms and `scikit-learn
 <https://github.com/scikit-learn/scikit-learn>`__ compatible tools
 for building, tuning, and evaluating composite models.
 
-For deep learning, see our companion package: `sktime-dl <https://github
-.com/sktime/sktime-dl>`_.
+For deep learning methods, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
 ------------------------------------------------------------
 
