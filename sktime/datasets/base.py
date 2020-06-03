@@ -39,9 +39,9 @@ def _load_dataset(name, split, return_X_y):
 
     # if split is None, load both train and test set
     elif split is None:
-        X = pd.DataFrame()
-        y = pd.Series()
-        for split in ["train", "test"]:
+        X = pd.DataFrame(dtype="object")
+        y = pd.Series(dtype="object")
+        for split in ("train", "test"):
             fname = name + '_' + split + '.ts'
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)

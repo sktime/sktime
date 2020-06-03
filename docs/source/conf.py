@@ -225,8 +225,7 @@ nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
-?filepath={{ env.doc2path( env.docname, base=None) }}
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
 
 |Binder|_ 
 """
