@@ -120,7 +120,6 @@ Documentation
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
 * Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
-
 ------------------------------------------------------------
 
 API Overview
@@ -159,6 +158,43 @@ can simply write:
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
 
+------------------------------------------------------------
+
+API Overview
+------------
+
+sktime is a unified toolbox for machine learning with time series. Time
+series give rise to multiple learning tasks (e.g.
+forecasting and time series classification). The goal of sktime is to
+provide all the necessary to solve these tasks, including dedicated time
+series algorithms as well as tools for building, tuning and evaluating
+composite models.
+
+Many of these tasks are related, and an algorithm that can
+solve one of them can often be re-used to help solve another one, an idea
+called reduction. sktime's unified interface allows to easily adapt an
+algorithm for one task to another.
+
+For example, to use a regression algorithm to solve a forecasting task, we
+can simply write:
+
+.. code-block:: python
+
+    import numpy as np
+    from sktime.datasets import load_airline
+    from sktime.forecasting.compose import ReducedRegressionForecaster
+    from sklearn.ensemble import RandomForestRegressor
+    from sktime.forecasting.model_selection import temporal_train_test_split
+    from sktime.performance_metrics.forecasting import smape_loss
+
+    y = load_airline()
+    y_train, y_test = temporal_train_test_split(y)
+    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
+    regressor = RandomForestRegressor()
+    forecaster = ReducedRegressionForecaster(regressor)
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh)
+    smape_loss(y_test, y_pred)
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.

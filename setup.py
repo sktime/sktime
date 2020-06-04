@@ -14,7 +14,7 @@ import re
 import shutil
 import sys
 import traceback
-from distutils.command.clean import clean as Clean
+from distutils.command.clean import clean as Clean  # noqa
 
 from pkg_resources import parse_version
 
