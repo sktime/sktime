@@ -32,21 +32,23 @@ def _load_dataset(name, split, return_X_y):
     Helper function to load time series classification datasets.
     """
 
-    if split in ["TRAIN", "TEST"]:
-        fname = name + '_' + split + '.ts'
+    if split in ("train", "test"):
+        fname = name + '_' + split.upper() + '.ts'
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
-    elif split == "ALL":
-        X = pd.DataFrame()
-        y = pd.Series()
-        for split in ["TRAIN", "TEST"]:
-            fname = name + '_' + split + '.ts'
+
+    # if split is None, load both train and test set
+    elif split is None:
+        X = pd.DataFrame(dtype="object")
+        y = pd.Series(dtype="object")
+        for split in ("train", "test"):
+            fname = name + '_' + split.upper() + '.ts'
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid split value")
+        raise ValueError("Invalid `split` value")
 
     # Return appropriately
     if return_X_y:
@@ -56,15 +58,15 @@ def _load_dataset(name, split, return_X_y):
         return X
 
 
-def load_gunpoint(split='TRAIN', return_X_y=False):
+def load_gunpoint(split=None, return_X_y=False):
     """
     Loads the GunPoint time series classification problem and returns X and y
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+    split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
-        default it loads the train split.
+        default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
@@ -109,16 +111,16 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_italy_power_demand(split='TRAIN', return_X_y=False):
+def load_italy_power_demand(split=None, return_X_y=False):
     """
     Loads the ItalyPowerDemand time series classification problem and
     returns X and y
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+    split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
-        default it loads the train split.
+        default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
@@ -155,16 +157,16 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_japanese_vowels(split='TRAIN', return_X_y=False):
+def load_japanese_vowels(split=None, return_X_y=False):
     """
         Loads the JapaneseVowels time series classification problem and
         returns X and y.
 
         Parameters
         ----------
-        split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+        split: None or str{"train", "test"}, optional (default=None)
             Whether to load the train or test partition of the problem. By
-            default it loads the train split.
+        default it loads both.
         return_X_y: bool, optional (default=False)
             If True, returns (features, target) separately instead of a
             single dataframe with columns for
@@ -211,15 +213,15 @@ def load_japanese_vowels(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split='TRAIN', return_X_y=False):
+def load_arrow_head(split=None, return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+    split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
-        default it loads the train split.
+        default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
@@ -260,15 +262,15 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split='TRAIN', return_X_y=False):
+def load_basic_motions(split=None, return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
+    split: None or str{"train", "test"}, optional (default=None)
         Whether to load the train or test partition of the problem. By
-        default it loads the train split.
+        default it loads both.
     return_X_y: bool, optional (default=False)
         If True, returns (features, target) separately instead of a single
         dataframe with columns for
