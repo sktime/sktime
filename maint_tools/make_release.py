@@ -121,6 +121,7 @@ class ConfirmGitStatus(Step):
     def action(self, context):
         self.instruct("Make sure you're on master and changes are merged in")
         self.print_run("git checkout master")
+        self.print_run("git pull")
 
 
 class RunTests(Step):
@@ -218,7 +219,8 @@ class GitAddRelease(Step):
     def action(self, context):
         self.instruct("Add CHANGELOG & README to git")
         self.instruct(
-            f"Commit with title: {context['package_name']} {context['version']}"
+            f"Commit with title: {context['package_name']} "
+            f"{context['version']}"
         )
 
 
