@@ -1,21 +1,23 @@
 """Helpers for OpenMP support during the build."""
 
-# adapted fom https://github.com/scikit-learn/scikit-learn/blob/master/sklearn/_build_utils/openmp_helpers.py
+# adapted fom https://github.com/scikit-learn/scikit-learn/blob/master
+# /sklearn/_build_utils/openmp_helpers.py
 # This code is adapted for a large part from the astropy openmp helpers, which
-# can be found at: https://github.com/astropy/astropy-helpers/blob/master/astropy_helpers/openmp_helpers.py  # noqa
+# can be found at: https://github.com/astropy/astropy-helpers/blob/master
+# /astropy_helpers/openmp_helpers.py  # noqa
 
 
-import os
-import sys
 import glob
+import os
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
+from distutils.errors import CompileError
+from distutils.errors import LinkError
+from distutils.sysconfig import customize_compiler
 
 from numpy.distutils.ccompiler import new_compiler
-from distutils.sysconfig import customize_compiler
-from distutils.errors import CompileError, LinkError
-
 
 CCODE = textwrap.dedent(
     """\
@@ -117,17 +119,20 @@ def check_openmp_support():
     err_message = textwrap.dedent(
         """
                             ***
-        It seems that sktime cannot be built with OpenMP support.                
+        It seems that sktime cannot be built with OpenMP support.            
+            
         - If your compiler supports OpenMP but the build still fails, please
-          submit a bug report at: 'https://github.com/alan-turing-institute/sktime/issues'
+          submit a bug report at: 
+          'https://github.com/alan-turing-institute/sktime/issues'
           
         - If you want to build sktime without OpenMP support, you can set
           the environment variable SKTIME_NO_OPENMP and rerun the build
           command. Note however that some estimators will run in sequential
           mode and their `n_jobs` parameter will have no effect anymore.
           
-        - See scikit-learn installation instructions for more info: 
-                https://scikit-learn.org/dev/developers/advanced_installation.html
+        - See sktime advanced installation instructions for more info: 
+                https://alan-turing-institute.github.io/sktime/installation
+                .html
                             ***
         """)
 

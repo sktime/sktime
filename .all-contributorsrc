@@ -1,0 +1,347 @@
+{
+  "projectName": "sktime",
+  "projectOwner": "alan-turing-institute",
+  "repoType": "github",
+  "repoHost": "",
+  "files": [
+    "CONTRIBUTORS.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "none",
+  "contributorsPerLine": 7,
+  "contributorsSortAlphabetically": true,
+  "skipCi": "true",
+  "contributors": [
+    {
+      "login": "fkiraly",
+      "name": "fkiraly",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
+      "profile": "https://github.com/fkiraly",
+      "contributions": [
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "financial",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk"
+      ]
+    },
+    {
+      "login": "sajaysurya",
+      "name": "Sajaysurya Ganesh",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/25329624?v=4",
+      "profile": "https://sajay.online",
+      "contributions": [
+        "code",
+        "doc",
+        "design",
+        "example",
+        "ideas",
+        "test",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "TonyBagnall",
+      "name": "Tony Bagnall",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/9594042?v=4",
+      "profile": "http://www.timeseriesclassification.com",
+      "contributions": [
+        "code",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk",
+        "data"
+      ]
+    },
+    {
+      "login": "jasonlines",
+      "name": "Jason Lines",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/38794632?v=4",
+      "profile": "http://www.timeseriesclassification.com",
+      "contributions": [
+        "code",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "review",
+        "talk",
+        "example"
+      ]
+    },
+    {
+      "login": "mloning",
+      "name": "Markus Löning",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/21020482?v=4",
+      "profile": "https://github.com/mloning",
+      "contributions": [
+        "code",
+        "test",
+        "maintenance",
+        "platform",
+        "review",
+        "infra",
+        "example",
+        "bug",
+        "tutorial",
+        "business",
+        "doc",
+        "design",
+        "eventOrganizing",
+        "fundingFinding",
+        "ideas",
+        "projectManagement",
+        "question",
+        "talk"
+      ]
+    },
+    {
+      "login": "goastler",
+      "name": "George Oastler",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7059456?v=4",
+      "profile": "https://github.com/goastler",
+      "contributions": [
+        "code",
+        "test",
+        "platform",
+        "example",
+        "doc"
+      ]
+    },
+    {
+      "login": "ViktorKaz",
+      "name": "ViktorKaz",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/33499138?v=4",
+      "profile": "https://github.com/ViktorKaz",
+      "contributions": [
+        "code",
+        "doc",
+        "design"
+      ]
+    },
+    {
+      "login": "MatthewMiddlehurst",
+      "name": "Matthew Middlehurst",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
+      "profile": "http://www.timeseriesclassification.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jesellier",
+      "name": "jesellier",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/51952076?v=4",
+      "profile": "https://github.com/jesellier",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "James-Large",
+      "name": "James Large",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/44509982?v=4",
+      "profile": "http://www.timeseriesclassification.com/",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "infra",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "simone-pignotti",
+      "name": "simone-pignotti",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/44410066?v=4",
+      "profile": "https://github.com/simone-pignotti",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "ClaudiaSanches",
+      "name": "ClaudiaSanches",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/28742178?v=4",
+      "profile": "https://github.com/ClaudiaSanches",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "aa25desh",
+      "name": "aa25desh",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/29518290?v=4",
+      "profile": "https://github.com/aa25desh",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "matteogales",
+      "name": "matteogales",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9269326?v=4",
+      "profile": "https://github.com/matteogales",
+      "contributions": [
+        "code",
+        "design",
+        "ideas"
+      ]
+    },
+    {
+      "login": "prockenschaub",
+      "name": "Patrick Rockenschaub",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/15381732?v=4",
+      "profile": "https://github.com/prockenschaub",
+      "contributions": [
+        "code",
+        "design",
+        "ideas",
+        "test"
+      ]
+    },
+    {
+      "login": "dasgupsa",
+      "name": "Saurabh Dasgupta",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/10398956?v=4",
+      "profile": "https://github.com/dasgupsa",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "angus924",
+      "name": "angus924",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/55837131?v=4",
+      "profile": "https://github.com/angus924",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "lnthach",
+      "name": "Thach Le Nguyen",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7788363?v=4",
+      "profile": "https://github.com/lnthach",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Ayushmaanseth",
+      "name": "Ayushmaan Seth",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/29939762?v=4",
+      "profile": "https://www.linkedin.com/in/ayushmaan-seth-4a96364a/",
+      "contributions": [
+        "code",
+        "review",
+        "test"
+      ]
+    },
+    {
+      "login": "ninfueng",
+      "name": "Ninnart Fuengfusin",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/28499769?v=4",
+      "profile": "https://github.com/ninfueng",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "big-o",
+      "name": "big-o",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/1134151?v=4",
+      "profile": "https://github.com/big-o",
+      "contributions": [
+        "code",
+        "test",
+        "design",
+        "ideas",
+        "review",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "Kludex",
+      "name": "Marcelo Trylesinski",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/7353520?v=4",
+      "profile": "http://marcelotryle.com",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "oleskiewicz",
+      "name": "oleskiewicz",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/5682158?v=4",
+      "profile": "https://github.com/oleskiewicz",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "dguijo",
+      "name": "David Guijo Rubio",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/47889499?v=4",
+      "profile": "http://www.uco.es/grupos/ayrna/index.php/es/publicaciones/articulos?publications_view_all=1&theses_view_all=0&projects_view_all=0&task=show&view=member&id=22",
+      "contributions": [
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "HYang1996",
+      "name": "HYang1996",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/44179303?v=4",
+      "profile": "https://github.com/HYang1996",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "Mo-Saif",
+      "name": "Mohammed Saif Kazamel",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/27867617?v=4",
+      "profile": "https://mo-saif.github.io/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "abandus",
+      "name": "abandus",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/46486474?v=4",
+      "profile": "https://github.com/abandus",
+      "contributions": [
+        "ideas",
+        "code"
+      ]
+    }
+  ]
+}

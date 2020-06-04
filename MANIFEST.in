@@ -1,5 +1,6 @@
 include *.rst
-recursive-include documentation *
+recursive-include docs *
+include *.md
 recursive-include examples *
 recursive-include sktime *.c *.h *.pyx *.pxd *.pxi *.tp
 recursive-include sktime/datasets *.csv *.csv.gz *.arff *.arff.gz *.txt *.ts
