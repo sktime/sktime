@@ -101,5 +101,5 @@ stages:
               pythonUploadServiceConnection: PyPI
           - script: |
               ls -lh dist/*.whl
-            # twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
+              twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'

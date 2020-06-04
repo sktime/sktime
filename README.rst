@@ -20,8 +20,8 @@
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3749000.svg
 .. _zenodo: https://doi.org/10.5281/zenodo.3749000
 
-.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/sktime/1/ci?logo=azure-pipelines
-.. _azure: https://dev.azure.com/mloning/sktime/_build/latest?definitionId=1&branchName=master
+.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
+.. _azure: https://dev.azure.com/mloning/sktime/_build
 
 
 sktime
@@ -120,7 +120,6 @@ Documentation
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
 * Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
-
 ------------------------------------------------------------
 
 API Overview
@@ -159,16 +158,15 @@ can simply write:
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
 
-
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
 
 Currently, sktime provides:
 
 * State-of-the-art algorithms for time series classification and regression, ported from the Java-based `tsml <https://github.com/uea-machine-learning/tsml/>`__ toolkit, as well as forecasting,
-* Transformers, including single-series transformations (e.g. detrending or deseasonalization) and series-as-features transformations (e.g. feature extractors, as well as tools to compose different transformers,
-* Pipelining, allowing to chain multiple transformers with a final estimator,
-* Tuning using grid-search CV
+* Transformers, including single-series transformations (e.g. detrending or deseasonalization) and series-as-features transformations (e.g. feature extractors), as well as tools to compose different transformers,
+* Pipelining,
+* Tuning,
 * Ensembling, such as a fully customisable random forest for time-series classification and regression, as well as ensembling for multivariate problems,
 
 For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.

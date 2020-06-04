@@ -108,7 +108,6 @@ artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
   - path: dist\*
 
-#on_success:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
@@ -127,6 +126,20 @@ after_test:
       }
 
 # upload artifacts to Github releases
+#deploy:
+#  - provider: GitHub
+#    description: 'Appveyor build artifacts'
+#    auth_token:
+#      secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
+#    artifact: /.*\.whl/  # upload all wheel packages to release assets
+#    draft: true
+#    on:
+#      branch: master  # release on master branch only
+#      APPVEYOR_REPO_TAG: true
+#      condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+#        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
+#
+
 deploy:
   - provider: GitHub
     description: 'Appveyor build artifacts'
@@ -139,4 +152,3 @@ deploy:
       APPVEYOR_REPO_TAG: true
       condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
         ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
-
