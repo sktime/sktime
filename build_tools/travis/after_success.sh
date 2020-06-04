@@ -17,15 +17,17 @@ then
     # very reliable but we don't want travis to report a failure
     # in the github UI just because the coverage report failed to
     # be published.
-    codecov --root "$TRAVIS_BUILD_DIR" || echo "codecov upload failed"
+    codecov --root "$TRAVIS_BUILD_DIR" || echo "Codecov upload failed"
 fi
 
 # Build website on master branch
-if [[ "$TRAVIS_OS_NAME" == "$TRAVIS_DEPLOY_OS_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
+if [[ "$TRAVIS_JOB_NAME" == "$TRAVIS_DEPLOY_JOB_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
 then
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
 
   # generate website
-  make docs
+  make docs || echo "Building docs failed"
+else
+  echo "Skipped building docs"
 fi

@@ -84,20 +84,17 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.8'
 ]
 EXTRAS_REQUIRE = {
-    'tests': [
-        'pytest',
-        'pytest-cov',
-        'tsfresh',
-        'pmdarima'
-    ],
     'docs': [
+        'pmdarima',
+        'tsfresh',
+        'numba',
+        'matplotlib',
+        'jupyter',
         'sphinx',
         'sphinx-gallery',
-        'nbspinx',
+        'nbsphinx',
         'sphinx_rtd_theme',
         'numpydoc',
-        'matplotlib',
-        'sphinx_bootstrap_theme',
         'm2r @ git+https://github.com/crossnox/m2r@dev#egg=m2r'
     ]
 }
@@ -120,10 +117,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
-        extras_require={
-            'alldeps': EXTRAS_REQUIRE
-        },
+        include_package_data=True
     )
 
 else:
@@ -271,6 +265,7 @@ def setup_package():
         python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
         **extra_setuptools_args
     )
 
