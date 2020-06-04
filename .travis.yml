@@ -61,13 +61,13 @@ addons:
     update: true
 
 install:
-  - bash build_tools/travis/install.sh  # build environment
+  - source build_tools/travis/install.sh  # build environment
 
 script:
   - bash build_tools/travis/test_script.sh  # run unit tests
 
 after_success:
-  - bash build_tools/travis/after_success.sh
+  - source build_tools/travis/after_success.sh
 
 before_deploy:
   - cd $TRAVIS_BUILD_DIR
