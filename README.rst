@@ -21,7 +21,7 @@
 .. _zenodo: https://doi.org/10.5281/zenodo.3749000
 
 .. |azure| image:: https://img.shields.io/azure-devops/build/mloning/sktime/1/ci?logo=azure-pipelines
-.. _azure: https://dev.azure.com/mloning/sktime/_build/latest?definitionId=1&branchName=master
+.. _azure: https://dev.azure.com/mloning/sktime/_apis/build/status/alan-turing-institute.sktime?branchName=master
 
 
 sktime
