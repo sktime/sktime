@@ -5,7 +5,6 @@
 # - https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
 branches:
-  # whitelist
   only:
     - master
     - dev
@@ -19,9 +18,7 @@ environment:
 
     TEST_DIR: "/tmp/sktime"
     REQUIREMENTS: "build_tools/requirements.txt"
-    PYPI_PASSWORD:
-      secure: "nZ6K3G+V4O3mBT6prI28OfGXFWRR4ZPqcC6YJ4yQP0E1evCINRH5j/k+Vz0+LbwM7e7G3zcnOFm+q1HhAKw1tEIuVTythuPsgPrmEhxh//gfgS6SWWoAXSV+5NATCQGkZ2Yiwti5bwyocki2tU2pqxI1rRWK2v/UMeEpzDZPOXpC+ATXLewPr5zsFn3aehHMjNm4RFqDCGSXk2uyEFIytvNMFu5bld6+enejtCjHR9J6nNUcQXrYRZrzCm8xPC1hB+cK0rlLLjUW903mPslHFQ=="
-    PYPI_USER: "__token__"
+    TWINE_USERNAME: __token__
 
   matrix:
     - PYTHON_VERSION: "3.6"
@@ -121,7 +118,7 @@ deploy_script:
       ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]+\.[0-9]+\.[0-9]+') ) {
         Write-Output ("Deploying tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
         pip install --upgrade twine
-        twine upload --username %PYPI_USER% --password %PYPI_PASSWORD% --skip-existing --non-interactive --verbose dist/*
+        twine upload --skip-existing --non-interactive --verbose dist/*
         Write-Output ("Successfully deployed tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI.")
       } else {
         Write-Output ("Skipped deployment to PyPI as this is not a tagged commit.")
