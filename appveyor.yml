@@ -118,8 +118,8 @@ deploy_script:
       ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]+\.[0-9]+\.[0-9]+') ) {
         Write-Output ("Deploying tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
         pip install --upgrade twine
-        twine upload --skip-existing --non-interactive --verbose dist/*
-        Write-Output ("Successfully deployed tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI.")
+        twine upload --skip-existing --non-interactive --verbose dist/*.whl
+        Write-Output ("Successfully uploaded wheels to PyPI.")
       } else {
         Write-Output ("Skipped deployment to PyPI as this is not a tagged commit.")
       }

@@ -87,16 +87,15 @@ deploy:
       branch: $DEPLOY_BRANCH  # deploy only on master
       condition: $TRAVIS_JOB_NAME = $DEPLOY_JOB_NAME  # deploy only on macOS build
 
-  #  # release is deployed only on tagged commits on master
-  #  - provider: releases
-  #    skip_cleanup: true
-  #    api_key: $GITHUB_TOKEN
-  #    draft: true
-  #    file_glob: true  # enable wildcards in file
-  #    file: dist/*  # files to upload
-  #    on:
-  #      tags: true  # deploy only on tags
-  #      condition: ($TRAVIS_BRANCH = $DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
+  # release is deployed only on tagged commits on master
+  - provider: releases
+    skip_cleanup: true
+    api_key: $GITHUB_TOKEN
+    draft: true
+    file_glob: true  # enable wildcards in file
+    file: dist/*.tar.gz  # files to upload
+    on:
+      tags: true  # deploy only on tags
 
   # deploy to pypi on tagged commits on master
   - provider: pypi
