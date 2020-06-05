@@ -61,43 +61,46 @@ addons:
     update: true
 
 install:
-  - source build_tools/travis/install.sh  # build environment
+  # build and install sktime
+  - source build_tools/travis/install.sh
 
 script:
-  - bash build_tools/travis/test_script.sh  # run unit tests
+  # run unit tests
+  - bash build_tools/travis/test_script.sh
 
-after_success:
-  - source build_tools/travis/after_success.sh
+#after_success:
+#  # generate docs
+#  - bash build_tools/travis/after_success.sh
 
 before_deploy:
   - cd $TRAVIS_BUILD_DIR
 
 deploy:
-  # website is always deployed on master branch
+  # deploy website on master branch
   - provider: pages
-    skip-cleanup: true  # skip clean up which would delete build artifacts
+    skip_cleanup: true  # skip clean up which would delete build artifacts
     local_dir: "./docs/_build/html"
-    github-token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
-    keep-history: false
+    github_token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
+    keep_history: false
     on:
       branch: $TRAVIS_DEPLOY_BRANCH  # deploy only on master
       condition: $TRAVIS_JOB_NAME = $TRAVIS_DEPLOY_JOB_NAME  # deploy only on macOS build
 
-#  # release is deployed only on tagged commits on master
-#  - provider: releases
-#    skip_cleanup: true
-#    api_key: $GITHUB_TOKEN
-#    draft: true
-#    file_glob: true  # enable wildcards in file
-#    file: dist/*  # files to upload
-#    on:
-#      tags: true  # deploy only on tags
-#      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
+  #  # release is deployed only on tagged commits on master
+  #  - provider: releases
+  #    skip_cleanup: true
+  #    api_key: $GITHUB_TOKEN
+  #    draft: true
+  #    file_glob: true  # enable wildcards in file
+  #    file: dist/*  # files to upload
+  #    on:
+  #      tags: true  # deploy only on tags
+  #      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
 
-  # pipy is deployed only on tagged commits on master
+  # deploy to pypi on tagged commits on master
   - provider: pypi
     skip_cleanup: true
-    user: "__token__"
+    username: "__token__"
     password: $PYPI_PASSWORD
     skip_existing: true
     on:
