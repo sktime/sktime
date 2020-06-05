@@ -79,7 +79,7 @@ stages:
             displayName: 'Collect wheels'
             inputs:
               source: 'current'
-              tags: '^v[0-9]\.[0-9]\.[0-9]'
+              tags: '^v[0-9]+\.[0-9]+\.[0-9]+'
               patterns: 'wheels_*/*manylinux*.whl'
               path: 'download/'
           - script: |
@@ -87,6 +87,10 @@ stages:
               cp download/wheels_*/*manylinux*.whl dist/
               ls -lh dist/
             displayName: 'Select and list wheels'
+          - task: UsePythonVersion@0
+            displayName: 'Use Python version'
+            inputs:
+              versionSpec: 3.x
           - script: |
               pip install --upgrade twine
             displayName: 'Install twine'
@@ -96,6 +100,5 @@ stages:
               # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
               pythonUploadServiceConnection: PyPI
           - script: |
-              ls -lh dist/*.whl
-              twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
+              python -m twine upload -r pypi --config-file $(PYPIRC_PATH) --non-interactive --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'

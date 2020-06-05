@@ -7,7 +7,7 @@ branches:
   only:
     - master
     - dev
-    - /^v[0-9]\.[0-9]\.[0-9]/  # allow builds on tags
+    - /^v[0-9]+\.[0-9]+\.[0-9]+/  # allow builds on tags
 
 language: shell  # 'language: python' is an error on Travis CI with macOS
 
@@ -106,4 +106,4 @@ deploy:
     skip_existing: true
     on:
       tags: true
-      condition: $TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]/ # deploy only on tags
+      condition: $TRAVIS_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+/ # deploy only on tags
