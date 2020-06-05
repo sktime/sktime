@@ -102,7 +102,7 @@ test_script:
   - cmd: pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime
 
   # Move back to the project folder
-  - ps: cd "../sktime"
+  - ps: cd ..
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
