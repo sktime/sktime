@@ -68,9 +68,9 @@ script:
   # run unit tests
   - bash build_tools/travis/test_script.sh
 
-#after_success:
-#  # generate docs
-#  - bash build_tools/travis/after_success.sh
+after_success:
+  # generate docs
+  - bash build_tools/travis/after_success.sh
 
 before_deploy:
   - cd $TRAVIS_BUILD_DIR
