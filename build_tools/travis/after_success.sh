@@ -23,7 +23,7 @@ else
 fi
 
 # Build website on master branch
-if [ "$TRAVIS_JOB_NAME" == "$TRAVIS_DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ];
+if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ];
 then
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
