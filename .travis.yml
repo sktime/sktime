@@ -83,7 +83,7 @@ deploy:
     github_token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
     keep_history: false
     on:
-      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_JOB_NAME = $TRAVIS_DEPLOY_JOB_NAME)
+      condition: ("$TRAVIS_BRANCH" = "$TRAVIS_DEPLOY_BRANCH") AND ("$TRAVIS_JOB_NAME" = "$TRAVIS_DEPLOY_JOB_NAME")
 
 #  # release is deployed only on tagged commits on master
 #  - provider: releases
@@ -103,4 +103,4 @@ deploy:
     password: $PYPI_PASSWORD
     skip_existing: true
     on:
-      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ("$TRAVIS_TAG" != "") AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
+      condition: ("$TRAVIS_BRANCH" = "$TRAVIS_DEPLOY_BRANCH") AND ("$TRAVIS_TAG" != "") AND ("$TRAVIS_TAG" =~ /^v[0-9]\.[0-9]\.[0-9]$/)

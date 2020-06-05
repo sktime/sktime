@@ -7,7 +7,7 @@
 
 # License: 3-clause BSD
 
-if [[ "$COVERAGE" == "true" ]];
+if [ "$COVERAGE" == "true" ];
 then
     # Need to run codecov from a git checkout, so we copy .coverage
     # from TEST_DIR where pytest has been run
@@ -23,7 +23,7 @@ else
 fi
 
 # Build website on master branch
-if [[ "$TRAVIS_JOB_NAME" == "$TRAVIS_DEPLOY_JOB_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
+if [ "$TRAVIS_JOB_NAME" == "$TRAVIS_DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ];
 then
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
