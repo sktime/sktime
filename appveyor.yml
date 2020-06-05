@@ -151,4 +151,4 @@ deploy:
       branch: master  # release on master branch only
       APPVEYOR_REPO_TAG: true
       condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
-        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
+        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]')
