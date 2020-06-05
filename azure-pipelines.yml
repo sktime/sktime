@@ -69,7 +69,7 @@ stages:
 
   - stage: 'Deploy'
     dependsOn: 'Build'
-    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    condition: and(succeeded('Build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
     jobs:
       - job: 'deploy_to_pypi'
         pool:
@@ -78,12 +78,8 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              source: 'specific'
-              project: 'sktime'
-              pipeline: 'alan-turing-institute.sktime'
-              runVersion: 'latestFromBranch'
-              runBranch: 'refs/heads/master'
-              tags: '^v[0-9]\.[0-9]\.[0-9]$'
+              source: 'current'
+              tags: '^v[0-9]+\.[0-9]+\.[0-9]+'
               patterns: 'wheels_*/*manylinux*.whl'
               path: 'download/'
           - script: |
@@ -91,6 +87,10 @@ stages:
               cp download/wheels_*/*manylinux*.whl dist/
               ls -lh dist/
             displayName: 'Select and list wheels'
+          - task: UsePythonVersion@0
+            displayName: 'Use Python version'
+            inputs:
+              versionSpec: 3.x
           - script: |
               pip install --upgrade twine
             displayName: 'Install twine'
@@ -100,6 +100,5 @@ stages:
               # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
               pythonUploadServiceConnection: PyPI
           - script: |
-              ls -lh dist/*.whl
-              twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
+              python -m twine upload -r pypi --config-file $(PYPIRC_PATH) --non-interactive --skip-existing --verbose dist/*.whl
             displayName: 'Upload wheels to PyPI'

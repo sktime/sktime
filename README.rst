@@ -79,7 +79,7 @@ Forecasting
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
     fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
-    forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
+    forecaster = ThetaForecaster()
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
@@ -153,11 +153,10 @@ can simply write:
     y_train, y_test = temporal_train_test_split(y)
     fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
     regressor = RandomForestRegressor()
-    forecaster = ReducedRegressionForecaster(regressor, window_length=12)
+    forecaster = ReducedRegressionForecaster(regressor)
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
-    >>> 0.1286823775616345
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
@@ -172,7 +171,8 @@ Currently, sktime provides:
 
 For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.
 
-In addition, sktime includes a experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
+In addition, sktime includes an experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
+
 
 ------------------------------------------------------------
 
