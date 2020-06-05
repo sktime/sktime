@@ -68,9 +68,9 @@ script:
   # run unit tests
   - bash build_tools/travis/test_script.sh
 
-after_success:
-  # generate docs
-  - bash build_tools/travis/after_success.sh
+#after_success:
+#  # generate docs
+#  - bash build_tools/travis/after_success.sh
 
 before_deploy:
   - cd $TRAVIS_BUILD_DIR
@@ -103,4 +103,4 @@ deploy:
     password: $PYPI_PASSWORD
     skip_existing: true
     on:
-      condition: $TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH AND $TRAVIS_TAG != "" AND $TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/
+      condition: ($TRAVIS_BRANCH = $TRAVIS_DEPLOY_BRANCH) AND ($TRAVIS_TAG != "") AND ($TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]$/)
