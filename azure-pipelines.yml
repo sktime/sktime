@@ -69,7 +69,7 @@ stages:
 
   - stage: 'Deploy'
     dependsOn: 'Build'
-    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+    condition: and(succeeded('Build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
     jobs:
       - job: 'deploy_to_pypi'
         pool:

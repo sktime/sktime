@@ -116,8 +116,8 @@ artifacts:
 after_test:
   - ps: >-
       if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
-      ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$') ) {
-        Write-Output ("Deploying " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
+      ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]') ) {
+        Write-Output ("Deploying tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
         pip install --upgrade twine
         twine upload --username %PYPI_USER% --password %PYPI_PASSWORD% --skip-existing --verbose dist/*.whl
         Write-Output ("Done.")
@@ -134,21 +134,5 @@ after_test:
 #    artifact: /.*\.whl/  # upload all wheel packages to release assets
 #    draft: true
 #    on:
-#      branch: master  # release on master branch only
 #      APPVEYOR_REPO_TAG: true
-#      condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
-#        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
-#
-
-deploy:
-  - provider: GitHub
-    description: 'Appveyor build artifacts'
-    auth_token:
-      secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
-    artifact: /.*\.whl/  # upload all wheel packages to release assets
-    draft: true
-    on:
-      branch: master  # release on master branch only
-      APPVEYOR_REPO_TAG: true
-      condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
-        ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]')
+#      condition: $env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]'

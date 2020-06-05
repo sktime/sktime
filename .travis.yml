@@ -104,5 +104,5 @@ deploy:
     password: $PYPI_PASSWORD
     skip_existing: true
     on:
-      branch: $DEPLOY_BRANCH
+      tags: true
       condition: $TRAVIS_TAG =~ /^v[0-9]\.[0-9]\.[0-9]/ # deploy only on tags
