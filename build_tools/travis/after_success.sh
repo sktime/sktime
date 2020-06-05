@@ -18,6 +18,8 @@ then
     # in the github UI just because the coverage report failed to
     # be published.
     codecov --root "$TRAVIS_BUILD_DIR" || echo "Codecov upload failed"
+else
+  echo "Codecov upload skipped"
 fi
 
 # Build website on master branch
@@ -27,7 +29,7 @@ then
   pip install -e .[docs]
 
   # generate website
-  make docs || echo "Building docs failed"
+  make docs
 else
   echo "Skipped building docs"
 fi
