@@ -78,11 +78,7 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-              source: 'specific'
-              project: 'sktime'
-              pipeline: 'alan-turing-institute.sktime'
-              runVersion: 'latestFromBranch'
-              runBranch: 'refs/heads/master'
+              source: 'current'
               tags: '^v[0-9]\.[0-9]\.[0-9]'
               patterns: 'wheels_*/*manylinux*.whl'
               path: 'download/'
