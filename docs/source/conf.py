@@ -219,14 +219,13 @@ def setup(app):
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for nbsphinx extension ---------------------------------------
-nbsphinx_execute = 'never'  # always  # whether to run notebooks
-nbsphinx_allow_errors = True  # False
-nbsphinx_timeout = -1  # set to -1 to disable timeout
+nbsphinx_execute = 'always'  # always  # whether to run notebooks
+nbsphinx_allow_errors = False  # False
+nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
-?filepath={{ env.doc2path( env.docname, base=None) }}
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
 
 |Binder|_ 
 """

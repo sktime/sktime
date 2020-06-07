@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 
@@ -8,7 +9,7 @@ import pytest
 from sktime.forecasting import FH
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_FHS
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh_values
 
 TEST_CUTOFFS = [2, 5]

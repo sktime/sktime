@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -10,7 +11,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformers.series_as_features.summarize import \
     FittedParamExtractor
 
-X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
+X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 
 @pytest.mark.parametrize("param_names", ["smoothing_level"])

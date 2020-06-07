@@ -4,7 +4,7 @@
 # notebooks in example folder
 
 # remove all
-rm source/examples/*
+rm -rf source/examples/*
 
 # cd into website folder
 cd source/examples/ || return

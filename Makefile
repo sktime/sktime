@@ -43,7 +43,7 @@ clean: ## Clean build dist and egg directories left after install
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
-	python setup.py sdist
+	python setup.py sdist bdist_wheel
 
 docs: doc
 

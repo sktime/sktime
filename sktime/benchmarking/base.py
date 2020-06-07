@@ -1,15 +1,14 @@
-from abc import ABC
-from abc import abstractmethod
-
-import numpy as np
-
 __author__ = ["Markus Löning", "Viktor Kazakov"]
 __all__ = ["BaseDataset", "HDDBaseDataset", "BaseResults", "HDDBaseResults"]
 
 import os
+from abc import ABC
+from abc import abstractmethod
+from warnings import warn
+
+import numpy as np
 from joblib import dump
 from joblib import load
-from warnings import warn
 
 
 class BaseDataset:

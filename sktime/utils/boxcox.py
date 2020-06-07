@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 # adapted from scipy to allow for bounds on lambda estimation, see
 # - https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/morestats.py
