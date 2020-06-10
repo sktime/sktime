@@ -6,7 +6,7 @@
 
 variables:
   REQUIREMENTS: build_tools/requirements.txt
-  EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
+  EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5, 3.9"  # comma-separate string
 
 trigger:
   branches:
