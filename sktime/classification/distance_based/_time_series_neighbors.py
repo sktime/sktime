@@ -37,8 +37,11 @@ from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
+from sktime.contrib.shape_dtw.shape_dtw_distance import shape_dtw_distance
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+
 
 """
 Please note that many aspects of this class are taken from scikit-learn's
@@ -177,7 +180,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=False)
         y = np.asarray(y)
         X = np.array(
             [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
@@ -257,7 +260,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=False)
         X = np.array(
             [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
 
