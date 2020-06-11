@@ -9,7 +9,7 @@ Mission statement
 sktime enables understandable and composable machine learning
 with time series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_ compatible algorithms
 and model composition tools, supported by a clear taxonomy of
-learning tasks, with instructive documentation & a friendly community.
+learning tasks, with instructive documentation and a friendly community.
 
 
 History
@@ -59,7 +59,7 @@ source directory.
 Funding
 -------
 
-sktime is a community driven project, however institutional and private
+sktime is a community-driven project, however institutional and private
 grants help to assure its sustainability.
 
 We would like to thank the following funders.
@@ -72,10 +72,10 @@ We would like to thank the following funders.
    <div class="sk-sponsor-div-box">
 
 `The Alan Turing Institute <https://turing.ac.uk>`_
-funded three months of the initial development via the Strategic Priorities
-Fund delivered by UK Research and Innovation (UKRI), as part of the `Tools,
-Practices and Systems <https://www.turing.ac.uk/events/tools-practices-and-systems-data-science-and-artificial-intelligence-scoping-workshop>`_
-programme.
+funded three months of the initial development under the UKRI Strategic
+Priorities Fund (EPSRC grant no EP/T001569/1), particularly the `Tools,
+Practices and Systems <https://www.turing.ac
+.uk/events/tools-practices-and-systems-data-science-and-artificial-intelligence-scoping-workshop>`_ theme within that grant.
 
 
 .. raw:: html
