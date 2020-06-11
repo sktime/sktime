@@ -109,7 +109,7 @@ Time Series Classification
 
 For more, check out the `time series classification tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples
-/01_classification_univariate.ipynb>`__.
+/02_classification_univariate.ipynb>`__.
 
 ------------------------------------------------------------
 
