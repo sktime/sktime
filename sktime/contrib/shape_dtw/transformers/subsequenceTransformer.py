@@ -3,9 +3,9 @@ import pandas as pd
 
 import math
 
-from sktime.transformers.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
-class SubsequenceTransformer(BaseTransformer):
+class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self,subsequenceLength=5):
         self.subsequenceLength=subsequenceLength

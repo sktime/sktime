@@ -3,7 +3,8 @@ import pandas as pd
 import numbers
 import math
 
-from sktime.transformers.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+
 
 """
 The HOG1D Transformer proposed by:
@@ -19,7 +20,7 @@ The HOG1D Transformer proposed by:
   publisher={IEEE}
 }
 """
-class HOG1D(BaseTransformer):
+class HOG1D(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self,num_intervals=2,num_bins=8,scaling_factor=0.1):
         self.num_intervals=num_intervals

@@ -3,9 +3,9 @@ import pandas as pd
 
 import math
 
-from sktime.transformers.base import BaseTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
-class Derivative(BaseTransformer):
+class Derivative(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self):
         pass

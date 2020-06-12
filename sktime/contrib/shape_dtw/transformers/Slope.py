@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 import math
 import statistics
-from sktime.transformers.base import BaseTransformer
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
-
-class Slope(BaseTransformer):
+class Slope(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self,num_intervals=8):
         self.num_intervals=num_intervals
@@ -147,11 +145,3 @@ class Slope(BaseTransformer):
                 raise ValueError("num_intervals cannot be higher than num_atts")
         else:
             raise ValueError("num_intervals must be an 'int'. Found '" + type(self.num_intervals).__name__ + "' instead.")
-
-    
-if __name__ == "__main__":
-    trainPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts"
-    trainData,trainDataClasses =  load_ts(trainPath)
-    
-    slope=Slope()
-    print(len(slope.transform(trainData)))

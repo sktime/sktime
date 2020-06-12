@@ -2,14 +2,13 @@ import numpy as np
 import pandas as pd
 import pywt
 import math
-from sktime.transformers.base import BaseTransformer
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 """
 Module to calculate the Discrete Wavelet Transform of a time series.
 This class is simply a wrapper for the pywt.wavedec() function.
 """
-class DWT(BaseTransformer):
+class DWT(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self,num_levels=3):
         self.num_levels=num_levels
@@ -53,13 +52,4 @@ class DWT(BaseTransformer):
         transformedData = np.asarray(transformedData)
 
         return transformedData
-        
-
-        
-if __name__ == "__main__":
-    trainPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts"
-    trainData,trainDataClasses =  load_ts(trainPath)
-    
-    dwt=DWT(num_levels=2)
-    print(dwt.transform(trainData))
     

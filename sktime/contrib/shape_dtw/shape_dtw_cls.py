@@ -2,23 +2,21 @@
 import numpy as np
 import pandas as pd
 import math
+from sktime.utils.validation.series_as_features import check_X,check_X_y
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-from sktime.utils.validation.supervised import validate_X_y, validate_X, check_X_is_univariate
 
-#DTW distance metric (for testing purposes)
-from sktime.distances.elastic_cython import dtw_distance
 
 #Transforms
 from sktime.contrib.shape_dtw.transformers.SubsequenceTransformer import SubsequenceTransformer
-from sktime.transformers.dictionary_based.PAA import PAA
+from sktime.transformers.series_as_features.dictionary_based._paa import PAA
 from sktime.contrib.shape_dtw.transformers.DWT import DWT
 from sktime.contrib.shape_dtw.transformers.Slope import Slope
 from sktime.contrib.shape_dtw.transformers.Derivative import Derivative
 from sktime.contrib.shape_dtw.transformers.HOG1D import HOG1D
 
 #Classifiers
-from sktime.classifiers.base import BaseClassifier
-from sktime.classifiers.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.base import BaseClassifier
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 
 #Write ShapeDTW as a classifier (that implements BaseClassifier).
 #Wrapper for KNeighborsTimeSeriesClassifier that uses DTW as a distance metric
@@ -74,7 +72,6 @@ class ShapeDTW(BaseClassifier):
             self.shape_descriptor_functions=[x.lower() for x in shape_descriptor_functions]
         else:
             self.shape_descriptor_functions = None
-            
         self.metric_params=metric_params
         
 
@@ -89,10 +86,8 @@ class ShapeDTW(BaseClassifier):
     -------
     self : object
     """
-    def fit(self, X, y, input_checks=True):
-        if input_checks:
-            validate_X_y(X,y)  
-            check_X_is_univariate(X)
+    def fit(self, X, y):
+        X,y= check_X_y(X,y,enforce_univariate=True)
             
         #Convert the training data to a numpy array
         self.trainData = self.convert_X(X)
@@ -129,10 +124,8 @@ class ShapeDTW(BaseClassifier):
     -------
     output : numpy array of shape = [n_test_instances, num_classes] of probabilities
     """
-    def predict_proba(self, X, input_checks=True):
-        if input_checks:
-            validate_X(X)   
-            check_X_is_univariate(X)
+    def predict_proba(self, X):
+        X= check_X(X,enforce_univariate=True)
         self.testData = self.convert_X(X)
         
         #get the number of attributes and instances
@@ -164,10 +157,8 @@ class ShapeDTW(BaseClassifier):
     -------
     output : numpy array of shape = [n_test_instances]
     """
-    def predict(self, X, input_checks=True):
-        if input_checks:
-            validate_X(X)   
-            check_X_is_univariate(X)
+    def predict(self, X):
+        X = check_X(X,enforce_univariate=True)
         self.testData = self.convert_X(X)
         
         #get the number of attributes and instances
@@ -338,18 +329,6 @@ class ShapeDTW(BaseClassifier):
             newData.append(temp)
         
         return np.asarray(newData)
-    
-    
-    """
-    Function to convert X into a numpy array of shape [num_insts,num_atts]
-    
-    Adopted from the sktime.classifiers.interval_based.tsf module
-    """
-    def convert_X(self,X):
-        if isinstance(X, pd.DataFrame):
-            if isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
-        return X
         
  
 if __name__ == "__main__":
@@ -358,7 +337,7 @@ if __name__ == "__main__":
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=9,shape_descriptor_function="compound",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":8,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":1,"weighting_factor":0.1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=5,shape_descriptor_function="raw",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":8,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":1,"weighting_factor":0.1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))
     

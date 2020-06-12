@@ -37,7 +37,6 @@ from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
-from sktime.contrib.shape_dtw.shape_dtw_distance import shape_dtw_distance
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
