@@ -74,8 +74,6 @@ class ShapeDTW(BaseClassifier):
             self.shape_descriptor_functions = None
         self.metric_params=metric_params
         
-
-
     """
     Parameters
     ----------
@@ -89,11 +87,11 @@ class ShapeDTW(BaseClassifier):
     def fit(self, X, y):
         X,y= check_X_y(X,y,enforce_univariate=True)
             
-        #Convert the training data to a numpy array
-        self.trainData = self.convert_X(X)
+        self.trainData = X
         self.trainDataClasses = y
+        
         #get the number of attributes and instances
-        num_atts = self.trainData.shape[1]
+        num_atts = self.trainData.iloc[0,0].shape[0]
         num_insts = self.trainData.shape[0]
         
         #If a subsequence length is not given, then set it to sqrt(num_atts)
@@ -102,10 +100,13 @@ class ShapeDTW(BaseClassifier):
             
         #Convert training data into a list of subsequences
         st = SubsequenceTransformer(self.subsequence_length)
+        st.fit(self.trainData)
         self.sequences = st.transform(self.trainData)
         
+        self.trainData = self.sequences
+        
         #Create the training data by finding the shape descriptors
-        self.trainData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        #self.trainData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
         
         return self 
         
@@ -126,7 +127,8 @@ class ShapeDTW(BaseClassifier):
     """
     def predict_proba(self, X):
         X= check_X(X,enforce_univariate=True)
-        self.testData = self.convert_X(X)
+        
+        self.testData = X
         
         #get the number of attributes and instances
         num_atts = self.testData.shape[1]
@@ -134,10 +136,13 @@ class ShapeDTW(BaseClassifier):
         
         #Convert testing data into a list of subsequences
         st = SubsequenceTransformer(self.subsequence_length)
+        st.fit(self.testData)
         self.sequences = st.transform(self.testData)
         
+        self.testData = self.sequences
+        
         #Create the testing data by finding the shape descriptors
-        self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        #self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
         
         #Classify the test data
         knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
@@ -159,7 +164,8 @@ class ShapeDTW(BaseClassifier):
     """
     def predict(self, X):
         X = check_X(X,enforce_univariate=True)
-        self.testData = self.convert_X(X)
+        
+        self.testData = X
         
         #get the number of attributes and instances
         num_atts = self.testData.shape[1]
@@ -167,10 +173,13 @@ class ShapeDTW(BaseClassifier):
         
         #Convert testing data into a list of subsequences
         st = SubsequenceTransformer(self.subsequence_length)
+        st.fit(self.testData)
         self.sequences = st.transform(self.testData)
         
+        self.testData = self.sequences
+        
         #Create the testing data by finding the shape descriptors
-        self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        #self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
         
         #Classify the test data
         knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
@@ -337,7 +346,7 @@ if __name__ == "__main__":
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=5,shape_descriptor_function="raw",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":8,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":1,"weighting_factor":0.1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=4,shape_descriptor_function="raw",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":8,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":1,"weighting_factor":0.1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))
     
