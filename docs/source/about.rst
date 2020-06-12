@@ -51,9 +51,9 @@ Artwork
 
 High quality PNG and SVG logos are available in the `docs/source/images/
 <https://alan-turing-institute.com/sktime/sktime/tree/master/docs/source/images>`_
-source directory.
+source directory. The artwork was created
 
-.. image:: images/sktime-logo-no-text.png
+.. image:: images/sktime-logo-no-text.jpg
    :align: center
 
 Funding
