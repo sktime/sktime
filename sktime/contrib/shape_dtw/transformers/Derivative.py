@@ -1,45 +1,59 @@
 import numpy as np
 import pandas as pd
-
 import math
-
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import tabularize
+from sktime.utils.validation.series_as_features import check_X
 
 class Derivative(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self):
-        pass
+        super(Derivative, self).__init__()
         
     """
     Parameters
     ----------
-    X : array-like or sparse matrix of shape = [n_samples, num_atts]
-        The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
+    X : a pandas dataframe of shape = [n_samples, num_dims]
+        The training input samples. 
 
     Returns
     -------
-    dims: numpy array or sparse matrix of shape = [n_samples, num_atts]
+    dims: a pandas data frame of shape = [n_samples, num_dims]
     """
     def transform(self,X):
-        #Check input
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("ShapeDTW cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
-            else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects")
-                
-        #get the number of attributes and instances
-        num_atts = X.shape[1]
+    
+        #Check the data
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=False)
+        
+        #Get information about the dataframe
+        num_dims = X.shape[1]
+        num_atts = len(X.iloc[0,0])
         num_insts = X.shape[0]
+        col_names = X.columns
         
-        #Calculate the derivative of each time series.
-        res = []
-        for x in range(num_insts):
-            temp = [X[x][i]-X[x][(i+1)] for i in range(num_atts-1)]
-            res.append(temp)
+        dataFrames = []
+        df = pd.DataFrame()
         
-        X = np.asarray(res)
+        for x in col_names:
+            #Convert one of the columns in the dataframe to a numpy array
+            arr = tabularize(pd.DataFrame(X[x]), return_array=True)
         
-        return X
+            #Calculate the derivative of each time series.
+            transformedData = []
+            for y in range(num_insts):
+                inst = [arr[y][i]-arr[y][(i+1)] for i in range(num_atts-1)]
+                transformedData.append(inst)
+            
+            #Convert to numpy array
+            transformedData = np.asarray(transformedData)
+            
+            #Add it to the dataframe
+            colToAdd = []
+            for i in range(len(transformedData)):
+                inst = transformedData[i]
+                colToAdd.append(pd.Series(inst))
+            
+            df[x] = colToAdd
+        
+        return df

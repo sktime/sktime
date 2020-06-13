@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 import numbers
 import math
-
+from sktime.utils.data_container import tabularize
+from sktime.utils.validation.series_as_features import check_X
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 
@@ -26,6 +27,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
         self.num_intervals=num_intervals
         self.num_bins=num_bins
         self.scaling_factor=scaling_factor
+        super(HOG1D, self).__init__()
         
     """
     Parameters
@@ -38,29 +40,42 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
     dims: numpy array or sparse matrix of shape = [n_samples, num_atts]
     """
     def transform(self,X):
-        #Check input
-        if isinstance(X, pd.DataFrame):
-            if X.shape[1] > 1:
-                raise TypeError("ShapeDTW cannot handle multivariate problems yet")
-            elif isinstance(X.iloc[0,0], pd.Series):
-                X = np.asarray([a.values for a in X.iloc[:,0]])
-            else:
-                raise TypeError("Input should either be a 2d numpy array, or a pandas dataframe with a single column of Series objects")
-                
-                        
-        #get the number of attributes and instances
-        num_atts = X.shape[1]
+    
+        #Check the data
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=False)
+        
+        #Get information about the dataframe
+        num_dims = X.shape[1]
+        num_atts = len(X.iloc[0,0])
         num_insts = X.shape[0]
+        col_names = X.columns
         
-        self.checkParameters(num_atts)
+        dataFrames = []
+        df = pd.DataFrame()
         
-        temp = []
-        for x in range(num_insts):
-            res = self.calculateHOG1Ds(X[x])
-            temp.append(res)
+        for x in col_names:
+            #Convert one of the columns in the dataframe to a numpy array
+            arr = tabularize(pd.DataFrame(X[x]), return_array=True)
             
+            #Get the HOG1Ds of each time series 
+            transformedData = []
+            for y in range(num_insts):
+                inst = self.calculateHOG1Ds(arr[y])
+                transformedData.append(inst)
             
-        return np.asarray(temp)
+            #Convert to numpy array
+            transformedData = np.asarray(transformedData)
+            
+            #Add it to the dataframe
+            colToAdd = []
+            for i in range(len(transformedData)):
+                inst = transformedData[i]
+                colToAdd.append(pd.Series(inst))
+            
+            df[x] = colToAdd
+            
+        return df
         
     """
     Function to calculate the HOG1Ds given a time series.
@@ -115,7 +130,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                 if(orientToAdd<= hisBoundaries[y]):
                     histogram[y]+=1.0
                     break
-        
+
         return histogram
         
     """

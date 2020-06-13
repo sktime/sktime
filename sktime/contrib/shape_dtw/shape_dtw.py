@@ -204,7 +204,7 @@ class ShapeDTW(BaseClassifier):
                 raise ValueError("When using 'compound', shape_descriptor_functions must be a string array of length 2.")
         
         dataFrames = []
-        col_names = data.columns
+        col_names = [x for x in range(len(data.columns)*len(self.transformer))]
         
         #Apply each transformer on the set of subsequences
         for t in self.transformer:
@@ -298,7 +298,7 @@ if __name__ == "__main__":
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=5,shape_descriptor_function="dwt",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":2,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":2,"weighting_factor":0.1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=10,shape_descriptor_function="compound",shape_descriptor_functions=["raw","hog1d"],metric_params={"num_intervals_hog1d":2,"num_bins_hog1d":8,"scaling_factor_hog1d":0.1,"num_levels_dwt":3,"weighting_factor":1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))
     
