@@ -63,6 +63,7 @@ from sktime.contrib.shape_dtw.shape_dtw import ShapeDTW
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sklearn.preprocessing import StandardScaler
 
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
@@ -382,6 +383,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+    
+    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    trainX = _normalise_X(trainX)
+    testX = _normalise_X(testX)
     if resampleID !=0:
         # allLabels = np.concatenate((trainY, testY), axis = None)
         # allData = pd.concat([trainX, testX])
@@ -597,3 +602,11 @@ if __name__ == "__main__":
         tf=False
         run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
                        dataset=dataset, resampleID=resample,train_file=tf)
+
+
+def _normalise_X(self, X):
+    """Helper function to normalise X using the z-score standardisation"""
+    # Xt = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+    scaler = StandardScaler(with_mean=True, with_std=True)
+    Xt = scaler.fit_transform(X)
+    return Xt
