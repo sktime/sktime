@@ -237,7 +237,8 @@ class ShapeDTW(BaseClassifier):
     def getTransformer(self,tName):
         parameters = self.metric_params
         
-        parameters = {k.lower(): v for k, v in parameters.items()}
+        if parameters is not None:
+            parameters = {k.lower(): v for k, v in parameters.items()}
         
         #Get the weighting_factor if one is provided
         self.weighting_factor=parameters.get("weighting_factor")

@@ -263,8 +263,8 @@ def set_classifier(cls, resampleId):
         return db.BOSSEnsemble()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == 'dtwcv':
-        return nn.KNeighborsTimeSeriesClassifier(metric="dtwcv")
+    elif cls.lower() == 'dtw':
+        return nn.KNeighborsTimeSeriesClassifier(metric="dtw")
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
     elif cls.lower() == 'shapedtw':
