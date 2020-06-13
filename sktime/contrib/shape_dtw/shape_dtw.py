@@ -8,7 +8,7 @@ from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 #Transforms
 from sktime.contrib.shape_dtw.transformers.SubsequenceTransformer import SubsequenceTransformer
-from sktime.transformers.series_as_features.dictionary_based._paa import PAA
+from sktime.contrib.shape_dtw.transformers._paa_multivariate import PAA_Multivariate
 from sktime.contrib.shape_dtw.transformers.DWT import DWT
 from sktime.contrib.shape_dtw.transformers.Slope import Slope
 from sktime.contrib.shape_dtw.transformers.Derivative import Derivative
@@ -106,7 +106,7 @@ class ShapeDTW(BaseClassifier):
         self.trainData = self.sequences
         
         #Create the training data by finding the shape descriptors
-        #self.trainData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        self.trainData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
         
         return self 
         
@@ -142,7 +142,7 @@ class ShapeDTW(BaseClassifier):
         self.testData = self.sequences
         
         #Create the testing data by finding the shape descriptors
-        #self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        self.testData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
         
         #Classify the test data
         knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
@@ -179,7 +179,7 @@ class ShapeDTW(BaseClassifier):
         self.testData = self.sequences
         
         #Create the testing data by finding the shape descriptors
-        #self.testData = self.generateShapeDescriptorVectors(self.sequences,num_insts,num_atts)
+        self.testData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
         
         #Classify the test data
         knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
@@ -190,68 +190,42 @@ class ShapeDTW(BaseClassifier):
     """
     This function is used to convert a list of subsequences into a list of shape descriptors to be used for classification.
     """
-    def generateShapeDescriptorVectors(self,data,num_insts,num_atts):
+    def generateShapeDescriptors(self,data,num_insts,num_atts):
     
-        #Get the appropriate transformer
+        #Get the appropriate transformer objects
         if self.shape_descriptor_function != "compound":
-            
             self.transformer = [self.getTransformer(self.shape_descriptor_function)]
         else:
             self.transformer = []
             for x in self.shape_descriptor_functions:
                 self.transformer.append(self.getTransformer(x))
-                
-           
-        if len(self.transformer)>2:
-            raise ValueError("ShapeDTW currently only supports two shape descriptor functions simultaenously.")
-           
-        result = []
+            #Compound only supports 2 shape descriptor functions 
+            if not (len(self.transformer)==2):
+                raise ValueError("When using 'compound', shape_descriptor_functions must be a string array of length 2.")
+        
+        dataFrames = []
+        col_names = data.columns
         
         #Apply each transformer on the set of subsequences
         for t in self.transformer:
             if t is None:
-                result.append(data)
-                pass
-            elif isinstance(t,PAA):
-                #Check params are okay before running PAA
-                if isinstance(t.num_intervals,int):
-                    if t.num_intervals <=0:
-                        raise ValueError("num_intervals must have the value of at least 1")
-                    if t.num_intervals > self.subsequence_length:
-                        raise ValueError("num_intervals cannot be higher than subsequence_length")
-                else:
-                    raise ValueError("num_intervals must be an 'int'. Found '" + type(self.num_intervals).__name__ + "' instead.")
-                    
-                    
-                #Apply the PAA on the subsequences
-                #Slighty different because PAA returns a pandas data frame.
-                #the others return a numpy array
-                newData = np.zeros((num_insts,num_atts,t.num_intervals))
-                for x in range(num_insts):
-                    #Apply PAA
-                    temp = t.transform(data[x])
-                    #Convert to a Numpy Array
-                    temp = self.convert_X(temp)
-                    newData[x] = temp
-                result.append(newData)
+                #Do no transformations
+                dataFrames.append(data)
             else:
-                #Apply the transform on each instance
-                newData = []
-                for x in range(num_insts):
-                    temp = t.transform(data[x])
-                    newData.append(temp)
-                result.append(np.asarray(newData))
+                #Do the transformation and extract the resulting data frame.
+                t.fit(data)
+                newData = t.transform(data)
+                dataFrames.append(newData)
                 
-        if self.shape_descriptor_function != "compound":
-            result = result[0]
-        else:
-            result = self.concatenateFeatureVectors(result)
+        #Combine the dataframes together
+        result = pd.concat(dataFrames, axis=1, sort=False)
+        result.columns=col_names
             
         return result
         
         
     """
-    Function to extract the appropriate transformer.
+    Function to extract the appropriate transformer
     
     Returns
     -------
@@ -273,8 +247,8 @@ class ShapeDTW(BaseClassifier):
         elif tName == "paa":
             num_intervals = parameters.get("num_intervals_paa")
             if num_intervals is None:
-                return PAA()
-            return PAA(num_intervals)
+                return PAA_Multivariate()
+            return PAA_Multivariate(num_intervals)
         elif tName == "dwt":
             num_levels = parameters.get("num_levels_dwt")
             if num_levels is None:
@@ -317,28 +291,6 @@ class ShapeDTW(BaseClassifier):
         else:
             raise ValueError("Invalid shape desciptor function.")
     
-    """
-    This function is to concatenate multiple shape descriptors as if it was one shape desciptor
-    """
-    def concatenateFeatureVectors(self,data):
-    
-        weighting_factor = self.weighting_factor
-        if weighting_factor is None:
-            weighting_factor=1
-        
-        num_insts=data[0].shape[0]
-        num_atts=data[0].shape[1]
-        
-        newData = []
-        
-        for x in range(num_insts):
-            temp = []
-            for y in range(num_atts):
-                temp.append(np.concatenate((data[0][x][y],data[1][x][y]*weighting_factor)))
-            newData.append(temp)
-        
-        return np.asarray(newData)
-        
  
 if __name__ == "__main__":
     trainPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts"
@@ -346,7 +298,7 @@ if __name__ == "__main__":
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=4,shape_descriptor_function="raw",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":8,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":1,"weighting_factor":0.1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=5,shape_descriptor_function="dwt",shape_descriptor_functions=["hog1d","raw"],metric_params={"num_intervals_paa":2,"num_bins_hog1d":12,"scaling_factor_hog1d":0.1,"num_levels_dwt":2,"weighting_factor":0.1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))
     

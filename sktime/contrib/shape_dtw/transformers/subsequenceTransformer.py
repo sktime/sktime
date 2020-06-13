@@ -7,21 +7,26 @@ from sktime.utils.validation.series_as_features import check_X
 
 __author__= "Vincent Nicholson"
 
+"""
+This class is to transform a univariate series into a multivariate one by extracting sets of subsequences.
+
+Proposed in the ShapeDTW algorithm.
+"""
 class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
 
-    def __init__(self,subsequenceLength=5):
-        self.subsequenceLength=subsequenceLength
+    def __init__(self,subsequence_length=5):
+        self.subsequence_length=subsequence_length
         super(SubsequenceTransformer, self).__init__()
         
     """
     Parameters
     ----------
-    X : array-like or sparse matrix of shape = [n_samples, num_atts]
-        The training input samples.  If a Pandas data frame is passed, the column 0 is extracted
+    X : a pandas dataframe of shape = [n_samples, 1]
+        The training input samples. 
 
     Returns
     -------
-    dims: numpy array or sparse matrix of shape = [n_samples, num_atts]
+    dims: a pandas data frame of shape = [n_samples, num_atts]
     """
     def transform(self,X):
     
@@ -36,14 +41,14 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
         #Check the parameters are appropriate
         self.checkParameters(num_atts)
         
-        pad_amnt = math.floor(self.subsequenceLength/2)
+        pad_amnt = math.floor(self.subsequence_length/2)
         padded_data = np.zeros((num_insts,num_atts + (2*pad_amnt)))
 
         #Pad both ends of X
         for i in range(num_insts):
             padded_data[i] = np.pad(X[i],pad_amnt,mode='edge')
             
-        subsequences = np.zeros((num_insts,num_atts,self.subsequenceLength))
+        subsequences = np.zeros((num_insts,num_atts,self.subsequence_length))
         
         #Extract subsequences
         for i in range(num_insts):
@@ -66,7 +71,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
     
     """
     def extractSubsequences(self,instance,num_atts):
-        shape = (num_atts,self.subsequenceLength)
+        shape = (num_atts,self.subsequence_length)
         strides = (instance.itemsize,instance.itemsize)
         return np.lib.stride_tricks.as_strided(instance, shape=shape, strides=strides)
     
@@ -78,13 +83,13 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
     ValueError if a parameters input is invalid.
     """
     def checkParameters(self,num_atts):
-        if isinstance(self.subsequenceLength,int):
-            if self.subsequenceLength <=0:
-                raise ValueError("subsequenceLength must have the value of at least 1")
-            if self.subsequenceLength > num_atts:
-                raise ValueError("subsequenceLength cannot be higher than the length of the time series.")
+        if isinstance(self.subsequence_length,int):
+            if self.subsequence_length <=0:
+                raise ValueError("subsequence_length must have the value of at least 1")
+            if self.subsequence_length > num_atts:
+                raise ValueError("subsequence_length cannot be higher than the length of the time series.")
         else:
-            raise ValueError("subsequenceLength must be an 'int'. Found '" + type(self.subsequenceLength).__name__ + "' instead.")
+            raise ValueError("subsequence_length must be an 'int'. Found '" + type(self.subsequence_length).__name__ + "' instead.")
 
     
     
