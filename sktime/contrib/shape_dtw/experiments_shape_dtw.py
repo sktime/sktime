@@ -268,6 +268,9 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
     elif cls.lower() == 'shapedtw':
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+    EDIT SHAPEDTW PARAMETERS HERE
+    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
         return ShapeDTW()
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
