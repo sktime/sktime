@@ -73,6 +73,7 @@ class ShapeDTW(BaseClassifier):
         else:
             self.shape_descriptor_functions = None
         self.metric_params=metric_params
+        super(ShapeDTW, self).__init__()
         
     """
     Parameters
@@ -107,6 +108,11 @@ class ShapeDTW(BaseClassifier):
         
         #Create the training data by finding the shape descriptors
         self.trainData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
+        
+        #Fit the kNN classifier
+        self.knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
+        self.knn.fit(self.trainData,self.trainDataClasses)
+        self.classes_ = self.knn.classes_
         
         return self 
         
@@ -145,9 +151,7 @@ class ShapeDTW(BaseClassifier):
         self.testData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
         
         #Classify the test data
-        knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
-        knn.fit(self.trainData,self.trainDataClasses)
-        return knn.predict_proba(self.testData)
+        return self.knn.predict_proba(self.testData)
 
 
     """
@@ -180,11 +184,9 @@ class ShapeDTW(BaseClassifier):
         
         #Create the testing data by finding the shape descriptors
         self.testData = self.generateShapeDescriptors(self.sequences,num_insts,num_atts)
-        
+
         #Classify the test data
-        knn = KNeighborsTimeSeriesClassifier(self.n_neighbours)
-        knn.fit(self.trainData,self.trainDataClasses)
-        return knn.predict(self.testData)
+        return self.knn.predict(self.testData)
         
         
     """
@@ -237,9 +239,10 @@ class ShapeDTW(BaseClassifier):
     def getTransformer(self,tName):
         parameters = self.metric_params
         
-        if parameters is not None:
-            parameters = {k.lower(): v for k, v in parameters.items()}
+        if parameters is None:
+            parameters={}
         
+        parameters = {k.lower(): v for k, v in parameters.items()}
         #Get the weighting_factor if one is provided
         self.weighting_factor=parameters.get("weighting_factor")
         
