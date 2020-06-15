@@ -240,6 +240,29 @@ multivariate_datasets = [
         "UWaveGestureLibrary"
 ]
 
+#Used on lines 410 and 411
+def _normalise_X(X):
+    """Helper function to normalise X using the z-score standardisation"""
+    #get the number of attributes and instances
+    num_atts = X.shape[1]
+    num_insts = X.shape[0]
+    
+    df = pd.DataFrame()
+    
+    for x in X.columns:
+        col = X[x]
+        data = []
+        for y in range(num_insts):
+            ser = col.iloc[y]
+            ser=ser.to_numpy()
+            sd = np.std(ser)
+            avg = np.mean(ser)
+            ser = (ser - avg) / sd
+            data.append(pd.Series(ser))
+        df[x] = data
+        
+    return df
+
 
 def set_classifier(cls, resampleId):
     """
@@ -268,11 +291,16 @@ def set_classifier(cls, resampleId):
         return nn.KNeighborsTimeSeriesClassifier(metric="dtw")
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
-    elif cls.lower() == 'shapedtw':
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-    EDIT SHAPEDTW PARAMETERS HERE
-    """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        return ShapeDTW()
+    elif cls.lower() == 'shapedtw_raw':
+        return ShapeDTW(n_neighbours=1,subsequence_length=30,shape_descriptor_function="raw",metric_params=None)
+    elif cls.lower() == 'shapedtw_dwt':
+        return ShapeDTW(n_neighbours=1, subsequence_length=30,shape_descriptor_function="dwt",metric_params={"num_levels_dwt":3})
+    elif cls.lower() == 'shapedtw_paa':
+        return ShapeDTW(n_neighbours=1, subsequence_length=30,shape_descriptor_function="paa",metric_params={"num_intervals_paa":5})
+    elif cls.lower() == 'shapedtw_slope':
+        return ShapeDTW(n_neighbours=1, subsequence_length=30, shape_descriptor_function="slope",metric_params={"num_intervals_slope":5})
+    elif cls.lower() == 'shapedtw_hog1d':
+        return ShapeDTW(n_neighbours=1, subsequence_length=30, shape_descriptor_function="hog1d",metric_params={"num_bins_hog1d":8,"num_intervals_hog1d":2,"scaling_factor_hog1d":0.1})
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
@@ -386,10 +414,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
-    
-    """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
     trainX = _normalise_X(trainX)
     testX = _normalise_X(testX)
+    
     if resampleID !=0:
         # allLabels = np.concatenate((trainY, testY), axis = None)
         # allData = pd.concat([trainX, testX])
@@ -607,9 +635,3 @@ if __name__ == "__main__":
                        dataset=dataset, resampleID=resample,train_file=tf)
 
 
-def _normalise_X(self, X):
-    """Helper function to normalise X using the z-score standardisation"""
-    # Xt = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    scaler = StandardScaler(with_mean=True, with_std=True)
-    Xt = scaler.fit_transform(X)
-    return Xt
