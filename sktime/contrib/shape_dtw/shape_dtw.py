@@ -86,7 +86,7 @@ class ShapeDTW(BaseClassifier):
     self : object
     """
     def fit(self, X, y):
-        X,y= check_X_y(X,y,enforce_univariate=True)
+        X,y= check_X_y(X,y,enforce_univariate=False)
             
         self.trainData = X
         self.trainDataClasses = y
@@ -132,7 +132,7 @@ class ShapeDTW(BaseClassifier):
     output : numpy array of shape = [n_test_instances, num_classes] of probabilities
     """
     def predict_proba(self, X):
-        X= check_X(X,enforce_univariate=True)
+        X= check_X(X,enforce_univariate=False)
         
         self.testData = X
         
@@ -167,7 +167,7 @@ class ShapeDTW(BaseClassifier):
     output : numpy array of shape = [n_test_instances]
     """
     def predict(self, X):
-        X = check_X(X,enforce_univariate=True)
+        X = check_X(X,enforce_univariate=False)
         
         self.testData = X
         
@@ -299,10 +299,13 @@ class ShapeDTW(BaseClassifier):
 if __name__ == "__main__":
     trainPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts"
     testPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TEST.ts"
+    
+    #trainPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Multivariate2018_ts\\AtrialFibrillation\\AtrialFibrillation_TRAIN.ts"
+    #testPath="C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Multivariate2018_ts\\AtrialFibrillation\\AtrialFibrillation_TEST.ts"
+    
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=10,shape_descriptor_function="compound",shape_descriptor_functions=["raw","hog1d"],metric_params={"num_intervals_hog1d":2,"num_bins_hog1d":8,"scaling_factor_hog1d":0.1,"num_levels_dwt":3,"weighting_factor":1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=30,shape_descriptor_function="raw",shape_descriptor_functions=["raw","hog1d"],metric_params={"num_intervals_hog1d":2,"num_bins_hog1d":8,"scaling_factor_hog1d":0.1,"num_levels_dwt":3,"weighting_factor":1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))
-    

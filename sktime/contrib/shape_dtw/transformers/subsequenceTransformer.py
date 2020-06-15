@@ -32,7 +32,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
     
         #get the number of attributes and instances
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=False)
         X = tabularize(X, return_array=True)
         
         num_atts = X.shape[1]
@@ -86,8 +86,8 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
         if isinstance(self.subsequence_length,int):
             if self.subsequence_length <=0:
                 raise ValueError("subsequence_length must have the value of at least 1")
-            if self.subsequence_length > num_atts:
-                raise ValueError("subsequence_length cannot be higher than the length of the time series.")
+            #if self.subsequence_length > num_atts:
+                #raise ValueError("subsequence_length cannot be higher than the length of the time series.")
         else:
             raise ValueError("subsequence_length must be an 'int'. Found '" + type(self.subsequence_length).__name__ + "' instead.")
 
