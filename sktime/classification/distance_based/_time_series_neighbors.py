@@ -180,10 +180,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         X, y = check_X_y(X, y, enforce_univariate=False)
         y = np.asarray(y)
-        X = convert_data(X)   
+        X = convert_data(X)
         check_classification_targets(y)
 
-        #print(X)
+        # print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
@@ -473,24 +473,25 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         check_array.__wrapped__.__code__ = temp
         return probabilities
 
-"""
-Helper function to convert univariate data into a 2D numpy array or multivariate data into a 3D numpy array
-"""
+
+# Helper function to convert univariate data into a 2D numpy array
+# or multivariate data into a 3D numpy array
 def convert_data(X):
-    #If X is univariate
+    # If X is univariate
     if X.shape[1] == 1:
         X = np.array(
             [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
     else:
-        #If X is multivariate
+        # If X is multivariate
         data = []
         for i in range(X.shape[0]):
             row = []
             for j in X.columns:
-                row.append(np.asarray(X.iloc[i,j]))
+                row.append(np.asarray(X.iloc[i, j]))
             data.append(row)
-        X = np.asarray(data)   
+        X = np.asarray(data)
     return X
+
 
 # overwrite sklearn internal checks, this is really hacky
 # we now need to replace: check_array.__wrapped__.__code__ since it's
