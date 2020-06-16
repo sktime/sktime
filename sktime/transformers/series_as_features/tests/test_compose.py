@@ -10,7 +10,7 @@ from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.utils.data_container import tabularize
-from sktime.utils.testing import generate_df_from_array
+from sktime.utils._testing import generate_df_from_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():
@@ -69,8 +69,8 @@ def test_row_transformer_transform_inverse_transform():
 
 
 def test_ColumnTransformer_pipeline():
-    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
-    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 
     # using Identity function transformers (transform series to series)
     def id_func(X):
@@ -91,8 +91,8 @@ def test_ColumnTransformer_pipeline():
 
 
 def test_RowTransformer_pipeline():
-    X_train, y_train = load_basic_motions("TRAIN", return_X_y=True)
-    X_test, y_test = load_basic_motions("TEST", return_X_y=True)
+    X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 
     # using pure sklearn
     def row_mean(X):

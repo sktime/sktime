@@ -7,7 +7,7 @@
 
 # License: 3-clause BSD
 
-if [[ "$COVERAGE" == "true" ]];
+if [ "$COVERAGE" == "true" ];
 then
     # Need to run codecov from a git checkout, so we copy .coverage
     # from TEST_DIR where pytest has been run
@@ -17,16 +17,23 @@ then
     # very reliable but we don't want travis to report a failure
     # in the github UI just because the coverage report failed to
     # be published.
-    codecov --root "$TRAVIS_BUILD_DIR" || echo "codecov upload failed"
+    codecov --root "$TRAVIS_BUILD_DIR" || echo "Codecov upload failed"
+else
+  echo "Skipped codecov upload"
 fi
 
 # Build website on master branch
-if [[ "$TRAVIS_OS_NAME" == "$TRAVIS_DEPLOY_OS_NAME" ]] && [[ "$TRAVIS_BRANCH" == "$TRAVIS_DEPLOY_BRANCH" ]];
+if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ];
 then
-
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
 
+  # we have to manually install bug fix here to parse md docs
+  # https://github.com/sphinx-doc/sphinx/issues/2840
+  pip install git+https://github.com/crossnox/m2r@dev#egg=m2r
+
   # generate website
   make docs
+else
+  echo "Skipped building docs"
 fi

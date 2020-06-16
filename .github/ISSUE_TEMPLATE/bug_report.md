@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: "\U0001F41B Bug report"
 about: Create a report to help us improve
 title: "[BUG]"
 labels: bug
@@ -44,6 +44,7 @@ import platform; print(platform.platform())
 import sys; print("Python", sys.version)
 import numpy; print("NumPy", numpy.__version__)
 import scipy; print("SciPy", scipy.__version__)
+import scipy; print("Pandas", pandas.__version__)
 import sktime; print("sktime", sktime.__version__)
 -->
 
