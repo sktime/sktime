@@ -39,7 +39,7 @@ class BOSSEnsemble(BaseClassifier):
     }
     Overview: Input n series length m
     BOSS performs a gird search over a set of parameter values, evaluating
-    each with a LOOCV. If then retains
+    each with a LOOCV. It then retains
     all ensemble members within 92% of the best. There are three primary
     parameters:
             alpha: alphabet size
@@ -57,7 +57,7 @@ class BOSSEnsemble(BaseClassifier):
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /timeseriesweka/classifiers/dictionary_based/BOSS.java
+    /tsml/classifiers/dictionary_based/BOSS.java
 
 
     Parameters
@@ -65,23 +65,19 @@ class BOSSEnsemble(BaseClassifier):
     randomised_ensemble     : bool, turns the option to just randomise the
     ensemble members rather than cross validate (cBOSS) (default=False)
     n_parameter_samples     : int, if search is randomised, number of
-    parameter combos to try
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
+    parameter combos to try (default=250)
     threshold               : double [0,1]. retain all classifiers within
     threshold% of the best one, optional (default =0.92)
     max_ensemble_size       : int or None, retain a maximum number of
     classifiers, even if within threshold, optional
     (default = 500, recommended 50 for cBOSS)
-    alphabet_size           : range of alphabet sizes to try (default to
-    single value, 4)
     max_win_len_prop        : maximum window length as a proportion of
     series length (default =1)
-    time_limit              : time contract to limit build time in minutes (
-    default=0, no limit)
-    alphabet_size           : range of alphabet size to search for (default,
-    a single value a=4)
+    time_limit              : time contract to limit build time in minutes
+    (default=0, no limit)
     min_window              : minimum window size, (default=10)
+    random_state            : int or None, seed for random, integer,
+    optional (default to no seed)
 
     Attributes
     ----------
@@ -102,7 +98,6 @@ class BOSSEnsemble(BaseClassifier):
                  max_ensemble_size=500,
                  max_win_len_prop=1,
                  time_limit=0.0,
-                 alphabet_size=4,
                  min_window=10,
                  random_state=None
                  ):
@@ -126,7 +121,7 @@ class BOSSEnsemble(BaseClassifier):
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
-        self.alphabet_size = alphabet_size
+        self.alphabet_size = 4
         self.min_window = min_window
         super(BOSSEnsemble, self).__init__()
 

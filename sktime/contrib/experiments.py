@@ -260,6 +260,9 @@ def set_classifier(cls, resampleId):
         return ib.TimeSeriesForest(random_state = resampleId)
     elif cls.lower() == 'boss':
         return db.BOSSEnsemble()
+    elif cls.lower() == 'tde':
+        from sktime.contrib.dictionary_based._tde import TDE
+        return TDE()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'dtwcv':
@@ -577,15 +580,15 @@ if __name__ == "__main__":
     else : #Local run
 #        data_dir = "/scratch/univariate_datasets/"
 #        results_dir = "/scratch/results"
-        data_dir = "/bench/datasets/Univariate2018/"
-        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        # data_dir = "Z:/ArchiveData/Univariate_ts/"
-        # results_dir = "E:/Temp/"
+#         data_dir = "/bench/datasets/Univariate2018/"
+#         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        data_dir = "Z:/ArchiveData/Univariate_ts/"
+        results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
         dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "TSF"
+        classifier = "TDE"
         resample = 1
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]

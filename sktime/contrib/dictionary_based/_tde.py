@@ -20,65 +20,54 @@ from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
 
+# TO DO: Make more efficient
+
+
 class TDE(BaseClassifier):
     """ Temporal Dictionary Ensemble (TDE)
 
-    Bag of SFA Symbols Ensemble: implementation of BOSS from Schafer:
-    @article
-    {schafer15boss,
-     author = {Patrick Schäfer,
-            title = {The BOSS is concerned with time series classification
-            in the presence of noise},
-            journal = {Data Mining and Knowledge Discovery},
-            volume = {29},
-            number= {6},
-            year = {2015}
-    }
+    todo: add bibtex when published
+
     Overview: Input n series length m
-    BOSS performs a gird search over a set of parameter values, evaluating
-    each with a LOOCV. If then retains
-    all ensemble members within 92% of the best. There are three primary
-    parameters:
+    TDE searches k parameter values selected using a Gaussian processes
+    regressor, evaluating each with a LOOCV. It then retains s
+    ensemble members.
+    There are six primary parameters for individual classifers:
             alpha: alphabet size
             w: window length
-            l: word length.
-    for any combination, a single BOSS slides a window length w along the
-    series. The w length window is shortened to
+            l: word length
+            p: normalise/no normalise
+            h: levels
+            b: MCB/IGB
+    for any combination, an individual TDE classifier slides a window of
+    length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These l
     coefficents are then discretised into alpha possible values, to form a
-    word length l. A histogram of words for each
-    series is formed and stored. fit involves finding n histograms.
+    word length l using breakpoints found using b. A histogram of words for
+    each series is formed and stored, using a spatial pyramid of h levels.
+    fit involves finding n histograms.
 
     predict uses 1 nearest neighbour with a bespoke distance function.
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /timeseriesweka/classifiers/dictionary_based/BOSS.java
+    /tsml/classifiers/dictionary_based/TDE.java
 
 
     Parameters
     ----------
-    randomised_ensemble     : bool, turns the option to just randomise the
-    ensemble members rather than cross validate (cBOSS) (default=False)
     n_parameter_samples     : int, if search is randomised, number of
-    parameter combos to try
-    random_state            : int or None, seed for random, integer,
-    optional (default to no seed)
-    threshold               : double [0,1]. retain all classifiers within
-    threshold% of the best one, optional (default =0.92)
+    parameter combos to try (default=250)
     max_ensemble_size       : int or None, retain a maximum number of
-    classifiers, even if within threshold, optional
-    (default = 500, recommended 50 for cBOSS)
-    alphabet_size           : range of alphabet sizes to try (default to
-    single value, 4)
+    classifiers, even if within threshold, optional (default = 100)
+    time_limit              : time contract to limit build time in minutes
+    (default=0, no limit)
     max_win_len_prop        : maximum window length as a proportion of
     series length (default =1)
-    time_limit              : time contract to limit build time in minutes (
-    default=0, no limit)
-    alphabet_size           : range of alphabet size to search for (default,
-    a single value a=4)
     min_window              : minimum window size, (default=10)
+    random_state            : int or None, seed for random, integer,
+    optional (default to no seed)
 
     Attributes
     ----------
@@ -89,6 +78,8 @@ class TDE(BaseClassifier):
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
     weights                 : weight of each classifier in the ensemble
+    prev_parameters_x       : parameter value of previous classifiers for GP
+    prev_parameters_y       : accuracy of previous classifiers for GP
 
     """
 
@@ -130,17 +121,15 @@ class TDE(BaseClassifier):
         super(TDE, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of BOSS classifiers from the training set (X,
-        y), either through randomising over the para
-         space to make a fixed size ensemble quickly or by creating a
-         variable size ensemble of those within a threshold
-         of the best
+        """Build an ensemble of individual TDE classifiers from the training
+        set (X,y), through randomising over the parameter space to a set
+        number of times then selecting new parameters using Gaussian
+        processes
+
         Parameters
         ----------
-        X : array-like or sparse matrix of shape = [n_instances, series_length]
-            The training input samples.  If a Pandas data frame is passed,
-            it must have a single column. BOSS not configured
-            to handle multivariate
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
         y : array-like, shape = [n_instances] The class labels.
 
         Returns
@@ -301,10 +290,7 @@ class TDE(BaseClassifier):
 
 
 class IndividualTDE(BaseClassifier):
-    """ Single Bag of SFA Symbols (BOSS) classifier
-
-    Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
-    @article
+    """ Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model
     """
 
     def __init__(self,
