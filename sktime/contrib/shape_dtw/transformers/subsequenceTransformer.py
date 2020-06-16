@@ -32,7 +32,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
     
         #get the number of attributes and instances
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
+        X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
         
         num_atts = X.shape[1]
