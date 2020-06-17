@@ -184,7 +184,8 @@ class BOSSEnsemble(BaseClassifier):
                 y_subsample = y[subsample]
 
                 boss = BOSSIndividual(parameters[0], parameters[1],
-                                      self.alphabet_size, parameters[2])
+                                      self.alphabet_size, parameters[2],
+                                      random_state=self.random_state)
                 boss.fit(X_subsample, y_subsample)
                 boss._clean()
 
@@ -216,7 +217,8 @@ class BOSSEnsemble(BaseClassifier):
                 for win_size in range(self.min_window, max_window + 1,
                                       win_inc):
                     boss = BOSSIndividual(win_size, self.word_lengths[0],
-                                          self.alphabet_size, normalise)
+                                          self.alphabet_size, normalise,
+                                          random_state=self.random_state)
                     boss.fit(X, y)
 
                     best_classifier_for_win_size = boss
@@ -282,7 +284,7 @@ class BOSSEnsemble(BaseClassifier):
         for n, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                sums[i, self.class_dictionary.get(preds[i])] += self.weights[n]
+                sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
         dists = sums / (np.ones(self.n_classes) * self.weight_sum)
 
@@ -361,12 +363,13 @@ class BOSSIndividual(BaseClassifier):
                  word_length=8,
                  alphabet_size=4,
                  norm=False,
-                 random_state=1
+                 random_state=None
                  ):
         self.window_size = window_size
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.norm = norm
+
         self.random_state = random_state
 
         self.transformer = SFA(word_length=word_length,
@@ -404,15 +407,13 @@ class BOSSIndividual(BaseClassifier):
 
         rng = check_random_state(self.random_state)
 
-        num_insts = X.shape[0]
-        classes = np.zeros(num_insts, dtype=np.int_)
-
+        classes = []
         test_bags = self.transformer.transform(X)
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
 
         for i, test_bag in enumerate(test_bags):
             best_dist = sys.float_info.max
-            nn = -1
+            nn = None
 
             for n, bag in enumerate(self.transformed_data):
                 dist = boss_distance(test_bag, bag, best_dist)
@@ -422,9 +423,9 @@ class BOSSIndividual(BaseClassifier):
                     best_dist = dist
                     nn = self.class_vals[n]
 
-            classes[i] = nn
+            classes.append(nn)
 
-        return classes
+        return np.array(classes)
 
     def predict_proba(self, X):
         preds = self.predict(X)
@@ -438,7 +439,7 @@ class BOSSIndividual(BaseClassifier):
     def _train_predict(self, train_num):
         test_bag = self.transformed_data[train_num]
         best_dist = sys.float_info.max
-        nn = -1
+        nn = None
 
         for n, bag in enumerate(self.transformed_data):
             if n == train_num:

@@ -4,15 +4,15 @@ IndividualTDE and TDE.
 """
 
 __author__ = "Matthew Middlehurst"
-__all__ = ["TDE", "IndividualTDE", "histogram_intersection"]
+__all__ = ["TemporalDictionaryEnsemble", "IndividualTDE",
+           "histogram_intersection"]
 
 import math
-import random
-import sys
 import time
 
 import numpy as np
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils import check_random_state
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
@@ -23,7 +23,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 # TO DO: Make more efficient
 
 
-class TDE(BaseClassifier):
+class TemporalDictionaryEnsemble(BaseClassifier):
     """ Temporal Dictionary Ensemble (TDE)
 
     todo: add bibtex when published
@@ -93,12 +93,11 @@ class TDE(BaseClassifier):
                  random_state=None
                  ):
         self.n_parameter_samples = n_parameter_samples
-        self.random_state = random_state
-        random.seed(random_state)
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.randomly_selected_params = randomly_selected_params
+        self.random_state = random_state
 
         self.classifiers = []
         self.weights = []
@@ -118,7 +117,7 @@ class TDE(BaseClassifier):
         self.min_window = min_window
         self.levels = [1, 2, 3]
         self.igb_options = [True, False]
-        super(TDE, self).__init__()
+        super(TemporalDictionaryEnsemble, self).__init__()
 
     def fit(self, X, y):
         """Build an ensemble of individual TDE classifiers from the training
@@ -164,26 +163,28 @@ class TDE(BaseClassifier):
         if self.time_limit > 0:
             self.n_parameter_samples = 0
 
+        rng = check_random_state(self.random_state)
+
         while (train_time < self.time_limit or num_classifiers <
                self.n_parameter_samples) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(
-                    random.randint(0, len(possible_parameters) - 1))
+                    rng.randint(0, len(possible_parameters)))
             else:
-                gp = GaussianProcessRegressor()
+                gp = GaussianProcessRegressor(random_state=self.random_state)
                 gp.fit(self.prev_parameters_x, self.prev_parameters_y)
                 preds = gp.predict(possible_parameters)
-                parameters = possible_parameters.pop(np.random.choice(
+                parameters = possible_parameters.pop(rng.choice(
                     np.flatnonzero(preds == preds.max())))
 
-            subsample = np.random.randint(self.n_instances,
-                                          size=subsample_size)
+            subsample = rng.randint(self.n_instances, size=subsample_size)
             X_subsample = X.iloc[subsample, :]
             y_subsample = y[subsample]
 
             tde = IndividualTDE(parameters[0], parameters[1],
                                 self.alphabet_size, parameters[2],
-                                parameters[3], parameters[4])
+                                parameters[3], parameters[4],
+                                random_state=self.random_state)
             tde.fit(X_subsample, y_subsample)
 
             tde.accuracy = self._individual_train_acc(tde, y_subsample,
@@ -215,9 +216,10 @@ class TDE(BaseClassifier):
         return self
 
     def predict(self, X):
-        return [self.classes_[int(np.random.choice(
+        rng = check_random_state(self.random_state)
+        return np.array([self.classes_[int(rng.choice(
             np.flatnonzero(prob == prob.max())))] for prob
-                in self.predict_proba(X)]
+                         in self.predict_proba(X)])
 
     def predict_proba(self, X):
         self.check_is_fitted()
@@ -228,7 +230,7 @@ class TDE(BaseClassifier):
         for n, clf in enumerate(self.classifiers):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
-                sums[i, self.class_dictionary.get(preds[i])] += self.weights[n]
+                sums[i, self.class_dictionary[preds[i]]] += self.weights[n]
 
         dists = sums / (np.ones(self.n_classes) * self.weight_sum)
 
@@ -299,7 +301,8 @@ class IndividualTDE(BaseClassifier):
                  alphabet_size=4,
                  norm=False,
                  levels=1,
-                 igb=False
+                 igb=False,
+                 random_state=None
                  ):
         self.window_size = window_size
         self.word_length = word_length
@@ -308,7 +311,10 @@ class IndividualTDE(BaseClassifier):
         self.levels = levels
         self.igb = igb
 
-        self.transform = SFA(word_length, alphabet_size,
+        self.random_state = random_state
+
+        self.transform = SFA(word_length=word_length,
+                             alphabet_size=alphabet_size,
                              window_size=window_size, norm=norm,
                              levels=levels, igb=igb, bigrams=True,
                              remove_repeat_words=True,
@@ -341,27 +347,26 @@ class IndividualTDE(BaseClassifier):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
-        num_insts = X.shape[0]
-        classes = np.zeros(num_insts, dtype=np.int_)
+        rng = check_random_state(self.random_state)
 
+        classes = []
         test_bags = self.transform.transform(X)
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
 
         for i, test_bag in enumerate(test_bags):
-            best_sim = sys.float_info.min
-            nn = -1
+            best_sim = -1
+            nn = None
 
             for n, bag in enumerate(self.transformed_data):
                 sim = histogram_intersection(test_bag, bag)
 
-                if sim > best_sim or (sim == best_sim and
-                                      random.random() < 0.5):
+                if sim > best_sim or (sim == best_sim and rng.random() < 0.5):
                     best_sim = sim
                     nn = self.class_vals[n]
 
-            classes[i] = nn
+            classes.append(nn)
 
-        return classes
+        return np.array(classes)
 
     def predict_proba(self, X):
         preds = self.predict(X)
@@ -374,8 +379,8 @@ class IndividualTDE(BaseClassifier):
 
     def _train_predict(self, train_num):
         test_bag = self.transformed_data[train_num]
-        best_sim = sys.float_info.min
-        nn = -1
+        best_sim = -1
+        nn = None
 
         for n, bag in enumerate(self.transformed_data):
             if n == train_num:
