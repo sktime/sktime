@@ -58,7 +58,7 @@ Development Version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
-`advanced installation instructions <https://alan-turing-institute.github.io/sktime/extension.html>`__.
+`advanced installation instructions <https://alan-turing-institute.github.io/sktime/installation.html>`__.
 
 ------------------------------------------------------------
 
