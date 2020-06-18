@@ -138,7 +138,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         X, y = check_X_y(X, y, enforce_univariate=True)
 
-        self.time_limit = self.time_limit * 6e+10
+        self.time_limit = self.time_limit * 60
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -154,7 +154,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
-        start_time = time.time_ns()
+        start_time = time.time()
         train_time = 0
         subsample_size = int(self.n_instances * 0.7)
         lowest_acc = 0
@@ -207,7 +207,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             self.prev_parameters_y.append(tde.accuracy)
 
             num_classifiers += 1
-            train_time = time.time_ns() - start_time
+            train_time = time.time() - start_time
 
         self.n_estimators = len(self.classifiers)
         self.weight_sum = np.sum(self.weights)
