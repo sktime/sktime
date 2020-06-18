@@ -322,11 +322,11 @@ class IndividualTDE(BaseClassifier):
         self.random_state = random_state
 
         self.transformer = SFA(word_length=word_length,
-                             alphabet_size=alphabet_size,
-                             window_size=window_size, norm=norm,
-                             levels=levels, igb=igb, bigrams=True,
-                             remove_repeat_words=True,
-                             save_words=False)
+                               alphabet_size=alphabet_size,
+                               window_size=window_size, norm=norm,
+                               levels=levels, igb=igb, bigrams=True,
+                               remove_repeat_words=True,
+                               save_words=False)
         self.transformed_data = []
         self.accuracy = 0
 
