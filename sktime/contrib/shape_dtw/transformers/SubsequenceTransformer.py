@@ -86,8 +86,6 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
         if isinstance(self.subsequence_length,int):
             if self.subsequence_length <=0:
                 raise ValueError("subsequence_length must have the value of at least 1")
-            #if self.subsequence_length > num_atts:
-                #raise ValueError("subsequence_length cannot be higher than the length of the time series.")
         else:
             raise ValueError("subsequence_length must be an 'int'. Found '" + type(self.subsequence_length).__name__ + "' instead.")
 

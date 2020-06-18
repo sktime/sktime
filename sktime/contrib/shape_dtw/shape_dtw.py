@@ -306,6 +306,6 @@ if __name__ == "__main__":
     trainData,trainDataClasses =  load_ts(trainPath)
     testData,testDataClasses =  load_ts(testPath)
     
-    shp = ShapeDTW(n_neighbours=1,subsequence_length=30,shape_descriptor_function="raw",shape_descriptor_functions=["raw","hog1d"],metric_params={"num_intervals_hog1d":2,"num_bins_hog1d":8,"scaling_factor_hog1d":0.1,"num_levels_dwt":3,"weighting_factor":1})
+    shp = ShapeDTW(n_neighbours=1,subsequence_length=30,shape_descriptor_function="dwt",shape_descriptor_functions=["raw","hog1d"],metric_params={"num_intervals_hog1d":2,"num_bins_hog1d":8,"scaling_factor_hog1d":0.1,"num_levels_dwt":3,"weighting_factor":1})
     shp.fit(trainData,trainDataClasses)
     print(shp.score(testData,testDataClasses))

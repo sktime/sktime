@@ -165,7 +165,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
             if self.num_intervals <=0:
                 raise ValueError("num_intervals must have the value of at least 1")
             if self.num_intervals > num_atts:
-                raise ValueError("num_intervals cannot be higher than num_atts")
+                raise ValueError("num_intervals cannot be higher than subsequence_length")
         else:
             raise ValueError("num_intervals must be an 'int'. Found '" + type(self.num_intervals).__name__ + "' instead.")
             
