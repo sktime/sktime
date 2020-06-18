@@ -12,6 +12,7 @@ import time
 from itertools import compress
 
 import numpy as np
+import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
@@ -143,6 +144,7 @@ class BOSSEnsemble(BaseClassifier):
         """
 
         X, y = check_X_y(X, y, enforce_univariate=True)
+        y = y.values if isinstance(y, pd.Series) else y
 
         self.time_limit = self.time_limit * 60
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
@@ -150,6 +152,9 @@ class BOSSEnsemble(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
+
+        self.classifiers = []
+        self.weights = []
 
         # Window length parameter space dependent on series length
 
@@ -179,12 +184,14 @@ class BOSSEnsemble(BaseClassifier):
                 parameters = possible_parameters.pop(
                     rng.randint(0, len(possible_parameters)))
 
-                subsample = rng.randint(self.n_instances, size=subsample_size)
+                subsample = rng.choice(self.n_instances, size=subsample_size,
+                                       replace=False)
                 X_subsample = X.iloc[subsample, :]
                 y_subsample = y[subsample]
 
                 boss = BOSSIndividual(parameters[0], parameters[1],
                                       self.alphabet_size, parameters[2],
+                                      save_words=False,
                                       random_state=self.random_state)
                 boss.fit(X_subsample, y_subsample)
                 boss._clean()
@@ -218,6 +225,7 @@ class BOSSEnsemble(BaseClassifier):
                                       win_inc):
                     boss = BOSSIndividual(win_size, self.word_lengths[0],
                                           self.alphabet_size, normalise,
+                                          save_words=True,
                                           random_state=self.random_state)
                     boss.fit(X, y)
 
@@ -363,6 +371,7 @@ class BOSSIndividual(BaseClassifier):
                  word_length=8,
                  alphabet_size=4,
                  norm=False,
+                 save_words=True,
                  random_state=None
                  ):
         self.window_size = window_size
@@ -370,13 +379,14 @@ class BOSSIndividual(BaseClassifier):
         self.alphabet_size = alphabet_size
         self.norm = norm
 
+        self.save_words = save_words
         self.random_state = random_state
 
         self.transformer = SFA(word_length=word_length,
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
                                remove_repeat_words=True,
-                               save_words=True)
+                               save_words=save_words)
         self.transformed_data = []
         self.accuracy = 0
 
@@ -456,7 +466,8 @@ class BOSSIndividual(BaseClassifier):
     def _shorten_bags(self, word_len):
         new_boss = BOSSIndividual(self.window_size, word_len,
                                   self.alphabet_size, self.norm,
-                                  self.random_state)
+                                  save_words=self.save_words,
+                                  random_state=self.random_state)
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
         new_boss.transformed_data = [series.to_dict() for series in

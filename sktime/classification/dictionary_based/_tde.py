@@ -11,6 +11,7 @@ import math
 import time
 
 import numpy as np
+import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -137,6 +138,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         """
 
         X, y = check_X_y(X, y, enforce_univariate=True)
+        y = y.values if isinstance(y, pd.Series) else y
 
         self.time_limit = self.time_limit * 60
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
@@ -144,6 +146,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
+
+        self.classifiers = []
+        self.weights = []
+        self.prev_parameters_x = []
+        self.prev_parameters_y = []
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
@@ -177,7 +184,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 parameters = possible_parameters.pop(rng.choice(
                     np.flatnonzero(preds == preds.max())))
 
-            subsample = rng.randint(self.n_instances, size=subsample_size)
+            subsample = rng.choice(self.n_instances, size=subsample_size,
+                                   replace=False)
             X_subsample = X.iloc[subsample, :]
             y_subsample = y[subsample]
 
@@ -275,7 +283,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         return possible_parameters
 
-    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
+    def _individual_train_acc(self, tde, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
@@ -283,7 +291,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             if correct + train_size - i < required_correct:
                 return -1
 
-            c = boss._train_predict(i)
+            c = tde._train_predict(i)
 
             if c == y[i]:
                 correct += 1
@@ -313,7 +321,7 @@ class IndividualTDE(BaseClassifier):
 
         self.random_state = random_state
 
-        self.transform = SFA(word_length=word_length,
+        self.transformer = SFA(word_length=word_length,
                              alphabet_size=alphabet_size,
                              window_size=window_size, norm=norm,
                              levels=levels, igb=igb, bigrams=True,
@@ -331,7 +339,7 @@ class IndividualTDE(BaseClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y, enforce_univariate=True)
 
-        sfa = self.transform.fit_transform(X, y)
+        sfa = self.transformer.fit_transform(X, y)
         self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
 
         self.class_vals = y
@@ -350,7 +358,7 @@ class IndividualTDE(BaseClassifier):
         rng = check_random_state(self.random_state)
 
         classes = []
-        test_bags = self.transform.transform(X)
+        test_bags = self.transformer.transform(X)
         test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
 
         for i, test_bag in enumerate(test_bags):
