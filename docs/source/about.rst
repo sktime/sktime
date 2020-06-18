@@ -49,7 +49,7 @@ Bibtex entry:
 Artwork
 -------
 
-High quality PNG and SVG logos are available in the `docs/source/images/
+High-quality logos are available in the `docs/source/images/
 <https://alan-turing-institute.com/sktime/sktime/tree/master/docs/source/images>`_
 source directory. The artwork was created
 
