@@ -19,6 +19,7 @@ GitHub, clone, and develop on a branch. Steps:
    details on how to fork a repository see `this
    guide <https://help.github.com/articles/fork-a-repo/>`__.
 
+
 2. Clone your fork of the sktime repo from your GitHub account to your
    local disk:
 
