@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 
@@ -12,8 +13,8 @@ from sktime.transformers.single_series.boxcox import BoxCoxTransformer
 from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.utils.testing import _construct_instance
-from sktime.utils.testing._forecasting import make_forecasting_problem
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 SINGLE_SERIES_TRANSFORMERS = [
     Deseasonalizer,

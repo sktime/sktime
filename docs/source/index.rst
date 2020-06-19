@@ -22,12 +22,3 @@ From here, you can navigate to:
    about
    contributors
    code_of_conduct
-
-.. raw:: html
-
-   <br/>
-
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

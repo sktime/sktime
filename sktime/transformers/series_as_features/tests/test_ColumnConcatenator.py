@@ -4,7 +4,7 @@ from sktime.transformers.series_as_features.compose import ColumnConcatenator
 
 
 def test_TimeSeriesConcatenator():
-    X, y = load_basic_motions(return_X_y=True)
+    X, y = load_basic_motions(split="train", return_X_y=True)
 
     # check that loaded dataframe is multivariate
     assert X.shape[1] > 1

@@ -14,8 +14,8 @@ from sktime.datasets import load_gunpoint
 def run_classifier_on_dataset(classifier, dataset_loader,
                               expected_predict_probas,
                               expected_predictions):
-    X_train, y_train = dataset_loader(split='TRAIN', return_X_y=True)
-    X_test, y_test = dataset_loader(split='TEST', return_X_y=True)
+    X_train, y_train = dataset_loader(split='train', return_X_y=True)
+    X_test, y_test = dataset_loader(split='test', return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
     # print(indices)
     X_train = X_train.iloc[indices]
