@@ -7,6 +7,10 @@ If you get stuck, feel free to `contact us`_ or `raise an issue`_.
 
 sktime follows `scikit-learn`_'s API whenever possible, it'll be useful to a look at their `developers’ guide`_.
 
+Before starting to develop, you will need to install the development version of sktime. To install the development version, please see our `advanced
+installation
+instructions <https://alan-turing-institute.github.io/sktime/installation.html#development-version>`__.
+
 
 The preferred workflow for contributing to sktime is to fork the `main
 repository <https://github.com/alan-turing-institute/sktime/>`__ on
@@ -18,8 +22,7 @@ GitHub, clone, and develop on a branch. Steps:
    creates a copy of the code under your GitHub user account. For more
    details on how to fork a repository see `this
    guide <https://help.github.com/articles/fork-a-repo/>`__.
-
-
+   
 2. Clone your fork of the sktime repo from your GitHub account to your
    local disk:
 
@@ -28,7 +31,34 @@ GitHub, clone, and develop on a branch. Steps:
     git clone git@github.com:YourLogin/sktime.git
     cd sktime
 
-3. Create a new ``feature`` branch from the ``dev`` branch to hold your
+
+3. Configure a remote for your fork to the upstream.
+   
+.. code-block:: bash
+
+   git remote -v
+   git remote add upstream https://github.com/alan-turing-institute/sktime.git
+   
+4. Verify the new upstream repository you've specified for your fork.
+
+.. code-block:: bash
+   
+   git remote -v
+   > origin    https://github.com/YOUR_USERNAME/YOUR_FORK.git (fetch)
+   > origin    https://github.com/YOUR_USERNAME/YOUR_FORK.git (push)
+   > upstream  https://github.com/alan-turing-institute/sktime.git (fetch)
+   > upstream  https://github.com/alan-turing-institute/sktime.git (push)
+   
+5. Sync the ``dev`` branch of your fork with the upstream repository
+
+.. code-block:: bash
+
+   git fetch upstream
+   git checkout dev
+   git merge upstream/dev
+
+
+6. Create a new ``feature`` branch from the ``dev`` branch to hold your
    changes:
 
 .. code-block:: bash
@@ -39,7 +69,7 @@ GitHub, clone, and develop on a branch. Steps:
 Always use a ``feature`` branch. It's good practice to never work on the
 ``master`` branch!
 
-4. Develop the feature on your feature branch. Add changed files using
+7. Develop the feature on your feature branch. Add changed files using
    ``git  add`` and then ``git commit`` files to record your changes in
    Git:
 
@@ -48,13 +78,13 @@ Always use a ``feature`` branch. It's good practice to never work on the
     git add modified_files
     git commit
 
-5. When finished, push the changes to your GitHub account with:
+8. When finished, push the changes to your GitHub account with:
 
 .. code-block:: bash
 
     git push -u origin my-feature-branch
 
-6. Follow `these
+9. Follow `these
    instructions <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`__
    to create a pull request from your fork. This will send an email to
    the committers.
@@ -63,9 +93,7 @@ If any of the above seems like magic to you, please look up the `Git
 documentation <https://git-scm.com/documentation>`__ on the web, or ask
 a friend or another contributor for help.
 
-To install the development version, please see our `advanced
-installation
-instructions <https://alan-turing-institute.github.io/sktime/installation.html#development-version>`__.
+
 
 Pull request checklist
 ----------------------
@@ -143,4 +171,6 @@ rules before submitting:
 .. _raise an issue: https://github.com/alan-turing-institute/sktime/issues/new/choose
 .. _clone:
 .. _fork: https://help.github.com/en/articles/fork-a-repo
+.. _syncfork: https://help.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork
+
 
