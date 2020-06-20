@@ -4,7 +4,6 @@ import pandas as pd
 import math
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import tabularize
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
@@ -192,6 +191,10 @@ class ShapeDTW(BaseClassifier):
             sl = self.subsequence_length
             sdf = self.shape_descriptor_function
             sdfs = self.shape_descriptor_functions
+            if sdfs is None or not (len(sdfs) == 2):
+                raise ValueError("When using 'compound', " + \
+                    "shape_descriptor_functions must be a string " + \
+                    "array of length 2.")
             mp = self.metric_params
 
             grid = GridSearchCV(
@@ -288,12 +291,11 @@ class ShapeDTW(BaseClassifier):
         else:
             self.transformer = []
             for x in self.shape_descriptor_functions:
-                self.transformer.append(self.getTransformer(x))
-            # Compound only supports 2 shape descriptor functions
+                self.transformer.append(self.get_transformer(x))
             if not (len(self.transformer) == 2):
-                raise ValueError("When using 'compound', \
-                    shape_descriptor_functions must be a string \
-                    array of length 2.")
+                raise ValueError("When using 'compound', " + \
+                    "shape_descriptor_functions must be a string " + \
+                    "array of length 2.")
 
         # To hold the result of each transformer
         dataFrames = []
@@ -392,7 +394,7 @@ class ShapeDTW(BaseClassifier):
     together into a single dataframe.
     Used when the shape_descriptor_function is set to "compound".
     """
-    def combine_data_frames(dataFrames, weighting_factor, col_names):
+    def combine_data_frames(self, dataFrames, weighting_factor, col_names):
         first_desc = dataFrames[0]
         second_desc = dataFrames[1]
 

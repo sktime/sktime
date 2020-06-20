@@ -18,7 +18,7 @@ Proposed in the ShapeDTW algorithm.
 
 class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
 
-    def __init__(self, subsequence_length=30):
+    def __init__(self, subsequence_length=5):
         self.subsequence_length = subsequence_length
         super(SubsequenceTransformer, self).__init__()
 
