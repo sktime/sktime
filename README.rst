@@ -58,7 +58,7 @@ Development Version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
-`advanced installation instructions <https://alan-turing-institute.github.io/sktime/extension.html>`__.
+`advanced installation instructions <https://alan-turing-institute.github.io/sktime/installation.html>`__.
 
 ------------------------------------------------------------
 
@@ -109,7 +109,7 @@ Time Series Classification
 
 For more, check out the `time series classification tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples
-/01_classification_univariate.ipynb>`__.
+/02_classification_univariate.ipynb>`__.
 
 ------------------------------------------------------------
 

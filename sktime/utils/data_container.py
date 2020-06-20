@@ -177,7 +177,7 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
     return Xt
 
 
-tabularize = tabularize
+tabularise = tabularize
 
 detabularise = detabularize
 
