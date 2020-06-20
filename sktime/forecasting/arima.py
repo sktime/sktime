@@ -80,7 +80,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         the seasonal model.
     max_P : int, optional (default=2)
         The maximum value of P, inclusive. Must be a positive integer greater
-        than start_P. 
+        than start_P.
     max_D : int, optional (default=1)
         The maximum value of D. Must be a positive integer greater than D.
     max_Q : int, optional (default=2)
@@ -106,7 +106,8 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         Whether the time-series is stationary and d should be set to zero.
     information_criterion : str, optional (default='aic')
         The information criterion used to select the best ARIMA model. One of
-        pmdarima.arima.auto_arima.VALID_CRITERIA, (‘aic’, ‘bic’, ‘hqic’, ‘oob’).
+        pmdarima.arima.auto_arima.VALID_CRITERIA, (‘aic’, ‘bic’, ‘hqic’,
+        ‘oob’).
     alpha : float, optional (default=0.05)
         Level of the test for testing significance.
     test : str, optional (default='kpss')
