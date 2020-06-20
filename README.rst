@@ -58,7 +58,7 @@ Development Version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
-`advanced installation instructions <https://alan-turing-institute.github.io/sktime/extension.html>`__.
+`advanced installation instructions <https://alan-turing-institute.github.io/sktime/installation.html>`__.
 
 ------------------------------------------------------------
 
@@ -195,7 +195,7 @@ How to contribute
 -----------------
 * First check out our `guide on how to contribute <https://alan-turing-institute.github.io/sktime/how_to_contribute.html>`__.
 * `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__.
+* Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
 
 For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
