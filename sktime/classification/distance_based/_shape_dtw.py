@@ -432,11 +432,3 @@ class ShapeDTW(BaseClassifier):
             df[col] = colToAdd
 
         return df
-
-if __name__ == "__main__":
-    trainData,trainDataClasses = load_ts("C:\\Users\\Vince\\Documents\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts")
-    testData,testDataClasses = load_ts("C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TEST.ts")
-    
-    shp=ShapeDTW(shape_descriptor_function="compound",subsequence_length=30)
-    shp.fit(trainData,trainDataClasses)
-    print(shp.score(testData,testDataClasses))
