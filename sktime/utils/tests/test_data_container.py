@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from sktime.utils.data_container import nested_to_3d_numpy
 from sktime.utils.data_container import from_3d_numpy_to_nested
+from sktime.utils.data_container import is_nested_dataframe
 
 
 def test_nested_to_3d_numpy():
@@ -20,4 +21,4 @@ def test_from_3d_numpy_to_nested():
 
     array = np.random.normal(size=(5, 12, 2))
     nested = from_3d_numpy_to_nested(array)
-    assert isinstance(nested, pd.DataFrame)
+    assert is_nested_dataframe(nested)
