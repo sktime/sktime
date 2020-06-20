@@ -131,6 +131,12 @@ Then you need to set the following environment variables:
 
 Finally you can build the package using the standard command.
 
+Alternatively, if you have other compilers, such as gcc, installed, the following one-liner will do the job:
+
+.. code-block:: 
+
+   env CC=$(which gcc-9) CXX=$(which g++-9) pip install --editable .
+
 FreeBSD
 *******
 
