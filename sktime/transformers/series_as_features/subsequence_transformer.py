@@ -32,7 +32,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
     -------
     dims: a pandas data frame of shape = [n_samples, num_atts]
     """
-    def transform(self, X):
+    def transform(self, X, y=None):
 
         # get the number of attributes and instances
         self.check_is_fitted()

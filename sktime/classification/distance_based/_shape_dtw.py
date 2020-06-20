@@ -4,6 +4,7 @@ import pandas as pd
 import math
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import tabularize
+from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
@@ -431,3 +432,11 @@ class ShapeDTW(BaseClassifier):
             df[col] = colToAdd
 
         return df
+
+if __name__ == "__main__":
+    trainData,trainDataClasses = load_ts("C:\\Users\\Vince\\Documents\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TRAIN.ts")
+    testData,testDataClasses = load_ts("C:\\Users\\Vince\\Documents\\Dissertation Repositories\\datasets\\Univariate2018_ts\\Chinatown\\Chinatown_TEST.ts")
+    
+    shp=ShapeDTW(shape_descriptor_function="compound",subsequence_length=30)
+    shp.fit(trainData,trainDataClasses)
+    print(shp.score(testData,testDataClasses))

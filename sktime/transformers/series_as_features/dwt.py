@@ -25,7 +25,7 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     -------
     dims: a pandas data frame of shape = [n_samples, num_dims]
     """
-    def transform(self, X):
+    def transform(self, X, y=None):
 
         # Check the data
         self.check_is_fitted()
