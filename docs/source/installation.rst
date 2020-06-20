@@ -14,8 +14,6 @@ But note that the package is actively being developed and currently not feature 
 
 Development version
 -------------------
-The installation instruction below are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
-
 To install the development version of sktime, follow these steps:
 
 1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
@@ -24,12 +22,13 @@ To install the development version of sktime, follow these steps:
 4. Make sure your local version is up-to-date: :code:`git pull`
 5. Build package from source using: :code:`pip install --editable .`
 
-Please read below for details and more advanced instructions.
+Please read below for more detailed instrcutions for specific operating
+systems.
 
 Building sktime from source also requires
 
-- Cython >= 0.28.5
-- OpenMP
+- Cython >= 0.28.5 (available through :code:`pip install cython`)
+- OpenMP (see below for instructions)
 
 .. note::
 
@@ -44,12 +43,18 @@ Running tests requires
 
 - pytest >=\ |PytestMinVersion|
 
-Generating the documentation and website requires
+and a few soft dependencies which are required for running certain modules,
+but not necessary for most of sktime's functionality.
 
-- nbsphinx
-- sphinx_rtd_theme
-- `pandoc <https://pandoc.org/installing.html>`_
+Generating the documentation and website requires a few extra dependencies
+too.
 
+You can install all extra dependencies for running tests and generating
+the documentation by running:
+
+.. code-block:: bash
+
+    pip install --editable .[docs]
 
 Retrieving the latest code
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -273,3 +278,9 @@ build step:
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+
+References
+----------
+
+The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
