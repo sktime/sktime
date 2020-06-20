@@ -9,7 +9,6 @@ from sktime.utils.data_container import tabularize
 from sktime.utils.time_series import compute_relative_to_n_timepoints
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 
 
 class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
@@ -269,4 +268,3 @@ class RandomIntervalSegmenter(IntervalSegmenter):
                                     n_timepoints - start + 1) for start
                 in starts]
         return np.column_stack([starts, ends])
-        

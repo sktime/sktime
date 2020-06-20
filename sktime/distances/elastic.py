@@ -6,8 +6,6 @@ __author__ = "Jason Lines"
 def dtw_distance(first, second, **kwargs):
 
     def dtw_single_channel(first, second, **kwargs):
-        
-    
         cutoff = np.inf
         try:
             window = kwargs["window"]
