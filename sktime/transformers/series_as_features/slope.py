@@ -34,7 +34,7 @@ class Slope(BaseSeriesAsFeaturesTransformer):
         num_insts = X.shape[0]
         col_names = X.columns
 
-        self.checkParameters(num_atts)
+        self.check_parameters(num_atts)
 
         df = pd.DataFrame()
 
@@ -45,7 +45,7 @@ class Slope(BaseSeriesAsFeaturesTransformer):
             # Calculate gradients
             transformedData = []
             for y in range(num_insts):
-                res = self.getGradientsOfLines(arr[y])
+                res = self.get_gradients_of_lines(arr[y])
                 transformedData.append(res)
 
             # Convert to Numpy array
@@ -76,11 +76,11 @@ class Slope(BaseSeriesAsFeaturesTransformer):
     """
     def get_gradients_of_lines(self, X):
         # Firstly, split the time series into approx equal length intervals
-        splitTimeSeries = self.splitTimeSeries(X)
+        splitTimeSeries = self.split_time_series(X)
         gradients = []
 
         for x in range(len(splitTimeSeries)):
-            gradients.append(self.getGradient(splitTimeSeries[x]))
+            gradients.append(self.get_gradient(splitTimeSeries[x]))
 
         return gradients
 

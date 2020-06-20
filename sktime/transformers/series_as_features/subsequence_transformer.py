@@ -18,7 +18,7 @@ Proposed in the ShapeDTW algorithm.
 
 class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
 
-    def __init__(self, subsequence_length=5):
+    def __init__(self, subsequence_length=30):
         self.subsequence_length = subsequence_length
         super(SubsequenceTransformer, self).__init__()
 
@@ -43,7 +43,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
         num_insts = X.shape[0]
 
         # Check the parameters are appropriate
-        self.checkParameters(num_atts)
+        self.check_parameters(num_atts)
 
         pad_amnt = math.floor(self.subsequence_length/2)
         padded_data = np.zeros((num_insts, num_atts + (2*pad_amnt)))
@@ -56,8 +56,8 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
 
         # Extract subsequences
         for i in range(num_insts):
-            subsequences[i] = self.extractSubsequences(padded_data[i],
-                                                       num_atts)
+            subsequences[i] = self.extract_subsequences(padded_data[i],
+                                                        num_atts)
 
         # Convert this into a panda's data frame
         df = pd.DataFrame()

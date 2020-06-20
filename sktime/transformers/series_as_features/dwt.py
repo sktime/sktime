@@ -100,7 +100,7 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     """
     Function to get the approximate coefficients at a given level.
     """
-    def get_approx_coefficients(arr):
+    def get_approx_coefficients(self, arr):
         new = []
         for x in range(math.floor(len(arr)/2)):
             new.append((arr[2*x]+arr[2*x+1])/math.sqrt(2))
@@ -113,7 +113,7 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     """
     Function to get the wavelet coefficients at a given level.
     """
-    def get_wavelet_coefficients(arr):
+    def get_wavelet_coefficients(self, arr):
         new = []
         for x in range(math.floor(len(arr)/2)):
             new.append((arr[2*x]-arr[2*x+1])/math.sqrt(2))

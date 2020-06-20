@@ -61,7 +61,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
             # Get the HOG1Ds of each time series
             transformedData = []
             for y in range(num_insts):
-                inst = self.calculateHOG1Ds(arr[y])
+                inst = self.calculate_hog1ds(arr[y])
                 transformedData.append(inst)
 
             # Convert to numpy array
@@ -93,11 +93,11 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
     def calculate_hog1ds(self, X):
         # Firstly, split the time series into approx equal
         # length intervals
-        splitTimeSeries = self.splitTimeSeries(X)
+        splitTimeSeries = self.split_time_series(X)
         HOG1Ds = []
 
         for x in range(len(splitTimeSeries)):
-            HOG1Ds.extend(self.getHOG1D(splitTimeSeries[x]))
+            HOG1Ds.extend(self.get_hog1d(splitTimeSeries[x]))
 
         return HOG1Ds
 

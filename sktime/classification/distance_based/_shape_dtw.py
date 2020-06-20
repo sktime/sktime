@@ -119,6 +119,12 @@ class ShapeDTW(BaseClassifier):
 
         X, y = check_X_y(X, y, enforce_univariate=False)
 
+        if self.metric_params is None:
+            self.metric_params = {}
+
+        self.metric_params = \
+            {k.lower(): v for k, v in self.metric_params.items()}
+
         # If the shape descriptor is 'compound',
         # calculate the appropriate weighting_factor
         if self.shape_descriptor_function == "compound":
@@ -162,12 +168,6 @@ class ShapeDTW(BaseClassifier):
     a 10-fold cross-validation on the training data.
     """
     def calculate_weighting_factor_value(self, X, y):
-
-        if self.metric_params is None:
-            self.metric_params = {}
-
-        self.metric_params = \
-            {k.lower(): v for k, v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
         if self.metric_params.get("weighting_factor") is not None:

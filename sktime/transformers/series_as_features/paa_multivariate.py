@@ -45,7 +45,7 @@ class PAA_Multivariate(BaseSeriesAsFeaturesTransformer):
         col_names = X.columns
 
         # Check the parameters are appropriate
-        self.checkParameters(num_atts)
+        self.check_parameters(num_atts)
 
         # Create the PAA object
         p = PAA(num_intervals=self.num_intervals)
