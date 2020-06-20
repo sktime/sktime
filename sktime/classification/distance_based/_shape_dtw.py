@@ -192,9 +192,9 @@ class ShapeDTW(BaseClassifier):
             sdf = self.shape_descriptor_function
             sdfs = self.shape_descriptor_functions
             if sdfs is None or not (len(sdfs) == 2):
-                raise ValueError("When using 'compound', " + \
-                    "shape_descriptor_functions must be a string " + \
-                    "array of length 2.")
+                raise ValueError("When using 'compound', " +
+                                 "shape_descriptor_functions must be a " +
+                                 "string array of length 2.")
             mp = self.metric_params
 
             grid = GridSearchCV(
@@ -293,9 +293,9 @@ class ShapeDTW(BaseClassifier):
             for x in self.shape_descriptor_functions:
                 self.transformer.append(self.get_transformer(x))
             if not (len(self.transformer) == 2):
-                raise ValueError("When using 'compound', " + \
-                    "shape_descriptor_functions must be a string " + \
-                    "array of length 2.")
+                raise ValueError("When using 'compound', " +
+                                 "shape_descriptor_functions must be a " +
+                                 "string array of length 2.")
 
         # To hold the result of each transformer
         dataFrames = []
