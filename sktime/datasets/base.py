@@ -11,7 +11,7 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 __all__ = [
     "load_airline",
     "load_arrow_head",
-    "load_gunpoint", 
+    "load_gunpoint",
     "load_osuleaf",
     "load_italy_power_demand",
     "load_basic_motions",
@@ -57,6 +57,7 @@ def _load_dataset(name, split, return_X_y):
     else:
         X['class_val'] = pd.Series(y)
         return X
+
 
 def load_gunpoint(split=None, return_X_y=False):
     """
@@ -104,6 +105,7 @@ def load_gunpoint(split=None, return_X_y=False):
     """
     name = 'GunPoint'
     return _load_dataset(name, split, return_X_y)
+
 
 def load_osuleaf(split=None, return_X_y=False):
     """
