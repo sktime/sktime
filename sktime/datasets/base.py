@@ -11,6 +11,7 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 __all__ = [
     "load_airline",
     "load_arrow_head",
+    "load_gunpoint", 
     "load_osuleaf",
     "load_italy_power_demand",
     "load_basic_motions",

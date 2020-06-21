@@ -1,6 +1,7 @@
 __all__ = [
     "load_airline",
     "load_arrow_head",
+    "load_gunpoint",
     "load_basic_motions",
     "load_osuleaf",
     "load_italy_power_demand",
@@ -10,6 +11,7 @@ __all__ = [
 ]
 
 from sktime.datasets.base import load_airline
+from sktime.datasets.base import load_gunpoint
 from sktime.datasets.base import load_arrow_head
 from sktime.datasets.base import load_basic_motions
 from sktime.datasets.base import load_osuleaf

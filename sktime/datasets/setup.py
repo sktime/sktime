@@ -17,6 +17,7 @@ def configuration(parent_package='', top_path=None):
     included_datasets = (
         "ArrowHead",
         "BasicMotions",
+        "GunPoint", 
         "OSULeaf",
         "ItalyPowerDemand",
         "JapaneseVowels",
