@@ -17,7 +17,8 @@ __all__ = [
     "load_japanese_vowels",
     "load_shampoo_sales",
     "load_longley",
-    "load_lynx"
+    "load_lynx",
+    "load_acsf"
 ]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
@@ -259,6 +260,105 @@ def load_arrow_head(split=None, return_X_y=False):
     """
 
     name = 'ArrowHead'
+    return _load_dataset(name, split, return_X_y)
+
+def load_acsf(split=None,return_X_y=False):
+    """
+        Loads the JapaneseVowels time series classification problem and
+        returns X and y.
+
+        Parameters
+        ----------
+        split: None or str{"train", "test"}, optional (default=None)
+            Whether to load the train or test partition of the problem. By
+        default it loads both.
+        return_X_y: bool, optional (default=False)
+            If True, returns (features, target) separately instead of a
+            single dataframe with columns for
+            features and the target.
+
+        Returns
+        -------
+        X: pandas DataFrame with m rows and c columns
+            The time series data for the problem with m cases and c dimensions
+        y: numpy array
+            The class labels for each case in X
+
+        Details
+        -------
+        Dimensionality:     multivariate, 12
+        Series length:      29
+        Train cases:        270
+        Test cases:         370
+        Number of classes:  9
+
+        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
+        the vowels 'a' and 'e'. A '12-degree
+        linear prediction analysis' is applied to the raw recordings to
+        obtain time-series with 12 dimensions, a
+        originally a length between 7 and 29. In this dataset, instances
+        have been padded to the longest length,
+        29. The classification task is to predict the speaker. Therefore,
+        each instance is a transformed utterance,
+        12*29 values with a single class label attached, [1...9]. The given
+        training set is comprised of 30
+        utterances for each speaker, however the test set has a varied
+        distribution based on external factors of
+        timing and experimenal availability, between 24 and 88 instances per
+        speaker. Reference: M. Kudo, J. Toyama
+        and M. Shimbo. (1999). "Multidimensional Curve Classification Using
+        Passing-Through Regions". Pattern
+        Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
+
+        Dataset details: http://timeseriesclassification.com/description.php
+        ?Dataset=JapaneseVowels
+    """
+
+    name = 'JapaneseVowels'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_arrow_head(split=None, return_X_y=False):
+    """
+    Loads the Power consumption of typical appliances time series classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      1460
+    Train cases:        100
+    Test cases:         100
+    Number of classes:  10
+
+    The dataset contains the power consumption of typical appliances.
+    The recordings are characterized by long idle periods and some high bursts
+    of enery consumption when the appliance is active.
+    The classes correspond to 10 categories of home appliances:
+    mobile phones (via chargers), coffee machines, computer stations (including monitor),
+    fridges and freezers, Hi-Fi systems (CD players), lamp (CFL), laptops (via chargers), 
+    microwave ovens, printers, and televisions (LCD or LED).
+
+    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset=ACSF1
+    """
+
+    name = 'ACSF1'
     return _load_dataset(name, split, return_X_y)
 
 
