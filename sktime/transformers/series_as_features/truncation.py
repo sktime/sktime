@@ -64,9 +64,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
 
         #truncate between lower and upper inclusive.
         truncate = arr[:, self.lower:self.upper+1]
-
-        print(truncate)
-
+        
         #retabularize
         return detabularize(pd.DataFrame(truncate))
 
