@@ -112,19 +112,11 @@ def tabularize(X, return_array=False):
     Xt = pd.DataFrame(Xt)
 
     # create column names from time index
-    if X.ndim == 1:
-        time_index = X.iloc[0].index if hasattr(X.iloc[0],
-                                                'index') else np.arange(
-            X.iloc[0].shape[0])
-        columns = [f'{X.name}__{i}' for i in time_index]
-
-    else:
-        columns = []
-        for colname, col in X.items():
-            time_index = col.iloc[0].index if hasattr(col.iloc[0],
-                                                      'index') else np.arange(
-                col.iloc[0].shape[0])
-            columns.extend([f'{colname}__{i}' for i in time_index])
+    columns = []
+    idx = lambda x: x.index if hasattr(x, "index") else np.arange(x.shape[0])
+    for colname, col in pd.DataFrame(X).items():
+        time_index = idx(col.iloc[0])
+        columns.extend([(colname, i) for i in time_index])
 
     Xt.index = X.index
     Xt.columns = columns
@@ -262,8 +254,7 @@ def from_nested_to_long(X):
         df = tabularize(X.iloc[:, i])
         df = df.reset_index()
         df = df.melt(id_vars="index")
-        df["column"] = df["variable"].str.split("__").str[0]
-        df["time_index"] = df["variable"].str.split("__").str[1]
+        df[['column','time_index']] = pd.DataFrame(df.variable.tolist(), index= df.index)
         df = df.drop(columns="variable")
         columns.append(df)
     return pd.concat(columns)
