@@ -166,7 +166,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bigram = words[window - self.window_size]\
                             .create_bigram(word, self.word_length)
                         if self.levels > 1:
-                            bigram = (bigram, 0)
+                            bigram = (bigram, -1)
                         bag[bigram] = bag.get(bigram, 0) + 1
 
             if self.save_words:

@@ -591,10 +591,10 @@ if __name__ == "__main__":
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "GunPoint"
+        dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "catch22forest"
+        classifier = "tde"
         resample = 0
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]

@@ -95,6 +95,7 @@ EXTRAS_REQUIRE = {
         'nbsphinx',
         'sphinx_rtd_theme',
         'numpydoc',
+        'catch22',
         # https://github.com/sphinx-doc/sphinx/issues/2840
         # 'm2r'
     ]
