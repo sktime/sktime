@@ -191,8 +191,8 @@ public:
 		//std_wd = sqrt(var_wd / window_size - mean_wd*mean_wd);
 
 		// z-normalize
-		
-		
+
+
 		std::vector<double> subsection(window_size);
 		for (int i = cur_pos; i <= window_end; i++){
 			double normalized_value;
@@ -241,7 +241,7 @@ public:
 				}
 			}
 			sax_word += char_start + bin;
-		}		
+		}
 
 		return sax_word;
 
