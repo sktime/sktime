@@ -122,8 +122,8 @@ class BOSSEnsemble(BaseClassifier):
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
-        self.alphabet_size = 4
         self.min_window = min_window
+        self.alphabet_size = 4
         super(BOSSEnsemble, self).__init__()
 
     def fit(self, X, y):
@@ -189,8 +189,8 @@ class BOSSEnsemble(BaseClassifier):
                 X_subsample = X.iloc[subsample, :]
                 y_subsample = y[subsample]
 
-                boss = BOSSIndividual(parameters[0], parameters[1],
-                                      self.alphabet_size, parameters[2],
+                boss = BOSSIndividual(*parameters,
+                                      alphabet_size=self.alphabet_size,
                                       save_words=False,
                                       random_state=self.random_state)
                 boss.fit(X_subsample, y_subsample)
@@ -224,7 +224,7 @@ class BOSSEnsemble(BaseClassifier):
                 for win_size in range(self.min_window, max_window + 1,
                                       win_inc):
                     boss = BOSSIndividual(win_size, self.word_lengths[0],
-                                          self.alphabet_size, normalise,
+                                          normalise, self.alphabet_size,
                                           save_words=True,
                                           random_state=self.random_state)
                     boss.fit(X, y)
@@ -369,15 +369,15 @@ class BOSSIndividual(BaseClassifier):
     def __init__(self,
                  window_size=10,
                  word_length=8,
-                 alphabet_size=4,
                  norm=False,
+                 alphabet_size=4,
                  save_words=True,
                  random_state=None
                  ):
         self.window_size = window_size
         self.word_length = word_length
-        self.alphabet_size = alphabet_size
         self.norm = norm
+        self.alphabet_size = alphabet_size
 
         self.save_words = save_words
         self.random_state = random_state

@@ -114,10 +114,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         self.word_lengths = [16, 14, 12, 10, 8]
         self.norm_options = [True, False]
-        self.alphabet_size = 4
         self.min_window = min_window
         self.levels = [1, 2, 3]
         self.igb_options = [True, False]
+        self.alphabet_size = 4
         super(TemporalDictionaryEnsemble, self).__init__()
 
     def fit(self, X, y):
@@ -189,9 +189,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             X_subsample = X.iloc[subsample, :]
             y_subsample = y[subsample]
 
-            tde = IndividualTDE(parameters[0], parameters[1],
-                                self.alphabet_size, parameters[2],
-                                parameters[3], parameters[4],
+            tde = IndividualTDE(*parameters, alphabet_size=self.alphabet_size,
                                 random_state=self.random_state)
             tde.fit(X_subsample, y_subsample)
 
@@ -306,18 +304,18 @@ class IndividualTDE(BaseClassifier):
     def __init__(self,
                  window_size=10,
                  word_length=8,
-                 alphabet_size=4,
                  norm=False,
                  levels=1,
                  igb=False,
+                 alphabet_size=4,
                  random_state=None
                  ):
         self.window_size = window_size
         self.word_length = word_length
-        self.alphabet_size = alphabet_size
         self.norm = norm
         self.levels = levels
         self.igb = igb
+        self.alphabet_size = alphabet_size
 
         self.random_state = random_state
 
