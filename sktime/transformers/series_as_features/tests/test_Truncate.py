@@ -20,4 +20,4 @@ def test_truncation_transformer():
     # model = Pipeline(steps=steps)
     # model.fit(X_train, y_train)
     # y_pred = model.predict(X_test)
-    #print(y_pred)
+    # print(y_pred)
