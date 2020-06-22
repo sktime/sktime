@@ -220,10 +220,19 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
+
         fx = self._fit(X)
-        check_array.__wrapped__.__code__ = temp
+
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
 
         self._is_fitted = True
         return fx
@@ -383,8 +392,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Class labels for each data sample.
         """
         self.check_is_fitted()
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
+
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
@@ -409,7 +424,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        check_array.__wrapped__.__code__ = temp
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
         return y_pred
 
     def predict_proba(self, X):
@@ -431,8 +449,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
 
         X = check_array(X, accept_sparse='csr')
 
@@ -470,16 +492,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             probabilities = probabilities[0]
 
-        check_array.__wrapped__.__code__ = temp
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
         return probabilities
 
 
 # overwrite sklearn internal checks, this is really hacky
 # we now need to replace: check_array.__wrapped__.__code__ since it's
 # wrapped by a future warning decorator
-def _check_array_ts(array, accept_sparse=False, *, accept_large_sparse=True,
-                    dtype="numeric", order=None, copy=False,
-                    force_all_finite=True,
-                    ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                    ensure_min_features=1, estimator=None):
+def _check_array_ts(array, *args, **kwargs):
     return array
