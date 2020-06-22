@@ -1,23 +1,27 @@
+# from sklearn.pipeline import Pipeline
+from sktime.transformers.series_as_features.truncation \
+ import TruncationTransformer
+# from sklearn.ensemble import RandomForestClassifier
+# from sktime.utils.data_container import tabularize
+# import pandas as pd
 
+from sktime.datasets.base import _load_dataset
 
-
-
-from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.truncation import TruncationTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sktime.datasets.base import load_gunpoint
 
 def test_truncation_transformer():
     # load data
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+    name = 'PLAID'
+    X_train, y_train = _load_dataset(name, split='train', return_X_y=True)
+    X_test, y_test = _load_dataset(name, split='test', return_X_y=True)
 
-    truncated_transformer = TruncationTransformer(0, 1)
+    # print(X_train)
+
+    truncated_transformer = TruncationTransformer()
     Xt = truncated_transformer.transform(X_train)
 
-    # steps = [('truncate', truncated_transformer),
-    #         ('rfestimator', RandomForestClassifier(n_estimators=2))]
-    # model = Pipeline(steps=steps)
-    # model.fit(X_train, y_train)
-    # y_pred = model.predict(X_test)
-    # print(y_pred)
+    # first length of the series in the
+    # first dimension should be truncated to 101
+    assert Xt[0][0].shape == (101)
+
+
+test_truncation_transformer()

@@ -1,14 +1,12 @@
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
-from sktime.datasets.base import load_gunpoint
-from sktime.utils.data_container import tabularize, detabularize
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.pipeline import Pipeline
+from sktime.utils.data_container import detabularize
+# from sktime.utils.data_container import tabularize
+import numpy as np
 
 __all__ = ["TruncationTransformer"]
 __author__ = ["Aaron Bostrom"]
@@ -18,7 +16,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
     """MyTransformer docstring
     """
 
-    def __init__(self, lower, upper, dim_to_use=0):
+    def __init__(self, lower=None, upper=None, dim_to_use=0):
         self.lower = lower
         self.upper = upper
         self.dim_to_use = dim_to_use
@@ -57,15 +55,24 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         Xt : pandas DataFrame
         """
-        #X = check_X(X, enforce_univariate=True)
+        # X = check_X(X, enforce_univariate=True)
 
         # Tabularise assuming series
-        arr = tabularize(X, return_array=True)
+        # arr = tabularize(X, return_array=True)
 
-        #truncate between lower and upper inclusive.
-        truncate = arr[:, self.lower:self.upper+1]
-        
-        #retabularize
+        n_instances, n_timepoints = X.shape
+
+        arr = [X.iloc[i, :].values for i in range(n_instances)]
+
+        def get_length(input):
+            return len(input[self.dim_to_use])
+
+        min_length = min(map(get_length, arr))
+
+        truncate = [out[self.dim_to_use][0:min_length] for out in arr]
+
+        # truncate between lower and upper inclusive.
+        # truncate = arr[:, self.lower:self.upper+1]
+
+        # retabularize
         return detabularize(pd.DataFrame(truncate))
-
-
