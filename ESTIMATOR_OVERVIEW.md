@@ -53,6 +53,7 @@ Simple (or first-degree) transformations:
 | Shapelet transform | transformers.ShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (contracted) | transformers.ContractedShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (random sampled) | transformers.RandomEnumerationShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
+| Canonical Time-series Characteristics  | transformers.series_as_features.catch22.Catch22 | @MatthewMiddlehurst  | [ Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher, B. D., & Jones, N. S. (2019). catch22: CAnonical Time-series CHaracteristics. Data Mining and Knowledge Discovery, 33(6), 1821-1852.](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
 
 #### Multivariate nested data frame to univariate nested data frame (n-mts-to-n-1-ts)
 
@@ -116,6 +117,7 @@ Paired (or second-degree) transformations:
 | Time Series k-NN | classifiers.distance_based.time_series_neighbors.KNeighborsTimeSeriesClassifier | @jasonlines |  |
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
+| catch22 Forest Classifier  | classifiers.hybrid.catch22_forest_classifier.Catch22ForestClassifier | @MatthewMiddlehurst  | [ Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher, B. D., & Jones, N. S. (2019). catch22: CAnonical Time-series CHaracteristics. Data Mining and Knowledge Discovery, 33(6), 1821-1852.](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
 
 ### Multivariate time series classifiers
 

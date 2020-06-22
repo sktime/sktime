@@ -54,6 +54,7 @@ from statsmodels.tsa.stattools import acf
 import sktime.classification.compose._ensemble as ensemble
 import sktime.classification.dictionary_based._boss as db
 import sktime.classification.dictionary_based._tde as tde
+import sktime.classification.hybrid._catch22_forest_classifier as hb
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
@@ -266,6 +267,8 @@ def set_classifier(cls, resampleId):
                                randomised_ensemble=True, max_ensemble_size=50)
     elif cls.lower() == 'tde':
         return tde.TemporalDictionaryEnsemble(random_state=resampleId)
+    elif cls.lower() == 'catch22forest':
+        return hb.Catch22ForestClassifier(random_state=resampleId)
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'dtwcv':
@@ -591,7 +594,7 @@ if __name__ == "__main__":
         dataset = "GunPoint"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "TDE"
+        classifier = "catch22forest"
         resample = 0
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]
