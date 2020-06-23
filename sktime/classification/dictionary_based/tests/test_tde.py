@@ -13,7 +13,10 @@ def test_tde_on_gunpoint():
     indices = np.random.RandomState(0).permutation(10)
 
     # train tde
-    tde = TemporalDictionaryEnsemble(random_state=0)
+    tde = TemporalDictionaryEnsemble(n_parameter_samples=50,
+                                     max_ensemble_size=10,
+                                     randomly_selected_params=40,
+                                     random_state=0)
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -37,16 +40,16 @@ def test_individual_tde_on_gunpoint():
 
 
 tde_gunpoint_probas = np.array([
-    [0.06646431771223787, 0.933535682287762, ],
-    [0.3909966904975225, 0.6090033095024778, ],
-    [0.6869686054378235, 0.3130313945621766, ],
-    [0.5247664149494433, 0.4752335850505569, ],
-    [0.2849280503190653, 0.7150719496809348, ],
-    [0.47890877840961055, 0.5210912215903898, ],
-    [0.2562944542977822, 0.7437055457022181, ],
-    [0.5773527637088371, 0.4226472362911632, ],
-    [0.6583167248724654, 0.3416832751275348, ],
-    [0.15295021118648408, 0.8470497888135161, ],
+    [0.0, 1.0000000000000002, ],
+    [0.24122367101303915, 0.758776328986961, ],
+    [0.8432798395185557, 0.15672016048144438, ],
+    [0.4317953861584755, 0.5682046138415247, ],
+    [0.3432798395185558, 0.6567201604814444, ],
+    [0.5320962888666, 0.4679037111334003, ],
+    [0.32133901705115353, 0.6786609829488466, ],
+    [0.8432798395185558, 0.15672016048144438, ],
+    [0.5422517552657975, 0.45774824473420267, ],
+    [0.31118355065195596, 0.6888164493480443, ],
 ])
 individual_tde_gunpoint_probas = np.array([
     [0.0, 1.0, ],
@@ -78,7 +81,10 @@ individual_tde_gunpoint_probas = np.array([
 #     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     tde = TemporalDictionaryEnsemble(random_state=0)
+#     tde = TemporalDictionaryEnsemble(n_parameter_samples=50,
+#                                      max_ensemble_size=10,
+#                                      randomly_selected_params=40,
+#                                      random_state=0)
 #     indiv_tde = IndividualTDE(random_state=0)
 #
 #     tde.fit(X_train.iloc[indices], y_train[indices])

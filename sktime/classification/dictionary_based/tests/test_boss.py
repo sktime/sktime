@@ -20,6 +20,22 @@ def test_boss_on_gunpoint():
     testing.assert_array_equal(probas, boss_gunpoint_probas)
 
 
+def test_cboss_on_gunpoint():
+    # load gunpoint data
+    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
+    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+    indices = np.random.RandomState(0).permutation(10)
+
+    # train boss
+    cboss = BOSSEnsemble(n_parameter_samples=50, max_ensemble_size=10,
+                         random_state=0)
+    cboss.fit(X_train.iloc[indices], y_train[indices])
+
+    # assert probabilities are the same
+    probas = cboss.predict_proba(X_test.iloc[indices])
+    testing.assert_array_equal(probas, cboss_gunpoint_probas)
+
+
 def test_individual_boss_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
@@ -44,6 +60,18 @@ boss_gunpoint_probas = np.array([
     [0.8461538461538461, 0.15384615384615385, ],
     [0.0, 1.0, ],
     [0.8461538461538461, 0.15384615384615385, ],
+    [1.0, 0.0, ],
+    [0.0, 1.0, ],
+])
+cboss_gunpoint_probas = np.array([
+    [0.0, 1.0, ],
+    [0.1, 0.9, ],
+    [1.0, 0.0, ],
+    [1.0, 0.0, ],
+    [0.0, 1.0, ],
+    [0.9, 0.1, ],
+    [0.0, 1.0, ],
+    [0.8, 0.2, ],
     [1.0, 0.0, ],
     [0.0, 1.0, ],
 ])
@@ -78,10 +106,16 @@ individual_boss_gunpoint_probas = np.array([
 #     indices = np.random.RandomState(0).permutation(10)
 #
 #     boss = BOSSEnsemble(random_state=0)
+#     cboss = BOSSEnsemble(n_parameter_samples=50, max_ensemble_size=10,
+#                          random_state=0)
 #     indiv_boss = BOSSIndividual(random_state=0)
 #
 #     boss.fit(X_train.iloc[indices], y_train[indices])
 #     probas = boss.predict_proba(X_test.iloc[indices])
+#     print_array(probas)
+#
+#     cboss.fit(X_train.iloc[indices], y_train[indices])
+#     probas = cboss.predict_proba(X_test.iloc[indices])
 #     print_array(probas)
 #
 #     indiv_boss.fit(X_train.iloc[indices], y_train[indices])

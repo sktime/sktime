@@ -29,7 +29,7 @@ def test_catch22_single_feature_on_gunpoint():
     c22.fit(X_train.iloc[indices], y_train[indices])
 
     # assert transformed data is the same
-    data = c22.transform_single_feature(X_train.iloc[indices], 5)
+    data = c22._transform_single_feature(X_train.iloc[indices], 5)
     testing.assert_array_equal(data, catch22_single_feature_gunpoint_data)
 
 
