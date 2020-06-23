@@ -10,6 +10,14 @@ __author__ = ["Aaron Bostrom"]
 
 class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
     """TruncationTransformer docstring
+
+    Parameters
+    ----------
+    lower   : int, bottom range of the values to truncate
+                    can also be used to truncate to a specific length
+
+    upper   : int, upper range, only required when paired with lower.
+                    this is used to calculate the range between. exclusive.
     """
 
     def __init__(self, lower=None, upper=None):
