@@ -23,4 +23,3 @@ def test_truncation_transformer():
     # and we've truncated them all to 5 long.
     data = tabularize(Xt)
     assert len(data.columns) == 5*12
-
