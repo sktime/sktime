@@ -74,7 +74,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
 
         min_length = TruncationTransformer.get_min_length(arr)
 
-        if min_length < self.lower:
+        if min_length < self.lower_:
             raise ValueError(
                 "Error: min_length of series \
                     is less than the one found when fit or set.")
