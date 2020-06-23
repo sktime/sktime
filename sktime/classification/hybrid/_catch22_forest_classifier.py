@@ -7,7 +7,7 @@ __all__ = ["Catch22ForestClassifier"]
 
 import numpy as np
 from sklearn.ensemble import BaggingClassifier
-from sklearn import tree
+from sklearn import tree, preprocessing
 from sklearn.utils import check_random_state
 from sklearn.utils import check_array
 from catch22 import catch22_all
@@ -96,17 +96,21 @@ class Catch22ForestClassifier(BaseClassifier):
         """
         # Correct formating of x
         if len(X.iloc[0]) == 1:  # UNI
-            X2 = [np.array(X.iloc[i].iloc[0]).tolist()
+            X = [np.array(X.iloc[i].iloc[0]).tolist()
                   for i in range(0, len(X))]
         else:  # MULTI
-            X2 = [[np.array(X.iloc[i].iloc[j]).tolist()
+            X = [[np.array(X.iloc[i].iloc[j]).tolist()
                    for j in range(0, len(X.iloc[i]))]
                   for i in range(0, len(X))]
 
         random_state = check_random_state(self.random_state)
 
+        self.classes_ = np.unique(y)
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
+
         if check_input:
-            X = check_array(X2, dtype=np.float64, allow_nd=True, order="C")
+            X = check_array(X, dtype=np.float64, allow_nd=True, order="C")
             y = check_array(y, ensure_2d=False)
 
         if X.ndim < 2 or X.ndim > 3:

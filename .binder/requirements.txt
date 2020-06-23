@@ -4,3 +4,4 @@ pmdarima
 numba
 scikit-posthocs
 matplotlib
+catch22

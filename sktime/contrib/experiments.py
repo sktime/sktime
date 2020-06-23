@@ -267,7 +267,7 @@ def set_classifier(cls, resampleId):
                                randomised_ensemble=True, max_ensemble_size=50)
     elif cls.lower() == 'tde':
         return tde.TemporalDictionaryEnsemble(random_state=resampleId)
-    elif cls.lower() == 'catch22forest':
+    elif cls.lower() == 'catch22':
         return hb.Catch22ForestClassifier(random_state=resampleId)
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
@@ -594,7 +594,7 @@ if __name__ == "__main__":
         dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "tde"
+        classifier = "catch22"
         resample = 0
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]

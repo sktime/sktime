@@ -79,7 +79,7 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
 
         return pd.DataFrame(c22_list)
 
-    def transform_single_feature(self, X, feature):
+    def _transform_single_feature(self, X, feature):
         """transforms data into the catch22 features
 
             Parameters
