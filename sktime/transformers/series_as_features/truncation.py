@@ -15,7 +15,6 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
     def __init__(self, lower=None, upper=None):
         self.lower = lower
         self.upper = upper
-        self.is_fitted_ = False
         super(TruncationTransformer, self).__init__()
 
     def fit(self, X, y=None):
@@ -35,7 +34,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         """
         X = check_X(X, enforce_univariate=True)
 
-        self.is_fitted = True
+        self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
