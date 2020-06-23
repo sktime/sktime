@@ -40,13 +40,13 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X)
 
         n_instances, _ = X.shape
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
-        if self.lower is not None:
+        if self.lower is None:
             self.lower = TruncationTransformer.get_min_length(arr)
 
         self._is_fitted = True
