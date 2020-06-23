@@ -45,7 +45,9 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         if self.lower is None:
             n_instances, _ = X.shape
             arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.lower = TruncationTransformer.get_min_length(arr)
+            self.lower_ = TruncationTransformer.get_min_length(arr)
+        else:
+            self.lower_ = self.lower
 
         self._is_fitted = True
         return self
@@ -80,9 +82,9 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         # depending on inputs either find the shortest truncation.
         # or use the bounds.
         if self.upper is None:
-            idxs = np.arange(self.lower)
+            idxs = np.arange(self.lower_)
         else:
-            idxs = np.arange(self.lower, self.upper)
+            idxs = np.arange(self.lower_, self.upper)
 
         truncate = [pd.Series([series.iloc[idxs]
                                for series in out])
