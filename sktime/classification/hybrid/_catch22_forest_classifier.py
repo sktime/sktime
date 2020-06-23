@@ -97,11 +97,11 @@ class Catch22ForestClassifier(BaseClassifier):
         # Correct formating of x
         if len(X.iloc[0]) == 1:  # UNI
             X = [np.array(X.iloc[i].iloc[0]).tolist()
-                  for i in range(0, len(X))]
+                 for i in range(0, len(X))]
         else:  # MULTI
             X = [[np.array(X.iloc[i].iloc[j]).tolist()
-                   for j in range(0, len(X.iloc[i]))]
-                  for i in range(0, len(X))]
+                  for j in range(0, len(X.iloc[i]))]
+                 for i in range(0, len(X))]
 
         random_state = check_random_state(self.random_state)
 
