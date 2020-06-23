@@ -1,29 +1,26 @@
 # from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.truncation \
- import TruncationTransformer
+from sktime.datasets.base import _load_dataset
+from sktime.transformers.series_as_features.truncation import \
+    TruncationTransformer
 # from sklearn.ensemble import RandomForestClassifier
 from sktime.utils.data_container import tabularize
-# import pandas as pd
 
-from sktime.datasets.base import _load_dataset
+# import pandas as pd
 
 
 def test_truncation_transformer():
     # load data
-    name = 'PLAID'
+    name = 'JapaneseVowels'
     X_train, y_train = _load_dataset(name, split='train', return_X_y=True)
     X_test, y_test = _load_dataset(name, split='test', return_X_y=True)
 
     # print(X_train)
 
-    truncated_transformer = TruncationTransformer()
+    truncated_transformer = TruncationTransformer(5)
     Xt = truncated_transformer.transform(X_train)
 
-    # we should be able to tabularise this data as its noq square.
-    # in addition the shortest series in PLAID is 101 long
-    # so it should have 101 cols
+    # when we tabulrize the data it has 12 dimensions
+    # and we've truncated them all to 5 long.
     data = tabularize(Xt)
-    assert len(data.columns) == 101
+    assert len(data.columns) == 5*12
 
-
-test_truncation_transformer()

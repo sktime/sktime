@@ -1,19 +1,15 @@
-
-# import numpy as np
+import numpy as np
 import pandas as pd
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.data_container import detabularize
-# from sktime.utils.data_container import tabularize
-import numpy as np
 
 __all__ = ["TruncationTransformer"]
 __author__ = ["Aaron Bostrom"]
 
 
 class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
-    """MyTransformer docstring
+    """TruncationTransformer docstring
     """
 
     def __init__(self, lower=None, upper=None, dim_to_use=0):
@@ -55,17 +51,14 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         Xt : pandas DataFrame
         """
-        # X = check_X(X, enforce_univariate=True)
+        X = check_X(X)
 
-        # Tabularise assuming series
-        # arr = tabularize(X, return_array=True)
-
-        n_instances, n_timepoints = X.shape
+        n_instances, _ = X.shape
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
         def get_length(input):
-            return len(input[self.dim_to_use])
+            return min(map(lambda series: len(series), input))
 
         # depending on inputs either find the shortest truncation.
         # or use the bounds.
@@ -77,10 +70,8 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
             else:
                 idxs = np.arange(self.lower, self.upper)
 
-        truncate = [out[self.dim_to_use][idxs] for out in arr]
+        truncate = [pd.Series([series[idxs]
+                               for series in out])
+                    for out in arr]
 
-        # truncate between lower and upper inclusive.
-        # truncate = arr[:, self.lower:self.upper+1]
-
-        # retabularize
-        return detabularize(pd.DataFrame(truncate))
+        return pd.DataFrame(truncate)
