@@ -65,6 +65,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         Xt : pandas DataFrame
         """
+        self.check_is_fitted()
         X = check_X(X)
 
         n_instances, _ = X.shape
