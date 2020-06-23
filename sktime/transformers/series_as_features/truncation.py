@@ -16,6 +16,7 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         self.lower = lower
         self.upper = upper
         self.dim_to_use = dim_to_use
+        self.is_fitted_ = False
         super(TruncationTransformer, self).__init__()
 
     def fit(self, X, y=None):
