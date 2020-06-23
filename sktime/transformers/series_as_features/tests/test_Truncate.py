@@ -2,7 +2,7 @@
 from sktime.transformers.series_as_features.truncation \
  import TruncationTransformer
 # from sklearn.ensemble import RandomForestClassifier
-# from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import tabularize
 # import pandas as pd
 
 from sktime.datasets.base import _load_dataset
@@ -19,9 +19,11 @@ def test_truncation_transformer():
     truncated_transformer = TruncationTransformer()
     Xt = truncated_transformer.transform(X_train)
 
-    # first length of the series in the
-    # first dimension should be truncated to 101
-    assert Xt[0][0].shape == (101)
+    # we should be able to tabularise this data as its noq square.
+    # in addition the shortest series in PLAID is 101 long
+    # so it should have 101 cols
+    data = tabularize(Xt)
+    assert len(data.columns) == 101
 
 
 test_truncation_transformer()

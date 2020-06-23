@@ -67,9 +67,17 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         def get_length(input):
             return len(input[self.dim_to_use])
 
-        min_length = min(map(get_length, arr))
+        # depending on inputs either find the shortest truncation.
+        # or use the bounds.
+        if self.lower is None:
+            idxs = np.arange(min(map(get_length, arr)))
+        else:
+            if self.upper is None:
+                idxs = np.arange(self.lower)
+            else:
+                idxs = np.arange(self.lower, self.upper)
 
-        truncate = [out[self.dim_to_use][0:min_length] for out in arr]
+        truncate = [out[self.dim_to_use][idxs] for out in arr]
 
         # truncate between lower and upper inclusive.
         # truncate = arr[:, self.lower:self.upper+1]
