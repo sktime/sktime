@@ -12,6 +12,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sktime.classification.compose import ColumnEnsembleClassifier
+from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
@@ -129,5 +130,8 @@ ESTIMATOR_TEST_PARAMS = {
          "ml_task": "classification", },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {
-        "acf_lag": 10}
+        "acf_lag": 10},
+    TemporalDictionaryEnsemble: {"n_parameter_samples": 50,
+                                 "max_ensemble_size": 10,
+                                 "randomly_selected_params": 40}
 }
