@@ -54,7 +54,7 @@ GitHub, clone, and develop on a branch. Steps:
 .. code-block:: bash
 
    git fetch upstream
-   git checkout dev
+   git checkout dev --track origin/dev
    git merge upstream/dev
 
 
