@@ -15,7 +15,15 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
     def __init__(self, lower=None, upper=None):
         self.lower = lower
         self.upper = upper
+        self.min_length = lower
         super(TruncationTransformer, self).__init__()
+
+    @staticmethod
+    def get_min_length(X):
+        def get_length(input):
+            return min(map(lambda series: len(series), input))
+
+        return min(map(get_length, X))
 
     def fit(self, X, y=None):
         """
@@ -33,6 +41,13 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         self : an instance of self.
         """
         X = check_X(X, enforce_univariate=True)
+
+        n_instances, _ = X.shape
+
+        arr = [X.iloc[i, :].values for i in range(n_instances)]
+
+        if self.lower is not None:
+            self.lower = TruncationTransformer.get_min_length(arr)
 
         self._is_fitted = True
         return self
@@ -56,18 +71,19 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
-        def get_length(input):
-            return min(map(lambda series: len(series), input))
+        min_length = TruncationTransformer.get_min_length(arr)
+
+        if min_length < self.lower:
+            raise ValueError(
+                "Error: min_length of series \
+                    is less than the one found when fit or set.")
 
         # depending on inputs either find the shortest truncation.
         # or use the bounds.
-        if self.lower is None:
-            idxs = np.arange(min(map(get_length, arr)))
+        if self.upper is None:
+            idxs = np.arange(self.lower)
         else:
-            if self.upper is None:
-                idxs = np.arange(self.lower)
-            else:
-                idxs = np.arange(self.lower, self.upper)
+            idxs = np.arange(self.lower, self.upper)
 
         truncate = [pd.Series([series[idxs]
                                for series in out])

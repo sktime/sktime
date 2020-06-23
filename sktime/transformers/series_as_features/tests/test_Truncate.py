@@ -17,7 +17,7 @@ def test_truncation_transformer():
     # print(X_train)
 
     truncated_transformer = TruncationTransformer(5)
-    Xt = truncated_transformer.transform(X_train)
+    Xt = truncated_transformer.fit_transform(X_train)
 
     # when we tabulrize the data it has 12 dimensions
     # and we've truncated them all to 5 long.
