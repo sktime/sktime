@@ -1,5 +1,5 @@
 """ catch22 features
-A forest classifier based on catch22 features
+A transformer for the catch22 features
 """
 
 __author__ = "Matthew Middlehurst"

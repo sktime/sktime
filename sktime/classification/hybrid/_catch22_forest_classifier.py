@@ -41,6 +41,9 @@ class Catch22ForestClassifier(BaseClassifier):
      time-series analysis: the empirical structure of time series and their
      methods. Journal of the Royal Society Interface, 10(83), 20130048.
 
+     Original Catch22ForestClassifier:
+     https://github.com/chlubba/sktime-catch22
+
      catch22 package implementations:
      https://github.com/chlubba/catch22
 
