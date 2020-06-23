@@ -8,3 +8,4 @@ cython>=0.29.0
 tsfresh
 scikit-posthocs
 pmdarima
+catch22
