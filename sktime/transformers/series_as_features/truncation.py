@@ -12,10 +12,9 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
     """TruncationTransformer docstring
     """
 
-    def __init__(self, lower=None, upper=None, dim_to_use=0):
+    def __init__(self, lower=None, upper=None):
         self.lower = lower
         self.upper = upper
-        self.dim_to_use = dim_to_use
         self.is_fitted_ = False
         super(TruncationTransformer, self).__init__()
 
