@@ -94,8 +94,8 @@ class DWT(BaseSeriesAsFeaturesTransformer):
                                   of at least 0")
         else:
             raise TypeError("num_intervals must be an 'int'. Found \
-                              '" + type(self.num_intervals).__name__ +
-                             "' instead.")
+                            '" + type(self.num_intervals).__name__ +
+                            "' instead.")
 
     """
     Function to get the approximate coefficients at a given level.

@@ -79,4 +79,4 @@ class PAA_Multivariate(BaseSeriesAsFeaturesTransformer):
                                   than subsequence_length")
         else:
             raise TypeError("num_intervals must be an 'int'. Found '" +
-                             type(self.num_intervals).__name__ + "' instead.")
+                            type(self.num_intervals).__name__ + "' instead.")

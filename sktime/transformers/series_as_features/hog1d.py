@@ -177,8 +177,8 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                                   than subsequence_length")
         else:
             raise TypeError("num_intervals must be an 'int'. \
-                              Found '" + type(self.num_intervals).__name__ +
-                             "' instead.")
+                            Found '" + type(self.num_intervals).__name__ +
+                            "' instead.")
 
         if isinstance(self.num_bins, int):
             if self.num_intervals <= 0:
@@ -186,10 +186,10 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                                   at least 1")
         else:
             raise TypeError("num_bins must be an 'int'. Found '"
-                             + type(self.num_bins).__name__ + "' \
-                             instead.")
+                            + type(self.num_bins).__name__ + "' \
+                            instead.")
 
         if not isinstance(self.scaling_factor, numbers.Number):
             raise TypeError("scaling_factor must be a 'number'. \
-                              Found '" + type(self.scaling_factor).__name__ +
-                             "' instead.")
+                            Found '" + type(self.scaling_factor).__name__ +
+                            "' instead.")

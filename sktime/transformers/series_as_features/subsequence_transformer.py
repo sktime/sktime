@@ -84,7 +84,8 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
                                                shape=shape, strides=strides)
 
     """
-    Function for checking the values of parameters inserted into subsequence_transformer.
+    Function for checking the values of parameters inserted
+    into subsequence_transformer.
 
     Throws
     ------
@@ -97,6 +98,6 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
                                   value of at least 1")
         else:
             raise TypeError("subsequence_length must be an 'int'. \
-                              Found '" +
-                             type(self.subsequence_length).__name__ +
-                             "' instead.")
+                            Found '" +
+                            type(self.subsequence_length).__name__ +
+                            "' instead.")
