@@ -13,11 +13,16 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
 
     Parameters
     ----------
-    lower   : int, bottom range of the values to truncate
-                    can also be used to truncate to a specific length
+    lower   : int, optional (default=None) bottom range of the values to
+                truncate can also be used to truncate to a specific length
 
-    upper   : int, upper range, only required when paired with lower.
-                    this is used to calculate the range between. exclusive.
+                if None, will find the shortest sequence and use instead.
+
+    upper   : int, optional (default=None) upper range, only required when
+                paired with lower.
+                This is used to calculate the range between. exclusive.
+
+                if None, will truncate from 0 to the lower bound.
     """
 
     def __init__(self, lower=None, upper=None):
