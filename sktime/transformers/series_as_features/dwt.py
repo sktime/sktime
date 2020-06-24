@@ -85,7 +85,7 @@ class DWT(BaseSeriesAsFeaturesTransformer):
 
     Throws
     ------
-    ValueError if a parameters input is invalid.
+    ValueError or TypeError if a parameters input is invalid.
     """
     def check_parameters(self, num_atts):
         if isinstance(self.num_intervals, int):
@@ -93,7 +93,7 @@ class DWT(BaseSeriesAsFeaturesTransformer):
                 raise ValueError("num_levels must have the value \
                                   of at least 0")
         else:
-            raise ValueError("num_intervals must be an 'int'. Found \
+            raise TypeError("num_intervals must be an 'int'. Found \
                               '" + type(self.num_intervals).__name__ +
                              "' instead.")
 

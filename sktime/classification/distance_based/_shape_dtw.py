@@ -82,13 +82,14 @@ class ShapeDTW(BaseClassifier):
                                   set to 'compound'.
                                   Use a list of shape descriptor
                                   functions at the same time.
+                                  (default = ['raw','derivative'])
 
     metric_params               : dictionary for metric parameters
                                   (default = None).
     """
     def __init__(self, n_neighbors=1, subsequence_length=None,
                  shape_descriptor_function='raw',
-                 shape_descriptor_functions=None,
+                 shape_descriptor_functions=['raw', 'derivative'],
                  metric_params=None):
         self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
@@ -109,21 +110,16 @@ class ShapeDTW(BaseClassifier):
     """
     def fit(self, X, y):
         # Perform preprocessing on params.
-        self.shape_descriptor_function = self.shape_descriptor_function.lower()
-        # Convert all strings in list to lowercase.
-        if self.shape_descriptor_functions is not None:
-            self.shape_descriptor_functions = \
-                [x.lower() for x in self.shape_descriptor_functions]
-        else:
-            self.shape_descriptor_functions = None
+        if not (isinstance(self.shape_descriptor_function, str)):
+            raise TypeError("shape_descriptor_function must be an 'str'. \
+                            Found '" +
+                            type(self.shape_descriptor_function).__name__ +
+                            "' instead.")
 
         X, y = check_X_y(X, y, enforce_univariate=False)
 
         if self.metric_params is None:
             self.metric_params = {}
-
-        self.metric_params = \
-            {k.lower(): v for k, v in self.metric_params.items()}
 
         # If the shape descriptor is 'compound',
         # calculate the appropriate weighting_factor
@@ -168,6 +164,9 @@ class ShapeDTW(BaseClassifier):
     a 10-fold cross-validation on the training data.
     """
     def calculate_weighting_factor_value(self, X, y):
+
+        self.metric_params = {k.lower(): v for k,
+                              v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
         if self.metric_params.get("weighting_factor") is not None:
@@ -325,6 +324,11 @@ class ShapeDTW(BaseClassifier):
     """
     Function to extract the appropriate transformer
 
+    Input
+    -------
+    self   : the ShapeDTW object.
+    tName  : the name of the required transformer.
+
     Returns
     -------
     output : Base Transformer object corresponding to the class
@@ -336,6 +340,15 @@ class ShapeDTW(BaseClassifier):
     """
     def get_transformer(self, tName):
         parameters = self.metric_params
+
+        tName = tName.lower()
+
+        if parameters is None:
+            parameters = {}
+
+        parameters = {k.lower(): v for k, v in parameters.items()}
+
+        self.check_metric_params(parameters)
 
         if tName == "raw":
             return None
@@ -389,6 +402,24 @@ class ShapeDTW(BaseClassifier):
         else:
             raise ValueError("Invalid shape desciptor function.")
 
+    """
+    Helper function for checking if a user has entered in
+    an invalid metric_params.
+    """
+    def check_metric_params(self, parameters):
+        valid_metric_params = ['num_intervals_paa', 'num_levels_dwt',
+                               'num_intervals_slope', 'num_intervals_hog1d',
+                               'num_bins_hog1d', 'scaling_factor_hog1d',
+                               'weighting_factor']
+
+        names = list(parameters.keys())
+
+        for x in names:
+            if not (x in valid_metric_params):
+                raise ValueError(x + " is not a valid metric parameter." +
+                                 "Make sure the shape descriptor function" +
+                                 " name is at the end of the metric " +
+                                 "parameter name.")
     """
     Helper function for the shape_dtw class to combine two dataframes
     together into a single dataframe.

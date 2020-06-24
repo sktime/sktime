@@ -84,11 +84,11 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
                                                shape=shape, strides=strides)
 
     """
-    Function for checking the values of parameters inserted into HOG1D.
+    Function for checking the values of parameters inserted into subsequence_transformer.
 
     Throws
     ------
-    ValueError if a parameters input is invalid.
+    ValueError or TypeError if a parameters input is invalid.
     """
     def check_parameters(self, num_atts):
         if isinstance(self.subsequence_length, int):
@@ -96,7 +96,7 @@ class SubsequenceTransformer(BaseSeriesAsFeaturesTransformer):
                 raise ValueError("subsequence_length must have the \
                                   value of at least 1")
         else:
-            raise ValueError("subsequence_length must be an 'int'. \
+            raise TypeError("subsequence_length must be an 'int'. \
                               Found '" +
                              type(self.subsequence_length).__name__ +
                              "' instead.")

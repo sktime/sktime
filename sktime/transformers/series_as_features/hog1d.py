@@ -165,7 +165,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
 
     Throws
     ------
-    ValueError if a parameters input is invalid.
+    ValueError or TypeError if a parameters input is invalid.
     """
     def check_parameters(self, num_atts):
         if isinstance(self.num_intervals, int):
@@ -176,7 +176,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                 raise ValueError("num_intervals cannot be higher \
                                   than subsequence_length")
         else:
-            raise ValueError("num_intervals must be an 'int'. \
+            raise TypeError("num_intervals must be an 'int'. \
                               Found '" + type(self.num_intervals).__name__ +
                              "' instead.")
 
@@ -185,11 +185,11 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                 raise ValueError("num_bins must have the value of \
                                   at least 1")
         else:
-            raise ValueError("num_bins must be an 'int'. Found '"
+            raise TypeError("num_bins must be an 'int'. Found '"
                              + type(self.num_bins).__name__ + "' \
                              instead.")
 
         if not isinstance(self.scaling_factor, numbers.Number):
-            raise ValueError("scaling_factor must be a 'number'. \
+            raise TypeError("scaling_factor must be a 'number'. \
                               Found '" + type(self.scaling_factor).__name__ +
                              "' instead.")
