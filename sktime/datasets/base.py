@@ -18,7 +18,7 @@ __all__ = [
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
-    "load_acsf"
+    "load_acsf1"
 ]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
