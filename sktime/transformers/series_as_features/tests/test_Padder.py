@@ -1,6 +1,6 @@
 # from sklearn.pipeline import Pipeline
 from sktime.datasets.base import _load_dataset
-from sktime.transformers.series_as_features.truncation import \
+from sktime.transformers.series_as_features.padder import \
     PaddingTransformer
 # from sklearn.ensemble import RandomForestClassifier
 from sktime.utils.data_container import tabularize
@@ -20,9 +20,9 @@ def test_truncation_transformer():
     Xt = padding_transformer.fit_transform(X_train)
 
     # when we tabulrize the data it has 12 dimensions
-    # and we've padded them to there normal length of 30
+    # and we've padded them to there normal length of 29
     data = tabularize(Xt)
-    assert len(data.columns) == 30*12
+    assert len(data.columns) == 29*12
 
 
 def test_truncation_paramterised_transformer():

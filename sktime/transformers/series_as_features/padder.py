@@ -49,12 +49,17 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
         if self.pad_length is None:
             n_instances, _ = X.shape
             arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.pad_length_ = PaddingTransformer.get_min_length(arr)
+            self.pad_length_ = PaddingTransformer.get_max_length(arr)
         else:
             self.pad_length_ = self.pad_length
 
         self._is_fitted = True
         return self
+
+    def create_pad(self, series):
+        out = np.zeros(self.pad_length_)
+        out[:len(series)] = series.iloc[:len(series)]
+        return out
 
     def transform(self, X, y=None):
         """
@@ -72,23 +77,18 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
         self.check_is_fitted()
         X = check_X(X)
 
-        n_instances, _ = X.shape
+        n_instances, n_dims = X.shape
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
-        max_length = PaddingTransformer.get_min_length(arr)
+        max_length = PaddingTransformer.get_max_length(arr)
 
-        if max_length > self.pad_length:
+        if max_length > self.pad_length_:
             raise ValueError(
                 "Error: max_length of series \
                     is greater than the one found when fit or set.")
 
-        # depending on inputs either find the shortest truncation.
-        # or use the bounds.
-        idxs = np.arange(self.pad_length)
-
-        pad = [pd.Series([series.iloc[idxs]
-                          for series in out])
+        pad = [pd.Series([self.create_pad(series) for series in out])
                for out in arr]
 
         return pd.DataFrame(pad)
