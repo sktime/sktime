@@ -263,7 +263,7 @@ def load_arrow_head(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-def load_acsf(split=None, return_X_y=False):
+def load_acsf1(split=None, return_X_y=False):
     """
     Loads the power consumption of typical appliances time series
     classification problem and returns X and y.
