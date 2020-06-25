@@ -265,8 +265,8 @@ def load_arrow_head(split=None, return_X_y=False):
 
 def load_acsf(split=None, return_X_y=False):
     """
-    Loads the power consumption of typical appliances time series classification
-    problem and returns X and y.
+    Loads the power consumption of typical appliances time series
+    classification problem and returns X and y.
 
     Parameters
     ----------
@@ -296,10 +296,11 @@ def load_acsf(split=None, return_X_y=False):
     The dataset contains the power consumption of typical appliances.
     The recordings are characterized by long idle periods and some high bursts
     of enery consumption when the appliance is active.
-    The classes correspond to 10 categories of home appliances:
-    mobile phones (via chargers), coffee machines, computer stations (including monitor),
-    fridges and freezers, Hi-Fi systems (CD players), lamp (CFL), laptops (via chargers), 
-    microwave ovens, printers, and televisions (LCD or LED)."
+    The classes correspond to 10 categories of home appliances;
+    mobile phones (via chargers), coffee machines, computer stations
+    (including monitor), fridges and freezers, Hi-Fi systems (CD players),
+    lamp (CFL), laptops (via chargers), microwave ovens, printers, and
+    televisions (LCD or LED)."
 
     Dataset details: http://www.timeseriesclassification.com/description.php
     ?Dataset=ACSF1
