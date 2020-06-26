@@ -15,13 +15,13 @@ from sktime.datasets import load_gunpoint
 
 
 # Check that exception is raised for bad subsequence length.
+# input types - string, float, negative int, negative float and empty dict
+# correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_subsequence_length", ['str', 0.5, -1, -0.5, {}])
 def test_subsequence_length(bad_subsequence_length):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
     y = np.zeros(10)
 
-    if isinstance(bad_subsequence_length, type(None)):
-        ShapeDTW(subsequence_length=bad_subsequence_length).fit(X, y)
     if not isinstance(bad_subsequence_length, int):
         with pytest.raises(TypeError):
             ShapeDTW(subsequence_length=bad_subsequence_length).fit(X, y)

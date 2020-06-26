@@ -116,23 +116,23 @@ class PAA(BaseSeriesAsFeaturesTransformer):
 
         return dims
 
-    """
-    Function for checking the values of parameters inserted into PAA.
-    For example, the number of subsequences cannot be larger than the
-    time series length.
-
-    Throws
-    ------
-    ValueError or TypeError if a parameters input is invalid.
-    """
     def check_parameters(self, num_atts):
+        """
+        Function for checking the values of parameters inserted into PAA.
+        For example, the number of subsequences cannot be larger than the
+        time series length.
+
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
+        """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
                 raise ValueError("num_intervals must have the \
                                   value of at least 1")
             if self.num_intervals > num_atts:
                 raise ValueError("num_intervals cannot be higher \
-                                  than subsequence_length")
+                                  than the time series length.")
         else:
             raise TypeError("num_intervals must be an 'int'. Found '" +
                             type(self.num_intervals).__name__ + "' instead.")

@@ -9,7 +9,9 @@ from sktime.transformers.series_as_features.subsequence_transformer \
 from sktime.utils.data_container import tabularize
 from sktime.utils._testing import generate_df_from_array
 
-# Check that exception is raised for bad input args.
+# Check that exception is raised for bad subsequence length.
+# input types - string, float, negative int, negative float and empty dict
+# correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_subsequence_length", ['str', 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_subsequence_length):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)

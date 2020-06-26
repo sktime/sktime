@@ -59,7 +59,7 @@ import sktime.classification.distance_based._elastic_ensemble as dist
 import sktime.classification.distance_based._time_series_neighbors as nn
 import sktime.classification.distance_based._proximity_forest as pf
 import sktime.classification.shapelet_based._stc as st
-from sktime.contrib.shape_dtw.shape_dtw import ShapeDTW
+from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter

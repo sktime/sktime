@@ -8,20 +8,18 @@ from sktime.utils.validation.series_as_features import check_X
 
 class Derivative(BaseSeriesAsFeaturesTransformer):
 
-    def __init__(self):
-        super(Derivative, self).__init__()
-
-    """
-    Parameters
-    ----------
-    X : a pandas dataframe of shape = [n_samples, num_dims]
-        The training input samples.
-
-    Returns
-    -------
-    dims: a pandas data frame of shape = [n_samples, num_dims]
-    """
     def transform(self, X, y=None):
+    
+        """
+        Parameters
+        ----------
+        X : a pandas dataframe of shape = [n_samples, num_dims]
+            The training input samples.
+
+        Returns
+        -------
+        dims: a pandas data frame of shape = [n_samples, num_dims]
+        """
 
         # Check the data
         self.check_is_fitted()
