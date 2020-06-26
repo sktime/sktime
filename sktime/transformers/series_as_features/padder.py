@@ -11,6 +11,11 @@ __author__ = ["Aaron Bostrom"]
 class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
     """PaddingTransformer docstring
 
+    Pads the input dataset to either a optional fixed length
+    (longer than the longest series).
+    Or finds the max length series across all series and dimensions and
+    pads to that with zeroes.
+
     Parameters
     ----------
     pad_length  : int, optional (default=None) length to pad the series too.
@@ -18,16 +23,10 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
                 if None, will find the longest sequence and use instead.
     """
 
-    def __init__(self, pad_length=None):
+    def __init__(self, pad_length=None, fill_value=0):
         self.pad_length = pad_length
+        self.fill_value = fill_value
         super(PaddingTransformer, self).__init__()
-
-    @staticmethod
-    def get_max_length(X):
-        def get_length(input):
-            return max(map(lambda series: len(series), input))
-
-        return max(map(get_length, X))
 
     def fit(self, X, y=None):
         """
@@ -49,15 +48,15 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
         if self.pad_length is None:
             n_instances, _ = X.shape
             arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.pad_length_ = PaddingTransformer.get_max_length(arr)
+            self.pad_length_ = _get_max_length(arr)
         else:
             self.pad_length_ = self.pad_length
 
         self._is_fitted = True
         return self
 
-    def create_pad(self, series):
-        out = np.zeros(self.pad_length_)
+    def _create_pad(self, series):
+        out = np.full(self.pad_length_, self.fill_value, np.float)
         out[:len(series)] = series.iloc[:len(series)]
         return out
 
@@ -81,14 +80,21 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
-        max_length = PaddingTransformer.get_max_length(arr)
+        max_length = _get_max_length(arr)
 
         if max_length > self.pad_length_:
             raise ValueError(
                 "Error: max_length of series \
                     is greater than the one found when fit or set.")
 
-        pad = [pd.Series([self.create_pad(series) for series in out])
+        pad = [pd.Series([self._create_pad(series) for series in out])
                for out in arr]
 
         return pd.DataFrame(pad)
+
+
+def _get_max_length(X):
+    def get_length(input):
+        return max(map(lambda series: len(series), input))
+
+    return max(map(get_length, X))
