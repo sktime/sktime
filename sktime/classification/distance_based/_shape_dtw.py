@@ -237,7 +237,7 @@ class ShapeDTW(BaseClassifier):
         self.testData = self.sequences
 
         # Create the testing data by finding the shape descriptors
-        self.testData = self.generateShapeDescriptors(
+        self.testData = self.generate_shape_descriptors(
                             self.sequences, num_insts, num_atts)
 
         # Classify the test data
