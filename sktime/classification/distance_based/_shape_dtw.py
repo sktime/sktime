@@ -12,8 +12,8 @@ from sklearn.model_selection import KFold
 # Transforms
 from sktime.transformers.series_as_features.subsequence_transformer \
     import SubsequenceTransformer
-from sktime.transformers.series_as_features.paa_multivariate \
-    import PAA_Multivariate
+from sktime.transformers.series_as_features.dictionary_based._paa \
+    import PAA
 from sktime.transformers.series_as_features.dwt import DWT
 from sktime.transformers.series_as_features.slope import Slope
 from sktime.transformers.series_as_features.derivative import Derivative
@@ -355,8 +355,8 @@ class ShapeDTW(BaseClassifier):
         elif tName == "paa":
             num_intervals = parameters.get("num_intervals_paa")
             if num_intervals is None:
-                return PAA_Multivariate()
-            return PAA_Multivariate(num_intervals)
+                return PAA()
+            return PAA(num_intervals)
         elif tName == "dwt":
             num_levels = parameters.get("num_levels_dwt")
             if num_levels is None:

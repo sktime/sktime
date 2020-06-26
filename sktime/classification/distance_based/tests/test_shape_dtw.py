@@ -4,8 +4,8 @@ import pytest
 from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils._testing import generate_df_from_array
 
-from sktime.transformers.series_as_features.paa_multivariate \
-    import PAA_Multivariate
+from sktime.transformers.series_as_features.dictionary_based._paa \
+    import PAA
 from sktime.transformers.series_as_features.dwt import DWT
 from sktime.transformers.series_as_features.slope import Slope
 from sktime.transformers.series_as_features.derivative import Derivative
@@ -60,8 +60,7 @@ def test_shape_descriptor_functions(bad_sdfs):
 
 
 # check that the metric_params are being fed in correctly
-@pytest.mark.parametrize("metric_params", [None])
-def test_metric_params(metric_params):
+def test_metric_params():
 
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
     y = np.zeros(10)
@@ -75,7 +74,7 @@ def test_metric_params(metric_params):
     assert shp.get_transformer("pAA").num_intervals == 3
     shp = ShapeDTW()
     assert shp.get_transformer("pAA").num_intervals == 8
-    assert isinstance(shp.get_transformer("paa"), PAA_Multivariate)
+    assert isinstance(shp.get_transformer("paa"), PAA)
 
     # test the dwt shape descriptor
     assert shp.get_transformer("dWt").num_levels == 3
@@ -161,12 +160,13 @@ def test_metric_params(metric_params):
 # default settings
 @pytest.mark.parametrize("shape_descriptor_function", ['raw', 'paa', 'dwt',
                                                        'slope', 'derivative',
-                                                       'hog1d', 'compound'])
+                                                       'hog1d'])
 def test_classification_functionality(shape_descriptor_function):
 
     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
 
+    # weighting_factor given so that it isn't tuned as this is not necessary.
     shp = ShapeDTW(shape_descriptor_function=shape_descriptor_function)
     shp.fit(X_train, y_train)
     print(shp.score(X_test, y_test))

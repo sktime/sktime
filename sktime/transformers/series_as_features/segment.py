@@ -110,6 +110,7 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         # Tabularise assuming series
         arr = tabularize(X, return_array=True)
         # have equal indexes in any given column
+        print(self.intervals_)
         for start, end in self.intervals_:
             interval = arr[:, start:end]
             intervals.append(interval)
