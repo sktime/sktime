@@ -150,7 +150,7 @@ class ShapeDTW(BaseClassifier):
                                                          num_insts, num_atts)
 
         # Fit the kNN classifier
-        self.knn = KNeighborsTimeSeriesClassifier(self.n_neighbors)
+        self.knn = KNeighborsTimeSeriesClassifier(n_neighbors=self.n_neighbors)
         self.knn.fit(self.trainData, self.trainDataClasses)
         self.classes_ = self.knn.classes_
 

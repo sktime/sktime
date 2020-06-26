@@ -292,15 +292,15 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
     elif cls.lower() == 'shapedtw_raw':
-        return ShapeDTW(subsequence_length=10,shape_descriptor_function="raw",metric_params=None)
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="raw",metric_params=None)
     elif cls.lower() == 'shapedtw_dwt':
-        return ShapeDTW(subsequence_length=10,shape_descriptor_function="dwt",metric_params={"num_levels_dwt":3})
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="dwt",metric_params={"num_levels_dwt":3})
     elif cls.lower() == 'shapedtw_paa':
-        return ShapeDTW(subsequence_length=10,shape_descriptor_function="paa",metric_params={"num_intervals_paa":5})
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="paa",metric_params={"num_intervals_paa":5})
     elif cls.lower() == 'shapedtw_slope':
-        return ShapeDTW(subsequence_length=10, shape_descriptor_function="slope",metric_params={"num_intervals_slope":5})
+        return ShapeDTW(subsequence_length=30, shape_descriptor_function="slope",metric_params={"num_intervals_slope":5})
     elif cls.lower() == 'shapedtw_hog1d':
-        return ShapeDTW(subsequence_length=10, shape_descriptor_function="hog1d",metric_params={"num_bins_hog1d":8,"num_intervals_hog1d":2,"scaling_factor_hog1d":0.1})
+        return ShapeDTW(subsequence_length=30, shape_descriptor_function="hog1d",metric_params={"num_bins_hog1d":8,"num_intervals_hog1d":2,"scaling_factor_hog1d":0.1})
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
