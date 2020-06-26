@@ -24,7 +24,8 @@ def configuration(parent_package='', top_path=None):
         "Lynx",
         "PLAID",
         "ShampooSales",
-        "Airline"
+        "Airline",
+        "ACSF1"
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")
