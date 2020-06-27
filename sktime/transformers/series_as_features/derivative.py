@@ -6,7 +6,7 @@ from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
-class Derivative(BaseSeriesAsFeaturesTransformer):
+class DerivativeTransformer(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X, y=None):
     

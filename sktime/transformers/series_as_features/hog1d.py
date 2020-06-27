@@ -24,13 +24,13 @@ The HOG1D Transformer proposed by:
 """
 
 
-class HOG1D(BaseSeriesAsFeaturesTransformer):
+class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):
         self.num_intervals = num_intervals
         self.num_bins = num_bins
         self.scaling_factor = scaling_factor
-        super(HOG1D, self).__init__()
+        super(HOG1DTransformer, self).__init__()
 
     """
     Parameters
@@ -51,6 +51,10 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
         # Get information about the dataframe
         num_insts = X.shape[0]
         col_names = X.columns
+        num_atts = len(X.iloc[0, 0])
+        
+        # Check the parameters are appropriate
+        self.check_parameters(num_atts)
 
         df = pd.DataFrame()
 
@@ -181,7 +185,7 @@ class HOG1D(BaseSeriesAsFeaturesTransformer):
                             "' instead.")
 
         if isinstance(self.num_bins, int):
-            if self.num_intervals <= 0:
+            if self.num_bins <= 0:
                 raise ValueError("num_bins must have the value of \
                                   at least 1")
         else:

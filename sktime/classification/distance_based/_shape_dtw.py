@@ -14,10 +14,10 @@ from sktime.transformers.series_as_features.subsequence_transformer \
     import SubsequenceTransformer
 from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
-from sktime.transformers.series_as_features.dwt import DWT
-from sktime.transformers.series_as_features.slope import Slope
-from sktime.transformers.series_as_features.derivative import Derivative
-from sktime.transformers.series_as_features.hog1d import HOG1D
+from sktime.transformers.series_as_features.dwt import DWTTransformer
+from sktime.transformers.series_as_features.slope import SlopeTransformer
+from sktime.transformers.series_as_features.derivative import DerivativeTransformer
+from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
@@ -360,15 +360,15 @@ class ShapeDTW(BaseClassifier):
         elif tName == "dwt":
             num_levels = parameters.get("num_levels_dwt")
             if num_levels is None:
-                return DWT()
-            return DWT(num_levels)
+                return DWTTransformer()
+            return DWTTransformer(num_levels)
         elif tName == "slope":
             num_intervals = parameters.get("num_intervals_slope")
             if num_intervals is None:
-                return Slope()
-            return Slope(num_intervals)
+                return SlopeTransformer()
+            return SlopeTransformer(num_intervals)
         elif tName == "derivative":
-            return Derivative()
+            return DerivativeTransformer()
         elif tName == "hog1d":
             num_intervals = parameters.get("num_intervals_hog1d")
             num_bins = parameters.get("num_bins_hog1d")
@@ -377,27 +377,27 @@ class ShapeDTW(BaseClassifier):
             # All 3 paramaters are None
             if num_intervals is None and num_bins is None and \
                scaling_factor is None:
-                return HOG1D()
+                return HOG1DTransformer()
 
             # 2 parameters are None
             if num_intervals is None and num_bins is None:
-                return HOG1D(scaling_factor=scaling_factor)
+                return HOG1DTransformer(scaling_factor=scaling_factor)
             if num_intervals is None and scaling_factor is None:
-                return HOG1D(num_bins=num_bins)
+                return HOG1DTransformer(num_bins=num_bins)
             if num_bins is None and scaling_factor is None:
-                return HOG1D(num_intervals=num_intervals)
+                return HOG1DTransformer(num_intervals=num_intervals)
 
             # 1 parameter is None
             if num_intervals is None:
-                return HOG1D(scaling_factor=scaling_factor, num_bins=num_bins)
+                return HOG1DTransformer(scaling_factor=scaling_factor, num_bins=num_bins)
             if scaling_factor is None:
-                return HOG1D(num_intervals=num_intervals, num_bins=num_bins)
+                return HOG1DTransformer(num_intervals=num_intervals, num_bins=num_bins)
             if num_bins is None:
-                return HOG1D(scaling_factor=scaling_factor,
+                return HOG1DTransformer(scaling_factor=scaling_factor,
                              num_intervals=num_intervals)
 
             # All parameters are given
-            return HOG1D(num_intervals=num_intervals,
+            return HOG1DTransformer(num_intervals=num_intervals,
                          num_bins=num_bins, scaling_factor=scaling_factor)
         else:
             raise ValueError("Invalid shape desciptor function.")

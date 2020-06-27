@@ -6,10 +6,10 @@ from sktime.utils._testing import generate_df_from_array
 
 from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
-from sktime.transformers.series_as_features.dwt import DWT
-from sktime.transformers.series_as_features.slope import Slope
-from sktime.transformers.series_as_features.derivative import Derivative
-from sktime.transformers.series_as_features.hog1d import HOG1D
+from sktime.transformers.series_as_features.dwt import DWTTransformer
+from sktime.transformers.series_as_features.slope import SlopeTransformer
+from sktime.transformers.series_as_features.derivative import DerivativeTransformer
+from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 from sktime.datasets import load_gunpoint
 
@@ -80,18 +80,18 @@ def test_metric_params():
     assert shp.get_transformer("dWt").num_levels == 3
     shp = ShapeDTW(metric_params={"num_LEvEls_dwt": 5})
     assert shp.get_transformer("Dwt").num_levels == 5
-    assert isinstance(shp.get_transformer("dwt"), DWT)
+    assert isinstance(shp.get_transformer("dwt"), DWTTransformer)
 
     # test the slope shape descriptor
     shp = ShapeDTW()
     assert shp.get_transformer("sLoPe").num_intervals == 8
     shp = ShapeDTW(metric_params={"num_inTErvals_slope": 2})
     assert shp.get_transformer("slope").num_intervals == 2
-    assert isinstance(shp.get_transformer("slope"), Slope)
+    assert isinstance(shp.get_transformer("slope"), SlopeTransformer)
 
     # test the derivative shape descriptor
     shp = ShapeDTW()
-    assert isinstance(shp.get_transformer("derivative"), Derivative)
+    assert isinstance(shp.get_transformer("derivative"), DerivativeTransformer)
 
     # test the hog1d shape descriptor
     assert shp.get_transformer("hOG1d").num_intervals == 2 and \
@@ -142,7 +142,7 @@ def test_metric_params():
            shp.get_transformer("hog1d").scaling_factor == 0.5
 
     shp = ShapeDTW()
-    assert isinstance(shp.get_transformer("hog1d"), HOG1D)
+    assert isinstance(shp.get_transformer("hog1d"), HOG1DTransformer)
 
     # test compound shape descriptor (mix upper and lower cases)
     shp = ShapeDTW(shape_descriptor_function="compound",

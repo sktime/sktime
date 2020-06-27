@@ -13,7 +13,7 @@ from sktime.utils._testing import generate_df_from_array
 # input types - string, float, negative int, negative float, empty dict
 # and an int that is larger than the time series length.
 # correct input is meant to be a positive integer of 1 or more.
-@pytest.mark.parametrize("bad_num_intervals", ['str', 1.2, -1.2, -1, {},11])
+@pytest.mark.parametrize("bad_num_intervals", ['str', 1.2, -1.2, -1, {},11,0])
 def test_bad_input_args(bad_num_intervals):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
 

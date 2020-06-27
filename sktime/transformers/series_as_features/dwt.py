@@ -9,11 +9,11 @@ from sktime.utils.validation.series_as_features import check_X
 __author__ = "Vincent Nicholson"
 
 
-class DWT(BaseSeriesAsFeaturesTransformer):
+class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
-        super(DWT, self).__init__()
+        super(DWTTransformer, self).__init__()
 
     """
     Parameters
@@ -30,6 +30,8 @@ class DWT(BaseSeriesAsFeaturesTransformer):
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
+        
+        self.check_parameters()
 
         # Get information about the dataframe
         col_names = X.columns
@@ -70,12 +72,16 @@ class DWT(BaseSeriesAsFeaturesTransformer):
             else:
                 coeffs = []
                 current = x
+                approx = None
                 for lev in range(num_levels):
                     approx = self.get_approx_coefficients(current)
                     wav_coeffs = self.get_wavelet_coefficients(current)
                     current = approx
+                    wav_coeffs.reverse()
                     coeffs.extend(wav_coeffs)
+                approx.reverse()
                 coeffs.extend(approx)
+                coeffs.reverse()
                 res.append(coeffs)
 
         return res
@@ -87,14 +93,14 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     ------
     ValueError or TypeError if a parameters input is invalid.
     """
-    def check_parameters(self, num_atts):
-        if isinstance(self.num_intervals, int):
-            if self.num_intervals <= -1:
-                raise ValueError("num_levels must have the value \
-                                  of at least 0")
+    def check_parameters(self):
+        if isinstance(self.num_levels, int):
+            if self.num_levels <= -1:
+                raise ValueError("num_levels must have the value" +
+                                  "of at least 0")
         else:
-            raise TypeError("num_intervals must be an 'int'. Found \
-                            '" + type(self.num_intervals).__name__ +
+            raise TypeError("num_levels must be an 'int'. Found" +
+                            "'" + type(self.num_levels).__name__ +
                             "' instead.")
 
     """
@@ -102,12 +108,10 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     """
     def get_approx_coefficients(self, arr):
         new = []
+        if len(arr) == 1:
+            return [arr[0]]
         for x in range(math.floor(len(arr)/2)):
             new.append((arr[2*x]+arr[2*x+1])/math.sqrt(2))
-
-        # If the length of the array is odd
-        if not (len(arr)/2).is_integer():
-            new.append(0)
         return new
 
     """
@@ -115,10 +119,9 @@ class DWT(BaseSeriesAsFeaturesTransformer):
     """
     def get_wavelet_coefficients(self, arr):
         new = []
+        # if length is 1, just return the list back
+        if len(arr) == 1:
+            return [arr[0]]
         for x in range(math.floor(len(arr)/2)):
             new.append((arr[2*x]-arr[2*x+1])/math.sqrt(2))
-
-        # If the length of the array is odd
-        if not (len(arr)/2).is_integer():
-            new.append(0)
         return new

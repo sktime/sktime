@@ -8,11 +8,11 @@ from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
-class Slope(BaseSeriesAsFeaturesTransformer):
+class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
-        super(Slope, self).__init__()
+        super(SlopeTransformer, self).__init__()
 
     """
     Parameters
