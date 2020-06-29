@@ -18,6 +18,7 @@ def configuration(parent_package='', top_path=None):
         "ArrowHead",
         "BasicMotions",
         "GunPoint",
+        "OSULeaf",
         "ItalyPowerDemand",
         "JapaneseVowels",
         "Longley",
