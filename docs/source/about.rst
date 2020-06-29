@@ -51,7 +51,7 @@ Artwork
 
 High-quality logos are available in the `docs/source/images/
 <https://alan-turing-institute.com/sktime/sktime/tree/master/docs/source/images>`_
-source directory. The artwork was created
+source directory.
 
 .. image:: images/sktime-logo-no-text.jpg
    :align: center
