@@ -9,8 +9,10 @@ from sktime.utils.validation.series_as_features import check_X
 class DerivativeTransformer(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X, y=None):
-    
         """
+        Function to calculate the derivative of a time series.
+        Does the same formula as dDTW.
+        
         Parameters
         ----------
         X : a pandas dataframe of shape = [n_samples, num_dims]

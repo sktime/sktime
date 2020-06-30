@@ -27,22 +27,37 @@ The HOG1D Transformer proposed by:
 class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):
+        """
+        This class is to calculate the HOG1D transform of a
+        dataframe of time series data. Works by splitting
+        the time series num_intervals times, and calculate
+        a histogram of gradients within each interval.
+        
+        Parameters
+        ----------
+            num_intervals   : int, length of interval.
+            num_bins        : int, num bins in the histogram.
+            scaling_factor  : float, a constant that is multiplied 
+                              to modify the distribution.
+        """
         self.num_intervals = num_intervals
         self.num_bins = num_bins
         self.scaling_factor = scaling_factor
         super(HOG1DTransformer, self).__init__()
 
-    """
-    Parameters
-    ----------
-    X : a pandas dataframe of shape = [n_samples, num_dims]
-        The training input samples.
-
-    Returns
-    -------
-    dims: a pandas data frame of shape = [n_samples, num_dims]
-    """
     def transform(self, X, y=None):
+        """
+        Function to transform a data frame of time series data.
+
+        Parameters
+        ----------
+        X : a pandas dataframe of shape = [n_samples, num_dims]
+            The training input samples.
+
+        Returns
+        -------
+        dims: a pandas data frame of shape = [n_samples, num_dims]
+        """
 
         # Check the data
         self.check_is_fitted()
@@ -54,7 +69,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         num_atts = len(X.iloc[0, 0])
         
         # Check the parameters are appropriate
-        self.check_parameters(num_atts)
+        self._check_parameters(num_atts)
 
         df = pd.DataFrame()
 
@@ -65,7 +80,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
             # Get the HOG1Ds of each time series
             transformedData = []
             for y in range(num_insts):
-                inst = self.calculate_hog1ds(arr[y])
+                inst = self._calculate_hog1ds(arr[y])
                 transformedData.append(inst)
 
             # Convert to numpy array
@@ -81,40 +96,41 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         return df
 
-    """
-    Function to calculate the HOG1Ds given a time series.
+    
+    def _calculate_hog1ds(self, X):
+        """
+        Function to calculate the HOG1Ds given a time series.
 
-    Parameters
-    ----------
-    X : a numpy array of shape = [num_atts]
+        Parameters
+        ----------
+        X : a numpy array of shape = [time_series_length]
 
-    Returns
-    -------
-    m : a numpy array of shape = [num_intervals*num_bins].
-        It contains the histogram of each gradient within
-        each interval.
-    """
-    def calculate_hog1ds(self, X):
+        Returns
+        -------
+        HOG1Ds : a numpy array of shape = [num_intervals*num_bins].
+                 It contains the histogram of each gradient within
+                 each interval.
+        """
         # Firstly, split the time series into approx equal
         # length intervals
-        splitTimeSeries = self.split_time_series(X)
+        splitTimeSeries = self._split_time_series(X)
         HOG1Ds = []
 
         for x in range(len(splitTimeSeries)):
-            HOG1Ds.extend(self.get_hog1d(splitTimeSeries[x]))
+            HOG1Ds.extend(self._get_hog1d(splitTimeSeries[x]))
 
         return HOG1Ds
 
-    """
-    Function to get the HOG1D given a portion of a time series.
+    def _get_hog1d(self, X):
+        """
+        Function to get the HOG1D given a portion of a time series.
 
-    X : a numpy array of shape = [interval_size]
+        X : a numpy array of shape = [interval_size]
 
-    Returns
-    -------
-    res : a numpy array of shape = [num_bins].
-    """
-    def get_hog1d(self, X):
+        Returns
+        -------
+        histogram : a numpy array of shape = [num_bins].
+        """
         # First step is to pad the portion on both ends once.
         gradients = [0.0]*(len(X))
         X = np.pad(X, 1, mode='edge')
@@ -142,18 +158,19 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         return histogram
 
-    """
-    Function to split a time series into approximately equal intervals.
+    def _split_time_series(self, X):
+        """
+        Function to split a time series into approximately equal intervals.
 
-    Adopted from = https://stackoverflow.com/questions/2130016/splitting
-                   -a-list-into-n-parts-of-approximately-equal-length
+        Adopted from = https://stackoverflow.com/questions/2130016/splitting
+                       -a-list-into-n-parts-of-approximately-equal-length
 
-    Parameters
-    ----------
-    X : a numpy array corresponding to the time series being split
-        into approx equal length intervals.
-    """
-    def split_time_series(self, X):
+        Parameters
+        ----------
+        X : a numpy array corresponding to the time series being split
+            into approx equal length intervals of shape 
+            [num_intervals,interval_length].
+        """
         avg = len(X) / float(self.num_intervals)
         output = []
         beginning = 0.0
@@ -164,14 +181,14 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         return output
 
-    """
-    Function for checking the values of parameters inserted into HOG1D.
+    def _check_parameters(self, num_atts):
+        """
+        Function for checking the values of parameters inserted into HOG1D.
 
-    Throws
-    ------
-    ValueError or TypeError if a parameters input is invalid.
-    """
-    def check_parameters(self, num_atts):
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
+        """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
                 raise ValueError("num_intervals must have \

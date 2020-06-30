@@ -4,30 +4,30 @@ import pytest
 import math
 
 from sktime.exceptions import NotFittedError
-from sktime.transformers.series_as_features.subsequence_transformer \
-    import SubsequenceTransformer
+from sktime.transformers.series_as_features.segment \
+    import SlidingWindowSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils._testing import generate_df_from_array
 
-# Check that exception is raised for bad subsequence length.
+# Check that exception is raised for bad window length.
 # input types - string, float, negative int, negative float and empty dict
 # correct input is meant to be a positive integer of 1 or more.
-@pytest.mark.parametrize("bad_subsequence_length", ['str', 1.2, -1.2, -1, {}])
-def test_bad_input_args(bad_subsequence_length):
+@pytest.mark.parametrize("bad_window_length", ['str', 1.2, -1.2, -1, {}])
+def test_bad_input_args(bad_window_length):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
 
-    if not isinstance(bad_subsequence_length, int):
+    if not isinstance(bad_window_length, int):
         with pytest.raises(TypeError):
-            SubsequenceTransformer(subsequence_length=bad_subsequence_length).fit(X).transform(X)
+            SlidingWindowSegmenter(window_length=bad_window_length).fit(X).transform(X)
     else:
         with pytest.raises(ValueError):
-            SubsequenceTransformer(subsequence_length=bad_subsequence_length).fit(X).transform(X)
+            SlidingWindowSegmenter(window_length=bad_window_length).fit(X).transform(X)
             
 # Check that NotFittedError is thrown if someone attempts to
 # transform before calling fit
 def test_early_trans_fail():
     X = generate_df_from_array(np.ones(10), n_rows=1, n_cols=1)
-    st = SubsequenceTransformer()
+    st = SlidingWindowSegmenter()
 
     with pytest.raises(NotFittedError):
         st.transform(X)
@@ -36,26 +36,26 @@ def test_early_trans_fail():
 def test_output_of_transformer():
     X = generate_df_from_array(np.array([1,2,3,4,5,6]), n_rows=1, n_cols=1)
     
-    st = SubsequenceTransformer(subsequence_length=1).fit(X)
+    st = SlidingWindowSegmenter(window_length=1).fit(X)
     res = st.transform(X)
     orig = convert_list_to_dataframe([[1.0],[2.0],[3.0],[4.0],[5.0],[6.0]])
     assert check_if_dataframes_are_equal(res,orig)
 
-    st = SubsequenceTransformer(subsequence_length=5).fit(X)
+    st = SlidingWindowSegmenter(window_length=5).fit(X)
     res = st.transform(X)
     orig = convert_list_to_dataframe([[1.0,1.0,1.0,2.0,3.0],[1.0,1.0,2.0,3.0,4.0],[1.0,2.0,3.0,4.0,5.0],[2.0,3.0,4.0,5.0,6.0],[3.0,4.0,5.0,6.0,6.0],[4.0,5.0,6.0,6.0,6.0]])
     assert check_if_dataframes_are_equal(res,orig)
     
-    st = SubsequenceTransformer(subsequence_length=10).fit(X)
+    st = SlidingWindowSegmenter(window_length=10).fit(X)
     res = st.transform(X)
     orig = convert_list_to_dataframe([[1.0,1.0,1.0,1.0,1.0,1.0,2.0,3.0,4.0,5.0],[1.0,1.0,1.0,1.0,1.0,2.0,3.0,4.0,5.0,6.0],[1.0,1.0,1.0,1.0,2.0,3.0,4.0,5.0,6.0,6.0],[1.0,1.0,1.0,2.0,3.0,4.0,5.0,6.0,6.0,6.0],[1.0,1.0,2.0,3.0,4.0,5.0,6.0,6.0,6.0,6.0],[1.0,2.0,3.0,4.0,5.0,6.0,6.0,6.0,6.0,6.0]])
     assert check_if_dataframes_are_equal(res,orig)
     
-@pytest.mark.parametrize("time_series_length,subsequence_length",[(5,1),(10,5),(15,9),(20,13),(25,19)])
-def test_output_dimensions(time_series_length,subsequence_length):
+@pytest.mark.parametrize("time_series_length,window_length",[(5,1),(10,5),(15,9),(20,13),(25,19)])
+def test_output_dimensions(time_series_length,window_length):
     X = generate_df_from_array(np.ones(time_series_length), n_rows=10, n_cols=1)
     
-    st = SubsequenceTransformer(subsequence_length=subsequence_length).fit(X)
+    st = SlidingWindowSegmenter(window_length=window_length).fit(X)
     res = st.transform(X)
     
     # get the dimension of the generated dataframe.
@@ -63,7 +63,7 @@ def test_output_dimensions(time_series_length,subsequence_length):
     num_rows = res.shape[0]
     num_cols = res.shape[1]
     
-    assert corr_time_series_length == subsequence_length
+    assert corr_time_series_length == window_length
     assert num_rows == 10
     assert num_cols == time_series_length
     
@@ -72,7 +72,7 @@ def test_fails_if_multivariate():
     X = generate_df_from_array(np.ones(5), n_rows=10, n_cols=5)
 
     with pytest.raises(ValueError):
-        s = SubsequenceTransformer().fit(X).transform(X)
+        s = SlidingWindowSegmenter().fit(X).transform(X)
 
 
 def convert_list_to_dataframe(list_to_convert):

@@ -286,6 +286,24 @@ def nested_to_3d_numpy(X, a=None, b=None):
     return np.stack(
         X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(
             lambda row: np.stack(row), axis=1).to_numpy())
+            
+# Helper function to convert univariate data into a 2D numpy array
+# or multivariate data into a 3D numpy array
+def convert_df_into_numpy(X):
+    # If X is univariate
+    if X.shape[1] == 1:
+        X = np.array(
+            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
+    else:
+        # If X is multivariate
+        data = []
+        for i in range(X.shape[0]):
+            row = []
+            for j in X.columns:
+                row.append(np.asarray(X.iloc[i, j]))
+            data.append(row)
+        X = np.asarray(data)
+    return X
 
 
 def from_3d_numpy_to_nested(X):

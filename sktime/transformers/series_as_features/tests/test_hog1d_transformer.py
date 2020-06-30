@@ -62,33 +62,33 @@ def test_early_trans_fail():
 
     with pytest.raises(NotFittedError):
         h.transform(X)
-"""
+
 # Check the transformer has changed the data correctly.   
 def test_output_of_transformer():
 
     X = generate_df_from_array(np.array([4,6,10,12,8,6,5,5]), n_rows=1, n_cols=1)
 
-    s = SlopeTransformer(num_intervals=2).fit(X)
-    res = s.transform(X)
-    orig = convert_list_to_dataframe([[(5+math.sqrt(41))/4,(1+math.sqrt(101))/-10]])
+    h = HOG1DTransformer().fit(X)
+    res = h.transform(X)
+    orig = convert_list_to_dataframe([[0,0,0,0,4,0,0,0,0,0,0,4,0,0,0,0]])
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res,orig)
 
     X = generate_df_from_array(np.array([-5,2.5,1,3,10,-1.5,6,12,-3,0.2]), n_rows=1, n_cols=1)
-    s = s.fit(X)
-    res = s.transform(X)
-    orig = convert_list_to_dataframe([[(104.8+math.sqrt(14704.04))/61,(143.752+math.sqrt(20790.0775))/-11.2]])
+    h = h.fit(X)
+    res = h.transform(X)
+    orig = convert_list_to_dataframe([[0,0,0,0,4,1,0,0,0,0,2,0,2,1,0,0]])
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res,orig)
-    
 
-@pytest.mark.parametrize("num_intervals,corr_series_length", [(2,2),(5,5),(8,8)])
-def test_output_dimensions(num_intervals,corr_series_length):
+# the time series length should always be num_bins*num_intervals (this is 2 by default)
+@pytest.mark.parametrize("num_bins,corr_series_length", [(4,8),(8,16),(12,24)])
+def test_output_dimensions(num_bins,corr_series_length):
 
     X = generate_df_from_array(np.ones(13), n_rows=10, n_cols=1)
     
-    s = SlopeTransformer(num_intervals=num_intervals).fit(X)
-    res = s.transform(X)
+    h = HOG1DTransformer(num_bins=num_bins).fit(X)
+    res = h.transform(X)
     
     # get the dimension of the generated dataframe.
     act_time_series_length = res.iloc[0, 0].shape[0]
@@ -99,18 +99,19 @@ def test_output_dimensions(num_intervals,corr_series_length):
     assert num_rows == 10
     assert num_cols == 1
 
-# This is to check that Slope produces the same result along each dimension
-def test_dwt_performs_correcly_along_each_dim():
+# This is to check that HOG1D produces the same result along each dimension
+def test_hog1d_performs_correcly_along_each_dim():
 
     X = generate_df_from_array(np.array([4,6,10,12,8,6,5,5]), n_rows = 1, n_cols=2)
     
-    s = SlopeTransformer(num_intervals=2).fit(X)
-    res = s.transform(X)
-    orig = convert_list_to_dataframe([[(5+math.sqrt(41))/4,(1+math.sqrt(101))/-10],
-                                      [(5+math.sqrt(41))/4,(1+math.sqrt(101))/-10]])
+    h = HOG1DTransformer().fit(X)
+    res = h.transform(X)
+    orig = convert_list_to_dataframe([[0,0,0,0,4,0,0,0,0,0,0,4,0,0,0,0],
+                                      [0,0,0,0,4,0,0,0,0,0,0,4,0,0,0,0]])
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res,orig)
-"""
+
+# Helper function to convert a Python list to a Pandas dataframe.
 def convert_list_to_dataframe(list_to_convert):
     # Convert this into a panda's data frame
     df = pd.DataFrame()

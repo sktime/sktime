@@ -8,28 +8,28 @@ __author__ = "Matthew Middlehurst"
 
 
 class PAA(BaseSeriesAsFeaturesTransformer):
-    """ (PAA) Piecewise Aggregate Approximation Transformer, as described in
-     Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
-     Dimensionality reduction for fast similarity search in large time series
-     databases.
-     Knowledge and information Systems, 3(3), 263-286, 2001.
-     For each series reduce the dimensionality to num_intervals, where each
-     value is the mean of values in
-     the interval.
-
-    TO DO: pythonise it to make it more efficient. Maybe check vs this version
-            http://vigne.sh/posts/piecewise-aggregate-approx/
-    Could have: Tune the interval size in fit somehow?
-
-    Parameters
-    ----------
-    num_intervals   : int, dimension of the transformed data (default 8)
-
-    """
 
     def __init__(self,
                  num_intervals=8
                  ):
+        """ (PAA) Piecewise Aggregate Approximation Transformer, as described in
+         Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
+         Dimensionality reduction for fast similarity search in large time series
+         databases.
+         Knowledge and information Systems, 3(3), 263-286, 2001.
+         For each series reduce the dimensionality to num_intervals, where each
+         value is the mean of values in
+         the interval.
+
+        TO DO: pythonise it to make it more efficient. Maybe check vs this version
+                http://vigne.sh/posts/piecewise-aggregate-approx/
+        Could have: Tune the interval size in fit somehow?
+
+        Parameters
+        ----------
+        num_intervals   : int, dimension of the transformed data (default 8)
+
+        """
         self.num_intervals = num_intervals
         super(PAA, self).__init__()
 
@@ -58,7 +58,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         col_names = X.columns
 
         # Check the parameters are appropriate
-        self.check_parameters(num_atts)
+        self._check_parameters(num_atts)
 
         # On each dimension, perform PAA
         dataFrames = []
@@ -116,7 +116,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
 
         return dims
 
-    def check_parameters(self, num_atts):
+    def _check_parameters(self, num_atts):
         """
         Function for checking the values of parameters inserted into PAA.
         For example, the number of subsequences cannot be larger than the

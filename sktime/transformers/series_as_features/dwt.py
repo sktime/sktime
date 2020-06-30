@@ -12,26 +12,36 @@ __author__ = "Vincent Nicholson"
 class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_levels=3):
+        """
+        The Discrete Wavelet Transform Transformer. This class performs
+        the Haar wavelet transformation on a time series.
+        
+        Parameters
+        ----------
+        num_levels : int, number of levels to perform the Haar wavelet
+                     transformation.
+        """
         self.num_levels = num_levels
         super(DWTTransformer, self).__init__()
 
-    """
-    Parameters
-    ----------
-    X : a pandas dataframe of shape = [n_samples, num_dims]
-        The training input samples.
-
-    Returns
-    -------
-    dims: a pandas data frame of shape = [n_samples, num_dims]
-    """
     def transform(self, X, y=None):
+        """
+        Parameters
+        ----------
+        X : a pandas dataframe of shape = [n_samples, num_dims]
+            The training input samples.
+
+        Returns
+        -------
+        dims: a pandas data frame of shape 
+              = [n_samples, num_dims]
+        """
 
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
         
-        self.check_parameters()
+        self._check_parameters()
 
         # Get information about the dataframe
         col_names = X.columns
@@ -41,7 +51,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
             # Convert one of the columns in the dataframe to numpy array
             arr = tabularize(pd.DataFrame(X[x]), return_array=True)
 
-            transformedData = self.extract_wavelet_coefficients(arr)
+            transformedData = self._extract_wavelet_coefficients(arr)
 
             # Convert to a numpy array
             transformedData = np.asarray(transformedData)
@@ -56,13 +66,13 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
         return df
 
-    """
-    Function to extract the wavelet coefficients of a 2d array of time series.
+    def _extract_wavelet_coefficients(self, data):
+        """
+        Function to extract the wavelet coefficients of a 2d array of time series.
 
-    The coefficients correspond to the wavelet coefficients from levels 1 to
-    num_levels followed by the approximation coefficients of the highest level.
-    """
-    def extract_wavelet_coefficients(self, data):
+        The coefficients correspond to the wavelet coefficients from levels 1 to
+        num_levels followed by the approximation coefficients of the highest level.
+        """
         num_levels = self.num_levels
         res = []
 
@@ -74,8 +84,8 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
                 current = x
                 approx = None
                 for lev in range(num_levels):
-                    approx = self.get_approx_coefficients(current)
-                    wav_coeffs = self.get_wavelet_coefficients(current)
+                    approx = self._get_approx_coefficients(current)
+                    wav_coeffs = self._get_wavelet_coefficients(current)
                     current = approx
                     wav_coeffs.reverse()
                     coeffs.extend(wav_coeffs)
@@ -86,14 +96,14 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
         return res
 
-    """
-    Function for checking the values of parameters inserted into DWT.
+    def _check_parameters(self):
+        """
+        Function for checking the values of parameters inserted into DWT.
 
-    Throws
-    ------
-    ValueError or TypeError if a parameters input is invalid.
-    """
-    def check_parameters(self):
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
+        """
         if isinstance(self.num_levels, int):
             if self.num_levels <= -1:
                 raise ValueError("num_levels must have the value" +
@@ -103,10 +113,10 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
                             "'" + type(self.num_levels).__name__ +
                             "' instead.")
 
-    """
-    Function to get the approximate coefficients at a given level.
-    """
-    def get_approx_coefficients(self, arr):
+    def _get_approx_coefficients(self, arr):
+        """
+        Function to get the approximate coefficients at a given level.
+        """
         new = []
         if len(arr) == 1:
             return [arr[0]]
@@ -114,10 +124,10 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
             new.append((arr[2*x]+arr[2*x+1])/math.sqrt(2))
         return new
 
-    """
-    Function to get the wavelet coefficients at a given level.
-    """
-    def get_wavelet_coefficients(self, arr):
+    def _get_wavelet_coefficients(self, arr):
+        """
+        Function to get the wavelet coefficients at a given level.
+        """
         new = []
         # if length is 1, just return the list back
         if len(arr) == 1:

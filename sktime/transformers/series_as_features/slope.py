@@ -11,20 +11,33 @@ from sktime.utils.validation.series_as_features import check_X
 class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
     def __init__(self, num_intervals=8):
+        """
+        Class to perform the Slope transformation on a time series
+        dataframe. It splits a time series into num_intervals segments.
+        Then within each segment, it performs a total least
+        squares regression to extract the gradient of the segment.
+        
+        Parameters
+        ----------
+        num_intervals   :   int, number of approx equal segments
+                            to split the time series into.
+        """
         self.num_intervals = num_intervals
         super(SlopeTransformer, self).__init__()
 
-    """
-    Parameters
-    ----------
-    X : a pandas dataframe of shape = [n_samples, num_dims]
-        The training input samples.
-
-    Returns
-    -------
-    dims: a pandas data frame of shape = [n_samples, num_dims]
-    """
     def transform(self, X, y=None):
+
+        """
+        Parameters
+        ----------
+        X : a pandas dataframe of shape = [n_samples, num_dims]
+            The training input samples.
+
+        Returns
+        -------
+        df: a pandas data frame of shape = [num_intervals, num_dims]
+        """
+
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
@@ -34,7 +47,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         num_insts = X.shape[0]
         col_names = X.columns
 
-        self.check_parameters(num_atts)
+        self._check_parameters(num_atts)
 
         df = pd.DataFrame()
 
@@ -45,7 +58,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
             # Calculate gradients
             transformedData = []
             for y in range(num_insts):
-                res = self.get_gradients_of_lines(arr[y])
+                res = self._get_gradients_of_lines(arr[y])
                 transformedData.append(res)
 
             # Convert to Numpy array
@@ -61,44 +74,51 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return df
 
-    """
-    Function to get the gradients of the line of best fits given a time series.
+    
+    def _get_gradients_of_lines(self, X):
 
-    Parameters
-    ----------
-    X : a numpy array of shape = [num_atts]
+        """
+        Function to get the gradients of the line of best fits given a time series.
 
-    Returns
-    -------
-    m : a numpy array of shape = [num_intervals].
-        It contains the gradients of the line of best fit
-        for each interval in a time series.
-    """
-    def get_gradients_of_lines(self, X):
+        Parameters
+        ----------
+        X : a numpy array of shape = [time_series_length]
+
+        Returns
+        -------
+        gradients : a numpy array of shape = [num_intervals].
+                    It contains the gradients of the line of best fit
+                    for each interval in a time series.
+        """
+        
         # Firstly, split the time series into approx equal length intervals
-        splitTimeSeries = self.split_time_series(X)
+        splitTimeSeries = self._split_time_series(X)
         gradients = []
 
         for x in range(len(splitTimeSeries)):
-            gradients.append(self.get_gradient(splitTimeSeries[x]))
+            gradients.append(self._get_gradient(splitTimeSeries[x]))
 
         return gradients
 
-    """
-    Function to get the gradient of the line of best fit given a
-    section of a time series.
+    
+    def _get_gradient(self, Y):
+    
+        """
+        Function to get the gradient of the line of best fit given a
+        section of a time series.
 
-    Equation adopted from: real-statistics.com/regression/total-least-squares
-    Parameters
-    ----------
-    Y : a numpy array of shape = [interval_size]
+        Equation adopted from: real-statistics.com/regression/total-least-squares
 
-    Returns
-    -------
-    m : an int corresponding to the gradient of the best fit line.
-    """
-    def get_gradient(self, Y):
-        # Create a list of content 1,2,3,4,...,len(Y) for the x coordinates.
+        Parameters
+        ----------
+        Y : a numpy array of shape = [interval_size]
+
+        Returns
+        -------
+        m : an int corresponding to the gradient of the best fit line.
+        """
+    
+        # Create a list that contains 1,2,3,4,...,len(Y) for the x coordinates.
         X = [(i+1) for i in range(len(Y))]
 
         # Calculate the mean of both lists
@@ -130,19 +150,22 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return m
 
-    """
-    Function to split a time series into approximately equal intervals.
+    def _split_time_series(self, X):
+        """
+        Function to split a time series into approximately equal intervals.
 
-    Adopted from = https://stackoverflow.com/questions/2130016/
-                   splitting-a-list-into-n-parts-of-approximately
-                   -equal-length
+        Adopted from = https://stackoverflow.com/questions/2130016/
+                       splitting-a-list-into-n-parts-of-approximately
+                       -equal-length
 
-    Parameters
-    ----------
-    X : a numpy array corresponding to the time series being split
-        into approx equal length intervals.
-    """
-    def split_time_series(self, X):
+        Parameters
+        ----------
+        X : a numpy array of shape = [time_series_length]
+
+        Returns
+        -------
+        output : a numpy array of shape = [num_intervals,interval_size]
+        """
         avg = len(X) / float(self.num_intervals)
         output = []
         beginning = 0.0
@@ -153,14 +176,14 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return output
 
-    """
-    Function for checking the values of parameters inserted into Slope.
+    def _check_parameters(self, num_atts):
+        """
+        Function for checking the values of parameters inserted into Slope.
 
-    Throws
-    ------
-    ValueError or TypeError if a parameters input is invalid.
-    """
-    def check_parameters(self, num_atts):
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
+        """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
                 raise ValueError("num_intervals must have the value \

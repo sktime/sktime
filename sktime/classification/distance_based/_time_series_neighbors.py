@@ -39,6 +39,7 @@ from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import convert_df_into_numpy
 
 
 """
@@ -180,7 +181,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         X, y = check_X_y(X, y, enforce_univariate=False)
         y = np.asarray(y)
-        X = convert_data(X)
+        X = convert_df_into_numpy(X)
         check_classification_targets(y)
 
         # print(X)
@@ -268,7 +269,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        X = convert_data(X)
+        X = convert_df_into_numpy(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -497,26 +498,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             check_array.__code__ = temp
         return probabilities
-
-
-# Helper function to convert univariate data into a 2D numpy array
-# or multivariate data into a 3D numpy array
-def convert_data(X):
-    # If X is univariate
-    if X.shape[1] == 1:
-        X = np.array(
-            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
-    else:
-        # If X is multivariate
-        data = []
-        for i in range(X.shape[0]):
-            row = []
-            for j in X.columns:
-                row.append(np.asarray(X.iloc[i, j]))
-            data.append(row)
-        X = np.asarray(data)
-    return X
-
 
 # overwrite sklearn internal checks, this is really hacky
 # we now need to replace: check_array.__wrapped__.__code__ since it's
