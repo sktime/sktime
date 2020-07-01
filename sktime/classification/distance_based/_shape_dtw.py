@@ -16,7 +16,8 @@ from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
 from sktime.transformers.series_as_features.dwt import DWTTransformer
 from sktime.transformers.series_as_features.slope import SlopeTransformer
-from sktime.transformers.series_as_features.derivative import DerivativeTransformer
+from sktime.transformers.series_as_features.derivative \
+    import DerivativeTransformer
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 # Classifiers
@@ -34,10 +35,12 @@ class ShapeDTW(BaseClassifier):
         Parameters
         ----------
         n_neighbours                : int, int, set k for knn (default =1).
-        subsequence_length          : int, defines the length of the subsequences
-                                      (default=sqrt(num_atts)).
+        subsequence_length          : int, defines the length of the
+                                      subsequences(default=sqrt(num_atts)).
+
         shape_descriptor_function   : string, defines the function to describe
-                                      the set of subsequences (default = 'raw').
+                                      the set of subsequences
+                                      (default = 'raw').
 
 
         The possible shape descriptor functions are as follows:
@@ -54,19 +57,24 @@ class ShapeDTW(BaseClassifier):
                                     - params = num_levels_dwt (default=3)
 
             - 'slope'               : use the gradient of each subsequence
-                                      fitted by a total least squares regression
-                                      as the shape descriptor function.
+                                      fitted by a total least squares
+                                      regression as the shape descriptor
+                                      function.
                                     - params = num_intervals_slope (default=8)
 
             - 'derivative'          : use the derivative of each subsequence
                                       as the shape descriptor function.
                                     - params = None
 
-            - 'hog1d'               : use a histogram of gradients in one dimension
-                                      as the shape desciptor function.
-                                    - params = num_intervals_hog1d (defualt=2)
-                                             = num_bins_hod1d (default=8)
-                                             = scaling_factor_hog1d (default=0.1)
+            - 'hog1d'               : use a histogram of gradients in one
+                                      dimension as the shape desciptor
+                                      function.
+                                    - params = num_intervals_hog1d
+                                                        (defualt=2)
+                                             = num_bins_hod1d
+                                                        (default=8)
+                                             = scaling_factor_hog1d
+                                                        (default=0.1)
 
             - 'compound'            : use a combination of two shape
                                       descriptors simultaneously.
@@ -149,7 +157,8 @@ class ShapeDTW(BaseClassifier):
 
         # Create the training data by finding the shape descriptors
         self.trainData = self._generate_shape_descriptors(self.sequences,
-                                                         num_insts, num_atts)
+                                                          num_insts,
+                                                          num_atts)
 
         # Fit the kNN classifier
         self.knn = KNeighborsTimeSeriesClassifier(n_neighbors=self.n_neighbors)
@@ -165,7 +174,7 @@ class ShapeDTW(BaseClassifier):
         If a value is given, the weighting_factor is set
         as the given value. If not, its tuned via
         a 10-fold cross-validation on the training data.
-        
+
         Parameters
         ----------
         X - training data in a dataframe of shape [num_insts,1]
@@ -220,7 +229,7 @@ class ShapeDTW(BaseClassifier):
         """
         Function to perform predictions on the testing data X. This function
         returns the probabilities for each class.
-         
+
         Parameters
         ----------
         X - pandas dataframe of testing data of shape [num_insts,1].
@@ -322,7 +331,8 @@ class ShapeDTW(BaseClassifier):
         # Combine the arrays into one dataframe
         if self.shape_descriptor_function == "compound":
             result = self._combine_data_frames(dataFrames,
-                                               self.weighting_factor, col_names)
+                                               self.weighting_factor,
+                                               col_names)
         else:
             result = dataFrames[0]
             result.columns = col_names
@@ -397,20 +407,22 @@ class ShapeDTW(BaseClassifier):
 
             # 1 parameter is None
             if num_intervals is None:
-                return HOG1DTransformer(scaling_factor=scaling_factor, num_bins=num_bins)
+                return HOG1DTransformer(scaling_factor=scaling_factor,
+                                        num_bins=num_bins)
             if scaling_factor is None:
-                return HOG1DTransformer(num_intervals=num_intervals, num_bins=num_bins)
+                return HOG1DTransformer(num_intervals=num_intervals,
+                                        num_bins=num_bins)
             if num_bins is None:
                 return HOG1DTransformer(scaling_factor=scaling_factor,
-                             num_intervals=num_intervals)
+                                        num_intervals=num_intervals)
 
             # All parameters are given
             return HOG1DTransformer(num_intervals=num_intervals,
-                         num_bins=num_bins, scaling_factor=scaling_factor)
+                                    num_bins=num_bins,
+                                    scaling_factor=scaling_factor)
         else:
             raise ValueError("Invalid shape desciptor function.")
 
-    
     def _check_metric_params(self, parameters):
         """
         Helper function for checking if a user has entered in
@@ -429,7 +441,7 @@ class ShapeDTW(BaseClassifier):
                                  "Make sure the shape descriptor function" +
                                  " name is at the end of the metric " +
                                  "parameter name.")
-    
+
     def _combine_data_frames(self, dataFrames, weighting_factor, col_names):
         """
         Helper function for the shape_dtw class to combine two dataframes

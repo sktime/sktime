@@ -499,6 +499,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             check_array.__code__ = temp
         return probabilities
 
+
 # overwrite sklearn internal checks, this is really hacky
 # we now need to replace: check_array.__wrapped__.__code__ since it's
 # wrapped by a future warning decorator

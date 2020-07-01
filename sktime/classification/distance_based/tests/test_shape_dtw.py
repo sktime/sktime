@@ -8,7 +8,8 @@ from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
 from sktime.transformers.series_as_features.dwt import DWTTransformer
 from sktime.transformers.series_as_features.slope import SlopeTransformer
-from sktime.transformers.series_as_features.derivative import DerivativeTransformer
+from sktime.transformers.series_as_features.derivative \
+    import DerivativeTransformer
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 from sktime.datasets import load_gunpoint
@@ -91,7 +92,8 @@ def test_metric_params():
 
     # test the derivative shape descriptor
     shp = ShapeDTW()
-    assert isinstance(shp._get_transformer("derivative"), DerivativeTransformer)
+    assert isinstance(shp._get_transformer("derivative"),
+                      DerivativeTransformer)
 
     # test the hog1d shape descriptor
     assert shp._get_transformer("hOG1d").num_intervals == 2 and \
