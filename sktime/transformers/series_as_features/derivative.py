@@ -8,21 +8,20 @@ from sktime.utils.validation.series_as_features import check_X
 
 class DerivativeTransformer(BaseSeriesAsFeaturesTransformer):
 
+    """
+    Function to calculate the derivative of a time series.
+    Does the same formula as dDTW.
+
+    Parameters
+    ----------
+    X : a pandas dataframe of shape = [n_samples, num_dims]
+        The training input samples.
+
+    Returns
+    -------
+    dims: a pandas data frame of shape = [n_samples, num_dims]
+    """
     def transform(self, X, y=None):
-        """
-        Function to calculate the derivative of a time series.
-        Does the same formula as dDTW.
-
-        Parameters
-        ----------
-        X : a pandas dataframe of shape = [n_samples, num_dims]
-            The training input samples.
-
-        Returns
-        -------
-        dims: a pandas data frame of shape = [n_samples, num_dims]
-        """
-
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)

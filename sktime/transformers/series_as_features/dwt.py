@@ -11,16 +11,16 @@ __author__ = "Vincent Nicholson"
 
 class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
+    """
+    The Discrete Wavelet Transform Transformer. This class performs
+    the Haar wavelet transformation on a time series.
+
+    Parameters
+    ----------
+    num_levels : int, number of levels to perform the Haar wavelet
+                 transformation.
+    """
     def __init__(self, num_levels=3):
-        """
-        The Discrete Wavelet Transform Transformer. This class performs
-        the Haar wavelet transformation on a time series.
-        
-        Parameters
-        ----------
-        num_levels : int, number of levels to perform the Haar wavelet
-                     transformation.
-        """
         self.num_levels = num_levels
         super(DWTTransformer, self).__init__()
 
@@ -33,14 +33,14 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
         Returns
         -------
-        dims: a pandas data frame of shape 
+        dims: a pandas data frame of shape
               = [n_samples, num_dims]
         """
 
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        
+
         self._check_parameters()
 
         # Get information about the dataframe
@@ -68,10 +68,12 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
     def _extract_wavelet_coefficients(self, data):
         """
-        Function to extract the wavelet coefficients of a 2d array of time series.
+        Function to extract the wavelet coefficients
+        of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients from levels 1 to
-        num_levels followed by the approximation coefficients of the highest level.
+        The coefficients correspond to the wavelet coefficients
+        from levels 1 to num_levels followed by the approximation
+        coefficients of the highest level.
         """
         num_levels = self.num_levels
         res = []
@@ -107,7 +109,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         if isinstance(self.num_levels, int):
             if self.num_levels <= -1:
                 raise ValueError("num_levels must have the value" +
-                                  "of at least 0")
+                                 "of at least 0")
         else:
             raise TypeError("num_levels must be an 'int'. Found" +
                             "'" + type(self.num_levels).__name__ +

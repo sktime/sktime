@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import math
-from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.dwt \
     import DWTTransformer
 from sktime.utils._testing import generate_df_from_array
@@ -21,17 +20,6 @@ def test_bad_input_args(bad_num_levels):
     else:
         with pytest.raises(ValueError):
             DWTTransformer(num_levels=bad_num_levels).fit(X).transform(X)
-
-
-# Check that NotFittedError is thrown if someone attempts to
-# transform before calling fit
-def test_early_trans_fail():
-
-    X = generate_df_from_array(np.ones(10), n_rows=1, n_cols=1)
-    d = DWTTransformer()
-
-    with pytest.raises(NotFittedError):
-        d.transform(X)
 
 
 # Check the transformer has changed the data correctly.

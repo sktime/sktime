@@ -12,7 +12,7 @@ from sktime.transformers.series_as_features.derivative \
     import DerivativeTransformer
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_italy_power_demand
 
 
 # Check that exception is raised for bad subsequence length.
@@ -97,51 +97,51 @@ def test_metric_params():
 
     # test the hog1d shape descriptor
     assert shp._get_transformer("hOG1d").num_intervals == 2 and \
-           shp._get_transformer("hOG1d").num_bins == 8 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.1
+        shp._get_transformer("hOG1d").num_bins == 8 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.1
 
     # test hog1d with only 1 custom parameter
     shp = ShapeDTW(metric_params={"NUM_intervals_hog1d": 5})
     assert shp._get_transformer("hoG1d").num_intervals == 5 and \
-           shp._get_transformer("hOG1d").num_bins == 8 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.1
+        shp._get_transformer("hOG1d").num_bins == 8 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.1
 
     shp = ShapeDTW(metric_params={"nUM_BinS_hog1d": 63})
     assert shp._get_transformer("hoG1d").num_intervals == 2 and \
-           shp._get_transformer("hOG1d").num_bins == 63 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.1
+        shp._get_transformer("hOG1d").num_bins == 63 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.1
 
     shp = ShapeDTW(metric_params={"scaling_factor_hog1d": 0.5})
     assert shp._get_transformer("hoG1d").num_intervals == 2 and \
-           shp._get_transformer("hOG1d").num_bins == 8 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.5
+        shp._get_transformer("hOG1d").num_bins == 8 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.5
 
     # test hog1d with 2 custom parameters
     shp = ShapeDTW(metric_params={"NUM_intervals_hog1d": 5,
                                   "nUM_BinS_hog1d": 63})
     assert shp._get_transformer("hoG1d").num_intervals == 5 and \
-           shp._get_transformer("hOG1d").num_bins == 63 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.1
+        shp._get_transformer("hOG1d").num_bins == 63 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.1
 
     shp = ShapeDTW(metric_params={"NUM_bins_hog1d": 63,
                                   "scaling_factor_hog1d": 0.5})
     assert shp._get_transformer("hoG1d").num_intervals == 2 and \
-           shp._get_transformer("hOG1d").num_bins == 63 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.5
+        shp._get_transformer("hOG1d").num_bins == 63 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.5
 
     shp = ShapeDTW(metric_params={"scaling_factor_hog1d": 0.5,
                                   "nUM_intervals_hog1d": 5})
     assert shp._get_transformer("hoG1d").num_intervals == 5 and \
-           shp._get_transformer("hOG1d").num_bins == 8 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.5
+        shp._get_transformer("hOG1d").num_bins == 8 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.5
 
     # test hog1d with all 3 custom parameters
     shp = ShapeDTW(metric_params={"scaling_factor_hog1d": 0.5,
                                   "nUM_intervals_hog1d": 5,
                                   "num_bins_hog1d": 63})
     assert shp._get_transformer("hoG1d").num_intervals == 5 and \
-           shp._get_transformer("hOG1d").num_bins == 63 and \
-           shp._get_transformer("hog1d").scaling_factor == 0.5
+        shp._get_transformer("hOG1d").num_bins == 63 and \
+        shp._get_transformer("hog1d").scaling_factor == 0.5
 
     shp = ShapeDTW()
     assert isinstance(shp._get_transformer("hog1d"), HOG1DTransformer)
@@ -165,10 +165,9 @@ def test_metric_params():
                                                        'hog1d'])
 def test_classification_functionality(shape_descriptor_function):
 
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+    X_train, y_train = load_italy_power_demand(split='train', return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split='test', return_X_y=True)
 
-    # weighting_factor given so that it isn't tuned as this is not necessary.
     shp = ShapeDTW(shape_descriptor_function=shape_descriptor_function)
     shp.fit(X_train, y_train)
     print(shp.score(X_test, y_test))

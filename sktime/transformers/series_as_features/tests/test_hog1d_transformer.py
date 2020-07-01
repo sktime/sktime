@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import pytest
 import numbers
-from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.hog1d \
     import HOG1DTransformer
 from sktime.utils._testing import generate_df_from_array
@@ -60,17 +59,6 @@ def test_bad_scaling_factor(bad_scaling_factor):
     else:
         HOG1DTransformer(scaling_factor=bad_scaling_factor) \
                             .fit(X).transform(X)
-
-
-# Check that NotFittedError is thrown if someone attempts to
-# transform before calling fit
-def test_early_trans_fail():
-
-    X = generate_df_from_array(np.ones(10), n_rows=1, n_cols=1)
-    h = HOG1DTransformer()
-
-    with pytest.raises(NotFittedError):
-        h.transform(X)
 
 
 # Check the transformer has changed the data correctly.

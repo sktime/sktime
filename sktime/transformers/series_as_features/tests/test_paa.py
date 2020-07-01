@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
 from sktime.utils._testing import generate_df_from_array
@@ -22,16 +21,6 @@ def test_bad_input_args(bad_num_intervals):
     else:
         with pytest.raises(ValueError):
             PAA(num_intervals=bad_num_intervals).fit(X).transform(X)
-
-
-# Check that NotFittedError is thrown if someone attempts to
-# transform before calling fit
-def test_early_trans_fail():
-    X = generate_df_from_array(np.ones(10), n_rows=1, n_cols=1)
-    p = PAA()
-
-    with pytest.raises(NotFittedError):
-        p.transform(X)
 
 
 # Check the transformer has changed the data correctly.

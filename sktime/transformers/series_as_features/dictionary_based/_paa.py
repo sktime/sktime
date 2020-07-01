@@ -8,28 +8,28 @@ __author__ = "Matthew Middlehurst"
 
 
 class PAA(BaseSeriesAsFeaturesTransformer):
+    """
+    (PAA) Piecewise Aggregate Approximation Transformer, as described in
+    Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
+    Dimensionality reduction for fast similarity search in large time series
+    databases.
+    Knowledge and information Systems, 3(3), 263-286, 2001.
+    For each series reduce the dimensionality to num_intervals, where each
+    value is the mean of values in
+    the interval.
 
+    TO DO: pythonise it to make it more efficient. Maybe check vs this version
+            http://vigne.sh/posts/piecewise-aggregate-approx/
+    Could have: Tune the interval size in fit somehow?
+
+    Parameters
+    ----------
+    num_intervals   : int, dimension of the transformed data (default 8)
+
+    """
     def __init__(self,
                  num_intervals=8
                  ):
-        """ (PAA) Piecewise Aggregate Approximation Transformer, as described in
-         Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
-         Dimensionality reduction for fast similarity search in large time series
-         databases.
-         Knowledge and information Systems, 3(3), 263-286, 2001.
-         For each series reduce the dimensionality to num_intervals, where each
-         value is the mean of values in
-         the interval.
-
-        TO DO: pythonise it to make it more efficient. Maybe check vs this version
-                http://vigne.sh/posts/piecewise-aggregate-approx/
-        Could have: Tune the interval size in fit somehow?
-
-        Parameters
-        ----------
-        num_intervals   : int, dimension of the transformed data (default 8)
-
-        """
         self.num_intervals = num_intervals
         super(PAA, self).__init__()
 
@@ -52,7 +52,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         # Check the data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        
+
         # Get information about the dataframe
         num_atts = len(X.iloc[0, 0])
         col_names = X.columns
@@ -70,9 +70,8 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         result.columns = col_names
 
         return result
-        
-        
-    def _perform_paa_along_dim(self,X):
+
+    def _perform_paa_along_dim(self, X):
         X = tabularize(X, return_array=True)
 
         num_atts = X.shape[1]

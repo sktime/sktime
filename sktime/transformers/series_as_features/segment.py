@@ -274,77 +274,78 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
 class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
 
+    """
+    This class is to transform a univariate series into a
+    multivariate one by extracting sets of subsequences.
+    It does this by firstly padding the time series on either end
+    floor(window_length/2) times. Then it performs a sliding
+    window of size window_length and hop size 1.
+
+    e.g. if window_length = 3
+
+    S = 1,2,3,4,5, floor(3/2) = 1 so S would be padded as
+
+    1,1,2,3,4,5,5
+
+    then SlidingWindowSegmenter would extract the following:
+
+    (1,1,2),(1,2,3),(2,3,4),(3,4,5),(4,5,5)
+
+    the time series is now a multivariate one.
+
+    Parameters
+    ----------
+        window_length : int, length of interval.
+
+    Returns
+    -------
+        df : pandas dataframe of shape
+             [n_instances, n_timepoints]
+
+    Proposed in the ShapeDTW algorithm.
+    """
     def __init__(self, window_length=5):
-        """
-        This class is to transform a univariate series into a
-        multivariate one by extracting sets of subsequences.
-        It does this by firstly padding the time series on either end
-        floor(window_length/2) times. Then it performs a sliding
-        window of size window_length and hop size 1.
-        
-        e.g. if window_length = 3
-        
-        S = 1,2,3,4,5, floor(3/2) = 1 so S would be padded as
-
-        1,1,2,3,4,5,5
-        
-        then SlidingWindowSegmenter would extract the following:
-        
-        (1,1,2),(1,2,3),(2,3,4),(3,4,5),(4,5,5) 
-        
-        the time series is now a multivariate one.
-        
-        Parameters
-        ----------
-            window_length : int, length of interval.
-
-        Returns
-        -------
-            df : pandas dataframe of shape
-                 [num_time_series, time_series_length]
-
-        Proposed in the ShapeDTW algorithm.
-        """
         self.window_length = window_length
         super(SlidingWindowSegmenter, self).__init__()
 
     def transform(self, X, y=None):
         """
         Function to perform the transformation on the time series data.
-        
+
         Parameters
         ----------
-        X : a pandas dataframe of shape = [n_samples, 1]
+        X : a pandas dataframe of shape = [n_instances, 1]
             The training input samples.
 
         Returns
         -------
-        dims: a pandas data frame of shape = [n_samples, time_series_length]
+        dims: a pandas data frame of shape = [n_instances, n_timepoints]
         """
         # get the number of attributes and instances
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
 
-        num_atts = X.shape[1]
-        num_insts = X.shape[0]
+        n_timepoints = X.shape[1]
+        n_instances = X.shape[0]
 
         # Check the parameters are appropriate
-        self._check_parameters(num_atts)
+        self._check_parameters(n_timepoints)
 
         pad_amnt = math.floor(self.window_length/2)
-        padded_data = np.zeros((num_insts, num_atts + (2*pad_amnt)))
+        padded_data = np.zeros((n_instances, n_timepoints + (2*pad_amnt)))
 
         # Pad both ends of X
-        for i in range(num_insts):
+        for i in range(n_instances):
             padded_data[i] = np.pad(X[i], pad_amnt, mode='edge')
 
-        subsequences = np.zeros((num_insts, num_atts, self.window_length))
+        subsequences = np.zeros((n_instances, n_timepoints,
+                                 self.window_length))
 
         # Extract subsequences
-        for i in range(num_insts):
+        for i in range(n_instances):
             subsequences[i] = self._extract_subsequences(padded_data[i],
-                                                        num_atts)
+                                                         n_timepoints)
 
         # Convert this into a panda's data frame
         df = pd.DataFrame()
@@ -356,8 +357,8 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
             df[i] = data
 
         return df.transpose()
-    
-    def _extract_subsequences(self, instance, num_atts):
+
+    def _extract_subsequences(self, instance, n_timepoints):
         """
         Function to extract a set of subsequences from a list of instances.
 
@@ -366,12 +367,12 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
         construction-from-1d-array/4924433#4924433
 
         """
-        shape = (num_atts, self.window_length)
+        shape = (n_timepoints, self.window_length)
         strides = (instance.itemsize, instance.itemsize)
         return np.lib.stride_tricks.as_strided(instance,
                                                shape=shape, strides=strides)
 
-    def _check_parameters(self, num_atts):
+    def _check_parameters(self, n_timepoints):
         """
         Function for checking the values of parameters inserted
         into SlidingWindowSegmenter.

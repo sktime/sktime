@@ -9,19 +9,18 @@ from sktime.utils.validation.series_as_features import check_X
 
 
 class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
+    """
+    Class to perform the Slope transformation on a time series
+    dataframe. It splits a time series into num_intervals segments.
+    Then within each segment, it performs a total least
+    squares regression to extract the gradient of the segment.
 
+    Parameters
+    ----------
+    num_intervals   :   int, number of approx equal segments
+                        to split the time series into.
+    """
     def __init__(self, num_intervals=8):
-        """
-        Class to perform the Slope transformation on a time series
-        dataframe. It splits a time series into num_intervals segments.
-        Then within each segment, it performs a total least
-        squares regression to extract the gradient of the segment.
-        
-        Parameters
-        ----------
-        num_intervals   :   int, number of approx equal segments
-                            to split the time series into.
-        """
         self.num_intervals = num_intervals
         super(SlopeTransformer, self).__init__()
 
@@ -43,11 +42,11 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         X = check_X(X, enforce_univariate=False)
 
         # Get information about the dataframe
-        num_atts = len(X.iloc[0, 0])
-        num_insts = X.shape[0]
+        n_timepoints = len(X.iloc[0, 0])
+        num_instances = X.shape[0]
         col_names = X.columns
 
-        self._check_parameters(num_atts)
+        self._check_parameters(n_timepoints)
 
         df = pd.DataFrame()
 
@@ -57,7 +56,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
             # Calculate gradients
             transformedData = []
-            for y in range(num_insts):
+            for y in range(num_instances):
                 res = self._get_gradients_of_lines(arr[y])
                 transformedData.append(res)
 
@@ -74,11 +73,11 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return df
 
-    
     def _get_gradients_of_lines(self, X):
 
         """
-        Function to get the gradients of the line of best fits given a time series.
+        Function to get the gradients of the line of best fits
+        given a time series.
 
         Parameters
         ----------
@@ -90,7 +89,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
                     It contains the gradients of the line of best fit
                     for each interval in a time series.
         """
-        
+
         # Firstly, split the time series into approx equal length intervals
         splitTimeSeries = self._split_time_series(X)
         gradients = []
@@ -100,14 +99,14 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return gradients
 
-    
     def _get_gradient(self, Y):
-    
+
         """
         Function to get the gradient of the line of best fit given a
         section of a time series.
 
-        Equation adopted from: real-statistics.com/regression/total-least-squares
+        Equation adopted from:
+        real-statistics.com/regression/total-least-squares
 
         Parameters
         ----------
@@ -117,7 +116,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         m : an int corresponding to the gradient of the best fit line.
         """
-    
+
         # Create a list that contains 1,2,3,4,...,len(Y) for the x coordinates.
         X = [(i+1) for i in range(len(Y))]
 
@@ -176,7 +175,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         return output
 
-    def _check_parameters(self, num_atts):
+    def _check_parameters(self, n_timepoints):
         """
         Function for checking the values of parameters inserted into Slope.
 
@@ -188,7 +187,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
             if self.num_intervals <= 0:
                 raise ValueError("num_intervals must have the value \
                                   of at least 1")
-            if self.num_intervals > num_atts:
+            if self.num_intervals > n_timepoints:
                 raise ValueError("num_intervals cannot be higher than \
                                   subsequence_length")
         else:

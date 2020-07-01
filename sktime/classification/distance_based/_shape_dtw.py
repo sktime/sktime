@@ -1,7 +1,6 @@
 # Utilities
 import numpy as np
 import pandas as pd
-import math
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import tabularize
 
@@ -27,78 +26,85 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 
 class ShapeDTW(BaseClassifier):
 
-    def __init__(self, n_neighbors=1, subsequence_length=None,
+    """
+    The ShapeDTW classifier works by initially extracting a set of subsequences
+    describing local neighbourhoods around each data point in a time series.
+    These subsequences are then passed into a shape descriptor function that
+    transforms these local neighbourhoods into a new representation. This
+    new representation is then sent into DTW with 1-NN.
+
+    Parameters
+    ----------
+    n_neighbours                : int, int, set k for knn (default =1).
+    subsequence_length          : int, defines the length of the
+                                  subsequences(default=sqrt(n_timepoints)).
+
+    shape_descriptor_function   : string, defines the function to describe
+                                  the set of subsequences
+                                  (default = 'raw').
+
+
+    The possible shape descriptor functions are as follows:
+
+        - 'raw'                 : use the raw subsequence as the
+                                  shape descriptor function.
+                                - params = None
+
+        - 'paa'                 : use PAA as the shape descriptor function.
+                                - params = num_intervals_paa (default=8)
+
+        - 'dwt'                 : use DWT (Discrete Wavelet Transform)
+                                  as the shape descriptor function.
+                                - params = num_levels_dwt (default=3)
+
+        - 'slope'               : use the gradient of each subsequence
+                                  fitted by a total least squares
+                                  regression as the shape descriptor
+                                  function.
+                                - params = num_intervals_slope (default=8)
+
+        - 'derivative'          : use the derivative of each subsequence
+                                  as the shape descriptor function.
+                                - params = None
+
+        - 'hog1d'               : use a histogram of gradients in one
+                                  dimension as the shape desciptor
+                                  function.
+                                - params = num_intervals_hog1d
+                                                    (defualt=2)
+                                         = num_bins_hod1d
+                                                    (default=8)
+                                         = scaling_factor_hog1d
+                                                    (default=0.1)
+
+        - 'compound'            : use a combination of two shape
+                                  descriptors simultaneously.
+                                - params = weighting_factor
+                                          (default=None)
+                                           Defines how to scale
+                                           values of a shape
+                                           descriptor.
+                                           If a value is not given,
+                                           this value is tuned
+                                           by 10-fold cross-validation
+                                           on the training data.
+
+
+    shape_descriptor_functions  : string list, only applicable when the
+                                  shape_descriptor_function is
+                                  set to 'compound'.
+                                  Use a list of shape descriptor
+                                  functions at the same time.
+                                  (default = ['raw','derivative'])
+
+    metric_params               : dictionary for metric parameters
+                                  (default = None).
+    """
+
+    def __init__(self, n_neighbors=1, subsequence_length=30,
                  shape_descriptor_function='raw',
                  shape_descriptor_functions=['raw', 'derivative'],
                  metric_params=None):
-        """
-        Parameters
-        ----------
-        n_neighbours                : int, int, set k for knn (default =1).
-        subsequence_length          : int, defines the length of the
-                                      subsequences(default=sqrt(num_atts)).
-
-        shape_descriptor_function   : string, defines the function to describe
-                                      the set of subsequences
-                                      (default = 'raw').
-
-
-        The possible shape descriptor functions are as follows:
-
-            - 'raw'                 : use the raw subsequence as the
-                                      shape descriptor function.
-                                    - params = None
-
-            - 'paa'                 : use PAA as the shape descriptor function.
-                                    - params = num_intervals_paa (default=8)
-
-            - 'dwt'                 : use DWT (Discrete Wavelet Transform)
-                                      as the shape descriptor function.
-                                    - params = num_levels_dwt (default=3)
-
-            - 'slope'               : use the gradient of each subsequence
-                                      fitted by a total least squares
-                                      regression as the shape descriptor
-                                      function.
-                                    - params = num_intervals_slope (default=8)
-
-            - 'derivative'          : use the derivative of each subsequence
-                                      as the shape descriptor function.
-                                    - params = None
-
-            - 'hog1d'               : use a histogram of gradients in one
-                                      dimension as the shape desciptor
-                                      function.
-                                    - params = num_intervals_hog1d
-                                                        (defualt=2)
-                                             = num_bins_hod1d
-                                                        (default=8)
-                                             = scaling_factor_hog1d
-                                                        (default=0.1)
-
-            - 'compound'            : use a combination of two shape
-                                      descriptors simultaneously.
-                                    - params = weighting_factor
-                                              (default=None)
-                                               Defines how to scale
-                                               values of a shape
-                                               descriptor.
-                                               If a value is not given,
-                                               this value is tuned
-                                               by 10-fold cross-validation
-                                               on the training data.
-
-
-        shape_descriptor_functions  : string list, only applicable when the
-                                      shape_descriptor_function is
-                                      set to 'compound'.
-                                      Use a list of shape descriptor
-                                      functions at the same time.
-                                      (default = ['raw','derivative'])
-
-        metric_params               : dictionary for metric parameters
-                                      (default = None).
-        """
         self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
@@ -112,8 +118,8 @@ class ShapeDTW(BaseClassifier):
 
         Parameters
         ----------
-        X - pandas dataframe of training data of shape [num_insts,1].
-        y - list of class labels of shape [num_insts].
+        X - pandas dataframe of training data of shape [n_instances,1].
+        y - list of class labels of shape [n_instances].
 
         Returns
         -------
@@ -136,33 +142,12 @@ class ShapeDTW(BaseClassifier):
         if self.shape_descriptor_function == "compound":
             self._calculate_weighting_factor_value(X, y)
 
-        self.trainData = X
-        self.trainDataClasses = y
-
-        # get the number of attributes and instances
-        num_atts = self.trainData.iloc[0, 0].shape[0]
-        num_insts = self.trainData.shape[0]
-
-        # If a subsequence length is not given,
-        # then set it to sqrt(num_atts)
-        if self.subsequence_length is None:
-            self.subsequence_length = math.floor(math.sqrt(num_atts))
-
-        # Convert training data into a list of subsequences
-        st = SlidingWindowSegmenter(self.subsequence_length)
-        st.fit(self.trainData)
-        self.sequences = st.transform(self.trainData)
-
-        self.trainData = self.sequences
-
-        # Create the training data by finding the shape descriptors
-        self.trainData = self._generate_shape_descriptors(self.sequences,
-                                                          num_insts,
-                                                          num_atts)
+        # Transform the training data.
+        X = self._preprocess(X)
 
         # Fit the kNN classifier
         self.knn = KNeighborsTimeSeriesClassifier(n_neighbors=self.n_neighbors)
-        self.knn.fit(self.trainData, self.trainDataClasses)
+        self.knn.fit(X, y)
         self.classes_ = self.knn.classes_
 
         return self
@@ -177,8 +162,8 @@ class ShapeDTW(BaseClassifier):
 
         Parameters
         ----------
-        X - training data in a dataframe of shape [num_insts,1]
-        y - training data classes of shape [num_insts].
+        X - training data in a dataframe of shape [n_instances,1]
+        y - training data classes of shape [n_instances].
         """
         self.metric_params = {k.lower(): v for k,
                               v in self.metric_params.items()}
@@ -225,6 +210,22 @@ class ShapeDTW(BaseClassifier):
             self.weighting_factor = \
                 grid.best_params_['metric_params']['weighting_factor']
 
+    def _preprocess(self, X):
+        # private method for performing the transformations on
+        # the test/training data. It extracts the subsequences
+        # and then performs the shape descriptor function on
+        # each subsequence.
+
+        # Convert X into a list of subsequences
+        st = SlidingWindowSegmenter(self.subsequence_length)
+        st.fit(X)
+        X = st.transform(X)
+
+        # Feed X into the appropriate shape descriptor function
+        X = self._generate_shape_descriptors(X)
+
+        return X
+
     def predict_proba(self, X):
         """
         Function to perform predictions on the testing data X. This function
@@ -232,34 +233,20 @@ class ShapeDTW(BaseClassifier):
 
         Parameters
         ----------
-        X - pandas dataframe of testing data of shape [num_insts,1].
+        X - pandas dataframe of testing data of shape [n_instances,1].
 
         Returns
         -------
         output : numpy array of shape =
-                [num_insts, num_classes] of probabilities
+                [n_instances, num_classes] of probabilities
         """
         X = check_X(X, enforce_univariate=False)
 
-        self.testData = X
-
-        # get the number of attributes and instances
-        num_atts = self.testData.shape[1]
-        num_insts = self.testData.shape[0]
-
-        # Convert testing data into a list of subsequences
-        st = SlidingWindowSegmenter(self.subsequence_length)
-        st.fit(self.testData)
-        self.sequences = st.transform(self.testData)
-
-        self.testData = self.sequences
-
-        # Create the testing data by finding the shape descriptors
-        self.testData = self._generate_shape_descriptors(
-                            self.sequences, num_insts, num_atts)
+        # Transform the test data in the same way as the training data.
+        X = self._preprocess(X)
 
         # Classify the test data
-        return self.knn.predict_proba(self.testData)
+        return self.knn.predict_proba(X)
 
     def predict(self, X):
         """
@@ -267,34 +254,21 @@ class ShapeDTW(BaseClassifier):
         Could do a wrap function for predict_proba,
         but this will do for now.
         ----------
-        X : The testing input samples of shape [num_insts,1].
+        X : The testing input samples of shape [n_instances,1].
 
         Returns
         -------
-        output : numpy array of shape = [num_insts]
+        output : numpy array of shape = [n_instances]
         """
         X = check_X(X, enforce_univariate=False)
-        self.testData = X
 
-        # get the number of attributes and instances
-        num_atts = self.testData.shape[1]
-        num_insts = self.testData.shape[0]
-
-        # Convert testing data into a list of subsequences
-        st = SlidingWindowSegmenter(self.subsequence_length)
-        st.fit(self.testData)
-        self.sequences = st.transform(self.testData)
-
-        self.testData = self.sequences
-
-        # Create the testing data by finding the shape descriptors
-        self.testData = self._generate_shape_descriptors(
-            self.sequences, num_insts, num_atts)
+        # Transform the test data in the same way as the training data.
+        X = self._preprocess(X)
 
         # Classify the test data
-        return self.knn.predict(self.testData)
+        return self.knn.predict(X)
 
-    def _generate_shape_descriptors(self, data, num_insts, num_atts):
+    def _generate_shape_descriptors(self, data):
         """
         This function is used to convert a list of
         subsequences into a list of shape descriptors

@@ -26,20 +26,20 @@ The HOG1D Transformer proposed by:
 
 class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
+    """
+    This class is to calculate the HOG1D transform of a
+    dataframe of time series data. Works by splitting
+    the time series num_intervals times, and calculate
+    a histogram of gradients within each interval.
+
+    Parameters
+    ----------
+        num_intervals   : int, length of interval.
+        num_bins        : int, num bins in the histogram.
+        scaling_factor  : float, a constant that is multiplied
+                          to modify the distribution.
+    """
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):
-        """
-        This class is to calculate the HOG1D transform of a
-        dataframe of time series data. Works by splitting
-        the time series num_intervals times, and calculate
-        a histogram of gradients within each interval.
-        
-        Parameters
-        ----------
-            num_intervals   : int, length of interval.
-            num_bins        : int, num bins in the histogram.
-            scaling_factor  : float, a constant that is multiplied 
-                              to modify the distribution.
-        """
         self.num_intervals = num_intervals
         self.num_bins = num_bins
         self.scaling_factor = scaling_factor
@@ -67,7 +67,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         num_insts = X.shape[0]
         col_names = X.columns
         num_atts = len(X.iloc[0, 0])
-        
+
         # Check the parameters are appropriate
         self._check_parameters(num_atts)
 
@@ -96,7 +96,6 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         return df
 
-    
     def _calculate_hog1ds(self, X):
         """
         Function to calculate the HOG1Ds given a time series.
@@ -168,7 +167,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         Parameters
         ----------
         X : a numpy array corresponding to the time series being split
-            into approx equal length intervals of shape 
+            into approx equal length intervals of shape
             [num_intervals,interval_length].
         """
         avg = len(X) / float(self.num_intervals)
