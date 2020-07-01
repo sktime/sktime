@@ -15,8 +15,8 @@ from sktime.transformers.series_as_features.dictionary_based._paa \
     import PAA
 from sktime.transformers.series_as_features.dwt import DWTTransformer
 from sktime.transformers.series_as_features.slope import SlopeTransformer
-from sktime.transformers.series_as_features.derivative \
-    import DerivativeTransformer
+from sktime.transformers.series_as_features.summarize._extract \
+    import DerivativeSlopeTransformer
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 # Classifiers
@@ -360,7 +360,7 @@ class ShapeDTW(BaseClassifier):
                 return SlopeTransformer()
             return SlopeTransformer(num_intervals)
         elif tName == "derivative":
-            return DerivativeTransformer()
+            return DerivativeSlopeTransformer()
         elif tName == "hog1d":
             num_intervals = parameters.get("num_intervals_hog1d")
             num_bins = parameters.get("num_bins_hog1d")
