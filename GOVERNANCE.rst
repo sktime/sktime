@@ -25,9 +25,9 @@ conform to our `Code of Conduct <https://github
 Authorship and maintainership of algorithms
 -------------------------------------------
 
-In sktime, algorithms are encapsulated in classes and inherit from our `BaseEstimator` class and when feasible written in a separate file.
+Authors and maintainers of algorithms have special rights and duties with regard to changes and maintenance of their algorithms and associated documentation, including doc strings and tutorial notebooks.
 
-Authors and maintainers of algorithms have special rights and duties with regard to changes and maintenance of their algorithms and associated documentation, including tutorial notebooks.
+Algorithms are encapsulated in classes. To faciliate authorship and maintainership questions, each algorithm is written in a separate file.
 
 The author is the contributor who implements and contributes the algorithm to the project. The maintainer is the contributor who is responsible for maintaining an algorithm and the first point of contact for users and other contributors for all issues, questions, and proposals regarding their algorithm. The author automatically becomes the first maintainer of the algorithm.
 
@@ -37,13 +37,16 @@ The author is the contributor who implements and contributes the algorithm to th
 
 Any maintainer is expected to give up their role if they can no longer fulfil their responsibilities. If a  maintainer fails to fulfil their responsibilities in given time frame, the maintainer loses their role and all rights that come with it.
 
-Note that authors and maintainers do not own the algorithms or files they contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
+Note that authors and maintainers do not *own* the algorithms or files they
+contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
 
 
 Curation and inclusion criteria for algorithms
 ----------------------------------------------
 
-Curation is about which contributions do we accept and in which case do we remove contributions again. We have the following guidelines:
+Curation is about how we select contributions, which criteria we use in order to decide which contributions to include, and in which cases we deprecate and remove contributions.
+
+We have the following guidelines:
 
 * We only consider published algorithms which have been shown to be competitive in comparative benchmarking studies or practically useful in applied projects. A technique that provides a clear-cut improvement (e.g. an enhanced data structure or a more efficient approximation technique) on a widely-used method will also be considered for inclusion.
 * From the algorithms or techniques that meet the above criteria, only those which fit well within the current framework and API of sktime are accepted. For extending current frameworks and API, see the [process for major changes]().
@@ -62,7 +65,9 @@ companion repository. For example, for deep learning techniques based on
 TensorFlow and Keras, we have `sktime-dl <https://github
 .com/sktime/sktime-dl>`_. For smaller dependencies which are limited to a few files, we encourage to use soft dependencies, which are only required for particular modules, but not for most of sktime's functionality and not for installing sktime.
 
-If significant issues are not fixed by the maintainer, and no other contributor volunteers to fix the algorithm within 3 months, we will deprecate and remove the algorithm from sktime.
+If significant issues are not fixed by the maintainer, and no other
+contributor volunteers to fix the algorithm within 3 months, we will
+deprecate and remove the algorithm from sktime eventually.
 
 Decision making
 ---------------
@@ -136,6 +141,7 @@ If no option can gather two thirds of the votes cast, the decision is escalated 
 
 Decisions (in addition to adding core developers and TC membership as above) are made according to the following rules:
 
+* **Additions**, such as new algorithms: Requires +1 by one core developer, no -1 by a core developer (lazy consensus), happens on the issue or PR page.
 * **Minor documentation changes**, such as typo fixes, or addition/correction of a sentence: Requires +1 by one core developer, no -1 by a core developer (lazy consensus), happens on the pull request page. Core developers are expected to give “reasonable time” to others to give their opinion on the pull request if they’re not confident others would agree.
 * **Code changes and major documentation changes** require +1 by one core developers, no -1 by a core developer or code maintainer (lazy consensus), happens on the pull-request page.
 * **Changes to the API design and changes to dependencies or supported versions** happen via an enhancement proposal and follows the decision-making process outlined above.
@@ -150,7 +156,7 @@ For all decision of the TC, a proposal must have been made public and discussed 
 
 
 Future directions
------------------
+~~~~~~~~~~~~~~~~~
 Once sktime's API, frameworks, and content becomes more consolidated or when the community has grown more, we will consider the following changes to ensure the smooth running of the project:
 
 * Allow for more time to discuss changes, and more time to cast vote when no consensus had been found,
