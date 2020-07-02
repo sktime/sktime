@@ -10,14 +10,14 @@ __author__ = "Tony Bagnall"
 __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.shapelets import \
     ContractedShapeletTransform
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
@@ -85,10 +85,16 @@ class ShapeletTransformClassifier(BaseClassifier):
         self : object
          """
         X, y = check_X_y(X, y, enforce_univariate=True)
-        self.n_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier.fit(X, y)
+        _y = y
+        # if y is a pd.series then convert to array.
+        if isinstance(y, pd.Series):
+            _y = y.to_numpy()
+
+        self.n_classes = np.unique(y).shape[0]
+        self.classes_ = class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
+
+        self.classifier.fit(X, _y)
 
         #        self.shapelet_transform.fit(X,y)
         #        print("Shapelet Search complete")
