@@ -35,7 +35,7 @@ The author is the contributor who implements and contributes the algorithm to th
 
 * **Maintenance duty.** The maintainer is responsible for maintaining an algorithm. This includes understandable and instructive documentation, bugs fixes, unit testing, coding quality and style improvements, and compliance with sktime's common API. Maintainers should reply to a new issue on their algorithm within 1 week, and demonstrate a significant effort to fix any issue within 1 month.
 
-Any maintainer is expected to give up his role if they can no longer fulfil their responsibilities. If a  maintainer fails to fulfil their responsibilities in given time frame, the maintainer loses their role and all rights that come with it.
+Any maintainer is expected to give up their role if they can no longer fulfil their responsibilities. If a  maintainer fails to fulfil their responsibilities in given time frame, the maintainer loses their role and all rights that come with it.
 
 Note that authors and maintainers do not own the algorithms or files they contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
 
