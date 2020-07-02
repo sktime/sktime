@@ -142,6 +142,11 @@ class ShapeDTW(BaseClassifier):
         if self.shape_descriptor_function == "compound":
             self._calculate_weighting_factor_value(X, y)
 
+        # Fit the SlidingWindowSegmenter
+        sw = SlidingWindowSegmenter(self.subsequence_length)
+        sw.fit(X)
+        self.sw = sw
+
         # Transform the training data.
         X = self._preprocess(X)
 
@@ -215,11 +220,7 @@ class ShapeDTW(BaseClassifier):
         # the test/training data. It extracts the subsequences
         # and then performs the shape descriptor function on
         # each subsequence.
-
-        # Convert X into a list of subsequences
-        st = SlidingWindowSegmenter(self.subsequence_length)
-        st.fit(X)
-        X = st.transform(X)
+        X = self.sw.transform(X)
 
         # Feed X into the appropriate shape descriptor function
         X = self._generate_shape_descriptors(X)
