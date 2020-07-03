@@ -43,7 +43,7 @@ def test_strategy_mean(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_seasonal_last(fh, sp):
-    f = NaiveForecaster(strategy="seasonal_last", sp=sp)
+    f = NaiveForecaster(strategy="last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
 
@@ -55,3 +55,30 @@ def test_strategy_seasonal_last(fh, sp):
     reps = np.int(np.ceil(max(fh) / sp))
     expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
     np.testing.assert_array_equal(y_pred, expected)
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("sp", TEST_SPS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+def test_strategy_seasonal_mean(fh, sp, window_length):
+    f = NaiveForecaster(strategy="last", sp=sp, window_length=window_length)
+    f.fit(y_train)
+    y_pred = f.predict(fh)
+
+    # check predicted index
+    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh), y_pred.index)
+
+    if window_length is None:
+        window_length = len(y_train)
+
+    if window_length > sp:
+        # check values
+        fh = check_fh(fh)  # get well formatted fh
+        reps = np.int(np.ceil(max(fh) / sp))
+        window = y_train.iloc[-window_length:]
+
+        for i in range(sp):
+            window.at[window[window.index % sp == i].index[-1]] = \
+                window[window.index % sp == i].mean()
+
+        expected = np.tile(window.iloc[-sp:].to_numpy(), reps = reps)[fh - 1]
+        np.testing.assert_array_equal(y_pred, expected)
