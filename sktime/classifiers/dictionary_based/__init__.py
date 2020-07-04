@@ -1,2 +1,0 @@
-from sktime.classifiers.dictionary_based.boss import BOSSEnsemble
-from sktime.classifiers.dictionary_based.boss import BOSSIndividual

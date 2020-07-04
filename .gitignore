@@ -6,7 +6,11 @@ __pycache__/
 # C extensions
 *.so
 *.c
+<<<<<<< HEAD
 *.cpp
+=======
+*mrseql.cpp
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 # Distribution / packaging
 .Python

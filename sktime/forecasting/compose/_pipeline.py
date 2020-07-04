@@ -1,9 +1,14 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["TransformedTargetForecaster"]
 
+<<<<<<< HEAD
 from itertools import islice
 from sklearn.base import clone
 from sktime.base import BaseComposition
@@ -21,6 +26,26 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
     """Meta-estimator for forecasting transformed time series."""
 
     _required_parameters = ("steps",)
+=======
+from sklearn.base import clone
+from sktime.base import BaseHeterogenousMetaEstimator
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._meta import MetaForecasterMixin
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.utils.validation.forecasting import check_y
+
+
+class TransformedTargetForecaster(MetaForecasterMixin,
+                                  OptionalForecastingHorizonMixin,
+                                  BaseSktimeForecaster,
+                                  BaseHeterogenousMetaEstimator):
+    """Meta-estimator for forecasting transformed time series."""
+
+    _required_parameters = ["steps"]
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def __init__(self, steps):
         self.steps = steps
@@ -37,18 +62,32 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         transformers = estimators[:-1]
         forecaster = estimators[-1]
 
+<<<<<<< HEAD
         allowed_transformer_type = BaseSeriesToSeriesTransformer
+=======
+        allowed_transformer_type = BaseSingleSeriesTransformer
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         for t in transformers:
             # Transformers must be endog/exog transformers
             if not isinstance(t, allowed_transformer_type):
                 raise TypeError(f"All intermediate steps should be "
+<<<<<<< HEAD
                                 f"instances of {allowed_transformer_type}, but "
+=======
+                                f"instances of {allowed_transformer_type}, "
+                                f"but "
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                                 f"transformer: {t} is not.")
 
         allowed_forecaster_type = BaseForecaster
         if not isinstance(forecaster, allowed_forecaster_type):
             raise TypeError(
+<<<<<<< HEAD
                 f"Last step of {self.__class__.__name__} must be of type: {allowed_forecaster_type}, "
+=======
+                f"Last step of {self.__class__.__name__} must be of type: "
+                f"{allowed_forecaster_type}, "
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                 f"but forecaster: {forecaster} is not.")
 
         # Shallow copy
@@ -111,14 +150,28 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         self._is_fitted = True
         return self
 
+<<<<<<< HEAD
     def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+=======
+    def _predict(self, fh=None, X=None, return_pred_int=False,
+                 alpha=DEFAULT_ALPHA):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         if return_pred_int:
             raise NotImplementedError()
 
         forecaster = self.steps_[-1][1]
+<<<<<<< HEAD
         y_pred = forecaster.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
         for step_idx, name, transformer in self._iter_transformers(reverse=True):
+=======
+        y_pred = forecaster.predict(fh=fh, X=X,
+                                    return_pred_int=return_pred_int,
+                                    alpha=alpha)
+
+        for step_idx, name, transformer in self._iter_transformers(
+                reverse=True):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             y_pred = transformer.inverse_transform(y_pred)
 
         return y_pred
@@ -159,7 +212,12 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
     def inverse_transform(self, y):
         self.check_is_fitted()
         yt = check_y(y)
+<<<<<<< HEAD
         for step_idx, name, transformer in self._iter_transformers(reverse=True):
+=======
+        for step_idx, name, transformer in self._iter_transformers(
+                reverse=True):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             yt = transformer.inverse_transform(yt)
         return yt
 
@@ -186,4 +244,7 @@ class TransformedTargetForecaster(MetaForecasterMixin, OptionalForecastingHorizo
         """
         self._set_params('steps', **kwargs)
         return self
+<<<<<<< HEAD
 
+=======
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

@@ -8,12 +8,17 @@ from operator import itemgetter
 from pathlib import Path
 
 
+<<<<<<< HEAD
 def all_estimators(scitype=None):
+=======
+def all_estimators(estimator_type=None):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """Get a list of all estimators from sktime.
 
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
 
+<<<<<<< HEAD
 
     Not included are: the base classes themselves, classes defined in test modules.
 
@@ -23,6 +28,18 @@ def all_estimators(scitype=None):
         Which kind of estimators should be returned. If None, no filter is
         applied and all estimators are returned.  Possible values are
         'classifier', 'regressor', 'transformer' and 'forecaster' to get
+=======
+    Not included are: the base classes themselves, classes defined in test
+    modules.
+
+    Parameters
+    ----------
+    estimator_type : string, list of string, optional (default=None)
+        Which kind of estimators should be returned.
+        - If None, no filter is applied and all estimators are returned.
+        - Possible values are 'classifier', 'regressor', 'transformer' and
+        'forecaster' to get
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         estimators only of these specific types, or a list of these to
         get the estimators that fit at least one of the types.
 
@@ -30,21 +47,40 @@ def all_estimators(scitype=None):
     -------
     estimators : list of tuples
         List of (name, class), where ``name`` is the class name as string
+<<<<<<< HEAD
         and ``class`` is the actuall type of the class.
 
     References
     ----------
     ..[1]   Modified version from scikit-learn's `all_estimators()` in sklearn.utils.__init__.py
+=======
+        and ``class`` is the actual class.
+
+    References
+    ----------
+    ..[1]   Modified version from scikit-learn's `all_estimators()` in
+    sklearn.utils.__init__.py
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """
 
     # lazy import to avoid circular imports
     import warnings
+<<<<<<< HEAD
     from sktime.forecasting.base._base import BaseForecaster
     from sktime.classifiers.base import BaseClassifier
     from sktime.regressors.base import BaseRegressor
     from sktime.transformers.base import BaseTransformer
 
     from sklearn.base import ClassifierMixin, RegressorMixin, TransformerMixin
+=======
+    from sktime.forecasting.base import BaseForecaster
+    from sktime.classification.base import BaseClassifier
+    from sktime.regression.base import BaseRegressor
+    from sktime.transformers.series_as_features.base import \
+        BaseSeriesAsFeaturesTransformer
+    from sktime.transformers.single_series.base import \
+        BaseSingleSeriesTransformer
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -57,6 +93,7 @@ def all_estimators(scitype=None):
     modules_to_ignore = {"tests", "setup", "contrib"}
     root = str(Path(__file__).parent.parent)  # sktime package
 
+<<<<<<< HEAD
     # Ignore deprecation warnings triggered at import time and from walking packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
@@ -65,21 +102,46 @@ def all_estimators(scitype=None):
 
             # filter modules
             if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
+=======
+    # Ignore deprecation warnings triggered at import time and from walking
+    # packages
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=FutureWarning)
+        for importer, modname, ispkg in pkgutil.walk_packages(
+                path=[root], prefix="sktime."):
+            mod_parts = modname.split(".")
+
+            # filter modules
+            if any(part in modules_to_ignore for part in
+                   mod_parts) or "._" in modname:
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                 continue
 
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
             classes = [(name, klass) for name, klass in classes
+<<<<<<< HEAD
                        if not (name.startswith("_") or name.startswith("Base"))]
+=======
+                       if
+                       not (name.startswith("_") or name.startswith("Base"))]
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
 
     # only keep classes that inherit from base classes
     base_classes = {
+<<<<<<< HEAD
         "classifier": (BaseClassifier, ClassifierMixin),
         "regressor": (BaseRegressor, RegressorMixin),
         "transformer": (BaseTransformer, TransformerMixin),
+=======
+        "classifier": BaseClassifier,
+        "regressor": BaseRegressor,
+        "series_as_features_transformer": BaseSeriesAsFeaturesTransformer,
+        "single_series_transformer": BaseSingleSeriesTransformer,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         "forecaster": BaseForecaster,
     }
     estimators = [c for c in all_classes
@@ -89,6 +151,7 @@ def all_estimators(scitype=None):
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
+<<<<<<< HEAD
     if scitype is not None:
         if not isinstance(scitype, list):
             scitype = [scitype]
@@ -99,15 +162,43 @@ def all_estimators(scitype=None):
         for name, base_class in base_classes.items():
             if name in scitype:
                 scitype.remove(name)
+=======
+    if estimator_type is not None:
+        if not isinstance(estimator_type, list):
+            estimator_type = [estimator_type]  # make iterable
+        else:
+            estimator_type = list(estimator_type)  # copy
+        filtered_estimators = []
+
+        for name, base_class in base_classes.items():
+            if name in estimator_type:
+                estimator_type.remove(name)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                 filtered_estimators.extend([est for est in estimators
                                             if issubclass(est[1], base_class)])
         estimators = filtered_estimators
 
+<<<<<<< HEAD
         # raise error if any filter names are left
         allowed_filters = ("classifier", "regressor", "transformer", "forecaster")
         if scitype:
             raise ValueError(f"Parameter type_filter must be one or a list of {allowed_filters} or "
                              f"None, but found: {repr(scitype)}")
+=======
+        # raise error if any filter names are still left
+        allowed_filters = (
+            "classifier",
+            "regressor",
+            "single_series_transformer",
+            "series_as_features_transformer",
+            "forecaster"
+        )
+        if estimator_type:
+            raise ValueError(
+                f"Parameter `estimator_type` must be None, a string, "
+                f"or a list of strings. Allowed strings values are: "
+                f"{allowed_filters}. But found: {repr(estimator_type)}")
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of

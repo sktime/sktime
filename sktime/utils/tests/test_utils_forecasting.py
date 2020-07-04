@@ -1,17 +1,26 @@
 import numpy as np
 import pandas as pd
 import pytest
+<<<<<<< HEAD
 
 from sktime.utils.testing.base import generate_df_from_array
 from sktime.utils.testing.forecasting import generate_polynomial_series
 from sktime.utils.time_series import fit_trend, remove_trend, add_trend
+=======
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.data_container import tabularize
+from sktime.utils._testing import generate_df_from_array
+from sktime.utils._testing.forecasting import generate_polynomial_series
+from sktime.utils.time_series import add_trend
+from sktime.utils.time_series import fit_trend
+from sktime.utils.time_series import remove_trend
 
 
 def test_tabularize():
     n_obs_X = 20
     n_cols_X = 3
-    X = generate_df_from_array(np.random.normal(size=n_obs_X), n_rows=10, n_cols=n_cols_X)
+    X = generate_df_from_array(np.random.normal(size=n_obs_X), n_rows=10,
+                               n_cols=n_cols_X)
 
     # Test single series input.
     Xt = tabularize(X.iloc[:, 0], return_array=True)
@@ -24,7 +33,8 @@ def test_tabularize():
     # Test dataframe input with columns having series of different length.
     n_obs_Y = 13
     n_cols_Y = 2
-    Y = generate_df_from_array(np.random.normal(size=n_obs_Y), n_rows=10, n_cols=n_cols_Y)
+    Y = generate_df_from_array(np.random.normal(size=n_obs_Y), n_rows=10,
+                               n_cols=n_cols_Y)
     X = pd.concat([X, Y], axis=1)
 
     Xt = tabularize(X, return_array=True)
@@ -36,7 +46,8 @@ def test_tabularize():
 
 
 @pytest.mark.parametrize("order", [0, 1, 2])  # polynomial order
-@pytest.mark.parametrize("n_obs", [1, 10, 20])  # number of time series observations
+@pytest.mark.parametrize("n_obs",
+                         [1, 10, 20])  # number of time series observations
 @pytest.mark.parametrize("n_samples", [1, 10, 20])  # number of samples
 def test_fit_remove_add_trend(order, n_samples, n_obs):
     # generate random polynomial series data
@@ -56,4 +67,3 @@ def test_fit_remove_add_trend(order, n_samples, n_obs):
     # test inverse transform restores original series
     xit = add_trend(xt, coefs=coefs)
     np.testing.assert_array_almost_equal(x, xit)
-

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["BaseSktimeForecaster", "BaseLastWindowForecaster"]
@@ -10,17 +14,31 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
+<<<<<<< HEAD
 from sktime.forecasting.model_selection import SlidingWindowSplitter, CutoffSplitter
 from sktime.utils.validation.forecasting import check_y, check_cv, check_fh
+=======
+from sktime.forecasting.model_selection import CutoffSplitter
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_fh
+from sktime.utils.validation.forecasting import check_y
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class BaseSktimeForecaster(BaseForecaster):
     """Base class for forecaster in sktime"""
 
     def __init__(self):
+<<<<<<< HEAD
         self._oh = pd.Series([])  # observation horizon, i.e. time points seen in fit or update
         self._cutoff = None  # time point in observation horizon cutoff which to make forecasts
         self._fh = None
+=======
+        self._oh = None  # observation horizon
+        self._cutoff = None  # reference point for relative forecasting horizon
+        self._fh = None  # forecasting horizon
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         super(BaseSktimeForecaster, self).__init__()
 
     @property
@@ -46,11 +64,24 @@ class BaseSktimeForecaster(BaseForecaster):
 
         # update only for non-empty data
         if len(y) > 0:
+<<<<<<< HEAD
             # for fitting: since no previous observation horizon is present, set new one
             # for updating: append observation horizon to previous one
             self._oh = y.combine_first(self.oh)
 
             # by default, set cutoff to the end of the observation horizon
+=======
+            # for fitting: since no previous observation horizon is present,
+            # set new one
+            if self._oh is None:
+                self._oh = y
+
+            # for updating: append observation horizon to previous one
+            else:
+                self._oh = y.combine_first(self.oh)
+
+            # set cutoff to the end of the observation horizon
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             self._set_cutoff(y.index[-1])
 
     @property
@@ -76,7 +107,12 @@ class BaseSktimeForecaster(BaseForecaster):
     def _detached_cutoff(self):
         """Context manager to detach cutoff
 
+<<<<<<< HEAD
         This is useful during rolling-cutoff forecasts when the cutoff needs to be repeatedly reset,
+=======
+        This is useful during rolling-cutoff forecasts when the cutoff needs
+        to be repeatedly reset,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         but afterwards should be restored to the original value.
         """
         cutoff = self.cutoff  # remember initial cutoff
@@ -89,9 +125,18 @@ class BaseSktimeForecaster(BaseForecaster):
     @property
     def fh(self):
         """The forecasting horizon"""
+<<<<<<< HEAD
         # raise error if some method tries to accessed it before it has been set
         if self._fh is None:
             raise ValueError("No `fh` has been set yet, please specify `fh` in `fit` or `predict`")
+=======
+        # raise error if some method tries to accessed it before it has been
+        # set
+        if self._fh is None:
+            raise ValueError(
+                "No `fh` has been set yet, please specify `fh` in `fit` or "
+                "`predict`")
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         return self._fh
 
     def _set_fh(self, fh):
@@ -105,7 +150,12 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         raise NotImplementedError()
 
+<<<<<<< HEAD
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+=======
+    def predict(self, fh=None, X=None, return_pred_int=False,
+                alpha=DEFAULT_ALPHA):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         """Make forecasts
 
         Parameters
@@ -124,6 +174,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         self.check_is_fitted()
         self._set_fh(fh)
+<<<<<<< HEAD
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
 
     def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
@@ -131,6 +182,18 @@ class BaseSktimeForecaster(BaseForecaster):
         """Update and make forecasts."
 
         This method is useful for updating forecasts in a single step, allowing to make use of more efficient
+=======
+        return self._predict(self.fh, X=X, return_pred_int=return_pred_int,
+                             alpha=alpha)
+
+    def update_predict_single(self, y_new, fh=None, X=None,
+                              update_params=False, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
+        """Update and make forecasts."
+
+        This method is useful for updating forecasts in a single step,
+        allowing to make use of more efficient
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         updating algorithms than calling update and predict sequentially.
 
         Parameters
@@ -140,7 +203,12 @@ class BaseSktimeForecaster(BaseForecaster):
         X : pd.DataFrame
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
+<<<<<<< HEAD
             If True, prediction intervals are returned in addition to point predictions.
+=======
+            If True, prediction intervals are returned in addition to point
+            predictions.
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         alpha : float or list of floats
 
         Returns
@@ -152,6 +220,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         self.check_is_fitted()
         self._set_fh(fh)
+<<<<<<< HEAD
         return self._update_predict_single(y_new, self.fh, X=X, update_params=update_params,
                                            return_pred_int=return_pred_int, alpha=alpha)
 
@@ -160,12 +229,31 @@ class BaseSktimeForecaster(BaseForecaster):
         """Internal method for updating and making forecasts.
 
         Implements default behaviour of calling update and predict sequentially, but can be overwritten by subclasses
+=======
+        return self._update_predict_single(y_new, self.fh, X=X,
+                                           update_params=update_params,
+                                           return_pred_int=return_pred_int,
+                                           alpha=alpha)
+
+    def _update_predict_single(self, y_new, fh, X=None, update_params=False,
+                               return_pred_int=False,
+                               alpha=DEFAULT_ALPHA):
+        """Internal method for updating and making forecasts.
+
+        Implements default behaviour of calling update and predict
+        sequentially, but can be overwritten by subclasses
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         to implement more efficient updating algorithms when available.
         """
         if X is not None:
             raise NotImplementedError()
         self.update(y_new, X_new=X, update_params=update_params)
+<<<<<<< HEAD
         return self.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+=======
+        return self.predict(fh, X=X, return_pred_int=return_pred_int,
+                            alpha=alpha)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update fitted paramters
@@ -186,7 +274,12 @@ class BaseSktimeForecaster(BaseForecaster):
         self._set_oh(y_new)
         return self
 
+<<<<<<< HEAD
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+=======
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
+                       return_pred_int=False,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                        alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
@@ -207,6 +300,7 @@ class BaseSktimeForecaster(BaseForecaster):
             Prediction intervals
         """
 
+<<<<<<< HEAD
 
         if return_pred_int:
             raise NotImplementedError()
@@ -216,6 +310,20 @@ class BaseSktimeForecaster(BaseForecaster):
                                            return_pred_int=return_pred_int, alpha=alpha)
 
     def _predict_moving_cutoff(self, y, cv, X=None, update_params=False, return_pred_int=False,
+=======
+        if return_pred_int:
+            raise NotImplementedError()
+        y_test = check_y(y_test)
+        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(
+            fh=self.fh)
+        return self._predict_moving_cutoff(y_test, cv, X=X_test,
+                                           update_params=update_params,
+                                           return_pred_int=return_pred_int,
+                                           alpha=alpha)
+
+    def _predict_moving_cutoff(self, y, cv, X=None, update_params=False,
+                               return_pred_int=False,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                                alpha=DEFAULT_ALPHA):
         """Make single-step or multi-step moving cutoff predictions
 
@@ -242,10 +350,21 @@ class BaseSktimeForecaster(BaseForecaster):
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
 
+<<<<<<< HEAD
                 # we cannot use update_predict_single here, as this would re-set the forecasting horizon, instead we use
                 # the internal _update_predict_single method
                 y_pred = self._update_predict_single(y_new, fh, X=X, update_params=update_params,
                                                      return_pred_int=return_pred_int, alpha=alpha)
+=======
+                # we cannot use update_predict_single here, as this would
+                # re-set the forecasting horizon, instead we use
+                # the internal _update_predict_single method
+                y_pred = self._update_predict_single(
+                    y_new, fh, X=X,
+                    update_params=update_params,
+                    return_pred_int=return_pred_int,
+                    alpha=alpha)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                 y_preds.append(y_pred)
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
@@ -268,7 +387,12 @@ class BaseSktimeForecaster(BaseForecaster):
 
 
 class OptionalForecastingHorizonMixin:
+<<<<<<< HEAD
     """Mixin class for forecasters which can take the forecasting horizon either
+=======
+    """Mixin class for forecasters which can take the forecasting horizon
+    either
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     during fit or predict."""
 
     def _set_fh(self, fh):
@@ -287,6 +411,7 @@ class OptionalForecastingHorizonMixin:
             if is_fitted:
                 # if no fh passed and there is none already, raise error
                 if self._fh is None:
+<<<<<<< HEAD
                     raise ValueError("The forecasting horizon `fh` must be passed either to `fit` or `predict`, "
                                      "but was found in neither.")
                 # otherwise if no fh passed, but there is one already, we can simply use that one
@@ -297,12 +422,36 @@ class OptionalForecastingHorizonMixin:
             # a warning should only be raised if fh passed to fit is overwritten, but no warning is required
             # when no fh has been provided in fit, and different fhs are passed to predict, but this requires
             # to keep track of whether fh has been passed to fit or not, hence not implemented for cutoff
+=======
+                    raise ValueError(
+                        "The forecasting horizon `fh` must be passed either "
+                        "to `fit` or `predict`, "
+                        "but was found in neither.")
+                # otherwise if no fh passed, but there is one already,
+                # we can simply use that one
+        else:
+            # if fh is passed, validate first, then check if there is one
+            # already,
+            # and overwrite
+
+            # a warning should only be raised if fh passed to fit is
+            # overwritten, but no warning is required
+            # when no fh has been provided in fit, and different fhs are
+            # passed to predict, but this requires
+            # to keep track of whether fh has been passed to fit or not,
+            # hence not implemented for cutoff
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             fh = check_fh(fh)
             self._fh = fh
 
 
 class RequiredForecastingHorizonMixin:
+<<<<<<< HEAD
     """Mixin class for forecasters which require the forecasting horizon during fit."""
+=======
+    """Mixin class for forecasters which require the forecasting horizon
+    during fit."""
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def _set_fh(self, fh):
         """Check, set and update the forecasting horizon.
@@ -312,7 +461,12 @@ class RequiredForecastingHorizonMixin:
         fh : None, int, list, np.ndarray
         """
 
+<<<<<<< HEAD
         msg = f"This is because fitting of the `{self.__class__.__name__}` depends on `fh`. "
+=======
+        msg = f"This is because fitting of the `{self.__class__.__name__}` " \
+              f"depends on `fh`. "
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         if hasattr(self, "is_fitted"):
             is_fitted = self.is_fitted
@@ -321,18 +475,30 @@ class RequiredForecastingHorizonMixin:
 
         if fh is None:
             if is_fitted:
+<<<<<<< HEAD
                 # intended workflow, no fh is passed when the forecaster is already fitted
                 pass
             else:
                 # fh must be passed when forecaster is not fitted yet
                 raise ValueError("The forecasting horizon `fh` must be passed to `fit`, "
                                  "but none was found. " + msg)
+=======
+                # intended workflow, no fh is passed when the forecaster is
+                # already fitted
+                pass
+            else:
+                # fh must be passed when forecaster is not fitted yet
+                raise ValueError(
+                    "The forecasting horizon `fh` must be passed to `fit`, "
+                    "but none was found. " + msg)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         else:
             fh = check_fh(fh)
             if is_fitted:
                 if not np.array_equal(fh, self._fh):
                     # raise error if existing fh and new one don't match
                     raise ValueError(
+<<<<<<< HEAD
                         f"A different forecasting horizon `fh` has been provided from "
                         f"the one seen in `fit`. If you want to change the forecasting "
                         f"horizon, please re-fit the forecaster. " + msg)
@@ -340,6 +506,18 @@ class RequiredForecastingHorizonMixin:
                 pass
             else:
                 # intended workflow: fh is passed when forecaster is not fitted yet
+=======
+                        "A different forecasting horizon `fh` has been "
+                        "provided from "
+                        "the one seen in `fit`. If you want to change the "
+                        "forecasting "
+                        "horizon, please re-fit the forecaster. " + msg)
+                # if existing one and new match, ignore new one
+                pass
+            else:
+                # intended workflow: fh is passed when forecaster is not
+                # fitted yet
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                 self._fh = fh
 
 
@@ -351,7 +529,12 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         self.window_length = window_length
         self.window_length_ = None
 
+<<<<<<< HEAD
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+=======
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
+                       return_pred_int=False,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                        alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
@@ -368,9 +551,19 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         -------
         y_pred : pd.Series or pd.DataFrame
         """
+<<<<<<< HEAD
         cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(self.fh, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_test, cv, X=X_test, update_params=update_params,
                                            return_pred_int=return_pred_int, alpha=alpha)
+=======
+        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(
+            self.fh,
+            window_length=self.window_length_)
+        return self._predict_moving_cutoff(y_test, cv, X=X_test,
+                                           update_params=update_params,
+                                           return_pred_int=return_pred_int,
+                                           alpha=alpha)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal predict"""
@@ -396,7 +589,12 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
             y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
             return y_ins.append(y_oos)
 
+<<<<<<< HEAD
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+=======
+    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         """Make single-step or multi-step fixed cutoff predictions
 
         Parameters
@@ -412,12 +610,25 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         y_pred = pd.Series
         """
         # assert all(fh > 0)
+<<<<<<< HEAD
         y_pred = self._predict_last_window(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
         index = fh.absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make in-sample prediction using single-step moving-cutoff predictions
+=======
+        y_pred = self._predict_last_window(fh, X=X,
+                                           return_pred_int=return_pred_int,
+                                           alpha=alpha)
+        index = fh.absolute(self.cutoff)
+        return pd.Series(y_pred, index=index)
+
+    def _predict_in_sample(self, fh, X=None, return_pred_int=False,
+                           alpha=DEFAULT_ALPHA):
+        """Make in-sample prediction using single-step moving-cutoff
+        predictions
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         Parameters
         ----------
@@ -433,6 +644,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         """
         y_train = self.oh
 
+<<<<<<< HEAD
         # generate cutoffs from forecasting horizon, note that cutoffs are still based on integer indexes,
         # so that they can be used with .iloc
         cutoffs = fh + len(y_train) - 2
@@ -441,6 +653,20 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
                                            alpha=alpha)
 
     def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+=======
+        # generate cutoffs from forecasting horizon, note that cutoffs are
+        # still based on integer indexes,
+        # so that they can be used with .iloc
+        cutoffs = fh + len(y_train) - 2
+        cv = CutoffSplitter(cutoffs, fh=1, window_length=self.window_length_)
+        return self._predict_moving_cutoff(y_train, cv, X=X,
+                                           update_params=False,
+                                           return_pred_int=return_pred_int,
+                                           alpha=alpha)
+
+    def _predict_last_window(self, fh, X=None, return_pred_int=False,
+                             alpha=DEFAULT_ALPHA):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         """Internal predict
 
         Parameters
@@ -467,11 +693,21 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         """Predict nan if predictions are not possible"""
         return np.full(len(fh), np.nan)
 
+<<<<<<< HEAD
     def _update_predict_single(self, y_new, fh, X=None, update_params=False, return_pred_int=False,
                                alpha=DEFAULT_ALPHA):
         """Internal method for updating and making forecasts.
 
         Implements default behaviour of calling update and predict sequentially, but can be overwritten by subclasses
+=======
+    def _update_predict_single(self, y_new, fh, X=None, update_params=False,
+                               return_pred_int=False,
+                               alpha=DEFAULT_ALPHA):
+        """Internal method for updating and making forecasts.
+
+        Implements default behaviour of calling update and predict
+        sequentially, but can be overwritten by subclasses
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         to implement more efficient updating algorithms when available.
 
         Parameters
@@ -490,13 +726,23 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         if X is not None:
             raise NotImplementedError()
         self.update(y_new, X_new=X, update_params=update_params)
+<<<<<<< HEAD
         return self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+=======
+        return self._predict(fh, X=X, return_pred_int=return_pred_int,
+                             alpha=alpha)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions"""
     if not isinstance(y_preds, list):
+<<<<<<< HEAD
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
+=======
+        raise ValueError(
+            f"`y_preds` must be a list, but found: {type(y_preds)}")
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     if len(y_preds[0]) == 1:
         # return series for single step ahead predictions

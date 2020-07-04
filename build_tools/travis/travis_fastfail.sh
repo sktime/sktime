@@ -14,9 +14,15 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
     exit 1
   fi
 else
+<<<<<<< HEAD
   # And for non-latest push builds in branches other than master, dev or release*
   case "$TRAVIS_BRANCH" in
     master | dev | release*)
+=======
+  # And for non-latest push builds in branches other than master, dev or tags
+  case "$TRAVIS_BRANCH" in
+    master | dev | v*.*.*)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
       ;;
     *)
       if [ "\"$TRAVIS_BUILD_NUMBER\"" != "$(curl -H "$curlhdr" \

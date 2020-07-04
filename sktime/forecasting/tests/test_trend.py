@@ -1,5 +1,9 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -8,6 +12,7 @@ import numpy as np
 import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import PolynomialTrendForecaster
+<<<<<<< HEAD
 from sktime.transformers.detrend import Detrender
 
 
@@ -17,6 +22,18 @@ def compute_expected_coefs(y, degree, with_intercept=True):
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
     return np.linalg.lstsq(poly_matrix, y.values)[0]
+=======
+from sktime.transformers.single_series.detrend import Detrender
+
+
+def compute_expected_coefs(y, degree, with_intercept=True):
+    """Helper function to compute expected coefficients from polynomial
+    regression"""
+    poly_matrix = np.vander(y.index.values, degree + 1)
+    if not with_intercept:
+        poly_matrix = poly_matrix[:, :-1]
+    return np.linalg.lstsq(poly_matrix, y.values, rcond=None)[0]
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def compute_expected_detrend(y, degree, with_intercept):
@@ -32,7 +49,12 @@ def check_trend(degree, with_intercept):
     y = load_airline()
     f = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     f.fit(y)
+<<<<<<< HEAD
     a = f.regressor_.steps[-1][1].coef_[::-1]  # intercept is added in reverse order
+=======
+    a = f.regressor_.steps[-1][1].coef_[
+        ::-1]  # intercept is added in reverse order
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     b = compute_expected_coefs(y, degree, with_intercept)
     np.testing.assert_allclose(a, b)

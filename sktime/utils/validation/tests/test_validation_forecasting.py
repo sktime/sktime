@@ -6,7 +6,10 @@ import pytest
 from pytest import raises
 
 from sktime.utils.validation.forecasting import check_fh_values
+<<<<<<< HEAD
 
+=======
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 bad_input_args = (
     (1, 2),  # tuple

@@ -1,14 +1,28 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["BaseStatsModelsAdapter"]
 
+<<<<<<< HEAD
 from sktime.forecasting.base._sktime import BaseSktimeForecaster, OptionalForecastingHorizonMixin
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
 class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+=======
+from sktime.forecasting.base._base import DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+
+
+class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin,
+                             BaseSktimeForecaster):
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """Base class for interfacing statsmodels forecasting algorithms
     """
     _fitted_param_names = ()
@@ -52,7 +66,12 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         Parameters
         ----------
         fh : int or array-like, optional (default=1)
+<<<<<<< HEAD
             The forecasters horizon with the steps ahead to to predict. Default is one-step ahead forecast,
+=======
+            The forecasters horizon with the steps ahead to to predict.
+            Default is one-step ahead forecast,
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             i.e. np.array([1])
         X : None
             Exogenous variables are ignored.
@@ -69,7 +88,12 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecast
         # Forecast all periods from start to end of pred horizon,
         # but only return given time points in pred horizon
         fh_abs = fh.absolute(self.cutoff)
+<<<<<<< HEAD
         y_pred = self._fitted_forecaster.predict(start=fh_abs[0], end=fh_abs[-1])
+=======
+        y_pred = self._fitted_forecaster.predict(start=fh_abs[0],
+                                                 end=fh_abs[-1])
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         return y_pred.loc[fh_abs]
 
     def get_fitted_params(self):

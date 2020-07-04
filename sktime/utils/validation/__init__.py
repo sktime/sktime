@@ -1,4 +1,5 @@
 __all__ = [
+<<<<<<< HEAD
     "check_is_fitted",
     "is_int"
 ]
@@ -79,6 +80,15 @@ def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
         raise NotFittedError(msg % {'name': type(estimator).__name__})
 
 
+=======
+    "is_int"
+]
+__author__ = ["Markus Löning"]
+
+import numpy as np
+
+
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 def is_int(x):
     """Check if x is of integer type, but not boolean"""
     # boolean are subclasses of integers in Python, so explicitly exclude them

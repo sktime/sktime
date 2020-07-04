@@ -1,1 +1,0 @@
-from sktime.classifiers.frequency_based.rise import RandomIntervalSpectralForest

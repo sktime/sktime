@@ -5,7 +5,10 @@
 # - https://github.com/scikit-learn/scikit-learn/blob/master/appveyor.yml
 
 branches:
+<<<<<<< HEAD
   # whitelist
+=======
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
   only:
     - master
     - dev
@@ -19,9 +22,13 @@ environment:
 
     TEST_DIR: "/tmp/sktime"
     REQUIREMENTS: "build_tools/requirements.txt"
+<<<<<<< HEAD
     PYPI_PASSWORD:
       secure: "nZ6K3G+V4O3mBT6prI28OfGXFWRR4ZPqcC6YJ4yQP0E1evCINRH5j/k+Vz0+LbwM7e7G3zcnOFm+q1HhAKw1tEIuVTythuPsgPrmEhxh//gfgS6SWWoAXSV+5NATCQGkZ2Yiwti5bwyocki2tU2pqxI1rRWK2v/UMeEpzDZPOXpC+ATXLewPr5zsFn3aehHMjNm4RFqDCGSXk2uyEFIytvNMFu5bld6+enejtCjHR9J6nNUcQXrYRZrzCm8xPC1hB+cK0rlLLjUW903mPslHFQ=="
     PYPI_USER: "__token__"
+=======
+    TWINE_USERNAME: __token__
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
   matrix:
     - PYTHON_VERSION: "3.6"
@@ -102,18 +109,23 @@ test_script:
   - cmd: pytest --showlocals --durations=20 %PYTEST_ARGS% --pyargs sktime
 
   # Move back to the project folder
+<<<<<<< HEAD
   - ps: cd "../sktime"
+=======
+  - ps: cd ..
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 artifacts:
   # Archive the generated wheel package in the ci.appveyor.com build report.
-  - path: dist\*
+  - path: 'dist\*.whl'
+    name: wheels
 
-#on_success:
 #  You can use this step to upload your artifacts to a public website.
 #  See Appveyor's documentation for more details. Or you can simply
 #  access your wheels from the Appveyor "artifacts" tab for your build.
 
 # deploy wheels to PyPI on tagged commits
+<<<<<<< HEAD
 after_test:
   - ps: >-
       if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
@@ -140,3 +152,29 @@ deploy:
       condition: ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
         ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]$')
 
+=======
+deploy_script:
+  - ps: ls dist
+  - ps: >-
+      if ( ($env:APPVEYOR_REPO_BRANCH -eq 'master') -and ($env:APPVEYOR_REPO_TAG -eq 'true') -and
+      ($env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]+\.[0-9]+\.[0-9]+') ) {
+        Write-Output ("Deploying tag: " + $env:APPVEYOR_REPO_TAG_NAME + " to PyPI ...")
+        pip install --upgrade twine
+        twine upload --skip-existing --non-interactive --verbose dist/*.whl
+        Write-Output ("Successfully uploaded wheels to PyPI.")
+      } else {
+        Write-Output ("Skipped deployment to PyPI as this is not a tagged commit.")
+      }
+
+# upload artifacts to Github releases
+#deploy:
+#  - provider: GitHub
+#    description: 'Appveyor build artifacts'
+#    auth_token:
+#      secure: I7Q//pymos/j6j6A6NmsxAdzi9YTJm0cCIha1LTDZOdrONHDACl2gZQ187ublAVk # your encrypted token from GitHub
+#    artifact: /.*\.whl/  # upload all wheel packages to release assets
+#    draft: true
+#    on:
+#      APPVEYOR_REPO_TAG: true
+#      condition: $env:APPVEYOR_REPO_TAG_NAME -match '^v[0-9]\.[0-9]\.[0-9]'
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

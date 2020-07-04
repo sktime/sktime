@@ -1,5 +1,9 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 # adapted from scipy to allow for bounds on lambda estimation, see
 # - https://github.com/scipy/scipy/blob/v1.4.1/scipy/stats/morestats.py
@@ -15,7 +19,12 @@ from scipy import special
 from scipy import stats
 from scipy.stats import boxcox_llf
 from scipy.stats import distributions
+<<<<<<< HEAD
 from scipy.stats.morestats import _calc_uniform_order_statistic_medians, _boxcox_conf_interval
+=======
+from scipy.stats.morestats import _boxcox_conf_interval
+from scipy.stats.morestats import _calc_uniform_order_statistic_medians
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method='pearsonr'):
@@ -28,7 +37,12 @@ def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method='pearsonr'):
     else:
         # input checks on bounds
         if not isinstance(bounds, tuple) or len(bounds) != 2:
+<<<<<<< HEAD
             raise ValueError(f"`bounds` must be a tuple of length 2, but found: {bounds}")
+=======
+            raise ValueError(
+                f"`bounds` must be a tuple of length 2, but found: {bounds}")
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         def optimizer(func, args):
             return optimize.fminbound(func, bounds[0], bounds[1], args=args)

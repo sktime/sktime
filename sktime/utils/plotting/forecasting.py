@@ -1,5 +1,9 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+<<<<<<< HEAD
+=======
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["plot_ys"]
@@ -28,7 +32,12 @@ def plot_ys(*ys, labels=None):
     if labels is not None:
         if len(ys) != len(labels):
             raise ValueError("There must be one label for each time series, "
+<<<<<<< HEAD
                              "but found inconsistent numbers of series and labels.")
+=======
+                             "but found inconsistent numbers of series and "
+                             "labels.")
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         labels_ = labels
     else:
         labels_ = ["" for _ in range(len(ys))]
