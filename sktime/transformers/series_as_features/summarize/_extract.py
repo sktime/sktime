@@ -102,7 +102,7 @@ class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=False)
 
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()

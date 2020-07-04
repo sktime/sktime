@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import math
 from sklearn.utils import check_random_state
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
@@ -110,6 +111,7 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         # Tabularise assuming series
         arr = tabularize(X, return_array=True)
         # have equal indexes in any given column
+        print(self.intervals_)
         for start, end in self.intervals_:
             interval = arr[:, start:end]
             intervals.append(interval)
@@ -268,3 +270,123 @@ class RandomIntervalSegmenter(IntervalSegmenter):
                                     n_timepoints - start + 1) for start
                 in starts]
         return np.column_stack([starts, ends])
+
+
+class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
+
+    """
+    This class is to transform a univariate series into a
+    multivariate one by extracting sets of subsequences.
+    It does this by firstly padding the time series on either end
+    floor(window_length/2) times. Then it performs a sliding
+    window of size window_length and hop size 1.
+
+    e.g. if window_length = 3
+
+    S = 1,2,3,4,5, floor(3/2) = 1 so S would be padded as
+
+    1,1,2,3,4,5,5
+
+    then SlidingWindowSegmenter would extract the following:
+
+    (1,1,2),(1,2,3),(2,3,4),(3,4,5),(4,5,5)
+
+    the time series is now a multivariate one.
+
+    Parameters
+    ----------
+        window_length : int, length of interval.
+
+    Returns
+    -------
+        df : pandas dataframe of shape
+             [n_instances, n_timepoints]
+
+    Proposed in the ShapeDTW algorithm.
+    """
+    def __init__(self, window_length=5):
+        self.window_length = window_length
+        super(SlidingWindowSegmenter, self).__init__()
+
+    def transform(self, X, y=None):
+        """
+        Function to perform the transformation on the time series data.
+
+        Parameters
+        ----------
+        X : a pandas dataframe of shape = [n_instances, 1]
+            The training input samples.
+
+        Returns
+        -------
+        dims: a pandas data frame of shape = [n_instances, n_timepoints]
+        """
+        # get the number of attributes and instances
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
+
+        n_timepoints = X.shape[1]
+        n_instances = X.shape[0]
+
+        # Check the parameters are appropriate
+        self._check_parameters(n_timepoints)
+
+        pad_amnt = math.floor(self.window_length/2)
+        padded_data = np.zeros((n_instances, n_timepoints + (2*pad_amnt)))
+
+        # Pad both ends of X
+        for i in range(n_instances):
+            padded_data[i] = np.pad(X[i], pad_amnt, mode='edge')
+
+        subsequences = np.zeros((n_instances, n_timepoints,
+                                 self.window_length))
+
+        # Extract subsequences
+        for i in range(n_instances):
+            subsequences[i] = self._extract_subsequences(padded_data[i],
+                                                         n_timepoints)
+
+        # Convert this into a panda's data frame
+        df = pd.DataFrame()
+        for i in range(len(subsequences)):
+            inst = subsequences[i]
+            data = []
+            for j in range(len(inst)):
+                data.append(pd.Series(inst[j]))
+            df[i] = data
+
+        return df.transpose()
+
+    def _extract_subsequences(self, instance, n_timepoints):
+        """
+        Function to extract a set of subsequences from a list of instances.
+
+        Adopted from -
+        https://stackoverflow.com/questions/4923617/efficient-numpy-2d-array-
+        construction-from-1d-array/4924433#4924433
+
+        """
+        shape = (n_timepoints, self.window_length)
+        strides = (instance.itemsize, instance.itemsize)
+        return np.lib.stride_tricks.as_strided(instance,
+                                               shape=shape, strides=strides)
+
+    def _check_parameters(self, n_timepoints):
+        """
+        Function for checking the values of parameters inserted
+        into SlidingWindowSegmenter.
+
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
+        """
+        if isinstance(self.window_length, int):
+            if self.window_length <= 0:
+                raise ValueError("window_length must have the \
+                                  value of at least 1")
+        else:
+            raise TypeError("window_length must be an 'int'. \
+                            Found '" +
+                            type(self.window_length).__name__ +
+                            "' instead.")
