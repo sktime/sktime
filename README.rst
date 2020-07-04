@@ -157,6 +157,7 @@ can simply write:
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
+    >>> 0.12726230426056875
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
