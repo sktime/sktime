@@ -4,13 +4,18 @@
 
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+from joblib import Parallel
+from joblib import delayed
 from sklearn.base import clone
-from sktime.transformers.base import BaseTransformer
-from sktime.transformers.segment import RandomIntervalSegmenter
+from sktime.base import MetaEstimatorMixin
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    _NonFittableSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
-from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.supervised import validate_X, check_X_is_univariate
+from sktime.utils.validation.series_as_features import check_X
 
 
 class PlateauFinder(BaseTransformer):

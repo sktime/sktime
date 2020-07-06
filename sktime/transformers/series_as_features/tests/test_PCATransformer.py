@@ -1,13 +1,3 @@
-<<<<<<< HEAD:sktime/transformers/tests/test_PCATransformer.py
-from sklearn.decomposition import PCA
-from sktime.exceptions import NotFittedError
-from sktime.transformers.pca import PCATransformer
-from sktime.utils.testing.base import generate_df_from_array
-from sktime.utils.data_container import tabularize, detabularize, get_time_index
-import pytest
-import pandas as pd
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/tests/test_PCATransformer.py
 import numpy as np
 import pandas as pd
 import pytest

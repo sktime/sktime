@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = "Markus Löning"
 
@@ -11,13 +8,9 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.forecasting.naive import NaiveForecaster
-<<<<<<< HEAD
-from sktime.forecasting.tests import TEST_OOS_FHS, TEST_SPS, TEST_WINDOW_LENGTHS
-=======
 from sktime.forecasting.tests import TEST_OOS_FHS
 from sktime.forecasting.tests import TEST_SPS
 from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -62,12 +55,8 @@ def test_strategy_seasonal_last(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-<<<<<<< HEAD
-    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh), y_pred.index)
-=======
     np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
                                   y_pred.index)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     # check values
     fh = check_fh(fh)  # get well formatted fh

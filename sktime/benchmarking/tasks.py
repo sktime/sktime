@@ -8,11 +8,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import _pprint
 
-<<<<<<< HEAD:sktime/highlevel/tasks.py
-from sktime.utils.validation.forecasting import check_fh
-
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/benchmarking/tasks.py
 
 class BaseTask:
     """
@@ -150,15 +145,10 @@ class BaseTask:
                         f"but found none")
 
             if metadata.shape[0] <= 1:
-<<<<<<< HEAD:sktime/highlevel/tasks.py
-                raise ValueError(f"For task of type: {type(self)}, several samples (rows) must be given, but only "
-                                 f"found: {metadata.shape[0]} samples")
-=======
                 raise ValueError(
                     f"For task of type: {type(self)}, several samples (rows) "
                     f"must be given, but only "
                     f"found: {metadata.shape[0]} samples")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/benchmarking/tasks.py
 
     @classmethod
     def _get_param_names(cls):
@@ -248,9 +238,5 @@ class TSRTask(BaseTask):
 
     def __init__(self, target, features=None, metadata=None):
         self._case = 'TSR'
-<<<<<<< HEAD:sktime/highlevel/tasks.py
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
-=======
         super(TSRTask, self).__init__(target, features=features,
                                       metadata=metadata)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/benchmarking/tasks.py

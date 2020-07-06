@@ -4,17 +4,10 @@
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
 PACKAGE=sktime
-<<<<<<< HEAD
-DOC_DIR='./docs/'
-MAINT_DIR = './maint_tools/'
-
-.PHONY: help cover dist venv
-=======
 DOC_DIR='./docs'
 MAINT_DIR='./maint_tools'
 
 .PHONY: help release install test lint clean dist doc docs
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 .DEFAULT_GOAL := help
 
@@ -40,10 +33,7 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./build
 	rm -rf ./pytest_cache
 	rm -rf ./htmlcov
-<<<<<<< HEAD
-=======
 	rm -rf ./junit
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 	rm -rf ./$(PACKAGE).egg-info
 	rm -rf ./cover
 	rm -rf $(VENV_DIR)
@@ -53,15 +43,6 @@ clean: ## Clean build dist and egg directories left after install
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
-<<<<<<< HEAD
-	python setup.py sdist
-
-doc: ## Build documentation with sphinx
-	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
-	$(MAKE) -C $(DOC_DIR) html
-
-docs: doc
-=======
 	python setup.py sdist bdist_wheel
 
 docs: doc
@@ -70,4 +51,3 @@ doc: ## Build documentation with Sphinx
 	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
 
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

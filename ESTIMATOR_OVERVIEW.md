@@ -1,43 +1,3 @@
-<<<<<<< HEAD
-
-# Time Series Transformers (trafo) - simple/1st degree
-
-## Atoms
-
-### Transforming a Single TS to a Primitive Data Frame Row (1-ts-to-df)
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-| Tabularise (UK)  | transformers.compose.Tabulariser | @mloning  |  |
-| Tabularize (US)  | transformers.compose.Tabularizer | @mloning  |  |
-| Auto-correlation function  | transformers.spectral_based.AutoCorrelationFourierTransformer | @jsellier  |  |
-| Bin Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
-| Bin Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
-| Cosine Transform  | transformers.spectral_based.CosineTransformer | @jsellier  |  |
-| Discrete Fourier Transform  | transformers.spectral_based.DiscreteFourierTransformer | @jsellier  |  |
-| Power Spectrum | transformers.spectral_based.PowerSpectrumTransformer | @jsellier  |  |
-| Feature Extractor | transformers.summarise.\_tsfresh.TSFreshFeatureExtractor | @mloning @Ayushmaanseth |  |
-| Relevant Feature Extractor | transformers.summarise.\_tsfresh.TSFreshRelevantFeatureExtractor | @mloning @Ayushmaanseth |  |
-
-### Transforming a Single TS to a Single TS (1-ts-to-1-ts)
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-| Derivative Series | transformers.summarise.DeriativeSlopeTransformer | @mloning |  |
-| Plateau Finder | transformers.summarise.PlateauFinder | @mloning |  |
-| Random Intervals | transformers.summarise.RandomIntervalFeatureExtractor | @mloning |  |
-
-
-
-### Transforming a Batch of TS to a Primitive Data Frame (n-ts-to-df)
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-| Tabularise (UK)  | transformers.compose.Tabulariser | @mloning  |  |
-| Tabularize (US)  | transformers.compose.Tabularizer | @mloning  |  |
-| Bin Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
-| Bin Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
-=======
 # Overview of sktime's estimators 
 
 ## Table of contents
@@ -69,6 +29,9 @@ Simple (or first-degree) transformations:
 | ------ | ------- | ------ | ------- |
 | Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
 | Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
+| Piecewise Aggregate Approximation  | transformers.series_as_features.dictionary_based.PAA | @MatthewMiddlehurst  | [ Keogh et al (2001) - Dimensionality reduction for fast similarity search in large time series databases](https://link.springer.com/article/10.1007/PL00011669) |
+| Symbolic Aggregate Approximation  | transformers.series_as_features.dictionary_based.SAX | @MatthewMiddlehurst  | [ Lin et al (2007) - Experiencing SAX: a novel symbolic representation of time series](https://link.springer.com/article/10.1007/s10618-007-0064-z) |
+| Symbolic Fourier Approximation  | transformers.series_as_features.dictionary_based.SFA | @MatthewMiddlehurst  | [ Schäfer (2012) - SFA: a symbolic fourier approximation and index for similarity](https://dl.acm.org/doi/abs/10.1145/2247596.2247656) |
 
 #### Nested data frame to tabular data frame 
 
@@ -85,26 +48,12 @@ Simple (or first-degree) transformations:
 | Derivative Series | transformers.summarise.DeriativeSlopeTransformer | @mloning |  |
 | Plateau Finder | transformers.summarise.PlateauFinder | @mloning |  |
 | Random Interval Feature Extractor | transformers.summarise.RandomIntervalFeatureExtractor | @mloning |  |
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | Matrix profile | transformers.matrix_profile | Claudia Rincon Sanchez | (custom implementation) |
 | Principal component scores after tabularization | transformers.PCATransformer | @prockenschaub | [ Hotelling (1933) - Analysis of a complex of statistical variables into principal components](https://psycnet.apa.org/record/1934-00645-001) |
 | Shapelet transform | transformers.ShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (contracted) | transformers.ContractedShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (random sampled) | transformers.RandomEnumerationShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 
-<<<<<<< HEAD
-### Transforming a Batch of Multivariate TS to a Batch of Univariate TS (n-mts-to-n-uts)
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-| concatenate dimensions  | transformers.compose.ColumnConcatenator | @mloning  |  |
-
-## Higher-order building blocks
-
-### Composites
-
-| components | name | sktime class | maintainer | literature
-=======
 #### Multivariate nested data frame to univariate nested data frame (n-mts-to-n-1-ts)
 
 | Name | Class | Maintainer | References |
@@ -116,22 +65,12 @@ Simple (or first-degree) transformations:
 #### Pipeline
 
 | Name | Class | Maintainer | References |
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | ------| ------ | ------- | ------ | ------- |
 | n-ts-to-X | Concatenate column-wise | transformers.compose.ColumnTransformer | @mloning |  |
 | n-ts-to-X | Feature union | pipeline.FeatureUnion | @mloning |  |
 
 ### Reduction
 
-<<<<<<< HEAD
-| from/output | to/input | name | sktime class | maintainer | literature
-| ------ | ------ | ------ | ------- | ------ | ------- |
-| n-ts-to-df | 1-ts-to-df | Apply row-wise | transformers.compose.RowwiseTransformer | @mloning |  |
-
-# Time Series Transformers - paired/2nd degree
-
-(note: interface for 2nd degree transformers is currently under re-factoring, currently not consistent or homogenous)
-=======
 | From/output | To/input | Name | Class | Maintainer | References |
 | ------ | ------ | ------ | ------- | ------ | ------- |
 | n-ts-to-df | 1-ts-to-df | Apply row-wise | transformers.compose.RowwiseTransformer | @mloning |  |
@@ -140,37 +79,17 @@ Simple (or first-degree) transformations:
 Paired (or second-degree) transformations: 
 
 > Note: the interface for 2nd degree transformers is currently under re-factoring, and currently not consistent or homogenous.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 ## Atoms
 
 ### Distances
 
-<<<<<<< HEAD
-| name | sktime class | maintainer | literature
-=======
 | Name | Class | Maintainer | References |
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | ------ | ------- | ------ | ------- |
 | BOSS Distance | classifiers.dictionary_based.boss.boss_distance | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| Histogram Intersection | classifiers.dictionary_based.tde.histogram_intersection | @MatthewMiddlehurst |  |
 
 ### Kernels
-<<<<<<< HEAD
-
-(todo - this is in goastler ork)
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-|  |  |  |  |
-
-# Time Series Classification (TSC)
-
-## Atoms
-
-### Univariate Time Series Classifiers
-
-| name | sktime class | maintainer | literature
-=======
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
@@ -183,10 +102,11 @@ Paired (or second-degree) transformations:
 ### Univariate time series classifiers
 
 | Name | Class | Maintainer | References |
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | ------ | ------- | ------ | ------- |
-| BOSS Ensemble | classifiers.dictionary_based.boss.Boss_Ensemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| BOSS Ensemble | classifiers.dictionary_based.boss.BossEnsemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
 | BOSS Atom | classifiers.dictionary_based.boss.BossIndividual | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| Temporal Dictionary Ensemble | classifiers.dictionary_based.tde.TemporalDictionaryEnsemble | @MatthewMiddlehurst |  |
+| TDE Atom | classifiers.dictionary_based.tde.IndividualTDE | @MatthewMiddlehurst |  |
 | Elastic Ensemble | classifiers.distance_based.elastic_ensemble.ElasticEnsemble | @jasonlines | [Lines, Bagnall (2015) - Time Series Classification with Ensembles of Elastic Distance Measures](https://link.springer.com/article/10.1007/s10618-014-0361-2) |
 | Proximity Forest | classifiers.distance_based.boss.ProximityForest | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
 | Proximity Stump | classifiers.distance_based.boss.ProximityStump | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
@@ -196,62 +116,25 @@ Paired (or second-degree) transformations:
 | Time Series k-NN | classifiers.distance_based.time_series_neighbors.KNeighborsTimeSeriesClassifier | @jasonlines |  |
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
-
-<<<<<<< HEAD
-### Multivariate Time Series Classifiers
-=======
+| ShapeDTW | classifiers.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
 ### Multivariate time series classifiers
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 | name | sktime class | maintainer | literature
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
 
-<<<<<<< HEAD
-## Higher-order building blocks
-=======
 ## Composition
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 ### Ensembling (abstract/1st order)
 
 (only abstract ensembles in this list - hard-coded ensembles go in one of the lists for atoms)
 
-<<<<<<< HEAD
-| of | name | sktime class | maintainer | literature
-=======
 | Of | Name | Class | Maintainer | References
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | ------ | ------ | ------ | ------- | ------ |
 | univariate TSC | boosting TSC  | classifiers.compose.ensemble.TimeSeriesForestClassifier | @mloning  |  |
 
 ### Pipelines
 
-<<<<<<< HEAD
-| components | name | sktime class | maintainer | literature
-| ------ | ------ | ------- | ------ | ------- |
-| trafos, TSC | pipeline | sktime.pipeline.Pipeline |  |  |
-
-### Reduction
-
-| from/output | to/input | name | sktime class | maintainer | literature
-| ------ | ------ | ------ | ------- | ------ | ------- |
-| multivariate TSC| univariate TSC | column ensembler  | classifiers.compose.column_ensembler.ColumnEnsembleClassifier | @abostrom  |  |
-
-# Time Series Regression (TSR)
-
-## Atoms
-
-### Univariate Time Series Regressors
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-|  |  |  |  |
-
-### Multivariate Time Series Regressors
-
-| name | sktime class | maintainer | literature
-=======
 | Components | Name | Class | Maintainer | References
 | ------ | ------ | ------- | ------ | ------- |
 | Transformers, classifiers, regressors | pipeline | sktime.pipeline.Pipeline |  |  |
@@ -275,7 +158,6 @@ Paired (or second-degree) transformations:
 ### Multivariate time series regressors
 
 | Name | Class | Maintainer | References |
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
 
@@ -283,28 +165,6 @@ Paired (or second-degree) transformations:
 
 ## Atoms
 
-<<<<<<< HEAD
-### Univariate Time Series Forecasting
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-| Dummy forecaster | DummyForecaster | @mloning | 
-| Holt-Winters exponential smoothing forecaster | ExpSmoothingForecaster | @mloning, @big-o | 
-| Theta forecaster | ThetaForecaster | @big-o | [Unmasking the Theta method](https://www.sciencedirect.com/science/article/pii/S0169207001001431)
-### Multivariate Time Series Forecasting
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-|  |  |  |  |
-
-### Time Series Forecasting with Exogeneity
-
-| name | sktime class | maintainer | literature
-| ------ | ------- | ------ | ------- |
-|  |  |  |  |
-
-## Higher-order building blocks
-=======
 ### Endogenous time series forecasters
 
 | Name | Class | Maintainer | References |
@@ -337,7 +197,6 @@ Paired (or second-degree) transformations:
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
 
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 # Forecasters
@@ -345,11 +204,8 @@ Paired (or second-degree) transformations:
 | ------ | ------- | ------ | ------- |
 
 ### Reduction
-<<<<<<< HEAD
-=======
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
 
 
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

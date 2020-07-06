@@ -4,36 +4,12 @@ Configurable time series ensembles
 """
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
 __all__ = ["TimeSeriesForestClassifier"]
-<<<<<<< HEAD:sktime/classifiers/compose/ensemble.py
-__author__ = "Markus Löning"
-
-from warnings import catch_warnings
-from warnings import simplefilter
-from warnings import warn
-
-import numpy as np
-from joblib import Parallel, delayed
-from sklearn.ensemble.base import _partition_estimators
-from sklearn.ensemble.forest import ForestClassifier
-from sklearn.ensemble.forest import MAX_INT
-from sklearn.ensemble.forest import _generate_sample_indices
-from sklearn.ensemble.forest import _generate_unsampled_indices
-from sklearn.ensemble.forest import _get_n_samples_bootstrap
-from sklearn.exceptions import DataConversionWarning
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sklearn.utils import compute_sample_weight
-from sklearn.utils.validation import check_is_fitted
-=======
 
 from warnings import warn
 import numpy as np
 import numbers
 from joblib import Parallel
 from joblib import delayed
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/classification/compose/_ensemble.py
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeClassifier
@@ -45,15 +21,10 @@ from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
 from sktime.utils.time_series import time_series_slope
-<<<<<<< HEAD:sktime/classifiers/compose/ensemble.py
-from sktime.utils.validation import check_is_fitted
-from sktime.utils.validation.supervised import validate_X_y, check_X_is_univariate, validate_X
-=======
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import \
     BaseTimeSeriesForest
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/classification/compose/_ensemble.py
 
 
 class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -207,13 +178,8 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         `oob_decision_function_` might contain NaN.
     """
     def __init__(self,
-<<<<<<< HEAD:sktime/classifiers/compose/ensemble.py
-                 base_estimator=None,
-                 n_estimators=200,
-=======
                  estimator=None,
                  n_estimators=100,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/classification/compose/_ensemble.py
                  criterion='entropy',
                  max_depth=None,
                  min_samples_split=2,

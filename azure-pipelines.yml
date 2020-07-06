@@ -6,11 +6,7 @@
 
 variables:
   REQUIREMENTS: build_tools/requirements.txt
-<<<<<<< HEAD
-  EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5"  # comma-separate string
-=======
   EXCLUDE_PYTHON_VERSIONS: "2.7, 3.5, 3.9"  # comma-separate string
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 trigger:
   branches:
@@ -73,11 +69,7 @@ stages:
 
   - stage: 'Deploy'
     dependsOn: 'Build'
-<<<<<<< HEAD
-    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
-=======
     condition: and(succeeded('Build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     jobs:
       - job: 'deploy_to_pypi'
         pool:
@@ -86,17 +78,8 @@ stages:
           - task: DownloadPipelineArtifact@2
             displayName: 'Collect wheels'
             inputs:
-<<<<<<< HEAD
-              source: 'specific'
-              project: 'sktime'
-              pipeline: 'alan-turing-institute.sktime'
-              runVersion: 'latestFromBranch'
-              runBranch: 'refs/heads/master'
-              tags: '^v[0-9]\.[0-9]\.[0-9]$'
-=======
               source: 'current'
               tags: '^v[0-9]+\.[0-9]+\.[0-9]+'
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
               patterns: 'wheels_*/*manylinux*.whl'
               path: 'download/'
           - script: |
@@ -104,13 +87,10 @@ stages:
               cp download/wheels_*/*manylinux*.whl dist/
               ls -lh dist/
             displayName: 'Select and list wheels'
-<<<<<<< HEAD
-=======
           - task: UsePythonVersion@0
             displayName: 'Use Python version'
             inputs:
               versionSpec: 3.x
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
           - script: |
               pip install --upgrade twine
             displayName: 'Install twine'
@@ -120,10 +100,5 @@ stages:
               # configured in https://dev.azure.com/<user>/<project>/_settings/adminservices
               pythonUploadServiceConnection: PyPI
           - script: |
-<<<<<<< HEAD
-              ls -lh dist/*.whl
-            # twine upload -r pypi --config-file $(PYPIRC_PATH) --skip-existing --verbose dist/*.whl
-=======
               python -m twine upload -r pypi --config-file $(PYPIRC_PATH) --non-interactive --skip-existing --verbose dist/*.whl
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             displayName: 'Upload wheels to PyPI'

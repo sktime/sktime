@@ -1,0 +1,13 @@
+sktime
+tsfresh
+pmdarima
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+numba
+>>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
+=======
+numba
+>>>>>>> upstream/dev
+scikit-posthocs
+matplotlib

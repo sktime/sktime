@@ -7,12 +7,6 @@ from sktime.benchmarking.tasks import TSCTask
 from sktime.benchmarking.tasks import TSRTask
 from sktime.datasets import load_gunpoint
 from sktime.datasets import load_shampoo_sales
-<<<<<<< HEAD:sktime/highlevel/tests/test_tasks.py
-from sktime.highlevel.tasks import BaseTask
-from sktime.highlevel.tasks import TSCTask
-from sktime.highlevel.tasks import TSRTask
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/benchmarking/tests/test_tasks.py
 
 TASKS = (TSCTask, TSRTask)
 
@@ -54,7 +48,3 @@ def check_set_metadata(task, target, metadata):
 @pytest.mark.parametrize("task", [TSRTask, TSCTask])
 def test_set_metadata_supervised(task):
     check_set_metadata(task, 'class_val', gunpoint)
-<<<<<<< HEAD:sktime/highlevel/tests/test_tasks.py
-
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/benchmarking/tests/test_tasks.py

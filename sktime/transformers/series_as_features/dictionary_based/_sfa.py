@@ -6,6 +6,8 @@ import sys
 
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
+
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based._sax import \
@@ -15,7 +17,7 @@ from sktime.utils.validation.series_as_features import check_X
 
 
 class SFA(BaseSeriesAsFeaturesTransformer):
-    """ SFA Transformer, as described in
+    """ SFA (Symbolic Fourier Approximation) Transformer, as described in
 
     @inproceedings{schafer2012sfa,
       title={SFA: a symbolic fourier approximation and index for similarity
@@ -202,6 +204,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return breakpoints
 
     def _igb(self, X, y):
+        le = preprocessing.LabelEncoder()
+        y = le.fit_transform(y)
+
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         dft = np.array([self._igb_dft(X[i, :], num_windows_per_inst, y[i])
                         for i in range(self.n_instances)])

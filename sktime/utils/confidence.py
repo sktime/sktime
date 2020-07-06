@@ -1,9 +1,5 @@
 from scipy.stats import norm
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 __all__ = ("zscore",)
 
 

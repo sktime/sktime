@@ -1,9 +1,6 @@
 sktime
 tsfresh
 pmdarima
-<<<<<<< HEAD
-=======
 numba
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 scikit-posthocs
 matplotlib

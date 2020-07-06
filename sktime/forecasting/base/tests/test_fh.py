@@ -1,23 +1,15 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 
 import numpy as np
 import pytest
 from sktime.forecasting import FH
-<<<<<<< HEAD
-from sktime.forecasting.tests import TEST_FHS
-from sktime.utils.testing.forecasting import make_forecasting_problem
-=======
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_FHS
 from sktime.utils._testing.forecasting import make_forecasting_problem
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.validation.forecasting import check_fh_values
 
 TEST_CUTOFFS = [2, 5]
@@ -59,19 +51,11 @@ def test_relative_in_and_out_of_sample(fh, cutoff):
 
 
 def test_y_test_index_input():
-<<<<<<< HEAD
-    y_train, y_test = make_forecasting_problem()
-=======
     y = make_forecasting_problem()
     y_train, y_test = temporal_train_test_split(y, train_size=0.75)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     # check if y_test.index can be passed as absolute horizon
     fh = FH(y_test.index, relative=False)
     cutoff = y_train.index[-1]
-<<<<<<< HEAD
-    np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)
-=======
     np.testing.assert_array_equal(fh.relative(cutoff),
                                   np.arange(len(y_test)) + 1)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

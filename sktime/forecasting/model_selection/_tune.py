@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["ForecastingGridSearchCV"]
@@ -20,12 +17,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import rankdata
 from sklearn.base import clone
-<<<<<<< HEAD
-from sklearn.model_selection import check_cv, ParameterGrid
-=======
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import check_cv
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -33,10 +26,6 @@ from sktime.exceptions import FitFailedWarning
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-<<<<<<< HEAD
-from sktime.utils.validation.forecasting import check_cv
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.validation.forecasting import check_y
 
@@ -44,13 +33,6 @@ from sktime.utils.validation.forecasting import check_y
 def _score(y_test, y_pred, scorer):
     """Evaluate forecasts"""
     if not isinstance(y_pred, pd.Series):
-<<<<<<< HEAD
-        raise NotImplementedError("multi-step forecasting horizons with multiple cutoffs/windows are not supported yet")
-
-    # select only test points for which we have made predictions
-    if not np.all(np.isin(y_pred.index, y_test.index)):
-        raise IndexError(f"Predicted time points are not in test set")
-=======
         raise NotImplementedError(
             "multi-step forecasting horizons with multiple cutoffs/windows "
             "are not supported yet")
@@ -58,7 +40,6 @@ def _score(y_test, y_pred, scorer):
     # select only test points for which we have made predictions
     if not np.all(np.isin(y_pred.index, y_test.index)):
         raise IndexError("Predicted time points are not in test set")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     y_test = y_test.loc[y_pred.index]
 
     scores = {name: func(y_test, y_pred) for name, func in scorer.items()}
@@ -175,12 +156,8 @@ def _fit_and_score(forecaster, cv, y, X, scorer, verbose,
 
 class BaseGridSearch(BaseForecaster):
 
-<<<<<<< HEAD
-    def __init__(self, forecaster, cv, n_jobs=None, pre_dispatch=None, refit=False, scoring=None, verbose=0,
-=======
     def __init__(self, forecaster, cv, n_jobs=None, pre_dispatch=None,
                  refit=False, scoring=None, verbose=0,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                  error_score=None, return_train_score=None):
         self.forecaster = forecaster
         self.cv = cv
@@ -198,22 +175,6 @@ class BaseGridSearch(BaseForecaster):
         """Call predict on the forecaster with the best found parameters.
         """
         self.check_is_fitted("update")
-<<<<<<< HEAD
-        self.best_forecaster_.update(y_new, X_new=X_new, update_params=update_params)
-        return self
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
-        """Call update_predict on the forecaster with the best found parameters.
-        """
-        self.check_is_fitted("update_predict")
-        return self.best_forecaster_.update_predict(y_test, cv=cv, X_test=X_test, update_params=update_params,
-                                                    return_pred_int=return_pred_int, alpha=alpha)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
-=======
         self.best_forecaster_.update(y_new, X_new=X_new,
                                      update_params=update_params)
         return self
@@ -236,22 +197,10 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update_predict_single(self, y_new, fh=None, X=None,
                               update_params=False, return_pred_int=False,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                               alpha=DEFAULT_ALPHA):
         """Call predict on the forecaster with the best found parameters.
         """
         self.check_is_fitted("update_predict_single")
-<<<<<<< HEAD
-        return self.best_forecaster_.update_predict_single(y_new, fh=fh, X=X, update_params=update_params,
-                                                           return_pred_int=return_pred_int, alpha=alpha)
-
-    @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Call predict on the forecaster with the best found parameters.
-        """
-        self.check_is_fitted("predict")
-        return self.best_forecaster_.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
-=======
         return self.best_forecaster_.update_predict_single(
             y_new, fh=fh, X=X,
             update_params=update_params,
@@ -267,7 +216,6 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.predict(fh=fh, X=X,
                                              return_pred_int=return_pred_int,
                                              alpha=alpha)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def transform(self, y, **transform_params):
@@ -303,12 +251,8 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.inverse_transform(y)
 
     def score(self, y_test, fh=None, X=None):
-<<<<<<< HEAD
-        """Returns the score on the given data, if the forecaster has been refit.
-=======
         """Returns the score on the given data, if the forecaster has been
         refit.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         This uses the score defined by ``scoring`` where provided, and the
         ``best_forecaster_.score`` method otherwise.
         Parameters
@@ -376,12 +320,8 @@ class BaseGridSearch(BaseForecaster):
 
         for scorer_name, scorer in scorers.items():
             # Computed the (weighted) mean and std for test scores alone
-<<<<<<< HEAD
-            _store("test_%s" % scorer_name, test_scores[scorer_name], rank=True,
-=======
             _store("test_%s" % scorer_name, test_scores[scorer_name],
                    rank=True,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                    greater_is_better=scorer.greater_is_better)
 
         return results
@@ -393,12 +333,8 @@ class BaseGridSearch(BaseForecaster):
             if not self.refit:
                 raise NotFittedError("This %s instance was initialized "
                                      "with refit=False. %s is "
-<<<<<<< HEAD
-                                     "available only after refitting on the best "
-=======
                                      "available only after refitting on the "
                                      "best "
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                                      "parameters. You can refit an forecaster "
                                      "manually using the ``best_params_`` "
                                      "attribute"
@@ -452,13 +388,8 @@ class BaseGridSearch(BaseForecaster):
             if self.verbose > 0:
                 n_splits = cv.get_n_splits(y_train)
                 print("Fitting {0} folds for each of {1} candidates,"
-<<<<<<< HEAD
-                      " totalling {2} fits".format(
-                    n_splits, n_candidates, n_candidates * n_splits))
-=======
                       " totalling {2} fits".format(n_splits, n_candidates,
                                                    n_candidates * n_splits))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
             out = []
             for parameters in candidate_params:
@@ -495,13 +426,6 @@ class BaseGridSearch(BaseForecaster):
             self.best_index_]
         self.best_params_ = results["params"][self.best_index_]
 
-<<<<<<< HEAD
-        self.best_forecaster_ = clone(base_forecaster).set_params(**self.best_params_)
-
-        if self.refit:
-            refit_start_time = time.time()
-            self.best_forecaster_.fit(y_train, fh=fh, X_train=X_train, **fit_params)
-=======
         self.best_forecaster_ = clone(base_forecaster).set_params(
             **self.best_params_)
 
@@ -509,7 +433,6 @@ class BaseGridSearch(BaseForecaster):
             refit_start_time = time.time()
             self.best_forecaster_.fit(y_train, fh=fh, X_train=X_train,
                                       **fit_params)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             self.refit_time_ = time.time() - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation

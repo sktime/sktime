@@ -259,11 +259,7 @@ def from_nested_to_long(X):
     columns = []
 
     for i in range(len(X.columns)):
-<<<<<<< HEAD
-        df = tabularise(X.iloc[:, i])
-=======
         df = tabularize(X.iloc[:, i])
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         df = df.reset_index()
         df = df.melt(id_vars="index")
         df["column"] = df["variable"].str.split("__").str[0]
@@ -274,12 +270,8 @@ def from_nested_to_long(X):
 
 
 def nested_to_3d_numpy(X, a=None, b=None):
-<<<<<<< HEAD
-    """Convert pandas DataFrame (with time series as pandas Series in cells) into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
-=======
     """Convert pandas DataFrame (with time series as pandas Series in cells)
     into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     Parameters
     ----------
@@ -292,14 +284,31 @@ def nested_to_3d_numpy(X, a=None, b=None):
     NumPy ndarray, converted NumPy ndarray
     """
     return np.stack(
-<<<<<<< HEAD
-        X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(lambda row: np.stack(row), axis=1).to_numpy())
-=======
         X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(
             lambda row: np.stack(row), axis=1).to_numpy())
+
+
+def from_3d_numpy_to_nested(X):
+    """Convert NumPy ndarray with shape (n_instances, n_columns, n_timepoints)
+    into pandas DataFrame (with time series as pandas Series in cells)
+
+    Parameters
+    ----------
+    X : NumPy ndarray, input
+
+    Returns
+    -------
+    pandas DataFrame
+    """
+    df = pd.DataFrame()
+    n_instances = X.shape[0]
+    n_variables = X.shape[1]
+    for variable in range(n_variables):
+        df['var_' + str(variable)] = [pd.Series(X[instance][variable])
+                                      for instance in range(n_instances)]
+    return df
 
 
 def is_nested_dataframe(X):
     return isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0],
                                                       (np.ndarray, pd.Series))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

@@ -1,26 +1,16 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 """
 Do-nothing script for making a release
 
 This idea comes from here:
-<<<<<<< HEAD
-- https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to-gradual-automation/
-
-The script is adapted from:
-- https://github.com/alan-turing-institute/CleverCSV/blob/master/make_release.py
-=======
 - https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to
 -gradual-automation/
 
 The script is adapted from:
 - https://github.com/alan-turing-institute/CleverCSV/blob/master
 /make_release.py
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 """
 
 __author__ = ["Markus Löning"]
@@ -29,17 +19,6 @@ import codecs
 import os
 import re
 import webbrowser
-<<<<<<< HEAD
-
-import colorama
-
-ROOTDIR = os.path.abspath(os.path.dirname(__file__)).strip("maint_tools")
-PACKAGE_NAME = "sktime"
-URLS = {
-    "docs_local": f"file:///{ROOTDIR}docs/_build/html/index.html",
-    "docs_online": "https://alan-turing-institute.github.io/sktime/",
-    "pypi": f"https://pypi.org/simple/{PACKAGE_NAME}/"
-=======
 import platform
 
 import colorama
@@ -51,29 +30,20 @@ URLS = {
     "docs_online": "https://alan-turing-institute.github.io/sktime/",
     "pypi": f"https://pypi.org/simple/{PACKAGE_NAME}/",
     "github_new_pr": "https://github.com/alan-turing-institute/sktime/compare"
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 }
 
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-<<<<<<< HEAD
-    with codecs.open(os.path.join(ROOTDIR, *parts), 'r') as fp:
-=======
     with codecs.open(os.path.join(ROOT_DIR, *parts), 'r') as fp:
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         return fp.read()
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-<<<<<<< HEAD
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-=======
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     if version_match:
         return version_match.group(1)
     else:
@@ -153,11 +123,6 @@ class Step:
 
 
 class ConfirmGitStatus(Step):
-<<<<<<< HEAD
-    def action(self, context):
-        self.instruct("Make sure you're on master and changes are merged in")
-        self.print_run("git checkout master")
-=======
 
     def __init__(self, branch):
         self.branch = branch
@@ -168,7 +133,6 @@ class ConfirmGitStatus(Step):
                       f"in.")
         self.do_cmd(f"git checkout {self.branch}")
         self.do_cmd("git pull")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class RunTests(Step):
@@ -192,12 +156,8 @@ class BumpVersion(Step):
 
     def post(self, context):
         wait_for_enter()
-<<<<<<< HEAD
-        context["version"] = find_version(context['package_name'], '__init__.py')
-=======
         context["version"] = find_version(context['package_name'],
                                           '__init__.py')
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class MakeClean(Step):
@@ -212,8 +172,6 @@ class MakeDocs(Step):
 
 class MakeDist(Step):
     def action(self, context):
-<<<<<<< HEAD
-=======
 
         if platform.system() == "Darwin":
             self.instruct(
@@ -228,19 +186,14 @@ class MakeDist(Step):
                 'export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib'
             )
 
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         self.do_cmd("make dist")
 
 
 class PushToTestPyPI(Step):
     def action(self, context):
         self.do_cmd(
-<<<<<<< HEAD
-            "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
-=======
             "twine upload --repository-url https://test.pypi.org/legacy/ "
             "dist/*"
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         )
 
 
@@ -249,15 +202,6 @@ class InstallFromTestPyPI(Step):
         self.instruct(
             f"Check installation from TestPyPI"
         )
-<<<<<<< HEAD
-        self.print_run("cd /tmp/")
-        self.print_cmd("rm -rf ./venv")
-        self.print_cmd("virtualenv ./venv")
-        self.print_cmd("source ./venv/bin/activate")
-        self.print_cmd(
-            "pip install --index-url https://test.pypi.org/simple/ "
-            "--extra-index-url https://pypi.org/simple {context['package_name']}=={context['version']}"
-=======
         self.print_run("makedir /tmp/")
         self.print_run("cd /tmp/")
         self.print_cmd("conda remove -n testenv --all -y")
@@ -269,25 +213,18 @@ class InstallFromTestPyPI(Step):
             f"pip install --index-url https://test.pypi.org/simple/ "
             f"--extra-index-url https://pypi.org/simple "
             f"{context['package_name']}=={context['version']}"
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         )
 
 
 class CheckVersionNumber(Step):
     def action(self, context):
         self.instruct(
-<<<<<<< HEAD
-            f"Ensure that the following command gives version: {context['version']}"
-        )
-        self.do_cmd(f"python -c 'import {context['package_name']}; print({context['package_name']}.__version__)'")
-=======
             f"Ensure that the following command gives version: "
             f"{context['version']}"
         )
         self.do_cmd(
             f"python -c 'import {context['package_name']}; print("
             f"{context['package_name']}.__version__)'")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class DeactivateVenv(Step):
@@ -296,14 +233,9 @@ class DeactivateVenv(Step):
         self.instruct("Go back to the project directory")
 
 
-<<<<<<< HEAD
-class GitTagVersion(Step):
-    def action(self, context):
-=======
 class GitTagRelease(Step):
     def action(self, context):
         self.instruct("Tag version as a release")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         self.do_cmd(f"git tag v{context['version']}")
 
 
@@ -313,33 +245,9 @@ class GitTagPreRelease(Step):
         self.print_run(f"git tag v{context['version']}-rc.1")
 
 
-<<<<<<< HEAD
-class GitAddCommit(Step):
-    def action(self, context):
-        self.instruct("Add everything to git and commit")
-
-
-class GitAddRelease(Step):
-    def action(self, context):
-        self.instruct("Add CHANGELOG & README to git")
-        self.instruct(
-            f"Commit with title: {context['package_name']} {context['version']}"
-        )
-
-
-class PushToPyPI(Step):
-    def action(self, context):
-        self.do_cmd("twine upload dist/*")
-
-
-class PushToGitHub(Step):
-    def action(self, context):
-        self.do_cmd("git push -u --tags origin master")
-=======
 class PushToGitHub(Step):
     def action(self, context):
         self.instruct("Add and commit to git, then push to GitHub")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class CheckCIStatus(Step):
@@ -367,43 +275,6 @@ class CheckLocalDocs(Step):
 
 class CheckPyPIFiles(Step):
     def action(self, context):
-<<<<<<< HEAD
-        self.instruct(
-            "Check PyPI files"
-        )
-        open_website(URLS["pypi"])
-
-
-def main():
-    colorama.init()
-    steps = [
-        ConfirmGitStatus(),
-        MakeClean(),
-        RunLinting(),
-        RunTests(),
-        MakeDocs(),
-        CheckLocalDocs(),
-        PushToGitHub(),  # trigger CI to run tests
-        CheckCIStatus(),
-        CheckOnlineDocs(),
-        BumpVersion(),
-        GitAddCommit(),
-        GitTagPreRelease(),
-        PushToGitHub(),  # trigger CI to run tests
-        CheckCIStatus(),
-        UpdateChangelog(),
-        MakeClean(),
-        MakeDocs(),
-        MakeDist(),
-        PushToTestPyPI(),
-        InstallFromTestPyPI(),
-        CheckVersionNumber(),
-        DeactivateVenv(),
-        GitAddRelease(),
-        PushToPyPI(),
-        GitTagVersion(),
-        PushToGitHub(),  # triggers Travis to build and deploy on tag
-=======
         self.instruct("Check PyPI files")
         open_website(URLS["pypi"])
 
@@ -458,17 +329,13 @@ def main():
         # make release
         GitTagRelease(),
         PushTagToGitHub(),
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         CheckCIStatus(),
         CheckOnlineDocs(),
         CheckPyPIFiles()
     ]
     context = dict()
     context["package_name"] = PACKAGE_NAME
-<<<<<<< HEAD
-=======
     context["version"] = find_version(context["package_name"], "__init__.py")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     for step in steps:
         step.run(context)
     cprint("\nDone!", color="yellow", style="bright")

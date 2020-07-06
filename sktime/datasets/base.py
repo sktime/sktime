@@ -10,20 +10,16 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
-<<<<<<< HEAD
-    "load_gunpoint",
-    "load_arrow_head",
-=======
     "load_arrow_head",
     "load_gunpoint",
     "load_osuleaf",
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
     "load_shampoo_sales",
     "load_longley",
-    "load_lynx"
+    "load_lynx",
+    "load_acsf1"
 ]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
@@ -257,11 +253,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
     return _load_dataset(name, split, return_X_y)
 
 
-<<<<<<< HEAD
-def load_arrow_head(split='TRAIN', return_X_y=False):
-=======
 def load_arrow_head(split=None, return_X_y=False):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """
     Loads the ArrowHead time series classification problem and returns X and y.
 
@@ -307,6 +299,53 @@ def load_arrow_head(split=None, return_X_y=False):
     """
 
     name = 'ArrowHead'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_acsf1(split=None, return_X_y=False):
+    """
+    Loads the power consumption of typical appliances time series
+    classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      1460
+    Train cases:        100
+    Test cases:         100
+    Number of classes:  10
+
+    The dataset contains the power consumption of typical appliances.
+    The recordings are characterized by long idle periods and some high bursts
+    of enery consumption when the appliance is active.
+    The classes correspond to 10 categories of home appliances;
+    mobile phones (via chargers), coffee machines, computer stations
+    (including monitor), fridges and freezers, Hi-Fi systems (CD players),
+    lamp (CFL), laptops (via chargers), microwave ovens, printers, and
+    televisions (LCD or LED)."
+
+    Dataset details: http://www.timeseriesclassification.com/description.php
+    ?Dataset=ACSF1
+    """
+
+    name = 'ACSF1'
     return _load_dataset(name, split, return_X_y)
 
 
@@ -383,12 +422,8 @@ def load_shampoo_sales():
 
     References
     ----------
-<<<<<<< HEAD
-    .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
-=======
     .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods
     and applications,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         John Wiley & Sons: New York. Chapter 3.
     """
 
@@ -401,10 +436,7 @@ def load_shampoo_sales():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='M')
     data = data.reset_index(drop=True)
-<<<<<<< HEAD
-=======
     data.index = pd.Int64Index(data.index)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     data.name = name
     return data
 
@@ -473,12 +505,8 @@ def load_longley(return_X_y=False):
     y = pd.Series([y], name=yname)
 
     # Get exogeneous series
-<<<<<<< HEAD
-    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
-=======
     X = pd.DataFrame(
         [pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     X.columns = data.columns
 
     if return_X_y:
@@ -500,15 +528,10 @@ def load_lynx():
 
     Details
     -------
-<<<<<<< HEAD
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This time-series records the number of skins of
-    predators (lynx) that were collected over several years by the Hudson's Bay Company. The dataset was
-=======
     The annual numbers of lynx trappings for 1821–1934 in Canada. This
     time-series records the number of skins of
     predators (lynx) that were collected over several years by the Hudson's
     Bay Company. The dataset was
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     taken from Brockwell & Davis (1991) and appears to be the series
     considered by Campbell & Walker (1977).
 
@@ -524,12 +547,6 @@ def load_lynx():
 
     References
     ----------
-<<<<<<< HEAD
-    .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S Language. Wadsworth & Brooks/Cole.
-
-    .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new analysis. Journal of the Royal Statistical Society
-=======
     .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S
     Language. Wadsworth & Brooks/Cole.
 
@@ -537,7 +554,6 @@ def load_lynx():
     work on the Mackenzie River series of
     annual Canadian lynx trappings for the years 1821–1934 and a new
     analysis. Journal of the Royal Statistical Society
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     series A, 140, 411–431.
     """
 
@@ -550,10 +566,7 @@ def load_lynx():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
-<<<<<<< HEAD
-=======
     data.index = pd.Int64Index(data.index)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     data.name = name
     return data
 
@@ -569,12 +582,8 @@ def load_airline():
 
     Details
     -------
-<<<<<<< HEAD
-    The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960.
-=======
     The classic Box & Jenkins airline data. Monthly totals of international
     airline passengers, 1949 to 1960.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     Dimensionality:     univariate
     Series length:      144
@@ -602,9 +611,6 @@ def load_airline():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
-<<<<<<< HEAD
-=======
     data.index = pd.Int64Index(data.index)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     data.name = name
     return data

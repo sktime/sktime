@@ -403,15 +403,10 @@ class Evaluator:
                 metric_name)
 
         strategy_dict = pd.DataFrame(metrics_per_estimator_dataset)
-<<<<<<< HEAD
-        strategy_dict = strategy_dict.melt(var_name="groups", value_name="values")
-        nemenyi = posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
-=======
         strategy_dict = strategy_dict.melt(var_name="groups",
                                            value_name="values")
         nemenyi = posthoc_nemenyi(strategy_dict, val_col="values",
                                   group_col="groups")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         return nemenyi
 
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):

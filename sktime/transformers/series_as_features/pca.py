@@ -2,11 +2,6 @@ __author__ = ["Patrick Rockenschaub"]
 __all__ = ["PCATransformer"]
 
 import pandas as pd
-<<<<<<< HEAD:sktime/transformers/pca.py
-
-from sktime.utils.validation import check_is_fitted
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/pca.py
 from sklearn.decomposition import PCA
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer

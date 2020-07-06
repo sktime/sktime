@@ -3,10 +3,6 @@ import pytest
 from scipy.stats import linregress
 from sktime.utils._testing.forecasting import generate_polynomial_series
 from sktime.utils.time_series import time_series_slope
-<<<<<<< HEAD
-from sktime.utils.testing.forecasting import generate_polynomial_series
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 @pytest.mark.parametrize("trend_order", [0, 3])

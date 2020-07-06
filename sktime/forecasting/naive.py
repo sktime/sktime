@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __all__ = ["NaiveForecaster"]
 __author__ = "Markus Löning"
@@ -11,23 +8,18 @@ __author__ = "Markus Löning"
 from warnings import warn
 
 import numpy as np
-<<<<<<< HEAD
-import pandas as pd
-from sktime.forecasting.base._sktime import BaseLastWindowForecaster, OptionalForecastingHorizonMixin
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-=======
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseLastWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
-<<<<<<< HEAD
-class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster):
+class NaiveForecaster(OptionalForecastingHorizonMixin,
+                      BaseLastWindowForecaster):
     """
-    NaiveForecaster is a forecaster that makes forecasts using simple strategies.
+    NaiveForecaster is a forecaster that makes forecasts using simple
+    strategies.
 
     Parameters
     ----------
@@ -82,7 +74,6 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             raise ValueError(
                 f"Unknown strategy: {strategy}; expected one of "
                 f"{allowed_strategies}")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
@@ -103,8 +94,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         Returns
         -------
         self : returns an instance of self.
-<<<<<<< HEAD
-        """        # X_train is ignored
+        """  # X_train is ignored
         self._set_oh(y_train)
         self._set_fh(fh)
 
@@ -168,27 +158,17 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         # check window length
         if self.window_length_ > len(self.oh):
-<<<<<<< HEAD
-            param = "sp" if self.strategy == "last" and self.sp is not None else "window_length_"
-            raise ValueError(f"The {param}: {self.window_length_} is greater than "
-                             f"the training series.")
-=======
             param = "sp" if self.strategy == "seasonal_last" else \
                 "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series.")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         self._is_fitted = True
         return self
 
-<<<<<<< HEAD
-    def _predict_last_window(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-=======
     def _predict_last_window(self, fh, X=None, return_pred_int=False,
                              alpha=DEFAULT_ALPHA):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         """Internal predict"""
         last_window = self._get_last_window()
 
@@ -200,19 +180,11 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         elif self.strategy == "last" and self.sp is None:
             return np.repeat(last_window[-1], len(fh))
 
-        elif self.strategy == "last" and self.sp is not None:
-            # we need to replicate the last window if max(fh) is larger than sp,
-            # so that we still make forecasts by repeating the last value for that season,
-=======
-        elif self.strategy == "last":
-            return np.repeat(last_window[-1], len(fh))
-
         elif self.strategy == "seasonal_last":
             # we need to replicate the last window if max(fh) is larger than
             # sp,
             # so that we still make forecasts by repeating the last value
             # for that season,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             # assume fh is sorted, i.e. max(fh) == fh[-1]
             if fh[-1] > self.sp_:
                 reps = np.int(np.ceil(fh[-1] / self.sp_))
@@ -225,29 +197,3 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 <<<<<<< HEAD
         elif self.strategy == "mean" and self.sp is None:
             return np.repeat(np.nanmean(last_window), len(fh))
-
-        elif self.strategy == "mean" and self.sp is not None:
-            last_window = pd.DataFrame(data = last_window, columns=['data'])
-            for i in range(self.sp_):
-                if any(last_window.index % self.sp_ == i) is True:
-                    last_window.at[last_window[last_window.index % self.sp_ == i].index[-1], 'data'] =\
-                        last_window[last_window.index % self.sp_ == i].mean()
-            
-            # we need to replicate the last window if max(fh) is larger than sp,
-            # so that we still make forecasts by repeating the last value for that season,
-            # assume fh is sorted, i.e. max(fh) == fh[-1]
-            if fh[-1] > self.sp_:
-                reps = np.int(np.ceil(fh[-1] / self.sp_))
-                last_window = np.tile(last_window['data'].tail(self.sp_).to_numpy(), reps=reps)
-            else:
-                last_window=last_window.tail(self.sp_).values[0]
-
-            # get zero-based index by subtracting the minimum
-            fh_idx = fh.index_like(self.cutoff)
-            return last_window[fh_idx]    
-
-
-=======
-        elif self.strategy == "mean":
-            return np.repeat(np.nanmean(last_window), len(fh))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

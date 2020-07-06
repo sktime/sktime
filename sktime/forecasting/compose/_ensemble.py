@@ -1,22 +1,11 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
 import pandas as pd
-<<<<<<< HEAD
-from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-
-
-class EnsembleForecaster(OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
-=======
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -24,19 +13,14 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 class EnsembleForecaster(OptionalForecastingHorizonMixin,
                          BaseHeterogenousEnsembleForecaster):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """Ensemble of forecasters
 
     Parameters
     ----------
     forecasters : list of (str, estimator) tuples
     n_jobs : int or None, optional (default=None)
-<<<<<<< HEAD
-        The number of jobs to run in parallel for fit. None means 1 unless in a joblib.parallel_backend context.
-=======
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         -1 means using all processors.
     """
 
@@ -87,20 +71,8 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
-<<<<<<< HEAD
-    def transform(self, fh=None, X=None):
-        self.check_is_fitted()
-        self._set_fh(fh)
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)
-
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if return_pred_int:
-            raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)
-=======
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
         return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(
             axis=1)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

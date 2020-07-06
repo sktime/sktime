@@ -1,12 +1,8 @@
 #! /usr/bin/env python
 """Install script for sktime"""
 
-<<<<<<< HEAD
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/setup.py
-=======
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
 # /setup.py
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 
@@ -26,11 +22,7 @@ MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
-<<<<<<< HEAD
-    "scikit-learn": "0.22.0",
-=======
     "scikit-learn": "0.23.0",
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     "statsmodels": "0.11.0"
 }
 
@@ -56,12 +48,8 @@ def find_version(*file_paths):
 
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
-<<<<<<< HEAD
-DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
-=======
 DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning ' \
               'with time series'
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Király'
@@ -76,12 +64,8 @@ PROJECT_URLS = {
 }
 VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = [
-<<<<<<< HEAD
-    *["{}>={}".format(package, version) for package, version in MIN_REQUIREMENTS.items()],
-=======
     *["{}>={}".format(package, version) for package, version in
       MIN_REQUIREMENTS.items()],
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     "wheel"
 ]
 CLASSIFIERS = [
@@ -100,15 +84,6 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.8'
 ]
 EXTRAS_REQUIRE = {
-<<<<<<< HEAD
-    'tests': [
-        'pytest',
-        'pytest-cov',
-        'tsfresh',
-        'pmdarima'
-    ],
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     'docs': [
         'pmdarima',
         'tsfresh',
@@ -117,11 +92,7 @@ EXTRAS_REQUIRE = {
         'jupyter',
         'sphinx',
         'sphinx-gallery',
-<<<<<<< HEAD
-        'nbspinx',
-=======
         'nbsphinx',
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         'sphinx_rtd_theme',
         'numpydoc',
         # https://github.com/sphinx-doc/sphinx/issues/2840
@@ -263,12 +234,8 @@ def check_package_status(package, min_version):
 
     instructions = ("Installation instructions are available on the "
                     "sktime website: "
-<<<<<<< HEAD
-                    "https://alan-turing-institute.github.io/sktime/installation.html\n")
-=======
                     "https://alan-turing-institute.github.io/sktime"
                     "/installation.html\n")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     if package_status['up_to_date'] is False:
         if package_status['version']:
@@ -322,13 +289,6 @@ def setup_package():
 
     # otherwise check Python and required package versions
     else:
-<<<<<<< HEAD
-        if sys.version_info < tuple([int(i) for i in MIN_PYTHON_VERSION.split(".")]):
-            raise RuntimeError(
-                "sktime requires Python %s or later. The current"
-                " Python version is %s installed in %s."
-                % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable))
-=======
         if sys.version_info < tuple(
                 [int(i) for i in MIN_PYTHON_VERSION.split(".")]):
             raise RuntimeError(
@@ -337,7 +297,6 @@ def setup_package():
                 % (MIN_PYTHON_VERSION,
                    platform.python_version(),
                    sys.executable))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         for package, version in MIN_REQUIREMENTS.items():
             check_package_status(package, version)

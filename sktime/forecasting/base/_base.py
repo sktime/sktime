@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning", "@big-o"]
 __all__ = [
@@ -20,11 +17,6 @@ DEFAULT_ALPHA = 0.05
 class BaseForecaster(BaseEstimator):
     """Base forecaster"""
 
-<<<<<<< HEAD
-    _estimator_type = "forecaster"
-
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     def __init__(self):
         self._is_fitted = False
         super(BaseEstimator, self).__init__()
@@ -46,12 +38,8 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-<<<<<<< HEAD
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-=======
     def predict(self, fh=None, X=None, return_pred_int=False,
                 alpha=DEFAULT_ALPHA):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         """Make forecasts
 
         Parameters
@@ -85,12 +73,8 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-<<<<<<< HEAD
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
-=======
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
                        return_pred_int=False,
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                        alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
@@ -112,12 +96,6 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-<<<<<<< HEAD
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA):
-        # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
-        # passed to update, the remaining time points of X are passed to predict
-=======
     def update_predict_single(self, y_new, fh=None, X=None,
                               update_params=False, return_pred_int=False,
                               alpha=DEFAULT_ALPHA):
@@ -125,17 +103,12 @@ class BaseForecaster(BaseEstimator):
         # length as y so that same time points are
         # passed to update, the remaining time points of X are passed to
         # predict
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         if X is not None or return_pred_int:
             raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
-<<<<<<< HEAD
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
-=======
         return self.predict(fh=fh, X=X, return_pred_int=return_pred_int,
                             alpha=alpha)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def score(self, y_test, fh=None, X=None):
         """Compute the sMAPE loss for the given forecasting horizon.
@@ -186,8 +159,4 @@ def is_forecaster(estimator):
     out : bool
         True if estimator is a forecaster and False otherwise.
     """
-<<<<<<< HEAD
-    return getattr(estimator, "_estimator_type", None) == "forecaster"
-=======
     return isinstance(estimator, BaseForecaster)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

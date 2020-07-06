@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["FH", "AbsoluteFH", "RelativeFH"]
@@ -42,12 +39,8 @@ class FH(np.ndarray):
         else:
             klass = AbsoluteFH
             if np.any(values < 0):
-<<<<<<< HEAD
-                raise ValueError("FH contains time points before observation horizon")
-=======
                 raise ValueError(
                     "FH contains time points before observation horizon")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         # subclass numpy array
         return values.view(klass)
@@ -61,17 +54,11 @@ class FH(np.ndarray):
     def _check_cutoff(self, cutoff):
         """Check cutoff"""
         if cutoff is None:
-<<<<<<< HEAD
-            output_type = "absolute" if self._type == "relative" else "relative"
-            raise ValueError(f"When relative={self.is_relative}, the "
-                             f"`cutoff` value must be passed in order to convert "
-=======
             output_type = "absolute" if self._type == "relative" else \
                 "relative"
             raise ValueError(f"When relative={self.is_relative}, the "
                              f"`cutoff` value must be passed in order to "
                              f"convert "
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                              f"it to {output_type}, but found: None")
 
     def in_sample(self, cutoff=None):

@@ -10,24 +10,15 @@ __all__ = [
 import numpy as np
 from sklearn.utils import check_array
 
-<<<<<<< HEAD
-from sktime.utils.validation.forecasting import check_fh, check_time_index
-=======
 from sktime.utils.validation.forecasting import check_time_index
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     """
-<<<<<<< HEAD
-    Get number of intervals from number of time points for various allowed input arguments.
-    Helpful to compute number of intervals relative to time series length, e.g. using floats or functions.
-=======
     Get number of intervals from number of time points for various allowed
     input arguments.
     Helpful to compute number of intervals relative to time series length,
     e.g. using floats or functions.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     Parameters
     ----------
@@ -41,18 +32,12 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     """
     # check input: n_timepoints
     if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
-<<<<<<< HEAD
-        raise ValueError(f"`n_timepoints` must be an integer, but found: {type(n_timepoints)}")
-    if not n_timepoints >= 1:
-        raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
-=======
         raise ValueError(
             f"`n_timepoints` must be an integer, but found: "
             f"{type(n_timepoints)}")
     if not n_timepoints >= 1:
         raise ValueError(
             f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     # compute number of splits
     allowed_strings = ["sqrt", "log"]
@@ -60,16 +45,10 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     # integer
     if np.issubdtype(type(n), np.dtype(int).type):
         if not n <= n_timepoints:
-<<<<<<< HEAD
-            raise ValueError(f"If `n_intervals` is an integer, it must be smaller "
-                             f"than `n_timepoints`, but found:  `n_intervals`={n} "
-                             f"and `n_timepoints`={n_timepoints}")
-=======
             raise ValueError(
                 f"If `n_intervals` is an integer, it must be smaller "
                 f"than `n_timepoints`, but found:  `n_intervals`={n} "
                 f"and `n_timepoints`={n_timepoints}")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         if n < 1:
             raise ValueError(f"If `n_intervals` is an integer, "
                              f"`n_intervals` must be >= 1, but found: {n}")
@@ -82,14 +61,9 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     # string
     elif isinstance(n, str):
         if n not in allowed_strings:
-<<<<<<< HEAD
-            raise ValueError(f"If `n_intervals` is a string, `n_intervals` must be "
-                             f"in {allowed_strings}, but found: {n}")
-=======
             raise ValueError(
                 f"If `n_intervals` is a string, `n_intervals` must be "
                 f"in {allowed_strings}, but found: {n}")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         str_func_map = {
             "sqrt": np.sqrt,
             "log": np.log
@@ -100,15 +74,6 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     # float
     elif isinstance(n, float):
         if not (0 < n <= 1):
-<<<<<<< HEAD
-            raise ValueError(f"If `n_intervals` is a float, `n_intervals` must be > 0 "
-                             f"and <= 1, but found: {n}")
-        n_intervals_ = n * n_timepoints
-
-    else:
-        raise ValueError(f"`n_intervals` must be either one of the allowed string options in "
-                         f"{allowed_strings}, an integer or a float number.")
-=======
             raise ValueError(
                 f"If `n_intervals` is a float, `n_intervals` must be > 0 "
                 f"and <= 1, but found: {n}")
@@ -119,7 +84,6 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
             f"`n_intervals` must be either one of the allowed string options "
             f"in "
             f"{allowed_strings}, an integer or a float number.")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     # make sure n_intervals is an integer and there is at least one interval
     n_intervals_ = np.maximum(1, np.int(n_intervals_))
@@ -150,12 +114,8 @@ def time_series_slope(y):
     else:
         x = np.arange(len_series)  # time index
         x_mean = (len_series - 1) / 2  # faster than x.mean()
-<<<<<<< HEAD
-        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
-=======
         return (np.mean(x * y) - x_mean * np.mean(y)) / (
                     np.mean(x ** 2) - x_mean ** 2)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def fit_trend(x, order=0):
@@ -310,12 +270,3 @@ def add_trend(x, coefs, time_index=None):
         xt = x + np.dot(poly_terms, coefs.T).T
 
     return xt
-<<<<<<< HEAD
-
-
-
-
-
-
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed

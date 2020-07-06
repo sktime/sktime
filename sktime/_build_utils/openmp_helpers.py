@@ -131,12 +131,8 @@ def check_openmp_support():
           mode and their `n_jobs` parameter will have no effect anymore.
           
         - See sktime advanced installation instructions for more info: 
-<<<<<<< HEAD
-                https://alan-turing-institute.github.io/sktime/installation.html
-=======
                 https://alan-turing-institute.github.io/sktime/installation
                 .html
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
                             ***
         """)
 

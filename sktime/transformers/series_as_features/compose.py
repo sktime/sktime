@@ -6,19 +6,12 @@ transformers as building blocks.
 import numpy as np
 import pandas as pd
 from scipy import sparse
-<<<<<<< HEAD:sktime/transformers/compose.py
-from sklearn.compose import ColumnTransformer as skColumnTransformer
-from sktime.utils.validation import check_is_fitted
-
-from sktime.transformers.base import BaseTransformer
-=======
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.base import MetaEstimatorMixin
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.base import \
     _NonFittableSeriesAsFeaturesTransformer
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/compose.py
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import tabularize
@@ -279,87 +272,9 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer,
         return Xt
 
 
-<<<<<<< HEAD:sktime/transformers/compose.py
-class Tabularizer(BaseTransformer):
-    """
-    A transformer that turns time series/panel data into tabular data.
-
-    This estimator converts nested pandas dataframe containing time-series/panel data with numpy arrays or pandas Series in
-    dataframe cells into a tabular pandas dataframe with only primitives in cells. This is useful for transforming
-    time-series/panel data into a format that is accepted by standard validation learning algorithms (as in sklearn).
-
-    Parameters
-    ----------
-    check_input: bool, optional (default=True)
-        When set to ``True``, inputs will be validated, otherwise inputs are assumed to be valid
-        and no checks are performed. Use with caution.
-    """
-
-    # TODO: allow to keep column names, but unclear how to handle multivariate data
-
-    def __init__(self, check_input=True):
-        self.check_input = check_input
-
-    def transform(self, X, y=None):
-        """Transform nested pandas dataframe into tabular dataframe.
-
-        Parameters
-        ----------
-        X : pandas DataFrame
-            Nested dataframe with pandas series or numpy arrays in cells.
-        y : array-like, optional (default=None)
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-            Transformed dataframe with only primitives in cells.
-        """
-
-        if self.check_input:
-            validate_X(X)
-
-        self._columns = X.columns
-        self._index = X.index
-        self._time_index = get_time_index(X)
-
-        Xt = tabularize(X)
-        return Xt
-
-    def inverse_transform(self, X, y=None):
-        """Transform tabular pandas dataframe into nested dataframe.
-
-        Parameters
-        ----------
-        X : pandas DataFrame
-            Tabular dataframe with primitives in cells.
-        y : array-like, optional (default=None)
-
-        Returns
-        -------
-        Xt : pandas DataFrame
-            Transformed dataframe with series in cells.
-        """
-
-        check_is_fitted_in_transform(self, '_time_index')
-
-        # TODO check if for each column, all rows have equal-index series
-        if self.check_input:
-            validate_X(X)
-
-        Xit = detabularize(X, index=self._index, time_index=self._time_index)
-        return Xit
-
-
-Tabulariser = Tabularizer
-
-
-class ColumnConcatenator(BaseTransformer):
-    """Transformer that concatenates multivariate time series/panel data into long univiariate time series/panel
-=======
 class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
     """Transformer that concatenates multivariate time series/panel data
     into long univiariate time series/panel
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/compose.py
         data by simply concatenating times series in time.
     """
 

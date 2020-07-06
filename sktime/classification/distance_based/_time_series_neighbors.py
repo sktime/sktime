@@ -23,12 +23,6 @@ from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 from sklearn.neighbors._base import _get_weights
 from sklearn.utils import gen_even_slices
-<<<<<<< HEAD:sktime/classifiers/distance_based/time_series_neighbors.py
-from sklearn.utils.multiclass import check_classification_targets
-from sktime.utils.validation import check_is_fitted
-from sklearn.utils import Parallel, delayed, effective_n_jobs
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/classification/distance_based/_time_series_neighbors.py
 from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
@@ -45,6 +39,8 @@ from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import nested_to_3d_numpy
+
 
 """
 Please note that many aspects of this class are taken from scikit-learn's
@@ -183,12 +179,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=False)
         y = np.asarray(y)
-        X = np.array(
-            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
+        X = nested_to_3d_numpy(X)
         check_classification_targets(y)
 
+        # print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
@@ -226,10 +222,19 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
+
         fx = self._fit(X)
-        check_array.__wrapped__.__code__ = temp
+
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
 
         self._is_fitted = True
         return fx
@@ -263,9 +268,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = np.array(
-            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
+        X = check_X(X, enforce_univariate=False)
+        X = nested_to_3d_numpy(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -389,8 +393,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Class labels for each data sample.
         """
         self.check_is_fitted()
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
+
         neigh_dist, neigh_ind = self.kneighbors(X)
         classes_ = self.classes_
         _y = self._y
@@ -415,7 +425,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        check_array.__wrapped__.__code__ = temp
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
         return y_pred
 
     def predict_proba(self, X):
@@ -437,8 +450,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        temp = check_array.__wrapped__.__code__
-        check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        if hasattr(check_array, '__wrapped__'):
+            temp = check_array.__wrapped__.__code__
+            check_array.__wrapped__.__code__ = _check_array_ts.__code__
+        else:
+            temp = check_array.__code__
+            check_array.__code__ = _check_array_ts.__code__
 
         X = check_array(X, accept_sparse='csr')
 
@@ -476,16 +493,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             probabilities = probabilities[0]
 
-        check_array.__wrapped__.__code__ = temp
+        if hasattr(check_array, '__wrapped__'):
+            check_array.__wrapped__.__code__ = temp
+        else:
+            check_array.__code__ = temp
         return probabilities
 
 
 # overwrite sklearn internal checks, this is really hacky
 # we now need to replace: check_array.__wrapped__.__code__ since it's
 # wrapped by a future warning decorator
-def _check_array_ts(array, accept_sparse=False, *, accept_large_sparse=True,
-                    dtype="numeric", order=None, copy=False,
-                    force_all_finite=True,
-                    ensure_2d=True, allow_nd=False, ensure_min_samples=1,
-                    ensure_min_features=1, estimator=None):
+def _check_array_ts(array, *args, **kwargs):
     return array

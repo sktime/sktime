@@ -10,15 +10,10 @@ from sklearn.ensemble._forest import ForestClassifier
 from sklearn.exceptions import DataConversionWarning
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
-<<<<<<< HEAD
-from sklearn.utils.validation import check_X_y, check_array, check_random_state
-from sktime.utils.validation import check_is_fitted
-=======
 from sklearn.utils.validation import check_X_y
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_random_state
 from sktime.classification.base import BaseClassifier
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class RotationForestClassifier(BaseClassifier, ForestClassifier):

@@ -9,24 +9,12 @@ import numbers
 
 from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
-<<<<<<< HEAD:sktime/regressors/tsf.py
-from sklearn.tree._tree import DOUBLE
-from sklearn.utils import check_array
-from sklearn.utils import check_random_state
-from sklearn.utils._joblib import Parallel, delayed
-from sktime.utils.validation import check_is_fitted
-
-from sktime.classifiers.compose.ensemble import _parallel_build_trees
-from sktime.transformers.summarise import RandomIntervalFeatureExtractor
-from sktime.pipeline import Pipeline
-=======
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.summarize import \
     RandomIntervalFeatureExtractor
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/regression/compose/_ensemble.py
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.regression.base import BaseRegressor
@@ -324,15 +312,9 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
-<<<<<<< HEAD:sktime/regressors/tsf.py
-    @property
-    def feature_importances_(self):
-        raise NotImplementedError()
-=======
         n_samples_bootstrap = _get_n_samples_bootstrap(
             n_samples, self.max_samples
         )
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/regression/compose/_ensemble.py
 
         for estimator in self.estimators_:
             final_estimator = estimator.steps[-1][1]

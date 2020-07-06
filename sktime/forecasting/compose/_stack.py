@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = ["StackingForecaster"]
@@ -14,15 +11,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.base import is_regressor
-<<<<<<< HEAD
-from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
-from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.model_selection import SingleWindowSplitter
-
-
-class StackingForecaster(RequiredForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster):
-=======
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
@@ -31,7 +19,6 @@ from sktime.forecasting.model_selection import SingleWindowSplitter
 
 class StackingForecaster(RequiredForecastingHorizonMixin,
                          BaseHeterogenousEnsembleForecaster):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     _required_parameters = ["forecasters", "final_regressor"]
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
@@ -79,12 +66,8 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
         self.final_regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
-<<<<<<< HEAD
-        self._fit_forecasters(forecasters, y_train, fh=self.fh, X_train=X_train)
-=======
         self._fit_forecasters(forecasters, y_train, fh=self.fh,
                               X_train=X_train)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         self._is_fitted = True
         return self
@@ -110,12 +93,8 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
-<<<<<<< HEAD
-    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-=======
     def _predict(self, fh=None, X=None, return_pred_int=False,
                  alpha=DEFAULT_ALPHA):
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         if return_pred_int:
             raise NotImplementedError()
         y_preds = np.column_stack(self._predict_forecasters(X=X))

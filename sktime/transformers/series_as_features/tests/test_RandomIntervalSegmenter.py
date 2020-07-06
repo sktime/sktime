@@ -1,11 +1,3 @@
-<<<<<<< HEAD:sktime/transformers/tests/test_RandomIntervalSegmenter.py
-from sktime.transformers.segment import RandomIntervalSegmenter
-from sktime.utils.testing.base import generate_df_from_array
-from sktime.utils.data_container import tabularize
-import pytest
-import pandas as pd
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/tests/test_RandomIntervalSegmenter.py
 import numpy as np
 import pandas as pd
 import pytest
@@ -20,17 +12,11 @@ N_ITER = 10
 # Test output format and dimensions.
 @pytest.mark.parametrize("n_instances", [1, 3])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
-<<<<<<< HEAD:sktime/transformers/tests/test_RandomIntervalSegmenter.py
-@pytest.mark.parametrize("n_intervals", [0.1, 1.0, 1, 3, 10, 'sqrt', 'random', 'log'])
-def test_output_format_dim(n_timepoints, n_instances, n_intervals):
-    X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
-=======
 @pytest.mark.parametrize("n_intervals",
                          [0.1, 1.0, 1, 3, 10, 'sqrt', 'random', 'log'])
 def test_output_format_dim(n_timepoints, n_instances, n_intervals):
     X = generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances,
                                n_cols=1)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/tests/test_RandomIntervalSegmenter.py
 
     trans = RandomIntervalSegmenter(n_intervals=n_intervals)
     Xt = trans.fit_transform(X)
@@ -42,12 +28,8 @@ def test_output_format_dim(n_timepoints, n_instances, n_intervals):
     # Check number of generated intervals/columns.
     if n_intervals != 'random':
         if np.issubdtype(type(n_intervals), np.floating):
-<<<<<<< HEAD:sktime/transformers/tests/test_RandomIntervalSegmenter.py
-            assert Xt.shape[1] == np.maximum(1, int(n_timepoints * n_intervals))
-=======
             assert Xt.shape[1] == np.maximum(1,
                                              int(n_timepoints * n_intervals))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/tests/test_RandomIntervalSegmenter.py
         elif np.issubdtype(type(n_intervals), np.integer):
             assert Xt.shape[1] == n_intervals
         elif n_intervals == 'sqrt':

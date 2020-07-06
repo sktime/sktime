@@ -1,18 +1,6 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
-<<<<<<< HEAD:sktime/transformers/tests/test_compose.py
-from sklearn.preprocessing import FunctionTransformer, StandardScaler
-
-from sktime.pipeline import Pipeline
-from sktime.transformers.compose import ColumnTransformer, Tabulariser, RowwiseTransformer
-from sktime.datasets import load_gunpoint, load_basic_motions
-from sktime.utils.data_container import tabularise
-from sktime.utils.testing.base import generate_df_from_array
-
-
-def test_rowwise_transformer_function_transformer_series_to_primitives():
-=======
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_basic_motions
@@ -26,7 +14,6 @@ from sktime.utils._testing import generate_df_from_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed:sktime/transformers/series_as_features/tests/test_compose.py
     X, y = load_gunpoint(return_X_y=True)
     ft = FunctionTransformer(func=np.mean, validate=False)
     t = RowTransformer(ft)

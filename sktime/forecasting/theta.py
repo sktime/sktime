@@ -7,11 +7,7 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-<<<<<<< HEAD
-from sktime.transformers.detrend import Deseasonaliser
-=======
 from sktime.transformers.single_series.detrend import Deseasonalizer
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_alpha
@@ -22,18 +18,6 @@ class ThetaForecaster(ExponentialSmoothing):
     """
     Theta method of forecasting.
 
-<<<<<<< HEAD
-    The theta method as defined in [1]_ is equivalent to simple exponential smoothing
-    (SES) with drift. This is demonstrated in [2]_.
-
-    The series is tested for seasonality using the test outlined in A&N. If deemed
-    seasonal, the series is seasonally adjusted using a classical multiplicative
-    decomposition before applying the theta method. The resulting forecasts are then
-    reseasonalized.
-
-    In cases where SES results in a constant forecast, the theta forecaster will revert
-    to predicting the SES constant plus a linear trend derived from the training data.
-=======
     The theta method as defined in [1]_ is equivalent to simple exponential
     smoothing
     (SES) with drift. This is demonstrated in [2]_.
@@ -50,7 +34,6 @@ class ThetaForecaster(ExponentialSmoothing):
     will revert
     to predicting the SES constant plus a linear trend derived from the
     training data.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     Prediction intervals are computed using the underlying state space model.
 
@@ -58,12 +41,8 @@ class ThetaForecaster(ExponentialSmoothing):
     ----------
 
     smoothing_level : float, optional
-<<<<<<< HEAD
-        The alpha value of the simple exponential smoothing, if the value is set then
-=======
         The alpha value of the simple exponential smoothing, if the value is
         set then
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         this will be used, otherwise it will be estimated from the data.
 
     deseasonalise : bool, optional (default=True)
@@ -71,15 +50,10 @@ class ThetaForecaster(ExponentialSmoothing):
 
     sp : int, optional (default=1)
         The number of observations that constitute a seasonal period for a
-<<<<<<< HEAD
-        multiplicative deseasonaliser, which is used if seasonality is detected in the
-        training data. Ignored if a deseasonaliser transformer is provided. Default is
-=======
         multiplicative deseasonaliser, which is used if seasonality is
         detected in the
         training data. Ignored if a deseasonaliser transformer is provided.
         Default is
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         1 (no seasonality).
 
     Attributes
@@ -92,26 +66,12 @@ class ThetaForecaster(ExponentialSmoothing):
         The estimated drift of the fitted model.
 
     se_ : float
-<<<<<<< HEAD
-        The standard error of the predictions. Used to calculate prediction intervals.
-=======
         The standard error of the predictions. Used to calculate prediction
         intervals.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     References
     ----------
 
-<<<<<<< HEAD
-    .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a decomposition
-           approach to forecasting. International Journal of Forecasting 16, 521-530,
-           2000.
-           <https://www.sciencedirect.com/science/article/pii/S0169207000000662>`_
-
-    .. [2] `Hyndman, Rob J., and Billah, Baki. Unmasking the Theta method.
-           International J. Forecasting, 19, 287-290, 2003.
-           <https://www.sciencedirect.com/science/article/pii/S0169207001001431>`_
-=======
     .. [1] `Assimakopoulos, V. and Nikolopoulos, K. The theta model: a
     decomposition
            approach to forecasting. International Journal of Forecasting 16,
@@ -124,7 +84,6 @@ class ThetaForecaster(ExponentialSmoothing):
            International J. Forecasting, 19, 287-290, 2003.
            <https://www.sciencedirect.com/science/article/pii
            /S0169207001001431>`_
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
@@ -139,12 +98,8 @@ class ThetaForecaster(ExponentialSmoothing):
         self.smoothing_level_ = None
         self.drift_ = None
         self.se_ = None
-<<<<<<< HEAD
-        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
-=======
         super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level,
                                               sp=sp)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -166,23 +121,15 @@ class ThetaForecaster(ExponentialSmoothing):
             warn("`sp` is ignored when `deseasonalise`=False")
 
         if self.deseasonalise:
-<<<<<<< HEAD
-            self.deseasonaliser_ = Deseasonaliser(sp=self.sp, model="multiplicative")
-=======
             self.deseasonaliser_ = Deseasonalizer(sp=self.sp,
                                                   model="multiplicative")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             y_train = self.deseasonaliser_.fit_transform(y_train)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y_train, fh=fh)
-<<<<<<< HEAD
-        self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
-=======
         self.smoothing_level_ = self._fitted_forecaster.params[
             "smoothing_level"]
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         # compute trend
         self.trend_ = self._compute_trend(y_train)
@@ -197,12 +144,8 @@ class ThetaForecaster(ExponentialSmoothing):
         ----------
 
         fh : array-like
-<<<<<<< HEAD
-            The forecasters horizon with the steps ahead to to predict. Default is
-=======
             The forecasters horizon with the steps ahead to to predict.
             Default is
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             one-step ahead forecast, i.e. np.array([1]).
 
         Returns
@@ -211,13 +154,9 @@ class ThetaForecaster(ExponentialSmoothing):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-<<<<<<< HEAD
-        y_pred = super(ThetaForecaster, self)._predict(fh, X=X, return_pred_int=False, alpha=alpha)
-=======
         y_pred = super(ThetaForecaster, self)._predict(fh, X=X,
                                                        return_pred_int=False,
                                                        alpha=alpha)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         # Add drift.
         drift = self._compute_drift()
@@ -247,13 +186,9 @@ class ThetaForecaster(ExponentialSmoothing):
             n_timepoints = len(self.oh)
             drift = self.trend_ * (
                     self.fh
-<<<<<<< HEAD
-                    + (1 - (1 - self.smoothing_level_) ** n_timepoints) / self.smoothing_level_
-=======
                     + (1 - (
                         1 - self.smoothing_level_) ** n_timepoints) /
                     self.smoothing_level_
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             )
 
         return drift
@@ -274,12 +209,8 @@ class ThetaForecaster(ExponentialSmoothing):
         for a in alpha:
             z = zscore(1 - a)
             error = z * sem
-<<<<<<< HEAD
-            errors.append(pd.Series(error, index=self.fh.absolute(self.cutoff)))
-=======
             errors.append(
                 pd.Series(error, index=self.fh.absolute(self.cutoff)))
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
         # for a single alpha value, unwrap list
         if len(errors) == 1:
@@ -289,13 +220,6 @@ class ThetaForecaster(ExponentialSmoothing):
         return errors
 
     def update(self, y_new, X_new=None, update_params=True):
-<<<<<<< HEAD
-        super(ThetaForecaster, self).update(y_new, X_new=X_new, update_params=update_params)
-        if update_params:
-            if self.deseasonalise:
-                y_new = self.deseasonaliser_.transform(y_new)
-            self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
-=======
         super(ThetaForecaster, self).update(y_new, X_new=X_new,
                                             update_params=update_params)
         if update_params:
@@ -303,18 +227,13 @@ class ThetaForecaster(ExponentialSmoothing):
                 y_new = self.deseasonaliser_.transform(y_new)
             self.smoothing_level_ = self._fitted_forecaster.params[
                 "smoothing_level"]
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
             self.trend_ = self._compute_trend(y_new)
         return self
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
-<<<<<<< HEAD
-        Get the prediction intervals for the forecast. If alpha is iterable, multiple
-=======
         Get the prediction intervals for the forecast. If alpha is iterable,
         multiple
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         intervals will be calculated.
         """
         errors = self._compute_pred_errors(alpha=alpha)

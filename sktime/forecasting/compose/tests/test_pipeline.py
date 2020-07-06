@@ -1,9 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
-<<<<<<< HEAD
-=======
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -14,12 +11,8 @@ from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
-<<<<<<< HEAD
-from sktime.transformers.detrend import Detrender, Deseasonaliser
-=======
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 def test_pipeline():
@@ -27,11 +20,7 @@ def test_pipeline():
     y_train, y_test = temporal_train_test_split(y)
 
     f = TransformedTargetForecaster([
-<<<<<<< HEAD
-        ("t1", Deseasonaliser(sp=12, model="multiplicative")),
-=======
         ("t1", Deseasonalizer(sp=12, model="multiplicative")),
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
         ("f", NaiveForecaster())
     ])
@@ -42,11 +31,7 @@ def test_pipeline():
     def compute_expected_y_pred(y_train, fh):
         # fitting
         yt = y_train.copy()
-<<<<<<< HEAD
-        t1 = Deseasonaliser(sp=12, model="multiplicative")
-=======
         t1 = Deseasonalizer(sp=12, model="multiplicative")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         yt = t1.fit_transform(yt)
         t2 = Detrender(PolynomialTrendForecaster(degree=1))
         yt = t2.fit_transform(yt)

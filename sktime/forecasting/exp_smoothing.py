@@ -2,33 +2,18 @@ __all__ = ["ExponentialSmoothing"]
 __author__ = ["Markus Löning", "@big-o"]
 
 from sktime.forecasting.base._statsmodels import BaseStatsModelsAdapter
-<<<<<<< HEAD
-from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
-=======
 from statsmodels.tsa.holtwinters import \
     ExponentialSmoothing as _ExponentialSmoothing
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 
 class ExponentialSmoothing(BaseStatsModelsAdapter):
     """
-<<<<<<< HEAD
-    Holt-Winters exponential smoothing forecaster. Default settings use simple exponential smoothing
-=======
     Holt-Winters exponential smoothing forecaster. Default settings use
     simple exponential smoothing
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     without trend and seasonality components.
 
     Parameters
     ----------
-<<<<<<< HEAD
-    trend : str{"add", "mul", "additive", "multiplicative", None}, optional (default=None)
-        Type of trend component.
-    damped : bool, optional (default=None)
-        Should the trend component be damped.
-    seasonal : {"add", "mul", "additive", "multiplicative", None}, optional (default=None)
-=======
     trend : str{"add", "mul", "additive", "multiplicative", None}, optional
     (default=None)
         Type of trend component.
@@ -36,7 +21,6 @@ class ExponentialSmoothing(BaseStatsModelsAdapter):
         Should the trend component be damped.
     seasonal : {"add", "mul", "additive", "multiplicative", None}, optional
     (default=None)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
         Type of seasonal component.
     sp : int, optional (default=None)
         The number of seasons to consider for the holt winters.
@@ -69,14 +53,9 @@ class ExponentialSmoothing(BaseStatsModelsAdapter):
         and practice. OTexts, 2014.
     """
 
-<<<<<<< HEAD
-    _fitted_param_names = ("initial_level", "initial_slope", "initial_seasons", "smoothing_level", "smoothing_slope",
-                           "smoothing_seasonal", "damping_slope")
-=======
     _fitted_param_names = (
         "initial_level", "initial_slope", "initial_seasons", "smoothing_level",
         "smoothing_slope", "smoothing_seasonal", "damping_slope")
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
     def __init__(
             self,

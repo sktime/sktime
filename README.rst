@@ -1,10 +1,6 @@
 .. -*- mode: rst -*-
 
-<<<<<<< HEAD
-|travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |Binder|_
-=======
 |travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -27,26 +23,10 @@
 .. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
 .. _azure: https://dev.azure.com/mloning/sktime/_build
 
-.. |azure| image:: https://img.shields.io/azure-devops/build/mloning/sktime/1/ci?logo=azure-pipelines
-.. _azure: https://dev.azure.com/mloning/sktime/_build/latest?definitionId=1&branchName=master
-
 
 sktime
 ======
 
-<<<<<<< HEAD
-sktime is a `scikit-learn <https://github.com/scikit-learn/scikit-learn>`__ compatible Python toolbox for machine
-learning with time series. sktime currently supports:
-
-* State-of-the-art time series classification and time series regression algorithms,
-* Classical forecasting including reduction strategies,
-* Benchmarking and post-hoc evaluation methods based on `mlaut <https://github.com/alan-turing-institute/mlaut/>`__.
-
-sktime has a number of `extension packages <https://github.com/sktime/>`__. For deep learning, see: `sktime-dl
-<https://github.com/sktime/sktime-dl>`_.
-
-sktime is under active development and we are looking for contributors.
-=======
 sktime is Python toolbox for machine learning with time series. We currently
 support:
 
@@ -61,7 +41,6 @@ for building, tuning, and evaluating composite models.
 For deep learning methods, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
 ------------------------------------------------------------
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 Installation
 ------------
@@ -136,26 +115,14 @@ For more, check out the `time series classification tutorial <https://github
 
 Documentation
 -------------
-<<<<<<< HEAD
-* Read the detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__,
-* Check out our `examples notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ or run them interactively on Binder_,
-* Take a look at our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 * Check out our `examples notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
 * Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
-<<<<<<< HEAD
-API Overview
-------------
-sktime extends the standard scikit-learn API to handle modular machine learning workflows for time series data.
-The goal is to create a unified interface for various distinct but closely related learning tasks that arise in a temporal data context, such as time series classification and forecasting. To find our more, take a look at our `paper <http://arxiv.org/abs/1909.07872>`__.
-=======
 ------------------------------------------------------------
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
+<<<<<<< HEAD
 API Overview
 ------------
 
@@ -166,15 +133,10 @@ provide all the necessary to solve these tasks, including dedicated time
 series algorithms as well as tools for building, tuning and evaluating
 composite models.
 
-<<<<<<< HEAD
-In addition, sktime includes a experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
-In particular, we introduce:
-=======
 Many of these tasks are related, and an algorithm that can
 solve one of them can often be re-used to help solve another one, an idea
 called reduction. sktime's unified interface allows to easily adapt an
 algorithm for one task to another.
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 For example, to use a regression algorithm to solve a forecasting task, we
 can simply write:
@@ -196,6 +158,7 @@ can simply write:
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
+    >>> 0.12726230426056875
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
@@ -212,14 +175,6 @@ For a list of implemented methods, see our `estimator overview <https://github.c
 
 In addition, sktime includes an experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
 
-<<<<<<< HEAD
-Contributions
--------------
-We are actively looking for contributors. Please contact @fkiraly or @mloning for volunteering or information on
-paid opportunities, or simply `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us
-or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__.
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
 
 ------------------------------------------------------------
 
@@ -242,7 +197,7 @@ How to contribute
 -----------------
 * First check out our `guide on how to contribute <https://alan-turing-institute.github.io/sktime/how_to_contribute.html>`__.
 * `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.md>`__.
+* Please also take a look at our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
 
 For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
@@ -266,7 +221,4 @@ Bibtex entry:
         date = {2019},
     }
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
