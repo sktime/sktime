@@ -142,7 +142,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseLastWindowForecaster)
                 reps = np.int(np.ceil(fh[-1] / self.sp_))
                 last_window = np.tile(last_window['data'].tail(self.sp_).to_numpy(), reps=reps)
             else:
-                last_window=last_window.tail(self.sp_).values[0]
+                last_window=last_window.tail(self.sp_).tail(self.sp_).to_numpy()
 
             # get zero-based index by subtracting the minimum
             fh_idx = fh.index_like(self.cutoff)
