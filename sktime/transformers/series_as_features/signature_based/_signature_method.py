@@ -37,13 +37,14 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     """
     def __init__(self,
                  scaling='stdsc',
-                 augmentation_list=['basepoint', 'addtime'],
+                 augmentation_list=('basepoint', 'addtime'),
                  window_name='dyadic',
                  window_kwargs={'depth': 3},
                  rescaling=None,
                  sig_tfm='signature',
                  depth=4,
                  ):
+        super(GeneralisedSignatureMethod, self).__init__()
         self.scaling = scaling
         self.augmentation_list = augmentation_list
         self.window_name = window_name

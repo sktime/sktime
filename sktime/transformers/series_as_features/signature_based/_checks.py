@@ -3,9 +3,10 @@ _checks.py
 ====================
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
-import torch
 import functools
-from sktime.utils.validation.series_as_features import check_X_y, check_X
+import torch
+import pandas as pd
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import nested_to_3d_numpy
 
 
@@ -26,25 +27,29 @@ def handle_sktime_signatures(check_fitted=False):
         to a torch Tensor.
         """
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(self, data, labels=None, **kwargs):
             # Data checks
-            args = list(args)
-            if len(args) == 2:
-                check_X(args[1], enforce_univariate=False)
-            elif len(args) == 3:
-                check_X_y(*args[1:], enforce_univariate=False)
+            if labels is None:
+                check_X(data, enforce_univariate=False)
             else:
-                raise NotImplementedError(
-                    "This decorator can only be used for args "
-                    "(self, data, labels) or (self, data)."
-                )
+                check_X_y(data, labels, enforce_univariate=False)
             # Fit checks
             if check_fitted:
-                args[0].check_is_fitted()
+                self.check_is_fitted()
+            # Keep the dataframe index as output is required to be of the
+            # same format
+            data_idx = data.index
             # Make tensor data
-            args[1] = sktime_to_tensor(args[1])
+            tensor_data = sktime_to_tensor(data)
             # Allow the function to be called on the checked and converted data
-            return func(*args, **kwargs)
+            if labels is None:
+                output = func(self, tensor_data, **kwargs)
+            else:
+                output = func(self, tensor_data, labels, **kwargs)
+            # Rebuild into a dataframe if the output is a tensor
+            if isinstance(output, torch.Tensor):
+                output = pd.DataFrame(index=data_idx, data=output)
+            return output
         return wrapper
     return real_decorator
 
@@ -56,3 +61,5 @@ def sktime_to_tensor(data):
     if not isinstance(data, torch.Tensor):
         data = torch.Tensor(nested_to_3d_numpy(data)).transpose(1, 2)
     return data
+
+

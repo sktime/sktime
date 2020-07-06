@@ -250,6 +250,7 @@ def check_constructor(Estimator):
                 "parameter `%s` for %s has no default value and is not "
                 "included in `_required_parameters`"
                 % (param.name, estimator.__class__.__name__))
+        print(param)
         if type(param.default) is type:
             assert param.default in [np.float64, np.int64]
         else:

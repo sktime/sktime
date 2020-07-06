@@ -9,7 +9,8 @@ and methodologies described in the paper:
 """
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import ClassifierMixin
+from sktime.classification.base import BaseClassifier
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from sktime.transformers.series_as_features.signature_based import \
     GeneralisedSignatureMethod
@@ -17,8 +18,7 @@ from sktime.transformers.series_as_features.signature_based._checks import \
     handle_sktime_signatures
 
 
-class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator,
-                          ClassifierMixin):
+class SignatureClassifier(BaseClassifier):
     """Classification module using signature-based features.
 
     This simply initialises the GeneralisedSignatureMethod class which builds
@@ -27,14 +27,15 @@ class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator,
 
     Parameters
     ----------
-    classifier: sklearn estimator, This should be any sklearn-type estimator.
+    classifier: sklearn estimator, This should be any sklearn-type
+        estimator. This defaults to RandomForestClassifier if left as None.
 
     Other Parameters
     ----------------
     See GeneralisedSignatureMethod parameters.
     """
     def __init__(self,
-                 classifier,
+                 classifier=None,
                  scaling='stdsc',
                  augmentation_list=['basepoint', 'addtime'],
                  window_name='dyadic',
@@ -42,17 +43,28 @@ class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator,
                  rescaling=None,
                  sig_tfm='signature',
                  depth=4,
+                 random_state=None
                  ):
-        super(SignatureClassifier, self).__init__(scaling,
-                                                  augmentation_list,
-                                                  window_name,
-                                                  window_kwargs,
-                                                  rescaling,
-                                                  sig_tfm,
-                                                  depth
-                                                  )
-        self.classifier = classifier
+        super(SignatureClassifier, self).__init__()
+        self.scaling = scaling
+        self.augmentation_list = augmentation_list
+        self.window_name = window_name
+        self.window_kwargs = window_kwargs
+        self.rescaling = rescaling
+        self.sig_tfm = sig_tfm
+        self.depth = depth
+        self.classifier = RandomForestClassifier() if classifier is None \
+            else classifier
+        self.random_state = random_state
 
+        self.signature_method = GeneralisedSignatureMethod(scaling,
+                                                           augmentation_list,
+                                                           window_name,
+                                                           window_kwargs,
+                                                           rescaling,
+                                                           sig_tfm,
+                                                           depth
+                                                           ).signature_method
         # Ready a classifier and join the signature method and classifier into
         # a pipeline.
         self.setup_classification_pipeline()
@@ -73,7 +85,7 @@ class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator,
 
     @handle_sktime_signatures(check_fitted=True)
     def predict(self, data):
-        return self.pipeline.predict_proba(data)
+        return self.pipeline.predict(data)
 
     @handle_sktime_signatures(check_fitted=True)
     def predict_proba(self, data):
@@ -147,3 +159,15 @@ def example_signature_hyperparameter_search(train_data,
     # Best classifier
     best_estimator = gs.best_estimator_
     return best_estimator
+
+
+if __name__ == '__main__':
+    from sktime.utils.load_data import load_from_tsfile_to_dataframe
+    train_x, train_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/BasicMotions/BasicMotions_TRAIN.ts")
+    test_x, test_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts")
+    import torch
+    train_y = torch.ones(train_y.shape).numpy()
+    test_y = torch.ones(test_y.shape).numpy()
+    self = SignatureClassifier().fit(train_x, train_y)
+    self.predict(test_x)
+
