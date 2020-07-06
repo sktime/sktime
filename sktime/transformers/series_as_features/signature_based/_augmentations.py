@@ -1,6 +1,7 @@
 import torch
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 
 
 def get_augmentation_pipeline(aug_list):
@@ -8,10 +9,10 @@ def get_augmentation_pipeline(aug_list):
 
     Parameters
     ----------
-    aug_list: list of strings
-              A list of strings that determine the augmentations to apply, and in which order to apply them (the first
-              string will be applied first). Possible augmentation strings are ['leadlag', 'ir', 'addtime', 'cumsum',
-              'basepoint']
+    aug_list: list of strings, A list of strings that determine the
+        augmentations to apply, and in which order to apply them (the first
+        string will be applied first). Possible augmentation strings are
+        ['leadlag', 'ir', 'addtime', 'cumsum', 'basepoint']
 
     Returns
     -------
@@ -46,8 +47,9 @@ def get_augmentation_pipeline(aug_list):
 class AddTime(BaseSeriesAsFeaturesTransformer):
     """Add time component to each path.
 
-    For a path of shape [B, L, C] this adds a time channel to be placed at the first index. The time channel will be of
-    length L and scaled to exist in [0, 1].
+    For a path of shape [B, L, C] this adds a time channel to be placed at the
+    first index. The time channel will be of length L and scaled to exist in
+    [0, 1].
     """
     def transform(self, data):
         # Batch and length dim
@@ -60,7 +62,8 @@ class AddTime(BaseSeriesAsFeaturesTransformer):
 
 
 class InvisibilityReset(BaseSeriesAsFeaturesTransformer):
-    """Adds an 'invisibility-reset' dimension to the path. This adds sensitivity to translation.
+    """Adds an 'invisibility-reset' dimension to the path. This adds
+    sensitivity to translation.
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
@@ -86,8 +89,9 @@ class InvisibilityReset(BaseSeriesAsFeaturesTransformer):
 class LeadLag(BaseSeriesAsFeaturesTransformer):
     """Applies the lead-lag transformation to each path.
 
-    We take the lead of an input stream, and augment it with the lag of the input stream. This enables us to capture the
-    quadratic variation of the stream and is particularly useful for applications in finance.
+    We take the lead of an input stream, and augment it with the lag of the
+    input stream. This enables us to capture the quadratic variation of the
+    stream and is particularly useful for applications in finance.
 
     Used widely in signature literature, see for example:
         - https://arxiv.org/pdf/1603.03788.pdf
@@ -135,7 +139,3 @@ class BasePoint(BaseSeriesAsFeaturesTransformer):
     def transform(self, X):
         zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
         return torch.cat((zero_vec, X), dim=1)
-
-
-
-

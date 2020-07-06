@@ -5,23 +5,33 @@ Class for signature computation over windows.
 """
 import torch
 import signatory
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.signature_based._window import window_getter
-from sktime.transformers.series_as_features.signature_based._rescaling import rescale_path, rescale_signature
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.signature_based._window import \
+    window_getter
+from sktime.transformers.series_as_features.signature_based._rescaling import \
+    rescale_path, rescale_signature
 
 
 class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     """Performs the signature transform over given windows.
 
-    Given data of shape [N, L, C] and specification of a window method from the signatures window module, this class
-    will compute the signatures over each window (for the given signature options) and concatenate the results into a
-    tensor of shape [N, num_sig_features * num_windows].
+    Given data of shape [N, L, C] and specification of a window method from the
+    signatures window module, this class will compute the signatures over
+    each window (for the given signature options) and concatenate the results
+    into a tensor of shape [N, num_sig_features * num_windows].
 
     Parameters
     ----------
-    num_intervals  : int, dimension of the transformed data (default 8)
+    num_intervals: int, dimension of the transformed data (default 8)
     """
-    def __init__(self, window_name, window_kwargs, sig_tfm, depth, rescaling=None):
+    def __init__(self,
+                 window_name,
+                 window_kwargs,
+                 sig_tfm,
+                 depth,
+                 rescaling=None
+                 ):
         self.window_name = window_name
         self.window_kwargs = window_kwargs
         self.sig_tfm = sig_tfm
@@ -49,7 +59,7 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         transform = getattr(path_obj, self.sig_tfm)
         length = path_obj.size(1)
 
-        # Compute signatures in each window returning the grouped list structure
+        # Compute signatures in each window returning the grouped structure
         signatures = []
         for window_group in self.window(length):
             signature_group = []
@@ -57,14 +67,15 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                 # Signature computation step
                 signature = transform(window.start, window.end)
                 # Rescale if specified
-                rescaled_signature = self.post_rescaling(signature, data.size(2), self.depth)
+                rescaled_signature = self.post_rescaling(
+                    signature, data.size(2), self.depth
+                )
 
                 signature_group.append(rescaled_signature)
             signatures.append(signature_group)
 
-        # We are currently not considering deep models and so return all the features concatenated together
-        signatures = torch.cat([x for l in signatures for x in l], axis=1)
+        # We are currently not considering deep models and so return all the
+        # features concatenated together
+        signatures = torch.cat([x for lst in signatures for x in lst], axis=1)
 
         return signatures
-
-

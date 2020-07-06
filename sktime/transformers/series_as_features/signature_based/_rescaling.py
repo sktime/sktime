@@ -1,36 +1,38 @@
 """
 rescaling.py
 =========================
-Signature rescaling methods. This implements the pre- and post- signature rescaling methods along with generic scaling
-methods along feature dimensions of 3D tensors.
+Signature rescaling methods. This implements the pre- and post- signature
+rescaling methods along with generic scaling methods along feature
+dimensions of 3D tensors.
 
 Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import torch
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, FunctionTransformer
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, \
+    FunctionTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 import signatory
 
 
 class TrickScaler(BaseSeriesAsFeaturesTransformer):
     """Tricks an sklearn scaler so that it uses the correct dimensions.
 
-    This class was created out of a desire to use sklearn scaling functionality on 3D tensors. Sklearn operates on a
-    tensor of shape [N, C] and normalises along the channel dimensions. To make this functionality work on tensors of
-    shape [N, L, C] we simply first stack the first two dimensions to get shape [N * L, C], apply a scaling function
-    and finally stack back to shape [N, L, C].
+    This class was created out of a desire to use sklearn scaling functionality
+    on 3D tensors. Sklearn operates on a tensor of shape [N, C] and
+    normalises along the channel dimensions. To make this functionality work on
+    tensors of shape [N, L, C] we simply first stack the first two dimensions
+    to get shape [N * L, C], apply a scaling function and finally stack back
+    to shape [N, L, C].
+
+    Parameters
+    ----------
+    scaling : str, Scaling method, one of ['stdsc', 'maxabs', 'minmax', None].
 
     # TODO allow scaling to be passed as an sklearn transformer.
     """
     def __init__(self, scaling):
-        """
-
-        Parameters
-        ----------
-        scaling : str
-            Scaling method, one of ['stdsc', 'maxabs', 'minmax', None].
-        """
         self.scaling = scaling
         if scaling == 'stdsc':
             self.scaler = StandardScaler()
@@ -41,7 +43,8 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
         elif scaling is None:
             self.scaler = FunctionTransformer(func=None)
         else:
-            raise ValueError('scaling param {} not recognised.'.format(scaling))
+            raise ValueError('scaling param {} not recognised.'
+                             ''.format(scaling))
 
     def _trick(self, X):
         return X.reshape(-1, X.shape[2])
@@ -60,7 +63,8 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
 
 
 def rescale_path(path, depth):
-    """Rescales the input path by depth! ** (1 / depth), so that the last signature term should be roughly O(1).
+    """Rescales the input path by depth! ** (1 / depth), so that the last
+    signature term should be roughly O(1).
 
     Parameters
     ----------
@@ -73,15 +77,15 @@ def rescale_path(path, depth):
     -------
     torch.Tensor:
         Tensor of the same shape as path, corresponding to the scaled path.
-
     """
     coeff = math.factorial(depth) ** (1 / depth)
     return coeff * path
 
 
 def rescale_signature(signature, channels, depth):
-    """Rescales the output signature by multiplying the depth-d term by d!, with the aim that every term become ~O(1).
-    
+    """Rescales the output signature by multiplying the depth-d term by d!,
+    with the aim that every term become ~O(1).
+
     Parameters
     ----------
     signature : torch.Tensor
@@ -95,12 +99,14 @@ def rescale_signature(signature, channels, depth):
     -------
     torch.Tensor:
         The signature with factorial depth scaling.
-
     """
-
     if signatory.signature_channels(channels, depth) != signature.size(-1):
-        raise ValueError("Given a sigtensor with {} channels, a path with {} channels and a depth of {}, which are "
-                         "not consistent.".format(signature.size(-1), channels, depth))
+        raise ValueError(
+            "Given a sigtensor with {} channels, a path with {} channels and "
+            "a depth of {}, which are not consistent.".format(
+                signature.size(-1), channels, depth
+            )
+        )
 
     end = 0
     term_length = 1
