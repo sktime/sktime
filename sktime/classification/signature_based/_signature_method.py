@@ -8,64 +8,82 @@ according to the best practices and methodologies described in the paper:
 # TODO Implement deep models.
 """
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sktime.transformers.series_as_features.signature_based import GeneralisedSignatureMethod
-from sktime.utils.validation.series_as_features import check_X
+from sktime.transformers.series_as_features.signature_based._checks import handle_sktime_signatures
 
 
-class SignatureClassifier(BaseEstimator, ClassifierMixin):
-    """Module for classification using signature features.
+class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator, ClassifierMixin):
+    """Classification module using signature-based features.
 
-    This simply sticks a classifier on the end of the GeneralisedSignatureTransform class as we wish to classify from
-    the features extracted by 'the signature method'.
+    This simply initialises the GeneralisedSignatureMethod class which builds the feature extraction pipeline, then
+    creates a new pipeline by appending a classifier after the feature extraction step.
+
+    Parameters
+    ----------
+    classifier: sklearn estimator, This should be any sklearn-type estimator.
+
+    Other Parameters
+    ----------------
+    See GeneralisedSignatureMethod parameters.
     """
     def __init__(self,
+                 classifier,
+                 scaling='stdsc',
                  augmentation_list=['basepoint', 'addtime'],
                  window_name='dyadic',
                  window_kwargs={'depth': 3},
+                 rescaling=None,
                  sig_tfm='signature',
                  depth=4,
-                 classifier='default'
                  ):
-        # Generalised signature method for feature extraction
-        self.signature_method = GeneralisedSignatureMethod(
-            augmentation_list=augmentation_list,
-            window_name=window_name,
-            window_kwargs=window_kwargs,
-            sig_tfm=sig_tfm,
-            depth=depth
-        )
+        super(SignatureClassifier, self).__init__(scaling,
+                                                  augmentation_list,
+                                                  window_name,
+                                                  window_kwargs,
+                                                  rescaling,
+                                                  sig_tfm,
+                                                  depth
+                                                  )
+        self.classifier = classifier
 
         # Ready a classifier and join the signature method and classifier into a pipeline.
-        self.classifier = RandomForestClassifier() if classifier == 'default' else classifier
-        self.setup_pipeline()
+        self.setup_classification_pipeline()
 
         # Add some methods
         self.predict = self.pipeline.predict
         self.predict_proba = self.pipeline.predict_proba
 
-    def setup_pipeline(self):
+    def setup_classification_pipeline(self):
         """ Setup the full signature method pipeline. """
         self.pipeline = Pipeline([
             ('signature_method', self.signature_method),
             ('classifier', self.classifier)
         ])
 
+    @handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
-        # sktime checks
-        data = check_X(data, enforce_univariate=False)
-
-        # Fit the pipeline
+        # Fit the pre-initialised classification pipeline
         self.pipeline.fit(data, labels)
-
+        self._is_fitted = True
         return self
+
+    @handle_sktime_signatures(check_fitted=True)
+    def predict(self, data):
+        return self.pipeline.predict_proba(data)
+
+    @handle_sktime_signatures(check_fitted=True)
+    def predict_proba(self, data):
+        return self.pipeline.predict_proba(data)
+
 
 
 if __name__ == '__main__':
     from sktime.utils.load_data import load_from_tsfile_to_dataframe
     train_x, train_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TEST.ts")
-    classifier = SignatureClassifier().fit(train_x, train_y)
+    classifier = RandomForestClassifier()
+    signature_pipeline = SignatureClassifier(classifier).fit(train_x, train_y)
 
 

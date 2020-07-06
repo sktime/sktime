@@ -16,6 +16,10 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     Given data of shape [N, L, C] and specification of a window method from the signatures window module, this class
     will compute the signatures over each window (for the given signature options) and concatenate the results into a
     tensor of shape [N, num_sig_features * num_windows].
+
+    Parameters
+    ----------
+    num_intervals  : int, dimension of the transformed data (default 8)
     """
     def __init__(self, window_name, window_kwargs, sig_tfm, depth, rescaling=None):
         self.window_name = window_name

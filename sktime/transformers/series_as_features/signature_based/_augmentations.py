@@ -112,6 +112,11 @@ class CumulativeSum(BaseSeriesAsFeaturesTransformer):
     """Cumulatively sums the values in the stream.
 
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
+
+    Parameters
+    ----------
+    append_zero: bool
+        Set True to append zero to the path before taking the cumulative sum.
     """
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
