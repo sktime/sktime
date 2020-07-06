@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "@big-o"]
 __all__ = [
@@ -15,8 +16,6 @@ DEFAULT_ALPHA = 0.05
 
 class BaseForecaster(BaseEstimator):
     """Base forecaster"""
-
-    _estimator_type = "forecaster"
 
     def __init__(self):
         self._is_fitted = False
@@ -39,7 +38,8 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False,
+                alpha=DEFAULT_ALPHA):
         """Make forecasts
 
         Parameters
@@ -73,7 +73,8 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False, return_pred_int=False,
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
+                       return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
@@ -95,15 +96,19 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict_single(self, y_new, fh=None, X=None, update_params=False, return_pred_int=False,
+    def update_predict_single(self, y_new, fh=None, X=None,
+                              update_params=False, return_pred_int=False,
                               alpha=DEFAULT_ALPHA):
-        # when nowcasting, X may be longer than y, X must be cut to same length as y so that same time points are
-        # passed to update, the remaining time points of X are passed to predict
+        # when nowcasting, X may be longer than y, X must be cut to same
+        # length as y so that same time points are
+        # passed to update, the remaining time points of X are passed to
+        # predict
         if X is not None or return_pred_int:
             raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int,
+                            alpha=alpha)
 
     def score(self, y_test, fh=None, X=None):
         """Compute the sMAPE loss for the given forecasting horizon.
@@ -154,4 +159,4 @@ def is_forecaster(estimator):
     out : bool
         True if estimator is a forecaster and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "forecaster"
+    return isinstance(estimator, BaseForecaster)

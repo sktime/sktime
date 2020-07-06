@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 """Install script for sktime"""
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/setup.py
+# adapted from https://github.com/scikit-learn/scikit-learn/blob/master
+# /setup.py
 
 __author__ = ["Markus Löning"]
 
@@ -13,7 +14,7 @@ import re
 import shutil
 import sys
 import traceback
-from distutils.command.clean import clean as Clean
+from distutils.command.clean import clean as Clean  # noqa
 
 from pkg_resources import parse_version
 
@@ -21,7 +22,7 @@ MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
-    "scikit-learn": "0.22.0",
+    "scikit-learn": "0.23.0",
     "statsmodels": "0.11.0"
 }
 
@@ -37,7 +38,8 @@ def read(*parts):
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
     if version_match:
         return version_match.group(1)
     else:
@@ -46,7 +48,8 @@ def find_version(*file_paths):
 
 WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
 DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning with time series'
+DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning ' \
+              'with time series'
 with codecs.open('README.rst', encoding='utf-8-sig') as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = 'F. Király'
@@ -61,7 +64,8 @@ PROJECT_URLS = {
 }
 VERSION = find_version('sktime', '__init__.py')
 INSTALL_REQUIRES = [
-    *["{}>={}".format(package, version) for package, version in MIN_REQUIREMENTS.items()],
+    *["{}>={}".format(package, version) for package, version in
+      MIN_REQUIREMENTS.items()],
     "wheel"
 ]
 CLASSIFIERS = [
@@ -80,19 +84,19 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.8'
 ]
 EXTRAS_REQUIRE = {
-    'tests': [
-        'pytest',
-        'pytest-cov',
-        'tsfresh',
-        'pmdarima'
-    ],
     'docs': [
+        'pmdarima',
+        'tsfresh',
+        'numba',
+        'matplotlib',
+        'jupyter',
         'sphinx',
         'sphinx-gallery',
-        'nbspinx',
+        'nbsphinx',
         'sphinx_rtd_theme',
         'numpydoc',
-        'matplotlib'
+        # https://github.com/sphinx-doc/sphinx/issues/2840
+        # 'm2r'
     ]
 }
 SETUP_REQUIRES = [
@@ -114,10 +118,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
-        extras_require={
-            'alldeps': EXTRAS_REQUIRE
-        },
+        include_package_data=True
     )
 
 else:
@@ -233,7 +234,8 @@ def check_package_status(package, min_version):
 
     instructions = ("Installation instructions are available on the "
                     "sktime website: "
-                    "https://alan-turing-institute.github.io/sktime/installation.html\n")
+                    "https://alan-turing-institute.github.io/sktime"
+                    "/installation.html\n")
 
     if package_status['up_to_date'] is False:
         if package_status['version']:
@@ -264,6 +266,7 @@ def setup_package():
         python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
         **extra_setuptools_args
     )
 
@@ -286,11 +289,14 @@ def setup_package():
 
     # otherwise check Python and required package versions
     else:
-        if sys.version_info < tuple([int(i) for i in MIN_PYTHON_VERSION.split(".")]):
+        if sys.version_info < tuple(
+                [int(i) for i in MIN_PYTHON_VERSION.split(".")]):
             raise RuntimeError(
                 "sktime requires Python %s or later. The current"
                 " Python version is %s installed in %s."
-                % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable))
+                % (MIN_PYTHON_VERSION,
+                   platform.python_version(),
+                   sys.executable))
 
         for package, version in MIN_REQUIREMENTS.items():
             check_package_status(package, version)

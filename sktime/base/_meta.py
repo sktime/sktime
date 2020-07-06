@@ -1,24 +1,35 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["BaseComposition"]
+__all__ = [
+    "MetaEstimatorMixin",
+    "BaseHeterogenousMetaEstimator"
+]
+
+from abc import ABCMeta
+
+from sktime.base import BaseEstimator
 
 
-from abc import ABCMeta, abstractmethod
+class MetaEstimatorMixin:
+    _required_parameters = []
 
-from sklearn.base import BaseEstimator
 
-
-class BaseComposition(BaseEstimator, metaclass=ABCMeta):
-    """Handles parameter management for estimtators composed of named estimators.
+class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
+                                    metaclass=ABCMeta):
+    """Handles parameter management for estimtators composed of named
+    estimators.
 
     from sklearn utils.metaestimator.py
     """
 
-    @abstractmethod
-    def __init__(self):
-        pass
+    def get_params(self, deep=True):
+        raise NotImplementedError("abstract method")
+
+    def set_params(self, **params):
+        raise NotImplementedError("abstract method")
 
     def _get_params(self, attr, deep=True):
         out = super().get_params(deep=deep)

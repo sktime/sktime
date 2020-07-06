@@ -3,20 +3,23 @@ Utilities for loading datasets
 """
 
 import os
+
 import pandas as pd
 
 from ..utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
-    "load_gunpoint",
     "load_arrow_head",
+    "load_gunpoint",
+    "load_osuleaf",
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
     "load_shampoo_sales",
     "load_longley",
-    "load_lynx"
+    "load_lynx",
+    "load_acsf1"
 ]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
@@ -31,21 +34,23 @@ def _load_dataset(name, split, return_X_y):
     Helper function to load time series classification datasets.
     """
 
-    if split in ["TRAIN", "TEST"]:
-        fname = name + '_' + split + '.ts'
+    if split in ("train", "test"):
+        fname = name + '_' + split.upper() + '.ts'
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
-    elif split == "ALL":
-        X = pd.DataFrame()
-        y = pd.Series()
-        for split in ["TRAIN", "TEST"]:
-            fname = name + '_' + split + '.ts'
+
+    # if split is None, load both train and test set
+    elif split is None:
+        X = pd.DataFrame(dtype="object")
+        y = pd.Series(dtype="object")
+        for split in ("train", "test"):
+            fname = name + '_' + split.upper() + '.ts'
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
     else:
-        raise ValueError("Invalid split value")
+        raise ValueError("Invalid `split` value")
 
     # Return appropriately
     if return_X_y:
@@ -55,16 +60,66 @@ def _load_dataset(name, split, return_X_y):
         return X
 
 
-def load_gunpoint(split='TRAIN', return_X_y=False):
+def load_gunpoint(split=None, return_X_y=False):
     """
     Loads the GunPoint time series classification problem and returns X and y
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      150
+    Train cases:        50
+    Test cases:         150
+    Number of classes:  2
+    This dataset involves one female actor and one male actor making a
+    motion with their
+    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
+    have their
+    hands by their sides. They draw a replicate gun from a hip-mounted
+    holster, point it
+    at a target for approximately one second, then return the gun to the
+    holster, and
+    their hands to their sides. For Point the actors have their gun by their
+    sides.
+    They point with their index fingers to a target for approximately one
+    second, and
+    then return their hands to their sides. For both classes, we tracked the
+    centroid
+    of the actor's right hands in both X- and Y-axes, which appear to be highly
+    correlated. The data in the archive is just the X-axis.
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=GunPoint
+    """
+    name = 'GunPoint'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_osuleaf(split=None, return_X_y=False):
+    """
+    Loads the OSULeaf time series classification problem and returns X and y
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
-        Whether to load the train or test partition of the problem. By default it loads the train split.
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
     return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single dataframe with columns for
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
         features and the target.
 
     Returns
@@ -77,37 +132,38 @@ def load_gunpoint(split='TRAIN', return_X_y=False):
     Details
     -------
     Dimensionality:     univariate
-    Series length:      150
-    Train cases:        50
-    Test cases:         150
-    Number of classes:  2
+    Series length:      427
+    Train cases:        200
+    Test cases:         242
+    Number of classes:  6
 
-    This dataset involves one female actor and one male actor making a motion with their
-    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors have their
-    hands by their sides. They draw a replicate gun from a hip-mounted holster, point it
-    at a target for approximately one second, then return the gun to the holster, and
-    their hands to their sides. For Point the actors have their gun by their sides.
-    They point with their index fingers to a target for approximately one second, and
-    then return their hands to their sides. For both classes, we tracked the centroid
-    of the actor's right hands in both X- and Y-axes, which appear to be highly
-    correlated. The data in the archive is just the X-axis.
+    The OSULeaf data set consist of one dimensional outlines of leaves.
+    The series were obtained by color image segmentation and boundary
+    extraction (in the anti-clockwise direction) from digitized leaf images
+    of six classes: Acer Circinatum, Acer Glabrum, Acer Macrophyllum,
+    Acer Negundo, Quercus Garryanaand Quercus Kelloggii for the MSc thesis
+    "Content-Based Image Retrieval: Plant Species Identification" by A Grandhi.
 
-    Dataset details: http://timeseriesclassification.com/description.php?Dataset=GunPoint
+    Dataset details: http://www.timeseriesclassification.com/description.php
+    ?Dataset=OSULeaf
     """
-    name = 'GunPoint'
+    name = 'OSULeaf'
     return _load_dataset(name, split, return_X_y)
 
 
-def load_italy_power_demand(split='TRAIN', return_X_y=False):
+def load_italy_power_demand(split=None, return_X_y=False):
     """
-    Loads the ItalyPowerDemand time series classification problem and returns X and y
+    Loads the ItalyPowerDemand time series classification problem and
+    returns X and y
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
-        Whether to load the train or test partition of the problem. By default it loads the train split.
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
     return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single dataframe with columns for
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
         features and the target.
 
     Returns
@@ -125,28 +181,35 @@ def load_italy_power_demand(split='TRAIN', return_X_y=False):
     Test cases:         1029
     Number of classes:  2
 
-    The data was derived from twelve monthly electrical power demand time series from Italy and
-    first used in the paper "Intelligent Icons: Integrating Lite-Weight Data Mining and
-    Visualization into GUI Operating Systems". The classification task is to distinguish days
+    The data was derived from twelve monthly electrical power demand time
+    series from Italy and
+    first used in the paper "Intelligent Icons: Integrating Lite-Weight Data
+    Mining and
+    Visualization into GUI Operating Systems". The classification task is to
+    distinguish days
     from Oct to March (inclusive) from April to September.
 
-    Dataset details: http://timeseriesclassification.com/description.php?Dataset=ItalyPowerDemand
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=ItalyPowerDemand
     """
 
     name = 'ItalyPowerDemand'
     return _load_dataset(name, split, return_X_y)
 
 
-def load_japanese_vowels(split='TRAIN', return_X_y=False):
+def load_japanese_vowels(split=None, return_X_y=False):
     """
-        Loads the JapaneseVowels time series classification problem and returns X and y.
+        Loads the JapaneseVowels time series classification problem and
+        returns X and y.
 
         Parameters
         ----------
-        split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
-            Whether to load the train or test partition of the problem. By default it loads the train split.
+        split: None or str{"train", "test"}, optional (default=None)
+            Whether to load the train or test partition of the problem. By
+        default it loads both.
         return_X_y: bool, optional (default=False)
-            If True, returns (features, target) separately instead of a single dataframe with columns for
+            If True, returns (features, target) separately instead of a
+            single dataframe with columns for
             features and the target.
 
         Returns
@@ -164,33 +227,44 @@ def load_japanese_vowels(split='TRAIN', return_X_y=False):
         Test cases:         370
         Number of classes:  9
 
-        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying the vowels 'a' and 'e'. A '12-degree
-        linear prediction analysis' is applied to the raw recordings to obtain time-series with 12 dimensions, a
-        originally a length between 7 and 29. In this dataset, instances have been padded to the longest length,
-        29. The classification task is to predict the speaker. Therefore, each instance is a transformed utterance,
-        12*29 values with a single class label attached, [1...9]. The given training set is comprised of 30
-        utterances for each speaker, however the test set has a varied distribution based on external factors of
-        timing and experimenal availability, between 24 and 88 instances per speaker. Reference: M. Kudo, J. Toyama
-        and M. Shimbo. (1999). "Multidimensional Curve Classification Using Passing-Through Regions". Pattern
+        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
+        the vowels 'a' and 'e'. A '12-degree
+        linear prediction analysis' is applied to the raw recordings to
+        obtain time-series with 12 dimensions, a
+        originally a length between 7 and 29. In this dataset, instances
+        have been padded to the longest length,
+        29. The classification task is to predict the speaker. Therefore,
+        each instance is a transformed utterance,
+        12*29 values with a single class label attached, [1...9]. The given
+        training set is comprised of 30
+        utterances for each speaker, however the test set has a varied
+        distribution based on external factors of
+        timing and experimenal availability, between 24 and 88 instances per
+        speaker. Reference: M. Kudo, J. Toyama
+        and M. Shimbo. (1999). "Multidimensional Curve Classification Using
+        Passing-Through Regions". Pattern
         Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
 
-        Dataset details: http://timeseriesclassification.com/description.php?Dataset=JapaneseVowels
+        Dataset details: http://timeseriesclassification.com/description.php
+        ?Dataset=JapaneseVowels
     """
 
     name = 'JapaneseVowels'
     return _load_dataset(name, split, return_X_y)
 
 
-def load_arrow_head(split='TRAIN', return_X_y=False):
+def load_arrow_head(split=None, return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
-        Whether to load the train or test partition of the problem. By default it loads the train split.
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
     return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single dataframe with columns for
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
         features and the target.
 
     Returns
@@ -208,30 +282,85 @@ def load_arrow_head(split='TRAIN', return_X_y=False):
     Test cases:         175
     Number of classes:  3
 
-    The arrowhead data consists of outlines of the images of arrowheads. The shapes of the
-    projectile points are converted into a time series using the angle-based method. The
-    classification of projectile points is an important topic in anthropology. The classes
-    are based on shape distinctions such as the presence and location of a notch in the
-    arrow. The problem in the repository is a length normalised version of that used in
+    The arrowhead data consists of outlines of the images of arrowheads. The
+    shapes of the
+    projectile points are converted into a time series using the angle-based
+    method. The
+    classification of projectile points is an important topic in
+    anthropology. The classes
+    are based on shape distinctions such as the presence and location of a
+    notch in the
+    arrow. The problem in the repository is a length normalised version of
+    that used in
     Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
 
-    Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=ArrowHead
     """
 
     name = 'ArrowHead'
     return _load_dataset(name, split, return_X_y)
 
 
-def load_basic_motions(split='TRAIN', return_X_y=False):
+def load_acsf1(split=None, return_X_y=False):
+    """
+    Loads the power consumption of typical appliances time series
+    classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      1460
+    Train cases:        100
+    Test cases:         100
+    Number of classes:  10
+
+    The dataset contains the power consumption of typical appliances.
+    The recordings are characterized by long idle periods and some high bursts
+    of enery consumption when the appliance is active.
+    The classes correspond to 10 categories of home appliances;
+    mobile phones (via chargers), coffee machines, computer stations
+    (including monitor), fridges and freezers, Hi-Fi systems (CD players),
+    lamp (CFL), laptops (via chargers), microwave ovens, printers, and
+    televisions (LCD or LED)."
+
+    Dataset details: http://www.timeseriesclassification.com/description.php
+    ?Dataset=ACSF1
+    """
+
+    name = 'ACSF1'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_basic_motions(split=None, return_X_y=False):
     """
     Loads the ArrowHead time series classification problem and returns X and y.
 
     Parameters
     ----------
-    split: str{"ALL", "TRAIN", "TEST"}, optional (default="TRAIN")
-        Whether to load the train or test partition of the problem. By default it loads the train split.
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
     return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single dataframe with columns for
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
         features and the target.
 
     Returns
@@ -249,14 +378,20 @@ def load_basic_motions(split='TRAIN', return_X_y=False):
     Test cases:         175
     Number of classes:  3
 
-    The arrowhead data consists of outlines of the images of arrowheads. The shapes of the
-    projectile points are converted into a time series using the angle-based method. The
-    classification of projectile points is an important topic in anthropology. The classes
-    are based on shape distinctions such as the presence and location of a notch in the
-    arrow. The problem in the repository is a length normalised version of that used in
+    The arrowhead data consists of outlines of the images of arrowheads. The
+    shapes of the
+    projectile points are converted into a time series using the angle-based
+    method. The
+    classification of projectile points is an important topic in
+    anthropology. The classes
+    are based on shape distinctions such as the presence and location of a
+    notch in the
+    arrow. The problem in the repository is a length normalised version of
+    that used in
     Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
 
-    Dataset details: http://timeseriesclassification.com/description.php?Dataset=ArrowHead
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=ArrowHead
     """
 
     name = 'BasicMotions'
@@ -275,7 +410,8 @@ def load_shampoo_sales():
 
     Details
     -------
-    This dataset describes the monthly number of sales of shampoo over a 3 year period.
+    This dataset describes the monthly number of sales of shampoo over a 3
+    year period.
     The units are a sales count.
 
     Dimensionality:     univariate
@@ -286,7 +422,8 @@ def load_shampoo_sales():
 
     References
     ----------
-    .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods and applications,
+    .. [1] Makridakis, Wheelwright and Hyndman (1998) Forecasting: methods
+    and applications,
         John Wiley & Sons: New York. Chapter 3.
     """
 
@@ -299,18 +436,21 @@ def load_shampoo_sales():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='M')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data
 
 
 def load_longley(return_X_y=False):
     """
-    Load the Longley multivariate time series dataset for forecasting with exogenous variables.
+    Load the Longley multivariate time series dataset for forecasting with
+    exogenous variables.
 
     Parameters
     ----------
     return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single dataframe with columns for
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
         features and the target.
 
     Returns
@@ -322,7 +462,8 @@ def load_longley(return_X_y=False):
 
     Details
     -------
-    This dataset contains various US macroeconomic variables from 1947 to 1962 that are known to be highly
+    This dataset contains various US macroeconomic variables from 1947 to
+    1962 that are known to be highly
     collinear.
 
     Dimensionality:     multivariate, 6
@@ -364,7 +505,8 @@ def load_longley(return_X_y=False):
     y = pd.Series([y], name=yname)
 
     # Get exogeneous series
-    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
+    X = pd.DataFrame(
+        [pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
     X.columns = data.columns
 
     if return_X_y:
@@ -386,8 +528,10 @@ def load_lynx():
 
     Details
     -------
-    The annual numbers of lynx trappings for 1821–1934 in Canada. This time-series records the number of skins of
-    predators (lynx) that were collected over several years by the Hudson's Bay Company. The dataset was
+    The annual numbers of lynx trappings for 1821–1934 in Canada. This
+    time-series records the number of skins of
+    predators (lynx) that were collected over several years by the Hudson's
+    Bay Company. The dataset was
     taken from Brockwell & Davis (1991) and appears to be the series
     considered by Campbell & Walker (1977).
 
@@ -398,14 +542,18 @@ def load_lynx():
 
     Notes
     -----
-    This data shows aperiodic, cyclical patterns, as opposed to periodic, seasonal patterns.
+    This data shows aperiodic, cyclical patterns, as opposed to periodic,
+    seasonal patterns.
 
     References
     ----------
-    .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S Language. Wadsworth & Brooks/Cole.
+    .. [1] Becker, R. A., Chambers, J. M. and Wilks, A. R. (1988). The New S
+    Language. Wadsworth & Brooks/Cole.
 
-    .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical work on the Mackenzie River series of
-    annual Canadian lynx trappings for the years 1821–1934 and a new analysis. Journal of the Royal Statistical Society
+    .. [2] Campbell, M. J. and Walker, A. M. (1977). A Survey of statistical
+    work on the Mackenzie River series of
+    annual Canadian lynx trappings for the years 1821–1934 and a new
+    analysis. Journal of the Royal Statistical Society
     series A, 140, 411–431.
     """
 
@@ -418,6 +566,7 @@ def load_lynx():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data
 
@@ -433,7 +582,8 @@ def load_airline():
 
     Details
     -------
-    The classic Box & Jenkins airline data. Monthly totals of international airline passengers, 1949 to 1960.
+    The classic Box & Jenkins airline data. Monthly totals of international
+    airline passengers, 1949 to 1960.
 
     Dimensionality:     univariate
     Series length:      144
@@ -461,5 +611,6 @@ def load_airline():
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
     data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
     data.name = name
     return data

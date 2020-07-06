@@ -1,5 +1,6 @@
 #!/usr/bin/env python3 -u
 # coding: utf-8
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = [
@@ -10,10 +11,13 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin, BaseSktimeForecaster, DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import DEFAULT_ALPHA
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
+                                BaseSktimeForecaster):
 
     def __init__(self, regressor=None, degree=1, with_intercept=True):
         self.regressor = regressor
@@ -42,15 +46,21 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
         self._set_oh(y_train)
         self._set_fh(fh)
 
-        # for default regressor, set fit_intercept=False as we generate a dummy variable in polynomial features
-        r = self.regressor if self.regressor is not None else LinearRegression(fit_intercept=False)  #
-        self.regressor_ = make_pipeline(PolynomialFeatures(degree=self.degree, include_bias=self.with_intercept), r)
+        # for default regressor, set fit_intercept=False as we generate a
+        # dummy variable in polynomial features
+        r = self.regressor if self.regressor is not None else LinearRegression(
+            fit_intercept=False)  #
+        self.regressor_ = make_pipeline(PolynomialFeatures(
+            degree=self.degree,
+            include_bias=self.with_intercept),
+            r)
         x = y_train.index.values.reshape(-1, 1)
         self.regressor_.fit(x, y_train.values)
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False,
+                alpha=DEFAULT_ALPHA):
         """Make forecasts
 
         Parameters
