@@ -4,8 +4,6 @@ signature_method.py
 Implementation of a SignatureClassifier that utilises the signature method of feature extraction. This method was built
 according to the best practices and methodologies described in the paper:
     "A Generalised Signature Method for Time Series" - [arxiv](https://arxiv.org/pdf/2006.00873.pdf)
-
-# TODO Implement deep models.
 """
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
@@ -51,10 +49,6 @@ class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator, ClassifierM
         # Ready a classifier and join the signature method and classifier into a pipeline.
         self.setup_classification_pipeline()
 
-        # Add some methods
-        self.predict = self.pipeline.predict
-        self.predict_proba = self.pipeline.predict_proba
-
     def setup_classification_pipeline(self):
         """ Setup the full signature method pipeline. """
         self.pipeline = Pipeline([
@@ -78,12 +72,12 @@ class SignatureClassifier(GeneralisedSignatureMethod, BaseEstimator, ClassifierM
         return self.pipeline.predict_proba(data)
 
 
-
 if __name__ == '__main__':
     from sktime.utils.load_data import load_from_tsfile_to_dataframe
     train_x, train_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TRAIN.ts")
     test_x, test_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/GunPoint/GunPoint_TEST.ts")
     classifier = RandomForestClassifier()
     signature_pipeline = SignatureClassifier(classifier).fit(train_x, train_y)
+    signature_pipeline.predict(test_x)
 
 
