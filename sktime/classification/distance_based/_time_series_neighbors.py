@@ -39,6 +39,8 @@ from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import nested_to_3d_numpy
+
 
 """
 Please note that many aspects of this class are taken from scikit-learn's
@@ -177,12 +179,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=False)
         y = np.asarray(y)
-        X = np.array(
-            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
+        X = nested_to_3d_numpy(X)
         check_classification_targets(y)
 
+        # print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
@@ -266,9 +268,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = np.array(
-            [np.asarray([x]).reshape(len(x), 1) for x in X.iloc[:, 0]])
+        X = check_X(X, enforce_univariate=False)
+        X = nested_to_3d_numpy(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
