@@ -46,11 +46,8 @@ def test_strategy_mean(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_seasonal_last(fh, sp):
-<<<<<<< HEAD
+
     f = NaiveForecaster(strategy="last", sp=sp)
-=======
-    f = NaiveForecaster(strategy="seasonal_last", sp=sp)
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
     f.fit(y_train)
     y_pred = f.predict(fh)
 
@@ -63,7 +60,7 @@ def test_strategy_seasonal_last(fh, sp):
     reps = np.int(np.ceil(max(fh) / sp))
     expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
     np.testing.assert_array_equal(y_pred, expected)
-<<<<<<< HEAD
+
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
@@ -91,5 +88,3 @@ def test_strategy_seasonal_mean(fh, sp, window_length):
 
         expected = np.tile(window.iloc[-sp:].to_numpy(), reps = reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
-=======
->>>>>>> 67c56be8b1e838f2628df829946f795b7dba9aed
