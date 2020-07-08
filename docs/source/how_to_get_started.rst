@@ -15,15 +15,18 @@ having to install anything.
 |Binder|_
 
 .. toctree::
-   :maxdepth: 1
+    :maxdepth: 1
 
-   examples/loading_data.ipynb
-   examples/forecasting.ipynb
-   examples/univariate_time_series_classification.ipynb
-   examples/shapelet_transform.ipynb
-   examples/plateau_finder.ipynb
-   examples/multivariate_time_series_classification.ipynb
-   examples/benchmarking.ipynb
+    examples/01_forecasting.ipynb
+    examples/02_classification_univariate.ipynb
+    examples/03_classification_multivariate.ipynb
+    examples/04_benchmarking.ipynb
+    examples/feature_extraction_with_tsfresh.ipynb
+    examples/shapelet_transform.ipynb
+    examples/mrseql.ipynb
+    examples/rocket.ipynb
+    examples/plateau_finder.ipynb
+    examples/loading_data.ipynb
 
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html

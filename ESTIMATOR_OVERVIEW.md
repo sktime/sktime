@@ -29,6 +29,9 @@ Simple (or first-degree) transformations:
 | ------ | ------- | ------ | ------- |
 | Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
 | Interval segmenter (random)  | transformers.compose.RandomIntervalSegmenter | @mloning  |  |
+| Piecewise Aggregate Approximation  | transformers.series_as_features.dictionary_based.PAA | @MatthewMiddlehurst  | [ Keogh et al (2001) - Dimensionality reduction for fast similarity search in large time series databases](https://link.springer.com/article/10.1007/PL00011669) |
+| Symbolic Aggregate Approximation  | transformers.series_as_features.dictionary_based.SAX | @MatthewMiddlehurst  | [ Lin et al (2007) - Experiencing SAX: a novel symbolic representation of time series](https://link.springer.com/article/10.1007/s10618-007-0064-z) |
+| Symbolic Fourier Approximation  | transformers.series_as_features.dictionary_based.SFA | @MatthewMiddlehurst  | [ Schäfer (2012) - SFA: a symbolic fourier approximation and index for similarity](https://dl.acm.org/doi/abs/10.1145/2247596.2247656) |
 
 #### Nested data frame to tabular data frame 
 
@@ -84,6 +87,7 @@ Paired (or second-degree) transformations:
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 | BOSS Distance | classifiers.dictionary_based.boss.boss_distance | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| Histogram Intersection | classifiers.dictionary_based.tde.histogram_intersection | @MatthewMiddlehurst |  |
 
 ### Kernels
 | Name | Class | Maintainer | References |
@@ -99,8 +103,10 @@ Paired (or second-degree) transformations:
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
-| BOSS Ensemble | classifiers.dictionary_based.boss.Boss_Ensemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| BOSS Ensemble | classifiers.dictionary_based.boss.BossEnsemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
 | BOSS Atom | classifiers.dictionary_based.boss.BossIndividual | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| Temporal Dictionary Ensemble | classifiers.dictionary_based.tde.TemporalDictionaryEnsemble | @MatthewMiddlehurst |  |
+| TDE Atom | classifiers.dictionary_based.tde.IndividualTDE | @MatthewMiddlehurst |  |
 | Elastic Ensemble | classifiers.distance_based.elastic_ensemble.ElasticEnsemble | @jasonlines | [Lines, Bagnall (2015) - Time Series Classification with Ensembles of Elastic Distance Measures](https://link.springer.com/article/10.1007/s10618-014-0361-2) |
 | Proximity Forest | classifiers.distance_based.boss.ProximityForest | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
 | Proximity Stump | classifiers.distance_based.boss.ProximityStump | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
@@ -110,7 +116,7 @@ Paired (or second-degree) transformations:
 | Time Series k-NN | classifiers.distance_based.time_series_neighbors.KNeighborsTimeSeriesClassifier | @jasonlines |  |
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
-
+| ShapeDTW | classifiers.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
 ### Multivariate time series classifiers
 
 | name | sktime class | maintainer | literature

@@ -7,8 +7,16 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 
 We keep track of changes in this file since v0.4.0.
 
+[0.4.1] - 2019-xx-xx
+--------------------
 
-[0.4.0] - 2019-05-xx
+Added
+~~~~~
+- New sktime logo
+
+
+
+[0.4.0] - 2019-06-05
 --------------------
 
 Added

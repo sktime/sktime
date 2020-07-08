@@ -258,7 +258,10 @@
       "contributions": [
         "code",
         "review",
-        "test"
+        "test",
+        "doc",
+        "eventOrganizing",
+        "tutorial"
       ]
     },
     {
@@ -329,6 +332,92 @@
       "name": "Mohammed Saif Kazamel",
       "avatar_url": "https://avatars0.githubusercontent.com/u/27867617?v=4",
       "profile": "https://mo-saif.github.io/",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "abandus",
+      "name": "abandus",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/46486474?v=4",
+      "profile": "https://github.com/abandus",
+      "contributions": [
+        "ideas",
+        "code"
+      ]
+    },
+    {
+      "login": "Pangoraw",
+      "name": "Paul",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/9824244?v=4",
+      "profile": "https://ber.gp",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "vedazeren",
+      "name": "vedazeren",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/63582874?v=4",
+      "profile": "https://github.com/vedazeren",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "hiqbal2",
+      "name": "hiqbal2",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/10302415?v=4",
+      "profile": "https://github.com/hiqbal2",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "btrtts",
+      "name": "btrtts",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/66252156?v=4",
+      "profile": "https://github.com/btrtts",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "marielledado",
+      "name": "Marielle",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/13499809?v=4",
+      "profile": "https://twitter.com/marielli",
+      "contributions": [
+        "doc",
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "Cheukting",
+      "name": "Cheuk Ting Ho",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/28761465?v=4",
+      "profile": "http://cheuk.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sophijka",
+      "name": "sophijka",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47450591?v=4",
+      "profile": "https://github.com/sophijka",
+      "contributions": [
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "Quaterion",
+      "name": "Quaterion",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/23200273?v=4",
+      "profile": "https://github.com/Quaterion",
       "contributions": [
         "bug"
       ]
