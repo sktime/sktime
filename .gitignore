@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *.c
+*mrseql.cpp
 
 # Distribution / packaging
 .Python
@@ -150,7 +151,6 @@ build_doc_site/
 
 # dev files
 envs/
-env/
 sktime/contrib/distance_based/tempy.py
 sktime/contrib/nothing_to_see_here.py
 sktime/distances/elastic_cython.html
