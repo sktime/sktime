@@ -55,6 +55,7 @@ class SignatureClassifier(BaseClassifier):
     sig_tfm: str, String to specify the type of signature transform. One of:
         ['signature', 'logsignature']).
     depth: int, Signature truncation depth.
+    random_state: int, Random state initialisation.
 
     Attributes
     ----------------
@@ -182,7 +183,7 @@ def basic_signature_hyperopt(X,
         # Classifier and classifier params
         'classifier': [RandomForestClassifier()],
         'classifier__n_estimators': [50, 100, 500, 1000],
-        'classifier__max_depth': [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100]
+        'classifier__max_depth': [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100],
         'classifier__random_state': [random_state],
     }
 
