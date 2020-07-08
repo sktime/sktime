@@ -61,5 +61,3 @@ def sktime_to_tensor(data):
     if not isinstance(data, torch.Tensor):
         data = torch.Tensor(nested_to_3d_numpy(data)).transpose(1, 2)
     return data
-
-

@@ -28,6 +28,13 @@ def get_augmentation_pipeline(aug_list):
         ('addtime', AddTime())
     ])
     """
+    # Assertions
+    types = [tuple, list, None, str]
+    assert any([type(aug_list) == t for t in types]), (
+        "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
+    )
+    aug_list = [aug_list] if isinstance(aug_list, str) else aug_list
+
     # Dictionary of augmentations
     AUGMENTATIONS = {
         'leadlag': LeadLag(),

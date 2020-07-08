@@ -16,16 +16,24 @@ import collections as co
 _Pair = co.namedtuple('Pair', ('start', 'end'))
 
 
-def window_getter(string, **kwargs):
+def window_getter(window_name,
+                  window_depth=None,
+                  window_length=None,
+                  window_step=None
+                  ):
     """Gets the window method correspondent to the given string and initialises
     with specified parameters.
 
     Parameters
     ----------
-    string: str, String from ['global', 'sliding', 'expanding', 'dyadic']
+    window_name: str, String from ['global', 'sliding', 'expanding', 'dyadic']
         used to access the window method.
-    kwargs: dict, Dictionary of key-word arguments to be passed to the
-    window method.
+    window_depth: int, The depth of the dyadic window. (Active only if
+        `window_name == 'dyadic']`.
+    window_length: int, The length of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
+    window_step: int, The step of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
 
     Returns
     -------
@@ -34,19 +42,21 @@ def window_getter(string, **kwargs):
         denote the start and end indexes of each window.
     """
     # Setup all available windows here
+    length_step = {'length': window_length, 'step': window_step}
     window_dict = {
-        'global': Global,
-        'sliding': Sliding,
-        'expanding': Expanding,
-        'dyadic': Dyadic,
+        'global': (Global, {}),
+        'sliding': (Sliding, length_step),
+        'expanding': (Expanding, length_step),
+        'dyadic': (Dyadic, {'depth': window_depth}),
     }
 
-    assert string in window_dict.keys(), (
+    assert window_name in window_dict.keys(), (
         "Window name must be one of: {}. Got: {}."
-        "".format(window_dict.keys(), string)
+        "".format(window_dict.keys(), window_name)
     )
 
-    return window_dict[string](**kwargs)
+    window_cls, window_kwargs = window_dict[window_name]
+    return window_cls(**window_kwargs)
 
 
 class Window:
@@ -63,13 +73,11 @@ class Window:
 
         Parameters
         ----------
-        length : int
-                 The length of the input path.
+        length: int, The length of the input path.
 
         Returns
         -------
-        int:
-            The number of windows.
+        int: The number of windows.
         """
         return sum([len(w) for w in self(length)])
 
@@ -85,12 +93,9 @@ class _ExpandingSliding(Window):
         """
         Parameters
         ----------
-        initial_length : int
-                         Initial length of the input window.
-        start_step : int
-                     Initial step size.
-        end_step : int
-                   Final step size.
+        initial_length: int, Initial length of the input window.
+        start_step: int, Initial step size.
+        end_step: int, Final step size.
         """
         super(_ExpandingSliding, self).__init__()
         self.initial_length = initial_length
@@ -154,14 +159,13 @@ class Dyadic(Window):
 
     Note: Ensure the depth, n, is chosen such that L/(2^n) >= 1, else it will
         be too high for the dataset.
+
+    Parameters
+    ----------
+    depth: int, The depth of the dyadic window, explained in the class
+        description.
     """
     def __init__(self, depth):
-        """
-        Parameters
-        ----------
-        depth: int, The depth of the dyadic window, noted in the class
-        description.
-        """
         super(Dyadic, self).__init__()
         self.depth = depth
 

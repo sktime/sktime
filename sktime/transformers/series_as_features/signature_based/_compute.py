@@ -26,33 +26,32 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     num_intervals: int, dimension of the transformed data (default 8)
     """
     def __init__(self,
-                 window_name,
-                 window_kwargs,
-                 sig_tfm,
-                 depth,
+                 window_name=None,
+                 window_depth=None,
+                 window_length=None,
+                 window_step=None,
+                 sig_tfm=None,
+                 sig_depth=None,
                  rescaling=None
                  ):
         self.window_name = window_name
-        self.window_kwargs = window_kwargs
+        self.window_depth = window_depth
+        self.window_length = window_length
+        self.window_step = window_step
         self.sig_tfm = sig_tfm
-        self.depth = depth
+        self.depth = sig_depth
         self.rescaling = rescaling
 
-        self.window = window_getter(self.window_name, **self.window_kwargs)
-        self.set_rescaling()
-
-    def set_rescaling(self):
-        # Setup rescaling options
-        self.pre_rescaling = lambda path, depth: path
-        self.post_rescaling = lambda signature, channels, depth: signature
-        if self.rescaling == 'pre':
-            self.pre_rescaling = rescale_path
-        elif self.rescaling == 'post':
-            self.post_rescaling = rescale_signature
+        self.window = window_getter(self.window_name,
+                                    self.window_depth,
+                                    self.window_length,
+                                    self.window_step
+                                    )
 
     def transform(self, data):
         # Path rescaling
-        data = self.pre_rescaling(data, self.depth)
+        if self.rescaling == 'pre':
+            data = rescale_path(data, self.depth)
 
         # Prepare for signature computation
         path_obj = signatory.Path(data, self.depth)
@@ -67,11 +66,12 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                 # Signature computation step
                 signature = transform(window.start, window.end)
                 # Rescale if specified
-                rescaled_signature = self.post_rescaling(
-                    signature, data.size(2), self.depth
-                )
+                if self.rescaling == 'post':
+                    signature = rescale_signature(
+                        signature, data.size(2), self.depth
+                    )
 
-                signature_group.append(rescaled_signature)
+                signature_group.append(signature)
             signatures.append(signature_group)
 
         # We are currently not considering deep models and so return all the

@@ -14,17 +14,18 @@ from sktime.transformers.series_as_features.signature_based._checks import \
 class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     """The generalised signature method of feature extraction.
 
-    This follows the methodologies and best practices described in "M
-    [https://arxiv.org/pdf/2006.00873.pdf]
-
     Parameters
     ----------
     scaling: str, Method of scaling.
-    augmentation_list: list of strings, List of augmentations to be applied
-        before the signature transform is applied.
+    augmentation_list: list of tuple of strings, List of augmentations to be
+        applied before the signature transform is applied.
     window_name: str, The name of the window transform to apply.
-    window_kwargs: dict, Additional parameters to be supplied to the window
-        method.
+    window_depth: int, The depth of the dyadic window. (Active only if
+        `window_name == 'dyadic']`.
+    window_length: int, The length of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
+    window_step: int, The step of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
     rescaling: str, The method of signature rescaling.
     sig_tfm: str, String to specify the type of signature transform. One of:
         ['signature', 'logsignature']).
@@ -39,7 +40,9 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
                  scaling='stdsc',
                  augmentation_list=('basepoint', 'addtime'),
                  window_name='dyadic',
-                 window_kwargs={'depth': 3},
+                 window_depth=3,
+                 window_length=None,
+                 window_step=None,
                  rescaling=None,
                  sig_tfm='signature',
                  depth=4,
@@ -48,7 +51,9 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
         self.scaling = scaling
         self.augmentation_list = augmentation_list
         self.window_name = window_name
-        self.window_kwargs = window_kwargs
+        self.window_depth = window_depth
+        self.window_length = window_length
+        self.window_step = window_step
         self.rescaling = rescaling
         self.sig_tfm = sig_tfm
         self.depth = depth
@@ -60,7 +65,12 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
         scaling_step = TrickScaler(scaling=self.scaling)
         augmentation_step = get_augmentation_pipeline(self.augmentation_list)
         transform_step = WindowSignatureTransform(
-            self.window_name, self.window_kwargs, self.sig_tfm, self.depth,
+            window_name=self.window_name,
+            window_depth=self.window_depth,
+            window_length=self.window_length,
+            window_step=self.window_step,
+            sig_tfm=self.sig_tfm,
+            sig_depth=self.depth,
             rescaling=self.rescaling
         )
 
@@ -78,5 +88,5 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
         return self
 
     @handle_sktime_signatures(check_fitted=True)
-    def transform(self, data):
+    def transform(self, data, labels=None):
         return self.signature_method.transform(data)

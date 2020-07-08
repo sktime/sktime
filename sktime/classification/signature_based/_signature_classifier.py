@@ -9,7 +9,6 @@ and methodologies described in the paper:
 """
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-from sklearn.base import ClassifierMixin
 from sktime.classification.base import BaseClassifier
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from sktime.transformers.series_as_features.signature_based import \
@@ -25,59 +24,103 @@ class SignatureClassifier(BaseClassifier):
     the feature extraction pipeline, then creates a new pipeline by
     appending a classifier after the feature extraction step.
 
+    The default parameters are set to best practice parameters found "A
+    Generalised Signature Method for Time-Series":
+        [https://arxiv.org/pdf/2006.00873.pdf]
+    Note that the final classifier used on the UEA datasets involved tuning
+    the hyperparameters:
+        - `depth` over [1, 2, 3, 4, 5, 6]
+        - `window_depth` over [2, 3, 4]
+        - RandomForestClassifier hyper-paramters.
+    as these were found to be the most dataset dependent hyper-parameters.
+    Thus, we recommend always tuning *at least* these parameters to any given
+    dataset.
+
+
     Parameters
     ----------
     classifier: sklearn estimator, This should be any sklearn-type
-        estimator. This defaults to RandomForestClassifier if left as None.
+        estimator. Defaults to RandomForestClassifier.
+    scaling: str, Method of scaling.
+    augmentation_list: list of tuple of strings, List of augmentations to be
+        applied before the signature transform is applied.
+    window_name: str, The name of the window transform to apply.
+    window_depth: int, The depth of the dyadic window. (Active only if
+        `window_name == 'dyadic']`.
+    window_length: int, The length of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
+    window_step: int, The step of the sliding/expanding window. (Active
+        only if `window_name in ['sliding, 'expanding'].
+    rescaling: str, The method of signature rescaling.
+    sig_tfm: str, String to specify the type of signature transform. One of:
+        ['signature', 'logsignature']).
+    depth: int, Signature truncation depth.
 
-    Other Parameters
+    Attributes
     ----------------
-    See GeneralisedSignatureMethod parameters.
+    signature_method: sklearn.Pipeline, An sklearn pipeline that performs the
+        signature feature extraction step.
+    pipeline: sklearn.Pipeline, The classifier appended to the
+        `signature_method` pipeline to make a classification pipeline.
     """
     def __init__(self,
                  classifier=None,
                  scaling='stdsc',
-                 augmentation_list=['basepoint', 'addtime'],
+                 augmentation_list=('basepoint', 'addtime'),
                  window_name='dyadic',
-                 window_kwargs={'depth': 3},
+                 window_depth=3,
+                 window_length=None,
+                 window_step=None,
                  rescaling=None,
                  sig_tfm='signature',
                  depth=4,
-                 random_state=None
+                 random_state=None,
                  ):
         super(SignatureClassifier, self).__init__()
+        self.classifier = classifier
         self.scaling = scaling
         self.augmentation_list = augmentation_list
         self.window_name = window_name
-        self.window_kwargs = window_kwargs
+        self.window_depth = window_depth
+        self.window_length = window_length
+        self.window_step = window_step
         self.rescaling = rescaling
         self.sig_tfm = sig_tfm
         self.depth = depth
-        self.classifier = RandomForestClassifier() if classifier is None \
-            else classifier
         self.random_state = random_state
 
         self.signature_method = GeneralisedSignatureMethod(scaling,
                                                            augmentation_list,
                                                            window_name,
-                                                           window_kwargs,
+                                                           window_depth,
+                                                           window_length,
+                                                           window_step,
                                                            rescaling,
                                                            sig_tfm,
-                                                           depth
+                                                           depth,
                                                            ).signature_method
-        # Ready a classifier and join the signature method and classifier into
-        # a pipeline.
-        self.setup_classification_pipeline()
 
     def setup_classification_pipeline(self):
         """ Setup the full signature method pipeline. """
+        # Use rf if no classifier is set
+        if self.classifier is None:
+            classifier = RandomForestClassifier(
+                random_state=self.random_state
+            )
+        else:
+            classifier = self.classifier
+
+        # Main classification pipeline
         self.pipeline = Pipeline([
             ('signature_method', self.signature_method),
-            ('classifier', self.classifier)
+            ('classifier', classifier)
         ])
 
     @handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
+        # Join the classifier onto the signature method pipeline
+        self.setup_classification_pipeline()
+
         # Fit the pre-initialised classification pipeline
         self.pipeline.fit(data, labels)
         self._is_fitted = True
@@ -92,12 +135,14 @@ class SignatureClassifier(BaseClassifier):
         return self.pipeline.predict_proba(data)
 
 
-def example_signature_hyperparameter_search(train_data,
-                                            train_labels,
-                                            n_splits=5,
-                                            n_iter=10):
-    """A simple hyper-parameter search to evaluate the best params from the
-    SignatureClassifier.
+def basic_signature_hyperopt(X,
+                             y,
+                             cv=5,
+                             n_iter=10,
+                             return_gs=False,
+                             random_state=None):
+    """Performs the hyperparameter search that is seen in "A Generalised
+    Signature Method for Time Series.
 
     This follows from the work seen in "A Generalised Signature Method for
     Time Series" that found for most problems a suitable 'best practices'
@@ -115,59 +160,44 @@ def example_signature_hyperparameter_search(train_data,
 
     Parameters
     ----------
-    train_data: pd.DataFrame, sktime formatted training data.
-    train_labels: pd.DataFrame, Corresponding sktime formatted training labels.
-    n_splits: int, The number of cross-validation folds to use. Splits the data
-        using a StratifiedKFoldCV method.
+    X: pd.DataFrame, Sktime formatted training data.
+    y: pd.DataFrame, Corresponding sktime formatted training labels.
+    cv: int/sklearn.cv, A sklearn CV object or an integer specifying the number
+        of splits that will be passed to a StratifiedKFoldCV method.
     n_iter: int, Number of iterations for the random gridsearch.
-
-    Returns
-    -------
-    SignatureClassifier: A trained signature classifier that achieved the best
-        accuracy on the validation folds.
+    return_gs: bool, Set True to return the full gridsearch object,
+        otherwise will return just the best classifier.
+    random_state: int, Sets the random state.
     """
-    classifier = RandomForestClassifier()
-
     signature_grid = {
         # Signature params
         'scaling': ['stdsc'],
         'depth': [1, 2, 3, 4, 5, 6],
         'window_name': ['dyadic'],
         'augmentation_list': [['basepoint', 'addtime']],
-        'window_kwargs': [
-            {'depth': 1},
-            {'depth': 2},
-            {'depth': 3},
-            {'depth': 4},
-        ],
+        'window_depth': [1, 2, 3, 4],
         'rescaling': ['post'],
+        'random_state': [random_state],
 
         # Classifier and classifier params
-        'classifier': [classifier],
+        'classifier': [RandomForestClassifier()],
         'classifier__n_estimators': [50, 100, 500, 1000],
         'classifier__max_depth': [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100]
+        'classifier__random_state': [random_state],
     }
 
+    # Setup cv
+    if isinstance(cv, int):
+        cv = StratifiedKFold(n_splits=cv, random_state=random_state)
+
     # Initialise the estimator
-    estimator = SignatureClassifier(classifier=classifier)
+    estimator = SignatureClassifier()
 
     # Run a random grid search and return the gs object
-    cv = StratifiedKFold(n_splits=n_splits)
-    gs = RandomizedSearchCV(estimator, signature_grid, cv=cv, n_iter=n_iter)
-    gs.fit(train_data, train_labels)
+    gs = RandomizedSearchCV(estimator, signature_grid, cv=cv, n_iter=n_iter,
+                            random_state=random_state)
+    gs.fit(X, y)
 
-    # Best classifier
-    best_estimator = gs.best_estimator_
-    return best_estimator
+    out = gs if return_gs else gs.best_estimator_
 
-
-if __name__ == '__main__':
-    from sktime.utils.load_data import load_from_tsfile_to_dataframe
-    train_x, train_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/BasicMotions/BasicMotions_TRAIN.ts")
-    test_x, test_y = load_from_tsfile_to_dataframe("../../../sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts")
-    import torch
-    train_y = torch.ones(train_y.shape).numpy()
-    test_y = torch.ones(test_y.shape).numpy()
-    self = SignatureClassifier().fit(train_x, train_y)
-    self.predict(test_x)
-
+    return out
