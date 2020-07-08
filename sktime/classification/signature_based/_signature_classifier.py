@@ -7,6 +7,7 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf)
 """
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sktime.classification.base import BaseClassifier
@@ -89,6 +90,7 @@ class SignatureClassifier(BaseClassifier):
         self.sig_tfm = sig_tfm
         self.depth = depth
         self.random_state = random_state
+        np.random.seed(random_state)
 
         self.signature_method = GeneralisedSignatureMethod(scaling,
                                                            augmentation_list,
@@ -170,6 +172,7 @@ def basic_signature_hyperopt(X,
         otherwise will return just the best classifier.
     random_state: int, Sets the random state.
     """
+    np.random.seed(random_state)
     signature_grid = {
         # Signature params
         'scaling': ['stdsc'],
@@ -185,11 +188,12 @@ def basic_signature_hyperopt(X,
         'classifier__n_estimators': [50, 100, 500, 1000],
         'classifier__max_depth': [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100],
         'classifier__random_state': [random_state],
+
     }
 
     # Setup cv
     if isinstance(cv, int):
-        cv = StratifiedKFold(n_splits=cv, random_state=random_state)
+        cv = StratifiedKFold(n_splits=cv)
 
     # Initialise the estimator
     estimator = SignatureClassifier()
