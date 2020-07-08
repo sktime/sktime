@@ -2,6 +2,3 @@ contact_links:
   - name: "All other questions and general chat"
     url: https://gitter.im/sktime/community
     about: Chat with the sktime community on Gitter
-  - name: "Code of Conduct incident reporting"
-    url: "mailto:f.kiraly@ucl.ac.uk?subject=sktime%20CoC%20incident&body=Please%20specify%20the%20PR%2Fissue%20number%20if%20applicable"
-    about: Report an incident to the Code of Conduct committee
