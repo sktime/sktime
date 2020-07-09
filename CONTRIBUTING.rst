@@ -150,8 +150,8 @@ For docstrings, use the `numpy docstring standard <https://numpydoc
 
 In addition, we add the following guidelines:
 
-- Use underscores to separate words in non-class names:
-    ``n_instances`` rather than\ ``ninstances``.
+- Please check out our `glossary of terms <https://github.com/alan-turing-institute/sktime/wiki/Glossary>`_.
+- Use underscores to separate words in non-class names: :code:`n_instances` rather than :code:`ninstances`.
 - Avoid multiple statements on one line. Prefer a line return after a control flow statement (``if``/``for``).
 - Use absolute imports for references inside sktime.
 - Please don’t use ``import *`` in any case. It is considered harmful by the official Python recommendations. It makes the code harder to read as the origin of symbols is no longer explicitly referenced, but most important, it prevents using a static analysis tool like pyflakes to automatically find bugs.
