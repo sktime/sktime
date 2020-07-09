@@ -50,7 +50,6 @@ def test_strategy_seasonal_last(fh, sp):
     f.fit(y_train)
     y_pred = f.predict(fh)
 
-
     # check predicted index
     np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
                                   y_pred.index)
