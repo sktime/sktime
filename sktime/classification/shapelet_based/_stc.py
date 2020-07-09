@@ -18,6 +18,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.shapelets import \
     ContractedShapeletTransform
 from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation.series_as_features import check_is_fitted
 
 
 class ShapeletTransformClassifier(BaseClassifier):
@@ -123,6 +124,9 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples]
         """
+        X = check_X(X, enforce_univariate=True)
+        self.check_is_fitted()
+
         probs = self.predict_proba(X)
         return np.array([self.classes_[np.argmax(prob)] for prob in probs])
 
@@ -138,6 +142,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        self.check_is_fitted()
+
         return self.classifier.predict_proba(X)
