@@ -27,13 +27,18 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
     strategy : str{"last", "mean"}, optional (default="last")
         Strategy used to make forecasts:
 
-        * "last" and sp is None: forecast the last value in the training series
-        * "mean" and sp is None: forecast the mean of (a given window) of the training series
-        * "last" and sp is not None: forecasts the last value of the same season in the training series
-        * "mean" and sp is not None: forecast the mean (of a given window) of the same season in the training series
+        * "last" and sp is None: forecast the last value in the
+                                training series
+        * "mean" and sp is None: forecast the mean of (a given window)
+                                of the training series
+        * "last" and sp is not None: forecasts the last value of the same
+                                season in the training series
+        * "mean" and sp is not None: forecast the mean (of a given window)
+                                of the same season in the training series
 
     sp : int or None, optional (default=None)
-        Seasonal periodicity to use in the seasonal forecast strategies. If None, naive strategy will be used
+        Seasonal periodicity to use in the seasonal forecast strategies.
+         If None, naive strategy will be used
 
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
@@ -94,8 +99,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if self.window_length is not None and self.sp is not None:
                 if self.window_length < self.sp:
                     param1, param2 = "window_length", "sp"
-                    raise ValueError(f"The {param1}: {self.window_length} is lesser than "
-                                     f"the {param2}: {self.sp}.")
+                    raise ValueError(f"The {param1}: {self.window_length}"
+                                     f" is lesser than the"
+                                     f" {param2}: {self.sp}.")
             self.window_length_ = check_window_length(self.window_length)
 
         #  if not given, set default window length for the mean strategy
@@ -104,8 +110,8 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         # check window length
         if self.window_length_ > len(self.oh):
-            param = "sp" if self.strategy == "last" and self.sp is not None else \
-                "window_length_"
+            param = "sp" if self.strategy == "last" and self.sp is not None \
+                else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series.")
@@ -143,22 +149,30 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             return np.repeat(np.nanmean(last_window), len(fh))
 
         elif self.strategy == "mean" and self.sp is not None:
-            last_window = pd.DataFrame(data=last_window, columns=['data'])
-            #computing last season's mean and imputing it into last season
+            last_window = pd.DataFrame(data=last_window,
+                                       columns=['data'])
+            # computing last season's mean and imputing it into last season
             for i in range(self.sp_):
                 if any(last_window.index % self.sp_ == i) is True:
-                    last_window.at[last_window[last_window.index % self.sp_ == i].index[-1], 'data'] = \
+                    last_window.\
+                        at[last_window[last_window.index % self.sp_ == i].
+                            index[-1], 'data'] =\
                         last_window[last_window.index % self.sp_ == i].mean()
 
-            # we need to replicate the last window if max(fh) is larger than sp,
-            # so that we still make forecasts by repeating the last value for that season,
+            # we need to replicate the last window if max(fh) is
+            # larger than sp,
+            # so that we still make forecasts by repeating the
+            # last value for that season,
             # assume fh is sorted, i.e. max(fh) == fh[-1]
-            #only slicing all the last seasons into last_window
+            # only slicing all the last seasons into last_window
             if fh[-1] > self.sp_:
                 reps = np.int(np.ceil(fh[-1] / self.sp_))
-                last_window = np.tile(last_window['data'].tail(self.sp_).to_numpy(), reps=reps)
+                last_window =\
+                    np.tile(last_window['data'].tail(self.sp_).to_numpy(),
+                            reps=reps)
             else:
-                last_window = last_window.tail(self.sp_).tail(self.sp_).to_numpy()
+                last_window =\
+                    last_window.tail(self.sp_).tail(self.sp_).to_numpy()
 
             # get zero-based index by subtracting the minimum
             fh_idx = fh.index_like(self.cutoff)
