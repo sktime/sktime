@@ -53,16 +53,17 @@ from statsmodels.tsa.stattools import acf
 
 import sktime.classification.compose._ensemble as ensemble
 import sktime.classification.dictionary_based._boss as db
-import sktime.classification.dictionary_based._tde as tde
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
 import sktime.classification.distance_based._time_series_neighbors as nn
 import sktime.classification.distance_based._proximity_forest as pf
 import sktime.classification.shapelet_based._stc as st
+from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sklearn.preprocessing import StandardScaler
 
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
@@ -239,6 +240,29 @@ multivariate_datasets = [
         "UWaveGestureLibrary"
 ]
 
+#Used on lines 410 and 411
+def _normalise_X(X):
+    """Helper function to normalise X using the z-score standardisation"""
+    #get the number of attributes and instances
+    num_atts = X.shape[1]
+    num_insts = X.shape[0]
+    
+    df = pd.DataFrame()
+    
+    for x in X.columns:
+        col = X[x]
+        data = []
+        for y in range(num_insts):
+            ser = col.iloc[y]
+            ser=ser.to_numpy()
+            sd = np.std(ser)
+            avg = np.mean(ser)
+            ser = (ser - avg) / sd
+            data.append(pd.Series(ser))
+        df[x] = data
+        
+    return df
+
 
 def set_classifier(cls, resampleId):
     """
@@ -260,18 +284,23 @@ def set_classifier(cls, resampleId):
     elif  cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
     elif cls.lower() == 'boss':
-        return db.BOSSEnsemble(random_state=resampleId)
-    elif cls.lower() == 'cboss':
-        return db.BOSSEnsemble(random_state=resampleId,
-                               randomised_ensemble=True, max_ensemble_size=50)
-    elif cls.lower() == 'tde':
-        return tde.TemporalDictionaryEnsemble(random_state=resampleId)
+        return db.BOSSEnsemble()
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == 'dtwcv':
-        return nn.KNeighborsTimeSeriesClassifier(metric="dtwcv")
+    elif cls.lower() == 'dtw':
+        return nn.KNeighborsTimeSeriesClassifier(metric="dtw")
     elif cls.lower() == 'ee' or cls.lower() == 'elasticensemble':
         return dist.ElasticEnsemble()
+    elif cls.lower() == 'shapedtw_raw':
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="raw",metric_params=None)
+    elif cls.lower() == 'shapedtw_dwt':
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="dwt",metric_params={"num_levels_dwt":3})
+    elif cls.lower() == 'shapedtw_paa':
+        return ShapeDTW(subsequence_length=30,shape_descriptor_function="paa",metric_params={"num_intervals_paa":5})
+    elif cls.lower() == 'shapedtw_slope':
+        return ShapeDTW(subsequence_length=30, shape_descriptor_function="slope",metric_params={"num_intervals_slope":5})
+    elif cls.lower() == 'shapedtw_hog1d':
+        return ShapeDTW(subsequence_length=30, shape_descriptor_function="hog1d",metric_params={"num_bins_hog1d":8,"num_intervals_hog1d":2,"scaling_factor_hog1d":0.1})
     elif cls.lower() == 'tsfcomposite':
         #It defaults to TSF
         return ensemble.TimeSeriesForestClassifier()
@@ -385,6 +414,10 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
     # TO DO: Automatically differentiate between problem types, currently only works with .ts
     trainX, trainY = load_ts(problem_path + dataset + '/' + dataset + '_TRAIN' + format)
     testX, testY = load_ts(problem_path + dataset + '/' + dataset + '_TEST' + format)
+
+    trainX = _normalise_X(trainX)
+    testX = _normalise_X(testX)
+    
     if resampleID !=0:
         # allLabels = np.concatenate((trainY, testY), axis = None)
         # allData = pd.concat([trainX, testX])
@@ -583,16 +616,16 @@ if __name__ == "__main__":
     else : #Local run
 #        data_dir = "/scratch/univariate_datasets/"
 #        results_dir = "/scratch/results"
-#         data_dir = "/bench/datasets/Univariate2018/"
-#         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "E:/Temp/"
+        data_dir = "/bench/datasets/Univariate2018/"
+        results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        # data_dir = "Z:/ArchiveData/Univariate_ts/"
+        # results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "GunPoint"
+        dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "TDE"
-        resample = 0
+        classifier = "TSF"
+        resample = 1
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]
 # #            print(i)
@@ -600,3 +633,5 @@ if __name__ == "__main__":
         tf=False
         run_experiment(overwrite=True, problem_path=data_dir, results_path=results_dir, cls_name=classifier,
                        dataset=dataset, resampleID=resample,train_file=tf)
+
+
