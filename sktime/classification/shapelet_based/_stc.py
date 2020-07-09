@@ -18,7 +18,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.shapelets import \
     ContractedShapeletTransform
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.utils.validation.series_as_features import check_is_fitted
 
 
 class ShapeletTransformClassifier(BaseClassifier):
