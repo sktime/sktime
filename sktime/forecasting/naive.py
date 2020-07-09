@@ -103,6 +103,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                                      f" is lesser than the"
                                      f" {param2}: {self.sp}.")
             self.window_length_ = check_window_length(self.window_length)
+            self.sp_ = check_sp(self.sp)
 
         #  if not given, set default window length for the mean strategy
         if self.strategy == "mean" and self.window_length is None:

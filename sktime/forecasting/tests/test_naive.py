@@ -66,7 +66,7 @@ def test_strategy_seasonal_last(fh, sp):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_seasonal_mean(fh, sp, window_length):
     if window_length > sp:
-        f = NaiveForecaster(strategy="last", sp=sp,
+        f = NaiveForecaster(strategy="mean", sp=sp,
                             window_length=window_length)
         f.fit(y_train)
         y_pred = f.predict(fh)
