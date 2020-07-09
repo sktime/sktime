@@ -124,9 +124,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples]
         """
-        X = check_X(X, enforce_univariate=True)
-        self.check_is_fitted()
-
+        # dont need to arg check as we do it in predict prob
         probs = self.predict_proba(X)
         return np.array([self.classes_[np.argmax(prob)] for prob in probs])
 
