@@ -445,10 +445,10 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 # add a little 1% leeway to the timing incase one run was slightly faster than
 # another based on the CPU.
                     time_in_seconds = self.time_contract_in_mins * 60
-                    time_in_seconds_percentage = (
-                        max_time_calc_shapelet / 100.0) * 25.0
-                    if (time_now + max_time_calc_shapelet) <= \
-                            (time_in_seconds + time_in_seconds_percentage):
+                    max_shapelet_time_percentage = (
+                        max_time_calc_shapelet / 100.0) * 0.75
+                    if (time_now + max_shapelet_time_percentage) > \
+                            time_in_seconds:
                         if self.verbose > 0:
                             print(
                                 "No more time available! It's been {0:02d}:{"

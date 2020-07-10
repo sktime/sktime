@@ -12,7 +12,7 @@ def test_stc_with_pd():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=random_state)
 
-    c = ShapeletTransformClassifier(1, random_state=random_state)
+    c = ShapeletTransformClassifier(1.0, random_state=random_state)
     c.fit(X_train, y_train)
 
     preds = c.predict(X_test)
@@ -26,7 +26,7 @@ def test_stc_with_np():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=random_state)
 
-    c = ShapeletTransformClassifier(1, random_state=random_state)
+    c = ShapeletTransformClassifier(1.0, random_state=random_state)
     c.fit(X_train, y_train.to_numpy())
 
     preds = c.predict(X_test)
