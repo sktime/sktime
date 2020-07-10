@@ -85,7 +85,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         if isinstance(_y, pd.Series):
             _y = _y.to_numpy()
 
-        # generate pipeline in fit so that random state can be propogated properly.
+# generate pipeline in fit so that random state can be propogated properly.
         self.classifier = Pipeline([
             ('st', ContractedShapeletTransform(
                 time_contract_in_mins=self.time_contract_in_mins,
