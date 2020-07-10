@@ -113,9 +113,9 @@ ESTIMATOR_TEST_PARAMS = {
     AutoARIMA:
         {"d": 0, "suppress_warnings": True},
     ShapeletTransformClassifier:
-        {"time_contract_in_mins": 0.1},
+        {"time_contract_in_mins": 0.125},
     ContractedShapeletTransform:
-        {"time_contract_in_mins": 0.1},
+        {"time_contract_in_mins": 0.125},
     ShapeletTransform:
         {"max_shapelets_to_store_per_class": 1},
     TSFreshFeatureExtractor:
