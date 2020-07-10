@@ -618,10 +618,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 "minimum information gain threshold. Please retry with other "
                 "data and/or parameter settings.")
 
-# copy the underlying iloc values because we were having idemptoency issues
-# due to shuffling.
         _X = np.array(
-            [[_X.iloc[r, c].values.copy() for c in range(len(_X.columns))]
+            [[_X.iloc[r, c].values for c in range(len(_X.columns))]
              for r in range(len(_X))])
 # may need to pad with nans here for uneq length, look at later
 

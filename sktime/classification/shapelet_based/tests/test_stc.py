@@ -1,8 +1,9 @@
 
+import numpy as np
+from sklearn.model_selection import train_test_split
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import load_italy_power_demand
-from sklearn.model_selection import train_test_split
-import numpy as np
+from sktime.utils._testing.estimator_checks import check_fit_idempotent
 
 
 def test_stc_with_pd():

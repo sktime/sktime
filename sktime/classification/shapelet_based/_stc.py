@@ -56,15 +56,6 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.n_estimators = n_estimators
         self.random_state = random_state
 
-        self.classifier = Pipeline([
-            ('st', ContractedShapeletTransform(
-                time_contract_in_mins=time_contract_in_mins,
-                verbose=False,
-                random_state=random_state)),
-            ('rf', RandomForestClassifier(n_estimators=n_estimators,
-                                          random_state=random_state))
-        ])
-
         #        self.shapelet_transform=ContractedShapeletTransform(
         #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
         #        self.classifier=RandomForestClassifier(
@@ -93,6 +84,16 @@ class ShapeletTransformClassifier(BaseClassifier):
         # if y is a pd.series then convert to array.
         if isinstance(_y, pd.Series):
             _y = _y.to_numpy()
+
+        # generate pipeline in fit so that random state can be propogated properly.
+        self.classifier = Pipeline([
+            ('st', ContractedShapeletTransform(
+                time_contract_in_mins=self.time_contract_in_mins,
+                verbose=False,
+                random_state=self.random_state)),
+            ('rf', RandomForestClassifier(n_estimators=self.n_estimators,
+                                          random_state=self.random_state))
+        ])
 
         self.n_classes = np.unique(_y).shape[0]
         self.classes_ = class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
