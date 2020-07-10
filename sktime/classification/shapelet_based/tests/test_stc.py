@@ -31,5 +31,4 @@ def test_stc_with_np():
 
     preds = c.predict(X_test)
 
-    print((preds == y_test).sum())
     np.testing.assert_equal((preds == y_test).sum(), 184)

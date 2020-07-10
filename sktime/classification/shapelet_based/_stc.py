@@ -88,17 +88,16 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         self : object
          """
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        _X, _y = check_X_y(X, y, enforce_univariate=True)
 
-        _y = y
         # if y is a pd.series then convert to array.
-        if isinstance(y, pd.Series):
-            _y = y.to_numpy()
+        if isinstance(_y, pd.Series):
+            _y = _y.to_numpy()
 
-        self.n_classes = np.unique(y).shape[0]
+        self.n_classes = np.unique(_y).shape[0]
         self.classes_ = class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
 
-        self.classifier.fit(X, _y)
+        self.classifier.fit(_X, _y)
 
         #        self.shapelet_transform.fit(X,y)
         #        print("Shapelet Search complete")
@@ -139,7 +138,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        X = check_X(X, enforce_univariate=True)
+        _X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()
 
-        return self.classifier.predict_proba(X)
+        return self.classifier.predict_proba(_X)
