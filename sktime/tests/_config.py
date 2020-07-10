@@ -48,15 +48,11 @@ from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
-    # 'ContractedShapeletTransform',
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
-    # 'MrSEQLClassifier',
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',
-    # 'ShapeletTransform',
-    # 'ShapeletTransformClassifier',
 ]
 
 TRANSFORMER = StandardScaler()

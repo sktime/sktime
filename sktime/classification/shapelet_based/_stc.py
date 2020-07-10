@@ -79,14 +79,14 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         self : object
          """
-        _X, _y = check_X_y(X, y, enforce_univariate=True)
+        X, _y = check_X_y(X, y, enforce_univariate=True)
 
         # if y is a pd.series then convert to array.
         if isinstance(_y, pd.Series):
             _y = _y.to_numpy()
 
 # generate pipeline in fit so that random state can be propogated properly.
-        self.classifier = Pipeline([
+        self.classifier_ = Pipeline([
             ('st', ContractedShapeletTransform(
                 time_contract_in_mins=self.time_contract_in_mins,
                 verbose=False,
@@ -95,18 +95,11 @@ class ShapeletTransformClassifier(BaseClassifier):
                                           random_state=self.random_state))
         ])
 
-        self.n_classes = np.unique(_y).shape[0]
+        self.n_classes_ = np.unique(_y).shape[0]
         self.classes_ = class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
 
-        self.classifier.fit(_X, _y)
+        self.classifier_.fit(X, _y)
 
-        #        self.shapelet_transform.fit(X,y)
-        #        print("Shapelet Search complete")
-        #        self.st_X =self.shapelet_transform.transform(X)
-        #        print("Transform complete")
-        #        X = np.asarray([a.values for a in X.iloc[:, 0]])
-        #        self.classifier.fit(X,y)
-        #       print("Build classifier complete")
         self._is_fitted = True
         return self
 
@@ -123,9 +116,10 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples]
         """
-        # dont need to arg check as we do it in predict prob
-        probs = self.predict_proba(X)
-        return np.array([self.classes_[np.argmax(prob)] for prob in probs])
+        X = check_X(X, enforce_univariate=True)
+        self.check_is_fitted()
+
+        return self.classifier_.predict(X)
 
     def predict_proba(self, X):
         """
@@ -139,7 +133,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        _X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()
 
-        return self.classifier.predict_proba(_X)
+        return self.classifier_.predict_proba(X)
