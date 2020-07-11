@@ -24,7 +24,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
     Parameters
     ----------
-    strategy : str{"last", "mean"}, optional (default="last")
+    strategy : str{"last", "mean", "drift"}, optional (default="last")
         Strategy used to make forecasts:
 
         * "last" and sp is None: forecast the last value in the
@@ -35,6 +35,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                                 season in the training series
         * "mean" and sp is not None: forecast the mean (of a given window)
                                 of the same season in the training series
+        * "drift" and sp is not None: forecast the values increasing or
+                                decreasing along a linear relationship
+                                 from last window
 
     sp : int or None, optional (default=None)
         Seasonal periodicity to use in the seasonal forecast strategies.
@@ -50,7 +53,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         # input checks
         # allowed strategies to include: last, constant, seasonal-last,
         # mean, median
-        allowed_strategies = ("last", "mean")
+        allowed_strategies = ("last", "mean", "drift")
         if strategy not in allowed_strategies:
             raise ValueError(
                 f"Unknown strategy: {strategy}; expected one of "
@@ -84,6 +87,11 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 warn("For the `last` strategy, "
                      "the `window_length_` value will be ignored.")
 
+        if self.strategy == "drift":
+            if self.sp is not None:
+                warn("For the `drift` strategy, "
+                     "the `sp` value will be ignored.")
+
         if self.strategy == "last" and self.sp is None:
             self.window_length_ = 1
 
@@ -105,8 +113,11 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             self.window_length_ = check_window_length(self.window_length)
             self.sp_ = check_sp(self.sp)
 
+        if self.strategy == "drift":
+            self.window_length_ = check_window_length(self.window_length)
+
         #  if not given, set default window length for the mean strategy
-        if self.strategy == "mean" and self.window_length is None:
+        if self.strategy in ("mean", "drift") and self.window_length is None:
             self.window_length_ = len(y_train)
 
         # check window length
@@ -148,6 +159,16 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         elif self.strategy == "mean" and self.sp is None:
             return np.repeat(np.nanmean(last_window), len(fh))
+
+        elif self.strategy == "drift":
+            if any(last_window) is not np.nan:
+                drift = np.mean(np.diff(last_window))
+
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
+
+                last_window =np.arange(last_window[-1], last_window[-1]+drift*(max(fh_idx)+1), drift)
+                return last_window[fh_idx]
 
         elif self.strategy == "mean" and self.sp is not None:
             last_window = pd.DataFrame(data=last_window,
