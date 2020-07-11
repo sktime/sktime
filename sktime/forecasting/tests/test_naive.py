@@ -89,3 +89,26 @@ def test_strategy_seasonal_mean(fh, sp, window_length):
 
         expected = np.tile(window.iloc[-sp:].to_numpy(), reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+def test_strategy_drift(fh, window_length):
+    f = NaiveForecaster(strategy="drift", window_length=window_length)
+    f.fit(y_train)
+    y_pred = f.predict(fh)
+
+    if window_length is None:
+        window_length = len(y_train)
+
+    window_length = y_train.iloc[-window_length:]
+    drift = np.mean(np.diff(window_length))
+
+    # get well formatted fh values
+    fh = check_fh(fh)
+    last_window = np.arange(window_length[-1],
+                            window_length[-1] + \
+                            drift * (max(fh) + 1),
+                            drift)
+    expected = last_window[fh - 1]
+    np.testing.assert_array_equal(y_pred, expected)
+

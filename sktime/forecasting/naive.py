@@ -167,7 +167,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 # get zero-based index by subtracting the minimum
                 fh_idx = fh.index_like(self.cutoff)
 
-                last_window =np.arange(last_window[-1], last_window[-1]+drift*(max(fh_idx)+1), drift)
+                last_window =np.arange(last_window[-1],
+                                       last_window[-1]+\
+                                       drift*(max(fh_idx)+1),
+                                       drift)
                 return last_window[fh_idx]
 
         elif self.strategy == "mean" and self.sp is not None:
