@@ -32,6 +32,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                                 of the training series
         When sp is not 1, computes the "last" and "mean"
         strategies based on values of the same season
+        * "drift": forecast the values increasing or
+                                decreasing along a linear relationship
+                                 from last window
 
     sp : int or None, optional (default=None)
         Seasonal periodicity to use in the seasonal forecast strategies.
@@ -80,6 +83,11 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if self.window_length is not None:
                 warn("For the `last` strategy, "
                      "the `window_length` value will be ignored.")
+
+        if self.strategy == "drift":
+            if self.sp != 1:
+                warn("For the `drift` strategy, "
+                     "the `sp` value will be ignored.")
 
         if self.strategy == "last" and self.sp == 1:
             self.window_length_ = 1
@@ -183,3 +191,16 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             # get zero-based index by subtracting the minimum
             fh_idx = fh.index_like(self.cutoff)
             return last_window[fh_idx]
+
+        elif self.strategy == "drift":
+            if any(last_window) is not np.nan:
+                drift = np.mean(np.diff(last_window))
+
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
+
+                last_window =np.arange(last_window[-1],
+                                       last_window[-1]+\
+                                       drift*(max(fh_idx)+1),
+                                       drift)
+                return last_window[fh_idx]
