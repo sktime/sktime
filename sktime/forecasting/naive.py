@@ -26,14 +26,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
     strategy : str{"last", "mean"}, optional (default="last")
         Strategy used to make forecasts:
 
-        * "last" and sp is None: forecast the last value in the
-                                training series
-        * "mean" and sp is None: forecast the mean of (a given window)
+        * "last" : forecast the last value in the
+                    training series when sp is 1
+        * "mean" : forecast the mean of (a given window)
                                 of the training series
-        * "last" and sp is not None: forecasts the last value of the same
-                                season in the training series
-        * "mean" and sp is not None: forecast the mean (of a given window)
-                                of the same season in the training series
+        When sp is not 1, computes the "last" and "mean"
+        strategies based on values of the same season
 
     sp : int or None, optional (default=None)
         Seasonal periodicity to use in the seasonal forecast strategies.
@@ -97,10 +95,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             # check window length is greater than sp for seasonal mean
             if self.window_length is not None and self.sp != 1:
                 if self.window_length < self.sp:
-                    param1, param2 = "window_length", "sp"
-                    raise ValueError(f"The {param1}: {self.window_length}"
+                    raise ValueError(f"The "
+                                     f"`window_length`: {self.window_length}"
                                      f" is lesser than the"
-                                     f" {param2}: {self.sp}.")
+                                     f" `sp`: {self.sp}.")
             self.window_length_ = check_window_length(self.window_length)
             self.sp_ = check_sp(self.sp)
 
