@@ -8,7 +8,6 @@ __author__ = "Markus Löning"
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseLastWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -150,15 +149,22 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             return np.repeat(np.nanmean(last_window), len(fh))
 
         elif self.strategy == "mean" and self.sp != 1:
-            last_window = pd.DataFrame(data=last_window,
-                                       columns=['data'])
-            # computing last season's mean and imputing it into last season
-            for i in range(self.sp_):
-                if any(last_window.index % self.sp_ == i) is True:
-                    last_window.\
-                        at[last_window[last_window.index % self.sp_ == i].
-                            index[-1], 'data'] =\
-                        last_window[last_window.index % self.sp_ == i].mean()
+            last_window = last_window.astype(float)
+            last_window = np.pad(last_window,
+                                 (0, self.sp_ - len(last_window) % self.sp_),
+                                 'constant',
+                                 constant_values=(-1))
+
+            last_window = last_window.reshape(np.int(np.
+                                                     ceil(len(last_window) /
+                                                          self.sp_)),
+                                              self.sp_)
+
+            last_window[-1][np.where(last_window == -1)[-1]] =\
+                (last_window.sum(axis=0)[np.where(last_window == -1)[-1]] +
+                 1) / (last_window.shape[-1] - 1)
+
+            last_window = last_window.mean(axis=0)
 
             # we need to replicate the last window if max(fh) is
             # larger than sp,
@@ -169,11 +175,8 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if fh[-1] > self.sp_:
                 reps = np.int(np.ceil(fh[-1] / self.sp_))
                 last_window =\
-                    np.tile(last_window['data'].tail(self.sp_).to_numpy(),
+                    np.tile(last_window,
                             reps=reps)
-            else:
-                last_window =\
-                    last_window['data'].tail(self.sp_).to_numpy()
 
             # get zero-based index by subtracting the minimum
             fh_idx = fh.index_like(self.cutoff)
