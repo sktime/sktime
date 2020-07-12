@@ -172,20 +172,6 @@ class MakeDocs(Step):
 
 class MakeDist(Step):
     def action(self, context):
-
-        if platform.system() == "Darwin":
-            self.instruct(
-                "On macOS, we need to set up the C compiler.")
-            self.do_cmd(
-                'export CC=/usr/bin/clang '
-                'export CXX=/usr/bin/clang++ '
-                'export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp" '
-                'export CFLAGS="$CFLAGS -I/usr/local/opt/libomp/include" '
-                'export CXXFLAGS="$CXXFLAGS -I/usr/local/opt/libomp/include" '
-                'export LDFLAGS="$LDFLAGS -L/usr/local/opt/libomp/lib -lomp" '
-                'export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib'
-            )
-
         self.do_cmd("make dist")
 
 
@@ -202,8 +188,8 @@ class InstallFromTestPyPI(Step):
         self.instruct(
             f"Check installation from TestPyPI"
         )
-        self.print_run("makedir /tmp/")
-        self.print_run("cd /tmp/")
+        self.print_run(f"mkdir {context['testdir']}")
+        self.print_run(f"cd {context['testdir']}")
         self.print_cmd("conda remove -n testenv --all -y")
         self.print_cmd("conda create -n testenv python=3.7")
         self.print_cmd("conda activate testenv")
@@ -214,7 +200,6 @@ class InstallFromTestPyPI(Step):
             f"--extra-index-url https://pypi.org/simple "
             f"{context['package_name']}=={context['version']}"
         )
-
 
 class CheckVersionNumber(Step):
     def action(self, context):
@@ -227,10 +212,14 @@ class CheckVersionNumber(Step):
             f"{context['package_name']}.__version__)'")
 
 
-class DeactivateVenv(Step):
+class DeactivateTestEnvironment(Step):
     def action(self, context):
-        self.print_run("deactivate")
+        self.instruct("Deactivate and remove test environment.")
+        self.print_run("conda deactivate")
+
         self.instruct("Go back to the project directory")
+        self.print_cmd("cd ..")
+        self.print_cmd(f"rm -r {context['testdir']}")
 
 
 class GitTagRelease(Step):
@@ -318,13 +307,20 @@ def main():
         # CheckOnlineDocs(),
         # check TestPyPI locally
         ConfirmGitStatus(branch="master"),
+        MakeClean(),
+        BumpVersion(),
+        CheckVersionNumber(),
+        UpdateChangelog(),
+        MakeDocs(),
+        CheckLocalDocs(),
         MakeDist(),
         PushToTestPyPI(),
         InstallFromTestPyPI(),
-        DeactivateVenv(),
+        DeactivateTestEnvironment(),
+        PushToGitHub(),
         # check pre-release online
-        GitTagPreRelease(),
-        PushTagToGitHub(),
+        # GitTagPreRelease(),
+        # PushTagToGitHub(),
         CheckCIStatus(),
         # make release
         GitTagRelease(),
@@ -336,6 +332,7 @@ def main():
     context = dict()
     context["package_name"] = PACKAGE_NAME
     context["version"] = find_version(context["package_name"], "__init__.py")
+    context["testdir"] = "temp/"
     for step in steps:
         step.run(context)
     cprint("\nDone!", color="yellow", style="bright")

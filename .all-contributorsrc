@@ -143,7 +143,9 @@
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
       "profile": "http://www.timeseriesclassification.com",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -420,6 +422,27 @@
       "profile": "https://github.com/Quaterion",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "ABostrom",
+      "name": "Aaron Bostrom",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9571933?v=4",
+      "profile": "https://github.com/ABostrom",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "BandaSaiTejaReddy",
+      "name": "BANDASAITEJAREDDY",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/31387911?v=4",
+      "profile": "https://github.com/BandaSaiTejaReddy",
+      "contributions": [
+        "code",
+        "doc"
       ]
     }
   ]
