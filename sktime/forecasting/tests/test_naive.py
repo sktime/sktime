@@ -53,19 +53,19 @@ def test_strategy_seasonal_last(fh, sp):
     # check predicted index
     np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
                                   y_pred.index)
-    if sp is not None:
-        # check values
-        fh = check_fh(fh)  # get well formatted fh
-        reps = np.int(np.ceil(max(fh) / sp))
-        expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
-        np.testing.assert_array_equal(y_pred, expected)
+    # check values
+    fh = check_fh(fh)  # get well formatted fh
+    reps = np.int(np.ceil(max(fh) / sp))
+    expected = np.tile(y_train.iloc[-sp:], reps=reps)[fh - 1]
+    np.testing.assert_array_equal(y_pred, expected)
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
-@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_seasonal_mean(fh, sp, window_length):
-    if window_length > sp:
+    if ((window_length is not None and window_length > sp) or
+            (window_length is None)):
         f = NaiveForecaster(strategy="mean", sp=sp,
                             window_length=window_length)
         f.fit(y_train)
@@ -81,13 +81,23 @@ def test_strategy_seasonal_mean(fh, sp, window_length):
         # check values
         fh = check_fh(fh)  # get well formatted fh
         reps = np.int(np.ceil(max(fh) / sp))
-        window = y_train.iloc[-window_length:]
+        last_window = y_train.iloc[-window_length:].values.astype(float)
+        last_window = np.pad(last_window,
+                             (0, sp - len(last_window) % sp),
+                             'constant',
+                             constant_values=(-1))
 
-        for i in range(sp):
-            window.at[window[window.index % sp == i].index[-1]] = \
-                window[window.index % sp == i].mean()
+        last_window = last_window.reshape(np.int(np.
+                                                 ceil(len(last_window) /
+                                                      sp)),
+                                          sp)
+        indices = np.where(last_window == -1)[-1]
+        last_window[-1][indices] = \
+            (last_window.sum(axis=0)[indices] +
+             1) / (last_window.shape[-1] - 1)
+        last_window = last_window.mean(axis=0)
 
-        expected = np.tile(window.iloc[-sp:].to_numpy(), reps=reps)[fh - 1]
+        expected = np.tile(last_window, reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)

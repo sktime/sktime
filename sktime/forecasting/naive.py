@@ -8,7 +8,6 @@ __author__ = "Markus Löning"
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseLastWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -27,17 +26,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
     strategy : str{"last", "mean", "drift"}, optional (default="last")
         Strategy used to make forecasts:
 
-        * "last" and sp is None: forecast the last value in the
-                                training series
-        * "mean" and sp is None: forecast the mean of (a given window)
+        * "last" : forecast the last value in the
+                    training series when sp is 1
+        * "mean" : forecast the mean of (a given window)
                                 of the training series
-        * "last" and sp is not None: forecasts the last value of the same
-                                season in the training series
-        * "mean" and sp is not None: forecast the mean (of a given window)
-                                of the same season in the training series
-        * "drift" and sp is not None: forecast the values increasing or
-                                decreasing along a linear relationship
-                                 from last window
+        When sp is not 1, computes the "last" and "mean"
+        strategies based on values of the same season
 
     sp : int or None, optional (default=None)
         Seasonal periodicity to use in the seasonal forecast strategies.
@@ -48,7 +42,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             series will be used.
     """
 
-    def __init__(self, strategy="last", window_length=None, sp=None):
+    def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()
         # input checks
         # allowed strategies to include: last, constant, seasonal-last,
@@ -85,17 +79,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         if self.strategy == "last":
             if self.window_length is not None:
                 warn("For the `last` strategy, "
-                     "the `window_length_` value will be ignored.")
+                     "the `window_length` value will be ignored.")
 
-        if self.strategy == "drift":
-            if self.sp is not None:
-                warn("For the `drift` strategy, "
-                     "the `sp` value will be ignored.")
-
-        if self.strategy == "last" and self.sp is None:
+        if self.strategy == "last" and self.sp == 1:
             self.window_length_ = 1
 
-        if self.strategy == "last" and self.sp is not None:
+        if self.strategy == "last" and self.sp != 1:
             self.sp_ = check_sp(self.sp)
 
             # window length we need for forecasts is just the
@@ -104,12 +93,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         if self.strategy == "mean":
             # check window length is greater than sp for seasonal mean
-            if self.window_length is not None and self.sp is not None:
+            if self.window_length is not None and self.sp != 1:
                 if self.window_length < self.sp:
-                    param1, param2 = "window_length", "sp"
-                    raise ValueError(f"The {param1}: {self.window_length}"
+                    raise ValueError(f"The "
+                                     f"`window_length`: {self.window_length}"
                                      f" is lesser than the"
-                                     f" {param2}: {self.sp}.")
+                                     f" `sp`: {self.sp}.")
             self.window_length_ = check_window_length(self.window_length)
             self.sp_ = check_sp(self.sp)
 
@@ -122,7 +111,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         # check window length
         if self.window_length_ > len(self.oh):
-            param = "sp" if self.strategy == "last" and self.sp is not None \
+            param = "sp" if self.strategy == "last" and self.sp != 1 \
                 else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
@@ -140,10 +129,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif self.strategy == "last" and self.sp is None:
+        elif self.strategy == "last" and self.sp == 1:
             return np.repeat(last_window[-1], len(fh))
 
-        elif self.strategy == "last" and self.sp is not None:
+        elif self.strategy == "last" and self.sp != 1:
             # we need to replicate the last window if max(fh) is larger than
             # sp,
             # so that we still make forecasts by repeating the last value
@@ -157,32 +146,27 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             fh_idx = fh.index_like(self.cutoff)
             return last_window[fh_idx]
 
-        elif self.strategy == "mean" and self.sp is None:
+        elif self.strategy == "mean" and self.sp == 1:
             return np.repeat(np.nanmean(last_window), len(fh))
 
-        elif self.strategy == "drift":
-            if any(last_window) is not np.nan:
-                drift = np.mean(np.diff(last_window))
+        elif self.strategy == "mean" and self.sp != 1:
+            last_window = last_window.astype(float)
+            last_window = np.pad(last_window,
+                                 (0, self.sp_ - len(last_window) % self.sp_),
+                                 'constant',
+                                 constant_values=(-1))
 
-                # get zero-based index by subtracting the minimum
-                fh_idx = fh.index_like(self.cutoff)
+            last_window = last_window.reshape(np.int(np.
+                                                     ceil(len(last_window) /
+                                                          self.sp_)),
+                                              self.sp_)
 
-                last_window =np.arange(last_window[-1],
-                                       last_window[-1]+\
-                                       drift*(max(fh_idx)+1),
-                                       drift)
-                return last_window[fh_idx]
+            indices = np.where(last_window == -1)[-1]
+            last_window[-1][indices] =\
+                (last_window.sum(axis=0)[indices] +
+                 1) / (last_window.shape[-1] - 1)
 
-        elif self.strategy == "mean" and self.sp is not None:
-            last_window = pd.DataFrame(data=last_window,
-                                       columns=['data'])
-            # computing last season's mean and imputing it into last season
-            for i in range(self.sp_):
-                if any(last_window.index % self.sp_ == i) is True:
-                    last_window.\
-                        at[last_window[last_window.index % self.sp_ == i].
-                            index[-1], 'data'] =\
-                        last_window[last_window.index % self.sp_ == i].mean()
+            last_window = last_window.mean(axis=0)
 
             # we need to replicate the last window if max(fh) is
             # larger than sp,
@@ -193,11 +177,8 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if fh[-1] > self.sp_:
                 reps = np.int(np.ceil(fh[-1] / self.sp_))
                 last_window =\
-                    np.tile(last_window['data'].tail(self.sp_).to_numpy(),
+                    np.tile(last_window,
                             reps=reps)
-            else:
-                last_window =\
-                    last_window['data'].tail(self.sp_).to_numpy()
 
             # get zero-based index by subtracting the minimum
             fh_idx = fh.index_like(self.cutoff)
