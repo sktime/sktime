@@ -64,20 +64,19 @@ def test_strategy_seasonal_last(fh, sp):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_seasonal_mean(fh, sp, window_length):
-
-    f = NaiveForecaster(strategy="mean", sp=sp,
+    if ((window_length is not None and window_length > sp) or (window_length is None)):
+        f = NaiveForecaster(strategy="mean", sp=sp,
                             window_length=window_length)
-    f.fit(y_train)
-    y_pred = f.predict(fh)
+        f.fit(y_train)
+        y_pred = f.predict(fh)
 
-    # check predicted index
-    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
+        # check predicted index
+        np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
                                       y_pred.index)
 
-    if window_length is None:
-        window_length = len(y_train)
+        if window_length is None:
+            window_length = len(y_train)
 
-    if window_length > sp:
         # check values
         fh = check_fh(fh)  # get well formatted fh
         reps = np.int(np.ceil(max(fh) / sp))
@@ -99,3 +98,8 @@ def test_strategy_seasonal_mean(fh, sp, window_length):
 
         expected = np.tile(last_window, reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
+
+
+
+
+
