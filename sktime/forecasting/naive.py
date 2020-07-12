@@ -160,8 +160,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                                                           self.sp_)),
                                               self.sp_)
 
-            last_window[-1][np.where(last_window == -1)[-1]] =\
-                (last_window.sum(axis=0)[np.where(last_window == -1)[-1]] +
+            indices = np.where(last_window == -1)[-1]
+            last_window[-1][indices] =\
+                (last_window.sum(axis=0)[indices] +
                  1) / (last_window.shape[-1] - 1)
 
             last_window = last_window.mean(axis=0)
