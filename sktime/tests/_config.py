@@ -117,7 +117,9 @@ ESTIMATOR_TEST_PARAMS = {
     ContractedShapeletTransform:
         {"time_contract_in_mins": 0.125},
     ShapeletTransform:
-        {"max_shapelets_to_store_per_class": 1},
+        {"max_shapelets_to_store_per_class": 1,
+         "min_shapelet_length": 3,
+         "max_shapelet_length": 4},
     TSFreshFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor:
