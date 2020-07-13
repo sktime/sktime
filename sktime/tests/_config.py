@@ -5,7 +5,8 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "ESTIMATOR_TEST_PARAMS",
-    "EXCLUDED"
+    "EXCLUDED",
+    "EXCLUDED_FROM_TESTS"
 ]
 
 from sklearn.linear_model import LinearRegression
@@ -16,35 +17,29 @@ from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.compose import DirectRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import RecursiveRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import StackingForecaster
-from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import (
+    DirectRegressionForecaster, DirectTimeSeriesRegressionForecaster,
+    EnsembleForecaster, RecursiveRegressionForecaster,
+    RecursiveTimeSeriesRegressionForecaster, StackingForecaster,
+    TransformedTargetForecaster)
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.forecasting.model_selection import (ForecastingGridSearchCV,
+                                                SingleWindowSplitter)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.transformers.series_as_features.compose import ColumnTransformer
-from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.compose import (ColumnTransformer,
+                                                            RowTransformer)
+from sktime.transformers.series_as_features.interpolate import TSInterpolator
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.series_as_features.shapelets import \
-    ContractedShapeletTransform
-from sktime.transformers.series_as_features.shapelets import ShapeletTransform
-from sktime.transformers.series_as_features.summarize import \
-    FittedParamExtractor
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshFeatureExtractor
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshRelevantFeatureExtractor
+from sktime.transformers.series_as_features.shapelets import (
+    ContractedShapeletTransform, ShapeletTransform)
+from sktime.transformers.series_as_features.summarize import (
+    FittedParamExtractor, TSFreshFeatureExtractor,
+    TSFreshRelevantFeatureExtractor)
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 # TODO fix estimators to pass all tests
 EXCLUDED = [
@@ -54,6 +49,11 @@ EXCLUDED = [
     'ProximityStump',
     'ProximityTree',
 ]
+
+EXCLUDED_FROM_TESTS = {
+    "ShapeletTransformClassifier": ["check_fit_idempotent"],
+    "ContractedShapeletTransform": ["check_fit_idempotent"],
+}
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [

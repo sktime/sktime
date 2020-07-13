@@ -11,6 +11,7 @@ import pytest
 from sktime.tests._config import EXCLUDED
 from sktime.utils import all_estimators
 from sktime.utils._testing.estimator_checks import check_estimator
+from sktime.tests._config import EXCLUDED_FROM_TESTS
 
 ALL_ESTIMATORS = [e[1] for e in all_estimators() if
                   e[0] not in EXCLUDED]
@@ -20,4 +21,4 @@ ALL_ESTIMATORS = [e[1] for e in all_estimators() if
 def test_estimator(Estimator):
     # We run a number of basic checks on all estimators to ensure correct
     # implementation of our framework and compatibility with scikit-learn
-    check_estimator(Estimator)
+    check_estimator(Estimator, EXCLUDED_FROM_TESTS.get(Estimator, []))
