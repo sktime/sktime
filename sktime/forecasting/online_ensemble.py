@@ -4,6 +4,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import OnlineSplitter
 
+
 class OnlineEnsembleForecaster(EnsembleForecaster):
     """Online Updating Ensemble of forecasters
 
@@ -22,15 +23,18 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def __init__(self, ensemble_algorithm, forecasters, n_jobs=None):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
-        
+
         if self.ensemble_algorithm.n != len(forecasters):
-            raise ValueError("Number of Experts in Ensemble Algorithm doesn't equal number of Forecasters")
-        
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters,n_jobs=n_jobs)
-    
+            raise ValueError("Number of Experts in Ensemble Algorithm \
+                             doesn't equal number of Forecasters")
+
+        super(EnsembleForecaster, self).__init__(forecasters=forecasters,
+                                                 n_jobs=n_jobs)
+
     def _fit_ensemble(self, y_val, X_val=None):
-        """Fits the ensemble by allowing forecasters to predict and compares to the actual parameters.
-        
+        """Fits the ensemble by allowing forecasters to predict and
+           compares to the actual parameters.
+
         Parameters
         ----------
         y_val : pd.Series
@@ -39,10 +43,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             Exogenous variables are ignored
         """
         fh = np.arange(len(y_val)) + 1
-        expert_predictions = np.column_stack(self._predict_forecasters(fh=fh, X=X_val))
+        expert_predictions = np.column_stack(self._predict_forecasters(
+                                             fh=fh, X=X_val))
         actual_values = np.array(y_val)
-        
-        self.ensemble_algorithm._update(expert_predictions.T,actual_values)
+
+        self.ensemble_algorithm._update(expert_predictions.T, actual_values)
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
@@ -58,14 +63,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self : an instance of self
         """
         self._fit_ensemble(y_new, X_val=X_new)
-        
+
         self.check_is_fitted()
         self._set_oh(y_new)
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
-            
+
         return self
-    
+
     def update_predict(self, y_test, X_test=None, update_params=False,
                        return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
@@ -92,8 +97,9 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
                                            update_params=update_params,
                                            return_pred_int=return_pred_int,
                                            alpha=alpha)
-    
-    def _predict_moving_cutoff(self, y, cv=OnlineSplitter(), X=None, update_params=False,
+
+    def _predict_moving_cutoff(self, y, cv=OnlineSplitter(), X=None,
+                               update_params=False,
                                return_pred_int=False,
                                alpha=DEFAULT_ALPHA):
         """Make single-step or multi-step moving cutoff predictions
@@ -113,7 +119,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
-        fh=np.array([1])
+        fh = np.array([1])
         y_preds = []
         cutoffs = []
         with self._detached_cutoff():
@@ -133,13 +139,15 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
                 cutoffs.append(self.cutoff)
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-        
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        
-        return (pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1)*self.ensemble_algorithm.weights).sum(axis=1)
-    
+
+        return (pd.concat(
+            self._predict_forecasters(fh=fh, X=X), axis=1)
+                * self.ensemble_algorithm.weights).sum(axis=1)
+
+
 def _format_moving_cutoff_predictions(y_preds, cutoffs):
     """Format moving-cutoff predictions"""
     if not isinstance(y_preds, list):

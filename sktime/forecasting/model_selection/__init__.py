@@ -7,6 +7,7 @@ __all__ = [
     "CutoffSplitter",
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
+    "OnlineSplitter",
     "temporal_train_test_split",
     "ForecastingGridSearchCV"
 ]

@@ -124,25 +124,29 @@ class CutoffSplitter(BaseSplitter):
     def get_cutoffs(self, y=None):
         """Return the cutoff points"""
         return check_cutoffs(self.cutoffs)
-    
+
+
 class OnlineSplitter(BaseSplitter):
-    """Window splitter to split time series where timeseries can be broken down into steps where we have the observed and the next step for     online learning
+    """Window splitter to split time series where timeseries can be broken
+       down into steps where we have the observed and the next step for
+       online learning.
     """
-    
+
     def __init__(self):
         pass
+
     def _split_windows(self, y):
-        """
-        Splits data so that the training_window is our current step and the test window is the next step.
+        """Splits data so that the training_window is our current step and
+        the test window is the next step.
         """
         total_time = len(y)
-        assert total_time>1, "Not Enough Data"
-        
-        
-        for i in range(0,total_time-1):
+        assert total_time > 1, "Not Enough Data"
+
+        for i in range(0, total_time-1):
             training_window = np.array([i])
             test_window = i+np.array([1])
-            yield training_window,test_window
+            yield training_window, test_window
+
 
 class BaseWindowSplitter(BaseSplitter):
     """Base class for window splits"""
