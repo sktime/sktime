@@ -21,4 +21,4 @@ ALL_ESTIMATORS = [e[1] for e in all_estimators() if
 def test_estimator(Estimator):
     # We run a number of basic checks on all estimators to ensure correct
     # implementation of our framework and compatibility with scikit-learn
-    check_estimator(Estimator, EXCLUDED_FROM_TESTS.get(Estimator, []))
+    check_estimator(Estimator, EXCLUDED_FROM_TESTS.get(Estimator.__name__, []))
