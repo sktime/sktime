@@ -79,11 +79,11 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         self : object
          """
-        X, _y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # if y is a pd.series then convert to array.
-        if isinstance(_y, pd.Series):
-            _y = _y.to_numpy()
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
 
 # generate pipeline in fit so that random state can be propogated properly.
         self.classifier_ = Pipeline([
@@ -95,10 +95,10 @@ class ShapeletTransformClassifier(BaseClassifier):
                                           random_state=self.random_state))
         ])
 
-        self.n_classes_ = np.unique(_y).shape[0]
-        self.classes_ = class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
+        self.n_classes_ = np.unique(y).shape[0]
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier_.fit(X, _y)
+        self.classifier_.fit(X, y)
 
         self._is_fitted = True
         return self

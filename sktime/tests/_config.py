@@ -5,8 +5,8 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "ESTIMATOR_TEST_PARAMS",
-    "EXCLUDED",
-    "EXCLUDED_FROM_TESTS"
+    "EXCLUDED_ESTIMATORS",
+    "EXCLUDED_TESTS"
 ]
 
 from sklearn.linear_model import LinearRegression
@@ -42,7 +42,7 @@ from sktime.transformers.single_series.adapt import \
 from sktime.transformers.single_series.detrend import Detrender
 
 # TODO fix estimators to pass all tests
-EXCLUDED = [
+EXCLUDED_ESTIMATORS = [
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
     'ProximityForest',
@@ -50,7 +50,7 @@ EXCLUDED = [
     'ProximityTree',
 ]
 
-EXCLUDED_FROM_TESTS = {
+EXCLUDED_TESTS = {
     "ShapeletTransformClassifier": ["check_fit_idempotent"],
     "ContractedShapeletTransform": ["check_fit_idempotent"],
 }
