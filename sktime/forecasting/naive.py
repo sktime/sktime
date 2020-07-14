@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["NaiveForecaster"]
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning", "Piyush Gade"]
 
 from warnings import warn
 
@@ -44,19 +44,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
     def __init__(self, strategy="last", window_length=None, sp=1):
         super(NaiveForecaster, self).__init__()
-        # input checks
-        # allowed strategies to include: last, constant, seasonal-last,
-        # mean, median
-        allowed_strategies = ("last", "mean")
-        if strategy not in allowed_strategies:
-            raise ValueError(
-                f"Unknown strategy: {strategy}; expected one of "
-                f"{allowed_strategies}")
         self.strategy = strategy
         self.sp = sp
         self.window_length = window_length
-
-        self.sp_ = None
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -77,34 +67,38 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         self._set_fh(fh)
 
         if self.strategy == "last":
-            if self.window_length is not None:
-                warn("For the `last` strategy, "
-                     "the `window_length` value will be ignored.")
+            if self.sp == 1:
+                if self.window_length is not None:
+                    warn("For the `last` strategy, "
+                         "the `window_length` value will be ignored if `sp` "
+                         "== 1.")
+                self.window_length_ = 1
 
-        if self.strategy == "last" and self.sp == 1:
-            self.window_length_ = 1
+            else:
+                self.sp_ = check_sp(self.sp)
 
-        if self.strategy == "last" and self.sp != 1:
-            self.sp_ = check_sp(self.sp)
+                # window length we need for forecasts is just the
+                # length of seasonal periodicity
+                self.window_length_ = self.sp_
 
-            # window length we need for forecasts is just the
-            # length of seasonal periodicity
-            self.window_length_ = self.sp_
-
-        if self.strategy == "mean":
+        elif self.strategy == "mean":
             # check window length is greater than sp for seasonal mean
             if self.window_length is not None and self.sp != 1:
                 if self.window_length < self.sp:
-                    raise ValueError(f"The "
-                                     f"`window_length`: {self.window_length}"
-                                     f" is lesser than the"
-                                     f" `sp`: {self.sp}.")
+                    raise ValueError(f"The `window_length`: "
+                                     f"{self.window_length} is smaller than "
+                                     f"`sp`: {self.sp}.")
             self.window_length_ = check_window_length(self.window_length)
             self.sp_ = check_sp(self.sp)
 
-        #  if not given, set default window length for the mean strategy
-        if self.strategy == "mean" and self.window_length is None:
-            self.window_length_ = len(y_train)
+            #  if not given, set default window length for the mean strategy
+            if self.window_length is None:
+                self.window_length_ = len(y_train)
+
+        else:
+            allowed_strategies = ("last", "mean")
+            raise ValueError(f"Unknown strategy: {self.strategy}. Expected "
+                             f"one of: {allowed_strategies}.")
 
         # check window length
         if self.window_length_ > len(self.oh):
@@ -126,57 +120,55 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
             return self._predict_nan(fh)
 
-        elif self.strategy == "last" and self.sp == 1:
-            return np.repeat(last_window[-1], len(fh))
+        elif self.strategy == "last":
+            if self.sp == 1:
+                return np.repeat(last_window[-1], len(fh))
 
-        elif self.strategy == "last" and self.sp != 1:
-            # we need to replicate the last window if max(fh) is larger than
-            # sp,
-            # so that we still make forecasts by repeating the last value
-            # for that season,
-            # assume fh is sorted, i.e. max(fh) == fh[-1]
-            if fh[-1] > self.sp_:
-                reps = np.int(np.ceil(fh[-1] / self.sp_))
-                last_window = np.tile(last_window, reps=reps)
+            else:
+                # we need to replicate the last window if max(fh) is larger
+                # than sp,so that we still make forecasts by repeating the
+                # last value for that season, assume fh is sorted, i.e. max(
+                # fh) == fh[-1]
+                if fh[-1] > self.sp_:
+                    reps = np.int(np.ceil(fh[-1] / self.sp_))
+                    last_window = np.tile(last_window, reps=reps)
 
-            # get zero-based index by subtracting the minimum
-            fh_idx = fh.index_like(self.cutoff)
-            return last_window[fh_idx]
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
+                return last_window[fh_idx]
 
-        elif self.strategy == "mean" and self.sp == 1:
-            return np.repeat(np.nanmean(last_window), len(fh))
+        elif self.strategy == "mean":
+            if self.sp == 1:
+                return np.repeat(np.nanmean(last_window), len(fh))
 
-        elif self.strategy == "mean" and self.sp != 1:
-            last_window = last_window.astype(float)
-            last_window = np.pad(last_window,
-                                 (0, self.sp_ - len(last_window) % self.sp_),
-                                 'constant',
-                                 constant_values=(-1))
+            else:
+                # if the window length is not a multiple of sp, we pad the
+                # window with nan values for easy computation of the mean
+                remainder = self.window_length_ % self.sp_
+                if remainder > 0:
+                    pad_width = self.sp_ - remainder
+                else:
+                    pad_width = 0
+                last_window = np.hstack([last_window,
+                                         np.full(pad_width, np.nan)])
 
-            last_window = last_window.reshape(np.int(np.
-                                                     ceil(len(last_window) /
-                                                          self.sp_)),
-                                              self.sp_)
+                # reshape last window, one column per season
+                last_window = last_window.reshape(np.int(np.ceil(
+                    self.window_length_ / self.sp_)), self.sp_)
 
-            indices = np.where(last_window == -1)[-1]
-            last_window[-1][indices] =\
-                (last_window.sum(axis=0)[indices] +
-                 1) / (last_window.shape[-1] - 1)
+                # compute seasonal mean, averaging over rows
+                y_pred = np.nanmean(last_window, axis=0)
 
-            last_window = last_window.mean(axis=0)
+                # we need to replicate the last window if max(fh) is
+                # larger than sp,
+                # so that we still make forecasts by repeating the
+                # last value for that season,
+                # assume fh is sorted, i.e. max(fh) == fh[-1]
+                # only slicing all the last seasons into last_window
+                if fh[-1] > self.sp_:
+                    reps = np.int(np.ceil(fh[-1] / self.sp_))
+                    y_pred = np.tile(y_pred, reps=reps)
 
-            # we need to replicate the last window if max(fh) is
-            # larger than sp,
-            # so that we still make forecasts by repeating the
-            # last value for that season,
-            # assume fh is sorted, i.e. max(fh) == fh[-1]
-            # only slicing all the last seasons into last_window
-            if fh[-1] > self.sp_:
-                reps = np.int(np.ceil(fh[-1] / self.sp_))
-                last_window =\
-                    np.tile(last_window,
-                            reps=reps)
-
-            # get zero-based index by subtracting the minimum
-            fh_idx = fh.index_like(self.cutoff)
-            return last_window[fh_idx]
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
+                return y_pred[fh_idx]

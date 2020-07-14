@@ -2,7 +2,7 @@
 # coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning", "Piyush Gade"]
 
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ def test_strategy_mean(fh, window_length):
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
-def test_strategy_seasonal_last(fh, sp):
+def test_strategy_last_seasonal(fh, sp):
     f = NaiveForecaster(strategy="last", sp=sp)
     f.fit(y_train)
     y_pred = f.predict(fh)
@@ -63,7 +63,7 @@ def test_strategy_seasonal_last(fh, sp):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
-def test_strategy_seasonal_mean(fh, sp, window_length):
+def test_strategy_mean_seasonal(fh, sp, window_length):
     if ((window_length is not None and window_length > sp) or
             (window_length is None)):
         f = NaiveForecaster(strategy="mean", sp=sp,
@@ -81,21 +81,31 @@ def test_strategy_seasonal_mean(fh, sp, window_length):
         # check values
         fh = check_fh(fh)  # get well formatted fh
         reps = np.int(np.ceil(max(fh) / sp))
-        last_window = y_train.iloc[-window_length:].values.astype(float)
-        last_window = np.pad(last_window,
-                             (0, sp - len(last_window) % sp),
-                             'constant',
-                             constant_values=(-1))
+        last_window = y_train.iloc[-window_length:].values
+        last_window = np.pad(last_window, (0, sp - len(last_window) % sp),
+                             'constant', constant_values=np.nan)
 
-        last_window = last_window.reshape(np.int(np.
-                                                 ceil(len(last_window) /
-                                                      sp)),
-                                          sp)
-        indices = np.where(last_window == -1)[-1]
-        last_window[-1][indices] = \
-            (last_window.sum(axis=0)[indices] +
-             1) / (last_window.shape[-1] - 1)
-        last_window = last_window.mean(axis=0)
-
-        expected = np.tile(last_window, reps=reps)[fh - 1]
+        last_window = last_window.reshape(np.int(np.ceil(len(last_window) /
+                                                         sp)), sp)
+        expected = np.tile(np.nanmean(last_window, axis=0), reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("n_seasons", [1, 3])
+@pytest.mark.parametrize("sp", TEST_SPS)
+def test_strategy_mean_seasonal_simple(n_seasons, sp):
+
+    # create 2d matrix, rows are different seasons, columns time points of
+    # each season
+    values = np.random.normal(size=(n_seasons, sp))
+    y = pd.Series(values.ravel())
+
+    expected = values.mean(axis=0)
+    assert expected.shape == (sp,)
+
+    f = NaiveForecaster(strategy="mean", sp=sp)
+    f.fit(y)
+    fh = np.arange(1, sp + 1)
+    y_pred = f.predict(fh)
+
+    np.testing.assert_array_equal(y_pred, expected)
