@@ -27,18 +27,20 @@ Authorship and maintainership of algorithms
 
 Authors and maintainers of algorithms have special rights and duties with regard to changes and maintenance of their algorithms and associated documentation, including doc strings and tutorial notebooks.
 
-Algorithms are encapsulated in classes. To faciliate authorship and maintainership questions, each algorithm is written in a separate file.
+In sktime, algorithms are encapsulated in classes and are called estimators. Authorship and maintainership operate on the level of classes. To faciliate authorship and maintainership questions, we try to write algorithms in separate files when possible. If an algorithm uses multiple files, we try to collect them in a folder.
 
 The author is the contributor who implements and contributes the algorithm to the project. The maintainer is the contributor who is responsible for maintaining an algorithm and the first point of contact for users and other contributors for all issues, questions, and proposals regarding their algorithm. The author automatically becomes the first maintainer of the algorithm.
 
 * **Veto right.** The maintainer has the right to veto any proposed changes to their algorithm within a time frame of 1 week. This does not extend to change to the common framework and API.
 
-* **Maintenance duty.** The maintainer is responsible for maintaining an algorithm. This includes understandable and instructive documentation, bugs fixes, unit testing, coding quality and style improvements, and compliance with sktime's common API. Maintainers should reply to a new issue on their algorithm within 1 week, and demonstrate a significant effort to fix any issue within 1 month.
+* **Maintenance duty.** The maintainer is responsible for maintaining an
+algorithm. This includes understandable and instructive documentation, bugs fixes, unit testing, coding quality and style improvements, and compliance with sktime's common API. Maintainers should reply to a new issue on their algorithm within 10 working days, and demonstrate a significant effort to fix any issue within 30 working days, ignoring any public holidays.
 
-Any maintainer is expected to give up their role if they can no longer fulfil their responsibilities. If a  maintainer fails to fulfil their responsibilities in given time frame, the maintainer loses their role and all rights that come with it.
+Any maintainer is expected to give up their role if they can no longer
+fulfil their maintenance duty. If a  maintainer fails to fulfil their
+responsibilities in the given time frame, the maintainer loses their role and all rights that come with it.
 
-Note that authors and maintainers do not *own* the algorithms or files they
-contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
+Note that authors and maintainers do not *own* the algorithms or files they contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
 
 
 Curation and inclusion criteria for algorithms
@@ -51,23 +53,17 @@ We have the following guidelines:
 * We only consider published algorithms which have been shown to be competitive in comparative benchmarking studies or practically useful in applied projects. A technique that provides a clear-cut improvement (e.g. an enhanced data structure or a more efficient approximation technique) on a widely-used method will also be considered for inclusion.
 * From the algorithms or techniques that meet the above criteria, only those which fit well within the current framework and API of sktime are accepted. For extending current frameworks and API, see the [process for major changes]().
 * The contributor should support the importance of the proposed addition with research papers and/or implementations in other similar packages, demonstrate its usefulness via common use-cases/applications and corroborate performance improvements, if any, with benchmarks and/or plots. It is expected that the proposed algorithm should outperform the methods that are already implemented in sktime in at least some areas.
-* We strive to consolidate existing functionality when feasible. For example, when there are multiple techniques for the same purpose, we prefer to combine them into a single class and make case distinctions based on hyper-parameters.
+* We strive to consolidate existing functionality if helps to improve the usability and maintainability of the project. For example, when there are multiple techniques for the same purpose, we prefer to combine them into a single class and make case distinctions based on hyper-parameters.
 
-Note that your implementation need not be in sktime to be used together with
-sktime tools. You can implement your favorite algorithm in a sktime
+Note that your implementation need not be in sktime to be used together with sktime tools. You can implement your favorite algorithm in a sktime
 compatible way in one of `our companion repositories <https://github
 .com/sktime>`_ on GitHub. We will be happy to list it under `related
 software <https://github.com/alan-turing-institute/sktime/wiki/related
 -software>`_.
 
-If algorithms require major dependencies, we encourage to create a separate
-companion repository. For example, for deep learning techniques based on
-TensorFlow and Keras, we have `sktime-dl <https://github
-.com/sktime/sktime-dl>`_. For smaller dependencies which are limited to a few files, we encourage to use soft dependencies, which are only required for particular modules, but not for most of sktime's functionality and not for installing sktime.
+If algorithms require major dependencies, we encourage to create a separate companion repository. For example, for deep learning techniques based on TensorFlow and Keras, we have `sktime-dl <https://github.com/sktime/sktime-dl>`_. For smaller dependencies which are limited to a few files, we encourage to use soft dependencies, which are only required for particular modules, but not for most of sktime's functionality and not for installing sktime.
 
-If significant issues are not fixed by the maintainer, and no other
-contributor volunteers to fix the algorithm within 3 months, we will
-deprecate and remove the algorithm from sktime eventually.
+If significant issues are not fixed by the maintainer, and no other contributor volunteers to fix the algorithm within 90 working days, we reserve the right to eventually deprecate and remove the algorithm from sktime.
 
 Decision making
 ---------------
@@ -76,16 +72,14 @@ The purpose of this section is to formalize the decision-making process used by 
 
 sktime's decision-making process is designed to take into account feedback from all community members and strives to find consensus, while avoiding deadlocks when no consensus can be found.
 
-Decisions about the future of the project are made through discussion with
-all members of the community. All discussion takes place on the project’s
-`issue tracker <https://github.com/alan-turing-institute/sktime/issues>`_ or
-pull requests. Sensitive discussion can occur on private chats.
+Decisions about the future of the project are made through discussion with all members of the community. All discussion takes place on the project’s `issue tracker <https://github.com/alan-turing-institute/sktime/issues>`_ or pull requests. Sensitive discussion can occur on private chats.
 
 sktime uses a "consensus seeking" process for making decisions. The community tries to find a resolution that has no open objections among core developers.
 
 Roles
 ~~~~~
-We differentiate between three roles:
+Throughout the decision making process, we differentiate between three roles:
+
 * Contributors
 * Core developers
 * Technical committee members
@@ -93,7 +87,9 @@ We differentiate between three roles:
 Contributors
 ++++++++++++
 
-Contributors are community members who contribute in concrete ways to the project. Anyone can become a contributor, and contributions can take many forms – not only code – as detailed in the contributing guide.
+Contributors are community members who contribute in concrete ways to the
+project. Anyone can become a contributor, and contributions can take many
+forms – not only code – as detailed in the `contributing guide <https://sktime.org/how_to_contribute.html>`_.
 
 Core developers
 +++++++++++++++
@@ -117,10 +113,9 @@ Technical committee
 
 The technical committee (TC) members are core developers who have additional rights and responsibilities to avoid deadlocks and to ensure the smooth running of the project. TC members are expected to participate in strategic planning, and approve changes to the governance model.
 
-The purpose of the TC is to ensure a smooth progress from the big-picture perspective. Changes that impact the full project require a synthetic analysis and a consensus that is both explicit and informed. In cases that the core developer community (which includes the TC members) fails to reach a consensus in the required time frame, the TC is the entity to resolve the
-issue.
+The purpose of the TC is to ensure a smooth progress from the big-picture perspective. Changes that impact the full project require a synthetic analysis and a consensus that is both explicit and informed. In cases that the core developer community (which includes the TC members) fails to reach a consensus, the TC is the entity to resolve the issue.
 
-Membership of the TC is by nomination by a core developer. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. TC membership votes are subject to a two-third majority of all cast votes as well as a simple majority approval of all the current TC members.
+Membership of the TC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. TC membership votes are subject to a two-third majority of all cast votes as well as a simple majority approval of all the current TC members.
 
 TC members who do not actively engage with the TC duties are expected to resign.
 
@@ -133,9 +128,10 @@ The initial members of the TC are:
 Voting: lazy consensus with veto right
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When no consensus can be found, any core developer can call for a vote at any point during the discussion. The vote will conclude one week from the call for the vote.
+When no consensus can be found, any core developer can call for a vote at
+any point during the discussion. The vote will conclude 10 working days from the call for the vote.
 
-The vote is a binary vote: for (+1) or against (-1) accepting the proposed changes. All votes take place on the issue or pull request.
+Votes are public and voluntary. Abstentions are allowed. All votes are a binary vote: for (+1) or against (-1) accepting the proposed changes. Votes take place on the issue or pull request. Votes are casts as comments: +1 or -1.
 
 If no option can gather two thirds of the votes cast, the decision is escalated to the TC, which in turn will use consensus seeking with the fallback option of a simple majority vote if no consensus can be found within a month. Any TC decision must be backed by an enhancement proposal.
 
@@ -166,13 +162,9 @@ Once sktime's API, frameworks, and content becomes more consolidated or when the
 
 Acknowledgments
 ---------------
-We follow the `all-contributors <https://allcontributors.org>`_ specification
-to recognise all contributors, including those that don't contribute code.
-Please see `our list of all contributors <https://github
-.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
+We follow the `all-contributors <https://allcontributors.org>`_ specification to recognise all contributors, including those that don't contribute code. Please see `our list of all contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
-If you think, we've missed anyone, please let us know or open a PR with the
-appropriate changes to `sktime/.all-contributorsrc <https://github
+If you think, we've missed anyone, please let us know or open a PR with the appropriate changes to `sktime/.all-contributorsrc <https://github
 .com/alan-turing-institute/sktime/blob/master/.all-contributorsrc>`_.
 
 
