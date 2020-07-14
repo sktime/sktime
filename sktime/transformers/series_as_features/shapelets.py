@@ -118,11 +118,11 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         self : FullShapeletTransform
             This estimator
         """
-        _X, _y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=True)
 
         # if y is a pd.series then convert to array.
-        if isinstance(_y, pd.Series):
-            _y = _y.to_numpy()
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
 
         if type(
                 self) is ContractedShapeletTransform and \
@@ -130,23 +130,23 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             raise ValueError(
                 "Error: time limit cannot be equal to or less than 0")
 
-        X_lens = np.array([len(_X.iloc[r, 0]) for r in range(len(
-            _X))])  # note, assumes all dimensions of a case are the same
+        X_lens = np.array([len(X.iloc[r, 0]) for r in range(len(
+            X))])  # note, assumes all dimensions of a case are the same
         # length. A shapelet would not be well defined if indices do not match!
-        _X = np.array(
-            [[_X.iloc[r, c].values for c in range(len(_X.columns))] for r in
+        X = np.array(
+            [[X.iloc[r, c].values for c in range(len(X.columns))] for r in
              range(len(
-                 _X))])  # may need to pad with nans here for uneq length,
+                 X))])  # may need to pad with nans here for uneq length,
         # look at later
 
-        num_ins = len(_y)
+        num_ins = len(y)
         distinct_class_vals = \
-            class_distribution(np.asarray(_y).reshape(-1, 1))[0][0]
+            class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         candidates_evaluated = 0
 
         if type(self) is _RandomEnumerationShapeletTransform:
-            num_series_to_visit = min(self.num_cases_to_sample, len(_y))
+            num_series_to_visit = min(self.num_cases_to_sample, len(y))
         else:
             num_series_to_visit = num_ins
 
@@ -179,7 +179,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             return (a for x in zip_longest(*iterables, fillvalue=sentinel) for
                     a in x if a != sentinel)
 
-        case_ids_by_class = {i: np.where(_y == i)[0] for i in
+        case_ids_by_class = {i: np.where(y == i)[0] for i in
                              distinct_class_vals}
 
         # if transform is random/contract then shuffle the data initially
@@ -194,7 +194,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                                case_ids_by_class}
         round_robin_case_order = _round_robin(
             *[list(v) for k, v in case_ids_by_class.items()])
-        cases_to_visit = [(i, _y[i]) for i in round_robin_case_order]
+        cases_to_visit = [(i, y[i]) for i in round_robin_case_order]
         # this dictionary will be used to store all possible starting
         # positions and shapelet lengths for a give series length. This
         # is because we enumerate all possible candidates and sample without
@@ -244,7 +244,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                     print("visiting series: " + str(series_id) + " (#" + str(
                         case_idx + 1) + ")")
 
-            this_series_len = len(_X[series_id][0])
+            this_series_len = len(X[series_id][0])
 
             # The bound on possible shapelet lengths will differ
             # series-to-series if using unequal length data.
@@ -312,7 +312,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 cand_len = candidates_to_visit[candidate_idx][1]
 
                 candidate = ShapeletTransform.zscore(
-                    _X[series_id][:, cand_start_pos: cand_start_pos + cand_len]
+                    X[series_id][:, cand_start_pos: cand_start_pos + cand_len]
                     )
 
                 # now go through all other series and get a distance from
@@ -329,14 +329,14 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 for comparison_series_idx in range(len(cases_to_visit)):
                     i = cases_to_visit[comparison_series_idx][0]
 
-                    if _y[i] != cases_to_visit[comparison_series_idx][1]:
+                    if y[i] != cases_to_visit[comparison_series_idx][1]:
                         raise ValueError("class match sanity test broken")
 
                     if i == series_id:
                         # don't evaluate candidate against own series
                         continue
 
-                    if _y[i] == this_class_val:
+                    if y[i] == this_class_val:
                         num_visited_this_class += 1
                         binary_class_identifier = 1  # positive for this class
                     else:
@@ -363,7 +363,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                             start_left = X_lens[i] - 1 - cand_len
 
                         comparison = ShapeletTransform.zscore(
-                            _X[i][:, start_left: start_left + cand_len])
+                            X[i][:, start_left: start_left + cand_len])
                         dist_left = np.linalg.norm(candidate - comparison)
                         bsf_dist = min(dist_left * dist_left, bsf_dist)
 
@@ -375,7 +375,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                         if start_right == X_lens[i] - cand_len + 1:
                             start_right = 0
                         comparison = ShapeletTransform.zscore(
-                            _X[i][:, start_right: start_right + cand_len])
+                            X[i][:, start_right: start_right + cand_len])
                         dist_right = np.linalg.norm(candidate - comparison)
                         bsf_dist = min(dist_right * dist_right, bsf_dist)
 
