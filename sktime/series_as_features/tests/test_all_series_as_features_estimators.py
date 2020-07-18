@@ -8,18 +8,18 @@ __all__ = []
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests._config import EXCLUDED
+from sktime.tests._config import EXCLUDED_ESTIMATORS
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
 
 ALL_CLASSIFIERS = [e[1] for e in
                    all_estimators(estimator_type="classifier")
-                   if e[0] not in EXCLUDED]
+                   if e[0] not in EXCLUDED_ESTIMATORS]
 
 ALL_REGRESSORS = [e[1] for e in
                   all_estimators(estimator_type="regressor")
-                  if e[0] not in EXCLUDED]
+                  if e[0] not in EXCLUDED_ESTIMATORS]
 
 N_CLASSES = 3
 ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)

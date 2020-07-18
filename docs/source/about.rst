@@ -6,10 +6,10 @@ About us
 Mission statement
 -----------------
 
-sktime enables understandable and composable machine learning
-with time series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_ compatible algorithms
-and model composition tools, supported by a clear taxonomy of
-learning tasks, with instructive documentation and a friendly community.
+sktime enables understandable and composable machine learning with time
+series. It provides `scikit-learn <https://scikit-learn.org/stable/>`_
+compatible algorithms and model composition tools, supported by a clear
+taxonomy of learning tasks, with instructive documentation and a friendly community.
 
 
 History
@@ -30,7 +30,7 @@ For an overview of current and past contributors, please see our
 Citing sktime
 -------------
 
-If you use scikit-learn in a scientific publication, we would appreciate
+If you use sktime in a scientific publication, we would appreciate
 citations to the following paper:
 
 `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines, Franz Király (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
@@ -49,11 +49,9 @@ Bibtex entry:
 Artwork
 -------
 
-High quality PNG and SVG logos are available in the `docs/source/images/
-<https://alan-turing-institute.com/sktime/sktime/tree/master/docs/source/images>`_
-source directory.
+High-quality logos are available in the `docs/source/images/ <https://github.com/alan-turing-institute/sktime/tree/master/docs/source/images>`_ source directory.
 
-.. image:: images/sktime-logo-no-text.png
+.. image:: images/sktime-logo-no-text.jpg
    :align: center
 
 Funding

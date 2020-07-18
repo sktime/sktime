@@ -20,7 +20,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
-from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -118,7 +118,11 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         self : FullShapeletTransform
             This estimator
         """
-        X = check_X(X, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=True)
+
+        # if y is a pd.series then convert to array.
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
 
         if type(
                 self) is ContractedShapeletTransform and \
@@ -149,7 +153,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         shapelet_heaps_by_class = {i: ShapeletPQ() for i in
                                    distinct_class_vals}
 
-        self.random_state = check_random_state(self.random_state)
+        self._random_state = check_random_state(self.random_state)
 
         # Here we establish the order of cases to sample. We need to sample
         # x cases and y shapelets from each (where x = num_cases_to_sample
@@ -183,7 +187,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         if type(self) is _RandomEnumerationShapeletTransform or type(
                 self) is ContractedShapeletTransform:
             for i in range(len(distinct_class_vals)):
-                self.random_state.shuffle(
+                self._random_state.shuffle(
                     case_ids_by_class[distinct_class_vals[i]])
 
         num_train_per_class = {i: len(case_ids_by_class[i]) for i in
@@ -284,7 +288,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 num_candidates_per_case = min(
                     self.num_candidates_to_sample_per_case,
                     num_candidates_per_case)
-                cand_idx = list(self.random_state.choice(
+                cand_idx = list(self._random_state.choice(
                     list(range(0, len(candidate_starts_and_lens))),
                     num_candidates_per_case, replace=False))
                 candidates_to_visit = [candidate_starts_and_lens[x] for x in
@@ -308,7 +312,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 cand_len = candidates_to_visit[candidate_idx][1]
 
                 candidate = ShapeletTransform.zscore(
-                    X[series_id][:, cand_start_pos: cand_start_pos + cand_len])
+                    X[series_id][:, cand_start_pos: cand_start_pos + cand_len]
+                    )
 
                 # now go through all other series and get a distance from
                 # the candidate to each
@@ -434,10 +439,16 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                     time_this_shapelet = (time_now - time_last_shapelet)
                     if time_this_shapelet > max_time_calc_shapelet:
                         max_time_calc_shapelet = time_this_shapelet
+                        print(max_time_calc_shapelet)
                     time_last_shapelet = time_now
-                    if (
-                            time_now + max_time_calc_shapelet) > \
-                            self.time_contract_in_mins * 60:
+
+# add a little 1% leeway to the timing incase one run was slightly faster than
+# another based on the CPU.
+                    time_in_seconds = self.time_contract_in_mins * 60
+                    max_shapelet_time_percentage = (
+                        max_time_calc_shapelet / 100.0) * 0.75
+                    if (time_now + max_shapelet_time_percentage) > \
+                            time_in_seconds:
                         if self.verbose > 0:
                             print(
                                 "No more time available! It's been {0:02d}:{"
@@ -605,7 +616,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             The transformed dataframe in tabular format.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        _X = check_X(X, enforce_univariate=True)
 
         if len(self.shapelets) == 0:
             raise RuntimeError(
@@ -613,17 +624,16 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 "minimum information gain threshold. Please retry with other "
                 "data and/or parameter settings.")
 
-        X = np.array(
-            [[X.iloc[r, c].values for c in range(len(X.columns))] for r in
-             range(len(
-                 X))])  # may need to pad with nans here for uneq length,
-        # look at later
+        _X = np.array(
+            [[_X.iloc[r, c].values for c in range(len(_X.columns))]
+             for r in range(len(_X))])
+# may need to pad with nans here for uneq length, look at later
 
-        output = np.zeros([len(X), len(self.shapelets)], dtype=np.float32, )
+        output = np.zeros([len(_X), len(self.shapelets)], dtype=np.float32, )
 
         # for the i^th series to transform
-        for i in range(0, len(X)):
-            this_series = X[i]
+        for i in range(0, len(_X)):
+            this_series = _X[i]
 
             # get the s^th shapelet
             for s in range(0, len(self.shapelets)):
