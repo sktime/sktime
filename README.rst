@@ -27,8 +27,7 @@
 sktime
 ======
 
-sktime is a Python toolbox for machine learning with time series. We currently
-support:
+sktime is a Python machine learning toolbox for time series with a unified interface for multiple learning tasks. We currently support:
 
 * Forecasting,
 * Time series classification,
