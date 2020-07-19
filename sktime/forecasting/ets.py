@@ -129,7 +129,7 @@ class AutoETS(BaseSktimeForecaster):
 
 
         """
-        y = self.y_train.to_numpy().tolist()
+        y = self.y_train.tolist()
         orig_y = y
         # Make damped into list
         if isinstance(self.damped, bool):
@@ -963,7 +963,7 @@ class AutoETS(BaseSktimeForecaster):
 
         n = len(y)
         p = len(init_state)
-        x = np.zeros(p * (n + 1))
+        x = np.zeros((p * (n + 1), 1))
         x[0: p] = init_state
         e = np.zeros(n)
         lik = 0
@@ -1003,7 +1003,7 @@ class AutoETS(BaseSktimeForecaster):
             if abs(lik + 99999) < 1e-7:
                 lik = np.nan
 
-        return lik, amse, e, np.array(x.reshape(n + 1, p))
+        return lik, amse, e, x.reshape(n + 1, p)
 
     """
     The following functions:
