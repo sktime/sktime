@@ -338,7 +338,7 @@ class AutoETS(BaseSktimeForecaster):
                            damped, lower, upper, optimisation_criterion,
                            nmse, bounds, m, optAlpha, optBeta, optGamma,
                            optPhi, givenAlpha, givenBeta, givenGamma,
-                           givenPhi, alpha, beta, gamma, phi):
+                           givenPhi, alpha, beta, gamma, phi, par):
         """
         Adapted from etsTargetFunction.cpp
 
@@ -368,6 +368,7 @@ class AutoETS(BaseSktimeForecaster):
         beta: float
         gamma: float
         phi: float
+        par: float array
 
         Returns
         -------
@@ -377,6 +378,8 @@ class AutoETS(BaseSktimeForecaster):
         objval = 0
         amse = np.zeros(30)
         e = np.zeros(len(y))
+        state = []
+        n = len(y)
 
         def admissible():
             nonlocal alpha, beta, gamma, phi, m, \
@@ -459,12 +462,102 @@ class AutoETS(BaseSktimeForecaster):
                     return False
             return True
 
-        def eval(p_par, p_par_length):
-            nonlocal par
+        def eval(p_par):
+            nonlocal par, alpha, beta, gamma, phi, nstate, objval, state, m, \
+                optAlpha, optBeta, optGamma, optPhi, y, e, lik, amse, n, \
+                seasontype, trendtype, errortype, optimisation_criterion, nmse
+            # Check if the parameter configuration has changed. If not, return
+            if (par == p_par).all():
+                return
 
+            par = p_par
 
-    def _etsTargetFunction(par, y, nstate, errortype, trendtype, seasontype,
-                           damped, par_noopt, lowerb, upperb,
+            if optAlpha:
+                alpha = par[0]
+            if optBeta:
+                beta = par[1]
+            if optGamma:
+                gamma = par[2]
+            if optPhi:
+                phi = par[3]
+
+            if not check_params():
+                objval = np.inf
+                return
+
+            for i in range(len(par) - nstate, len(par)):
+                state += [par[i]]
+
+            # Add extra state
+            if seasontype != 0:  # "N" = 0, "M" = 2
+                sum = 0
+                for i in range(1 + 1 if trendtype != 0 else 0, nstate):
+                    sum += state[i]
+
+                new_state = m * 1 if seasontype == 2 else 0 - sum
+
+                state += [new_state]
+
+            # Check states
+            if seasontype == 2:
+                min = np.inf
+                start = 1
+                if trendtype != 0:
+                    start = 2
+                for i in range(start, len(state)):
+                    if state[i] < min:
+                        min = state[i]
+                if min < 0:
+                    objval = np.inf
+
+            p = len(state)
+            for i in range(p * len(y) + 1):
+                state += [0]
+
+            state, e, lik, amse = self._ets_calculation(y, n, state, m,
+                                                        errortype,
+                                                        trendtype, seasontype,
+                                                        alpha, beta, gamma,
+                                                        phi, e, lik, amse,
+                                                        nmse)
+
+            # Avoid perfect fits
+            if lik < -1e10:
+                lik = -1e10
+
+            if np.isnan(lik):
+                lik = np.inf
+
+            if abs(lik + 99999) < 1e-7:
+                lik = np.inf
+
+            if optimisation_criterion == "lik":
+                objval = lik
+            elif optimisation_criterion == "mse":
+                objval = amse[0]
+            elif optimisation_criterion == "amse":
+                mean = 0
+                for i in range(nmse):
+                    mean += amse[i] / nmse
+                objval = mean
+            elif optimisation_criterion == "sigma":
+                mean = 0
+                n_e = len(e)
+                for i in range(n_e):
+                    mean += e[i] * e[i] / n_e
+                objval = mean
+            elif optimisation_criterion == "mae":
+                mean = 0
+                n_e = len(e)
+                for i in range(n_e):
+                    mean += abs(e[i]) / n_e
+                objval = mean
+
+        eval(par)
+        return objval
+
+    def _etsTargetFunction(self, par, y, nstate, errortype, trendtype,
+                           seasontype,  damped, par_noopt, lowerb, upperb,
                            optimisation_criterion, nmse, bounds, m):
         """
         Adapted from ets.R/etsTargetFunctionInit
@@ -559,12 +652,12 @@ class AutoETS(BaseSktimeForecaster):
         else:  # seasontype =="M"
             season = 2
 
-        res = _etsTargetFunctionInit(y, nstate, error, trend, season, damped,
-                                     lowerb, upperb, optimisation_criterion,
-                                     nmse, bounds, m, optAlpha, optBeta,
-                                     optGamma, optPhi, givenAlpha, givenBeta,
-                                     givenGamma, givenPhi, alpha, beta, gamma,
-                                     phi)
+        res = self._ETsTargetFunction(y, nstate, error, trend, season, damped,
+                                      lowerb, upperb, optimisation_criterion,
+                                      nmse, bounds, m, optAlpha, optBeta,
+                                      optGamma, optPhi, givenAlpha, givenBeta,
+                                      givenGamma, givenPhi, alpha, beta, gamma,
+                                      phi, par)
 
         return res
 
@@ -868,254 +961,6 @@ class AutoETS(BaseSktimeForecaster):
         states: float array
         """
 
-        """
-        The following functions:
-
-        _ets_calculation
-        _forecast
-        _update
-
-        are adapted from the etscalc.c file, available at:
-        https://github.com/robjhyndman/forecast/blob/master/src/etscalc.c
-        """
-
-        def _ets_calculation(y, n, x, m, error, trend, season, alpha, beta,
-                             gamma, phi, e, lik, amse, nmse):
-            """
-            Adapted from etscalc.c/etscalc
-
-            Parameters
-            ----------
-            y: float
-            n: int
-            x: float
-            m: int
-            error: int
-            trend: int
-            season: int
-            alpha: float
-            beta: float
-            gamma: float
-            phi: float
-            e: float
-            lik: float
-            amse: float
-            nmse: int
-
-            Returns
-            -------
-            x: float array
-            e: float array
-            lik: float
-            amse: float array
-            """
-
-            def _forecast(L, b, s, m, trend, season, phi, f, h):
-                """
-                Adapted from etscalc.c/forecast
-
-                Parameters
-                ----------
-                L(l): float
-                b: float
-                s: float
-                m: int
-                trend: int
-                season: int
-                phi: float
-                f: float array
-                h: int
-
-                Returns
-                -------
-                f: float array
-                """
-                phi_star = phi
-
-                # Forecasts
-                for i in range(h):
-                    if trend == 0:
-                        f[i] = L
-                    elif trend == 1:
-                        f[i] = L + phi_star * b
-                    elif b < 0:
-                        f[i] = - 99999.0
-                    else:
-                        f[i] = L * pow(b, phi_star)
-                    j = m - 1 - i
-                    while j < 0:
-                        j += m
-                    if season == 1:
-                        f[i] = f[i] + s[j]
-                    elif season == 2:
-                        f[i] = f[i] * s[j]
-                    if i < (h - 1):
-                        if abs(phi - 1) < 1.0e-10:
-                            phi_star = phi_star + 1.0
-                        else:
-                            phi_star = phi_star + pow(phi, (i+1))
-                return f
-
-            def _update(oldl, L, oldb, b, olds, s, m, trend, season,
-                        alpha, beta, gamma, phi, y):
-                """
-                Adapted from etscalc.c/update
-
-                Parameters
-                ----------
-                oldl: float
-                L(l): float
-                oldb: float
-                b: float
-                olds: float
-                s: float
-                m: int
-                trend: int
-                season: int
-                alpha: float
-                beta: float
-                gamma: float
-                phi: float
-                y: float
-
-                Returns
-                -------
-                L: float
-                b: float
-                s: float array
-                """
-                # New level
-                if trend == 0:
-                    q = oldl  # l(t - 1)
-                    phib = 0
-                elif trend == 1:
-                    phib = phi * oldb
-                    q = oldl + phib  # l(t - 1) + phi * b(t - 1)
-                elif abs(phi - 1.0) < 1.0e-10:
-                    phib = oldb
-                    q = oldl * oldb  # l(t -1) * b(t - 1)
-                else:
-                    phib = pow(oldb, phi)
-                    q = oldl * phib  # l(t - 1) * b(t - 1) ^ phi
-
-                if season == 0:
-                    p = y
-                elif season == 1:
-                    p = y - olds[m - 1]  # y[t] - s[t - m]
-                else:
-                    if abs(olds[m - 1]) < 1.0e-10:
-                        p = 1.0e10
-                    else:
-                        p = y / olds[m - 1]  # y[t] / s[t - m]
-                L = q + alpha * (p - q)
-
-                # New growth
-                if trend > 0:
-                    if trend == 1:
-                        r = L - oldl  # l[t] - l[t - 1]
-                    else:  # if trend == 2
-                        if abs(oldl) < 1.0e-10:
-                            r = 1.0e10
-                        else:
-                            r = L / oldl  # l[t] / l[t - 1]
-                    # b[t] = phi * b[t - 1] + beta * (r - phi * b[t - 1])
-                    # b[t] = b[t - 1] ^ phi + beta * (r - b[t - 1] ^ phi)
-                    b = phib + (beta / alpha) * (r - phib)
-
-                # New season
-                if trend > 0:
-                    if season == 1:
-                        t = y - q
-                    else:  # if season == 2
-                        if abs(q) < 1.0e-10:
-                            t = 1.0e10
-                        else:
-                            t = y / q
-                    # s[t] = s[t - m] + gamma * (t - s[t - m])
-                    s[0] = olds[m - 1] + gamma * (t - olds[m - 1])
-                    for j in range(m):
-                        s[j] = olds[j - 1]  # s[t] = s[t]
-
-                return L, b, s
-            # =================
-            olds = np.zeros(24)
-            s = np.zeros(24)
-            f = np.zeros(24)
-            denom = np.zeros(30)
-            oldl = L = oldb = b = lik2 = tmp = nstates = 0
-
-            # Check for m value
-            if m > 24 and season > 0:
-                return
-            elif m < 1:
-                m = 1
-
-            # Check for nmse value
-            if nmse > 30:
-                nmse = 30
-
-            nstates = m * (season > 0) + 1 + (trend > 0)
-
-            # Copy initial state components
-            L = x[0]
-            if trend > 0:
-                b = x[1]
-            if season > 0:
-                for j in range(m):
-                    s[j] = x[(trend > 0) + j + 1]
-
-            lik = 0.0
-            lik2 = 0.0
-            for j in range(nmse):
-                amse[j] = 0.0
-                denom[j] = 0.0
-
-            for i in range(n):
-                # Copy previous state
-                oldl = L
-                if trend > 0:
-                    oldb = b
-                if season > 0:
-                    for j in range(m):
-                        olds[j] = s[j]
-
-                # One step forecast
-                f = _forecast(oldl, oldb, olds, m, trend, season, phi, f, nmse)
-                if abs(f[0] - (-99999)) < 1.0e-10:
-                    lik = -99999.0
-                    return
-
-                if error == 1:
-                    e[i] = y[i] - f[0]
-                else:
-                    e[i] = (y[i] - f[0]) / f[0]
-                for j in range(nmse):
-                    if i + j < n:
-                        denom[j] += 1.0
-                        tmp = y[i+j] - f[j]
-                        amse[j] = (amse[j] * (denom[j] - 1.0) + tmp * tmp) \
-                            / denom[j]
-
-                # Update state
-                L, b, s = _update(oldl, L, oldb, b, olds, s, m, trend, season,
-                                  alpha, beta, gamma, phi, y[i])
-
-                # Store new state
-                x[nstates * (i + 1)] = L
-                if trend > 0:
-                    x[nstates * (i + 1) + 1] = b
-                if season > 0:
-                    for j in range(m):
-                        x[(trend > 0) + nstates * (i + 1) + j + 1] = s[j]
-                lik = lik + e[i] * e[i]
-                lik2 += np.log(abs(f[0]))
-
-            lik = n * np.log(lik)
-            if error == 2:
-                lik += 2 * lik2
-
-            return x, e, lik, amse
-        # ========================
         n = len(y)
         p = len(init_state)
         x = np.zeros(p * (n + 1))
@@ -1150,12 +995,259 @@ class AutoETS(BaseSktimeForecaster):
         else:  # seasontype =="M"
             season = 2
 
-        x, e, lik, amse = _ets_calculation(y, n, x, m, error, trend, season,
-                                           alpha, beta, gamma, phi, e, lik,
-                                           amse, nmse)
+        x, e, lik, amse = self._ets_calculation(y, n, x, m, error, trend,
+                                                season, alpha, beta, gamma,
+                                                phi, e, lik, amse, nmse)
 
         if not np.isnan(lik):
             if abs(lik + 99999) < 1e-7:
                 lik = np.nan
 
         return lik, amse, e, np.array(x.reshape(n + 1, p))
+
+    """
+    The following functions:
+
+    _ets_calculation
+    _forecast
+    _update
+
+    are adapted from the etscalc.c file, available at:
+    https://github.com/robjhyndman/forecast/blob/master/src/etscalc.c
+    """
+    def _ets_calculation(self, y, n, x, m, error, trend, season, alpha, beta,
+                         gamma, phi, e, lik, amse, nmse):
+        """
+        Adapted from etscalc.c/etscalc
+
+        Parameters
+        ----------
+        y: float
+        n: int
+        x: float
+        m: int
+        error: int
+        trend: int
+        season: int
+        alpha: float
+        beta: float
+        gamma: float
+        phi: float
+        e: float
+        lik: float
+        amse: float
+        nmse: int
+
+        Returns
+        -------
+        x: float array
+        e: float array
+        lik: float
+        amse: float array
+        """
+
+        def _forecast(L, b, s, m, trend, season, phi, f, h):
+            """
+            Adapted from etscalc.c/forecast
+
+            Parameters
+            ----------
+            L(l): float
+            b: float
+            s: float
+            m: int
+            trend: int
+            season: int
+            phi: float
+            f: float array
+            h: int
+
+            Returns
+            -------
+            f: float array
+            """
+            phi_star = phi
+
+            # Forecasts
+            for i in range(h):
+                if trend == 0:
+                    f[i] = L
+                elif trend == 1:
+                    f[i] = L + phi_star * b
+                elif b < 0:
+                    f[i] = - 99999.0
+                else:
+                    f[i] = L * pow(b, phi_star)
+                j = m - 1 - i
+                while j < 0:
+                    j += m
+                if season == 1:
+                    f[i] = f[i] + s[j]
+                elif season == 2:
+                    f[i] = f[i] * s[j]
+                if i < (h - 1):
+                    if abs(phi - 1) < 1.0e-10:
+                        phi_star = phi_star + 1.0
+                    else:
+                        phi_star = phi_star + pow(phi, (i+1))
+            return f
+
+        def _update(oldl, L, oldb, b, olds, s, m, trend, season,
+                    alpha, beta, gamma, phi, y):
+            """
+            Adapted from etscalc.c/update
+
+            Parameters
+            ----------
+            oldl: float
+            L(l): float
+            oldb: float
+            b: float
+            olds: float
+            s: float
+            m: int
+            trend: int
+            season: int
+            alpha: float
+            beta: float
+            gamma: float
+            phi: float
+            y: float
+
+            Returns
+            -------
+            L: float
+            b: float
+            s: float array
+            """
+            # New level
+            if trend == 0:
+                q = oldl  # l(t - 1)
+                phib = 0
+            elif trend == 1:
+                phib = phi * oldb
+                q = oldl + phib  # l(t - 1) + phi * b(t - 1)
+            elif abs(phi - 1.0) < 1.0e-10:
+                phib = oldb
+                q = oldl * oldb  # l(t -1) * b(t - 1)
+            else:
+                phib = pow(oldb, phi)
+                q = oldl * phib  # l(t - 1) * b(t - 1) ^ phi
+
+            if season == 0:
+                p = y
+            elif season == 1:
+                p = y - olds[m - 1]  # y[t] - s[t - m]
+            else:
+                if abs(olds[m - 1]) < 1.0e-10:
+                    p = 1.0e10
+                else:
+                    p = y / olds[m - 1]  # y[t] / s[t - m]
+            L = q + alpha * (p - q)
+
+            # New growth
+            if trend > 0:
+                if trend == 1:
+                    r = L - oldl  # l[t] - l[t - 1]
+                else:  # if trend == 2
+                    if abs(oldl) < 1.0e-10:
+                        r = 1.0e10
+                    else:
+                        r = L / oldl  # l[t] / l[t - 1]
+                # b[t] = phi * b[t - 1] + beta * (r - phi * b[t - 1])
+                # b[t] = b[t - 1] ^ phi + beta * (r - b[t - 1] ^ phi)
+                b = phib + (beta / alpha) * (r - phib)
+
+            # New season
+            if trend > 0:
+                if season == 1:
+                    t = y - q
+                else:  # if season == 2
+                    if abs(q) < 1.0e-10:
+                        t = 1.0e10
+                    else:
+                        t = y / q
+                # s[t] = s[t - m] + gamma * (t - s[t - m])
+                s[0] = olds[m - 1] + gamma * (t - olds[m - 1])
+                for j in range(m):
+                    s[j] = olds[j - 1]  # s[t] = s[t]
+
+            return L, b, s
+        # =================
+        olds = np.zeros(24)
+        s = np.zeros(24)
+        f = np.zeros(24)
+        denom = np.zeros(30)
+        oldl = L = oldb = b = lik2 = tmp = nstates = 0
+
+        # Check for m value
+        if m > 24 and season > 0:
+            return
+        elif m < 1:
+            m = 1
+
+        # Check for nmse value
+        if nmse > 30:
+            nmse = 30
+
+        nstates = m * (season > 0) + 1 + (trend > 0)
+
+        # Copy initial state components
+        L = x[0]
+        if trend > 0:
+            b = x[1]
+        if season > 0:
+            for j in range(m):
+                s[j] = x[(trend > 0) + j + 1]
+
+        lik = 0.0
+        lik2 = 0.0
+        for j in range(nmse):
+            amse[j] = 0.0
+            denom[j] = 0.0
+
+        for i in range(n):
+            # Copy previous state
+            oldl = L
+            if trend > 0:
+                oldb = b
+            if season > 0:
+                for j in range(m):
+                    olds[j] = s[j]
+
+            # One step forecast
+            f = _forecast(oldl, oldb, olds, m, trend, season, phi, f, nmse)
+            if abs(f[0] - (-99999)) < 1.0e-10:
+                lik = -99999.0
+                return
+
+            if error == 1:
+                e[i] = y[i] - f[0]
+            else:
+                e[i] = (y[i] - f[0]) / f[0]
+            for j in range(nmse):
+                if i + j < n:
+                    denom[j] += 1.0
+                    tmp = y[i+j] - f[j]
+                    amse[j] = (amse[j] * (denom[j] - 1.0) + tmp * tmp) \
+                        / denom[j]
+
+            # Update state
+            L, b, s = _update(oldl, L, oldb, b, olds, s, m, trend, season,
+                              alpha, beta, gamma, phi, y[i])
+
+            # Store new state
+            x[nstates * (i + 1)] = L
+            if trend > 0:
+                x[nstates * (i + 1) + 1] = b
+            if season > 0:
+                for j in range(m):
+                    x[(trend > 0) + nstates * (i + 1) + j + 1] = s[j]
+            lik = lik + e[i] * e[i]
+            lik2 += np.log(abs(f[0]))
+
+        lik = n * np.log(lik)
+        if error == 2:
+            lik += 2 * lik2
+
+        return x, e, lik, amse
