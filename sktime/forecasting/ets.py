@@ -314,9 +314,18 @@ class AutoETS(BaseSktimeForecaster):
             The documentation of nmmin() function can be found at:
             https://cran.r-project.org/doc/manuals/r-release/R-exts.html, and
             https://stat.ethz.ch/R-manual/R-devel/library/stats/html/optim.html
+        , as well as from ets.R/etsTargetFunctionInit
 
         scipy.optimize.minimize includes the same alpha, beta and gamma vlaues
         (reflection, contraction and expansion factors in Nelder-Mead method).
+
+        The etsTargetFunctionInit function is integrated into the main body of
+        this function, and the interfacting wrapper, etsTargetFunctionWrapper,
+        is eliminated with its essential component, etsNelderMead adapted.
+
+        The content of the original etsTargetFunction.cpp is integrated into
+        the _etsTargetFunction function to produce the obejctive function to
+        be optimised.
 
         Parameters
         ----------
@@ -329,10 +338,179 @@ class AutoETS(BaseSktimeForecaster):
         res: OptimizeResult object
         """
 
+        def _etsTargetFunction(par):
+            nonlocal y, nstate, error, trend, season, damped, \
+                lower, upper, optimisation_criterion, nmse, bounds, m, \
+                optAlpha, optBeta, optGamma, optPhi, givenAlpha, givenBeta, \
+                givenGamma, givenPhi, alpha, beta, gamma, phi
+
+            # Adapted from
+            # etsTargetFunction.cpp/EtsTargetFunction::admissible()
+            def admissible():
+                nonlocal alpha, beta, gamma, phi, m, \
+                    optBeta, givenBeta, optGamma, givenGamma
+
+                if phi < 0 or phi > 1 + 1e-8:
+                    return False
+
+                # If gamma was set by the user or is optimised,
+                # the bounds need to be enforced
+                if not optGamma and not givenGamma:
+                    if alpha < 1 - 1 / phi or alpha > 1 + 1 / phi:
+                        return False
+                    if optBeta or givenBeta:
+                        if beta < alpha * (phi - 1) or beta > (1 + phi) * \
+                                (2 - alpha):
+                            return False
+                elif m > 1:  # Seasonal model
+                    if not optBeta and not givenBeta:
+                        beta = 0
+
+                    d = max(1 - 1 / phi - alpha, 0)
+                    if gamma < d or gamma > 1 + 1 / phi - alpha:
+                        return False
+                    if alpha < 1 - 1 / phi - gamma * (1 - m + phi * m) / \
+                            (2 * phi * m):
+                        return False
+                    if beta < - (1 - phi) * (gamma / m + alpha):
+                        return False
+
+                    # End of easy tests. Now use characteristic equation
+                    opr = [1, alpha + beta - phi]
+                    for i in range(m - 2):
+                        opr += [alpha + beta - alpha * phi]
+                    opr += [alpha + beta - alpha * phi + gamma - 1]
+                    opr += [phi * (1 - alpha - gamma)]
+
+                    # Modify cpolyroot()
+                    # Reverse order of opr from decreasing to increasing powers
+                    opr = opr[::-1]
+                    # Obtain roots
+                    roots = np.polynomial.polynomial.polyroots(opr)
+                    # Separate real and imaginary part of the roots
+                    zeror = roots.real
+                    zeroi = roots.imag
+
+                    max_val = 0
+                    for i in range(len(zeror)):
+                        abs_val = np.sqrt(zeror[i] * zeror[i] +
+                                          zeroi[i] * zeroi[i])
+                        if abs_val > max_val:
+                            max_val = abs_val
+
+                    if max_val > 1 + 1e-10:
+                        return False
+
+                # Passed all tests
+                return True
+
+            # Adapted from
+            # etsTargetFunction.cpp/EtsTargetFunction::check_params()
+            def check_params():
+                nonlocal bounds, alpha, beta, gamma, phi, lower, upper,\
+                    optAlpha, optBeta, optGamma, optPhi
+
+                if bounds != "admissible":
+                    if optAlpha:
+                        if alpha < lower[0] or alpha > upper[0]:
+                            return False
+                    if optBeta:
+                        if beta < lower[1] or beta > alpha or beta > upper[1]:
+                            return False
+                    if optPhi:
+                        if phi < lower[3] or phi > upper[3]:
+                            return False
+                    if optGamma:
+                        if gamma < lower[2] or gamma > 1 - alpha \
+                                or gamma > upper[2]:
+                            return False
+                if bounds != "usual":
+                    if not admissible():
+                        return False
+                return True
+
+        # ======================================================================
+        # _etsNelderMead
+
+        # Adapted from etsTargetFunctionInit
+        alpha = par[0] if np.isnan(par_noopt[0]) else par_noopt[0]
+        if np.isnan(alpha):
+            raise ValueError("Alpha value error.")
+        if trendtype != "N":
+            beta = par[1] if np.isnan(par_noopt[1]) else par_noopt[1]
+            if np.isnan(beta):
+                raise ValueError("Beta value error.")
+        else:
+            beta = None
+        if seasontype != "N":
+            gamma = par[2] if np.isnan(par_noopt[2]) else par_noopt[2]
+            if np.isnan(gamma):
+                raise ValueError("Gamma value error.")
+        else:
+            m = 1
+            gamma = None
+        if damped:
+            phi = par[3] if np.isnan(par_noopt[3]) else par_noopt[3]
+            if np.isnan(phi):
+                raise ValueError("Phi value error.")
+        else:
+            phi = None
+
+        # Determine which values to optimise and which ones are given by user
+        optAlpha = alpha is not None
+        optBeta = beta is not None
+        optGamma = gamma is not None
+        optPhi = phi is not None
+
+        givenAlpha = givenBeta = givenGamma = givenPhi = False
+
+        if not np.isnan(par_noopt[0]):
+            optAlpha = False
+            givenAlpha = True
+        if not np.isnan(par_noopt[1]):
+            optBeta = False
+            givenBeta = True
+        if not np.isnan(par_noopt[2]):
+            optGamma = False
+            givenGamma = True
+        if not np.isnan(par_noopt[3]):
+            optPhi = False
+            givenPhi = True
+
+        if not damped:
+            phi = 1
+        if trendtype == "N":
+            beta = 0
+        if seasontype == "N":
+            gamma = 0
+
+        if errortype == "A":
+            error = 1
+        else:  # errortype == "M"
+            error = 2
+
+        if trendtype == "N":
+            trend = 0
+        elif trendtype == "A":
+            trend = 1
+        else:  # trendtype == "M"
+            trend = 2
+
+        if seasontype == "N":
+            season = 0
+        elif seasontype == "A":
+            season = 1
+        else:  # seasontype =="M"
+            season = 2
+
+        # Adaped from etsTargetFunctionWrapper.cpp/etsNelderMead
+
+        # Perform optimisation using the objective function
         res = minimize(fun=funcPtr, x0=dpar, method='Nelder-Mead',
                        options={'maxiter': maxit, 'xatol': tol, 'fatol': tol})
 
         return res
+
 
     def _ETsTargetFunction(self, y, nstate, errortype, trendtype, seasontype,
                            damped, lower, upper, optimisation_criterion,
@@ -380,87 +558,6 @@ class AutoETS(BaseSktimeForecaster):
         e = np.zeros(len(y))
         state = []
         n = len(y)
-
-        def admissible():
-            nonlocal alpha, beta, gamma, phi, m, \
-                optBeta, givenBeta, optGamma, givenGamma
-
-            if phi < 0 or phi > 1 + 1e-8:
-                return False
-
-            # If gamma was set by the user or is optimised,
-            # the bounds need to be enforced
-            if not optGamma and not givenGamma:
-                if alpha < 1 - 1 / phi or alpha > 1 + 1 / phi:
-                    return False
-                if optBeta or givenBeta:
-                    if beta < alpha * (phi - 1) or beta > (1 + phi) * (2 -
-                                                                       alpha):
-                        return False
-            elif m > 1:  # Seasonal model
-                if not optBeta and not givenBeta:
-                    beta = 0
-
-                d = max(1 - 1 / phi - alpha, 0)
-                if gamma < d or gamma > 1 + 1 / phi - alpha:
-                    return False
-                if alpha < 1 - 1 / phi - gamma * (1 - m + phi * m) / (2 * phi
-                                                                      * m):
-                    return False
-                if beta < - (1 - phi) * (gamma / m + alpha):
-                    return False
-
-                # End of easy tests. Now use characteristic equation
-                opr = [1, alpha + beta - phi]
-                for i in range(m - 2):
-                    opr += [alpha + beta - alpha * phi]
-                opr += [alpha + beta - alpha * phi + gamma - 1]
-                opr += [phi * (1 - alpha - gamma)]
-
-                # Modify cpolyroot()
-                # Reverse order of opr from decreasing to increasing powers
-                opr = opr[::-1]
-                # Obtain roots
-                roots = np.polynomial.polynomial.polyroots(opr)
-                # Separate real and imaginary part of the roots
-                zeror = roots.real
-                zeroi = roots.imag
-
-                max_val = 0
-                for i in range(len(zeror)):
-                    abs_val = np.sqrt(zeror[i] * zeror[i] +
-                                      zeroi[i] * zeroi[i])
-                    if abs_val > max_val:
-                        max_val = abs_val
-
-                if max_val > 1 + 1e-10:
-                    return False
-
-            # Passed all tests
-            return True
-
-        def check_params():
-            nonlocal bounds, alpha, beta, gamma, phi, lower, upper,\
-                optAlpha, optBeta, optGamma, optPhi
-
-            if bounds != "admissible":
-                if optAlpha:
-                    if alpha < lower[0] or alpha > upper[0]:
-                        return False
-                if optBeta:
-                    if beta < lower[1] or beta > alpha or beta > upper[1]:
-                        return False
-                if optPhi:
-                    if phi < lower[3] or phi > upper[3]:
-                        return False
-                if optGamma:
-                    if gamma < lower[2] or gamma > 1 - alpha \
-                            or gamma > upper[2]:
-                        return False
-            if bounds != "usual":
-                if not admissible():
-                    return False
-            return True
 
         def eval(p_par):
             nonlocal par, alpha, beta, gamma, phi, nstate, objval, state, m, \
@@ -582,75 +679,6 @@ class AutoETS(BaseSktimeForecaster):
         Returns
         -------
         """
-        alpha = par[0] if np.isnan(par_noopt[0]) else par_noopt[0]
-        if np.isnan(alpha):
-            raise ValueError("Alpha value error.")
-        if trendtype != "N":
-            beta = par[1] if np.isnan(par_noopt[1]) else par_noopt[1]
-            if np.isnan(beta):
-                raise ValueError("Beta value error.")
-        else:
-            beta = None
-        if seasontype != "N":
-            gamma = par[2] if np.isnan(par_noopt[2]) else par_noopt[2]
-            if np.isnan(gamma):
-                raise ValueError("Gamma value error.")
-        else:
-            m = 1
-            gamma = None
-        if damped:
-            phi = par[3] if np.isnan(par_noopt[3]) else par_noopt[3]
-            if np.isnan(phi):
-                raise ValueError("Phi value error.")
-        else:
-            phi = None
-
-        # Determine which values to optimise and which ones are given by user
-        optAlpha = alpha is not None
-        optBeta = beta is not None
-        optGamma = gamma is not None
-        optPhi = phi is not None
-
-        givenAlpha = givenBeta = givenGamma = givenPhi = False
-
-        if not np.isnan(par_noopt[0]):
-            optAlpha = False
-            givenAlpha = True
-        if not np.isnan(par_noopt[1]):
-            optBeta = False
-            givenBeta = True
-        if not np.isnan(par_noopt[2]):
-            optGamma = False
-            givenGamma = True
-        if not np.isnan(par_noopt[3]):
-            optPhi = False
-            givenPhi = True
-
-        if not damped:
-            phi = 1
-        if trendtype == "N":
-            beta = 0
-        if seasontype == "N":
-            gamma = 0
-
-        if errortype == "A":
-            error = 1
-        else:  # errortype == "M"
-            error = 2
-
-        if trendtype == "N":
-            trend = 0
-        elif trendtype == "A":
-            trend = 1
-        else:  # trendtype == "M"
-            trend = 2
-
-        if seasontype == "N":
-            season = 0
-        elif seasontype == "A":
-            season = 1
-        else:  # seasontype =="M"
-            season = 2
 
         res = self._ETsTargetFunction(y, nstate, error, trend, season, damped,
                                       lowerb, upperb, optimisation_criterion,
@@ -661,8 +689,8 @@ class AutoETS(BaseSktimeForecaster):
 
         return res
 
-    def _initparam(alpha, beta, gamma, phi, trendtype, seasontype, damped,
-                   lower, upper, m):
+    def _initparam(self, alpha, beta, gamma, phi, trendtype, seasontype,
+                   damped, lower, upper, m):
         """
         Adapted from ets.R/initparam
 
@@ -724,7 +752,7 @@ class AutoETS(BaseSktimeForecaster):
 
         return par
 
-    def _check_param(alpha, beta, gamma, phi, lower, upper, bounds, m):
+    def _check_param(self, alpha, beta, gamma, phi, lower, upper, bounds, m):
         """
         Adapted from ets.R/check.param
 
@@ -794,7 +822,10 @@ class AutoETS(BaseSktimeForecaster):
 
             # Passed all tests
             return 1
-        # ========================
+
+        # ======================================================================
+        # _check_param
+
         if bounds != "admissible":
             if alpha is not None:
                 if alpha < lower[0] or alpha > upper[0]:
@@ -813,7 +844,7 @@ class AutoETS(BaseSktimeForecaster):
                 return 0
         return 1
 
-    def _initstate(y, freqeuncy, trendtype, seasontype):
+    def _initstate(self, y, sp, trendtype, seasontype):
         """
         Adapted from ets.R/initstate
 
@@ -852,22 +883,24 @@ class AutoETS(BaseSktimeForecaster):
             # Compute matrix of Fourier terms
             n = len(y)
             times = np.linspace(1, n, n)
-            sp = 12
             p = 1 / sp
             X = np.zeros((n, 2))
             X[:, 0] = np.sin(2 * p * times * np.pi)
             X[:, 1] = np.cos(2 * p * times * np.pi)
             return X
 
+        # ======================================================================
+        # _initstate
+
         if seasontype != "N":
             # Do decomposition
-            m = freqeuncy
+            m = sp
             n = len(y)
             if n < 4:
                 raise ValueError("Not enough time series data.")
             elif n < 3 * m:
                 # Fit simple Fourier model
-                fouriery = _fourier(y, 12)
+                fouriery = _fourier(y, m)
                 trendy = np.linspace(1, n, n)
                 mod = smf.ols(formula='y ~ trendy + fouriery', data=y)
                 res = mod.fit()
@@ -1092,6 +1125,8 @@ class AutoETS(BaseSktimeForecaster):
                         phi_star = phi_star + pow(phi, (i+1))
             return f
 
+        # ======================================================================
+
         def _update(oldl, L, oldb, b, olds, s, m, trend, season,
                     alpha, beta, gamma, phi, y):
             """
@@ -1173,7 +1208,10 @@ class AutoETS(BaseSktimeForecaster):
                     s[j] = olds[j - 1]  # s[t] = s[t]
 
             return L, b, s
-        # =================
+
+        # ======================================================================
+        # _ets_calculation
+
         olds = np.zeros(24)
         s = np.zeros(24)
         f = np.zeros(24)
