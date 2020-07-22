@@ -3,6 +3,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import OnlineSplitter
+from .ensemble_algorithms import EnsembleAlgorithms
 
 
 class OnlineEnsembleForecaster(EnsembleForecaster):
@@ -20,13 +21,16 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, ensemble_algorithm, forecasters, n_jobs=None):
+    def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
         self.n_jobs = n_jobs
-        self.ensemble_algorithm = ensemble_algorithm
+        if ensemble_algorithm is None:
+            self.ensemble_algorithm = EnsembleAlgorithms(len(forecasters))
+        else:
+            self.ensemble_algorithm = ensemble_algorithm
 
-        if self.ensemble_algorithm.n != len(forecasters):
-            raise ValueError("Number of Experts in Ensemble Algorithm \
-                             doesn't equal number of Forecasters")
+#         if self.ensemble_algorithm.n != len(forecasters):
+#             raise ValueError("Number of Experts in Ensemble Algorithm \
+#                              doesn't equal number of Forecasters")
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters,
                                                  n_jobs=n_jobs)
