@@ -22,6 +22,7 @@ from sktime.forecasting.compose import (
     EnsembleForecaster, RecursiveRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster, StackingForecaster,
     TransformedTargetForecaster)
+from sktime.forecasting.online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import (ForecastingGridSearchCV,
                                                 SingleWindowSplitter)
@@ -87,6 +88,8 @@ ESTIMATOR_TEST_PARAMS = {
     TransformedTargetForecaster:
         {"steps": STEPS},
     EnsembleForecaster:
+        {"forecasters": FORECASTERS},
+    OnlineEnsembleForecaster:
         {"forecasters": FORECASTERS},
     StackingForecaster:
         {"forecasters": FORECASTERS, "final_regressor": REGRESSOR},

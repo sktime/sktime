@@ -2,7 +2,8 @@ import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
-from sktime.forecasting.model_selection import OnlineSplitter
+from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.base._sktime import _format_moving_cutoff_predictions
 from .ensemble_algorithms import EnsembleAlgorithms
 
 
@@ -23,10 +24,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
         self.n_jobs = n_jobs
-        if ensemble_algorithm is None:
-            self.ensemble_algorithm = EnsembleAlgorithms(len(forecasters))
-        else:
-            self.ensemble_algorithm = ensemble_algorithm
+        self.ensemble_algorithm = ensemble_algorithm
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \
@@ -35,23 +33,48 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters,
                                                  n_jobs=n_jobs)
 
-    def _fit_ensemble(self, y_val, X_val=None):
+    def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if self.ensemble_algorithm is None:
+            self.ensemble_algorithm = EnsembleAlgorithms(len(self.forecasters))
+
+        self._set_oh(y_train)
+        self._set_fh(fh)
+        names, forecasters = self._check_forecasters()
+        self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
+        self._is_fitted = True
+        return self
+
+    def _fit_ensemble(self, y_new, X_new=None):
         """Fits the ensemble by allowing forecasters to predict and
            compares to the actual parameters.
 
         Parameters
         ----------
-        y_val : pd.Series
+        y_new : pd.Series
             Target time series to which to fit the forecaster.
-        X_val : pd.DataFrame, optional (default=None)
+        X_new : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        fh = np.arange(len(y_val)) + 1
+        fh = np.arange(len(y_new)) + 1
         expert_predictions = np.column_stack(self._predict_forecasters(
-                                             fh=fh, X=X_val))
-        actual_values = np.array(y_val)
+                                             fh=fh, X=X_new))
+        y_new = np.array(y_new)
 
-        self.ensemble_algorithm._update(expert_predictions.T, actual_values)
+        self.ensemble_algorithm._update(expert_predictions.T, y_new)
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
@@ -66,7 +89,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : an instance of self
         """
-        self._fit_ensemble(y_new, X_val=X_new)
+        self._fit_ensemble(y_new, X_new=X_new)
 
         self.check_is_fitted()
         self._set_oh(y_new)
@@ -102,7 +125,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
                                            return_pred_int=return_pred_int,
                                            alpha=alpha)
 
-    def _predict_moving_cutoff(self, y, cv=OnlineSplitter(), X=None,
+    def _predict_moving_cutoff(self, y,
+                               cv=SlidingWindowSplitter(start_with_window=True,
+                                                        window_length=1,
+                                                        fh=1),
+                               X=None,
                                update_params=False,
                                return_pred_int=False,
                                alpha=DEFAULT_ALPHA):
@@ -111,7 +138,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         Parameters
         ----------
         y : pd.Series
-        cv : temporal cross-validation generator, set to OnlineSplitter()
+        cv : temporal cross-validation generator
         X : pd.DataFrame
         update_params : bool
         return_pred_int : bool
@@ -150,22 +177,3 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         return (pd.concat(
             self._predict_forecasters(fh=fh, X=X), axis=1)
                 * self.ensemble_algorithm.weights).sum(axis=1)
-
-
-def _format_moving_cutoff_predictions(y_preds, cutoffs):
-    """Format moving-cutoff predictions"""
-    if not isinstance(y_preds, list):
-        raise ValueError(
-            f"`y_preds` must be a list, but found: {type(y_preds)}")
-
-    if len(y_preds[0]) == 1:
-        # return series for single step ahead predictions
-        return pd.concat(y_preds)
-
-    else:
-        # return data frame when we predict multiple steps ahead
-        y_pred = pd.DataFrame(y_preds).T
-        y_pred.columns = cutoffs
-        if y_pred.shape[1] == 1:
-            return y_pred.iloc[:, 0]
-        return y_pred

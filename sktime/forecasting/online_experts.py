@@ -9,11 +9,8 @@ class OnlineExperts(object):
     Super-Class for general online expert style algorithms
     """
 
-    def __init__(self, **kwargs):
-        pass
-
     def _predict(self, expert_predictions):
-        pass
+        raise NotImplementedError()
 
     def _update(self, expert_predictions, actual_values):
         """Performs a weight update based on the loss between
@@ -24,7 +21,7 @@ class OnlineExperts(object):
         expert_predictions : np.array(shape=(time_axis,experts_axis)
         actual_values : np.array(), shape=(time_axis)
         """
-        pass
+        raise NotImplementedError()
 
     def _modify_weights(self, new_array):
         """Performs a pointwise multiplication of the current
@@ -301,22 +298,6 @@ def se(actual, expected):
     se: squared error between the two values
     """
     return np.power(np.subtract(actual, expected), 2)
-
-
-def mse(actual, expected):
-    """
-    Will return the mean squared error between the two arguments
-
-    Parameters
-    ----------
-    actual : float, actual value to be compared with
-    expected : float, expected value to be compared with
-
-    Returns
-    -------
-    mse: mean squared error between the two values
-    """
-    return np.mean(se(actual, expected))
 
 
 def _define_epsilon(n, T, a=1):
