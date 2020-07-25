@@ -3,7 +3,6 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.base._sktime import _format_moving_cutoff_predictions
 from .ensemble_algorithms import EnsembleAlgorithms
 
 
@@ -123,52 +122,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         return self._predict_moving_cutoff(y_test, X=X_test,
                                            update_params=update_params,
                                            return_pred_int=return_pred_int,
-                                           alpha=alpha)
-
-    def _predict_moving_cutoff(self, y,
-                               cv=SlidingWindowSplitter(start_with_window=True,
-                                                        window_length=1,
-                                                        fh=1),
-                               X=None,
-                               update_params=False,
-                               return_pred_int=False,
-                               alpha=DEFAULT_ALPHA):
-        """Make single-step or multi-step moving cutoff predictions
-
-        Parameters
-        ----------
-        y : pd.Series
-        cv : temporal cross-validation generator
-        X : pd.DataFrame
-        update_params : bool
-        return_pred_int : bool
-        alpha : float or array-like
-
-        Returns
-        -------
-        y_pred = pd.Series
-        """
-        if return_pred_int:
-            raise NotImplementedError()
-        fh = np.array([1])
-        y_preds = []
-        cutoffs = []
-        with self._detached_cutoff():
-            self._set_cutoff(y.index[0] - 1)
-            for new_window, _ in cv.split(y):
-                y_new = y.iloc[new_window]
-
-                # we cannot use update_predict_single here, as this would
-                # re-set the forecasting horizon, instead we use
-                # the internal _update_predict_single method
-                y_pred = self._update_predict_single(
-                    y_new, fh, X=X,
-                    update_params=update_params,
-                    return_pred_int=return_pred_int,
-                    alpha=alpha)
-                y_preds.append(y_pred)
-                cutoffs.append(self.cutoff)
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+                                           alpha=alpha,
+                                           cv=SlidingWindowSplitter(
+                                                start_with_window=True,
+                                                window_length=1,
+                                                fh=1)
+                                           )
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
