@@ -70,12 +70,15 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         X_new : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        fh = np.arange(len(y_new)) + 1
-        expert_predictions = np.column_stack(self._predict_forecasters(
-                                             fh=fh, X=X_new))
-        y_new = np.array(y_new)
+        if len(y_new)>=1:
+            fh = np.arange(len(y_new)) + 1
+            expert_predictions = np.column_stack(self._predict_forecasters(
+                                                 fh=fh, X=X_new))
+            y_new = np.array(y_new)
 
-        self.ensemble_algorithm._update(expert_predictions.T, y_new)
+            self.ensemble_algorithm._update(expert_predictions.T, y_new)
+        else:
+            pass
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
