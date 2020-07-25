@@ -3,6 +3,7 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from .ensemble_algorithms import EnsembleAlgorithms
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_y
 
@@ -22,9 +23,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
+    def __init__(self, forecasters,
+                 ensemble_algorithm=EnsembleAlgorithms(0),
+                 n_jobs=None):
+
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
+        if type(ensemble_algorithm) is EnsembleAlgorithms:
+            self.ensemble_algorithm._uniform_weights(len(forecasters))
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \

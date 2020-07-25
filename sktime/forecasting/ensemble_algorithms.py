@@ -46,7 +46,17 @@ class EnsembleAlgorithms(object):
         expert_predictions : np.array(), shape=(time_axis,experts_axis)
         actual_values : np.array(), shape=(time_axis)
         """
-        pass
+        raise NotImplementedError()
+
+    def _uniform_weights(self, n):
+        """ Resets weights for n expert to uniform weights
+
+        Parameters
+        ----------
+        n : int
+        """
+        self.n = n
+        self.weights = np.ones(n)/n
 
 
 class HedgeExpertEnsemble(EnsembleAlgorithms):
