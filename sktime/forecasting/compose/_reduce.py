@@ -343,13 +343,38 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
 
 ##############################################################################
-# redution to regression
+# reduction to regression
 class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
+    """
+    Forecasting based on reduction to tabular regression with a direct
+    reduction strategy.
+    For the direct reduction strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+    window_length : int (default=10)
+    step_length : int (default=1)
+    """
     pass
 
 
 class RecursiveRegressionForecaster(ReducedTabularRegressorMixin,
                                     _RecursiveReducer):
+    """
+    Forecasting based on reduction to tabular regression with a recursive
+    reduction strategy.
+    For the recursive reduction strategy, a single estimator is
+    fit for a one-step-ahead forecasting horizon and then called
+    iteratively to predict multiple steps ahead.
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+    window_length : int (default=10)
+    step_length : int (default=1)
+    """
     pass
 
 
@@ -357,11 +382,36 @@ class RecursiveRegressionForecaster(ReducedTabularRegressorMixin,
 # reduction to time series regression
 class DirectTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin,
                                            _DirectReducer):
+    """
+    Forecasting based on reduction to time series regression with a direct
+    reduction strategy.
+    For the direct reduction strategy, a separate forecaster is fitted
+    for each step ahead of the forecasting horizon
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+    window_length : int (default=10)
+    step_length : int (default=1)
+    """
     pass
 
 
 class RecursiveTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin,
                                               _RecursiveReducer):
+    """
+    Forecasting based on reduction to time series regression with a recursive
+    reduction strategy.
+    For the recursive reduction strategy, a single estimator is
+    fit for a one-step-ahead forecasting horizon and then called
+    iteratively to predict multiple steps ahead.
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+    window_length : int (default=10)
+    step_length : int (default=1)
+    """
     pass
 
 
