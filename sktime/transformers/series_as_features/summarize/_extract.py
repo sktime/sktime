@@ -257,9 +257,11 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 class FittedParamExtractor(MetaEstimatorMixin,
                            _NonFittableSeriesAsFeaturesTransformer):
     """
-    Extract parameters of a fitted forecaster as features for another algorithm.
-    This class first fits a forecaster to the given time series and then returns the fitted parameters.
-    The fitted parameters can be used as features for some tabular estimator (e.g. classification).
+    Extract parameters of a fitted forecaster as features a subsequent task.
+    This class first fits a forecaster to the given time series and then
+    returns the fitted parameters.
+    The fitted parameters can be used as features for a tabular estimator
+    (e.g. classification).
 
     Parameters
     ----------
@@ -269,7 +271,8 @@ class FittedParamExtractor(MetaEstimatorMixin,
         Name of parameters to extract from the forecaster.
     n_jobs : int, optional (default=None)
         Number of jobs to run in parallel.
-        None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
     """
     _required_parameters = ["forecaster"]
 

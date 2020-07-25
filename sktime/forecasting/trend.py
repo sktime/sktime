@@ -20,17 +20,20 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
                                 BaseSktimeForecaster):
     """
     Forecast time series data with a polynomial trend.
-    Default settings train a linear regression model with a 1st degree polynomial transformation of the feature.
+    Default settings train a linear regression model with a 1st degree
+    polynomial transformation of the feature.
 
     Parameters
     ----------
     regressor : estimator object, optional (default = None)
-        Define the regression model type. If not set, will default to sklearn.linear_model.LinearRegression
+        Define the regression model type. If not set, will default to
+         sklearn.linear_model.LinearRegression
     degree : int, optional (default = 1)
         Degree of polynomial function
     with_intercept : bool, optional (default=True)
-        If true, then include a feature in which all polynomial powers are zero.
-        (i.e. a column of ones - acts as an intercept term in a linear model)
+        If true, then include a feature in which all polynomial powers are
+        zero. (i.e. a column of ones, acts as an intercept term in a linear
+        model)
 
     Attributes
     ----------

@@ -17,15 +17,19 @@ from sktime.utils.validation.forecasting import check_y
 class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
     """
     Remove a trend from a series.
-    This transformer uses any forecaster and returns the in-sample residuals of the forecaster's predicted values.
+    This transformer uses any forecaster and returns the in-sample residuals
+    of the forecaster's predicted values.
 
     The Detrender works by first fitting the forecaster to the input data.
     To transform data, it uses the fitted forecaster to generate
-    forecasts for the time points of the passed data and returns the residuals of the forecasts.
-    Depending on the passed data, this will require it to generate in-sample or out-of-sample forecasts.
+    forecasts for the time points of the passed data and returns the residuals
+     of the forecasts.
+    Depending on the passed data, this will require it to generate in-sample
+    or out-of-sample forecasts.
 
     The detrender also works in a pipeline as a form of boosting,
-    by first detrending a time series and then fitting another forecaster on the residuals.
+    by first detrending a time series and then fitting another forecaster on
+    the residuals.
 
     For example, to remove the linear trend of a time series:
     forecaster = PolynomialTrendForecaster(degree=1)
@@ -35,7 +39,8 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
     Parameters
     ----------
     forecaster : estimator object
-        The forcasting model to remove the trend with (e.g. PolynomialTrendForecaster)
+        The forcasting model to remove the trend with
+        (e.g. PolynomialTrendForecaster)
 
     Attributes
     ----------
