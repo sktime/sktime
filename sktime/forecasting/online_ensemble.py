@@ -3,7 +3,6 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from .ensemble_algorithms import EnsembleAlgorithms
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_y
 
@@ -26,8 +25,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
-        if self.ensemble_algorithm is None:
-            self.ensemble_algorithm = EnsembleAlgorithms(len(forecasters))
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \
@@ -70,7 +67,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         X_new : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        if len(y_new)>=1:
+        if len(y_new) >= 1:
             fh = np.arange(len(y_new)) + 1
             expert_predictions = np.column_stack(self._predict_forecasters(
                                                  fh=fh, X=X_new))
