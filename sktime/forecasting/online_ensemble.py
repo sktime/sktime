@@ -24,8 +24,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
-        if self.ensemble_algorithm is None:
-            self.ensemble_algorithm = EnsembleAlgorithms(len(self.forecasters))
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \
@@ -33,6 +31,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters,
                                                  n_jobs=n_jobs)
+        if self.ensemble_algorithm is None:
+            self.ensemble_algorithm = EnsembleAlgorithms(len(self.forecasters))
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
