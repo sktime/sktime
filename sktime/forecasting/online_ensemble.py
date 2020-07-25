@@ -97,7 +97,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         return self
 
-    def update_predict(self, y_test, X_test=None, update_params=False,
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
                        return_pred_int=False,
                        alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
