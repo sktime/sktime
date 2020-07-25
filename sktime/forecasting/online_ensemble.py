@@ -4,6 +4,8 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from .ensemble_algorithms import EnsembleAlgorithms
+from sktime.utils.validation.forecasting import check_cv
+from sktime.utils.validation.forecasting import check_y
 
 
 class OnlineEnsembleForecaster(EnsembleForecaster):
@@ -33,7 +35,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters,
                                                  n_jobs=n_jobs)
-        
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -122,10 +123,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         if return_pred_int:
             raise NotImplementedError()
         y_test = check_y(y_test)
-        cv = check_cv(cv) if cv is not None else 
-                    SlidingWindowSplitter(start_with_window=True,
-                                          window_length=1,
-                                          fh=1)
+        if cv is not None:
+            cv = check_cv(cv)
+        else:
+            cv = SlidingWindowSplitter(start_with_window=True,
+                                       window_length=1,
+                                       fh=1)
 
         return self._predict_moving_cutoff(y_test, X=X_test,
                                            update_params=update_params,
