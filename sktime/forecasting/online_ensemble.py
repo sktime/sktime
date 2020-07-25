@@ -24,6 +24,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
+        if self.ensemble_algorithm is None:
+            self.ensemble_algorithm = EnsembleAlgorithms(len(self.forecasters))
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \
@@ -47,8 +49,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : returns an instance of self.
         """
-        if self.ensemble_algorithm is None:
-            self.ensemble_algorithm = EnsembleAlgorithms(len(self.forecasters))
 
         self._set_oh(y_train)
         self._set_fh(fh)
@@ -119,15 +119,16 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             Prediction intervals
         """
 
+        if cv is None:
+            cv = SlidingWindowSplitter(start_with_window=True,
+                                       window_length=1,
+                                       fh=1)
+
         return self._predict_moving_cutoff(y_test, X=X_test,
                                            update_params=update_params,
                                            return_pred_int=return_pred_int,
                                            alpha=alpha,
-                                           cv=SlidingWindowSplitter(
-                                                start_with_window=True,
-                                                window_length=1,
-                                                fh=1)
-                                           )
+                                           cv=cv)
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
