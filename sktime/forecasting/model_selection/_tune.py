@@ -446,6 +446,57 @@ class BaseGridSearch(BaseForecaster):
 
 
 class ForecastingGridSearchCV(BaseGridSearch):
+    """
+    Performs grid-search cross-validation to find optimal model parameters.
+    The forecaster is fit on the initial window and then temporal cross-validation is used to find the optimal parameter
+
+    Grid-search cross-validation is performed based on a cross-validation
+    iterator encoding the cross-validation scheme, the parameter grid to
+    search over, and (optionally) the evaluation metric for comparing model
+    performance. As in scikit-learn, tuning works through the common hyper-parameter
+    interface which allows to repeatedly fit and evaluate the same forecaster
+    with different hyper-parameters.
+
+    Parameters
+    ----------
+    forecaster : estimator object
+        The estimator should implement the sktime or scikit-learn estimator interface.
+        The either the estimator must contain a "score" function, or a scoring function must be passed.
+    cv : cross-validation generator or an iterable
+        e.g. SlidingWindowSplitter()
+    param_grid : dict or list of dictionaries
+        Model tuning parameters of the forecaster to evaluate via grid-search cross-validation
+    scoring: function, optional (default=None)
+        Function to score models for evaluation of optimal parameters
+    n_jobs: int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context. -1 means using all processors.
+    refit: bool, optional (default=True)
+        Refit the forecaster with the best parameters on all the data
+    verbose: int, optional (default=0)
+    pre_dispatch: str, optional (default='2*n_jobs')
+    error_score: numeric value or the string 'raise', optional (default=np.nan)
+        The test score returned when a forecaster fails to be fitted.
+    return_train_score: bool, optional (default=False)
+
+    Attributes
+    ----------
+    best_index_ : int
+    best_score_: float
+        Score of the best model
+    best_params_ : dict
+        Best parameter values across the parameter grid
+    best_forecaster_ : estimator
+        Fitted estimator with the best parameters
+    cv_results_ : dict
+        Results from grid search cross validation
+    n_splits_: int
+        Number of splits in the data for cross validation}
+    refit_time_ : float
+        Time (seconds) to refit the best forecaster
+    scorer_ : function
+        Function used to score model
+    """
     _required_parameters = ["forecaster", "cv", "param_grid"]
 
     def __init__(self, forecaster, cv, param_grid, scoring=None,
