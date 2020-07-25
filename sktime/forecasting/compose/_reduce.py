@@ -252,6 +252,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         y_pred = np.zeros(len(fh))
 
         # Iterate over estimators/forecast horizon
+        # Use last prediction for next prediction
         for i, regressor in enumerate(self.regressors_):
             y_pred[i] = regressor.predict(X_last)
         return y_pred
@@ -344,7 +345,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
 
 ##############################################################################
-# redution to regression
+# reduction to regression
 class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     pass
 
@@ -354,8 +355,103 @@ class RecursiveRegressionForecaster(ReducedTabularRegressorMixin,
     pass
 
 
+class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
+    strategy = "dirrec"
+
+    def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if X_train is not None:
+            raise NotImplementedError()
+
+        self._set_oh(y_train)
+        self._set_fh(fh)
+        if np.any(self.fh <= 0):
+            raise NotImplementedError(
+                "in-sample predictions are not implemented")
+
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
+        # for the direct reduction strategy, a separate forecaster is fitted
+        # for each step ahead of the forecasting horizon
+        self._cv = SlidingWindowSplitter(fh=self.fh,
+                                         window_length=self.window_length_,
+                                         step_length=self.step_length_,
+                                         start_with_window=True)
+
+        # transform data using rolling window split
+        X_train, Y_train = self._transform(y_train, X_train)
+
+        # iterate over forecasting horizon
+        self.regressors_ = []
+        for i in range(len(self.fh)):
+            y_train = Y_train[:, i]
+            regressor = clone(self.regressor)
+            regressor.fit(X_train, y_train)
+            self.regressors_.append(regressor)
+
+            column_to_add = "y_train_{}".format(i)
+            X_train[column_to_add] = y_train
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(self, fh, X=None, return_pred_int=False,
+                             alpha=DEFAULT_ALPHA):
+        """Predict"""
+        # compute prediction
+        # prepare recursive predictions
+        fh_max = fh[-1]
+        y_pred = np.zeros(fh_max)
+
+        # get last window from observation horizon
+        last_window = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+
+        # recursively predict iterating over forecasting horizon
+
+        for i in range(fh_max):
+            X_last = self._format_windows(
+                [last_window])  # convert data into required input format
+
+            # make forecast using specific fitted regressor
+            y_pred[i] = self.regressor_[i].predict(
+                X_last)
+
+            # update last window with previous prediction
+            # use full window adopting from DirectReducer
+            last_window = np.append(last_window, y_pred[i])
+
+        fh_idx = fh.index_like(self.cutoff)
+        return y_pred[fh_idx]
+
+
+class DirRecRegressionForecaster(ReducedTabularRegressorMixin, _DirRecReducer):
+    pass
+
+
+class DirRecTimeSeriesForecaster(ReducedTimeSeriesRegressorMixin,
+                                 _DirRecReducer):
+    pass
+
 ##############################################################################
 # reduction to time series regression
+
+
 class DirectTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin,
                                            _DirectReducer):
     pass
@@ -433,18 +529,20 @@ def _get_forecaster_class(scitype, strategy):
         raise ValueError(
             f"Unknown strategy, please provide one of {allowed_strategies}.")
 
-    if strategy == "dirrec":
-        raise NotImplementedError(
-            "The `dirrec` strategy is not yet implemented.")
+    # if strategy == "dirrec":
+    #     raise NotImplementedError(
+    #         "The `dirrec` strategy is not yet implemented.")
 
     lookup_table = {
         "regressor": {
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
+            "dirrec": DirRecRegressionForecaster,
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
-            "recursive": RecursiveTimeSeriesRegressionForecaster
+            "recursive": RecursiveTimeSeriesRegressionForecaster,
+            "dirrec": DirRecTimeSeriesForecaster,
         }
     }
     # look up and return forecaster class
