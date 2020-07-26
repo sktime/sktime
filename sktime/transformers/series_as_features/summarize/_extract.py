@@ -257,7 +257,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 class FittedParamExtractor(MetaEstimatorMixin,
                            _NonFittableSeriesAsFeaturesTransformer):
     """
-    Extract parameters of a fitted forecaster as features a subsequent task.
+    Extract parameters of a fitted forecaster as features for a subsequent tabular learning task.
     This class first fits a forecaster to the given time series and then
     returns the fitted parameters.
     The fitted parameters can be used as features for a tabular estimator
