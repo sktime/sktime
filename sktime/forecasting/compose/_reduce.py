@@ -354,8 +354,13 @@ class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
     Parameters
     ----------
     regressor : sklearn estimator object
-    window_length : int (default=10)
-    step_length : int (default=1)
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
     """
     pass
 
@@ -372,8 +377,13 @@ class RecursiveRegressionForecaster(ReducedTabularRegressorMixin,
     Parameters
     ----------
     regressor : sklearn estimator object
-    window_length : int (default=10)
-    step_length : int (default=1)
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
     """
     pass
 
@@ -390,9 +400,14 @@ class DirectTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin,
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-    window_length : int (default=10)
-    step_length : int (default=1)
+    regressor : sktime estimator object
+        Define the type of time series regression model.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
     """
     pass
 
@@ -408,9 +423,14 @@ class RecursiveTimeSeriesRegressionForecaster(ReducedTimeSeriesRegressorMixin,
 
     Parameters
     ----------
-    regressor : sklearn estimator object
-    window_length : int (default=10)
-    step_length : int (default=1)
+    regressor : sktime estimator object
+        Define the type of time series regression model.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
     """
     pass
 
