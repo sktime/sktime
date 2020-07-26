@@ -3,7 +3,6 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from .ensemble_algorithms import AveragingEnsemble
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_y
 
@@ -24,12 +23,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters,
-                 ensemble_algorithm=AveragingEnsemble(0),
+                 ensemble_algorithm=None,
                  n_jobs=None):
 
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
-
+        self.weights = np.ones(len(forecasters))/len(forecasters)
 
 #         if self.ensemble_algorithm.n != len(forecasters):
 #             raise ValueError("Number of Experts in Ensemble Algorithm \
@@ -58,7 +57,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
-        self.ensemble_algorithm._uniform_weights(len(forecasters))
         self._is_fitted = True
         return self
 
@@ -73,7 +71,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         X_new : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        if len(y_new) >= 1:
+        if len(y_new) >= 1 and self.ensemble_algorithm is not None:
             fh = np.arange(len(y_new)) + 1
             expert_predictions = np.column_stack(self._predict_forecasters(
                                                  fh=fh, X=X_new))
@@ -145,7 +143,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-
+        if self.ensemble_algorithm is not None:
+            self.weights = self.ensemble_algorithm.weights
         return (pd.concat(
             self._predict_forecasters(fh=fh, X=X), axis=1)
-                * self.ensemble_algorithm.weights).sum(axis=1)
+                * self.weights).sum(axis=1)
