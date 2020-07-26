@@ -109,3 +109,24 @@ class NNLSEnsemble(EnsembleAlgorithms):
         weights, loss = nnls(self.total_expert_predictions.T,
                              self.total_actual_values)
         self.weights = weights
+
+
+class AveragingEnsemble(EnsembleAlgorithms):
+    """ Wrapper class for just averaging the experts
+
+    Parameters
+    ----------
+    n : int, number of experts
+    loss_func : function, loss function
+    """
+
+    def _update(self, expert_predictions, actual_values):
+        """ Resets the weights over the experts by passing previous observations
+            to the online_expert algorithm
+
+        Parameters
+        ----------
+        expert_predictions : np.array(), shape=(time_axis,experts_axis)
+        actual_values : np.array(), shape=(time_axis)
+        """
+        pass
