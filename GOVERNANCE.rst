@@ -40,8 +40,7 @@ Any maintainer is expected to give up their role if they can no longer
 fulfil their maintenance duty. If a  maintainer fails to fulfil their
 responsibilities in the given time frame, the maintainer loses their role and all rights that come with it.
 
-Note that authors and maintainers do not *own* the algorithms or files they contributed or maintain. sktime is an open-source project, and all code is contributed under our 3-clause-BSD license. By contributing to sktime, ownership is transferred to all sktime developers and the project as a whole.
-
+Note that authors and maintainers do not own the algorithms or files they contributed or maintain. sktime is an open-source project, and all code is contributed under our `open-source license <https://github.com/alan-turing-institute/sktime/blob/master/LICENSE>`_. The project belongs to the sktime community, and all parts of it are always considered 'work in progress' so that they can evolve over time with newer contributions.
 
 Curation and inclusion criteria for algorithms
 ----------------------------------------------
@@ -162,10 +161,11 @@ Once sktime's API, frameworks, and content becomes more consolidated or when the
 
 Acknowledgments
 ---------------
+sktime is collaboratively developed by its diverse community of developers, users, educators, and other stakeholders. We value all kinds of contributions and are committed to recognising each of them fairly.
+
 We follow the `all-contributors <https://allcontributors.org>`_ specification to recognise all contributors, including those that don't contribute code. Please see `our list of all contributors <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
-If you think, we've missed anyone, please let us know or open a PR with the appropriate changes to `sktime/.all-contributorsrc <https://github
-.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc>`_.
+If you think, we've missed anything, please let us know or open a PR with the appropriate changes to `sktime/.all-contributorsrc <https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc>`_.
 
 
 References
