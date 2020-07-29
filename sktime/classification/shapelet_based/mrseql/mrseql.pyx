@@ -9,6 +9,7 @@ import numpy as np
 
 from libcpp.vector cimport vector
 from libcpp cimport bool
+from libcpp.set cimport set
 from libcpp.string cimport string
 
 __author__ = ["Thach Le Nguyen"]
@@ -20,6 +21,7 @@ cdef extern from "sax_converter.h":
         SAX(int, int, int)        
         vector[string] timeseries2SAX(vector[double])
         vector[double] map_weighted_patterns(vector[double], vector[string], vector[double])
+        vector[set[int]] map_patterns(vector[double], vector[string])
 
 cdef class PySAX:
     '''
@@ -49,6 +51,9 @@ cdef class PySAX:
 
     def map_weighted_patterns(self, ts, sequences, weights):
         return self.thisptr.map_weighted_patterns(ts, sequences, weights)
+        
+    def map_patterns(self, ts, sequences):
+        return self.thisptr.map_patterns(ts, sequences)
 
 
 class AdaptedSFA:
