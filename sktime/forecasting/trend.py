@@ -18,6 +18,27 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
                                 BaseSktimeForecaster):
+    """
+    Forecast time series data with a polynomial trend.
+    Default settings train a linear regression model with a 1st degree
+    polynomial transformation of the feature.
+
+    Parameters
+    ----------
+    regressor : estimator object, optional (default = None)
+        Define the regression model type. If not set, will default to
+         sklearn.linear_model.LinearRegression
+    degree : int, optional (default = 1)
+        Degree of polynomial function
+    with_intercept : bool, optional (default=True)
+        If true, then include a feature in which all polynomial powers are
+        zero. (i.e. a column of ones, acts as an intercept term in a linear
+        model)
+
+    Attributes
+    ----------
+
+    """
 
     def __init__(self, regressor=None, degree=1, with_intercept=True):
         self.regressor = regressor
@@ -32,11 +53,12 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         Parameters
         ----------
         y_train : pd.Series
-            Target time series to which to fit the forecaster.
+            Target time series with which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecast horizon with the steps ahead to predict.
         X_train : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -61,21 +83,25 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
 
     def predict(self, fh=None, X=None, return_pred_int=False,
                 alpha=DEFAULT_ALPHA):
-        """Make forecasts
+        """Make forecasts for the given forecast horizon
 
         Parameters
         ----------
         fh : int, list or np.array
+            The forecast horizon with the steps ahead to predict
         X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
         return_pred_int : bool, optional (default=False)
+            Return the prediction intervals for the forecast.
         alpha : float or list, optional (default=0.95)
+            If alpha is iterable, multiple intervals will be calculated.
 
         Returns
         -------
         y_pred : pd.Series
-            Point predictions
+            Point predictions for the forecast
         y_pred_int : pd.DataFrame
-            Prediction intervals
+            Prediction intervals for the forecast
         """
         if return_pred_int or X is not None:
             raise NotImplementedError()
