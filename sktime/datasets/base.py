@@ -10,14 +10,16 @@ from ..utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
-    "load_gunpoint",
     "load_arrow_head",
+    "load_gunpoint",
+    "load_osuleaf",
     "load_italy_power_demand",
     "load_basic_motions",
     "load_japanese_vowels",
     "load_shampoo_sales",
     "load_longley",
-    "load_lynx"
+    "load_lynx",
+    "load_acsf1"
 ]
 
 __author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
@@ -61,6 +63,54 @@ def _load_dataset(name, split, return_X_y):
 def load_gunpoint(split=None, return_X_y=False):
     """
     Loads the GunPoint time series classification problem and returns X and y
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      150
+    Train cases:        50
+    Test cases:         150
+    Number of classes:  2
+    This dataset involves one female actor and one male actor making a
+    motion with their
+    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
+    have their
+    hands by their sides. They draw a replicate gun from a hip-mounted
+    holster, point it
+    at a target for approximately one second, then return the gun to the
+    holster, and
+    their hands to their sides. For Point the actors have their gun by their
+    sides.
+    They point with their index fingers to a target for approximately one
+    second, and
+    then return their hands to their sides. For both classes, we tracked the
+    centroid
+    of the actor's right hands in both X- and Y-axes, which appear to be highly
+    correlated. The data in the archive is just the X-axis.
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=GunPoint
+    """
+    name = 'GunPoint'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_osuleaf(split=None, return_X_y=False):
+    """
+    Loads the OSULeaf time series classification problem and returns X and y
 
     Parameters
     ----------
@@ -82,32 +132,22 @@ def load_gunpoint(split=None, return_X_y=False):
     Details
     -------
     Dimensionality:     univariate
-    Series length:      150
-    Train cases:        50
-    Test cases:         150
-    Number of classes:  2
+    Series length:      427
+    Train cases:        200
+    Test cases:         242
+    Number of classes:  6
 
-    This dataset involves one female actor and one male actor making a
-    motion with their
-    hand. The two classes are: Gun-Draw and Point: For Gun-Draw the actors
-    have their
-    hands by their sides. They draw a replicate gun from a hip-mounted
-    holster, point it
-    at a target for approximately one second, then return the gun to the
-    holster, and
-    their hands to their sides. For Point the actors have their gun by their
-    sides.
-    They point with their index fingers to a target for approximately one
-    second, and
-    then return their hands to their sides. For both classes, we tracked the
-    centroid
-    of the actor's right hands in both X- and Y-axes, which appear to be highly
-    correlated. The data in the archive is just the X-axis.
+    The OSULeaf data set consist of one dimensional outlines of leaves.
+    The series were obtained by color image segmentation and boundary
+    extraction (in the anti-clockwise direction) from digitized leaf images
+    of six classes: Acer Circinatum, Acer Glabrum, Acer Macrophyllum,
+    Acer Negundo, Quercus Garryanaand Quercus Kelloggii for the MSc thesis
+    "Content-Based Image Retrieval: Plant Species Identification" by A Grandhi.
 
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=GunPoint
+    Dataset details: http://www.timeseriesclassification.com/description.php
+    ?Dataset=OSULeaf
     """
-    name = 'GunPoint'
+    name = 'OSULeaf'
     return _load_dataset(name, split, return_X_y)
 
 
@@ -259,6 +299,53 @@ def load_arrow_head(split=None, return_X_y=False):
     """
 
     name = 'ArrowHead'
+    return _load_dataset(name, split, return_X_y)
+
+
+def load_acsf1(split=None, return_X_y=False):
+    """
+    Loads the power consumption of typical appliances time series
+    classification problem and returns X and y.
+
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+
+    Details
+    -------
+    Dimensionality:     univariate
+    Series length:      1460
+    Train cases:        100
+    Test cases:         100
+    Number of classes:  10
+
+    The dataset contains the power consumption of typical appliances.
+    The recordings are characterized by long idle periods and some high bursts
+    of enery consumption when the appliance is active.
+    The classes correspond to 10 categories of home appliances;
+    mobile phones (via chargers), coffee machines, computer stations
+    (including monitor), fridges and freezers, Hi-Fi systems (CD players),
+    lamp (CFL), laptops (via chargers), microwave ovens, printers, and
+    televisions (LCD or LED)."
+
+    Dataset details: http://www.timeseriesclassification.com/description.php
+    ?Dataset=ACSF1
+    """
+
+    name = 'ACSF1'
     return _load_dataset(name, split, return_X_y)
 
 

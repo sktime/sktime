@@ -27,7 +27,7 @@
 sktime
 ======
 
-sktime is Python toolbox for machine learning with time series. We currently
+sktime is a Python toolbox for machine learning with time series. We currently
 support:
 
 * Forecasting,
@@ -116,7 +116,7 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
-* Check out our `examples notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
+* Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
 * Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
@@ -128,11 +128,11 @@ API Overview
 sktime is a unified toolbox for machine learning with time series. Time
 series give rise to multiple learning tasks (e.g.
 forecasting and time series classification). The goal of sktime is to
-provide all the necessary to solve these tasks, including dedicated time
+provide all the necessary tools to solve these tasks, including dedicated time
 series algorithms as well as tools for building, tuning and evaluating
 composite models.
 
-Many of these tasks are related, and an algorithm that can
+Many of these tasks are related. An algorithm that can
 solve one of them can often be re-used to help solve another one, an idea
 called reduction. sktime's unified interface allows to easily adapt an
 algorithm for one task to another.
@@ -157,6 +157,7 @@ can simply write:
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
+    >>> 0.12726230426056875
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.

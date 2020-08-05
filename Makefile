@@ -25,6 +25,8 @@ install: ## Install for the current user using the default python command
 test: ## Run unit tests
 	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
 
+tests: test
+
 lint:  ## Run linting
 	$(MAINT_DIR)/linting.sh
 

@@ -5,7 +5,8 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "ESTIMATOR_TEST_PARAMS",
-    "EXCLUDED"
+    "EXCLUDED_ESTIMATORS",
+    "EXCLUDED_TESTS"
 ]
 
 from sklearn.linear_model import LinearRegression
@@ -17,48 +18,43 @@ from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.compose import DirectRegressionForecaster
-from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import EnsembleForecaster
-from sktime.forecasting.compose import RecursiveRegressionForecaster
-from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
-from sktime.forecasting.compose import StackingForecaster
-from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.compose import (
+    DirectRegressionForecaster, DirectTimeSeriesRegressionForecaster,
+    EnsembleForecaster, RecursiveRegressionForecaster,
+    RecursiveTimeSeriesRegressionForecaster, StackingForecaster,
+    TransformedTargetForecaster)
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.model_selection import SingleWindowSplitter
+from sktime.forecasting.model_selection import (ForecastingGridSearchCV,
+                                                SingleWindowSplitter)
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.transformers.series_as_features.compose import ColumnTransformer
-from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.compose import (ColumnTransformer,
+                                                            RowTransformer)
+from sktime.transformers.series_as_features.interpolate import TSInterpolator
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.series_as_features.shapelets import \
-    ContractedShapeletTransform
-from sktime.transformers.series_as_features.shapelets import ShapeletTransform
-from sktime.transformers.series_as_features.summarize import \
-    FittedParamExtractor
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshFeatureExtractor
-from sktime.transformers.series_as_features.summarize import \
-    TSFreshRelevantFeatureExtractor
+from sktime.transformers.series_as_features.shapelets import (
+    ContractedShapeletTransform, ShapeletTransform)
+from sktime.transformers.series_as_features.summarize import (
+    FittedParamExtractor, TSFreshFeatureExtractor,
+    TSFreshRelevantFeatureExtractor)
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
-from sktime.transformers.series_as_features.interpolate import TSInterpolator
 
 # TODO fix estimators to pass all tests
-EXCLUDED = [
-    'ContractedShapeletTransform',
+EXCLUDED_ESTIMATORS = [
     'ElasticEnsemble',
     'KNeighborsTimeSeriesClassifier',
-    # 'MrSEQLClassifier',
     'ProximityForest',
     'ProximityStump',
     'ProximityTree',
-    'ShapeletTransform',
-    'ShapeletTransformClassifier',
 ]
+
+EXCLUDED_TESTS = {
+    "ShapeletTransformClassifier": ["check_fit_idempotent"],
+    "ContractedShapeletTransform": ["check_fit_idempotent"],
+}
 
 TRANSFORMER = StandardScaler()
 TRANSFORMERS = [
@@ -118,11 +114,13 @@ ESTIMATOR_TEST_PARAMS = {
     AutoARIMA:
         {"d": 0, "suppress_warnings": True},
     ShapeletTransformClassifier:
-        {"time_contract_in_mins": 0.1},
+        {"time_contract_in_mins": 0.125},
     ContractedShapeletTransform:
-        {"time_contract_in_mins": 0.1},
+        {"time_contract_in_mins": 0.125},
     ShapeletTransform:
-        {"max_shapelets_to_store_per_class": 1},
+        {"max_shapelets_to_store_per_class": 1,
+         "min_shapelet_length": 3,
+         "max_shapelet_length": 4},
     TSFreshFeatureExtractor:
         {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor:
