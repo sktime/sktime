@@ -26,7 +26,6 @@ author = u' '
 
 # The short X.Y version
 import sktime
-
 # version = '.'.join(sktime.__version__.split('.', 2)[:2])
 version = sktime.__version__
 
@@ -219,7 +218,7 @@ def setup(app):
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for nbsphinx extension ---------------------------------------
-nbsphinx_execute = 'always'  # always  # whether to run notebooks
+nbsphinx_execute = 'never'  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 
