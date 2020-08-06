@@ -37,6 +37,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                      When sp is not 1, mean of all values
                      in a season from last window will be
                      forecasted for each season.
+        * "drift": forecast the values increasing or
+                    decreasing along a linear relationship
+                     from last window
 
     sp : int, optional (default=1)
         Seasonal periodicity to use in the seasonal forecasting.
@@ -97,8 +100,18 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
             #  if not given, set default window length for the mean strategy
 
+        elif self.strategy == "drift":
+            if self.sp != 1:
+                warn("For the `drift` strategy, "
+                     "the `sp` value will be ignored.")
+            # window length we need for forecasts is just the
+            # length of seasonal periodicity
+            self.window_length_ = check_window_length(self.window_length)
+            if self.window_length is None:
+                self.window_length_ = len(y_train)
+
         else:
-            allowed_strategies = ("last", "mean")
+            allowed_strategies = ("last", "mean", "drift")
             raise ValueError(f"Unknown strategy: {self.strategy}. Expected "
                              f"one of: {allowed_strategies}.")
 
@@ -174,3 +187,16 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 # get zero-based index by subtracting the minimum
                 fh_idx = fh.index_like(self.cutoff)
                 return y_pred[fh_idx]
+
+        elif self.strategy == "drift":
+            if any(last_window) is not np.nan:
+                drift = np.mean(np.diff(last_window))
+
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
+
+                last_window = np.arange(last_window[-1],
+                                        last_window[-1] +
+                                        drift * (max(fh_idx) + 1),
+                                        drift)
+                return last_window[fh_idx]
