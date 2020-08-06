@@ -27,15 +27,19 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         Strategy used to make forecasts:
 
         * "last" : forecast the last value in the
-                    training series when sp is 1
-        * "mean" : forecast the mean of (a given window)
-                                of the training series
-        When sp is not 1, computes the "last" and "mean"
-        strategies based on values of the same season
+                    training series when sp is 1.
+                    When sp is not 1,
+                    last value of each season
+                    in the last window will be
+                    forecasted for each season.
+        * "mean" : forecast the mean of last window
+                     of training series when sp is 1.
+                     When sp is not 1, mean of all values
+                     in a season from last window will be
+                     forecasted for each season.
 
-    sp : int or None, optional (default=None)
-        Seasonal periodicity to use in the seasonal forecast strategies.
-         If None, naive strategy will be used
+    sp : int, optional (default=1)
+        Seasonal periodicity to use in the seasonal forecasting.
 
     window_length : int or None, optional (default=None)
         Window length to use in the `mean` strategy. If None, entire training
