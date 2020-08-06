@@ -51,7 +51,7 @@ GitHub account to your local disk:
 .. code-block:: bash
 
    git fetch upstream
-   git checkout dev --track origin/dev
+   git checkout --track origin/dev
    git merge upstream/dev
 
 
