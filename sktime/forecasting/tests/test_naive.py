@@ -125,10 +125,11 @@ def test_strategy_drift(fh, window_length):
 
     window_length = y_train.iloc[-window_length:]
     drift = np.mean(np.diff(window_length))
-
+    window_length = window_length.values
     # get well formatted fh values
     fh = check_fh(fh)
-    last_window = np.arange(window_length[-1],
+    last_window = np.arange(window_length[-1] +
+                            drift,
                             window_length[-1] +
                             drift * (max(fh)+1),
                             drift)

@@ -99,6 +99,8 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             self.sp_ = check_sp(self.sp)
 
             #  if not given, set default window length for the mean strategy
+            if self.window_length is None:
+                self.window_length_ = len(y_train)
 
         elif self.strategy == "drift":
             if self.sp != 1:
@@ -189,14 +191,17 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 return y_pred[fh_idx]
 
         elif self.strategy == "drift":
-            if any(last_window) is not np.nan:
-                drift = np.mean(np.diff(last_window))
+            # if NaNs exists they are counted as zero and jump
+            # in linear difference is splitted among
+            # the missing values
+            drift = np.mean(np.diff(np.nan_to_num(last_window)))
 
-                # get zero-based index by subtracting the minimum
-                fh_idx = fh.index_like(self.cutoff)
+            # get zero-based index by subtracting the minimum
+            fh_idx = fh.index_like(self.cutoff)
 
-                last_window = np.arange(last_window[-1],
-                                        last_window[-1] +
-                                        drift * (max(fh_idx) + 1),
-                                        drift)
-                return last_window[fh_idx]
+            last_window = np.arange(last_window[-1] +
+                                    drift,
+                                    last_window[-1] +
+                                    drift * (max(fh_idx) + 1),
+                                    drift)
+            return last_window[fh_idx]
