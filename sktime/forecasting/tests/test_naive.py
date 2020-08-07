@@ -129,10 +129,9 @@ def test_strategy_drift(fh, window_length):
         window_length = window_length.values
         # get well formatted fh values
         fh = check_fh(fh)
-        last_window = np.arange(window_length[-1] +
-                                drift,
+        last_window = np.arange(window_length[-1],
                                 window_length[-1] +
                                 drift * (max(fh) + 1),
                                 drift)
-        expected = last_window[fh - 1]
+        expected = last_window[fh - 1] + drift
         np.testing.assert_array_equal(y_pred, expected)

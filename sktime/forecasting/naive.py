@@ -113,8 +113,8 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 self.window_length_ = len(y_train)
             if self.window_length == 1:
                 raise ValueError(f"For the `drift` strategy, "
-                                f"the `window_length`: {self.window_length} "
-                                f"value must be more than one.")
+                                 f"the `window_length`: {self.window_length} "
+                                 f"value must be more than one.")
 
         else:
             allowed_strategies = ("last", "mean", "drift")
@@ -204,9 +204,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 # get zero-based index by subtracting the minimum
                 fh_idx = fh.index_like(self.cutoff)
 
-                last_window = np.arange(last_window[-1] +
-                                        drift,
+                last_window = np.arange(last_window[-1],
                                         last_window[-1] +
-                                        drift * (max(fh_idx) + 1),
+                                        drift * (max(fh)),
                                         drift)
+                last_window = last_window + drift
                 return last_window[fh_idx]
