@@ -111,6 +111,10 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             self.window_length_ = check_window_length(self.window_length)
             if self.window_length is None:
                 self.window_length_ = len(y_train)
+            if self.window_length == 1:
+                raise ValueError(f"For the `drift` strategy, "
+                                f"the `window_length`: {self.window_length} "
+                                f"value must be more than one.")
 
         else:
             allowed_strategies = ("last", "mean", "drift")
@@ -191,17 +195,18 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 return y_pred[fh_idx]
 
         elif self.strategy == "drift":
-            # if NaNs exists they are counted as zero and jump
-            # in linear difference is splitted among
-            # the missing values
-            drift = np.mean(np.diff(np.nan_to_num(last_window)))
+            if self.window_length_ != 1:
+                # if NaNs exists they are counted as zero and jump
+                # in linear difference is splitted among
+                # the missing values
+                drift = np.mean(np.diff(np.nan_to_num(last_window)))
 
-            # get zero-based index by subtracting the minimum
-            fh_idx = fh.index_like(self.cutoff)
+                # get zero-based index by subtracting the minimum
+                fh_idx = fh.index_like(self.cutoff)
 
-            last_window = np.arange(last_window[-1] +
-                                    drift,
-                                    last_window[-1] +
-                                    drift * (max(fh_idx) + 1),
-                                    drift)
-            return last_window[fh_idx]
+                last_window = np.arange(last_window[-1] +
+                                        drift,
+                                        last_window[-1] +
+                                        drift * (max(fh_idx) + 1),
+                                        drift)
+                return last_window[fh_idx]
