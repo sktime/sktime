@@ -114,7 +114,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if self.window_length == 1:
                 raise ValueError(f"For the `drift` strategy, "
                                  f"the `window_length`: {self.window_length} "
-                                 f"value must be more than one.")
+                                 f"value must be greater than one.")
 
         else:
             allowed_strategies = ("last", "mean", "drift")
@@ -194,19 +194,21 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 fh_idx = fh.index_like(self.cutoff)
                 return y_pred[fh_idx]
 
-        elif self.strategy == "drift":
+        # if self.strategy == "drift":
+        else:
             if self.window_length_ != 1:
-                # if NaNs exists they are counted as zero and jump
-                # in linear difference is splitted among
-                # the missing values
-                drift = np.mean(np.diff(np.nan_to_num(last_window)))
+                if np.any(np.isnan(last_window[0], last_window[-1])):
+                    raise ValueError(f"For {self.strategy},"
+                                     f"first and last elements in the last "
+                                     f"window must not be missing a value.")
+                else:
+                    # formula for slope
+                    slope = (last_window[-1] -
+                             last_window[0]) / (len(last_window) - 1)
 
-                # get zero-based index by subtracting the minimum
-                fh_idx = fh.index_like(self.cutoff)
+                    # get zero-based index by subtracting the minimum
+                    fh_idx = fh.index_like(self.cutoff)
 
-                last_window = np.arange(last_window[-1],
-                                        last_window[-1] +
-                                        drift * (max(fh)),
-                                        drift)
-                last_window = last_window + drift
-                return last_window[fh_idx]
+                    # linear extrapolation
+                    y_pred = last_window[-1] + (fh_idx + 1) * slope
+                    return y_pred

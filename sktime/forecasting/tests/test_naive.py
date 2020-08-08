@@ -124,14 +124,33 @@ def test_strategy_drift(fh, window_length):
         if window_length is None:
             window_length = len(y_train)
 
-        window_length = y_train.iloc[-window_length:]
-        drift = np.mean(np.diff(window_length))
-        window_length = window_length.values
+        last_window = y_train.iloc[-window_length:].values
+        slope = (last_window[-1] -
+                 last_window[0]) / (len(last_window) - 1)
         # get well formatted fh values
         fh = check_fh(fh)
-        last_window = np.arange(window_length[-1],
-                                window_length[-1] +
-                                drift * (max(fh) + 1),
-                                drift)
-        expected = last_window[fh - 1] + drift
+
+        expected = last_window[-1] + slope * (fh + 1)
+        np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length",
+                         [*TEST_WINDOW_LENGTHS, None])
+def test_strategy_drift_simple(fh, window_length):
+    # test for flat time series data
+    if window_length != 1:
+        y_train = np.ones((1, 20))
+        f = NaiveForecaster(strategy="drift",
+                            window_length=window_length)
+        f.fit(y_train)
+        y_pred = f.predict(fh)
+
+        if window_length is None:
+            window_length = len(y_train)
+
+        g = NaiveForecaster(strategy="last")
+        g.fit(y_train)
+        expected = g.predict(fh)
+
         np.testing.assert_array_equal(y_pred, expected)
