@@ -12,7 +12,6 @@ We are particularly motivated to support new and/or anxious collaborators, peopl
 | [Roles](#Roles) | What roles we have in sktime's community and what rights and responsibilities they have | 
 | [Decision making](#Decision-making) | How we make decisions |
 | [Acknowledging contributions](#Acknowledging-contributions) | How we acknowledge contributions
-| [Ownership](#Ownership) | Who owns contributions to sktime |
 | [Outlook](#Outlook) | What we may change in the future |
 
 
@@ -106,10 +105,7 @@ Nomination by core developers, vote by core developers, 2/3 majority and simple 
 
 To avoid deadlocks if there is an even number of CoC members, one of them will have a tie breaking priviledge. 
 
-
 ### CC members
-Membership of the CoC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CC membership votes are subject to a 
-
 CC members are core developers with additional rights and responsibilities to avoid deadlocks and ensure a smooth progress of the project. 
 
 The current members of the CC are:
@@ -132,19 +128,19 @@ The current members of the CC are:
 
 
 #### Appointment
-Membership of the CC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CC membership votes are subject to a 
-* 2/3 majority of all cast votes, as well as 
+Membership of the CC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CC membership votes are subject to: 
+* a 2/3 majority of all cast votes, as well as 
 * a simple majority approval of all the current CC members.
 
-CC members who do not actively engage with the CC duties are expected to resign. 
-
 To avoid deadlocks if there is an even number of CC members, one of them will have a tie breaking priviledge. 
+
+CC members who do not actively engage with the CC responsibilities are expected to resign. 
 
 #### Communications 
 The CC has regular public meetings that the full community is welcome to attend. 
 
 * The agenda, available at [`community-council/AGENDA.md`](https://github.com/sktime/community-council/blob/master/AGENDA.md), will be discussed in each meeting. 
-* If you want to add an agenda item to the meeting, [update the agenda](https://github.com/sktime/community-council/edit/master/AGENDA.md) and make sure you attend the meeting.
+* If you want to add an agenda item to the meeting, simply [update the agenda](https://github.com/sktime/community-council/edit/master/AGENDA.md) and make sure you attend the meeting.
 * All meetings are logged and available at [`community-council/previous_meetings/`](https://github.com/sktime/community-council/tree/master/previous_meetings).
 * To contact the CC directly, please send an email to info@sktime.org. 
 
@@ -193,7 +189,7 @@ When no consensus can be found, any core developer can call for a vote at any po
 
 For all types of changes, except appointments, the winning condition is a 2/3 majority of the votes casts by core developers including CC members. If the proposed change cannot gather a 2/3 majority of the votes cast by core developers (including CC members), the decision is escalated to the [Stage 3: conflict resolution](#Stage-3:-conflict-resolution). 
 
-For appointments, winning conditions vary depending on the role as described in the [section on roles](#Roles) above. Appointment decisions are not escalated to the CC, the nomination is simply rejected. All appointment votes take place on private chats. 
+For appointments, winning conditions vary depending on the role as described in the [section on roles](#Roles) above. Appointment decisions are not escalated to the CC. If the nomination cannot gather sufficient support, the nomination is rejected. 
 
 
 ### Stage 3: conflict resolution
@@ -205,13 +201,9 @@ If the proposed change cannot gather a 2/3 majority of the votes cast, the CC tr
 
 
 ### sktime enhancement proposals
-For all decision of the CC, an enhancement proposal must have been made public and discussed before the vote. An enhancement proposal must be a consolidated document, rather than a long discussion on an issue. We expect enhancement proposals to include most of the following: 
+For all decision of the CC, an enhancement proposal must have been made public and discussed before the vote. 
 
-1. Problem statement
-2. Motivation for proposed solution
-3. Discussion and comparison of alternative solutions
-4. Detailed description of design and implementation of proposed solution 
-6. Prototypical implementation (if applicable)
+An enhancement proposal must be a consolidated document, with a concise problem statement, a clear description of the proposed solution and a comparison with alternative solutions, as outlined in our [template](https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md). 
 
 We collect and discuss proposals in sktime's [repository for enhancement-proposals](https://github.com/sktime/enhancement-proposals). 
 
@@ -240,8 +232,7 @@ We follow the [all-contributors](https://allcontributors.org) specification to r
 
 If you think, we've missed anything, please let us know or open a PR with the appropriate changes to [`sktime/.all-contributorsrc`](https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc).
 
-## Ownership
-Contributors do not own their contributions to sktime. sktime is an open-source project, and all code is contributed under [our open-source license](https://github.com/alan-turing-institute/sktime/blob/master/LICENSE). 
+Note that contributors do not own their contributions. sktime is an open-source project, and all code is contributed under [our open-source license](https://github.com/alan-turing-institute/sktime/blob/master/LICENSE). 
 
 The project belongs to the sktime community, and all parts of it are always considered "work in progress" so that they can evolve over time with newer contributions.
 
