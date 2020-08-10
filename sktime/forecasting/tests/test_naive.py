@@ -128,7 +128,7 @@ def test_strategy_drift_unit_slope(fh, window_length):
         # get well formatted fh values
         fh = check_fh(fh)
 
-        expected = y_train.iloc[-1] + np.arange(1, max(fh) + 2)[fh]
+        expected = y_train.iloc[-1] + np.arange(0, max(fh) + 1)[fh]
         np.testing.assert_array_equal(y_pred, expected)
 
 
