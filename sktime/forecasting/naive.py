@@ -197,14 +197,14 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         # if self.strategy == "drift":
         else:
             if self.window_length_ != 1:
-                if np.any(np.isnan(last_window[0], last_window[-1])):
+                if np.any(np.isnan(last_window[[0, -1]])):
                     raise ValueError(f"For {self.strategy},"
                                      f"first and last elements in the last "
                                      f"window must not be missing a value.")
                 else:
                     # formula for slope
                     slope = (last_window[-1] -
-                             last_window[0]) / (len(last_window) - 1)
+                             last_window[0]) / (self.window_length_ - 1)
 
                     # get zero-based index by subtracting the minimum
                     fh_idx = fh.index_like(self.cutoff)

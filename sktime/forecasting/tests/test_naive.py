@@ -140,7 +140,7 @@ def test_strategy_drift(fh, window_length):
 def test_strategy_drift_simple(fh, window_length):
     # test for flat time series data
     if window_length != 1:
-        y_train = np.ones((1, 20))
+        y_train = pd.Series(np.ones(20))
         f = NaiveForecaster(strategy="drift",
                             window_length=window_length)
         f.fit(y_train)
@@ -149,8 +149,8 @@ def test_strategy_drift_simple(fh, window_length):
         if window_length is None:
             window_length = len(y_train)
 
-        g = NaiveForecaster(strategy="last")
-        g.fit(y_train)
-        expected = g.predict(fh)
+        # get well formatted fh values
+        fh = check_fh(fh)
+        expected = np.ones(len(fh))
 
         np.testing.assert_array_equal(y_pred, expected)
