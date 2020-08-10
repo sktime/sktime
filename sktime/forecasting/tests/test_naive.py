@@ -114,7 +114,8 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length",
                          [*TEST_WINDOW_LENGTHS, None])
-def test_strategy_drift(fh, window_length):
+def test_strategy_drift_unit_slope(fh, window_length):
+    # drift strategy for constant slope 1
     if window_length != 1:
         f = NaiveForecaster(strategy="drift",
                             window_length=window_length)
@@ -124,13 +125,12 @@ def test_strategy_drift(fh, window_length):
         if window_length is None:
             window_length = len(y_train)
 
-        last_window = y_train.iloc[-window_length:].values
-        slope = (last_window[-1] -
-                 last_window[0]) / (len(last_window) - 1)
+        last_point = y_train.iloc[-1].values
+
         # get well formatted fh values
         fh = check_fh(fh)
 
-        expected = last_window[-1] + slope * fh
+        expected = last_point + np.arange(1, max(fh) + 2)[fh]
         np.testing.assert_array_equal(y_pred, expected)
 
 
