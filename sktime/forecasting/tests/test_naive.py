@@ -125,12 +125,10 @@ def test_strategy_drift_unit_slope(fh, window_length):
         if window_length is None:
             window_length = len(y_train)
 
-        last_point = y_train.iloc[-1].values
-
         # get well formatted fh values
         fh = check_fh(fh)
 
-        expected = last_point + np.arange(1, max(fh) + 2)[fh]
+        expected = y_train.iloc[-1] + np.arange(1, max(fh) + 2)[fh]
         np.testing.assert_array_equal(y_pred, expected)
 
 
