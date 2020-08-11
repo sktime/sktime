@@ -175,6 +175,6 @@ def test_strategy_drift_window_length(fh, window_length):
 
         # get well formatted fh values
         fh = check_fh(fh)
-        expected = values[-1] + slope * (fh + 1)
+        expected = values[-1] + slope * fh
 
         np.testing.assert_array_equal(y_pred, expected)
