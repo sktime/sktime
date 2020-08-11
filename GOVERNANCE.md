@@ -14,13 +14,11 @@ We are particularly motivated to support new and/or anxious collaborators, peopl
 | [Acknowledging contributions](#Acknowledging-contributions) | How we acknowledge contributions
 | [Outlook](#Outlook) | What we may change in the future |
 
-
 ## Code of Conduct
 
 We value the participation of every member of our community and want to ensure an that every contributor has an enjoyable and fulfilling experience. Accordingly, everyone who participates in the sktime project is expected to show respect and courtesy to other community members at all times.
 
 To make clear what is expected, we ask all members of the community to conform to our [Code of Conduct](https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst). 
-
 
 ## Roles
 
@@ -33,7 +31,6 @@ We distinguish between the following roles. For each role, we describe their rig
 | [Core developer](#Core-developers) | direct write access, issue/PR management, veto right, voting, nomination | nomination by core developers, vote by core developers, 2/3 majority |
 | [CoC committee member](#CoC-committee-members) | CoC maintenance, investigation and enforcement | nomination by core developers, vote by core developers, 2/3 majority and simple CoC majority | 
 | [CC member](#CC-members) | conflict resolution, technical leadership, project management | nomination by core developers, vote by core developers, 2/3 majority and simple CC majority |
-
 
 ### Contributors
 
@@ -50,7 +47,6 @@ Algorithm maintainers are contributors who have contributed an algorithm. They h
 In sktime, algorithms are encapsulated in classes with specific interface requirements and are called estimators. 
 
 Maintainership operates on the level of classes. To faciliate maintainership questions, we try to write algorithms in separate files when possible. If an algorithm uses multiple files, we try to collect them in a folder.
-
 
 #### Rights and responsibilities
 
@@ -73,7 +69,6 @@ When applicable, maintainers are listed in each file as the `__author__` string.
 Core developers are contributors who have shown that they are dedicated to the continued development of the project through ongoing engagement with the community. They have shown they can be trusted to maintain sktime with care.
 
 Current core developers are listed in the [core-developers team](https://github.com/orgs/sktime/teams/core-developers/members) within the sktime organisation on GitHub.
-
 
 #### Rights and responsibilities
 
@@ -116,7 +111,6 @@ The current members of the CC are:
 | Franz Király | [@fkiraly](https://github.com/fkiraly) | 
 | Anthony Bagnall | [@TonyBagnall](https://github.com/TonyBagnall) |
 
-
 #### Rights and responsibilities
 
 | Right/responsibility | Description | 
@@ -125,7 +119,6 @@ The current members of the CC are:
 | Technical direction | Strategic planning, development roadmap |
 | Project management | Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts) |
 | Nomination | They can nominate new core developers, CoC committee members and CC members. | 
-
 
 #### Appointment
 Membership of the CC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CC membership votes are subject to: 
@@ -182,15 +175,13 @@ When no consensus can be found, the decision is escaled to [Stage 2: voting](#St
 When no consensus can be found, any core developer can call for a vote at any point during the discussion. 
 
 * The vote will conclude 10 working days from the call for the vote.
-* Votes are public and voluntary. Abstentions are allowed. 
+* Votes are public and voluntary. Abstentions are allowed. You can abstain by simply not casting a vote. 
 * All votes are a binary vote: for or against accepting the proposed changes. 
 * Votes are casts as comments: +1 (approval) or -1 (rejection).
-
 
 For all types of changes, except appointments, the winning condition is a 2/3 majority of the votes casts by core developers including CC members. If the proposed change cannot gather a 2/3 majority of the votes cast by core developers (including CC members), the decision is escalated to the [Stage 3: conflict resolution](#Stage-3:-conflict-resolution). 
 
 For appointments, winning conditions vary depending on the role as described in the [section on roles](#Roles) above. Appointment decisions are not escalated to the CC. If the nomination cannot gather sufficient support, the nomination is rejected. 
-
 
 ### Stage 3: conflict resolution
 If the proposed change cannot gather a 2/3 majority of the votes cast, the CC tries to resolve the deadlock. 
@@ -198,7 +189,6 @@ If the proposed change cannot gather a 2/3 majority of the votes cast, the CC tr
 * Any CC decision must be backed by an [enhancement proposal](#sktime-enhancement-proposals).
 * The CC will use consensus seeking.
 * If no consensus can be found within a month, the decision is made through a simple majority vote (with tie breaking) among the CC members. 
-
 
 ### sktime enhancement proposals
 For all decision of the CC, an enhancement proposal must have been made public and discussed before the vote. 
@@ -223,7 +213,6 @@ compatible way in one of [our companion repositories](https://github.com/sktime)
 
 If algorithms require major dependencies, we encourage to create a separate companion repository. For example, for deep learning techniques based on TensorFlow and Keras, we have [sktime-dl](https://github.com/sktime/sktime-dl). For smaller dependencies which are limited to a few files, we encourage to use soft dependencies, which are only required for particular modules, but not for most of sktime's functionality and not for installing sktime.
 
-
 ## Acknowledging contributions
 
 sktime is collaboratively developed by its diverse community of developers, users, educators, and other stakeholders. We value all kinds of contributions and are committed to recognising each of them fairly.
@@ -236,7 +225,6 @@ Note that contributors do not own their contributions. sktime is an open-source 
 
 The project belongs to the sktime community, and all parts of it are always considered "work in progress" so that they can evolve over time with newer contributions.
 
-
 ## Outlook
 We are open to improvement suggestions for our governance model. Once the community grows more and sktime's code base becomes more consolidated, we will consider the following changes:
 
@@ -247,7 +235,6 @@ We are open to improvement suggestions for our governance model. Once the commun
 In addition, we plan to add more roles for managening/coordinating specific project:
 * Community manager (mentorship, outreach, social media, etc),
 * Sub-councils for project-specific technical leadership (e.g. for documentation, learning tasks, continuous integration)
-
 
 ## References
 Our governance model is inspired by various existing governance structures. In particular, we'd like to acknowledge:
