@@ -152,3 +152,29 @@ def test_strategy_drift_flat_line(fh, window_length):
         expected = np.ones(len(fh))
 
         np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length",
+                         [*TEST_WINDOW_LENGTHS, None])
+def test_strategy_drift_window_length(fh, window_length):
+    # test for checking if window_length is properly working
+    if window_length != 1:
+        if window_length is None:
+            window_length = len(y_train)
+
+        values = np.random.normal(size=window_length)
+        y = pd.Series(values)
+        f = NaiveForecaster(strategy="drift",
+                            window_length=window_length)
+        f.fit(y)
+        y_pred = f.predict(fh)
+
+        slope = (values[-1] -
+                 values[0]) / (window_length - 1)
+
+        # get well formatted fh values
+        fh = check_fh(fh)
+        expected = values[-1] + slope * (fh + 1)
+
+        np.testing.assert_array_equal(y_pred, expected)
