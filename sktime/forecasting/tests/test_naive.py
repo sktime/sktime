@@ -135,7 +135,7 @@ def test_strategy_drift_unit_slope(fh, window_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length",
                          [*TEST_WINDOW_LENGTHS, None])
-def test_strategy_drift_simple(fh, window_length):
+def test_strategy_drift_flat_line(fh, window_length):
     # test for flat time series data
     if window_length != 1:
         y_train = pd.Series(np.ones(20))

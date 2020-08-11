@@ -37,9 +37,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                      When sp is not 1, mean of all values
                      in a season from last window will be
                      forecasted for each season.
-        * "drift": forecast the values increasing or
-                    decreasing along a linear relationship
-                     from last window
+        * "drift": forecast by fitting a line between the
+                    first and last point of the window and
+                     extrapolating it into the future
 
     sp : int, optional (default=1)
         Seasonal periodicity to use in the seasonal forecasting.
@@ -200,7 +200,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 if np.any(np.isnan(last_window[[0, -1]])):
                     raise ValueError(f"For {self.strategy},"
                                      f"first and last elements in the last "
-                                     f"window must not be missing a value.")
+                                     f"window must not be a missing value.")
                 else:
                     # formula for slope
                     slope = (last_window[-1] -
