@@ -190,7 +190,7 @@ If the proposed change cannot gather a 2/3 majority of the votes cast, the CC tr
 * The CC will use consensus seeking.
 * If no consensus can be found within a month, the decision is made through a simple majority vote (with tie breaking) among the CC members. 
 
-### sktime enhancement proposals
+### sktime enhancement proposals (STEPs)
 For all decision of the CC, an enhancement proposal must have been made public and discussed before the vote. 
 
 An enhancement proposal must be a consolidated document, with a concise problem statement, a clear description of the proposed solution and a comparison with alternative solutions, as outlined in our [template](https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md). 
