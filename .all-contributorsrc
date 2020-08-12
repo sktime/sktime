@@ -1,10 +1,8 @@
 {
-  "files": [
-    "CONTRIBUTORS.md"
-  ],
+  "files": ["CONTRIBUTORS.md"],
   "imageSize": 100,
   "contributorsPerLine": 7,
-  "contributorsSortAlphabetically": true,
+  "contributorsSortAlphabetically": "true",
   "skipCi": "true",
   "contributors": [
     {
