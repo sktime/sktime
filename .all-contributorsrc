@@ -1,5 +1,7 @@
 {
-  "files": ["CONTRIBUTORS.md"],
+  "files": [
+    "CONTRIBUTORS.md"
+  ],
   "imageSize": 100,
   "contributorsPerLine": 7,
   "contributorsSortAlphabetically": true,
@@ -103,7 +105,8 @@
         "ideas",
         "projectManagement",
         "question",
-        "talk"
+        "talk",
+        "mentoring"
       ]
     },
     {
@@ -279,7 +282,8 @@
         "design",
         "ideas",
         "review",
-        "tutorial"
+        "tutorial",
+        "mentoring"
       ]
     },
     {
