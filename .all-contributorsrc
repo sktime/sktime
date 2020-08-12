@@ -1,14 +1,8 @@
 {
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "",
   "files": [
     "CONTRIBUTORS.md"
   ],
   "imageSize": 100,
-  "commit": false,
-  "commitConvention": "none",
   "contributorsPerLine": 7,
   "contributorsSortAlphabetically": true,
   "skipCi": "true",
