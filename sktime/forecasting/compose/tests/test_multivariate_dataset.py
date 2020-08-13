@@ -18,18 +18,22 @@ from sktime.transformers.single_series.detrend import Detrender
 def test_pipeline():
     X, y = load_uschange()
 
-    print(y.head())
-    print(X.head())
+    # split the y data into a train and test sample
+    # use the y index to select the matching X sample
+    y_train, y_test = temporal_train_test_split(y)
+    X_train, X_test = X.iloc[y_train.index,:], X.iloc[y_test.index, :]
 
-    # y_train, y_test = temporal_train_test_split(y)
+    # Todo NaiveForecaster() ignores X_train
+    # so need to replace with a forecaster which
+    # uses X_train to implement _transform() in _reduce.py
 
-    # f = TransformedTargetForecaster([
-    #     ("t1", Deseasonalizer(sp=12, model="multiplicative")),
-    #     ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
-    #     ("f", NaiveForecaster())
-    # ])
-    # fh = np.arange(len(y_test)) + 1
-    # f.fit(y_train, fh)
+    f = TransformedTargetForecaster([
+        ("f", NaiveForecaster())
+    ])
+    fh = np.arange(len(y_test)) + 1
+    f.fit(y_train, fh, X_train=X_train)
+    
+    
     # actual = f.predict()
 
     # def compute_expected_y_pred(y_train, fh):
