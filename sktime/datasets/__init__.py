@@ -6,7 +6,8 @@ __all__ = [
     "load_italy_power_demand",
     "load_longley",
     "load_lynx",
-    "load_shampoo_sales"
+    "load_shampoo_sales",
+    "load_uschange"
 ]
 
 from sktime.datasets.base import load_airline
@@ -17,3 +18,4 @@ from sktime.datasets.base import load_italy_power_demand
 from sktime.datasets.base import load_longley
 from sktime.datasets.base import load_lynx
 from sktime.datasets.base import load_shampoo_sales
+from sktime.datasets.base import load_uschange
