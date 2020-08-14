@@ -2,7 +2,7 @@
 # coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = "Markus Löning"
+__author__ = ["Markus Löning", "Sebastiaan Koel"]
 __all__ = [
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
@@ -25,7 +25,6 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_window_length
 from sktime.utils.validation.forecasting import check_y
-import sys
 
 ##############################################################################
 # base classes for reduction from forecasting to regression
