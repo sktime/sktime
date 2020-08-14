@@ -15,42 +15,61 @@ from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
 
 
-def test_pipeline():
+
+import numpy as np
+from sktime.datasets import load_uschange
+from sktime.forecasting.compose import ReducedRegressionForecaster
+from sklearn.linear_model import LinearRegression
+# from sklearn.ensemble import RandomForestRegressor
+from sktime.forecasting.model_selection import temporal_train_test_split
+from sktime.performance_metrics.forecasting import smape_loss
+
+def test_multivariate():
     X, y = load_uschange()
 
-    # split the y data into a train and test sample
-    # use the y index to select the matching X sample
     y_train, y_test = temporal_train_test_split(y)
     X_train, X_test = X.iloc[y_train.index,:], X.iloc[y_test.index, :]
 
-    # Todo NaiveForecaster() ignores X_train
-    # so need to replace with a forecaster which
-    # uses X_train to implement _transform() in _reduce.py
 
-    f = TransformedTargetForecaster([
-        ("f", NaiveForecaster())
-    ])
-    fh = np.arange(len(y_test)) + 1
-    f.fit(y_train, fh, X_train=X_train)
-    
-    
-    # actual = f.predict()
+    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
+    regressor = LinearRegression()
+    forecaster = ReducedRegressionForecaster(regressor, window_length=2)
+    forecaster.fit(y_train, fh=fh, X_train=X_train)
 
-    # def compute_expected_y_pred(y_train, fh):
-    #     # fitting
-    #     yt = y_train.copy()
-    #     t1 = Deseasonalizer(sp=12, model="multiplicative")
-    #     yt = t1.fit_transform(yt)
-    #     t2 = Detrender(PolynomialTrendForecaster(degree=1))
-    #     yt = t2.fit_transform(yt)
-    #     f = NaiveForecaster()
-    #     f.fit(yt, fh)
+    # How is predict implemented?
+    y_pred = forecaster.predict(fh=fh, X=X_test)
+    smape_loss(y_test, y_pred)
 
-    #     # predicting
-    #     y_pred = f.predict()
-    #     y_pred = t2.inverse_transform(y_pred)
-    #     y_pred = t1.inverse_transform(y_pred)
-    #     return y_pred
 
-    # expected = compute_expected_y_pred(y_train, fh)
-    # np.testing.assert_array_equal(actual, expected)
+
+# def test_pipeline():
+#     y = load_airline()
+#     y_train, y_test = temporal_train_test_split(y)
+
+#     f = TransformedTargetForecaster([
+#         ("t1", Deseasonalizer(sp=12, model="multiplicative")),
+#         ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
+#         ("f", NaiveForecaster())
+#     ])
+#     fh = np.arange(len(y_test)) + 1
+#     f.fit(y_train, fh)
+#     actual = f.predict()
+
+#     def compute_expected_y_pred(y_train, fh):
+#         # fitting
+#         yt = y_train.copy()
+#         t1 = Deseasonalizer(sp=12, model="multiplicative")
+#         yt = t1.fit_transform(yt)
+#         t2 = Detrender(PolynomialTrendForecaster(degree=1))
+#         yt = t2.fit_transform(yt)
+#         f = NaiveForecaster()
+#         f.fit(yt, fh)
+
+#         # predicting
+#         y_pred = f.predict()
+#         y_pred = t2.inverse_transform(y_pred)
+#         y_pred = t1.inverse_transform(y_pred)
+#         return y_pred
+
+#     expected = compute_expected_y_pred(y_train, fh)
+#     np.testing.assert_array_equal(actual, expected)

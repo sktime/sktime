@@ -25,10 +25,11 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_window_length
 from sktime.utils.validation.forecasting import check_y
-
+import sys
 
 ##############################################################################
 # base classes for reduction from forecasting to regression
+
 
 class BaseReducer(BaseLastWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
@@ -63,8 +64,6 @@ class BaseReducer(BaseLastWindowForecaster):
 
     def _transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
-        if X_train is not None:
-            raise NotImplementedError()
         y_train = check_y(y_train)
 
         # get integer time index
@@ -72,11 +71,17 @@ class BaseReducer(BaseLastWindowForecaster):
 
         # Transform target series into tabular format using
         # rolling window tabularisation
+
         x_windows = []
         y_windows = []
         for x_index, y_index in cv.split(y_train):
             x_window = y_train.iloc[x_index]
             y_window = y_train.iloc[y_index]
+
+            if X_train is not None:
+                endo_window = X_train.iloc[x_index, :].transpose()\
+                    .values.flatten()
+                x_window = np.hstack((x_window, endo_window))
 
             x_windows.append(x_window)
             y_windows.append(y_window)
@@ -281,8 +286,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         self : returns an instance of self.
         """
         # input checks
-        if X_train is not None:
-            raise NotImplementedError()
+        # if X_train is not None:
+        #     raise NotImplementedError()
 
         # set values
         self._set_oh(y_train)
