@@ -4,9 +4,9 @@ Welcome to our contributing guidelines! sktime is a community-driven project and
 
 ## Contents
 * [Areas of contribution](#Areas-of-contribution)
-* [Git/GitHub workflow](#Git/GitHub-workflow)
+* [Git and GitHub workflow](#Git-and-GitHub-workflow)
 * [Continuous integration](#Continuous-integration)
-* [Documentation](#Documenation)
+* [Documentation](#Documentation)
 * [Coding style](#Coding-style)
 * [Pull request checklist](#Pull-request-checklist)
 * [Reporting bugs](#Reporting-bugs)
@@ -29,7 +29,7 @@ The following table gives an overview of key areas of contribution.
 | Mentoring | Onboarding and mentoring new contributors |
 | Project management | Finding funding, organising meetings, initiating new collaborations |
 
-## Git/GitHub workflow
+## Git and GitHub workflow
 
 The preferred workflow for contributing to sktime's repository is to fork the [main repository](https://github.com/alan-turing-institute/sktime/) on GitHub, clone, and develop on a new branch. Steps:
 
