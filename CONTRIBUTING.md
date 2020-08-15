@@ -6,6 +6,7 @@ Welcome to our contributing guidelines! sktime is a community-driven project and
 * [Areas of contribution](#Areas-of-contribution)
 * [Git/GitHub workflow](#Git/GitHub-workflow)
 * [Continuous integration](#Continuous-integration)
+* [Documentation](#Documenation)
 * [Coding style](#Coding-style)
 * [Pull request checklist](#Pull-request-checklist)
 * [Reporting bugs](#Reporting-bugs)
@@ -122,6 +123,23 @@ To check if your code passes all tests locally, you need to install the developm
     ```bash
     pytest sktime/
     ```
+
+## Documentation
+
+To build our online documentation and website locally, you need to install a few additional dependencies listed in `setup.py`. From the root directory, run:
+ 
+ ```bash
+pip install -e .[docs] 
+```  
+For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
+
+To build the website, you need to run:
+
+```bash
+make docs
+```
+
+You can find the generated files in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
 
 ## Coding style
 
