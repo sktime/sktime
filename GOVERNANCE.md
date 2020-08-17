@@ -10,7 +10,7 @@ We are particularly motivated to support new and/or anxious collaborators, peopl
 |---|---|
 | [Code of Conduct](#Code-of-Conduct) | How we expect all members of the sktime community to interact |
 | [Roles](#Roles) | What roles we have in sktime's community and what rights and responsibilities they have | 
-| [Decision making](#Decision-making) | How we make decisions |
+| [Decision making](#Decision-making) | How and by whom decisions are made |
 | [Acknowledging contributions](#Acknowledging-contributions) | How we acknowledge contributions
 | [Outlook](#Outlook) | What we may change in the future |
 
@@ -18,11 +18,11 @@ We are particularly motivated to support new and/or anxious collaborators, peopl
 
 We value the participation of every member of our community and want to ensure an that every contributor has an enjoyable and fulfilling experience. Accordingly, everyone who participates in the sktime project is expected to show respect and courtesy to other community members at all times.
 
-To make clear what is expected, we ask all members of the community to conform to our [Code of Conduct](https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst). 
+We ask all members of the community to conform to our [Code of Conduct](https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst). 
 
 ## Roles
 
-We distinguish between the following roles. For each role, we describe their rights and responsibilities, and appointment process in more detail below.
+We distinguish between the following key roles that community members may exercise. For each role, we describe their rights and responsibilities, and appointment process in more detail below.
 
 |Role | Rights/responsibilities | Appointment |
 |---|---|---|
@@ -34,19 +34,17 @@ We distinguish between the following roles. For each role, we describe their rig
 
 ### Contributors
 
-Contributors are community members who contribute in concrete ways to the project. Anyone can become a contributor, and contributions can take many forms – not only code – as detailed in the [contributing guide](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst). 
+Contributors are community members who have contributed in concrete ways to the project. Anyone can become a contributor, and contributions can take many forms – not only code – as detailed in the [contributing guide](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst). 
 
 For more details on how we acknowledge contributions, see the [Acknowledging contributions](#Acknowledging-contributions) section below.
 
-Former and current contributors are listed in [`CONTRIBUTORS.md`](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md).
+All contributors are listed in [`CONTRIBUTORS.md`](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md).
 
 ### Algorithm maintainer
 
 Algorithm maintainers are contributors who have contributed an algorithm. They have the same voting rights as core developers with regard to their algorithm. 
 
-In sktime, algorithms are encapsulated in classes with specific interface requirements and are called estimators. 
-
-Maintainership operates on the level of classes. To faciliate maintainership questions, we try to write algorithms in separate files when possible. If an algorithm uses multiple files, we try to collect them in a folder.
+In sktime, algorithms are encapsulated in classes with specific interface requirements and are called estimators. To faciliate maintainership questions, we try to write algorithms in separate files when possible. 
 
 #### Rights and responsibilities
 
@@ -60,13 +58,13 @@ Maintainership operates on the level of classes. To faciliate maintainership que
 
 The contributor who contributes an algorithm is automatically appointed as its first maintainer. If they can no longer fulfil their maintenance responsibilities, maintainers are expected to resign. 
 
-The maintainer can appoint another contributor as maintainer. No vote is required. An algorithm can have multiple maintainers. 
+When the maintainer resigns, they can appoint another contributor as the new maintainer. No vote is required.
 
 When applicable, maintainers are listed in each file as the `__author__` string.
 
 ### Core developers
 
-Core developers are contributors who have shown that they are dedicated to the continued development of the project through ongoing engagement with the community. They have shown they can be trusted to maintain sktime with care.
+Core developers are contributors who have shown that they are dedicated to the continued development of the project through ongoing engagement with the community. 
 
 Current core developers are listed in the [core-developers team](https://github.com/orgs/sktime/teams/core-developers/members) within the sktime organisation on GitHub.
 
@@ -82,9 +80,9 @@ Current core developers are listed in the [core-developers team](https://github.
 #### Appointment
 New core developers can be nominated by any current core developer. Once they have been nominated, there will be a vote by the current core developers.
 
-Voting on new core developers is one of the few activities that takes place on the project's private chat. While it is expected that most votes will be unanimous, a 2/3 majority of the cast votes is enough. The vote needs to be open for at least one week.
+Voting on new core developers is one of the few activities that takes place on the project's private chat. While it is expected that most votes will be unanimous, a 2/3 majority of the cast votes is enough. The vote needs to be open for at least five working days.
 
-Core developers that have not contributed to the project (commits or GitHub comments) in the past 12 months will be asked if they want to become *emeritus core developers* and give up their rights and responsibilities until they become active again.
+Core developers that have not contributed to the project (commits or GitHub comments) in the past 12 months will be asked if they want to become *emeritus core developers* and give up their rights and responsibilities. When they become active again, emeritus developers can retake their role without having to be appointed.
 
 ### CoC committee members
 
@@ -96,20 +94,17 @@ CoC committee members are responsible for investigating potential CoC incidents 
 In addition, they are responsible for maintaining and improving the CoC. 
 
 #### Appointment
-Nomination by core developers, vote by core developers, 2/3 majority and simple CoC majority
+Membership of the CC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CoC membership votes are subject to: 
+* a 2/3 majority of all cast votes, as well as 
+* a simple majority approval of all the current CoC members.
 
-To avoid deadlocks if there is an even number of CoC members, one of them will have a tie breaking priviledge. 
+To avoid deadlocks if there is an even number of CoC members, one of them will have a tie breaking privilege. 
+
 
 ### CC members
 CC members are core developers with additional rights and responsibilities to avoid deadlocks and ensure a smooth progress of the project. 
 
-The current members of the CC are:
-
-| Name | GitHub Account | 
-|---|---|
-| Markus Löning | [@mloning](https://github.com/mloning) | 
-| Franz Király | [@fkiraly](https://github.com/fkiraly) | 
-| Anthony Bagnall | [@TonyBagnall](https://github.com/TonyBagnall) |
+Current CC members are listed in the [community-council team](https://github.com/orgs/sktime/teams/community-council/members) within the sktime organisation on GitHub.
 
 #### Rights and responsibilities
 
@@ -118,14 +113,13 @@ The current members of the CC are:
 | Decision making: conflict resolution | see the [section on the role of the CC in the decision making](#Stage-3:-conflict-resolution) process below |
 | Technical direction | Strategic planning, development roadmap |
 | Project management | Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts) |
-| Nomination | They can nominate new core developers, CoC committee members and CC members. | 
 
 #### Appointment
 Membership of the CC is by nomination by a core developer and a vote by all core developers. A nomination will result in discussion which cannot take more than a week and then a vote by the core developers which will stay open for a week. CC membership votes are subject to: 
 * a 2/3 majority of all cast votes, as well as 
 * a simple majority approval of all the current CC members.
 
-To avoid deadlocks if there is an even number of CC members, one of them will have a tie breaking priviledge. 
+To avoid deadlocks if there is an even number of CC members, one of them will have a tie breaking privilege. 
 
 CC members who do not actively engage with the CC responsibilities are expected to resign. 
 
@@ -179,9 +173,9 @@ When no consensus can be found, any core developer can call for a vote at any po
 * All votes are a binary vote: for or against accepting the proposed changes. 
 * Votes are casts as comments: +1 (approval) or -1 (rejection).
 
-For all types of changes, except appointments, the winning condition is a 2/3 majority of the votes casts by core developers including CC members. If the proposed change cannot gather a 2/3 majority of the votes cast by core developers (including CC members), the decision is escalated to the [Stage 3: conflict resolution](#Stage-3:-conflict-resolution). 
+For all types of changes, except appointments, the winning condition is a 2/3 majority of the votes casts by core developers including CC members. If the proposed change cannot gather a 2/3 majority of the votes cast by core developers, the decision is escalated to the [Stage 3: conflict resolution](#Stage-3:-conflict-resolution). 
 
-For appointments, winning conditions vary depending on the role as described in the [section on roles](#Roles) above. Appointment decisions are not escalated to the CC. If the nomination cannot gather sufficient support, the nomination is rejected. 
+For appointments, winning conditions vary depending on the role as described in the [section on roles](#Roles) above. Appointment decisions are not escalated to the CC. If a nomination cannot gather sufficient support, the nomination is rejected. 
 
 ### Stage 3: conflict resolution
 If the proposed change cannot gather a 2/3 majority of the votes cast, the CC tries to resolve the deadlock. 
@@ -204,7 +198,7 @@ Curation is about how we select contributions, which criteria we use in order to
 We have the following guidelines:
 
 * We only consider published algorithms which have been shown to be competitive in comparative benchmarking studies or practically useful in applied projects. A technique that provides a clear-cut improvement (e.g. an enhanced data structure or a more efficient approximation technique) on a widely-used method will also be considered for inclusion.
-* From the algorithms or techniques that meet the above criteria, only those which fit well within the current framework and API of sktime are accepted. For extending current frameworks and API, see the [process for major changes]().
+* From the algorithms or techniques that meet the above criteria, only those which fit well within the current API of sktime are accepted. For algorithms that do not fit well into the current API, the API will have to be extended first. For extending current API, see the [decision making process](#Decision-making) for major changes.
 * The contributor should support the importance of the proposed addition with research papers and/or implementations in other similar packages, demonstrate its usefulness via common use-cases/applications and corroborate performance improvements, if any, with benchmarks and/or plots. It is expected that the proposed algorithm should outperform the methods that are already implemented in sktime in at least some areas.
 * We strive to consolidate existing functionality if helps to improve the usability and maintainability of the project. For example, when there are multiple techniques for the same purpose, we prefer to combine them into a single class and make case distinctions based on hyper-parameters.
 
@@ -221,7 +215,7 @@ We follow the [all-contributors](https://allcontributors.org) specification to r
 
 If you think, we've missed anything, please let us know or open a PR with the appropriate changes to [`sktime/.all-contributorsrc`](https://github.com/alan-turing-institute/sktime/blob/master/.all-contributorsrc).
 
-Note that contributors do not own their contributions. sktime is an open-source project, and all code is contributed under [our open-source license](https://github.com/alan-turing-institute/sktime/blob/master/LICENSE). 
+Note that contributors do not own their contributions. sktime is an open-source project, and all code is contributed under [our open-source license](https://github.com/alan-turing-institute/sktime/blob/master/LICENSE). All contributors ackwoledge that they have all the rights to the code they contribute to make it available under this license.
 
 The project belongs to the sktime community, and all parts of it are always considered "work in progress" so that they can evolve over time with newer contributions.
 
@@ -232,7 +226,7 @@ We are open to improvement suggestions for our governance model. Once the commun
 * Require more positive votes (less lazy consensus) to accept changes during consensus seeking stage,
 * Reduce time for maintainers to reply to issues
 
-In addition, we plan to add more roles for managening/coordinating specific project:
+In addition, we plan to add more roles for managing/coordinating specific project:
 * Community manager (mentorship, outreach, social media, etc),
 * Sub-councils for project-specific technical leadership (e.g. for documentation, learning tasks, continuous integration)
 
