@@ -215,7 +215,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             the transformers.
             By setting ``remainder`` to be an estimator, the remaining
             non-specified columns will use the ``remainder`` estimator. The
-            estimator must support :term:`fit` and :term:`transform`.
+            estimator must support `fit` and `transform`.
 
     """
     _required_parameters = ["estimators"]
