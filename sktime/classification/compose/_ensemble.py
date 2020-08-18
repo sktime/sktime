@@ -111,8 +111,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both `fit` and `predict`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -123,7 +122,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     warm_start : bool, optional (default=False)
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest.
     class_weight : dict, list of dicts, "balanced", "balanced_subsample" or \
         None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -340,7 +339,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         p : array of shape (n_samples, n_classes), or a list of n_outputs
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
-            classes corresponds to that in the attribute :term:`classes_`.
+            classes corresponds to that in the attribute `classes_`.
         """
         proba = self.predict_proba(X)
 
