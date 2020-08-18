@@ -10,14 +10,14 @@ __author__ = "Tony Bagnall"
 __all__ = ["ShapeletTransformClassifier"]
 
 import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.shapelets import \
     ContractedShapeletTransform
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
@@ -49,17 +49,12 @@ class ShapeletTransformClassifier(BaseClassifier):
     def __init__(
             self,
             time_contract_in_mins=300,
-            n_estimators=500
+            n_estimators=500,
+            random_state=None
     ):
         self.time_contract_in_mins = time_contract_in_mins
         self.n_estimators = n_estimators
-
-        self.classifier = Pipeline([
-            ('st', ContractedShapeletTransform(
-                time_contract_in_mins=time_contract_in_mins,
-                verbose=False)),
-            ('rf', RandomForestClassifier(n_estimators=n_estimators))
-        ])
+        self.random_state = random_state
 
         #        self.shapelet_transform=ContractedShapeletTransform(
         #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
@@ -85,18 +80,26 @@ class ShapeletTransformClassifier(BaseClassifier):
         self : object
          """
         X, y = check_X_y(X, y, enforce_univariate=True)
-        self.n_classes = np.unique(y).shape[0]
+
+        # if y is a pd.series then convert to array.
+        if isinstance(y, pd.Series):
+            y = y.to_numpy()
+
+# generate pipeline in fit so that random state can be propogated properly.
+        self.classifier_ = Pipeline([
+            ('st', ContractedShapeletTransform(
+                time_contract_in_mins=self.time_contract_in_mins,
+                verbose=False,
+                random_state=self.random_state)),
+            ('rf', RandomForestClassifier(n_estimators=self.n_estimators,
+                                          random_state=self.random_state))
+        ])
+
+        self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier.fit(X, y)
+        self.classifier_.fit(X, y)
 
-        #        self.shapelet_transform.fit(X,y)
-        #        print("Shapelet Search complete")
-        #        self.st_X =self.shapelet_transform.transform(X)
-        #        print("Transform complete")
-        #        X = np.asarray([a.values for a in X.iloc[:, 0]])
-        #        self.classifier.fit(X,y)
-        #       print("Build classifier complete")
         self._is_fitted = True
         return self
 
@@ -113,8 +116,10 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples]
         """
-        probs = self.predict_proba(X)
-        return np.array([self.classes_[np.argmax(prob)] for prob in probs])
+        X = check_X(X, enforce_univariate=True)
+        self.check_is_fitted()
+
+        return self.classifier_.predict(X)
 
     def predict_proba(self, X):
         """
@@ -128,6 +133,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         -------
         output : array of shape = [n_samples, num_classes] of probabilities
         """
-        self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
-        return self.classifier.predict_proba(X)
+        self.check_is_fitted()
+
+        return self.classifier_.predict_proba(X)
