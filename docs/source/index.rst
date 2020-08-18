@@ -20,5 +20,6 @@ From here, you can navigate to:
    changelog
    contributing
    about
-   contributors
+   governance
    code_of_conduct
+   contributors
