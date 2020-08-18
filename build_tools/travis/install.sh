@@ -67,6 +67,10 @@ make_conda() {
     # Install requirements from inside conda environment
     pip install -r "$REQUIREMENTS"
 
+    # Install signatory after the requirements due to limitations with
+    # signatory needing to be installed after pytorch
+    pip install signatory==1.2.0.
+
     # List installed environment
     python --version
     conda list -n testenv
