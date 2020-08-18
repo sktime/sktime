@@ -14,15 +14,13 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 <!--
-Add a Minimal, Complete, and Verifiable example (for more details, see e.g. 
-https://stackoverflow.com/help/mcve
+Add a Minimal, Complete, and Verifiable example (for more details, see e.g. https://stackoverflow.com/help/mcve
 
-If the code is too long, feel free to put it in a public gist and link
-it in the issue: https://gist.github.com
+If the code is too long, feel free to put it in a public gist and link it in the issue: https://gist.github.com
 -->
 
 ```python
-[Past your code here.]
+<Paste your code here>
 ```
 
 **Expected behavior**
@@ -39,13 +37,9 @@ Add any other context about the problem here.
 <details>
 
 <!--
-Please run the following snippet and paste the output here.
-import platform; print(platform.platform())
-import sys; print("Python", sys.version)
-import numpy; print("NumPy", numpy.__version__)
-import scipy; print("SciPy", scipy.__version__)
-import scipy; print("Pandas", pandas.__version__)
-import sktime; print("sktime", sktime.__version__)
+Please run the following code snippet and paste the output here:
+ 
+from sktime import show_versions; show_versions()
 -->
 
 </details>

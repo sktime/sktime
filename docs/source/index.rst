@@ -19,7 +19,8 @@ From here, you can navigate to:
    user_guide
    api_reference
    changelog
-   how_to_contribute
+   contributing
    about
-   contributors
+   governance
    code_of_conduct
+   contributors

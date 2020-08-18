@@ -26,7 +26,6 @@ author = u' '
 
 # The short X.Y version
 import sktime
-
 # version = '.'.join(sktime.__version__.split('.', 2)[:2])
 version = sktime.__version__
 
