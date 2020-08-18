@@ -69,7 +69,7 @@ make_conda() {
 
     # Install signatory after the requirements due to limitations with
     # signatory needing to be installed after pytorch
-    pip install signatory==1.2.0.
+    pip install signatory==1.2.0.1.4.0
 
     # List installed environment
     python --version
