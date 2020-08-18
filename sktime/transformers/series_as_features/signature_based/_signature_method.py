@@ -2,7 +2,7 @@ from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._compute import \
-    WindowSignatureTransform
+    _WindowSignatureTransform
 from sktime.transformers.series_as_features.signature_based._augmentations \
     import make_augmentation_pipeline
 from sktime.transformers.series_as_features.signature_based._rescaling import \
@@ -64,7 +64,7 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
         """ Sets up the signature method as an sklearn pipeline. """
         scaling_step = TrickScaler(scaling=self.scaling)
         augmentation_step = make_augmentation_pipeline(self.augmentation_list)
-        transform_step = WindowSignatureTransform(
+        transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
             window_depth=self.window_depth,
             window_length=self.window_length,

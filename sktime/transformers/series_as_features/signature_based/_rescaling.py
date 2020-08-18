@@ -34,17 +34,12 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
     """
     def __init__(self, scaling):
         self.scaling = scaling
-        if scaling == 'stdsc':
-            self.scaler = StandardScaler()
-        elif scaling == 'maxabs':
-            self.scaler = MaxAbsScaler()
-        elif scaling == 'minmax':
-            self.scaler = MinMaxScaler()
-        elif scaling is None:
-            self.scaler = FunctionTransformer(func=None)
-        else:
-            raise ValueError('scaling param {} not recognised.'
-                             ''.format(scaling))
+
+        # Checks
+        allowed_values = ['stdsc', 'minmax', 'maxabs', None]
+        if scaling not in allowed_values:
+            raise ValueError('scaling param {} not recognised. Must be one '
+                             'of {}.'.format(scaling, allowed_values))
 
     def _trick(self, X):
         return X.reshape(-1, X.shape[2])
@@ -53,13 +48,30 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
         return X.reshape(shape)
 
     def fit(self, X, y=None):
+        # Setup the scaler
+        scaling = self.scaling
+        if scaling == 'stdsc':
+            self.scaler = StandardScaler()
+        elif scaling == 'maxabs':
+            self.scaler = MaxAbsScaler()
+        elif scaling == 'minmax':
+            self.scaler = MinMaxScaler()
+        elif scaling is None:
+            self.scaler = FunctionTransformer(func=None)
+
         self.scaler.fit(self._trick(X), y)
         self._is_fitted = True
         return self
 
     def transform(self, X):
-        X_tfm = self.scaler.transform(self._trick(X))
-        return torch.Tensor(self._untrick(X_tfm, X.shape))
+        # Input checks
+        self.check_is_fitted()
+
+        # 3d -> 2d -> 2d_scaled -> 3d_scaled
+        X_tfm_2d = self.scaler.transform(self._trick(X))
+        X_tfm_3d = torch.Tensor(self._untrick(X_tfm_2d, X.shape))
+
+        return X_tfm_3d
 
 
 def rescale_path(path, depth):

@@ -13,7 +13,7 @@ from sktime.transformers.series_as_features.signature_based._rescaling import \
     rescale_path, rescale_signature
 
 
-class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
+class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     """Performs the signature transform over given windows.
 
     Given data of shape [N, L, C] and specification of a window method from the
@@ -34,6 +34,7 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                  sig_depth=None,
                  rescaling=None
                  ):
+        super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth
         self.window_length = window_length
@@ -48,7 +49,14 @@ class WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                                     self.window_step
                                     )
 
+    def fit(self, data, labels=None):
+        self._is_fitted = True
+        return self
+
     def transform(self, data):
+        # Input checks
+        self.check_is_fitted()
+
         # Path rescaling
         if self.rescaling == 'pre':
             data = rescale_path(data, self.depth)

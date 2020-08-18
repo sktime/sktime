@@ -134,7 +134,7 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X):
         if self.append_zero:
-            X = _BasePoint().transform(X)
+            X = _BasePoint().fit_transform(X)
         return torch.cumsum(X, 1)
 
 
