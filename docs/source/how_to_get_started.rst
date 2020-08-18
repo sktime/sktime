@@ -27,6 +27,8 @@ having to install anything.
     examples/rocket.ipynb
     examples/plateau_finder.ipynb
     examples/loading_data.ipynb
+    examples/dictionary_based_classification.ipynb
+    examples/interpolation.ipynb
 
 .. _scikit-learn: https://scikit-learn.org/stable/
 .. _getting-started guide: https://scikit-learn.org/stable/getting_started.html

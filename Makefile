@@ -51,5 +51,6 @@ docs: doc
 
 doc: ## Build documentation with Sphinx
 	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
+	rm -rf $(DOC_DIR)/source/contributing.rst && m2r CONTRIBUTING.md && mv CONTRIBUTING.rst $(DOC_DIR)/source/contributing.rst
 	$(MAKE) -C $(DOC_DIR) html
 
