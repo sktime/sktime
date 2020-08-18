@@ -8,3 +8,5 @@ cython>=0.29.0
 tsfresh
 scikit-posthocs
 pmdarima
+signatory==1.2.1.1.4.0
+torch==1.4.0
