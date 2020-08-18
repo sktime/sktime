@@ -44,10 +44,10 @@ def window_getter(window_name,
     # Setup all available windows here
     length_step = {'length': window_length, 'step': window_step}
     window_dict = {
-        'global': (Global, {}),
-        'sliding': (Sliding, length_step),
-        'expanding': (Expanding, length_step),
-        'dyadic': (Dyadic, {'depth': window_depth}),
+        'global': (_Global, {}),
+        'sliding': (_Sliding, length_step),
+        'expanding': (_Expanding, length_step),
+        'dyadic': (_Dyadic, {'depth': window_depth}),
     }
 
     assert window_name in window_dict.keys(), (
@@ -59,7 +59,7 @@ def window_getter(window_name,
     return window_cls(**window_kwargs)
 
 
-class Window:
+class _Window:
     """Abstract base class for windows.
 
     Each subclass must implement a __call__ method that returns a list of lists
@@ -82,13 +82,13 @@ class Window:
         return sum([len(w) for w in self(length)])
 
 
-class Global(Window):
+class _Global(_Window):
     """ A single window over the full data. """
     def __call__(self, length=None):
         return [[_Pair(None, None)]]
 
 
-class _ExpandingSliding(Window):
+class _ExpandingSliding(_Window):
     def __init__(self, initial_length, start_step, end_step):
         """
         Parameters
@@ -113,7 +113,7 @@ class _ExpandingSliding(Window):
         return [list(_call())]
 
 
-class Sliding(_ExpandingSliding):
+class _Sliding(_ExpandingSliding):
     """A window starting at zero and going to some point that increases
     between windows.
     """
@@ -124,12 +124,12 @@ class Sliding(_ExpandingSliding):
         length: int, The length of the window.
         step: int, The sliding step size.
         """
-        super(Sliding, self).__init__(
+        super(_Sliding, self).__init__(
             initial_length=length, start_step=step, end_step=step
         )
 
 
-class Expanding(_ExpandingSliding):
+class _Expanding(_ExpandingSliding):
     """ A window of fixed length, slid along the dataset. """
     def __init__(self, length, step):
         """
@@ -138,12 +138,12 @@ class Expanding(_ExpandingSliding):
         length: int, The length of each window.
         step: int, The step size.
         """
-        super(Expanding, self).__init__(
+        super(_Expanding, self).__init__(
             initial_length=length, start_step=0, end_step=step
         )
 
 
-class Dyadic(Window):
+class _Dyadic(_Window):
     """Windows generated 'dyadically'.
 
     These are successive windows of increasing fineness. The windows are as
@@ -166,7 +166,7 @@ class Dyadic(Window):
         description.
     """
     def __init__(self, depth):
-        super(Dyadic, self).__init__()
+        super(_Dyadic, self).__init__()
         self.depth = depth
 
     def __call__(self, length):
@@ -178,8 +178,8 @@ class Dyadic(Window):
         _out[_depth].append(_Pair(int(_offset), int(_offset + length)))
 
         if _depth < self.depth:
-            left = Dyadic(self.depth)
-            right = Dyadic(self.depth)
+            left = _Dyadic(self.depth)
+            right = _Dyadic(self.depth)
             half_length = length / 2
             # The order of left then right is important, so that they add their
             # entries to _out in the correct order.

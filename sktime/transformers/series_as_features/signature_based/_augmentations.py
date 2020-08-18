@@ -4,7 +4,7 @@ from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 
 
-def get_augmentation_pipeline(aug_list):
+def make_augmentation_pipeline(aug_list):
     """Buids an sklearn pipeline of augmentations from a list of strings.
 
     Parameters
@@ -21,7 +21,7 @@ def get_augmentation_pipeline(aug_list):
 
     Examples
     --------
-    >>> get_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
+    >>> make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
     Pipeline([
         ('leadlag', LeadLag()),
         ('ir', InvisibilityReset()),
@@ -37,11 +37,11 @@ def get_augmentation_pipeline(aug_list):
 
     # Dictionary of augmentations
     AUGMENTATIONS = {
-        'leadlag': LeadLag(),
-        'ir': InvisibilityReset(),
-        'addtime': AddTime(),
-        'cumsum': CumulativeSum(),
-        'basepoint': BasePoint()
+        'leadlag': _LeadLag(),
+        'ir': _InvisibilityReset(),
+        'addtime': _AddTime(),
+        'cumsum': _CumulativeSum(),
+        'basepoint': _BasePoint()
     }
 
     pipeline = Pipeline([
@@ -51,7 +51,7 @@ def get_augmentation_pipeline(aug_list):
     return pipeline
 
 
-class AddTime(BaseSeriesAsFeaturesTransformer):
+class _AddTime(BaseSeriesAsFeaturesTransformer):
     """Add time component to each path.
 
     For a path of shape [B, L, C] this adds a time channel to be placed at the
@@ -68,7 +68,7 @@ class AddTime(BaseSeriesAsFeaturesTransformer):
         return torch.cat((time_scaled, data), 2)
 
 
-class InvisibilityReset(BaseSeriesAsFeaturesTransformer):
+class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
     """Adds an 'invisibility-reset' dimension to the path. This adds
     sensitivity to translation.
 
@@ -93,7 +93,7 @@ class InvisibilityReset(BaseSeriesAsFeaturesTransformer):
         return X_penoff
 
 
-class LeadLag(BaseSeriesAsFeaturesTransformer):
+class _LeadLag(BaseSeriesAsFeaturesTransformer):
     """Applies the lead-lag transformation to each path.
 
     We take the lead of an input stream, and augment it with the lag of the
@@ -119,7 +119,7 @@ class LeadLag(BaseSeriesAsFeaturesTransformer):
         return X_leadlag
 
 
-class CumulativeSum(BaseSeriesAsFeaturesTransformer):
+class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     """Cumulatively sums the values in the stream.
 
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
@@ -134,11 +134,11 @@ class CumulativeSum(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X):
         if self.append_zero:
-            X = BasePoint().transform(X)
+            X = _BasePoint().transform(X)
         return torch.cumsum(X, 1)
 
 
-class BasePoint(BaseSeriesAsFeaturesTransformer):
+class _BasePoint(BaseSeriesAsFeaturesTransformer):
     """Appends a zero starting vector to every path.
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf

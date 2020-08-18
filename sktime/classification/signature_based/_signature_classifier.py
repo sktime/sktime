@@ -119,6 +119,7 @@ class SignatureClassifier(BaseClassifier):
             ('classifier', classifier)
         ])
 
+    # Handle the sktime fit checks and convert to a tensor
     @handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
         # Join the classifier onto the signature method pipeline
@@ -129,10 +130,12 @@ class SignatureClassifier(BaseClassifier):
         self._is_fitted = True
         return self
 
+    # Handle the sktime predict checks and convert to tensor format
     @handle_sktime_signatures(check_fitted=True)
     def predict(self, data):
         return self.pipeline.predict(data)
 
+    # Handle the sktime predict checks and convert to tensor format
     @handle_sktime_signatures(check_fitted=True)
     def predict_proba(self, data):
         return self.pipeline.predict_proba(data)
