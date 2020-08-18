@@ -14,25 +14,23 @@ We are particularly motivated to support new and/or anxious
 collaborators, people who are looking to learn and develop their skills,
 and anyone who has experienced discrimination in the past.
 
-+-----------------------------------+-----------------------------------+
-| Section                           | Purpose                           |
-+===================================+===================================+
-| `Code of                          | How we expect all members of the  |
-| Conduct <#Code-of-Conduct>`__     | sktime community to interact      |
-+-----------------------------------+-----------------------------------+
-| `Roles <#Roles>`__                | What roles we have in sktime’s    |
-|                                   | community and what rights and     |
-|                                   | responsibilities they have        |
-+-----------------------------------+-----------------------------------+
-| `Decision                         | How and by whom decisions are     |
-| making <#Decision-making>`__      | made                              |
-+-----------------------------------+-----------------------------------+
-| `Acknowledging                    | How we acknowledge contributions  |
-| contributions                     |                                   |
-| <#Acknowledging-contributions>`__ |                                   |
-+-----------------------------------+-----------------------------------+
-| `Outlook <#Outlook>`__            | What we may change in the future  |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Section
+     - Purpose
+   * - :ref:`code-of-conduct`
+     - How we expect all members of the sktime community to interact
+   * - :ref:`roles`
+     - What roles we have in sktime's community and what rights and responsibilities they have
+   * - :ref:`decision-making`
+     - How and by whom decisions are made
+   * - :ref:`acknowledging-contributions`
+     - How we acknowledge contributions
+   * - :ref:`outlook`
+     - What we may change in the future
+
+.. _code-of-conduct:
 
 Code of Conduct
 ---------------
@@ -46,6 +44,8 @@ all times.
 We ask all members of the community to conform to our `Code of
 Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__.
 
+.. _roles:
+
 Roles
 -----
 
@@ -53,36 +53,29 @@ We distinguish between the following key roles that community members
 may exercise. For each role, we describe their rights and
 responsibilities, and appointment process in more detail below.
 
-+-----------------------+-----------------------+-----------------------+
-| Role                  | Rights/               | Appointment           |
-|                       | responsibilities      |                       |
-+=======================+=======================+=======================+
-| `Contributor          |                       | Concrete contribution |
-| <#Contributors>`__    |                       |                       |
-+-----------------------+-----------------------+-----------------------+
-| `Algorithm            | Algorithm             | Algorithm             |
-| maintainer <#Alg      | maintenance, voting   | contribution or       |
-| orithm-maintainer>`__ | and veto right for    | appointment by        |
-|                       | changes to their      | current maintainer    |
-|                       | algorithm             |                       |
-+-----------------------+-----------------------+-----------------------+
-| `Core                 | Direct write access,  | Nomination by core    |
-| developer             | issue/PR management,  | developers, vote by   |
-| <#Core-developers>`__ | veto right, voting,   | core developers, 2/3  |
-|                       | nomination            | majority              |
-+-----------------------+-----------------------+-----------------------+
-| `CoC committee        | CoC maintenance,      | Nomination by core    |
-| member <#CoC-         | investigation and     | developers, vote by   |
-| committee-members>`__ | enforcement           | core developers, 2/3  |
-|                       |                       | majority and simple   |
-|                       |                       | CoC majority          |
-+-----------------------+-----------------------+-----------------------+
-| `CC                   | Conflict resolution,  | Nomination by core    |
-| me                    | technical leadership, | developers, vote by   |
-| mber <#CC-members>`__ | project management    | core developers, 2/3  |
-|                       |                       | majority and simple   |
-|                       |                       | CC majority           |
-+-----------------------+-----------------------+-----------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Role
+     - Rights/responsibilities
+     - Appointment
+   * - :ref:`contributors`
+     - \-
+     - Concrete contribution
+   * - :ref:`algorithm-maintainers`
+     - Algorithm maintenance, voting and veto right for changes to their algorithm
+     - Algorithm contribution or appointment by current maintainer
+   * - :ref:`core-developers`
+     - Direct write access, issue/PR management, veto right, voting, nomination
+     - Nomination by core developers, vote by core developers, 2/3 majority
+   * - :ref:`coc-committee-members`
+     - CoC maintenance, investigation and enforcement
+     - Nomination by core developers, vote by core developers, 2/3 majority and simple CoC majority
+   * - :ref:`cc-members`
+     - Conflict resolution, technical leadership, project management
+     - Nomination by core developers, vote by core developers, 2/3 majority and simple CC majority
+
+.. _contributors:
 
 Contributors
 ~~~~~~~~~~~~
@@ -92,16 +85,14 @@ to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
 guide <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.rst>`__.
 
-For more details on how we acknowledge contributions, see the
-`Acknowledging contributions <#Acknowledging-contributions>`__ section
-below.
+For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 
-All contributors are listed in
-`CONTRIBUTORS.md <https://github
-.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
+All contributors are listed in `CONTRIBUTORS.md <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__.
 
-Algorithm maintainer
-~~~~~~~~~~~~~~~~~~~~
+.. _algorithm-maintainers:
+
+Algorithm maintainers
+~~~~~~~~~~~~~~~~~~~~~
 
 Algorithm maintainers are contributors who have contributed an
 algorithm. They have the same voting rights as core developers with
@@ -115,33 +106,17 @@ when possible.
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+-----------------------------------+-----------------------------------+
-| Right/responsibility              | Description                       |
-+===================================+===================================+
-| Decision making with respect to   | Algorithm maintainers can         |
-| their algorithm                   | partipate in the decision making  |
-|                                   | process by vetoing changes and    |
-|                                   | casting votes with regard to      |
-|                                   | proposed changes to their         |
-|                                   | algorithm. This does not extend   |
-|                                   | to proposed changes to the common |
-|                                   | framework and API.                |
-+-----------------------------------+-----------------------------------+
-| Maintenance                       | They are responsible for          |
-|                                   | maintaining the code and          |
-|                                   | documentation for their           |
-|                                   | algorithm, including bug fixes,   |
-|                                   | unit testing, coding style,       |
-|                                   | compliance with the common API,   |
-|                                   | docstrings, documentation and     |
-|                                   | tutorials notebooks.              |
-+-----------------------------------+-----------------------------------+
-| Support                           | They are the first point of       |
-|                                   | contact for users and other       |
-|                                   | contributors for all questions,   |
-|                                   | issues and proposals regarding    |
-|                                   | their algorithm.                  |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+  :header-rows: 1
+
+  * - Right/responsibility
+    - Description
+  * - Decision making with respect to their algorithm
+    - Algorithm maintainers can partipate in the decision making process by vetoing changes and casting votes with regard to proposed changes to their algorithm. This does not extend to proposed changes to the common framework and API.
+  * - Maintenance
+    - They are responsible for maintaining the code and documentation for their algorithm, including bug fixes, unit testing, coding style, compliance with the common API, docstrings, documentation and tutorials notebooks.
+  * - Support
+    - They are the first point of contact for users and other contributors for all questions, issues and proposals regarding their algorithm.
 
 Appointment
 ^^^^^^^^^^^
@@ -155,6 +130,8 @@ new maintainer. No vote is required.
 
 Maintainers are listed in the `CODEOWNERS <https://github
 .com/alan-turing-institute/sktime/blob/master/CODEOWNERS>`__ file.
+
+.. _core-developers:
 
 Core developers
 ~~~~~~~~~~~~~~~
@@ -172,33 +149,20 @@ within the sktime organisation on GitHub.
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+-----------------------------------+-----------------------------------+
-| Right/responsibility              | Description                       |
-+===================================+===================================+
-| Direct access                     | Being a core developer allows     |
-|                                   | contributors to more easily carry |
-|                                   | on with their project related     |
-|                                   | activities by giving them direct  |
-|                                   | access to the project’s           |
-|                                   | repository.                       |
-+-----------------------------------+-----------------------------------+
-| Issue/PR management               | Core developers are responsible   |
-|                                   | for reviewing and managing issues |
-|                                   | and pull requests. This includes  |
-|                                   | commenting on issues, reviewing   |
-|                                   | code contributions, merging       |
-|                                   | approved pull requests, and       |
-|                                   | closing issues once resolved.     |
-+-----------------------------------+-----------------------------------+
-| Decision making                   | They can partipate in the         |
-|                                   | decision making process by        |
-|                                   | vetoing changes and casting       |
-|                                   | votes.                            |
-+-----------------------------------+-----------------------------------+
-| Nomination                        | They can nominate new core        |
-|                                   | developers, CoC committee members |
-|                                   | and CC members.                   |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Right/responsibility
+     - Description
+   * - Direct access
+     - Being a core developer allows contributors to more easily carry on with their project related activities by giving them direct access to the project’s repository.
+   * - Issue/PR management
+     - Core developers are responsible for reviewing and managing issues and pull requests. This includes commenting on issues, reviewing code contributions, merging approved pull requests, and closing issues once resolved.
+   * - Decision making
+     - They can partipate in the decision making process by vetoing changes and casting votes.
+   * - Nomination
+     - They can nominate new core developers, CoC committee members and CC members.
+
 
 .. _appointment-1:
 
@@ -219,6 +183,8 @@ GitHub comments) in the past 12 months will be asked if they want to
 become *emeritus core developers* and give up their rights and
 responsibilities. When they become active again, emeritus developers can
 retake their role without having to be appointed.
+
+.. _coc-committee-members:
 
 CoC committee members
 ~~~~~~~~~~~~~~~~~~~~~
@@ -253,6 +219,8 @@ stay open for a week. CoC membership votes are subject to:
 To avoid deadlocks if there is an even number of CoC members, one of
 them will have a tie breaking privilege.
 
+.. _cc-members:
+
 CC members
 ~~~~~~~~~~
 
@@ -269,23 +237,18 @@ within the sktime organisation on GitHub.
 Rights and responsibilities
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-+-----------------------------------+-----------------------------------+
-| Right/responsibility              | Description                       |
-+===================================+===================================+
-| Decision making: conflict         | See the section on the role of    |
-| resolution                        | the CC in the decision making     |
-|                                   | process below                     |
-+-----------------------------------+-----------------------------------+
-| Technical direction               | Strategic planning, development   |
-|                                   | roadmap                           |
-+-----------------------------------+-----------------------------------+
-| Project management                | Funding, collaborations with      |
-|                                   | external organisations, community |
-|                                   | infrastructure (chat server,      |
-|                                   | GitHub repositories, continuous   |
-|                                   | integration accounts, social      |
-|                                   | media accounts)                   |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Right/responsibility
+     - Description
+   * - Decision making: conflict resolution
+     - see :ref:`stage-3` below
+   * - Technical direction
+     - Strategic planning, development roadmap
+   * - Project management
+     - Funding, collaborations with external organisations, community infrastructure (chat server, GitHub repositories, continuous integration accounts, social media accounts)
+
 
 .. _appointment-3:
 
@@ -322,6 +285,8 @@ attend.
    `community-council/previous_meetings/ <https://github.com/sktime/community-council/tree/master/previous_meetings>`__.
 -  To contact the CC directly, please send an email to info@sktime.org.
 
+.. _decision-making:
+
 Decision making
 ---------------
 
@@ -336,9 +301,7 @@ avoiding deadlocks when no consensus can be found.
 
 All discussion and votes takes place on the project’s `issue
 tracker <https://github.com/alan-turing-institute/sktime/issues>`__,
-`pull
-requests <https://github.com/alan-turing-institute/sktime/pulls>`__ or
-`enhancement proposals <#sktime-enhancement-proposals>`__. Some
+`pull requests <https://github.com/alan-turing-institute/sktime/pulls>`__ or an :ref:`steps`. Some
 sensitive discussions and appointment votes occur on private chats.
 
 The CC reserves the right to overrule decisions.
@@ -346,30 +309,25 @@ The CC reserves the right to overrule decisions.
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
 
-+-----------------------------------+-----------------------------------+
-| Type of change                    | Decision making process           |
-+===================================+===================================+
-| Code additions, such as new       | Lazy consensus, supported by the  |
-| algorithms                        | `algorithm inclusion criteria     |
-|                                   | <#Algorithm-inclusion-criteria>`_ |
-+-----------------------------------+-----------------------------------+
-| Minor documentation changes, such | Lazy consensus                    |
-| as typo fixes, or                 |                                   |
-| addition/correction of a sentence |                                   |
-+-----------------------------------+-----------------------------------+
-| Code changes and major            | Lazy consensus                    |
-| documentation changes             |                                   |
-+-----------------------------------+-----------------------------------+
-| Changes to the API design, hard   | Lazy consensus based on an        |
-| dependencies, or supported        | `enhancement proposal             |
-| versions                          | <#sktime-enhancement-proposals>`_ |
-+-----------------------------------+-----------------------------------+
-| Changes to sktime’s governance    | Lazy consensus based on an        |
-| (this document and the CoC)       | `enhancement proposal             |
-|                                   | <#sktime-enhancement-proposals>`_ |
-+-----------------------------------+-----------------------------------+
-| Appointment                       | Voting                            |
-+-----------------------------------+-----------------------------------+
+.. list-table::
+   :header-rows: 1
+
+   * - Type of change
+     - Decision making process
+   * - Code additions, such as new algorithms
+     - Lazy consensus, supported by the :ref:`algorithm-inclusion-guidelines`
+   * - Minor documentation changes, such as typo fixes, or addition/correction of a sentence
+     - Lazy consensus
+   * - Code changes and major documentation changes
+     - Lazy consensus
+   * - Changes to the API design, hard dependencies, or supported versions
+     - Lazy consensus based on an :ref:`steps`
+   * - Changes to sktime's governance (this document and the CoC)
+     - Lazy consensus based on an :ref:`steps`
+   * - Appointment
+     - Voting
+
+.. _stage-1:
 
 Stage 1: lazy consensus with veto right
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -387,11 +345,11 @@ core developers.
    others would agree.
 -  More important changes that impact the full project require a more
    detailed analysis and a consensus that is both explicit and informed.
-   These changes require an `enhancement
-   proposal <#sktime-enhancement-proposals>`__.
+   These changes require an :ref:`steps`.
 
-When no consensus can be found, the decision is escaled to `Stage 2:
-voting <#Stage-2:-voting>`__.
+When no consensus can be found, the decision is escaled to :ref:`stage-2`.
+
+.. _stage-2:
 
 Stage 2: voting
 ~~~~~~~~~~~~~~~
@@ -409,13 +367,14 @@ at any point during the discussion.
 For all types of changes, except appointments, the winning condition is
 a 2/3 majority of the votes casts by core developers including CC
 members. If the proposed change cannot gather a 2/3 majority of the
-votes cast by core developers, the decision is escalated to the `Stage
-3: conflict resolution <#Stage-3:-conflict-resolution>`__.
+votes cast by core developers, the decision is escalated to the :ref:`stage-3`.
 
 For appointments, winning conditions vary depending on the role as
-described in the `section on roles <#Roles>`__ above. Appointment
+described in :ref:`roles` above. Appointment
 decisions are not escalated to the CC. If a nomination cannot gather
 sufficient support, the nomination is rejected.
+
+.. _stage-3:
 
 Stage 3: conflict resolution
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -423,20 +382,21 @@ Stage 3: conflict resolution
 If the proposed change cannot gather a 2/3 majority of the votes cast,
 the CC tries to resolve the deadlock.
 
--  Any CC decision must be backed by an `enhancement
-   proposal <#sktime-enhancement-proposals>`__.
 -  The CC will use consensus seeking.
 -  If no consensus can be found within a month, the decision is made
    through a simple majority vote (with tie breaking) among the CC
    members.
+-  Any CC decision must be supported by an :ref:`steps`, which has been made public and discussed before the vote.
 
-sktime enhancement proposals (STEPs)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _steps:
 
-For all decision of the CC, an enhancement proposal must have been made
+sktime enhancement proposal
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For all decision of the CC, an sktime enhancement proposal (STEP) must have been made
 public and discussed before the vote.
 
-An enhancement proposal must be a consolidated document, with a concise
+An sktime enhancement proposal is a consolidated document, with a concise
 problem statement, a clear description of the proposed solution and a
 comparison with alternative solutions, as outlined in our
 `template <https://github.com/sktime/enhancement-proposals/blob/master/TEMPLATE.md>`__.
@@ -444,8 +404,10 @@ comparison with alternative solutions, as outlined in our
 We collect and discuss proposals in sktime’s `repository for
 enhancement-proposals <https://github.com/sktime/enhancement-proposals>`__.
 
-Algorithm inclusion criteria
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. _algorithm-inclusion-guidelines:
+
+Algorithm inclusion guidelines
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Curation is about how we select contributions, which criteria we use in
 order to decide which contributions to include, and in which cases we
@@ -492,6 +454,8 @@ dependencies which are limited to a few files, we encourage to use soft
 dependencies, which are only required for particular modules, but not
 for most of sktime’s functionality and not for installing sktime.
 
+.. _acknowledging-contributions:
+
 Acknowledging contributions
 ---------------------------
 
@@ -518,6 +482,8 @@ The project belongs to the sktime community, and all parts of it are
 always considered “work in progress” so that they can evolve over time
 with newer contributions.
 
+.. _outlook:
+
 Outlook
 -------
 
@@ -536,6 +502,8 @@ specific project:
 
 * Community manager (mentorship, outreach, social media, etc),
 * Sub-councils for project-specific technical leadership (e.g.  for documentation, learning tasks, continuous integration)
+
+.. _references:
 
 References
 ----------
