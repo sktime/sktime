@@ -15,7 +15,14 @@ DEFAULT_ALPHA = 0.05
 
 
 class BaseForecaster(BaseEstimator):
-    """Base forecaster"""
+    """Base forecaster
+
+    The base forecaster specifies the methods and method
+    signatures that all forecasters have to implement.
+
+    Specific implementations of these methods is deferred to concrete
+    forecasters.
+    """
 
     def __init__(self):
         self._is_fitted = False
@@ -59,7 +66,7 @@ class BaseForecaster(BaseEstimator):
         raise NotImplementedError("abstract method")
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -147,7 +154,7 @@ class BaseForecaster(BaseEstimator):
 
 
 def is_forecaster(estimator):
-    """Return True if the given estimator is (probably) a forecaster.
+    """Return True if the given estimator is a forecaster.
 
     Parameters
     ----------

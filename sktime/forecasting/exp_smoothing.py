@@ -1,12 +1,12 @@
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["Markus Löning", "@big-o"]
 
-from sktime.forecasting.base._statsmodels import BaseStatsModelsAdapter
+from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
 from statsmodels.tsa.holtwinters import \
     ExponentialSmoothing as _ExponentialSmoothing
 
 
-class ExponentialSmoothing(BaseStatsModelsAdapter):
+class ExponentialSmoothing(_StatsModelsAdapter):
     """
     Holt-Winters exponential smoothing forecaster. Default settings use
     simple exponential smoothing

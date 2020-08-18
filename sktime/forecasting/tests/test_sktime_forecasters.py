@@ -39,26 +39,26 @@ y = make_forecasting_problem()
 y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
-# test oh setting
+# test _y setting
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_oh_setting(Forecaster):
-    # check oh and cutoff is None after construction
+    # check _y and cutoff is None after construction
     f = _construct_instance(Forecaster)
-    assert f.oh is None
+    assert f._y is None
     assert f.cutoff is None
 
-    # check that oh and cutoff is updated during fit
+    # check that _y and cutoff is updated during fit
     f.fit(y_train, FH0)
-    assert isinstance(f.oh, pd.Series)
-    assert len(f.oh) > 0
+    assert isinstance(f._y, pd.Series)
+    assert len(f._y) > 0
     assert f.cutoff == y_train.index[-1]
 
     # check data pointers
-    np.testing.assert_array_equal(f.oh.index, y_train.index)
+    np.testing.assert_array_equal(f._y.index, y_train.index)
 
-    # check that oh and cutoff is updated during update
+    # check that _y and cutoff is updated during update
     f.update(y_test, update_params=False)
-    np.testing.assert_array_equal(f.oh.index,
+    np.testing.assert_array_equal(f._y.index,
                                   np.append(y_train.index, y_test.index))
     assert f.cutoff == y_test.index[-1]
 

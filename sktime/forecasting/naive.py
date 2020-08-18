@@ -9,14 +9,14 @@ from warnings import warn
 
 import numpy as np
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseLastWindowForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
 class NaiveForecaster(OptionalForecastingHorizonMixin,
-                      BaseLastWindowForecaster):
+                      BaseWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
@@ -67,7 +67,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """  # X_train is ignored
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         if self.strategy in ("last", "seasonal_last"):
@@ -103,7 +103,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             self.window_length_ = len(y_train)
 
         # check window length
-        if self.window_length_ > len(self.oh):
+        if self.window_length_ > len(self._y):
             param = "sp" if self.strategy == "seasonal_last" else \
                 "window_length_"
             raise ValueError(
