@@ -10,11 +10,11 @@ from sktime.transformers.series_as_features.segment import \
     RandomIntervalSegmenter
 
 # load data
-X_train, y_train = load_gunpoint("TRAIN", return_X_y=True)
+X_train, y_train = load_gunpoint("train", return_X_y=True)
 X_train = pd.concat([X_train, X_train], axis=1)
 X_train.columns = ['ts', 'ts_copy']
 
-X_test, y_test = load_gunpoint("TEST", return_X_y=True)
+X_test, y_test = load_gunpoint("test", return_X_y=True)
 X_test = pd.concat([X_test, X_test], axis=1)
 X_test.columns = ['ts', 'ts_copy']
 

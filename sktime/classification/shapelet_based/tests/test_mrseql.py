@@ -5,8 +5,8 @@ from sktime.datasets import load_gunpoint
 
 def test_mrseql_on_gunpoint():
     # load training data
-    X_train, y_train = load_gunpoint(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='TEST', return_X_y=True)
+    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
+    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
 
     sax_clf = MrSEQLClassifier(seql_mode='fs', symrep=['sax'])
     sfa_clf = MrSEQLClassifier(seql_mode='fs', symrep=['sfa'])

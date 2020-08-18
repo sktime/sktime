@@ -28,26 +28,19 @@ If your contribution does add a new dependency, we may suggest to initially deve
 
 #### PR checklist for new estimators 
 <!--
-This is only relevant if you contribute new algorithm or estimator (classifiers, regressors, forecasters, etc
-.). If so, please go through the checklist below. Otherwise please delete check list.
--->
+This is only relevant if you contribute a new estimator
+ (classifiers, regressors, forecasters, etc
+.). If so, please go through the checklist below. Otherwise please ignore check list.
 
-- [ ] I have added unit tests and made sure they pass locally. 
- 
-- [ ] I have updated the existing example notebooks or provided a new one to showcase how my algorithm works.
-   
-- [ ] I have updated sktime's 
-[estimator overview](https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md) and I'm
- committed to maintain my contribution and provide bug fixes if necessary.
+- [ ] I've added unit tests and made sure they pass locally. 
+- [ ] I've updated the existing example notebooks or provided a new one to showcase how my estimator works.
+- [ ] I've updated sktime's [estimator overview](https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md) and I'm committed to maintain my contribution and provide bug fixes if necessary.
+- [ ] I've added myself to the list of contributors
+-->
 
 #### Any other comments?
 <!--
-Please be aware that we are a loose team of volunteers so patience is
-necessary; assistance handling other issues is very welcome. We value
-all user contributions, no matter how minor they are. If we are slow to
-review, either the pull request needs some benchmarking, tinkering,
-convincing, etc. or more likely the reviewers are simply busy. In either
-case, we ask for your understanding during the review process.
+Please be aware that we are a loose team of volunteers so patience is necessary; assistance handling other issues is very welcome. We value all user contributions, no matter how minor they are. If we are slow to review, either the pull request needs some benchmarking, tinkering, convincing, etc. or more likely the reviewers are simply busy. In either case, we ask for your understanding during the review process.
 
 Thanks for contributing!
 -->

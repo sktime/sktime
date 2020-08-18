@@ -41,8 +41,8 @@ def test_predict_proba():
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_equivalent_model_specifications(n_intervals, n_estimators):
     random_state = 1234
-    X_train, y_train = load_gunpoint(split="TRAIN", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="TEST", return_X_y=True)
+    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 
     # Due to tie-breaking/floating point rounding in the final decision tree
     # classifier, the results depend on the
@@ -86,8 +86,8 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     random_state = 1234
-    X_train, y_train = load_gunpoint(split="TRAIN", return_X_y=True)
-    X_test, y_test = load_gunpoint(split="TEST", return_X_y=True)
+    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 
     features = [np.mean, np.std, time_series_slope]
     steps = [('transform',
