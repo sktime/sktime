@@ -3,12 +3,13 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["BaseSktimeForecaster", "BaseLastWindowForecaster"]
+__all__ = ["BaseSktimeForecaster", "BaseWindowForecaster"]
 
 from contextlib import contextmanager
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
@@ -16,51 +17,60 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X
 
 
 class BaseSktimeForecaster(BaseForecaster):
-    """Base class for forecaster in sktime"""
+    """Base class for forecaster implemented in sktime"""
 
     def __init__(self):
-        self._oh = None  # observation horizon
-        self._cutoff = None  # reference point for relative forecasting horizon
-        self._fh = None  # forecasting horizon
+        # training data
+        self._y = None
+        self._X = None
+
+        # forecasting horizon
+        self._fh = None
+        self._cutoff = None  # reference point for relative fh
         super(BaseSktimeForecaster, self).__init__()
 
-    @property
-    def oh(self):
-        """The observation horizon, i.e. the seen data
-        passed either to `fit` or one of the `update` methods.
-
-        Returns
-        -------
-        oh : pd.Series
-            The available observation horizon
-        """
-        return self._oh
-
-    def _set_oh(self, y):
-        """Set and update the observation horizon
+    def _set_y_X(self, y, X=None):
+        """Set training data.
 
         Parameters
         ----------
         y : pd.Series
+            Endogenous time series
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
         """
-        y = check_y(y, allow_empty=True)
+        # set initial training data
+        self._y, self._X = check_y_X(y, X=X, allow_empty=False)
 
+        # set initial cutoff to the end of the training data
+        self._set_cutoff(y.index[-1])
+
+    def _update_y_X(self, y, X=None):
+        """Update training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Endogenous time series
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        """
         # update only for non-empty data
-        if len(y) > 0:
-            # for fitting: since no previous observation horizon is present,
-            # set new one
-            if self._oh is None:
-                self._oh = y
+        y, X = check_y_X(y, X=X, allow_empty=True)
 
-            # for updating: append observation horizon to previous one
-            else:
-                self._oh = y.combine_first(self.oh)
+        if len(y) > 0:
+            self._y = y.combine_first(self._y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff(y.index[-1])
+
+            # update X if given
+            if X is not None:
+                self._X = X.combine_first(self._X)
 
     @property
     def cutoff(self):
@@ -83,17 +93,18 @@ class BaseSktimeForecaster(BaseForecaster):
 
     @contextmanager
     def _detached_cutoff(self):
-        """Context manager to detach cutoff
+        """When in detached cutoff mode, the cutoff can be updated but will
+        be reset to the initial value after leaving the detached cutoff mode.
 
         This is useful during rolling-cutoff forecasts when the cutoff needs
-        to be repeatedly reset,
-        but afterwards should be restored to the original value.
+        to be repeatedly reset, but afterwards should be restored to the
+        original value.
         """
-        cutoff = self.cutoff  # remember initial cutoff
+        cutoff = self.cutoff  # keep initial cutoff
         try:
             yield
         finally:
-            # re-set cutoff to initial state
+            # re-set cutoff to initial value
             self._set_cutoff(cutoff)
 
     @property
@@ -118,6 +129,9 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         raise NotImplementedError()
 
+    def fit(self, y_train, fh=None, X_train=None):
+        raise NotImplementedError("abstract method")
+
     def predict(self, fh=None, X=None, return_pred_int=False,
                 alpha=DEFAULT_ALPHA):
         """Make forecasts
@@ -125,8 +139,11 @@ class BaseSktimeForecaster(BaseForecaster):
         Parameters
         ----------
         fh : int, list or np.array
+            Forecasting horizon
         X : pd.DataFrame, optional (default=None)
+            Exogeneous time series
         return_pred_int : bool, optional (default=False)
+            If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
 
         Returns
@@ -176,16 +193,13 @@ class BaseSktimeForecaster(BaseForecaster):
                                            alpha=alpha)
 
     def _update_predict_single(self, y_new, fh, X=None, update_params=False,
-                               return_pred_int=False,
-                               alpha=DEFAULT_ALPHA):
+                               return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal method for updating and making forecasts.
 
         Implements default behaviour of calling update and predict
         sequentially, but can be overwritten by subclasses
         to implement more efficient updating algorithms when available.
         """
-        if X is not None:
-            raise NotImplementedError()
         self.update(y_new, X_new=X, update_params=update_params)
         return self.predict(fh, X=X, return_pred_int=return_pred_int,
                             alpha=alpha)
@@ -204,14 +218,16 @@ class BaseSktimeForecaster(BaseForecaster):
         self : an instance of self
         """
         if update_params:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not "
+                f"yet support updating fitted "
+                f"parameters.")
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
         return self
 
     def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
-                       return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
+                       return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
         Parameters
@@ -261,17 +277,22 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         if return_pred_int:
             raise NotImplementedError()
+
         fh = cv.get_fh()
         y_preds = []
         cutoffs = []
+
+        # enter into a detached cutoff mode
         with self._detached_cutoff():
+            # set cutoff to time point before data
             self._set_cutoff(y.index[0] - 1)
+            # iterate over data
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
 
                 # we cannot use update_predict_single here, as this would
                 # re-set the forecasting horizon, instead we use
-                # the internal _update_predict_single method
+                # the internal update_predict_single method
                 y_pred = self._update_predict_single(
                     y_new, fh, X=X,
                     update_params=update_params,
@@ -320,7 +341,8 @@ class OptionalForecastingHorizonMixin:
                 # if no fh passed and there is none already, raise error
                 if self._fh is None:
                     raise ValueError(
-                        "The forecasting horizon `fh` must be passed either "
+                        "The forecasting horizon `fh` must be passed "
+                        "either "
                         "to `fit` or `predict`, "
                         "but was found in neither.")
                 # otherwise if no fh passed, but there is one already,
@@ -352,7 +374,8 @@ class RequiredForecastingHorizonMixin:
         fh : None, int, list, np.ndarray
         """
 
-        msg = f"This is because fitting of the `{self.__class__.__name__}` " \
+        msg = f"This is because fitting of the `" \
+              f"{self.__class__.__name__}` " \
               f"depends on `fh`. "
 
         if hasattr(self, "is_fitted"):
@@ -368,7 +391,8 @@ class RequiredForecastingHorizonMixin:
             else:
                 # fh must be passed when forecaster is not fitted yet
                 raise ValueError(
-                    "The forecasting horizon `fh` must be passed to `fit`, "
+                    "The forecasting horizon `fh` must be passed to "
+                    "`fit`, "
                     "but none was found. " + msg)
         else:
             fh = check_fh(fh)
@@ -389,11 +413,11 @@ class RequiredForecastingHorizonMixin:
                 self._fh = fh
 
 
-class BaseLastWindowForecaster(BaseSktimeForecaster):
-    """Base class for forecasters implemented in sktime"""
+class BaseWindowForecaster(BaseSktimeForecaster):
+    """Base class for forecasters that use """
 
     def __init__(self, window_length=None):
-        super(BaseLastWindowForecaster, self).__init__()
+        super(BaseWindowForecaster, self).__init__()
         self.window_length = window_length
         self.window_length_ = None
 
@@ -416,8 +440,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         y_pred : pd.Series or pd.DataFrame
         """
         cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(
-            self.fh,
-            window_length=self.window_length_)
+            self.fh, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_test, cv, X=X_test,
                                            update_params=update_params,
                                            return_pred_int=return_pred_int,
@@ -431,7 +454,8 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         fh_oos = fh.out_of_sample(self.cutoff)
         fh_ins = fh.in_sample(self.cutoff)
 
-        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
+        kwargs = {"X": X, "return_pred_int": return_pred_int,
+                  "alpha": alpha}
 
         # all values are out-of-sample
         if len(fh_oos) == len(fh):
@@ -487,7 +511,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         -------
         y_pred : pd.DataFrame or pd.Series
         """
-        y_train = self.oh
+        y_train = self._y
 
         # generate cutoffs from forecasting horizon, note that cutoffs are
         # still based on integer indexes,
@@ -520,7 +544,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         """Select last window"""
         start = self.cutoff - self.window_length_ + 1
         end = self.cutoff
-        return self.oh.loc[start:end].values
+        return self._y.loc[start:end].to_numpy()
 
     @staticmethod
     def _predict_nan(fh):
@@ -528,8 +552,7 @@ class BaseLastWindowForecaster(BaseSktimeForecaster):
         return np.full(len(fh), np.nan)
 
     def _update_predict_single(self, y_new, fh, X=None, update_params=False,
-                               return_pred_int=False,
-                               alpha=DEFAULT_ALPHA):
+                               return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Internal method for updating and making forecasts.
 
         Implements default behaviour of calling update and predict

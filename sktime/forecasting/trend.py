@@ -41,9 +41,9 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
+        self._set_y_X(y_train, X_train)
         if X_train is not None:
             raise NotImplementedError()
-        self._set_oh(y_train)
         self._set_fh(fh)
 
         # for default regressor, set fit_intercept=False as we generate a
