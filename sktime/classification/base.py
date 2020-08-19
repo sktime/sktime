@@ -33,6 +33,7 @@ class BaseClassifier(BaseEstimator):
             array of predictions of each instance (class value)
         """
         X = check_X(X)
+        self.check_is_fitted()
         distributions = self.predict_proba(X)
         predictions = []
         for instance_index in range(0, X.shape[0]):

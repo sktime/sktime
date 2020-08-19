@@ -102,7 +102,7 @@ class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=False)
 
         num_cases, num_dim = X.shape
         output_df = pd.DataFrame()
@@ -256,6 +256,25 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
 class FittedParamExtractor(MetaEstimatorMixin,
                            _NonFittableSeriesAsFeaturesTransformer):
+    """
+    Extract parameters of a fitted forecaster as features for a subsequent
+    tabular learning task.
+    This class first fits a forecaster to the given time series and then
+    returns the fitted parameters.
+    The fitted parameters can be used as features for a tabular estimator
+    (e.g. classification).
+
+    Parameters
+    ----------
+    forecaster : estimator object
+        sktime estimator to extract features from
+    param_names : str
+        Name of parameters to extract from the forecaster.
+    n_jobs : int, optional (default=None)
+        Number of jobs to run in parallel.
+        None means 1 unless in a joblib.parallel_backend context.
+        -1 means using all processors.
+    """
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):
@@ -265,6 +284,20 @@ class FittedParamExtractor(MetaEstimatorMixin,
         super(FittedParamExtractor, self).__init__()
 
     def transform(self, X, y=None):
+        """
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Univariate time series to transform.
+        y : pd.DataFrame, optional (default=False)
+            Exogenous variables
+
+        Returns
+        -------
+        y_hat : pd.DataFrame
+            Extracted parameters; columns are parameter values
+        """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
         param_names = self._check_param_names(self.param_names)

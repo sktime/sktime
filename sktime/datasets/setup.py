@@ -18,6 +18,7 @@ def configuration(parent_package='', top_path=None):
         "ArrowHead",
         "BasicMotions",
         "GunPoint",
+        "OSULeaf",
         "ItalyPowerDemand",
         "JapaneseVowels",
         "Longley",
@@ -26,6 +27,7 @@ def configuration(parent_package='', top_path=None):
         "ShampooSales",
         "Airline",
         "Uschange"
+        "ACSF1"
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")
