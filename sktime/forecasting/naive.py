@@ -23,7 +23,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
     Parameters
     ----------
-    strategy : str{"last", "mean"}, optional (default="last")
+    strategy : str{"last", "mean", "drift"}, optional (default="last")
         Strategy used to make forecasts:
 
         * "last" : forecast the last value in the
@@ -37,6 +37,9 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                      When sp is not 1, mean of all values
                      in a season from last window will be
                      forecasted for each season.
+        * "drift": forecast by fitting a line between the
+                    first and last point of the window and
+                     extrapolating it into the future
 
     sp : int, optional (default=1)
         Seasonal periodicity to use in the seasonal forecasting.
@@ -99,8 +102,22 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             if self.window_length is None:
                 self.window_length_ = len(y_train)
 
+        elif self.strategy == "drift":
+            if self.sp != 1:
+                warn("For the `drift` strategy, "
+                     "the `sp` value will be ignored.")
+            # window length we need for forecasts is just the
+            # length of seasonal periodicity
+            self.window_length_ = check_window_length(self.window_length)
+            if self.window_length is None:
+                self.window_length_ = len(y_train)
+            if self.window_length == 1:
+                raise ValueError(f"For the `drift` strategy, "
+                                 f"the `window_length`: {self.window_length} "
+                                 f"value must be greater than one.")
+
         else:
-            allowed_strategies = ("last", "mean")
+            allowed_strategies = ("last", "mean", "drift")
             raise ValueError(f"Unknown strategy: {self.strategy}. Expected "
                              f"one of: {allowed_strategies}.")
 
@@ -176,3 +193,22 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                 # get zero-based index by subtracting the minimum
                 fh_idx = fh.index_like(self.cutoff)
                 return y_pred[fh_idx]
+
+        # if self.strategy == "drift":
+        else:
+            if self.window_length_ != 1:
+                if np.any(np.isnan(last_window[[0, -1]])):
+                    raise ValueError(f"For {self.strategy},"
+                                     f"first and last elements in the last "
+                                     f"window must not be a missing value.")
+                else:
+                    # formula for slope
+                    slope = (last_window[-1] -
+                             last_window[0]) / (self.window_length_ - 1)
+
+                    # get zero-based index by subtracting the minimum
+                    fh_idx = fh.index_like(self.cutoff)
+
+                    # linear extrapolation
+                    y_pred = last_window[-1] + (fh_idx + 1) * slope
+                    return y_pred

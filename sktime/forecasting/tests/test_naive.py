@@ -109,3 +109,72 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
     y_pred = f.predict(fh)
 
     np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length",
+                         [*TEST_WINDOW_LENGTHS, None])
+def test_strategy_drift_unit_slope(fh, window_length):
+    # drift strategy for constant slope 1
+    if window_length != 1:
+        f = NaiveForecaster(strategy="drift",
+                            window_length=window_length)
+        f.fit(y_train)
+        y_pred = f.predict(fh)
+
+        if window_length is None:
+            window_length = len(y_train)
+
+        # get well formatted fh values
+        fh = check_fh(fh)
+
+        expected = y_train.iloc[-1] + np.arange(0, max(fh) + 1)[fh]
+        np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length",
+                         [*TEST_WINDOW_LENGTHS, None])
+def test_strategy_drift_flat_line(fh, window_length):
+    # test for flat time series data
+    if window_length != 1:
+        y_train = pd.Series(np.ones(20))
+        f = NaiveForecaster(strategy="drift",
+                            window_length=window_length)
+        f.fit(y_train)
+        y_pred = f.predict(fh)
+
+        if window_length is None:
+            window_length = len(y_train)
+
+        # get well formatted fh values
+        fh = check_fh(fh)
+        expected = np.ones(len(fh))
+
+        np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length",
+                         [*TEST_WINDOW_LENGTHS, None])
+def test_strategy_drift_window_length(fh, window_length):
+    # test for checking if window_length is properly working
+    if window_length != 1:
+        if window_length is None:
+            window_length = len(y_train)
+
+        values = np.random.normal(size=window_length)
+        y = pd.Series(values)
+        f = NaiveForecaster(strategy="drift",
+                            window_length=window_length)
+        f.fit(y)
+        y_pred = f.predict(fh)
+
+        slope = (values[-1] -
+                 values[0]) / (window_length - 1)
+
+        # get well formatted fh values
+        fh = check_fh(fh)
+        expected = values[-1] + slope * fh
+
+        np.testing.assert_array_equal(y_pred, expected)
