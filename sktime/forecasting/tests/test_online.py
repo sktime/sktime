@@ -48,7 +48,8 @@ def test_weights_for_airline_normal_hedge():
     ], ensemble_algorithm=hedge_expert)
 
     forecaster.fit(y_train)
-    forecaster.update_predict(y_test)
+    results = forecaster.update_predict(y_test)
+    print(results)
 
     expected = np.array([0, 0.55132043, 0.44867957])
     np.testing.assert_allclose(forecaster.weights, expected, rtol=1e-8)
@@ -69,6 +70,8 @@ def test_weights_for_airline_nnls():
     ], ensemble_algorithm=hedge_expert)
 
     forecaster.fit(y_train)
+    results = forecaster.update_predict(y_test)
+    print(results)
     forecaster.update_predict(y_test)
 
     expected = np.array([0, 1.02354436, 0])
