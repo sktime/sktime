@@ -239,7 +239,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # use last window as new input data for time series regressors to
         # make forecasts
         # get last window from observation horizon
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
@@ -317,7 +317,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
