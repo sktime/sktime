@@ -542,9 +542,20 @@ class BaseWindowForecaster(BaseSktimeForecaster):
 
     def _get_last_window(self):
         """Select last window"""
+        # get the start and end points of the last window
         start = self.cutoff - self.window_length_ + 1
         end = self.cutoff
-        return self._y.loc[start:end].to_numpy()
+
+        # get the last window of the endogenous variable
+        y = self._y.loc[start:end].to_numpy()
+
+        # if exogenous variables are given, also get the last window of
+        # those
+        if self._X is not None:
+            X = self._X.loc[start:end].to_numpy()
+        else:
+            X = None
+        return y, X
 
     @staticmethod
     def _predict_nan(fh):

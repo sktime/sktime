@@ -116,7 +116,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
     def _predict_last_window(self, fh, X=None, return_pred_int=False,
                              alpha=DEFAULT_ALPHA):
         """Internal predict"""
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
