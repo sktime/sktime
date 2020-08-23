@@ -7,7 +7,7 @@ __all__ = [
     "check_window_length",
     "check_step_length",
     "check_time_index",
-    "check_consistent_time_index",
+    "check_equal_time_index",
     "check_alpha",
     "check_fh_values",
     "check_cutoffs",
@@ -22,23 +22,27 @@ import pandas as pd
 from sktime.utils.validation import is_int
 
 
-def check_y_X(y, X):
+def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
     """Validate input data.
+
     Parameters
     ----------
-    y : pandas Series or numpy ndarray
-    X : pandas DataFrame
-    Returns
-    -------
-    None
+    y : pd.Series
+    X : pd.DataFrame, optional (default=None)
+    allow_empty : bool, optional (default=False)
+        If True, empty `y` does not raise an error.
+    allow_constant : bool, optional (default=True)
+        If True, constant `y` does not raise an error.
+
     Raises
     ------
     ValueError
-        If y is an invalid input
+        If y or X are invalid inputs
     """
-    y = check_y(y)
-    X = check_X(X)
-    check_consistent_time_index(y, X)
+    y = check_y(y, allow_empty=allow_empty, allow_constant=allow_constant)
+    if X is not None:
+        X = check_X(X)
+        check_equal_time_index(y, X)
     return y, X
 
 
@@ -67,15 +71,16 @@ def check_y(y, allow_empty=False, allow_constant=True):
             f"`y` must be a pandas Series, but found type: {type(y)}")
 
     # check that series is not empty
-    if not allow_empty:
-        if len(y) < 1:
+    if len(y) < 1:
+        if not allow_empty:
             raise ValueError(
-                f"`y` must contain at least some observations, but found "
-                f"empty series: {y}")
+                f"`y` must contain at least some values, but found "
+                f"empty series: {y}.")
 
-    if not allow_constant:
-        if np.all(y == y.iloc[0]):
-            raise ValueError("All values of `y` are the same")
+    else:
+        if not allow_constant:
+            if np.all(y == y.iloc[0]):
+                raise ValueError("All values of `y` are the same.")
 
     # check time index
     check_time_index(y.index)
@@ -125,7 +130,7 @@ def check_time_index(time_index):
 
     if not time_index.is_monotonic:
         raise ValueError(
-            f"Time index must be sorted (monotonically increasing), "
+            f"The (time) index must be sorted (monotonically increasing), "
             f"but found: {time_index}")
 
     return time_index
@@ -148,35 +153,7 @@ def check_X(X):
         If y is an invalid input
     """
     if not isinstance(X, pd.DataFrame):
-        raise ValueError(f"`X` must a pandas DataFrame, but found: {type(X)}")
-    if X.shape[0] > 1:
-        raise ValueError(
-            f"`X` must consist of a single row, but found: {X.shape[0]} rows")
-
-    # Check if index is the same for all columns.
-
-    # Get index from first row, can be either pd.Series or np.array.
-    first_index = X.iloc[0, 0].index if hasattr(X.iloc[0, 0],
-                                                'index') else pd.RangeIndex(
-        X.iloc[0, 0].shape[0])
-
-    # Series must contain now least 2 observations, otherwise should be
-    # primitive.
-    if len(first_index) < 1:
-        raise ValueError(
-            f'Time series must contain now least 2 observations, but found: '
-            f'{len(first_index)} observations in column: {X.columns[0]}')
-
-    # Compare with remaining columns
-    for c, col in enumerate(X.columns):
-        index = X.iloc[0, c].index if hasattr(X.iloc[0, c],
-                                              'index') else pd.RangeIndex(
-            X.iloc[0, 0].shape[0])
-        if not np.array_equal(first_index, index):
-            raise ValueError(
-                f'Found time series with unequal index in column {col}. '
-                f'Input time-series must have the same index.')
-
+        raise ValueError(f"`X` must a pd.DataFrame, but found: {type(X)}")
     return X
 
 
@@ -254,33 +231,29 @@ def check_fh_is_relative(fh):
         raise TypeError("`fh` must be relative, but found absolute `fh`")
 
 
-def check_consistent_time_index(*ys, y_train=None):
-    """Check that y_test and y_pred have consistent indices.
+def check_equal_time_index(*ys):
+    """Check that time series have the same (time) indices.
+
     Parameters
     ----------
-    y_test : pd.Series
-    y_pred : pd.Series
-    y_train : pd.Series
+    ys : pd.Series or pd.DataFrame
+        One or more time series
+
     Raises
     ------
     ValueError
-        If time indicies are not equal
+        If (time) indices are not the same
     """
 
     # only validate indices if data is passed as pd.Series
     first_index = ys[0].index
     check_time_index(first_index)
+
     for y in ys[1:]:
         check_time_index(y.index)
 
         if not first_index.equals(y.index):
-            raise ValueError("Found inconsistent time indices.")
-
-    if y_train is not None:
-        check_time_index(y_train.index)
-        if y_train.index.max() >= first_index.min():
-            raise ValueError("Found `y_train` with time index which is not "
-                             "before time index of `y_pred`")
+            raise ValueError("Some (time) indices are not the same.")
 
 
 def check_alpha(alpha):

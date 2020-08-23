@@ -18,7 +18,8 @@ From here, you can navigate to:
    how_to_get_started
    api_reference
    changelog
-   how_to_contribute
+   contributing
    about
-   contributors
+   governance
    code_of_conduct
+   contributors

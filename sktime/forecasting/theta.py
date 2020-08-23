@@ -183,7 +183,7 @@ class ThetaForecaster(ExponentialSmoothing):
             drift = self.trend_ * self.fh
         else:
             # Calculate drift from SES parameters
-            n_timepoints = len(self.oh)
+            n_timepoints = len(self._y)
             drift = self.trend_ * (
                     self.fh
                     + (1 - (
@@ -200,7 +200,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.check_is_fitted()
         alpha = check_alpha(alpha)
 
-        n_timepoints = len(self.oh)
+        n_timepoints = len(self._y)
 
         self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)

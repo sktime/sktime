@@ -303,7 +303,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         self._forecaster.fit(y_train, exogenous=X_train, **fit_args)
         self._is_fitted = True

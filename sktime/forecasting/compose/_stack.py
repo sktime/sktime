@@ -42,9 +42,9 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
+        self._set_y_X(y_train, X_train)
         if X_train is not None:
             raise NotImplementedError()
-        self._set_oh(y_train)
         self._set_fh(fh)
 
         names, forecasters = self._check_forecasters()
@@ -86,7 +86,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
         self : an instance of self
         """
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
         if update_params:
             warn("Updating `final regressor is not implemented")
         for forecaster in self.forecasters_:
