@@ -32,8 +32,7 @@ class FeatureUnion(_FeatureUnion, BaseEstimator, MetaEstimatorMixin):
             Number of jobs to run in parallel.
             ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
             context.
-            ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-            for more details.
+            ``-1`` means using all processors.
         transformer_weights : dict, optional
             Multiplicative weights for features per transformer.
             Keys are transformer names, values the weights.

@@ -83,6 +83,7 @@ deploy:
     local_dir: "./docs/_build/html"
     github_token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
     keep_history: false
+    fqdn: sktime.org  # set custom domain
     on:
       branch: $DEPLOY_BRANCH  # deploy only on master
       condition: $TRAVIS_JOB_NAME = $DEPLOY_JOB_NAME  # deploy only on macOS build

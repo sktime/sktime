@@ -42,7 +42,7 @@ for wheel in dist/sktime-*.whl; do
   auditwheel repair --plat "$PLATFORM" --wheel-dir dist/ "$wheel"
 done
 
-# Install built whee wheel and test
+# Install built wheel and test
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install from wheel
   "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime

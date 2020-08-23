@@ -96,7 +96,7 @@ class TransformedTargetForecaster(MetaForecasterMixin,
         self : returns an instance of self.
         """
         self.steps_ = self._check_steps()
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         # transform
@@ -145,7 +145,7 @@ class TransformedTargetForecaster(MetaForecasterMixin,
         self : an instance of self
         """
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
 
         for step_idx, name, transformer in self._iter_transformers():
             if hasattr(transformer, "update"):
