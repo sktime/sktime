@@ -12,32 +12,39 @@ __all__ = [
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.compose import (
-    DirectRegressionForecaster, DirectTimeSeriesRegressionForecaster,
-    EnsembleForecaster, RecursiveRegressionForecaster,
-    RecursiveTimeSeriesRegressionForecaster, StackingForecaster,
-    TransformedTargetForecaster)
-from sktime.forecasting.online_ensemble import OnlineEnsembleForecaster
+from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import (ForecastingGridSearchCV,
-                                                SingleWindowSplitter)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.transformers.series_as_features.compose import (ColumnTransformer,
-                                                            RowTransformer)
+from sktime.transformers.series_as_features.compose import ColumnTransformer
+from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.interpolate import TSInterpolator
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.series_as_features.shapelets import (
-    ContractedShapeletTransform, ShapeletTransform)
-from sktime.transformers.series_as_features.summarize import (
-    FittedParamExtractor, TSFreshFeatureExtractor,
-    TSFreshRelevantFeatureExtractor)
+from sktime.transformers.series_as_features.shapelets import \
+    ContractedShapeletTransform
+from sktime.transformers.series_as_features.shapelets import ShapeletTransform
+from sktime.transformers.series_as_features.summarize import \
+    FittedParamExtractor
+from sktime.transformers.series_as_features.summarize import \
+    TSFreshFeatureExtractor
+from sktime.transformers.series_as_features.summarize import \
+    TSFreshRelevantFeatureExtractor
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
