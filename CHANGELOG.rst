@@ -7,6 +7,7 @@ The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`
 
 We keep track of changes in this file since v0.4.0.
 
+
 [0.4.2] - 2020-xx-xx
 --------------------
 
@@ -16,6 +17,7 @@ We keep track of changes in this file since v0.4.0.
 
 Added
 ~~~~~
+- New sktime logo @mloning
 - TemporalDictionaryEnsemble (#292) @MatthewMiddlehurst
 - ShapeDTW (#287) @Multivin12
 - Updated sktime artwork (logo) @mloning
@@ -23,8 +25,7 @@ Added
 - Padding transformer (#316) @ABostrom
 - Example notebook with feature importance graph for time series forest (#319) @HYang1996
 - ACSF1 data set (#314) @BandaSaiTejaReddy
-- Data conversion function from 3d numpy array to nested pandas dataframe
-(#304) @vedazeren
+- Data conversion function from 3d numpy array to nested pandas dataframe (#304) @vedazeren
 
 Changed
 ~~~~~~~

@@ -53,7 +53,7 @@ NON_STATE_CHANGING_METHODS = [
 ]
 
 
-def check_estimator(Estimator):
+def check_estimator(Estimator, exclude=None):
     """Check whether estimator complies with common interface.
 
     Parameters
@@ -66,7 +66,10 @@ def check_estimator(Estimator):
         If Estimator does not comply
     """
     for check in yield_estimator_checks():
-        check(Estimator)
+
+        # check if associated test is not included in the exclusion list
+        if check.__name__ not in exclude:
+            check(Estimator)
 
 
 def yield_estimator_checks():
