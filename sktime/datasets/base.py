@@ -19,10 +19,11 @@ __all__ = [
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
-    "load_acsf1"
+    "load_acsf1",
+    "load_uschange"
 ]
 
-__author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
+__author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o', "Sebastiaan Koel"]
 
 DIRNAME = 'data'
 MODULE = os.path.dirname(__file__)
@@ -614,3 +615,56 @@ def load_airline():
     data.index = pd.Int64Index(data.index)
     data.name = name
     return data
+
+def load_uschange(y_col='Consumption'):
+    """
+    Load the multivariate time series dataset for forecasting
+    Growth rates of personal consumption and personal income.
+
+    Returns
+    -------
+    y : pandas Series
+        selected column, default consumption
+    X : pandas Dataframe
+        columns with explanatory variables
+
+    Details
+    -------
+    Percentage changes in quarterly personal consumption expenditure,
+    personal disposable income, production, savings and the
+    unemployment rate for the US, 1960 to 2016.
+
+
+    Dimensionality:     multivariate
+    Columns:            ['Quarter', 'Consumption', 'Income', 'Production', 'Savings', 'Unemployment']
+    Series length:      188
+    Frequency:          Quarterly
+    Number of cases:    1
+
+    Notes
+    -----
+    This data shows an increasing trend, non-constant (increasing) variance
+    and periodic, seasonal patterns.
+
+    References
+    ----------
+    ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
+    """
+
+    name = 'Uschange'
+    fname = name + '.csv'
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0, squeeze=True)
+
+    # Sort by Quarter then set simple numeric index
+    # TODO add support for period/datetime indexing
+    # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.sort_values('Quarter')
+    data = data.reset_index(drop=True)
+    data.index = pd.Int64Index(data.index)
+    data.name = name
+    y = data[y_col]
+    if y_col != 'Quarter':
+        data = data.drop('Quarter', axis=1)        
+    X = data.drop(y_col, axis=1)
+    return X, y
