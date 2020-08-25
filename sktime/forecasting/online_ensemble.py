@@ -53,7 +53,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self : returns an instance of self.
         """
 
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
@@ -97,7 +97,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._fit_ensemble(y_new, X_new=X_new)
 
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
 
