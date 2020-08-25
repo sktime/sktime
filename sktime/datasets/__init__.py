@@ -19,3 +19,7 @@ from sktime.datasets.base import load_italy_power_demand
 from sktime.datasets.base import load_longley
 from sktime.datasets.base import load_lynx
 from sktime.datasets.base import load_shampoo_sales
+
+from sktime.datasets.generators import ArmaGenerator
+from sktime.datasets.generators import LinearGenerator
+from sktime.datasets.generators import NoiseGenerator
