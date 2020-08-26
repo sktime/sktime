@@ -7,7 +7,10 @@ __all__ = [
     "load_italy_power_demand",
     "load_longley",
     "load_lynx",
-    "load_shampoo_sales"
+    "load_shampoo_sales",
+    "ArmaGenerator",
+    "LinearGenerator",
+    "NoiseGenerator"
 ]
 
 from sktime.datasets.base import load_airline
