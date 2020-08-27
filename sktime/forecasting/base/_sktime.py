@@ -184,7 +184,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
 
         alphas = check_alpha(alpha)
-        errors = self._compute_pred_errors(alphas)
+        errors = self._compute_pred_err(alphas)
 
         # compute prediction intervals
         pred_int = [
@@ -202,7 +202,7 @@ class BaseSktimeForecaster(BaseForecaster):
         # otherwise return list of pd.DataFrames
         return pred_int
 
-    def _compute_pred_errors(self, alphas):
+    def _compute_pred_err(self, alphas):
         """Calculate the prediction errors for each point.
 
         Parameters

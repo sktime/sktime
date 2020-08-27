@@ -192,7 +192,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return drift
 
-    def _compute_pred_errors(self, alphas):
+    def _compute_pred_err(self, alphas):
         """
         Get the prediction errors for the forecast.
         """
