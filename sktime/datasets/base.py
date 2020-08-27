@@ -616,6 +616,7 @@ def load_airline():
     data.name = name
     return data
 
+
 def load_uschange(y_name='Consumption'):
     """
     Load the multivariate time series dataset for forecasting
@@ -665,6 +666,6 @@ def load_uschange(y_name='Consumption'):
     data.name = name
     y = data[y_name]
     if y_name != 'Quarter':
-        data = data.drop('Quarter', axis=1)        
+        data = data.drop('Quarter', axis=1)
     X = data.drop(y_name, axis=1)
     return X, y
