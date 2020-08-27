@@ -616,7 +616,7 @@ def load_airline():
     data.name = name
     return data
 
-def load_uschange(y_col='Consumption'):
+def load_uschange(y_name='Consumption'):
     """
     Load the multivariate time series dataset for forecasting
     Growth rates of personal consumption and personal income.
@@ -663,8 +663,8 @@ def load_uschange(y_col='Consumption'):
     data = data.reset_index(drop=True)
     data.index = pd.Int64Index(data.index)
     data.name = name
-    y = data[y_col]
-    if y_col != 'Quarter':
+    y = data[y_name]
+    if y_name != 'Quarter':
         data = data.drop('Quarter', axis=1)        
-    X = data.drop(y_col, axis=1)
+    X = data.drop(y_name, axis=1)
     return X, y
