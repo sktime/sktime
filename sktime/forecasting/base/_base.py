@@ -55,6 +55,7 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
         return_pred_int : bool, optional (default=False)
         alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
 
         Returns
         -------
@@ -62,6 +63,30 @@ class BaseForecaster(BaseEstimator):
             Point predictions
         y_pred_int : pd.DataFrame
             Prediction intervals
+        """
+        raise NotImplementedError("abstract method")
+
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction intervals for a forecast.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Parameters
+        ----------
+
+        y_pred : pd.Series
+            Point predictions.
+
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in ``y_pred``.
+            If ``alpha`` was iterable, then ``intervals`` will be a list of such tables.
         """
         raise NotImplementedError("abstract method")
 
