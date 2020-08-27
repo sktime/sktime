@@ -637,7 +637,8 @@ def load_uschange(y_name='Consumption'):
 
 
     Dimensionality:     multivariate
-    Columns:            ['Quarter', 'Consumption', 'Income', 'Production', 'Savings', 'Unemployment']
+    Columns:            ['Quarter', 'Consumption', 'Income', 'Production',
+                         'Savings', 'Unemployment']
     Series length:      188
     Frequency:          Quarterly
     Number of cases:    1
