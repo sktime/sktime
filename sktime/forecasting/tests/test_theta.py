@@ -1,7 +1,6 @@
 __author__ = ["@big-o"]
 
 import numpy as np
-import pandas as pd
 import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split

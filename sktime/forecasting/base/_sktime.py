@@ -161,8 +161,8 @@ class BaseSktimeForecaster(BaseForecaster):
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
-        Get the prediction intervals for a forecast. Must be run *after* the forecaster
-        has been fitted.
+        Get the prediction intervals for a forecast. Must be run *after* the
+        forecaster has been fitted.
 
         If alpha is iterable, multiple intervals will be calculated.
 
@@ -179,8 +179,9 @@ class BaseSktimeForecaster(BaseForecaster):
         -------
 
         intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in ``y_pred``.
-            If ``alpha`` was iterable, then ``intervals`` will be a list of such tables.
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
         """
 
         alphas = check_alpha(alpha)
@@ -215,8 +216,8 @@ class BaseSktimeForecaster(BaseForecaster):
         -------
 
         errors : list of pd.Series
-            Each series in the list will contain the errors for each point in the
-            forecast for the corresponding alpha.
+            Each series in the list will contain the errors for each point in
+            the forecast for the corresponding alpha.
         """
         raise NotImplementedError("abstract method")
 

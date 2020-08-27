@@ -222,4 +222,3 @@ class ThetaForecaster(ExponentialSmoothing):
                 "smoothing_level"]
             self.trend_ = self._compute_trend(y_new)
         return self
-

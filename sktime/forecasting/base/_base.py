@@ -85,8 +85,9 @@ class BaseForecaster(BaseEstimator):
         -------
 
         intervals : pd.DataFrame
-            A table of upper and lower bounds for each point prediction in ``y_pred``.
-            If ``alpha`` was iterable, then ``intervals`` will be a list of such tables.
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
         """
         raise NotImplementedError("abstract method")
 
