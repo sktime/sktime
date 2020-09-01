@@ -78,6 +78,7 @@ make_conda() {
 
 # requirements file
 make_conda "$REQUIREMENTS"
+pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
 if [ "$COVERAGE" == "true" ]
 then
