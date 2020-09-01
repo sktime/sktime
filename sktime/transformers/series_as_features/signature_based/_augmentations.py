@@ -58,6 +58,10 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
     first index. The time channel will be of length L and scaled to exist in
     [0, 1].
     """
+    def fit(self):
+        self._is_fitted = True
+        return self
+
     def transform(self, data):
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
@@ -74,6 +78,10 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
+    def fit(self):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
@@ -105,6 +113,10 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
         - https://arxiv.org/pdf/1310.4054.pdf
         - https://arxiv.org/pdf/1307.7244.pdf
     """
+    def fit(self):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         # Interleave
         X_repeat = X.repeat_interleave(2, dim=1)
@@ -132,6 +144,10 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
 
+    def fit(self):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         if self.append_zero:
             X = _BasePoint().fit_transform(X)
@@ -143,6 +159,10 @@ class _BasePoint(BaseSeriesAsFeaturesTransformer):
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
+    def fit(self):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
         return torch.cat((zero_vec, X), dim=1)
