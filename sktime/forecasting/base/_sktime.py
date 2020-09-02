@@ -2,7 +2,7 @@
 # coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning"]
+__author__ = ["Markus Löning", "@big-o"]
 __all__ = ["BaseSktimeForecaster", "BaseWindowForecaster"]
 
 from contextlib import contextmanager
@@ -14,6 +14,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
@@ -157,6 +158,68 @@ class BaseSktimeForecaster(BaseForecaster):
         self._set_fh(fh)
         return self._predict(self.fh, X=X, return_pred_int=return_pred_int,
                              alpha=alpha)
+
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction intervals for a forecast. Must be run *after* the
+        forecaster has been fitted.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Parameters
+        ----------
+
+        y_pred : pd.Series
+            Point predictions.
+
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+
+        alphas = check_alpha(alpha)
+        errors = self._compute_pred_err(alphas)
+
+        # compute prediction intervals
+        pred_int = [
+            pd.DataFrame({
+                "lower": y_pred - error,
+                "upper": y_pred + error
+            })
+            for error in errors
+        ]
+
+        # for a single alpha, return single pd.DataFrame
+        if isinstance(alpha, float):
+            return pred_int[0]
+
+        # otherwise return list of pd.DataFrames
+        return pred_int
+
+    def _compute_pred_err(self, alphas):
+        """Calculate the prediction errors for each point.
+
+        Parameters
+        ----------
+
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+
+        errors : list of pd.Series
+            Each series in the list will contain the errors for each point in
+            the forecast for the corresponding alpha.
+        """
+        raise NotImplementedError("abstract method")
 
     def update_predict_single(self, y_new, fh=None, X=None,
                               update_params=False, return_pred_int=False,
