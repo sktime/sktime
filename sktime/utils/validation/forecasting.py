@@ -348,7 +348,7 @@ def check_fh_values(values):
             raise TypeError(f"`fh` must be a 1d array, but found shape: "
                             f"{values.shape}")
 
-        if not np.issubdtype(values.dtype, np.integer):
+        if np.issubdtype(values.dtype, np.float):
             raise TypeError(f"If `fh` is passed as an array, it must "
                             f"be an array of integers, but found an "
                             f"array of type: {values.dtype}")
@@ -366,7 +366,7 @@ def check_fh_values(values):
 
     # check fh is not empty
     if len(values) < 1:
-        raise TypeError("`fh` cannot be empty, please specify now least one "
+        raise TypeError("`fh` cannot be empty, please specify at least one "
                         "step to forecast.")
 
     # check fh does not contain duplicates

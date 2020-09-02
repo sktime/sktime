@@ -7,6 +7,8 @@ __all__ = ["FH", "AbsoluteFH", "RelativeFH"]
 
 import numpy as np
 import pandas as pd
+
+from sktime.forecasting.base import _subtract_time
 from sktime.utils.validation.forecasting import check_fh_values
 
 
@@ -38,9 +40,6 @@ class FH(np.ndarray):
             klass = RelativeFH
         else:
             klass = AbsoluteFH
-            if np.any(values < 0):
-                raise ValueError(
-                    "FH contains time points before observation horizon")
 
         # subclass numpy array
         return values.view(klass)
@@ -154,7 +153,7 @@ class AbsoluteFH(FH):
         fh : relative forecasting horizon
         """
         self._check_cutoff(cutoff)
-        values = self - cutoff
+        values = _subtract_time(self, cutoff)
         return values.view(RelativeFH)
 
     def absolute(self, cutoff=None):

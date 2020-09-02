@@ -573,12 +573,12 @@ def load_lynx():
 
 def load_airline():
     """
-    Load the airline univariate time series dataset for forecasting.
+    Load the airline univariate time series dataset [1].
 
     Returns
     -------
-    y : pandas Series
-        Lynx sales dataset
+    y : pd.Series
+     Time series
 
     Details
     -------
@@ -607,10 +607,7 @@ def load_airline():
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0, squeeze=True)
 
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
+    # make sure time index is properly formatted
+    data.index = pd.PeriodIndex(data.index, freq="M", name="Period")
+    data.name = "Number of airline passengers"
     return data

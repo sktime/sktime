@@ -8,6 +8,7 @@ __all__ = [
 ]
 
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
@@ -63,21 +64,32 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y_train, X_train)
         if X_train is not None:
-            raise NotImplementedError()
+            raise NotImplementedError("Exogeneous variables are not "
+                                      "yet supported")
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
-        r = self.regressor if self.regressor is not None else LinearRegression(
-            fit_intercept=False)  #
-        self.regressor_ = make_pipeline(PolynomialFeatures(
-            degree=self.degree,
-            include_bias=self.with_intercept),
-            r)
-        x = y_train.index.values.reshape(-1, 1)
-        self.regressor_.fit(x, y_train.values)
+        if self.regressor is None:
+            regressor = LinearRegression(fit_intercept=False)
+        else:
+            regressor = self.regressor
+
+        # make pipeline with polynomial features
+        self.regressor_ = make_pipeline(
+            PolynomialFeatures(degree=self.degree,
+                               include_bias=self.with_intercept),
+            regressor)
+
+        # transform data
+        n_timepoints = len(y_train)
+        X_train = np.arange(n_timepoints).reshape(-1, 1)
+        y_train = y_train.to_numpy()
+
+        # fit regressor
+        self.regressor_.fit(X_train, y_train)
         self._is_fitted = True
         return self
 
@@ -107,7 +119,9 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
             raise NotImplementedError()
         self.check_is_fitted()
         self._set_fh(fh)
-        fh_abs = self.fh.absolute(self.cutoff)
-        x = fh_abs.reshape(-1, 1)
-        y_pred = self.regressor_.predict(x)
-        return pd.Series(y_pred, index=fh_abs)
+
+        # use relative fh as time index to predict
+        fh_relative = self.fh.relative(self.cutoff)
+        X_pred = fh_relative.reshape(-1, 1)
+        y_pred = self.regressor_.predict(X_pred)
+        return pd.Series(y_pred, index=self.fh.absolute(self.cutoff))

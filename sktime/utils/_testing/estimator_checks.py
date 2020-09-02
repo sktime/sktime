@@ -26,8 +26,8 @@ from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import is_forecaster
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
 from sktime.transformers.series_as_features.base import \

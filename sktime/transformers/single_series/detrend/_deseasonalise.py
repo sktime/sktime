@@ -11,13 +11,14 @@ __all__ = [
 ]
 
 import numpy as np
+from statsmodels.tsa.seasonal import seasonal_decompose
+
 from sktime.transformers.single_series.base import \
     BaseSingleSeriesTransformer
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_time_index
+from sktime.forecasting.base import _subtract_time
 from sktime.utils.validation.forecasting import check_y
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 
 class Deseasonalizer(BaseSingleSeriesTransformer):
@@ -39,16 +40,16 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
             raise ValueError(f"`model` must be one of {allowed_models}, "
                              f"but found: {model}")
         self.model = model
-        self._oh_index = None
+        self._y_index = None
         self.seasonal_ = None
         super(Deseasonalizer, self).__init__()
 
-    def _set_oh_index(self, y):
-        self._oh_index = check_time_index(y.index)
+    def _set_y_index(self, y):
+        self._y_index = y.index
 
     def _align_seasonal(self, y):
         """Helper function to align seasonal components with y's time index"""
-        shift = -(y.index[0] - self._oh_index[0]) % self.sp
+        shift = -_subtract_time(y.index[0], self._y_index[0]) % self.sp
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
     def fit(self, y, **fit_params):
@@ -65,22 +66,24 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         """
 
         y = check_y(y)
-        self._set_oh_index(y)
+        self._set_y_index(y)
         sp = check_sp(self.sp)
-        self.seasonal_ = seasonal_decompose(y, model=self.model, period=sp,
-                                            filt=None, two_sided=True,
-                                            extrapolate_trend=0).seasonal.iloc[
-                         :sp]
+
+        # apply seasonal decomposition
+        self.seasonal_ = seasonal_decompose(
+            y, model=self.model, period=sp, filt=None, two_sided=True,
+            extrapolate_trend=0).seasonal.iloc[:sp]
+
         self._is_fitted = True
         return self
 
-    def _detrend(self, y, seasonal):
+    def _transform(self, y, seasonal):
         if self.model == "additive":
             return y - seasonal
         else:
             return y / seasonal
 
-    def _retrend(self, y, seasonal):
+    def _inverse_transform(self, y, seasonal):
         if self.model == "additive":
             return y + seasonal
         else:
@@ -102,7 +105,7 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
-        return self._detrend(y, seasonal)
+        return self._transform(y, seasonal)
 
     def inverse_transform(self, y, **transform_params):
         """Inverse transform data.
@@ -120,7 +123,7 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         self.check_is_fitted()
         y = check_y(y)
         seasonal = self._align_seasonal(y)
-        return self._retrend(y, seasonal)
+        return self._inverse_transform(y, seasonal)
 
     def update(self, y_new, update_params=False):
         """Update fitted parameters
@@ -137,7 +140,7 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
          """
         self.check_is_fitted()
         y_new = check_y(y_new)
-        self._set_oh_index(y_new)
+        self._set_y_index(y_new)
         return self
 
 
@@ -190,7 +193,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         """
 
         y_train = check_y(y_train)
-        self._set_oh_index(y_train)
+        self._set_y_index(y_train)
         sp = check_sp(self.sp)
 
         # set default condition

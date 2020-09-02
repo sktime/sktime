@@ -8,7 +8,7 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pandas as pd
 from sktime.classification.base import is_classifier
-from sktime.forecasting.base import is_forecaster
+from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import is_regressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.transformers.series_as_features.base import \
