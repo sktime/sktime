@@ -8,12 +8,12 @@ import numpy as np
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
 
-from sktime.forecasting.ensemble_algorithms import HedgeExpertEnsemble,\
+from sktime.forecasting.ensemble_algorithms import NormalHedgeEnsemble,\
                                                    NNLSEnsemble
-from sktime.forecasting.online_experts import NormalHedge, se
 from sktime.forecasting.online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
+from sklearn.metrics import mean_squared_error
 
 
 def test_weights_for_airline_averaging():
@@ -38,7 +38,7 @@ def test_weights_for_airline_normal_hedge():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    hedge_expert = HedgeExpertEnsemble(3, 80, NormalHedge, loss_func=se)
+    hedge_expert = NormalHedgeEnsemble(n=3, loss_func=mean_squared_error)
 
     forecaster = OnlineEnsembleForecaster([
         ("av5",  NaiveForecaster(strategy="mean", window_length=5)),
@@ -58,7 +58,7 @@ def test_weights_for_airline_nnls():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    hedge_expert = NNLSEnsemble(3, loss_func=se)
+    hedge_expert = NNLSEnsemble(n=3, loss_func=mean_squared_error)
 
     forecaster = OnlineEnsembleForecaster([
         ("av5",  NaiveForecaster(strategy="mean", window_length=5)),
