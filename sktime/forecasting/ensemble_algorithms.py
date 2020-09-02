@@ -3,7 +3,7 @@ from scipy.optimize import nnls
 import numpy as np
 
 
-class EnsembleAlgorithms(BaseEstimator):
+class EnsembleAlgorithm(BaseEstimator):
     """Wrapper class to take ensemble algorithms and allow them to be easily set
 
     Parameters
@@ -65,7 +65,7 @@ class EnsembleAlgorithms(BaseEstimator):
         self.weights = np.ones(n)/n
 
 
-class HedgeExpertEnsemble(EnsembleAlgorithms):
+class HedgeExpertEnsemble(EnsembleAlgorithm):
     """Wrapper class to take hedge style ensemble algorithms and
        allow them to be updated
 
@@ -170,7 +170,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         self.weights /= np.sum(self.weights)
 
 
-class NNLSEnsemble(EnsembleAlgorithms):
+class NNLSEnsemble(EnsembleAlgorithm):
     """ Wrapper class to perform a non-negative least squares to fit to the experts
     Keeps tracks of all observations seen so far and fits to it
 
