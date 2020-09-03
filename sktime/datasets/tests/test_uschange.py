@@ -48,7 +48,7 @@ def test_uschange():
         'len_y': 187,
         'len_X': 187,
         'data_types_X': {'Income': 'float64', 'Production': 'float64',
-             'Savings': 'float64', 'Unemployment': 'float64'},
+                         'Savings': 'float64', 'Unemployment': 'float64'},
         'data_type_y': 'float64'
     }
 
