@@ -95,8 +95,8 @@ class CutoffSplitter(BaseSplitter):
     def __init__(self, cutoffs, fh=DEFAULT_FH,
                  window_length=DEFAULT_WINDOW_LENGTH):
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(fh=fh,
-                                             window_length=window_length)
+        super(CutoffSplitter, self).__init__(
+            fh=fh, window_length=window_length)
 
     def _split_windows(self, y):
         # cutoffs
@@ -130,8 +130,8 @@ class BaseWindowSplitter(BaseSplitter):
     """Base class for window splits"""
 
     def __init__(self, fh=None, window_length=None):
-        super(BaseWindowSplitter, self).__init__(fh=fh,
-                                                 window_length=window_length)
+        super(BaseWindowSplitter, self).__init__(
+            fh=fh, window_length=window_length)
 
     def split_initial(self, y):
         raise NotImplementedError("abstract method")
@@ -148,7 +148,7 @@ class BaseWindowSplitter(BaseSplitter):
             end = n_timepoints + 1
         else:
             fh_max = fh[-1]
-            end = n_timepoints - fh_max + 1  #  non-inclusive end indexing
+            end = n_timepoints - fh_max + 1  # non-inclusive end indexing
 
             # check if computed values are feasible with the provided index
             if window_length is not None:
@@ -351,6 +351,7 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
     Creates train/test splits over endogenous arrays an optional exogenous
     arrays. This is a wrapper of scikit-learn's ``train_test_split`` that
     does not shuffle.
+
     Parameters
     ----------
     *arrays : sequence of indexables with same length / shape[0]
@@ -359,14 +360,15 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
-        absolute number of test samples. If None, the value is set to the
+        relative number of test samples. If None, the value is set to the
         complement of the train size. If ``train_size`` is also None, it will
         be set to 0.25.
     train_size : float, int, or None, (default=None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
-        int, represents the absolute number of train samples. If None,
+        int, represents the relative number of train samples. If None,
         the value is automatically set to the complement of the test size.
+
     Returns
     -------
     splitting : list, length=2 * len(arrays)

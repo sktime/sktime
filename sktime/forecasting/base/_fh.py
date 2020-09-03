@@ -3,168 +3,125 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["FH", "AbsoluteFH", "RelativeFH"]
+__all__ = ["ForecastingHorizon"]
 
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import _subtract_time
+from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh_values
 
 
-class FH(np.ndarray):
-    """Forecasting horizon
+class BaseForecastingHorizon:
 
-    Parameters
-    ----------
-    values : np.array, list or int
-        Values of forecasting horizon
-    relative : bool, optional (default=True)
-        - If True, values are relative to end of training series.
-        - If False, values are absolute.
-    """
+    def __repr__(self):
+        _repr = pd.Index.__repr__(self).strip(')')
+        return f"{_repr}, is_relative={self.is_relative})"
 
-    is_relative = None
-    _type = None
+    @staticmethod
+    def _new(values, is_relative=True, **kwargs):
+        return _make_fh(values, is_relative=is_relative)
 
-    def __new__(cls, values, relative=True):
-        """Construct forecasting horizon object"""
+    @staticmethod
+    def _simple_new(values, is_relative=True, **kwargs):
+        return _make_fh(values, is_relative=is_relative)
 
-        if not relative and isinstance(values, pd.Index):
-            values = values.values  # accept pandas index for absolute fh
+    def get_relative(self, cutoff=None):
+        if self.is_relative:
+            return self
 
-        # input checks, returns numpy array
-        values = check_fh_values(values)
-
-        if relative:
-            klass = RelativeFH
         else:
-            klass = AbsoluteFH
+            # dispatch on cutoff type
+            self._check_cutoff(cutoff)
+            values = self - cutoff
 
-        # subclass numpy array
-        return values.view(klass)
+            if is_int(cutoff):
+                pass
 
-    def relative(self, cutoff=None):
-        raise NotImplementedError("abstract method")
+            # get integers
+            elif isinstance(cutoff, pd.Period):
+                values = [value.n for value in values]
 
-    def absolute(self, cutoff=None):
-        raise NotImplementedError("abstract method")
+            elif isinstance(cutoff, pd.Timestamp):
+                try:
+                    values = (values / pd.Timedelta(1, cutoff.freqstr)).astype(
+                        np.int)
+                except ValueError:
+                    values = values.to_period(cutoff.freqstr) - pd.Period(
+                        cutoff, freq=cutoff.freqstr)
+                    values = [value.n for value in values]
+
+            else:
+                raise TypeError("`cutoff` type not supported")
+
+            return self._new(values, is_relative=True)
+
+    def get_absolute(self, cutoff=None):
+        if not self.is_relative:
+            return self
+
+        else:
+            self._check_cutoff(cutoff)
+
+            if hasattr(cutoff, "freq"):
+                # compute relative index for period index
+                values = cutoff + self * cutoff.freq
+
+            else:
+                values = cutoff + self
+
+            return self._new(values, is_relative=False)
+
+    def get_in_sample(self, cutoff=None):
+        relative = self.get_relative(cutoff)
+        return self._new(self[relative <= 0],
+                         is_relative=self.is_relative)
+
+    def get_out_of_sample(self, cutoff=None):
+        is_out_of_sample = self.get_relative(cutoff) > 0
+        return self._new(self[is_out_of_sample],
+                         is_relative=self.is_relative)
+
+    def get_index_like(self, cutoff=None):
+        return self.get_relative(cutoff=cutoff) - 1
 
     def _check_cutoff(self, cutoff):
-        """Check cutoff"""
         if cutoff is None:
-            output_type = "absolute" if self._type == "relative" else \
-                "relative"
-            raise ValueError(f"When relative={self.is_relative}, the "
-                             f"`cutoff` value must be passed in order to "
-                             f"convert "
-                             f"it to {output_type}, but found: None")
+            raise ValueError("`cutoff` must be provided.")
 
-    def in_sample(self, cutoff=None):
-        """Return in-sample values
+        if isinstance(self, pd.PeriodIndex):
+            if not isinstance(cutoff, pd.Period):
+                raise TypeError()
 
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : in-sample values of forecasting horizon
-        """
-        relative = self.relative(cutoff)
-        return relative[relative <= 0]
-
-    def out_of_sample(self, cutoff=None):
-        """Return out-of-sample values
-
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : out-of-sample values of forecasting horizon
-        """
-        relative = self.relative(cutoff)
-        return relative[relative > 0]
-
-    def index_like(self, cutoff=None):
-        """Return zero-based index-like forecasting horizon.
-
-        This is useful for indexing pd.Series using .iloc
-
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : relative zero-based index-like values of forecasting horizon
-        """
-        return self.relative(cutoff) - 1
+        elif isinstance(self, pd.DatetimeIndex):
+            if not isinstance(cutoff, pd.Timestamp):
+                raise TypeError()
 
 
-class RelativeFH(FH):
-    is_relative = True
-    _type = "relative"
-
-    def relative(self, cutoff=None):
-        """Return forecasting horizon values relative to cutoff.
-
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : relative forecasting horizon
-        """
-        return self
-
-    def absolute(self, cutoff=None):
-        """Return absolute forecasting horizon values.
-
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : absolute forecasting horizon
-        """
-        self._check_cutoff(cutoff)
-        values = self + cutoff
-        return values.view(AbsoluteFH)
+def ForecastingHorizon(values, is_relative=True):
+    """Factory method"""
+    values = check_fh_values(values)
+    return _make_fh(values, is_relative)
 
 
-class AbsoluteFH(FH):
-    is_relative = False
-    _type = "absolute"
+def _make_fh(values, is_relative):
+    """Helper funtion to create classes for the forecasting horizons which
+    dynaimcally inherit from pandas index types"""
+    # get pandas index
+    index = pd.Index(values)
 
-    def relative(self, cutoff=None):
-        """Return forecasting horizon values relative to cutoff.
+    # define new class by dynamic inheritance from pandas index type
+    class ForecastingHorizon(BaseForecastingHorizon, type(index)):
+        """Forecasting Horizon"""
 
-        Parameters
-        ----------
-        cutoff : int
+        def __new__(cls, *args, **kwargs):
+            obj = object.__new__(cls)
 
-        Returns
-        -------
-        fh : relative forecasting horizon
-        """
-        self._check_cutoff(cutoff)
-        values = _subtract_time(self, cutoff)
-        return values.view(RelativeFH)
+            # update instances from index
+            obj.__dict__.update(index.__dict__)
+            obj.is_relative = is_relative
 
-    def absolute(self, cutoff=None):
-        """Return absolute forecasting horizon values.
+            return obj
 
-        Parameters
-        ----------
-        cutoff : int
-
-        Returns
-        -------
-        fh : absolute forecasting horizon
-        """
-        return self
+    # create instance of new class
+    return ForecastingHorizon(index, is_relative=is_relative)

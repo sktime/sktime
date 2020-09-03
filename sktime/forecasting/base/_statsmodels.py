@@ -70,7 +70,7 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
             raise NotImplementedError()
         # Forecast all periods from start to end of pred horizon,
         # but only return given time points in pred horizon
-        fh_abs = fh.absolute(self.cutoff)
+        fh_abs = fh.get_absolute(self.cutoff)
         y_pred = self._fitted_forecaster.predict(start=fh_abs[0],
                                                  end=fh_abs[-1])
         return y_pred.loc[fh_abs]

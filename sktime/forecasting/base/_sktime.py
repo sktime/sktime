@@ -451,8 +451,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         if return_pred_int:
             raise NotImplementedError()
 
-        fh_oos = fh.out_of_sample(self.cutoff)
-        fh_ins = fh.in_sample(self.cutoff)
+        fh_oos = fh.get_out_of_sample(self.cutoff)
+        fh_ins = fh.get_in_sample(self.cutoff)
 
         kwargs = {"X": X, "return_pred_int": return_pred_int,
                   "alpha": alpha}
@@ -491,7 +491,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         y_pred = self._predict_last_window(fh, X=X,
                                            return_pred_int=return_pred_int,
                                            alpha=alpha)
-        index = fh.absolute(self.cutoff)
+        index = fh.get_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False,

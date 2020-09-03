@@ -19,7 +19,15 @@ __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
+
 from sktime.utils.validation import is_int
+
+ALLOWED_INDEX_TYPES = (
+    pd.PeriodIndex,
+    pd.RangeIndex,
+    pd.Int64Index,
+    pd.DatetimeIndex
+)
 
 
 def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
@@ -209,9 +217,10 @@ def check_fh(fh):
     fh : FH
         Checked forecasting horizon.
     """
-    from sktime.forecasting.base._fh import FH
-    if not isinstance(fh, FH):
-        fh = FH(fh)
+    from sktime.forecasting.base._fh import BaseForecastingHorizon
+    from sktime.forecasting.base._fh import ForecastingHorizon
+    if not isinstance(fh, BaseForecastingHorizon):
+        fh = ForecastingHorizon(fh, is_relative=True)
     return fh
 
 
@@ -226,9 +235,10 @@ def check_fh_is_relative(fh):
     ------
     TypeError : if fh is not relative
     """
-    from sktime.forecasting import FH
-    if isinstance(fh, FH) and not fh.is_relative:
-        raise TypeError("`fh` must be relative, but found absolute `fh`")
+    from sktime.forecasting.base._fh import BaseForecastingHorizon
+    if isinstance(fh, BaseForecastingHorizon) and not fh.is_relative:
+        raise TypeError(
+            "`fh` must be get_relative, but found get_absolute `fh`")
 
 
 def check_equal_time_index(*ys):
@@ -321,57 +331,50 @@ def check_scoring(scoring):
     return scoring
 
 
-def check_fh_values(values):
-    """Validate forecasting horizon values.
+def check_fh_values(fh):
+    """Validate forecasting horizon fh.
 
     Parameters
     ----------
-    values : int, list of int, array of int
+    fh : int, list of int, array of int, pd.Index
         Forecasting horizon with steps ahead to predict.
 
     Raises
     ------
-    TypeError : if values do not meet criteria
+    TypeError : if fh do not meet criteria
 
     Returns
     -------
-    fh : numpy array of int
+    fh : pd.Index
         Sorted and validated forecasting horizon.
     """
     # check single integer
-    if is_int(values):
-        values = np.array([values], dtype=np.int)
+    if is_int(fh):
+        return pd.Int64Index([fh], dtype=np.int)
 
-    # check array
-    elif isinstance(values, np.ndarray):
-        if values.ndim > 1:
-            raise TypeError(f"`fh` must be a 1d array, but found shape: "
-                            f"{values.shape}")
+    # check pandas index
+    elif isinstance(fh, ALLOWED_INDEX_TYPES):
+        pass
 
-        if np.issubdtype(values.dtype, np.float):
-            raise TypeError(f"If `fh` is passed as an array, it must "
-                            f"be an array of integers, but found an "
-                            f"array of type: {values.dtype}")
+    # check numpy array and list
+    elif isinstance(fh, (np.ndarray, list)):
+        fh = pd.Int64Index(fh, dtype=np.int)
 
-    # check list
-    elif isinstance(values, list):
-        if not np.all([is_int(h) for h in values]):
-            raise TypeError("If `fh` is passed as a list, "
-                            "it has to be a list of integers.")
-        values = np.array(values, dtype=np.int)
-
+    # raise error for other types
     else:
-        raise TypeError(f"`fh` has to be either a numpy array, list, "
-                        f"or a single integer, but found: {type(values)}")
+        allowed_types = ("int", "np.array", "list",
+                         *[f"{index_type.__name__}"
+                           for index_type in ALLOWED_INDEX_TYPES])
+        raise TypeError(f"`fh` must be one of {allowed_types}, "
+                        f"but found: {type(fh)}")
 
-    # check fh is not empty
-    if len(values) < 1:
-        raise TypeError("`fh` cannot be empty, please specify at least one "
-                        "step to forecast.")
+    # check non-empty
+    if len(fh) == 0:
+        raise ValueError(f"`fh` must not be empty, but found: {fh}")
 
     # check fh does not contain duplicates
-    if len(values) != len(np.unique(values)):
-        raise TypeError("`fh` should not contain duplicates.")
+    if len(fh) != fh.nunique():
+        raise ValueError("`fh` must not contain duplicates.")
 
-    # sort fh
-    return np.sort(values)
+    # return sorted fh
+    return fh.sort_values()

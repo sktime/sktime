@@ -99,7 +99,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
             raise NotImplementedError()
         y_preds = np.column_stack(self._predict_forecasters(X=X))
         y_pred = self.final_regressor_.predict(y_preds)
-        index = self.fh.absolute(self.cutoff)
+        index = self.fh.get_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _check_final_regressor(self):

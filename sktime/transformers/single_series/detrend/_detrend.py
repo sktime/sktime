@@ -12,7 +12,7 @@ from sktime.forecasting.base._meta import MetaForecasterMixin
 from sktime.transformers.single_series.base import \
     BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
-from sktime.forecasting.base._fh import FH
+from sktime.forecasting.base._fh import ForecastingHorizon
 
 
 class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
@@ -93,7 +93,7 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         self.check_is_fitted()
         y = check_y(y)
 
-        fh = FH(y.index, relative=False)
+        fh = ForecastingHorizon(y.index, is_relative=False)
         y_pred = self.forecaster_.predict(fh, X=X)
         return y - y_pred
 
@@ -115,12 +115,9 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         """
         self.check_is_fitted()
         y = check_y(y)
-        fh = FH(y.index, relative=False)
+        fh = ForecastingHorizon(y.index, is_relative=False)
         y_pred = self.forecaster_.predict(fh=fh, X=X)
         return y + y_pred
-
-    def _get_relative_fh(self, y):
-        return y.index.values - self.forecaster_.cutoff
 
     def update(self, y_new, update_params=False):
         """

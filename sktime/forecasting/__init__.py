@@ -7,4 +7,4 @@ __all__ = [
     "FH"
 ]
 
-from sktime.forecasting.base._fh import FH
+from sktime.forecasting.base._fh import ForecastingHorizon

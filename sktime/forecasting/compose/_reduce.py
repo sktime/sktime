@@ -332,7 +332,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             last_window = np.append(last_window, y_pred[i])[
                           -self.window_length_:]
 
-        fh_idx = fh.index_like(self.cutoff)
+        fh_idx = fh.get_index_like(self.cutoff)
         return y_pred[fh_idx]
 
     # def _predict_in_sample(self, fh, X=None, return_pred_int=False,

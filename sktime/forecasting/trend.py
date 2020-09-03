@@ -121,7 +121,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         self._set_fh(fh)
 
         # use relative fh as time index to predict
-        fh_relative = self.fh.relative(self.cutoff)
+        fh_relative = self.fh.get_relative(self.cutoff).to_numpy()
         X_pred = fh_relative.reshape(-1, 1)
         y_pred = self.regressor_.predict(X_pred)
-        return pd.Series(y_pred, index=self.fh.absolute(self.cutoff))
+        return pd.Series(y_pred, index=self.fh.get_absolute(self.cutoff))
