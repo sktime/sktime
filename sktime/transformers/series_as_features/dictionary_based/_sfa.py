@@ -19,55 +19,11 @@ from sklearn.feature_selection import f_classif
 
 from numba import njit
 
+from numba.core import types
+# from numba.typed import Dict
+
 # The binning methods to use: equi-depth, equi-width or information gain
 binning_methods = {"equi-depth", "equi-width", "information-gain"}
-
-
-@njit()
-def _create_word(dft, word_length, alphabet_size, breakpoints):
-    word = 0
-    for i in range(word_length):
-        for bp in range(alphabet_size):
-            if dft[i] <= breakpoints[i][bp]:
-                word = (word << 2) | bp
-                break
-
-    return word
-
-
-@njit()
-def _iterate_mft(series, mft_data, phis, length, window_size, i):
-    for n in range(0, length, 2):
-        real = mft_data[n] + series[i + window_size - 1] - \
-               series[i - 1]
-        imag = mft_data[n + 1]
-        mft_data[n] = real * phis[n] - imag * phis[n + 1]
-        mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-
-
-@njit()
-def _calc_incremental_mean_std(series, end, window_size):
-    means = np.zeros(end)
-    stds = np.zeros(end)
-
-    window = series[0:window_size]
-    series_sum = np.sum(window)
-    square_sum = np.sum(np.multiply(window, window))
-
-    r_window_length = 1 / window_size
-    means[0] = series_sum * r_window_length
-    buf = square_sum * r_window_length - means[0] * means[0]
-    stds[0] = math.sqrt(buf) if buf > 0 else 0
-
-    for w in range(1, end):
-        series_sum += series[w + window_size - 1] - series[w - 1]
-        means[w] = series_sum * r_window_length
-        square_sum += series[w + window_size - 1] * series[
-            w + window_size - 1] - series[w - 1] * series[w - 1]
-        buf = square_sum * r_window_length - means[w] * means[w]
-        stds[w] = math.sqrt(buf) if buf > 0 else 0
-
-    return stds
 
 
 class SFA(BaseSeriesAsFeaturesTransformer):
@@ -232,33 +188,36 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         for i in range(X.shape[0]):
             dfts = self._mft(X[i, :])
-            bag = {}
+
+            bag = {}  # Dict.empty(key_type=types.int64,value_type=types.int64)
             last_word = -1
             repeat_words = 0
             words = []
 
             for window in range(dfts.shape[0]):
-                word_raw = _create_word(
+                word_raw = SFA._create_word(
                     dfts[window], self.word_length,
                     self.alphabet_size, self.breakpoints)
-                word = _BitWord(word=word_raw)
+                words.append(word_raw)
 
-                words.append(word)
-                repeat_word = (self._add_to_pyramid(bag, word, last_word,
+                repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
                                                     window -
                                                     int(repeat_words / 2))
                                if self.levels > 1 else
-                               self._add_to_bag(bag, word, last_word))
+                               self._add_to_bag(bag, word_raw, last_word))
+
                 if repeat_word:
                     repeat_words += 1
                 else:
-                    last_word = word.word
+                    last_word = word_raw
                     repeat_words = 0
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = words[window - self.window_size] \
-                            .create_bigram(word, self.word_length)
+                        bigram = _BitWord.create_bigram_word(
+                            words[window - self.window_size],
+                            word_raw, self.word_length)
+
                         if self.levels > 1:
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
@@ -411,20 +370,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             for i in range(0, int(length / 2))]).flatten()
 
         end = max(1, len(series) - self.window_size + 1)
-        stds = _calc_incremental_mean_std(series, end, self.window_size)
+        stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
         mft_data = np.array([])
 
         for i in range(end):
             if i > 0:
                 # moved to external method to use njit
-                # for n in range(0, length, 2):
-                #     real = mft_data[n] + series[i + self.window_size - 1] - \
-                #            series[i - 1]
-                #     imag = mft_data[n + 1]
-                #     mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                #     mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-                _iterate_mft(series, mft_data, phis, length,
+                SFA._iterate_mft(series, mft_data, phis, length,
                              self.window_size, i)
             else:
                 X_fft = np.fft.rfft(series[0:self.window_size])
@@ -442,71 +395,40 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]
 
-    # moved to external method to use njit
-    # def _calc_incremental_mean_std(self, series, end):
-    #     means = np.zeros(end)
-    #     stds = np.zeros(end)
-    #
-    #     window = series[0:self.window_size]
-    #     series_sum = np.sum(window)
-    #     square_sum = np.sum(np.multiply(window, window))
-    #
-    #     r_window_length = 1 / self.window_size
-    #     means[0] = series_sum * r_window_length
-    #     buf = square_sum * r_window_length - means[0] * means[0]
-    #     stds[0] = math.sqrt(buf) if buf > 0 else 0
-    #
-    #     for w in range(1, end):
-    #         series_sum += series[w + self.window_size - 1] - series[w - 1]
-    #         means[w] = series_sum * r_window_length
-    #         square_sum += series[w + self.window_size - 1] * series[
-    #             w + self.window_size - 1] - series[w - 1] * series[w - 1]
-    #         buf = square_sum * r_window_length - means[w] * means[w]
-    #         stds[w] = math.sqrt(buf) if buf > 0 else 0
-    #
-    #     return stds
-    #
-    # def _create_word(self, dft):
-    #     word = _BitWord()
-    #
-    #     for i in range(self.word_length):
-    #         for bp in range(self.alphabet_size):
-    #             if dft[i] <= self.breakpoints[i][bp]:
-    #                 word.push(bp)
-    #                 break
-    #
-    #     return word
-
+    # TODO merge with transform???
     # assumes saved words are of word length 16.
     def _shorten_bags(self, word_len):
         new_bags = pd.DataFrame()
         dim = []
 
         for i in range(len(self.words)):
-            bag = {}
+            bag = dict()
             last_word = -1
             repeat_words = 0
-            new_words = []
+
             for window, word in enumerate(self.words[i]):
-                new_word = _BitWord(word=word.word)
-                new_word.shorten(16 - word_len)
+                new_word = _BitWord.shorten_word(word, 16 - word_len)
+
                 repeat_word = (self._add_to_pyramid(bag, new_word, last_word,
                                                     window -
                                                     int(repeat_words / 2))
                                if self.levels > 1 else
                                self._add_to_bag(bag, new_word, last_word))
+
                 if repeat_word:
                     repeat_words += 1
                 else:
-                    last_word = new_word.word
+                    last_word = new_word
                     repeat_words = 0
 
                 if self.bigrams:
-                    new_words.append(new_words)
-
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = new_words[window - self.window_size] \
-                            .create_bigram(word, self.word_length)
+                        bigram = _BitWord.create_bigram_word(
+                            _BitWord.shorten_word(
+                                self.words[window - self.window_size],
+                                16 - word_len),
+                            word, self.word_length)
+
                         if self.levels > 1:
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
@@ -518,15 +440,15 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return new_bags
 
     def _add_to_bag(self, bag, word, last_word):
-        if self.remove_repeat_words and word.word == last_word:
+        if self.remove_repeat_words and word == last_word:
             return False
 
-        bag[word.word] = bag.get(word.word, 0) + 1
+        bag[word] = bag.get(word, 0) + 1
 
         return True
 
     def _add_to_pyramid(self, bag, word, last_word, window_ind):
-        if self.remove_repeat_words and word.word == last_word:
+        if self.remove_repeat_words and word == last_word:
             return False
 
         start = 0
@@ -536,9 +458,57 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             pos = window_ind + int((self.window_size / 2))
             quadrant = start + (pos / quadrant_size)
 
-            bag[(word.word, quadrant)] = (bag.get((word.word, quadrant), 0)
+            bag[(word, quadrant)] = (bag.get((word, quadrant), 0)
                                           + self.level_weights[i])
 
             start += num_quadrants
 
         return True
+
+    @staticmethod
+    @njit("int32(float64[:], int32, int32, float64[:,:])", fastmath=True)
+    def _create_word(dft, word_length, alphabet_size, breakpoints):
+        word = 0
+        for i in range(word_length):
+            for bp in range(alphabet_size):
+                if dft[i] <= breakpoints[i][bp]:
+                    word = (word << 2) | bp
+                    break
+
+        return word
+
+    @staticmethod
+    @njit("(float64[:],float64[:],float64[:],int32, int32, int32)",
+          fastmath=True)
+    def _iterate_mft(series, mft_data, phis, length, window_size, i):
+        for n in range(0, length, 2):
+            real = mft_data[n] + series[i + window_size - 1] - \
+                   series[i - 1]
+            imag = mft_data[n + 1]
+            mft_data[n] = real * phis[n] - imag * phis[n + 1]
+            mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+
+    @staticmethod
+    @njit("float64[:](float64[:],int32,int32)", fastmath=True)
+    def _calc_incremental_mean_std(series, end, window_size):
+        means = np.zeros(end)
+        stds = np.zeros(end)
+
+        window = series[0:window_size]
+        series_sum = np.sum(window)
+        square_sum = np.sum(np.multiply(window, window))
+
+        r_window_length = 1 / window_size
+        means[0] = series_sum * r_window_length
+        buf = square_sum * r_window_length - means[0] * means[0]
+        stds[0] = math.sqrt(buf) if buf > 0 else 0
+
+        for w in range(1, end):
+            series_sum += series[w + window_size - 1] - series[w - 1]
+            means[w] = series_sum * r_window_length
+            square_sum += series[w + window_size - 1] * series[
+                w + window_size - 1] - series[w - 1] * series[w - 1]
+            buf = square_sum * r_window_length - means[w] * means[w]
+            stds[w] = math.sqrt(buf) if buf > 0 else 0
+
+        return stds

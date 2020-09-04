@@ -20,7 +20,10 @@ from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
-# TO DO: Make more efficient
+# from numba import njit
+# from numba.typed import Dict
+
+# TODO: Make more efficient
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -492,14 +495,14 @@ class BOSSIndividual(BaseClassifier):
 # def _dist(val_a, val_b):
 #     return (val_a - val_b) * (val_a - val_b)
 
-
 def boss_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
 
     if isinstance(first, dict):
         for word, val_a in first.items():
             val_b = second.get(word, 0)
-            dist += (val_a - val_b) * (val_a - val_b)
+            buf = (val_a - val_b)
+            dist += buf * buf
 
             if dist > best_dist:
                 return sys.float_info.max

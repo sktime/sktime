@@ -11,6 +11,9 @@ from sktime.utils.data_container import tabularize
 #    definition. Timestamps?
 from sktime.utils.validation.series_as_features import check_X
 
+# from numba import types
+# from numba.experimental import jitclass
+
 __author__ = "Matthew Middlehurst"
 
 
@@ -165,8 +168,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
                  sys.float_info.max]
         }[self.alphabet_size]
 
-
-class _BitWord:
+# @jitclass([('word', types.int32)])
+class _BitWord(object):
     # Used to represent a word for dictionary based classifiers such as BOSS
     # an BOP.
     # Can currently only handle an alphabet size of <= 4 and word length of
@@ -175,8 +178,7 @@ class _BitWord:
     # class will need changes/expansions
     # if this is needed.
 
-    def __init__(self,
-                 word=0):
+    def __init__(self, word=0):
         self.word = word
 
     def push(self, letter):
@@ -189,6 +191,16 @@ class _BitWord:
 
     def create_bigram(self, other_word, length):
         return (self.word << length) | other_word.word
+
+    @staticmethod
+    def create_bigram_word(word, other_word, length):
+        return (word << length) | other_word.word
+
+
+    @staticmethod
+    def shorten_word(word, amount):
+        # shorten a word by set amount of letters
+        return _BitWord.right_shift(word, amount * 2)
 
     @staticmethod
     def word_list(word, length):
