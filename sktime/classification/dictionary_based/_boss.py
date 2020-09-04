@@ -20,6 +20,7 @@ from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
+from numba import njit
 
 # TO DO: Make more efficient
 
@@ -488,6 +489,9 @@ class BOSSIndividual(BaseClassifier):
         self.word_length = word_len
         self.transformer.word_length = word_len
 
+#@njit()
+#def _dist(val_a, val_b):
+#    return (val_a - val_b) * (val_a - val_b)
 
 def boss_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
