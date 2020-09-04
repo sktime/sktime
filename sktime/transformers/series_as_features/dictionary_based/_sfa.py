@@ -257,11 +257,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             self.dft_length = self.dft_length + self.dft_length % 2  # even
 
         if self.binning_method == "information-gain":
-            return self._igb(X, y, dft)
+            return self._igb(dft, y)
         else:
-            return self._mcb(X, y, dft)
+            return self._mcb(dft)
 
-    def _mcb(self, X, y, dft):
+    def _mcb(self, dft):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         total_num_windows = self.n_instances * num_windows_per_inst
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
@@ -295,7 +295,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         return breakpoints
 
-    def _igb(self, X, y, dft):
+    def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(criterion='entropy',
                                      max_leaf_nodes=self.alphabet_size)
@@ -378,7 +378,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             if i > 0:
                 # moved to external method to use njit
                 SFA._iterate_mft(series, mft_data, phis, length,
-                             self.window_size, i)
+                                 self.window_size, i)
             else:
                 X_fft = np.fft.rfft(series[0:self.window_size])
                 reals = np.real(X_fft)
@@ -458,8 +458,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             pos = window_ind + int((self.window_size / 2))
             quadrant = start + (pos / quadrant_size)
 
-            bag[(word, quadrant)] = (bag.get((word, quadrant), 0)
-                                          + self.level_weights[i])
+            bag[(word, quadrant)] = (bag.get((word, quadrant), 0) 
+                                     + self.level_weights[i])
 
             start += num_quadrants
 
