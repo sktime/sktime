@@ -40,8 +40,6 @@ def test_data_loaders(dataset):
     y = checks['data'][0]
     X = checks['data'][1]
 
-    print(type(y))
-    print(type(X))
     if y is not None:
         assert(isinstance(y, pd.Series))
         assert(len(y) == checks['len_y'])
