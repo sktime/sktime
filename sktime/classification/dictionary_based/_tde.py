@@ -314,7 +314,7 @@ class IndividualTDE(BaseClassifier):
         self.word_length = word_length
         self.norm = norm
         self.levels = levels
-        self.igb = "information-gain" if igb else "equi-depth"
+        self.igb = igb
         self.alphabet_size = alphabet_size
 
         self.random_state = random_state
@@ -322,7 +322,9 @@ class IndividualTDE(BaseClassifier):
         self.transformer = SFA(word_length=word_length,
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
-                               levels=levels, binning_method=self.igb, bigrams=True,
+                               levels=levels,
+                               binning_method="information-gain" if igb else "equi-depth",
+                               bigrams=True,
                                remove_repeat_words=True,
                                save_words=False)
         self.transformed_data = []
