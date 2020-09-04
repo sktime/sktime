@@ -41,19 +41,19 @@ def test_data_loaders(dataset):
     X = checks['data'][1]
 
     if y is not None:
-        assert(isinstance(y, pd.Series))
-        assert(len(y) == checks['len_y'])
-        assert(y.dtype == checks['data_type_y'])
+        assert isinstance(y, pd.Series)
+        assert len(y) == checks['len_y']
+        assert y.dtype == checks['data_type_y']
 
     if X is not None:
         if len(checks['data_types_X']) > 1:
-            assert(isinstance(X, pd.DataFrame))
+            assert isinstance(X, pd.DataFrame)
         else:
-            assert(isinstance(X, pd.Series))
+            assert isinstance(X, pd.Series)
 
-        assert(X.columns.values.tolist() == checks['columns'])
+        assert X.columns.values.tolist() == checks['columns']
 
         for col, dt in checks['data_types_X'].items():
-            assert(X[col].dtype == dt)
+            assert X[col].dtype == dt
 
-        assert(len(X) == checks['len_X'])
+        assert len(X) == checks['len_X']
