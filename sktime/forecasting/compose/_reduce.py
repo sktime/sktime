@@ -247,9 +247,12 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
-        X_last = self._format_windows(
-                    [np.hstack((last_window, last_window_X.transpose()
-                                .flatten()))])
+        if last_window_X is not None:
+            X_last = self._format_windows(
+                        [np.hstack((last_window, last_window_X.transpose()
+                                    .flatten()))])
+        else:
+            X_last = self._format_windows(last_window)
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
