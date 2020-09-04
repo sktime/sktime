@@ -669,4 +669,4 @@ def load_uschange(y_name='Consumption'):
     if y_name != 'Quarter':
         data = data.drop('Quarter', axis=1)
     X = data.drop(y_name, axis=1)
-    return X, y
+    return y, X

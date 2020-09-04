@@ -5,23 +5,43 @@
 __author__ = ["Sebastiaan Koel"]
 __all__ = []
 
+import pytest
 import pandas as pd
 from sktime.datasets import load_uschange
 
+_CHECKS = {
+    'uschange': {
+        'columns': ['Income', 'Production', 'Savings', 'Unemployment'],
+        'len_y': 187,
+        'len_X': 187,
+        'data_types_X': {'Income': 'float64', 'Production': 'float64',
+                         'Savings': 'float64', 'Unemployment': 'float64'},
+        'data_type_y': 'float64',
+        'data': load_uschange()
+    },
+}
 
-def check_dataset(checks, y=None, X=None):
+
+@pytest.mark.parametrize("dataset", sorted(_CHECKS.keys()))
+def test_data_loaders(dataset):
     """
     asserts if datasets are loaded correctly
     ----------
-    checks: dictionary with values to assert against should contain:
+    dataset: dictionary with values to assert against should contain:
         'columns' : list with column names in correct order,
         'len_y'   : lenght of the y series (int),
         'len_X'   : lenght of the X series/dataframe (int),
         'data_types_X' : dictionary with column name keys and dtype as value,
         'data_type_y'  : dtype if y column (string)
-    y:  y series of the dataset
-    X:  X dataframe or series from dataset
+        'data'    : tuple with y series and X series/dataframe if one is not
+                    applicable fill with None value,
     """
+    checks = _CHECKS[dataset]
+    y = checks['data'][0]
+    X = checks['data'][1]
+
+    print(type(y))
+    print(type(X))
     if y is not None:
         assert(isinstance(y, pd.Series))
         assert(len(y) == checks['len_y'])
@@ -39,17 +59,3 @@ def check_dataset(checks, y=None, X=None):
             assert(X[col].dtype == dt)
 
         assert(len(X) == checks['len_X'])
-
-
-def test_uschange():
-    X, y = load_uschange()
-    checks = {
-        'columns': ['Income', 'Production', 'Savings', 'Unemployment'],
-        'len_y': 187,
-        'len_X': 187,
-        'data_types_X': {'Income': 'float64', 'Production': 'float64',
-                         'Savings': 'float64', 'Unemployment': 'float64'},
-        'data_type_y': 'float64'
-    }
-
-    check_dataset(checks, y, X)
