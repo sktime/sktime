@@ -19,7 +19,7 @@ from sklearn.feature_selection import f_classif
 
 from numba import njit
 
-from numba.core import types
+# from numba.core import types
 # from numba.typed import Dict
 
 # The binning methods to use: equi-depth, equi-width or information gain

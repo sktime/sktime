@@ -467,7 +467,7 @@ class BOSSIndividual(BaseClassifier):
 
     def _shorten_bags(self, word_len):
         new_boss = BOSSIndividual(self.window_size, word_len,
-                                  self.alphabet_size, self.norm,
+                                  self.norm, self.alphabet_size,
                                   save_words=self.save_words,
                                   random_state=self.random_state)
         new_boss.transformer = self.transformer
