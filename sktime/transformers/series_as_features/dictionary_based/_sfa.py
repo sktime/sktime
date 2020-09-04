@@ -216,7 +216,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
