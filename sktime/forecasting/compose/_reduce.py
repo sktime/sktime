@@ -207,8 +207,6 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self : returns an instance of self.
         """
         self._set_y_X(y_train, X_train)
-        if X_train is not None:
-            raise NotImplementedError()
         self._set_fh(fh)
         if np.any(self.fh <= 0):
             raise NotImplementedError(
@@ -244,11 +242,14 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # make forecasts
         # get last window from observation horizon
         # To Do, implement multivariate like _RecursiveReducer
-        last_window, _ = self._get_last_window()
+        last_window, last_window_X = self._get_last_window()
+
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
-        X_last = self._format_windows([last_window])
+        X_last = self._format_windows(
+                    [np.hstack((last_window, last_window_X.transpose()
+                                .flatten()))])
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
@@ -283,10 +284,6 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         -------
         self : returns an instance of self.
         """
-        # input checks
-        # if X_train is not None:
-        #     raise NotImplementedError()
-
         # set values
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
