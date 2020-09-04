@@ -22,6 +22,7 @@ from numba import njit
 # The binning methods to use: equi-depth, equi-width or information gain
 binning_methods = {"equi-depth", "equi-width", "information-gain"}
 
+
 @njit()
 def _create_word(dft, word_length, alphabet_size, breakpoints):
     word = 0
@@ -33,6 +34,7 @@ def _create_word(dft, word_length, alphabet_size, breakpoints):
 
     return word
 
+
 @njit()
 def _iterate_mft(series, mft_data, phis, length, window_size, i):
     for n in range(0, length, 2):
@@ -41,6 +43,7 @@ def _iterate_mft(series, mft_data, phis, length, window_size, i):
         imag = mft_data[n + 1]
         mft_data[n] = real * phis[n] - imag * phis[n + 1]
         mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+
 
 @njit()
 def _calc_incremental_mean_std(series, end, window_size):
@@ -65,6 +68,7 @@ def _calc_incremental_mean_std(series, end, window_size):
         stds[w] = math.sqrt(buf) if buf > 0 else 0
 
     return stds
+
 
 class SFA(BaseSeriesAsFeaturesTransformer):
     """ SFA (Symbolic Fourier Approximation) Transformer, as described in
@@ -101,10 +105,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             size of window for sliding. Input series
             length for whole series transform
 
-        norm:                boolean, default = False
-            whether to mean normalise words by dropping first fourier coefficient
+        norm:               boolean, default = False
+            mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain"},  default="equi-depth"
+        binning_method:      {"equi-depth", "equi-width", "information-gain"},
+                             default="equi-depth"
             the binning method used to derive the breakpoints.
 
         anova:               boolean, default = False
@@ -147,10 +152,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         # we cannot select more than window_size many letters in a word
         offset = 2 if norm else 0
         self.word_length = min(word_length, window_size - offset)
-        self.dft_length = window_size-offset if anova==True else self.word_length
+        self.dft_length = window_size - offset if anova is True \
+            else self.word_length
 
         # make dft_length an even number (same number of reals and imags)
-        self.dft_length = self.dft_length + self.dft_length%2
+        self.dft_length = self.dft_length + self.dft_length % 2
 
         self.support = list(range(self.word_length))
 
@@ -233,8 +239,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             for window in range(dfts.shape[0]):
                 word_raw = _create_word(
-                    dfts[window], self.word_length, self.alphabet_size, self.breakpoints)
-                word = _BitWord(word = word_raw)
+                    dfts[window], self.word_length,
+                    self.alphabet_size, self.breakpoints)
+                word = _BitWord(word=word_raw)
 
                 words.append(word)
                 repeat_word = (self._add_to_pyramid(bag, word, last_word,
@@ -265,7 +272,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         return bags
 
-    def _binning(self, X, y=None) :
+    def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         dft = np.array([self._mcb_dft(X[i, :], num_windows_per_inst) for i in
                         range(self.n_instances)])
@@ -275,10 +282,10 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             y = np.repeat(y, num_windows_per_inst)
 
         if self.anova and y is not None:
-            #non_constant = np.where(~np.isclose(
+            # non_constant = np.where(~np.isclose(
             #                dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
             _, p = f_classif(dft, y)
-            #self.support = non_constant[np.argsort(p)[::-1][:self.word_length]]
+            # self.support=non_constant[np.argsort(p)[::-1][:self.word_length]]
             # select word-length many indices with largest f-score
             self.support = np.argsort(p)[::-1][:self.word_length]
 
@@ -288,9 +295,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             # select the Fourier coefficients with highest f-score
             dft = dft[:, self.support]
             self.dft_length = np.max(self.support)
-            self.dft_length = self.dft_length + self.dft_length%2 # make it even
+            self.dft_length = self.dft_length + self.dft_length % 2  # even
 
-        if self.binning_method == "information-gain" :
+        if self.binning_method == "information-gain":
             return self._igb(X, y, dft)
         else:
             return self._mcb(X, y, dft)
@@ -302,9 +309,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         for letter in range(self.word_length):
 
-            column = np.sort(
-                np.array([round(dft[inst][letter] * 100) / 100
-                          for inst in range(self.n_instances*num_windows_per_inst)]))
+            res = [round(dft[inst][letter] * 100) / 100
+                   for inst in range(self.n_instances * num_windows_per_inst)]
+            column = np.sort(np.array(res))
 
             bin_index = 0
 
@@ -318,10 +325,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             # use equi-width binning aka equi-frequency binning
             elif self.binning_method == "equi-width":
-                target_bin_width = (column[-1] - column[0]) / self.alphabet_size
+                target_bin_width = \
+                    (column[-1] - column[0]) / self.alphabet_size
 
                 for bp in range(self.alphabet_size - 1):
-                    breakpoints[letter][bp] = (bp + 1) * (target_bin_width) + column[0]
+                    breakpoints[letter][bp] = (bp + 1) * target_bin_width \
+                                              + column[0]
 
             breakpoints[letter][self.alphabet_size - 1] = sys.float_info.max
 
@@ -353,8 +362,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                            self.window_size:self.series_length]
         return [self._discrete_fourier_transform(row) for n, row in
                 enumerate(split)]
-
-
 
     def _discrete_fourier_transform(self, series):
         """ Performs a discrete fourier transform using the fast fourier
@@ -417,11 +424,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 #     imag = mft_data[n + 1]
                 #     mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 #     mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
-                _iterate_mft(series, mft_data, phis, length, self.window_size, i)
+                _iterate_mft(series, mft_data, phis, length,
+                             self.window_size, i)
             else:
                 X_fft = np.fft.rfft(series[0:self.window_size])
                 reals = np.real(X_fft)
-                imags = np.imag(X_fft)  # * -1 # TODO correct for lower bounding??
+                imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
                 mft_data = np.empty((length,), dtype=reals.dtype)
                 mft_data[0::2] = reals[:np.int32(length / 2)]
                 mft_data[1::2] = imags[:np.int32(length / 2)]
@@ -431,7 +439,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             transformed[i] = mft_data * normalising_factor
 
-        return transformed[:, start_offset:][:,self.support] \
+        return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]
 
     # moved to external method to use njit

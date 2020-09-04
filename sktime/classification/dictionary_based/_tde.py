@@ -319,11 +319,13 @@ class IndividualTDE(BaseClassifier):
 
         self.random_state = random_state
 
+        binning_method = "information-gain" if igb else "equi-depth"
+
         self.transformer = SFA(word_length=word_length,
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
                                levels=levels,
-                               binning_method="information-gain" if igb else "equi-depth",
+                               binning_method=binning_method,
                                bigrams=True,
                                remove_repeat_words=True,
                                save_words=False)
