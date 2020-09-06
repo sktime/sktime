@@ -15,12 +15,12 @@ from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
 from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
-from sklearn.pipeline import Pipeline
+from sklearn.model_selection import cross_val_score
 
-from sktime.transformers.series_as_features.dictionary_based._sax import \
-    _BitWord
+# from sktime.transformers.series_as_features.dictionary_based._sax import \
+#     _BitWord
 
 # from numba import njit
 # from numba.typed import Dict
@@ -77,6 +77,7 @@ class WEASEL(BaseClassifier):
                  alphabet_size=4,
                  chi2_threshold=2,
                  anova=True,
+                 bigrams=True,
                  binning_strategy="information-gain",
                  random_state=None
                  ):
@@ -85,14 +86,15 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [True, False]
-        self.word_lengths = [6, 4]
+        self.word_lengths = [4, 6]
 
+        self.bigrams = bigrams
         self.chi2_threshold = chi2_threshold
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
         self.min_window = 6
-        self.max_window = -1
+        self.max_window = 350
         self.win_inc = 1
         self.highest_bit = -1
         self.window_sizes = []
@@ -102,6 +104,7 @@ class WEASEL(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
+        self.vectorizer = None
 
         super(WEASEL, self).__init__()
 
@@ -124,7 +127,7 @@ class WEASEL(BaseClassifier):
 
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
-        self.max_window = int(self.series_length)
+        self.max_window = min(self.series_length, self.max_window)
         self.window_sizes = list(range(self.min_window,
                                        self.max_window,
                                        self.win_inc))
@@ -134,9 +137,9 @@ class WEASEL(BaseClassifier):
 
         for norm in self.norm_options:
 
-            #SFA_transformers = [SFA() for _ in range(len(self.window_sizes))]
+            # SFA_transformers = [SFA() for _ in range(len(self.window_sizes))]
 
-            #for i, window_size in enumerate(self.window_sizes):
+            # for i, window_size in enumerate(self.window_sizes):
             #    SFA_transformers[i] =\
             #        SFA(word_length=np.max(self.word_lengths),
             #                  alphabet_size=self.alphabet_size,
@@ -154,54 +157,60 @@ class WEASEL(BaseClassifier):
                 SFA_transformers = [SFA() for _ in range(len(self.window_sizes))]
 
                 for i, window_size in enumerate(self.window_sizes):
-                    #X_sfas = SFA_transformers[i]._shorten_bags(word_length)  # FIXME !!
+                    # X_sfas = SFA_transformers[i]._shorten_bags(word_length,
+                    #                                            np.max(self.word_lengths))  # FIXME !!
 
                     SFA_transformers[i] = SFA(word_length=word_length,
-                                  alphabet_size=self.alphabet_size,
-                                  window_size=window_size,
-                                  norm=norm,
-                                  anova=True,
-                                  binning_method="information-gain",
-                                  bigrams=True,
-                                  remove_repeat_words=False,
-                                  save_words=False)
+                                              alphabet_size=self.alphabet_size,
+                                              window_size=window_size,
+                                              norm=norm,
+                                              anova=self.anova,
+                                              binning_method=self.binning_strategy,
+                                              bigrams=self.bigrams,
+                                              remove_repeat_words=False,
+                                              lower_bounding=False,
+                                              save_words=False)
                     X_sfas = SFA_transformers[i].fit_transform(X, y)
 
                     # TODO refactor: dicts not really needed here ...
-                    X_words = [series.to_dict() for series in X_sfas.iloc[:, 0]]
+                    bag = [series.to_dict() for series in X_sfas.iloc[:, 0]]
 
                     # chi-squared test to keep only relevent features
-                    X_counts = DictVectorizer(sparse=False).fit_transform(X_words)
+                    X_counts = DictVectorizer(sparse=False).fit_transform(bag)
                     chi2_statistics, p = chi2(X_counts, y)
                     relevant_features = np.where(
-                        chi2_statistics > self.chi2_threshold)[0]
+                        chi2_statistics >= self.chi2_threshold)[0]
 
                     # merging bag-of-patterns of different window_sizes
                     # to single bag-of-patterns with prefix indicating
                     # the used window-length
-                    for i in range(len(X_words)) :
-                        for (key, value) in X_words[i].items():
+                    for j in range(len(bag)):
+                        for (key, value) in bag[j].items():
                             if key in relevant_features:  # chi-squared test
                                 # append the prefices to the words to
                                 # distinguish between window-sizes
                                 word = (key << self.highest_bit) | window_size
-                                self._add_to_bag(X_all_words[i], word, value)
+                                self._add_to_bag(X_all_words[j], word, value)
 
                 # TODO use CountVectorizer instead on actual words ... ???
-                lr = LogisticRegressionCV(max_iter=5000,
-                                          solver="liblinear",
-                                          # , n_jobs=-1,
-                                          random_state=self.random_state,
-                                          cv=5)
-                clf = Pipeline([('vectorizer', DictVectorizer(sparse=True)),
-                                ('lr', lr)]).fit(X_all_words, y)
+                vectorizer = DictVectorizer(sparse=True)
+                X_dict = vectorizer.fit_transform(X_all_words)
+                lr = LogisticRegression(max_iter=5000, solver="liblinear",
+                                        dual=True, n_jobs=-1, penalty="l2",
+                                        random_state=self.random_state)
 
-                current_acc = clf.score(X_all_words, y)
+                # cross validation scores
+                current_acc = cross_val_score(lr, X_dict, y, cv=10).mean()
+                print(current_acc)
 
-                if current_acc > max_acc :
+                if current_acc > max_acc:
                     max_acc = current_acc
                     self.SFA_transformers = SFA_transformers
-                    self.clf = clf
+                    self.vectorizer = vectorizer
+                    self.clf = lr
+
+                    # fit final model using all words
+                    self.clf.fit(X_dict, y)
 
         self._is_fitted = True
         return self
@@ -211,24 +220,26 @@ class WEASEL(BaseClassifier):
         X = check_X(X, enforce_univariate=True)
 
         bag = self._transform_words(X)
-        return self.clf.predict(bag)
+        bag_dict = self.vectorizer.transform(bag)
+        return self.clf.predict(bag_dict)
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
         bag = self._transform_words(X)
-        return self.clf.predict_proba(bag)
+        bag_dict = self.vectorizer.transform(bag)
+        return self.clf.predict_proba(bag_dict)
 
     def _transform_words(self, X):
-        bag_all_words = [dict() for x in range(len(X))]
+        bag_all_words = [dict() for _ in range(len(X))]
         for i, window_size in enumerate(self.window_sizes):
 
             # SFA transform
             X_sfa = self.SFA_transformers[i].transform(X)
 
             # TODO shorten words???
-            # X_sfa = self.SFA_transformers[i]._shorten_bags(word_length)  # FIXME !!
+            # X_sfa = self.SFA_transformers[i]._shorten_bags(word_length, np.max(self.word_lengths)  # FIXME !!
 
             # TODO refactor? dicts not really needed here ...
             X_words = [series.to_dict() for series in X_sfa.iloc[:, 0]]
@@ -236,15 +247,18 @@ class WEASEL(BaseClassifier):
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
             # the used window-length
-            for i in range(len(X_words)):
-                for (key, value) in X_words[i].items():
+            for j in range(len(X_words)):
+                for (key, value) in X_words[j].items():
                     # append the prefices to the words to distinguish
                     # between window-sizes
                     word = (key << self.highest_bit) | window_size
-                    self._add_to_bag(bag_all_words[i], word, value)
+                    self._add_to_bag(bag_all_words[j], word, value)
 
         return bag_all_words
 
     def _add_to_bag(self, bag, word, value):
-        bag[word] = bag.get(word, 0) + value
+        if bag.get(word) > 0 :
+            assert False  # this may not happen here
+
+        bag[word] = 1  # TODO add value or 1??
         return True

@@ -1,4 +1,4 @@
-__author__ = ["Matthew Middlehurst"]
+__author__ = ["Matthew Middlehurst", "Patrick Schäfer"]
 __all__ = ["SFA"]
 
 import math
@@ -100,6 +100,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                  bigrams=False,
                  remove_repeat_words=False,
                  levels=1,
+                 lower_bounding=True,
                  save_words=False
                  ):
         self.words = []
@@ -118,7 +119,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
+        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size) if \
+            lower_bounding else 1.0
+
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
@@ -242,11 +245,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         if self.anova and y is not None:
             # non_constant = np.where(~np.isclose(
-            #                dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
+            #    dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
+
+            # select word-length many indices with best f-score
             _, p = f_classif(dft, y)
-            # self.support=non_constant[np.argsort(p)[::-1][:self.word_length]]
-            # select word-length many indices with largest f-score
-            self.support = np.argsort(p)[::-1][:self.word_length]
+            # self.support=non_constant[np.argsort(p)[::]][:self.word_length]
+            self.support = np.argsort(p)[::][:self.word_length]
 
             # sort remaining indices
             self.support = np.sort(self.support)
@@ -399,8 +403,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             if self.anova else transformed[:, start_offset:]
 
     # TODO merge with transform???
-    # assumes saved words are of word length 16.
-    def _shorten_bags(self, word_len):
+    # assumes saved words are of word length 'max_word_length'.
+    def _shorten_bags(self, word_len, max_word_length):
         new_bags = pd.DataFrame()
         dim = []
 
@@ -410,7 +414,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             repeat_words = 0
 
             for window, word in enumerate(self.words[i]):
-                new_word = _BitWord.shorten_word(word, 16 - word_len)
+                new_word = _BitWord.shorten_word(word,
+                                                 max_word_length - word_len)
 
                 repeat_word = (self._add_to_pyramid(bag, new_word, last_word,
                                                     window -
@@ -429,7 +434,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bigram = _BitWord.create_bigram_word(
                             _BitWord.shorten_word(
                                 self.words[i][window - self.window_size],
-                                16 - word_len),
+                                max_word_length - word_len),
                             word, self.word_length)
 
                         if self.levels > 1:
@@ -461,7 +466,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             pos = window_ind + int((self.window_size / 2))
             quadrant = start + (pos / quadrant_size)
 
-            bag[(word, quadrant)] = (bag.get((word, quadrant), 0) 
+            bag[(word, quadrant)] = (bag.get((word, quadrant), 0)
                                      + self.level_weights[i])
 
             start += num_quadrants

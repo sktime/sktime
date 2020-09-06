@@ -471,7 +471,8 @@ class BOSSIndividual(BaseClassifier):
                                   save_words=self.save_words,
                                   random_state=self.random_state)
         new_boss.transformer = self.transformer
-        sfa = self.transformer._shorten_bags(word_len)
+        sfa = self.transformer._shorten_bags(word_len,
+                                             np.max(self.word_lengths))
         new_boss.transformed_data = [series.to_dict() for series in
                                      sfa.iloc[:, 0]]
         new_boss.class_vals = self.class_vals
