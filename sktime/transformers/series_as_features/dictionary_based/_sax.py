@@ -178,6 +178,8 @@ class _BitWord(object):
     # class will need changes/expansions
     # if this is needed.
 
+    # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
+
     def __init__(self, word=0):
         self.word = word
 
@@ -187,14 +189,14 @@ class _BitWord(object):
 
     def shorten(self, amount):
         # shorten a word by set amount of letters
-        self.word = self.right_shift(self.word, amount * 2)
+        _BitWord.shorten_word(self.word, amount)
 
     def create_bigram(self, other_word, length):
-        return (self.word << length) | other_word.word
+        return _BitWord.create_bigram_word(self.word, other_word, length)
 
     @staticmethod
     def create_bigram_word(word, other_word, length):
-        return (word << length) | other_word.word
+        return (word << length) | other_word
 
 
     @staticmethod

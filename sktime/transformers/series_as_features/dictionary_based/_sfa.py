@@ -114,7 +114,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         # make dft_length an even number (same number of reals and imags)
         self.dft_length = self.dft_length + self.dft_length % 2
 
-        self.support = list(range(self.word_length))
+        self.support = np.array(list(range(self.word_length)))
 
         self.alphabet_size = alphabet_size
         self.window_size = window_size
@@ -253,7 +253,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             # select the Fourier coefficients with highest f-score
             dft = dft[:, self.support]
-            self.dft_length = np.max(self.support)
+            self.dft_length = np.max(self.support) + 1
             self.dft_length = self.dft_length + self.dft_length % 2  # even
 
         if self.binning_method == "information-gain":
@@ -374,11 +374,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         transformed = np.zeros((end, length))
         mft_data = np.array([])
 
+        support_index = np.zeros(length, dtype=np.int32)
+        support_index[self.support] = True
+
         for i in range(end):
             if i > 0:
                 # moved to external method to use njit
                 SFA._iterate_mft(series, mft_data, phis, length,
-                                 self.window_size, i)
+                                 self.window_size, i, support_index)
             else:
                 X_fft = np.fft.rfft(series[0:self.window_size])
                 reals = np.real(X_fft)
@@ -425,7 +428,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                     if window - self.window_size >= 0 and window > 0:
                         bigram = _BitWord.create_bigram_word(
                             _BitWord.shorten_word(
-                                self.words[window - self.window_size],
+                                self.words[i][window - self.window_size],
                                 16 - word_len),
                             word, self.word_length)
 
@@ -478,10 +481,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return word
 
     @staticmethod
-    @njit("(float64[:],float64[:],float64[:],int32, int32, int32)",
+    @njit("(float64[:],float64[:],float64[:],int32,int32,int32,int32[:])",
           fastmath=True)
-    def _iterate_mft(series, mft_data, phis, length, window_size, i):
+    def _iterate_mft(series, mft_data, phis, length, window_size, i, support):
         for n in range(0, length, 2):
+            # if support[n] or support[n+1] :  # only compute needed indices
             real = mft_data[n] + series[i + window_size - 1] - \
                    series[i - 1]
             imag = mft_data[n + 1]
