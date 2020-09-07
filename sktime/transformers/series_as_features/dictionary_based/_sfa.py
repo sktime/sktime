@@ -11,7 +11,6 @@ from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based._sax import \
     _BitWord
-from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 from sklearn.tree import DecisionTreeClassifier
@@ -182,26 +181,30 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             raise TypeError('binning_method must be one of: ', binning_methods)
 
         X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        _X = nested_to_3d_numpy(X)
+        _X = _X.reshape(_X.shape[0], _X.shape[2])
 
-        self.n_instances, self.series_length = X.shape
-        self.breakpoints = self._binning(X, y)
+        self.n_instances, self.series_length = _X.shape
+        self.breakpoints = self._binning(_X, y)
 
         self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
         self.check_is_fitted()
+
         X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        _X = nested_to_3d_numpy(X)
+        _X = _X.reshape(_X.shape[0], _X.shape[2])
 
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(X.shape[0]):
-            dfts = self._mft(X[i, :])
+        for i in range(_X.shape[0]):
+            dfts = self._mft(_X[i, :])
 
-            bag = {}  # Dict.empty(key_type=types.int64,value_type=types.int64)
+            # Dict.empty(key_type=types.int64,value_type=types.int64)
+            bag = dict()
             last_word = -1
             repeat_words = 0
             words = np.zeros(dfts.shape[0], dtype=np.int32)
@@ -226,9 +229,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = _BitWord.create_bigram_word(
-                            words[window - self.window_size],
-                            word_raw, self.word_length)
+                        bigram = (words[window - self.window_size]
+                                  << self.word_length) | word_raw
+                        # bigram = _BitWord.create_bigram_word(
+                        #     words[window - self.window_size],
+                        #     word_raw, self.word_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
@@ -543,3 +548,21 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             stds[w] = math.sqrt(buf) if buf > 0 else 0
 
         return stds
+
+def nested_to_3d_numpy(X, a=None, b=None):
+    """Convert pandas DataFrame (with time series as pandas Series in cells)
+    into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
+
+    Parameters
+    ----------
+    X : pandas DataFrame, input
+    a : int, first row (optional, default None)
+    b : int, last row (optional, default None)
+
+    Returns
+    -------
+    NumPy ndarray, converted NumPy ndarray
+    """
+    return np.stack(
+        X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(
+            lambda row: np.stack(row), axis=1).to_numpy())

@@ -195,7 +195,7 @@ class WEASEL(BaseClassifier):
                             # append the prefices to the words to
                             # distinguish between window-sizes
                             word = (key << self.highest_bit) | window_size
-                            WEASEL._add_to_bag(X_all_words[j], word, value)
+                            X_all_words[j][word] = value  # add value of 1?
 
                 # TODO use CountVectorizer instead on actual words ... ???
                 vectorizer = DictVectorizer(sparse=True)
@@ -205,7 +205,7 @@ class WEASEL(BaseClassifier):
                                         random_state=self.random_state)
 
                 # cross validation scores
-                current_acc = cross_val_score(lr, bag_vec, y, cv=10).mean()
+                current_acc = cross_val_score(lr, bag_vec, y, cv=5).mean()
                 print("Train acc:", norm, current_acc)
 
                 if current_acc > max_acc:
@@ -215,6 +215,9 @@ class WEASEL(BaseClassifier):
                     self.SFA_transformers = transformers
                     self.best_word_length = word_length
                     final_bag_vec = bag_vec
+
+                if max_acc == 1.0:
+                    break
 
         # # fit final model using all words
         # for i, window_size in enumerate(self.window_sizes):
@@ -232,7 +235,6 @@ class WEASEL(BaseClassifier):
         #     self.SFA_transformers[i].fit_transform(X, y)
 
         self.clf.fit(final_bag_vec, y)
-
         self._is_fitted = True
         return self
 
@@ -268,11 +270,6 @@ class WEASEL(BaseClassifier):
                     # append the prefices to the words to distinguish
                     # between window-sizes
                     word = (key << self.highest_bit) | window_size
-                    WEASEL._add_to_bag(bag_all_words[j], word, value)
+                    bag_all_words[j][word] = value
 
         return bag_all_words
-
-    @staticmethod
-    def _add_to_bag(bag, word, value):
-        # assert bag.get(word) is None  # this may not happen here
-        bag[word] = value  # add value of 1?
