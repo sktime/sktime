@@ -204,13 +204,13 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             bag = {}  # Dict.empty(key_type=types.int64,value_type=types.int64)
             last_word = -1
             repeat_words = 0
-            words = []
+            words = np.zeros(dfts.shape[0], dtype=np.int32)
 
-            for window in range(dfts.shape[0]):
+            for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
                     dfts[window], self.word_length,
                     self.alphabet_size, self.breakpoints)
-                words.append(word_raw)
+                words[j] = word_raw
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
                                                     window -
@@ -239,7 +239,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             if self.skip_series_conversion:
                 dim.append(bag)
-            else :
+            else:
                 dim.append(pd.Series(bag))
 
         bags[0] = dim
@@ -397,7 +397,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         mft_data[0::2] = reals[:np.int32(length / 2)]
         mft_data[1::2] = imags[:np.int32(length / 2)]
         transformed[0] = mft_data * ((1 / stds[0] if stds[0] > 0 else 1) *
-                              self.inverse_sqrt_win_size)
+                                     self.inverse_sqrt_win_size)
 
         # other runs using mft
         # moved to external method to use njit
@@ -474,7 +474,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             if self.skip_series_conversion:
                 dim.append(bag)
-            else :
+            else:
                 dim.append(pd.Series(bag))
 
         new_bags[0] = dim

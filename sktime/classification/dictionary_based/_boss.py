@@ -388,7 +388,8 @@ class BOSSIndividual(BaseClassifier):
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
                                remove_repeat_words=True,
-                               save_words=save_words)
+                               save_words=save_words,
+                               skip_series_conversion=True)
         self.transformed_data = []
         self.accuracy = 0
 
@@ -402,7 +403,7 @@ class BOSSIndividual(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
+        self.transformed_data = sfa.iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -421,7 +422,7 @@ class BOSSIndividual(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
+        test_bags = test_bags.iloc[:, 0]
 
         for i, test_bag in enumerate(test_bags):
             best_dist = sys.float_info.max
@@ -471,10 +472,9 @@ class BOSSIndividual(BaseClassifier):
                                   save_words=self.save_words,
                                   random_state=self.random_state)
         new_boss.transformer = self.transformer
-        sfa = self.transformer._shorten_bags(word_len,
-                                             np.max(self.word_lengths))
-        new_boss.transformed_data = [series.to_dict() for series in
-                                     sfa.iloc[:, 0]]
+        sfa = self.transformer._shorten_bags(word_len)
+        new_boss.transformed_data = sfa.iloc[:, 0]
+
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes
         new_boss.classes_ = self.classes_

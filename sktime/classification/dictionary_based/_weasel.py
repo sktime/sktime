@@ -86,7 +86,7 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [True, False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = [4, 6]  # 6
 
         self.bigrams = bigrams
         self.chi2_threshold = chi2_threshold
@@ -105,6 +105,7 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.vectorizer = None
+        self.best_word_length = -1
 
         super(WEASEL, self).__init__()
 
@@ -135,82 +136,102 @@ class WEASEL(BaseClassifier):
         max_acc = -1
         self.highest_bit = (math.ceil(math.log2(self.max_window))+1)
 
+        final_bag_vec = None
+
         for norm in self.norm_options:
 
-            # SFA_transformers = [SFA() for _ in range(len(self.window_sizes))]
-
+            # transformers = [SFA() for _ in range(len(self.window_sizes))]
             # for i, window_size in enumerate(self.window_sizes):
-            #    SFA_transformers[i] =\
+            #    transformers[i] =\
             #        SFA(word_length=np.max(self.word_lengths),
-            #                  alphabet_size=self.alphabet_size,
-            #                  window_size=window_size,
-            #                  norm=norm,
-            #                  anova=True,
-            #                  binning_method="information-gain",
-            #                  bigrams=True,
-            #                  remove_repeat_words=False,
-            #                  save_words=True)
-            #    SFA_transformers[i].fit_transform(X, y)
+            #            alphabet_size=self.alphabet_size,
+            #            window_size=window_size,
+            #            norm=norm,
+            #            anova=self.anova,
+            #            binning_method=self.binning_strategy,
+            #            bigrams=self.bigrams,
+            #            remove_repeat_words=False,
+            #            lower_bounding=False,
+            #            save_words=True)
+            #    transformers[i].fit_transform(X, y)
 
             for word_length in self.word_lengths:  # use the shortening trick??
                 X_all_words = [dict() for x in range(len(X))]
-                SFA_transformers = [SFA() for _ in range(len(self.window_sizes))]
+                transformers = [SFA() for _ in range(len(self.window_sizes))]
 
                 for i, window_size in enumerate(self.window_sizes):
-                    # X_sfas = SFA_transformers[i]._shorten_bags(word_length,
-                    #                                            np.max(self.word_lengths))  # FIXME !!
+                    # X_sfas = transformers[i]._shorten_bags(
+                    #     word_length, np.max(self.word_lengths))
 
-                    SFA_transformers[i] = SFA(word_length=word_length,
-                                              alphabet_size=self.alphabet_size,
-                                              window_size=window_size,
-                                              norm=norm,
-                                              anova=self.anova,
-                                              binning_method=self.binning_strategy,
-                                              bigrams=self.bigrams,
-                                              remove_repeat_words=False,
-                                              lower_bounding=False,
-                                              save_words=False)
-                    X_sfas = SFA_transformers[i].fit_transform(X, y)
+                    transformers[i] = SFA(word_length=word_length,
+                                          alphabet_size=self.alphabet_size,
+                                          window_size=window_size,
+                                          norm=norm,
+                                          anova=self.anova,
+                                          binning_method=self.binning_strategy,
+                                          bigrams=self.bigrams,
+                                          remove_repeat_words=False,
+                                          lower_bounding=False,
+                                          save_words=False,
+                                          skip_series_conversion=True)
+                    X_sfas = transformers[i].fit_transform(X, y)
 
                     # TODO refactor: dicts not really needed here ...
-                    bag = [series.to_dict() for series in X_sfas.iloc[:, 0]]
+                    # bag = [series.to_dict() for series in X_sfas.iloc[:, 0]]
+                    bag = X_sfas.iloc[:, 0]
 
                     # chi-squared test to keep only relevent features
-                    X_counts = DictVectorizer(sparse=False).fit_transform(bag)
-                    chi2_statistics, p = chi2(X_counts, y)
-                    relevant_features = np.where(
-                        chi2_statistics >= self.chi2_threshold)[0]
+                    # bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
+                    # chi2_statistics, p = chi2(bag_vec, y)
+                    # relevant_features = np.where(
+                    #     chi2_statistics >= self.chi2_threshold)[0]
 
                     # merging bag-of-patterns of different window_sizes
                     # to single bag-of-patterns with prefix indicating
                     # the used window-length
                     for j in range(len(bag)):
                         for (key, value) in bag[j].items():
-                            if key in relevant_features:  # chi-squared test
-                                # append the prefices to the words to
-                                # distinguish between window-sizes
-                                word = (key << self.highest_bit) | window_size
-                                self._add_to_bag(X_all_words[j], word, value)
+                            # if key in relevant_features:  # chi-squared test
+                            # append the prefices to the words to
+                            # distinguish between window-sizes
+                            word = (key << self.highest_bit) | window_size
+                            WEASEL._add_to_bag(X_all_words[j], word, value)
 
                 # TODO use CountVectorizer instead on actual words ... ???
                 vectorizer = DictVectorizer(sparse=True)
-                X_dict = vectorizer.fit_transform(X_all_words)
+                bag_vec = vectorizer.fit_transform(X_all_words)
                 lr = LogisticRegression(max_iter=5000, solver="liblinear",
                                         dual=True, n_jobs=-1, penalty="l2",
                                         random_state=self.random_state)
 
                 # cross validation scores
-                current_acc = cross_val_score(lr, X_dict, y, cv=10).mean()
-                print(current_acc)
+                current_acc = cross_val_score(lr, bag_vec, y, cv=10).mean()
+                print("Train acc:", norm, current_acc)
 
                 if current_acc > max_acc:
                     max_acc = current_acc
-                    self.SFA_transformers = SFA_transformers
                     self.vectorizer = vectorizer
                     self.clf = lr
+                    self.SFA_transformers = transformers
+                    self.best_word_length = word_length
+                    final_bag_vec = bag_vec
 
-                    # fit final model using all words
-                    self.clf.fit(X_dict, y)
+        # # fit final model using all words
+        # for i, window_size in enumerate(self.window_sizes):
+        #     self.SFA_transformers[i] = \
+        #         SFA(word_length=np.max(self.word_lengths),
+        #             alphabet_size=self.alphabet_size,
+        #             window_size=window_size,
+        #             norm=norm,
+        #             anova=self.anova,
+        #             binning_method=self.binning_strategy,
+        #             bigrams=self.bigrams,
+        #             remove_repeat_words=False,
+        #             lower_bounding=False,
+        #             save_words=False)
+        #     self.SFA_transformers[i].fit_transform(X, y)
+
+        self.clf.fit(final_bag_vec, y)
 
         self._is_fitted = True
         return self
@@ -237,12 +258,7 @@ class WEASEL(BaseClassifier):
 
             # SFA transform
             X_sfa = self.SFA_transformers[i].transform(X)
-
-            # TODO shorten words???
-            # X_sfa = self.SFA_transformers[i]._shorten_bags(word_length, np.max(self.word_lengths)  # FIXME !!
-
-            # TODO refactor? dicts not really needed here ...
-            X_words = [series.to_dict() for series in X_sfa.iloc[:, 0]]
+            X_words = X_sfa.iloc[:, 0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
@@ -252,13 +268,11 @@ class WEASEL(BaseClassifier):
                     # append the prefices to the words to distinguish
                     # between window-sizes
                     word = (key << self.highest_bit) | window_size
-                    self._add_to_bag(bag_all_words[j], word, value)
+                    WEASEL._add_to_bag(bag_all_words[j], word, value)
 
         return bag_all_words
 
-    def _add_to_bag(self, bag, word, value):
-        if bag.get(word) > 0 :
-            assert False  # this may not happen here
-
-        bag[word] = 1  # TODO add value or 1??
-        return True
+    @staticmethod
+    def _add_to_bag(bag, word, value):
+        # assert bag.get(word) is None  # this may not happen here
+        bag[word] = value  # add value of 1?

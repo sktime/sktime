@@ -12,7 +12,9 @@ def test_transformer():
     word_length = 6
     alphabet_size = 4
 
-    p = SFA(word_length=word_length, alphabet_size=alphabet_size,
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            skip_series_conversion=False,
             binning_method="equi-depth").fit(X, y)
 
     # print("Equi Depth")
@@ -22,7 +24,9 @@ def test_transformer():
     assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
     _ = p.transform(X, y)
 
-    p = SFA(word_length=word_length, alphabet_size=alphabet_size,
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            skip_series_conversion=False,
             binning_method="equi-width").fit(X, y)
 
     # print("Equi Width")
@@ -32,7 +36,9 @@ def test_transformer():
     assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
     _ = p.transform(X, y)
 
-    p = SFA(word_length=word_length, alphabet_size=alphabet_size,
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            skip_series_conversion=False,
             binning_method="information-gain").fit(X, y)
     # print("Information Gain")
     # print(p.breakpoints)
@@ -54,8 +60,11 @@ def test_dft_mft():
 
     # print("Single DFT transformation")
     window_size = np.shape(X_tab)[1]
-    p = SFA(word_length=word_length, alphabet_size=alphabet_size,
-            window_size=window_size, binning_method="equi-depth").fit(X, Y)
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            skip_series_conversion=False,
+            binning_method="equi-depth").fit(X, Y)
     dft = p._discrete_fourier_transform(X_tab[0])
     mft = p._mft(X_tab[0])
 
@@ -65,8 +74,11 @@ def test_dft_mft():
 
     for norm in [True, False]:
         for window_size in [140]:
-            p = SFA(word_length=word_length, norm=norm,
-                    alphabet_size=alphabet_size, window_size=window_size,
+            p = SFA(word_length=word_length,
+                    norm=norm,
+                    alphabet_size=alphabet_size,
+                    window_size=window_size,
+                    skip_series_conversion=False,
                     binning_method="equi-depth").fit(X, Y)
             mft = p._mft(X_tab[0])
             for i in range(len(X_tab[0]) - window_size + 1):
@@ -88,8 +100,11 @@ def test_sfa_anova():
     for binning in ["information-gain", "equi-depth"]:
         # print("SFA with ANOVA one-sided test")
         window_size = 32
-        p = SFA(word_length=word_length, anova=True,
-                alphabet_size=alphabet_size, window_size=window_size,
+        p = SFA(word_length=word_length,
+                anova=True,
+                alphabet_size=alphabet_size,
+                window_size=window_size,
+                skip_series_conversion=False,
                 binning_method=binning).fit(X, y)
 
         # print(p.breakpoints)
@@ -100,8 +115,11 @@ def test_sfa_anova():
         _ = p.transform(X, y)
 
         # print("SFA with first feq coefficients")
-        p2 = SFA(word_length=word_length, anova=False,
-                 alphabet_size=alphabet_size, window_size=window_size,
+        p2 = SFA(word_length=word_length,
+                 anova=False,
+                 alphabet_size=alphabet_size,
+                 window_size=window_size,
+                 skip_series_conversion = False,
                  binning_method=binning).fit(X, y)
 
         # print(p2.breakpoints)
@@ -136,6 +154,7 @@ def test_word_length():
                                         bigrams=bigrams,
                                         window_size=window_size,
                                         norm=norm,
+                                        skip_series_conversion=False,
                                         binning_method=binning).fit(X, y)
 
                                 # print("Norm", norm, "Anova", anova)
