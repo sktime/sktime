@@ -328,7 +328,6 @@ class IndividualTDE(BaseClassifier):
                                binning_method=binning_method,
                                bigrams=True,
                                remove_repeat_words=True,
-                               skip_series_conversion=True,
                                save_words=False)
         self.transformed_data = []
         self.accuracy = 0

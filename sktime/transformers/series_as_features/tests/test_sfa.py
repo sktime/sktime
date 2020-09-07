@@ -14,7 +14,6 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
-            skip_series_conversion=False,
             binning_method="equi-depth").fit(X, y)
 
     # print("Equi Depth")
@@ -26,7 +25,6 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
-            skip_series_conversion=False,
             binning_method="equi-width").fit(X, y)
 
     # print("Equi Width")
@@ -38,7 +36,6 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
-            skip_series_conversion=False,
             binning_method="information-gain").fit(X, y)
     # print("Information Gain")
     # print(p.breakpoints)
@@ -63,7 +60,6 @@ def test_dft_mft():
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
             window_size=window_size,
-            skip_series_conversion=False,
             binning_method="equi-depth").fit(X, Y)
     dft = p._discrete_fourier_transform(X_tab[0])
     mft = p._mft(X_tab[0])
@@ -78,7 +74,6 @@ def test_dft_mft():
                     norm=norm,
                     alphabet_size=alphabet_size,
                     window_size=window_size,
-                    skip_series_conversion=False,
                     binning_method="equi-depth").fit(X, Y)
             mft = p._mft(X_tab[0])
             for i in range(len(X_tab[0]) - window_size + 1):
@@ -104,7 +99,6 @@ def test_sfa_anova():
                 anova=True,
                 alphabet_size=alphabet_size,
                 window_size=window_size,
-                skip_series_conversion=False,
                 binning_method=binning).fit(X, y)
 
         # print(p.breakpoints)
@@ -119,7 +113,6 @@ def test_sfa_anova():
                  anova=False,
                  alphabet_size=alphabet_size,
                  window_size=window_size,
-                 skip_series_conversion = False,
                  binning_method=binning).fit(X, y)
 
         # print(p2.breakpoints)
@@ -154,7 +147,6 @@ def test_word_length():
                                         bigrams=bigrams,
                                         window_size=window_size,
                                         norm=norm,
-                                        skip_series_conversion=False,
                                         binning_method=binning).fit(X, y)
 
                                 # print("Norm", norm, "Anova", anova)

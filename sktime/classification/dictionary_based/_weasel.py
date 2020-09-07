@@ -172,8 +172,7 @@ class WEASEL(BaseClassifier):
                                           bigrams=self.bigrams,
                                           remove_repeat_words=False,
                                           lower_bounding=False,
-                                          save_words=False,
-                                          skip_series_conversion=True)
+                                          save_words=False)
                     X_sfas = transformers[i].fit_transform(X, y)
 
                     # TODO refactor: dicts not really needed here ...

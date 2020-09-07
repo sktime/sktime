@@ -388,8 +388,7 @@ class BOSSIndividual(BaseClassifier):
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
                                remove_repeat_words=True,
-                               save_words=save_words,
-                               skip_series_conversion=True)
+                               save_words=save_words)
         self.transformed_data = []
         self.accuracy = 0
 

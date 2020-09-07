@@ -11,6 +11,9 @@ from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based._sax import \
     _BitWord
+
+from sktime.utils.data_container import tabularize
+
 from sktime.utils.validation.series_as_features import check_X
 
 from sklearn.tree import DecisionTreeClassifier
@@ -81,11 +84,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         save_words:          boolean, default = False
             whether to save the words generated for each series (default False)
 
-        skip_series_conversion:  boolean, default = False
-            skips converting the data to a pandas dataseries - if the data is
-            to be processed afterwards, e.g. by BOSS or WEASEL,
-            this saves A LOT of time
-
     Attributes
     ----------
         words: []
@@ -105,8 +103,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                  remove_repeat_words=False,
                  levels=1,
                  lower_bounding=True,
-                 save_words=False,
-                 skip_series_conversion=False
+                 save_words=False
                  ):
         self.words = []
         self.breakpoints = []
@@ -146,8 +143,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         self.n_instances = 0
         self.series_length = 0
 
-        self.skip_series_conversion = skip_series_conversion
-
         super(SFA, self).__init__()
 
     def fit(self, X, y=None):
@@ -181,11 +176,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             raise TypeError('binning_method must be one of: ', binning_methods)
 
         X = check_X(X, enforce_univariate=True)
-        _X = nested_to_3d_numpy(X)
-        _X = _X.reshape(_X.shape[0], _X.shape[2])
+        # _X = nested_to_3d_numpy(X)
+        # _X = _X.reshape(_X.shape[0], _X.shape[2])
+        X = tabularize(X, return_array=True)
 
-        self.n_instances, self.series_length = _X.shape
-        self.breakpoints = self._binning(_X, y)
+        self.n_instances, self.series_length = X.shape
+        self.breakpoints = self._binning(X, y)
 
         self._is_fitted = True
         return self
@@ -194,14 +190,15 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         self.check_is_fitted()
 
         X = check_X(X, enforce_univariate=True)
-        _X = nested_to_3d_numpy(X)
-        _X = _X.reshape(_X.shape[0], _X.shape[2])
+        # _X = nested_to_3d_numpy(X)
+        # _X = _X.reshape(_X.shape[0], _X.shape[2])
+        X = tabularize(X, return_array=True)
 
         bags = pd.DataFrame()
         dim = []
 
-        for i in range(_X.shape[0]):
-            dfts = self._mft(_X[i, :])
+        for i in range(X.shape[0]):
+            dfts = self._mft(X[i, :])
 
             # Dict.empty(key_type=types.int64,value_type=types.int64)
             bag = dict()
@@ -242,10 +239,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             if self.save_words:
                 self.words.append(words)
 
-            if self.skip_series_conversion:
-                dim.append(bag)
-            else:
-                dim.append(pd.Series(bag))
+            dim.append(bag)
 
         bags[0] = dim
 
@@ -477,10 +471,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
 
-            if self.skip_series_conversion:
-                dim.append(bag)
-            else:
-                dim.append(pd.Series(bag))
+            dim.append(bag)
 
         new_bags[0] = dim
 
@@ -548,21 +539,3 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             stds[w] = math.sqrt(buf) if buf > 0 else 0
 
         return stds
-
-def nested_to_3d_numpy(X, a=None, b=None):
-    """Convert pandas DataFrame (with time series as pandas Series in cells)
-    into NumPy ndarray with shape (n_instances, n_columns, n_timepoints).
-
-    Parameters
-    ----------
-    X : pandas DataFrame, input
-    a : int, first row (optional, default None)
-    b : int, last row (optional, default None)
-
-    Returns
-    -------
-    NumPy ndarray, converted NumPy ndarray
-    """
-    return np.stack(
-        X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(
-            lambda row: np.stack(row), axis=1).to_numpy())
