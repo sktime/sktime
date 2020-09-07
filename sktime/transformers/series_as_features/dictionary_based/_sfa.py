@@ -82,6 +82,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         save_words:          boolean, default = False
             whether to save the words generated for each series (default False)
 
+        skip_series_conversion:  boolean, default = False
+            skips converting the data to a pandas dataseries - if the data is
+            to be processed afterwards, e.g. by BOSS or WEASEL,
+            this saves A LOT of time
+
     Attributes
     ----------
         words: []
@@ -101,7 +106,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                  remove_repeat_words=False,
                  levels=1,
                  lower_bounding=True,
-                 save_words=False
+                 save_words=False,
+                 skip_series_conversion=False
                  ):
         self.words = []
         self.breakpoints = []
@@ -140,6 +146,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         self.n_instances = 0
         self.series_length = 0
+
+        self.skip_series_conversion = skip_series_conversion
+
         super(SFA, self).__init__()
 
     def fit(self, X, y=None):
@@ -228,7 +237,10 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             if self.save_words:
                 self.words.append(words)
 
-            dim.append(pd.Series(bag))
+            if self.skip_series_conversion:
+                dim.append(bag)
+            else :
+                dim.append(pd.Series(bag))
 
         bags[0] = dim
 
@@ -376,35 +388,54 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         end = max(1, len(series) - self.window_size + 1)
         stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
-        mft_data = np.array([])
 
+        # first run with fft
+        X_fft = np.fft.rfft(series[0:self.window_size])
+        reals = np.real(X_fft)
+        imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
+        mft_data = np.empty((length,), dtype=reals.dtype)
+        mft_data[0::2] = reals[:np.int32(length / 2)]
+        mft_data[1::2] = imags[:np.int32(length / 2)]
+        transformed[0] = mft_data * ((1 / stds[0] if stds[0] > 0 else 1) *
+                              self.inverse_sqrt_win_size)
+
+        # other runs using mft
+        # moved to external method to use njit
         support_index = np.zeros(length, dtype=np.int32)
         support_index[self.support] = True
-
-        for i in range(end):
-            if i > 0:
-                # moved to external method to use njit
-                SFA._iterate_mft(series, mft_data, phis, length,
-                                 self.window_size, i, support_index)
-            else:
-                X_fft = np.fft.rfft(series[0:self.window_size])
-                reals = np.real(X_fft)
-                imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
-                mft_data = np.empty((length,), dtype=reals.dtype)
-                mft_data[0::2] = reals[:np.int32(length / 2)]
-                mft_data[1::2] = imags[:np.int32(length / 2)]
-
-            normalising_factor = ((1 / stds[i] if stds[i] > 0 else 1) *
-                                  self.inverse_sqrt_win_size)
-
-            transformed[i] = mft_data * normalising_factor
+        SFA._iterate_mft(series, mft_data, phis, length,
+                         self.window_size,
+                         self.anova, support_index, stds, end,
+                         transformed, self.inverse_sqrt_win_size)
 
         return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]
 
+    @staticmethod
+    @njit("(float64[:],float64[:],float64[:],int32,int32,"
+          "int32,int32[:],float64[:],int32,float64[:,:],float64)",
+          fastmath=True)
+    def _iterate_mft(series, mft_data, phis, length, window_size,
+                     anova, support, stds, end, transformed,
+                     inverse_sqrt_win_size):
+        for i in range(1, end):
+            for n in range(0, length, 2):
+                # only compute needed indices
+                # if not anova or support[n] or support[n+1] :
+                real = mft_data[n] + series[i + window_size - 1] - \
+                       series[i - 1]
+                imag = mft_data[n + 1]
+                mft_data[n] = real * phis[n] - imag * phis[n + 1]
+                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+
+            normalising_factor = ((1 / stds[i] if stds[i] > 0 else 1) *
+                                  inverse_sqrt_win_size)
+
+            transformed[i] = mft_data * normalising_factor
+
     # TODO merge with transform???
     # assumes saved words are of word length 'max_word_length'.
-    def _shorten_bags(self, word_len, max_word_length):
+    def _shorten_bags(self, word_len, max_word_length=16):
         new_bags = pd.DataFrame()
         dim = []
 
@@ -441,7 +472,10 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
 
-            dim.append(pd.Series(bag))
+            if self.skip_series_conversion:
+                dim.append(bag)
+            else :
+                dim.append(pd.Series(bag))
 
         new_bags[0] = dim
 
@@ -484,18 +518,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                     break
 
         return word
-
-    @staticmethod
-    @njit("(float64[:],float64[:],float64[:],int32,int32,int32,int32[:])",
-          fastmath=True)
-    def _iterate_mft(series, mft_data, phis, length, window_size, i, support):
-        for n in range(0, length, 2):
-            # if support[n] or support[n+1] :  # only compute needed indices
-            real = mft_data[n] + series[i + window_size - 1] - \
-                   series[i - 1]
-            imag = mft_data[n + 1]
-            mft_data[n] = real * phis[n] - imag * phis[n + 1]
-            mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
     @staticmethod
     @njit("float64[:](float64[:],int32,int32)", fastmath=True)
