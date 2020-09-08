@@ -76,13 +76,18 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             Only applicable if labels are given
 
         bigrams:             boolean, default = False
-            whether to create bigrams
+            whether to create bigrams of SFA words
 
         remove_repeat_words: boolean, default = False
             whether to use numerosity reduction (default False)
 
         save_words:          boolean, default = False
             whether to save the words generated for each series (default False)
+
+        return_pandas_data_series:          boolean, default = False
+            set to true to return Pandas Series as a result of transform.
+            setting to true reduces speed significantly but is required for
+            automatic test.
 
     Attributes
     ----------
@@ -103,7 +108,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                  remove_repeat_words=False,
                  levels=1,
                  lower_bounding=True,
-                 save_words=False
+                 save_words=False,
+                 return_pandas_data_series=False
                  ):
         self.words = []
         self.breakpoints = []
@@ -121,6 +127,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         self.alphabet_size = alphabet_size
         self.window_size = window_size
+        self.lower_bounding = lower_bounding
         self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size) if \
             lower_bounding else 1.0
 
@@ -142,6 +149,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         self.n_instances = 0
         self.series_length = 0
+        self.return_pandas_data_series = return_pandas_data_series
 
         super(SFA, self).__init__()
 
@@ -239,7 +247,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             if self.save_words:
                 self.words.append(words)
 
-            dim.append(bag)
+            dim.append(
+                pd.Series(bag) if self.return_pandas_data_series else bag)
 
         bags[0] = dim
 
@@ -256,7 +265,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         if self.anova and y is not None:
             # non_constant = np.where(~np.isclose(
-            #    dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
+            #     dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
 
             # select word-length many indices with best f-score
             _, p = f_classif(dft, y)
@@ -320,8 +329,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
             for bp in range(len(threshold)):
                 breakpoints[i][bp] = threshold[bp]
-
             breakpoints[i][self.alphabet_size - 1] = sys.float_info.max
+
         return np.sort(breakpoints, axis=1)
 
     def _mcb_dft(self, series, num_windows_per_inst):
@@ -334,8 +343,13 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                                              dtype=np.int_))
         split[-1] = series[self.series_length -
                            self.window_size:self.series_length]
-        return [self._discrete_fourier_transform(row) for n, row in
-                enumerate(split)]
+
+        result = np.zeros((len(split), self.dft_length), dtype=np.float64)
+    
+        for i, row in enumerate(split):
+            result[i] = self._discrete_fourier_transform(row)
+
+        return result
 
     def _discrete_fourier_transform(self, series):
         """ Performs a discrete fourier transform using the fast fourier
@@ -357,7 +371,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         start = 2 if self.norm else 0
 
         s = np.std(series)
-        std = (s if s > 0 else 1)
+        std = (s if s > 1e-8 else 1)
 
         X_fft = np.fft.rfft(series)
         reals = np.real(X_fft)
@@ -370,6 +384,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
+    # TODO: safe memory by directly discretizing and
+    #       not storing the intermediate array?
     def _mft(self, series):
         """
 
@@ -386,6 +402,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         end = max(1, len(series) - self.window_size + 1)
         stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
+
         transformed = np.zeros((end, length))
 
         # first run with fft
@@ -395,16 +412,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         mft_data = np.empty((length,), dtype=reals.dtype)
         mft_data[0::2] = reals[:np.int32(length / 2)]
         mft_data[1::2] = imags[:np.int32(length / 2)]
-        transformed[0] = mft_data * ((1 / stds[0] if stds[0] > 0 else 1) *
-                                     self.inverse_sqrt_win_size)
+        transformed[0] = mft_data * self.inverse_sqrt_win_size / \
+                         (stds[0] if stds[0] > 1e-8 else 1)
 
         # other runs using mft
         # moved to external method to use njit
-        support_index = np.zeros(length, dtype=np.int32)
-        support_index[self.support] = True
         SFA._iterate_mft(series, mft_data, phis, length,
                          self.window_size,
-                         self.anova, support_index, stds, end,
+                         stds, end,
                          transformed, self.inverse_sqrt_win_size)
 
         return transformed[:, start_offset:][:, self.support] \
@@ -412,23 +427,22 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     @njit("(float64[:],float64[:],float64[:],int32,int32,"
-          "int32,int32[:],float64[:],int32,float64[:,:],float64)",
+          "float64[:],int32,float64[:,:],float64)",
           fastmath=True)
     def _iterate_mft(series, mft_data, phis, length, window_size,
-                     anova, support, stds, end, transformed,
+                     stds, end, transformed,
                      inverse_sqrt_win_size):
         for i in range(1, end):
             for n in range(0, length, 2):
                 # only compute needed indices
-                # if not anova or support[n] or support[n+1] :
                 real = mft_data[n] + series[i + window_size - 1] - \
                        series[i - 1]
                 imag = mft_data[n + 1]
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
-            normalising_factor = ((1 / stds[i] if stds[i] > 0 else 1) *
-                                  inverse_sqrt_win_size)
+            normalising_factor = inverse_sqrt_win_size / \
+                                 (stds[i] if stds[i] > 1e-8 else 1)
 
             transformed[i] = mft_data * normalising_factor
 
@@ -471,7 +485,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
 
-            dim.append(bag)
+            dim.append(
+                pd.Series(bag) if self.return_pandas_data_series else bag)
 
         new_bags[0] = dim
 
@@ -536,6 +551,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             square_sum += series[w + window_size - 1] * series[
                 w + window_size - 1] - series[w - 1] * series[w - 1]
             buf = square_sum * r_window_length - means[w] * means[w]
-            stds[w] = math.sqrt(buf) if buf > 0 else 0
+            stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
 
         return stds

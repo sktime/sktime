@@ -7,7 +7,7 @@ __all__ = ["WEASEL"]
 
 import math
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
@@ -16,7 +16,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import chi2
+# from sklearn.feature_selection import chi2
 from sklearn.model_selection import cross_val_score
 
 # from sktime.transformers.series_as_features.dictionary_based._sax import \
@@ -38,34 +38,63 @@ class WEASEL(BaseClassifier):
       pages={637--646},
       year={2017}
     }
-
-    # TODO
     # Overview: Input n series length m
-    # BOSS performs a gird search over a set of parameter values, evaluating
-    # each with a LOOCV. It then retains
-    # all ensemble members within 92% of the best. There are three primary
-    # parameters:
-    #         alpha: alphabet size
-    #         w: window length
-    #         l: word length.
-    # for any combination, a single BOSS slides a window length w along the
-    # series. The w length window is shortened to
-    # an l length word through taking a Fourier transform and keeping the
-    # first l/2 complex coefficients. These l
-    # coefficents are then discretised into alpha possible values, to form a
-    # word length l. A histogram of words for each
-    # series is formed and stored. fit involves finding n histograms.
+    # WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
+    # for different window lengths and learns a logistic regression classifier
+    # on this bag.
     #
-    # predict uses 1 nearest neighbour with a bespoke distance function.
+    # There are these primary parameters:
+    #         alphabet_size: alphabet size
+    #         chi2-threshold: used for feature selection to select best words
+    #         anova: select best l/2 fourier coefficients other than first ones
+    #         bigrams: using bigrams of SFA words
+    #         binning_strategy: the binning strategy used to disctrtize into
+    #                           SFA words.
+    #
+    # WEASEL slides a window length w along the series. The w length window
+    # is shortened to an l length word through taking a Fourier transform and
+    # keeping the best l/2 complex coefficients using an anova one-sided
+    # test. These l coefficents are then discretised into alpha possible
+    # symbols, to form a word of length l. A histogram of words for each
+    # series is formed and stored.
+    # For each window-length a bag is created and all words are joint into
+    # one bag-of-patterns. Words from different window-lengths are
+    # discriminated by different prefixes.
+    #
+    # fit involves training a logistic regression classifier on the single
+    # bag-of-patterns.
+    #
+    # predict uses the logistic regression classifier
 
-    For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/WEASEL.java
+    # For the Java version, see
+    # https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
+    # /tsml/classifiers/dictionary_based/WEASEL.java
 
 
     Parameters
     ----------
-    ensemble members rather than cross validate (cBOSS) (default=False)
+    alphabet_size:      int, default = 4
+        number of values to discretise each value to
+
+    chi2_threshold:     int, default = 2
+        feature selection is applied based on the chi-squared test.
+        this is the threshold to use for chi-squared test on bag-of-words
+        (higher means more strict)
+
+    anova:               boolean, default = True
+        If True, the Fourier coefficient selection is done via a one-way
+        ANOVA test. If False, the first Fourier coefficients are selected.
+        Only applicable if labels are given
+
+    bigrams:             boolean, default = True
+            whether to create bigrams of SFA words
+
+    binning_strategy:   {"equi-depth", "equi-width", "information-gain"},
+                        default="information-gain"
+        The binning method used to derive the breakpoints.
+
+    random_state:       int or None,
+        Seed for random, integer
 
     Attributes
     ----------
@@ -86,7 +115,7 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [True, False]
-        self.word_lengths = [4, 6]  # 6
+        self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.chi2_threshold = chi2_threshold
@@ -95,7 +124,9 @@ class WEASEL(BaseClassifier):
 
         self.min_window = 6
         self.max_window = 350
-        self.win_inc = 1
+
+        # differs from publication. here set to 4 for performance reasons
+        self.win_inc = 4
         self.highest_bit = -1
         self.window_sizes = []
 
@@ -156,7 +187,7 @@ class WEASEL(BaseClassifier):
             #    transformers[i].fit_transform(X, y)
 
             for word_length in self.word_lengths:  # use the shortening trick??
-                X_all_words = [dict() for x in range(len(X))]
+                all_words = [ dict() for x in range(len(X))]
                 transformers = [SFA() for _ in range(len(self.window_sizes))]
 
                 for i, window_size in enumerate(self.window_sizes):
@@ -173,17 +204,17 @@ class WEASEL(BaseClassifier):
                                           remove_repeat_words=False,
                                           lower_bounding=False,
                                           save_words=False)
-                    X_sfas = transformers[i].fit_transform(X, y)
+                    sfa_words = transformers[i].fit_transform(X, y)
 
                     # TODO refactor: dicts not really needed here ...
                     # bag = [series.to_dict() for series in X_sfas.iloc[:, 0]]
-                    bag = X_sfas.iloc[:, 0]
+                    bag = sfa_words.iloc[:, 0]
 
                     # chi-squared test to keep only relevent features
                     # bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
                     # chi2_statistics, p = chi2(bag_vec, y)
                     # relevant_features = np.where(
-                    #     chi2_statistics >= self.chi2_threshold)[0]
+                    #    chi2_statistics >= self.chi2_threshold)[0]
 
                     # merging bag-of-patterns of different window_sizes
                     # to single bag-of-patterns with prefix indicating
@@ -194,29 +225,43 @@ class WEASEL(BaseClassifier):
                             # append the prefices to the words to
                             # distinguish between window-sizes
                             word = (key << self.highest_bit) | window_size
-                            X_all_words[j][word] = value  # add value of 1?
+                            # X_all_words[j].append((word, value))
+                            all_words[j][word] = value
 
                 # TODO use CountVectorizer instead on actual words ... ???
                 vectorizer = DictVectorizer(sparse=True)
-                bag_vec = vectorizer.fit_transform(X_all_words)
-                lr = LogisticRegression(max_iter=5000, solver="liblinear",
-                                        dual=True, n_jobs=-1, penalty="l2",
-                                        random_state=self.random_state)
+                bag_vec = vectorizer.fit_transform(all_words)
 
-                # cross validation scores
-                current_acc = cross_val_score(lr, bag_vec, y, cv=5).mean()
-                print("Train acc:", norm, current_acc)
+                clf = LogisticRegression(max_iter=5000, solver="liblinear",
+                                         dual=True,
+                                         n_jobs=-1, penalty="l2",
+                                         random_state=self.random_state)
+                current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
+
+                # clf = RandomForestClassifier(oob_score=True,
+                #                              n_estimators=1000,
+                #                              n_jobs=-1).fit(bag_vec, y)
+                # current_acc = clf.oob_score_
+
+                # clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10),
+                #                        scoring="accuracy",
+                #                        normalize=False).fit(bag_vec, y)
+                #
+                # # cross validation scores
+                # current_acc = clf.best_score_
+
+                print("Train acc:", norm, word_length, current_acc)
 
                 if current_acc > max_acc:
                     max_acc = current_acc
                     self.vectorizer = vectorizer
-                    self.clf = lr
+                    self.clf = clf
                     self.SFA_transformers = transformers
                     self.best_word_length = word_length
                     final_bag_vec = bag_vec
 
                 if max_acc == 1.0:
-                    break
+                    break  # there can be no better model than 1.0
 
         # # fit final model using all words
         # for i, window_size in enumerate(self.window_sizes):
@@ -258,14 +303,14 @@ class WEASEL(BaseClassifier):
         for i, window_size in enumerate(self.window_sizes):
 
             # SFA transform
-            X_sfa = self.SFA_transformers[i].transform(X)
-            X_words = X_sfa.iloc[:, 0]
+            sfa_words = self.SFA_transformers[i].transform(X)
+            bag = sfa_words.iloc[:, 0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
             # the used window-length
-            for j in range(len(X_words)):
-                for (key, value) in X_words[j].items():
+            for j in range(len(bag)):
+                for (key, value) in bag[j].items():
                     # append the prefices to the words to distinguish
                     # between window-sizes
                     word = (key << self.highest_bit) | window_size

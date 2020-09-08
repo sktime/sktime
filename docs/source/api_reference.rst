@@ -46,6 +46,7 @@ Dictionary-based
 
     BOSSIndividual
     BOSSEnsemble
+    WEASEL
 
 Distance-based
 --------------
