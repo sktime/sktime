@@ -212,7 +212,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             bag = dict()
             last_word = -1
             repeat_words = 0
-            words = []  # np.zeros(dfts.shape[0], dtype=np.int32)
+            words = []  # np.zeros(dfts.shape[0], dtype=np.uint32)
 
             for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
@@ -380,8 +380,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         length = start + self.dft_length
         dft = np.empty((length,), dtype=reals.dtype)
-        dft[0::2] = reals[:np.int32(length / 2)]
-        dft[1::2] = imags[:np.int32(length / 2)]
+        dft[0::2] = reals[:np.uint32(length / 2)]
+        dft[1::2] = imags[:np.uint32(length / 2)]
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
@@ -411,8 +411,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         reals = np.real(X_fft)
         imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
         mft_data = np.empty((length,), dtype=reals.dtype)
-        mft_data[0::2] = reals[:np.int32(length / 2)]
-        mft_data[1::2] = imags[:np.int32(length / 2)]
+        mft_data[0::2] = reals[:np.uint32(length / 2)]
+        mft_data[1::2] = imags[:np.uint32(length / 2)]
         transformed[0] = mft_data * self.inverse_sqrt_win_size / \
             (stds[0] if stds[0] > 1e-8 else 1)
 
