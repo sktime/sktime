@@ -322,7 +322,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(criterion='entropy',
-                                     max_leaf_nodes=self.alphabet_size)
+                                     max_leaf_nodes=self.alphabet_size,
+                                     random_state=1)
 
         for i in range(self.word_length):
             clf.fit(dft[:, i][:, None], y)
@@ -427,8 +428,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     @njit("(float64[:],float64[:],float64[:],int32,int32,"
-          "float64[:],int32,float64[:,:],float64)",
-          fastmath=True)
+          "float64[:],int32,float64[:,:],float64)", fastmath=True
+          )
     def _iterate_mft(series, mft_data, phis, length, window_size,
                      stds, end, transformed,
                      inverse_sqrt_win_size):
@@ -520,7 +521,10 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return True
 
     @staticmethod
-    @njit("int32(float64[:], int32, int32, float64[:,:])", fastmath=True)
+    @njit(#  this seems to cause a problem with python 3.6??
+          # "int32(float64[:], int32, int32, float64[:,:])",
+          fastmath=True
+         )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
         word = 0
         for i in range(word_length):
