@@ -252,11 +252,11 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
                         [np.hstack((last_window, last_window_X.transpose()
                                     .flatten()))])
         else:
-            X_last = self._format_windows(last_window)
+            X_last = self._format_windows([last_window])
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
-
+        print(X_last)
         # Iterate over estimators/forecast horizon
         for i, regressor in enumerate(self.regressors_):
             y_pred[i] = regressor.predict(X_last)
