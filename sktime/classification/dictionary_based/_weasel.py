@@ -187,7 +187,7 @@ class WEASEL(BaseClassifier):
             #    transformers[i].fit_transform(X, y)
 
             for word_length in self.word_lengths:  # use the shortening trick??
-                all_words = [ dict() for x in range(len(X))]
+                all_words = [dict() for x in range(len(X))]
                 transformers = [SFA() for _ in range(len(self.window_sizes))]
 
                 for i, window_size in enumerate(self.window_sizes):

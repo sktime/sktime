@@ -168,6 +168,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
                  sys.float_info.max]
         }[self.alphabet_size]
 
+
 # @jitclass([('word', types.int32)])
 class _BitWord(object):
     # Used to represent a word for dictionary based classifiers such as BOSS
@@ -197,7 +198,6 @@ class _BitWord(object):
     @staticmethod
     def create_bigram_word(word, other_word, length):
         return (word << length) | other_word
-
 
     @staticmethod
     def shorten_word(word, amount):

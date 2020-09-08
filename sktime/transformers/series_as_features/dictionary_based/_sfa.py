@@ -345,7 +345,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                            self.window_size:self.series_length]
 
         result = np.zeros((len(split), self.dft_length), dtype=np.float64)
-    
+
         for i, row in enumerate(split):
             result[i] = self._discrete_fourier_transform(row)
 
@@ -413,7 +413,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         mft_data[0::2] = reals[:np.int32(length / 2)]
         mft_data[1::2] = imags[:np.int32(length / 2)]
         transformed[0] = mft_data * self.inverse_sqrt_win_size / \
-                         (stds[0] if stds[0] > 1e-8 else 1)
+            (stds[0] if stds[0] > 1e-8 else 1)
 
         # other runs using mft
         # moved to external method to use njit
@@ -441,8 +441,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
-            normalising_factor = inverse_sqrt_win_size / \
-                                 (stds[i] if stds[i] > 1e-8 else 1)
+            normalising_factor = inverse_sqrt_win_size / (stds[i]
+                                                          if stds[i] > 1e-8
+                                                          else 1)
 
             transformed[i] = mft_data * normalising_factor
 
