@@ -428,7 +428,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     @njit("(float64[:],float64[:],float64[:],int32,int32,"
-          "float64[:],int32,float64[:,:],float64)", fastmath=True
+          "float64[:],int32,float64[:,:],float64)",
+          fastmath=True
           )
     def _iterate_mft(series, mft_data, phis, length, window_size,
                      stds, end, transformed,
@@ -521,9 +522,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return True
 
     @staticmethod
-    @njit(#  this seems to cause a problem with python 3.6??
-          # "int32(float64[:], int32, int32, float64[:,:])",
-          # fastmath=True
+    @njit(  # this seems to cause a problem with python 3.6??
+            # "uint32(float64[:], int32, int32, float64[:,:])",
+            # fastmath=True
          )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
         word = 0
