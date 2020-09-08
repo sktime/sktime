@@ -212,13 +212,13 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             bag = dict()
             last_word = -1
             repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.int32)
+            words = []  # np.zeros(dfts.shape[0], dtype=np.int32)
 
             for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
                     dfts[window], self.word_length,
                     self.alphabet_size, self.breakpoints)
-                words[j] = word_raw
+                words.append(word_raw)
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
                                                     window -
@@ -245,7 +245,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bag[bigram] = bag.get(bigram, 0) + 1
 
             if self.save_words:
-                self.words.append(words)
+                self.words.append(np.array(words))
 
             dim.append(
                 pd.Series(bag) if self.return_pandas_data_series else bag)
@@ -523,7 +523,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     @staticmethod
     @njit(#  this seems to cause a problem with python 3.6??
           # "int32(float64[:], int32, int32, float64[:,:])",
-          fastmath=True
+          # fastmath=True
          )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
         word = 0
