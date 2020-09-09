@@ -131,7 +131,7 @@ def test_word_length():
 
     word_lengths = [6, 7, 11]
     alphabet_size = 4
-    window_sizes = [4, 5, 6]
+    window_sizes = [5, 6]
 
     try:
 

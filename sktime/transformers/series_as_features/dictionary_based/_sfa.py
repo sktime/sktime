@@ -20,6 +20,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_selection import f_classif
 
 from numba import njit
+from numba import typeof
 
 # from numba.core import types
 # from numba.typed import Dict
@@ -208,16 +209,18 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         for i in range(X.shape[0]):
             dfts = self._mft(X[i, :])
 
-            # Dict.empty(key_type=types.int64,value_type=types.int64)
             bag = dict()
+            # bag = Dict.empty(key_type=typeof((100,100.0)),
+            #                  value_type=types.float64) \
+            #     if self.levels > 1 else \
+            #     Dict.empty(key_type=types.int64, value_type=types.int64)
+
             last_word = -1
             repeat_words = 0
             words = []  # np.zeros(dfts.shape[0], dtype=np.uint32)
 
             for j, window in enumerate(range(dfts.shape[0])):
-                word_raw = SFA._create_word(
-                    dfts[window], self.word_length,
-                    self.alphabet_size, self.breakpoints)
+                word_raw = SFA._create_word(dfts[window], self.breakpoints)
                 words.append(word_raw)
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
@@ -418,24 +421,24 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         # other runs using mft
         # moved to external method to use njit
-        SFA._iterate_mft(series, mft_data, phis, length,
-                         self.window_size,
-                         stds, end,
+        SFA._iterate_mft(series, mft_data, phis,
+                         self.window_size, stds,
                          transformed, self.inverse_sqrt_win_size)
 
         return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]
 
     @staticmethod
-    @njit("(float64[:],float64[:],float64[:],int32,int32,"
-          "float64[:],int32,float64[:,:],float64)",
+    @njit("(float64[:],float64[:],float64[:],int32,"
+          "float64[:],float64[:,:],float64)",
           fastmath=True
           )
-    def _iterate_mft(series, mft_data, phis, length, window_size,
-                     stds, end, transformed,
+    def _iterate_mft(series, mft_data,
+                     phis, window_size,
+                     stds, transformed,
                      inverse_sqrt_win_size):
-        for i in range(1, end):
-            for n in range(0, length, 2):
+        for i in range(1, len(transformed)):
+            for n in range(0, len(mft_data), 2):
                 # only compute needed indices
                 real = mft_data[n] + series[i + window_size - 1] - \
                        series[i - 1]
@@ -457,6 +460,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         for i in range(len(self.words)):
             bag = dict()
+            # bag = bag = Dict.empty(key_type=typeof((100,100.0)),
+            #                  value_type=types.float64) \
+            #     if self.levels > 1 else \
+            #     Dict.empty(key_type=types.int64, value_type=types.int64)
+
             last_word = -1
             repeat_words = 0
 
@@ -524,11 +532,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     @njit(  # this seems to cause a problem with python 3.6??
-            # "uint32(float64[:], int32, int32, float64[:,:])",
+            # "uint32(float64[:], float64[:,:])",
             # fastmath=True
          )
-    def _create_word(dft, word_length, alphabet_size, breakpoints):
+    def _create_word(dft, breakpoints):
         word = 0
+        word_length, alphabet_size = np.shape(breakpoints)
         for i in range(word_length):
             for bp in range(alphabet_size):
                 if dft[i] <= breakpoints[i][bp]:
