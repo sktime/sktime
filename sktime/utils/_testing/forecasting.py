@@ -120,6 +120,8 @@ def make_forecasting_problem(n_timepoints=50, random_state=None):
                      index=pd.Int64Index(np.arange(n_timepoints)))
 
 
-def assert_correct_pred_time_index(y_pred, y_train, fh):
+def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
+    assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
-    np.testing.assert_array_equal(y_pred.index, y_train.index[-1] + fh)
+    expected = fh.to_absolute(cutoff).to_pandas()
+    y_pred_index.equals(expected)

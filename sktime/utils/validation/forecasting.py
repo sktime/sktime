@@ -13,7 +13,6 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "check_fh_is_relative"
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -204,41 +203,34 @@ def check_sp(sp):
     return sp
 
 
-def check_fh(fh):
+def check_fh(fh, enforce_relative=False):
     """Validate forecasting horizon.
 
     Parameters
     ----------
-    fh : int, list of int, array of int or FH
-        Forecasting horizon with steps ahead to predict.
+    fh : int, list, np.array, pd.Index or ForecastingHorizon
+        Forecasting horizon specifying the time points to predict.
+    enforce_relative : bool, optional (default=False)
+        If True, checks if fh is relative.
 
     Returns
     -------
-    fh : FH
-        Checked forecasting horizon.
+    fh : ForecastingHorizon
+        Validated forecasting horizon.
     """
-    from sktime.forecasting.base._fh import BaseForecastingHorizon
-    from sktime.forecasting.base._fh import ForecastingHorizon
-    if not isinstance(fh, BaseForecastingHorizon):
+    # Convert to ForecastingHorizon
+    from sktime.forecasting.all import ForecastingHorizon
+    if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=True)
+
+    # Check if non-empty
+    if len(fh) == 0:
+        raise ValueError(f"`fh` must not be empty, but found: {fh}")
+
+    if enforce_relative and not fh.is_relative:
+        raise ValueError("`fh` must be relative, but found absolute `fh`")
+
     return fh
-
-
-def check_fh_is_relative(fh):
-    """Check if fh is relative.
-
-    Parameters
-    ----------
-    fh : np.array, list, int or FH
-
-    Raises
-    ------
-    TypeError : if fh is not relative
-    """
-    from sktime.forecasting.base._fh import BaseForecastingHorizon
-    if isinstance(fh, BaseForecastingHorizon) and not fh.is_relative:
-        raise TypeError(
-            "`fh` must be get_relative, but found get_absolute `fh`")
 
 
 def check_equal_time_index(*ys):
@@ -296,17 +288,12 @@ def check_alpha(alpha):
 
 
 def check_cutoffs(cutoffs):
-    if not isinstance(cutoffs, np.ndarray):
-        raise ValueError(
-            f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
+    if not isinstance(cutoffs, (np.ndarray, pd.Index)):
+        raise ValueError(f"`cutoffs` must be a np.array or pd.Index, "
+                         f"but found: {type(cutoffs)}")
+    assert np.issubdtype(cutoffs.dtype, np.integer)
 
-    if not all([is_int(cutoff) for cutoff in cutoffs]):
-        raise ValueError("All cutoff points must be integers")
-
-    if not cutoffs.ndim == 1:
-        raise ValueError("`cutoffs must be 1-dimensional array")
-
-    if not len(cutoffs) > 0:
+    if len(cutoffs) == 0:
         raise ValueError("Found empty `cutoff` array")
 
     return np.sort(cutoffs)
@@ -367,10 +354,6 @@ def check_fh_values(fh):
                            for index_type in ALLOWED_INDEX_TYPES])
         raise TypeError(f"`fh` must be one of {allowed_types}, "
                         f"but found: {type(fh)}")
-
-    # check non-empty
-    if len(fh) == 0:
-        raise ValueError(f"`fh` must not be empty, but found: {fh}")
 
     # check fh does not contain duplicates
     if len(fh) != fh.nunique():

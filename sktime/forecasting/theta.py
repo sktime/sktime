@@ -210,7 +210,7 @@ class ThetaForecaster(ExponentialSmoothing):
             z = zscore(1 - a)
             error = z * sem
             errors.append(
-                pd.Series(error, index=self.fh.get_absolute(self.cutoff)))
+                pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
 
         # for a single alpha value, unwrap list
         if len(errors) == 1:

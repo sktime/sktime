@@ -7,10 +7,12 @@ __author__ = ["Markus Löning", "Piyush Gade"]
 import numpy as np
 import pandas as pd
 import pytest
+
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests import TEST_OOS_FHS
 from sktime.forecasting.tests import TEST_SPS
 from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
+from sktime.utils._testing.forecasting import assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -51,8 +53,8 @@ def test_strategy_last_seasonal(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-    np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
-                                  y_pred.index)
+    assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+
     # check values
     fh = check_fh(fh)  # get well formatted fh
     reps = np.int(np.ceil(max(fh) / sp))
@@ -72,8 +74,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         y_pred = f.predict(fh)
 
         # check predicted index
-        np.testing.assert_array_equal(y_train.index[-1] + check_fh(fh),
-                                      y_pred.index)
+        assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
         if window_length is None:
             window_length = len(y_train)

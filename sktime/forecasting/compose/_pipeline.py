@@ -125,7 +125,7 @@ class TransformedTargetForecaster(MetaForecasterMixin,
                                     return_pred_int=return_pred_int,
                                     alpha=alpha)
 
-        for step_idx, name, transformer in self._iter_transformers(
+        for _, _, transformer in self._iter_transformers(
                 reverse=True):
             y_pred = transformer.inverse_transform(y_pred)
 
@@ -160,15 +160,14 @@ class TransformedTargetForecaster(MetaForecasterMixin,
     def transform(self, y):
         self.check_is_fitted()
         yt = check_y(y)
-        for step_idx, name, transformer in self._iter_transformers():
+        for _, _, transformer in self._iter_transformers():
             yt = transformer.transform(yt)
         return yt
 
     def inverse_transform(self, y):
         self.check_is_fitted()
         yt = check_y(y)
-        for step_idx, name, transformer in self._iter_transformers(
-                reverse=True):
+        for _, _, transformer in self._iter_transformers(reverse=True):
             yt = transformer.inverse_transform(yt)
         return yt
 

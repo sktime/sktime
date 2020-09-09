@@ -11,7 +11,6 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sktime.utils.validation.forecasting import check_cutoffs
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_fh_is_relative
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_time_index
 from sktime.utils.validation.forecasting import check_window_length
@@ -79,6 +78,9 @@ class BaseSplitter:
             y = y.index
         return check_time_index(y)
 
+    def _check_fh(self):
+        return check_fh(self.fh, enforce_relative=True).to_numpy()
+
 
 class CutoffSplitter(BaseSplitter):
     """Manual window splitter to split time series at given cutoff points.
@@ -95,8 +97,7 @@ class CutoffSplitter(BaseSplitter):
     def __init__(self, cutoffs, fh=DEFAULT_FH,
                  window_length=DEFAULT_WINDOW_LENGTH):
         self.cutoffs = cutoffs
-        super(CutoffSplitter, self).__init__(
-            fh=fh, window_length=window_length)
+        super(CutoffSplitter, self).__init__(fh, window_length)
 
     def _split_windows(self, y):
         # cutoffs
@@ -104,8 +105,7 @@ class CutoffSplitter(BaseSplitter):
         if not np.max(cutoffs) < len(y):
             raise ValueError("`cutoffs` are out-of-bounds for given `y`.")
 
-        fh = check_fh(self.fh)
-        check_fh_is_relative(fh)
+        fh = self._check_fh()
 
         if np.max(cutoffs) + np.max(fh) > len(y):
             raise ValueError(
@@ -139,7 +139,7 @@ class BaseWindowSplitter(BaseSplitter):
     def _get_end(self, y):
         """Helper function to compute the end of the last window"""
         n_timepoints = len(y)
-        fh = check_fh(self.fh)
+        fh = self._check_fh()
         window_length = check_window_length(self.window_length)
 
         # end point is end of last window
@@ -185,8 +185,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     def _split_windows(self, y):
         step_length = check_step_length(self.step_length)
         window_length = check_window_length(self.window_length)
-        fh = check_fh(self.fh)
-        check_fh_is_relative(fh)
+        fh = self._check_fh()
 
         end = self._get_end(y)
         start = self._get_start()
@@ -279,13 +278,11 @@ class SingleWindowSplitter(BaseWindowSplitter):
     """
 
     def __init__(self, fh, window_length=None):
-        super(SingleWindowSplitter, self).__init__(fh=fh,
-                                                   window_length=window_length)
+        super(SingleWindowSplitter, self).__init__(fh, window_length)
 
     def _split_windows(self, y):
         window_length = check_window_length(self.window_length)
-        fh = check_fh(self.fh)
-        check_fh_is_relative(fh)
+        fh = self._check_fh()
 
         end = self._get_end(y) - 1
         start = 0 if window_length is None else end - window_length

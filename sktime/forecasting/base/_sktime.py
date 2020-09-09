@@ -451,8 +451,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         if return_pred_int:
             raise NotImplementedError()
 
-        fh_oos = fh.get_out_of_sample(self.cutoff)
-        fh_ins = fh.get_in_sample(self.cutoff)
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
 
         kwargs = {"X": X, "return_pred_int": return_pred_int,
                   "alpha": alpha}
@@ -491,7 +491,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         y_pred = self._predict_last_window(fh, X=X,
                                            return_pred_int=return_pred_int,
                                            alpha=alpha)
-        index = fh.get_absolute(self.cutoff)
+        index = fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False,
@@ -514,9 +514,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         y_train = self._y
 
         # generate cutoffs from forecasting horizon, note that cutoffs are
-        # still based on integer indexes,
-        # so that they can be used with .iloc
-        cutoffs = fh + len(y_train) - 2
+        # still based on integer indexes, so that they can be used with .iloc
+        cutoffs = fh.to_relative() + len(y_train) - 2
         cv = CutoffSplitter(cutoffs, fh=1, window_length=self.window_length_)
         return self._predict_moving_cutoff(y_train, cv, X=X,
                                            update_params=False,

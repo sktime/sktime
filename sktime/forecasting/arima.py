@@ -9,6 +9,7 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -311,39 +312,29 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # distinguish between in-sample and out-of-sample prediction
-        is_in_sample = fh <= 0
-        is_out_of_sample = np.logical_not(is_in_sample)
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
 
-        # pure out-of-sample prediction
-        if np.all(is_out_of_sample):
-            return self._predict_out_of_sample(fh, X=X,
-                                               return_pred_int=return_pred_int,
-                                               alpha=DEFAULT_ALPHA)
+        kwargs = {"X": X, "return_pred_int": return_pred_int,
+                  "alpha": alpha}
 
-        # pure in-sample prediction
-        elif np.all(is_in_sample):
-            return self._predict_in_sample(fh, X=X,
-                                           return_pred_int=return_pred_int,
-                                           alpha=DEFAULT_ALPHA)
+        # all values are out-of-sample
+        if len(fh_oos) == len(fh):
+            return self._predict_fixed_cutoff(fh_oos, **kwargs)
 
-        # mixed in-sample and out-of-sample prediction
+        # all values are in-sample
+        elif len(fh_ins) == len(fh):
+            return self._predict_in_sample(fh_ins, **kwargs)
+
+        # both in-sample and out-of-sample values
         else:
-            fh_in_sample = fh[is_in_sample]
-            fh_out_of_sample = fh[is_out_of_sample]
-
-            y_pred_in = self._predict_in_sample(
-                fh_in_sample, X=X,
-                return_pred_int=return_pred_int,
-                alpha=DEFAULT_ALPHA)
-            y_pred_out = self._predict_out_of_sample(
-                fh_out_of_sample, X=X,
-                return_pred_int=return_pred_int,
-                alpha=DEFAULT_ALPHA)
-            return y_pred_in.append(y_pred_out)
+            y_ins = self._predict_in_sample(fh_ins, **kwargs)
+            y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
+            return y_ins.append(y_oos)
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False,
                            alpha=DEFAULT_ALPHA):
-        fh_abs = fh.get_absolute(self.cutoff)
+        fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh_abs - np.min(fh_abs)
         start = fh_abs[0]
         end = fh_abs[-1]
@@ -371,12 +362,12 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
                 alpha=alpha)
             return pd.Series(y_pred[fh_idx], index=fh_abs)
 
-    def _predict_out_of_sample(self, fh, X=None, return_pred_int=False,
-                               alpha=DEFAULT_ALPHA):
+    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
         # make prediction
         n_periods = int(fh[-1])
-        index = fh.get_absolute(self.cutoff)
-        fh_idx = fh.get_index_like(self.cutoff)
+        index = fh.to_absolute(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff)
 
         if return_pred_int:
             y_pred, pred_int = self._forecaster.model_.predict(

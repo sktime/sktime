@@ -291,9 +291,11 @@ Decision making
 ---------------
 
 The purpose of this section is to formalize the decision-making process
-used by the sktime project. We clarify \* what types of changes we make
-decision on, \* how decisions are made, and \* who participates in the
-decision making.
+used by the sktime project. We clarify
+
+* what types of changes we make decision on,
+* how decisions are made, and
+* who participates in the decision making.
 
 sktime’s decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while

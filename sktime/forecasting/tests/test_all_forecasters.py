@@ -104,7 +104,7 @@ def test_predict_time_index(Forecaster, fh, y_train):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.predict()
-    assert_correct_pred_time_index(y_pred, y_train, fh)
+    assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -115,7 +115,7 @@ def test_predict_in_sample(Forecaster, fh, y_train):
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()
-        assert_correct_pred_time_index(y_pred, y_train, fh)
+        assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
     except NotImplementedError:
         pass
 
@@ -128,7 +128,7 @@ def test_predict_in_sample_full(Forecaster, y_train):
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()
-        assert_correct_pred_time_index(y_pred, y_train, fh)
+        assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
     except NotImplementedError:
         pass
 
@@ -140,7 +140,7 @@ def check_pred_ints(pred_ints, y_train, y_pred, fh):
 
     for pred_int in pred_ints:
         assert list(pred_int.columns) == ["lower", "upper"]
-        assert_correct_pred_time_index(pred_int, y_train, fh)
+        assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
 
         # check if errors are weakly monotonically increasing
         pred_errors = y_pred - pred_int["lower"]
@@ -179,7 +179,6 @@ def test_score(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     actual = f.score(y_test.iloc[fh_idx], fh=fh)
-    assert actual > 0
     assert actual == expected
 
 
@@ -189,7 +188,7 @@ def test_update_predict_single(Forecaster, fh):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.update_predict_single(y_test)
-    assert_correct_pred_time_index(y_pred, y_test, fh)
+    assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
 
 def check_update_predict_y_pred(y_pred, y_test, fh, step_length):

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.base._fh import DELEGATED_METHODS
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests import TEST_FHS
@@ -94,6 +95,8 @@ def _make_fh(cutoff, steps, fh_type, is_relative):
 
 def _assert_index_equal(a, b):
     """Helper function to compare forecasting horizons"""
+    assert isinstance(a, pd.Index)
+    assert isinstance(b, pd.Index)
     assert a.equals(b)
 
 
@@ -111,45 +114,48 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # split data
     y_train, y_test = temporal_train_test_split(y, test_size=10)
 
-    # generate forecasting horizon steps
-    # steps = np.arange(1, len(y_test) + 1)
-
     # choose cutoff point
     cutoff = y_train.index[-1]
 
     # generate fh
     if is_int(steps):
         steps = np.array([1], dtype=np.int)
-
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    assert isinstance(fh, TYPE_LOOKUP.get(fh_type))
+    assert isinstance(fh.to_pandas(), TYPE_LOOKUP.get(fh_type))
 
     # get expected outputs
     fh_relative = pd.Int64Index(steps).sort_values()
     fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
-    fh_index_like = fh_relative - 1
-    fh_oos = fh[fh_relative > 0]
-    fh_ins = fh[fh_relative <= 0]
+    fh_indexer = fh_relative - 1
+    fh_oos = fh.to_pandas()[fh_relative > 0]
+    fh_ins = fh.to_pandas()[fh_relative <= 0]
 
     # check outputs
     # check relative representation
-    _assert_index_equal(fh_absolute, fh.get_absolute(cutoff))
-    assert not fh.get_absolute(cutoff).is_relative
+    _assert_index_equal(fh_absolute, fh.to_absolute(cutoff).to_pandas())
+    assert not fh.to_absolute(cutoff).is_relative
 
     # check relative representation
-    _assert_index_equal(fh_relative, fh.get_relative(cutoff))
-    assert fh.get_relative(cutoff).is_relative
+    _assert_index_equal(fh_relative, fh.to_relative(cutoff).to_pandas())
+    assert fh.to_relative(cutoff).is_relative
 
     # check index-like representation
-    _assert_index_equal(fh_index_like, fh.get_index_like(cutoff))
+    _assert_index_equal(fh_indexer, fh.to_indexer(cutoff))
 
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
     # formatted in a slightly different way than the generated solution
-    np.testing.assert_array_equal(fh_ins.to_numpy(), fh.get_in_sample(cutoff))
-    assert fh.get_in_sample(cutoff).is_relative == is_relative
+    np.testing.assert_array_equal(fh_ins.to_numpy(),
+                                  fh.to_in_sample(cutoff).to_pandas())
+    assert fh.to_in_sample(cutoff).is_relative == is_relative
 
     # check out-of-sample representation
     np.testing.assert_array_equal(fh_oos.to_numpy(),
-                                  fh.get_out_of_sample(cutoff))
-    assert fh.get_out_of_sample(cutoff).is_relative == is_relative
+                                  fh.to_out_of_sample(cutoff).to_pandas())
+    assert fh.to_out_of_sample(cutoff).is_relative == is_relative
+
+
+def test_fh_method_delegation():
+    fh = _make_fh(10, np.arange(20), "int", True)
+    for method in DELEGATED_METHODS:
+        assert hasattr(fh, method)

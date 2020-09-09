@@ -155,7 +155,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                     last_window = np.tile(last_window, reps=reps)
 
                 # get zero-based index by subtracting the minimum
-                fh_idx = fh.get_index_like(self.cutoff)
+                fh_idx = fh.to_indexer(self.cutoff)
                 return last_window[fh_idx]
 
         elif self.strategy == "mean":
@@ -191,7 +191,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                     y_pred = np.tile(y_pred, reps=reps)
 
                 # get zero-based index by subtracting the minimum
-                fh_idx = fh.get_index_like(self.cutoff)
+                fh_idx = fh.to_indexer(self.cutoff)
                 return y_pred[fh_idx]
 
         # if self.strategy == "drift":
@@ -207,7 +207,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                              last_window[0]) / (self.window_length_ - 1)
 
                     # get zero-based index by subtracting the minimum
-                    fh_idx = fh.get_index_like(self.cutoff)
+                    fh_idx = fh.to_indexer(self.cutoff)
 
                     # linear extrapolation
                     y_pred = last_window[-1] + (fh_idx + 1) * slope

@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from pytest import raises
 
+from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_fh_values
 
 bad_input_types = (
@@ -20,9 +21,12 @@ bad_input_types = (
     True,  # boolean
 )
 
-bad_input_values = (
+duplicate_input_values = (
     np.array([1, 2, 2]),  # duplicates
     [3, 3, 1],
+)
+
+empty_input = (
     np.array([]),  # empty
     [],
     pd.Int64Index([])
@@ -38,19 +42,25 @@ good_input_args = (
 )
 
 
+@pytest.mark.parametrize("arg", empty_input)
+def test_check_fh_empty_input(arg):
+    with raises(ValueError):
+        check_fh(arg)
+
+
 @pytest.mark.parametrize("arg", bad_input_types)
 def test_check_fh_values_bad_input_types(arg):
     with raises(TypeError):
         check_fh_values(arg)
 
 
-@pytest.mark.parametrize("arg", bad_input_values)
-def test_check_fh_values_bad_input_values(arg):
+@pytest.mark.parametrize("arg", duplicate_input_values)
+def test_check_fh_values_duplicate_input_values(arg):
     with raises(ValueError):
         check_fh_values(arg)
 
 
 @pytest.mark.parametrize("arg", good_input_args)
-def test_check_fh_values_input_conversion_to_int_dtype(arg):
+def test_check_fh_values_input_conversion_to_pandas_index(arg):
     output = check_fh_values(arg)
     assert isinstance(output, pd.Index)
