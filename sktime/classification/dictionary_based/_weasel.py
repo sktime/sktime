@@ -233,8 +233,7 @@ class WEASEL(BaseClassifier):
                 bag_vec = vectorizer.fit_transform(all_words)
 
                 clf = LogisticRegression(max_iter=5000, solver="liblinear",
-                                         dual=True,
-                                         n_jobs=-1, penalty="l2",
+                                         dual=True, penalty="l2",
                                          random_state=self.random_state)
                 current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
 
@@ -250,7 +249,7 @@ class WEASEL(BaseClassifier):
                 # # cross validation scores
                 # current_acc = clf.best_score_
 
-                print("Train acc:", norm, word_length, current_acc)
+                # print("Train acc:", norm, word_length, current_acc)
 
                 if current_acc > max_acc:
                     max_acc = current_acc
