@@ -67,6 +67,9 @@ make_conda() {
     # Install requirements from inside conda environment
     pip install -r "$REQUIREMENTS"
 
+    # Install this everywhere, I dont know why this doesnt work
+    pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
+
     # List installed environment
     python --version
     conda list -n testenv
