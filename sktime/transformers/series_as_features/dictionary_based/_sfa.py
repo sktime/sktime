@@ -20,8 +20,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.feature_selection import f_classif
 
 from numba import njit
-from numba import typeof
-
+# from numba import typeof
 # from numba.core import types
 # from numba.typed import Dict
 
@@ -220,7 +219,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             words = []  # np.zeros(dfts.shape[0], dtype=np.uint32)
 
             for j, window in enumerate(range(dfts.shape[0])):
-                word_raw = SFA._create_word(dfts[window], self.breakpoints)
+                word_raw = SFA._create_word(
+                    dfts[window], self.word_length,
+                    self.alphabet_size, self.breakpoints)
                 words.append(word_raw)
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
@@ -532,12 +533,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     @njit(  # this seems to cause a problem with python 3.6??
-            # "uint32(float64[:], float64[:,:])",
+            # "uint32(float64[:], int32, int32, float64[:,:])",
             # fastmath=True
-         )
-    def _create_word(dft, breakpoints):
+          )
+    def _create_word(dft, word_length, alphabet_size, breakpoints):
         word = 0
-        word_length, alphabet_size = np.shape(breakpoints)
         for i in range(word_length):
             for bp in range(alphabet_size):
                 if dft[i] <= breakpoints[i][bp]:
