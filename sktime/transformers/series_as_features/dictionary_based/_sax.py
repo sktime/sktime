@@ -187,19 +187,19 @@ class _BitWord(object):
     def create_bigram_word(word, other_word, length):
         return (word << length) | other_word
 
-    @staticmethod
-    def shorten_word(word, amount):
+    @classmethod
+    def shorten_word(cls, word, amount):
         # shorten a word by set amount of letters
-        return _BitWord.right_shift(word, amount * 2)
+        return cls.right_shift(word, amount * 2)
 
-    @staticmethod
-    def word_list(word, length):
+    @classmethod
+    def word_list(cls, word, length):
         # list of input integers to obtain current word
         word_list = []
         shift = 32 - (length * 2)
 
         for i in range(length - 1, -1, -1):
-            word_list.append(_BitWord.right_shift(word << shift, 32 - 2))
+            word_list.append(cls.right_shift(word << shift, 32 - 2))
             shift += 2
 
         return word_list
