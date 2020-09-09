@@ -65,6 +65,8 @@ install:
   # Install requirements from inside conda environment
   - cmd: activate testenv
   - cmd: pip install -r %REQUIREMENTS%
+  - cmd: conda install pytorch=1.5.0 -c pytorch
+  - cmd: pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
   # List installed environment
   - cmd: python --version
