@@ -46,6 +46,11 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         save_words:          boolean, whether to use numerosity reduction (
         default False)
 
+        return_pandas_data_series:          boolean, default = True
+            set to true to return Pandas Series as a result of transform.
+            setting to true reduces speed significantly but is required for
+            automatic test.
+
     Attributes
     ----------
         words:      histor = []
@@ -57,14 +62,15 @@ class SAX(BaseSeriesAsFeaturesTransformer):
                  alphabet_size=4,
                  window_size=12,
                  remove_repeat_words=False,
-                 save_words=False
+                 save_words=False,
+                 return_pandas_data_series=True
                  ):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
-
+        self.return_pandas_data_series = return_pandas_data_series
         self.words = []
 
         super(SAX, self).__init__()
@@ -100,7 +106,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
         for i in range(n_instances):
             bag = {}
-            lastWord = None
+            lastWord = -1
 
             words = []
 
@@ -125,32 +131,30 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             if self.save_words:
                 self.words.append(words)
 
-            dim.append(pd.Series(bag))
+            dim.append(
+                pd.Series(bag) if self.return_pandas_data_series else bag)
 
         bags[0] = dim
 
         return bags
 
     def _create_word(self, pattern, breakpoints):
-        word = _BitWord()
-
+        word = 0
         for i in range(self.word_length):
             for bp in range(self.alphabet_size):
                 if pattern[i] <= breakpoints[bp]:
-                    word.push(bp)
+                    word = (word << 2) | bp
                     break
 
         return word
 
     def _add_to_bag(self, bag, word, last_word):
-        if self.remove_repeat_words and word.word == last_word:
-            return last_word
-        if word.word in bag:
-            bag[word.word] += 1
-        else:
-            bag[word.word] = 1
+        if self.remove_repeat_words and word == last_word:
+            return False
 
-        return word.word
+        bag[word] = bag.get(word, 0) + 1
+
+        return True
 
     def _generate_breakpoints(self):
         # Pre-made gaussian curve breakpoints from UEA TSC codebase
@@ -169,7 +173,6 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         }[self.alphabet_size]
 
 
-# @jitclass([('word', types.int32)])
 class _BitWord(object):
     # Used to represent a word for dictionary based classifiers such as BOSS
     # an BOP.
@@ -178,22 +181,7 @@ class _BitWord(object):
     # Current literature shows little reason to go beyond this, but the
     # class will need changes/expansions
     # if this is needed.
-
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
-
-    def __init__(self, word=0):
-        self.word = word
-
-    def push(self, letter):
-        # add letter to a word
-        self.word = (self.word << 2) | letter
-
-    def shorten(self, amount):
-        # shorten a word by set amount of letters
-        _BitWord.shorten_word(self.word, amount)
-
-    def create_bigram(self, other_word, length):
-        return _BitWord.create_bigram_word(self.word, other_word, length)
 
     @staticmethod
     def create_bigram_word(word, other_word, length):
