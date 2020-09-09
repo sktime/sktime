@@ -64,7 +64,7 @@ def all_estimators(estimator_type=None):
     # packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
-        for importer, modname, ispkg in pkgutil.walk_packages(
+        for _, modname, _ in pkgutil.walk_packages(
                 path=[root], prefix="sktime."):
             mod_parts = modname.split(".")
 

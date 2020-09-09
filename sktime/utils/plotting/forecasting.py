@@ -5,8 +5,6 @@
 __author__ = ["Markus Löning"]
 __all__ = ["plot_ys"]
 
-import numpy as np
-
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -63,7 +61,3 @@ def index_is_complete(y):
 
     if hasattr(index, "is_full"):
         return index.is_full
-
-
-
-

@@ -69,7 +69,7 @@ def generate_time_series_data_with_trend(n_instances=1, n_timepoints=100,
     """Helper function to generate time series/panel data with polynomial
     trend"""
     samples = []
-    for i in range(n_instances):
+    for _ in range(n_instances):
         s = generate_polynomial_series(n_timepoints, order=order, coefs=coefs)
 
         if noise:
@@ -96,7 +96,7 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100,
                                                     order=order)
 
     samples = []
-    for i in range(n_samples):
+    for _ in range(n_samples):
         # coefs = np.random.normal(scale=0.01, size=(order + 1, 1))
         s = generate_polynomial_series(n_obs, order)
 
