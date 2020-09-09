@@ -2,7 +2,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.classification.dictionary_based import BOSSEnsemble, BOSSIndividual
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 def test_boss_on_gunpoint():
@@ -33,6 +33,19 @@ def test_individual_boss_on_gunpoint():
     # assert probabilities are the same
     probas = indiv_boss.predict_proba(X_test.iloc[indices])
     testing.assert_array_equal(probas, individual_boss_gunpoint_probas)
+
+
+def test_boss_on_power_demand():
+    # load power demand data
+    X_train, y_train = load_italy_power_demand(split='train', return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split='test', return_X_y=True)
+
+    # train BOSS
+    boss = BOSSEnsemble(random_state=47)
+    boss.fit(X_train, y_train)
+
+    score = boss.score(X_test, y_test)
+    assert (score >= 0.80)
 
 
 boss_gunpoint_probas = np.array([
