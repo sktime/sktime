@@ -67,10 +67,6 @@ make_conda() {
     # Install requirements from inside conda environment
     pip install -r "$REQUIREMENTS"
 
-    # Install signatory after the requirements due to limitations with
-    # signatory needing to be installed after pytorch
-    pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
-
     # List installed environment
     python --version
     conda list -n testenv
@@ -78,7 +74,11 @@ make_conda() {
 
 # requirements file
 make_conda "$REQUIREMENTS"
+
+# Install signatory after the requirements due to limitations with
+# signatory needing to be installed after pytorch
 pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
+
 
 if [ "$COVERAGE" == "true" ]
 then

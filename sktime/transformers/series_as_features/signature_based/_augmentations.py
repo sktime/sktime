@@ -58,7 +58,7 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
     first index. The time channel will be of length L and scaled to exist in
     [0, 1].
     """
-    def fit(self):
+    def fit(self, X, y=None):
         self._is_fitted = True
         return self
 
@@ -78,7 +78,7 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
-    def fit(self):
+    def fit(self, X, y=None):
         self._is_fitted = True
         return self
 
@@ -113,7 +113,7 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
         - https://arxiv.org/pdf/1310.4054.pdf
         - https://arxiv.org/pdf/1307.7244.pdf
     """
-    def fit(self):
+    def fit(self, X, y=None):
         self._is_fitted = True
         return self
 
@@ -144,7 +144,7 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
 
-    def fit(self):
+    def fit(self, X, y=None):
         self._is_fitted = True
         return self
 
@@ -159,7 +159,7 @@ class _BasePoint(BaseSeriesAsFeaturesTransformer):
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
-    def fit(self):
+    def fit(self, X, y=None):
         self._is_fitted = True
         return self
 
