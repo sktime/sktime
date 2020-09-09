@@ -79,6 +79,12 @@ make_conda() {
 # requirements file
 make_conda "$REQUIREMENTS"
 
+# Install signatory after the requirements due to limitations with
+# signatory needing to be installed after pytorch
+conda install pytorch=1.5.0 -c pytorch
+pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
+
+
 if [ "$COVERAGE" == "true" ]
 then
     pip install coverage codecov pytest-cov
@@ -106,10 +112,5 @@ fi
 build_tools/travis/travis_fastfail.sh
 
 set +e
-
-# Install signatory after the requirements due to limitations with
-# signatory needing to be installed after pytorch
-conda install pytorch=1.5.0 -c pytorch
-pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
 
