@@ -81,6 +81,7 @@ make_conda "$REQUIREMENTS"
 
 # Install signatory after the requirements due to limitations with
 # signatory needing to be installed after pytorch
+conda install pytorch=1.5.0 -c pytorch
 pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
 
