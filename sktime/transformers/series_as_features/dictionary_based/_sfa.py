@@ -264,13 +264,13 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             y = np.repeat(y, num_windows_per_inst)
 
         if self.anova and y is not None:
-            # non_constant = np.where(~np.isclose(
-            #     dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
+            non_constant = np.where(~np.isclose(
+                dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
 
             # select word-length many indices with best f-score
-            _, p = f_classif(dft, y)
-            # self.support=non_constant[np.argsort(p)[::]][:self.word_length]
-            self.support = np.argsort(p)[::][:self.word_length]
+            if self.word_length <= non_constant.size:
+                _, p = f_classif(dft[:, non_constant], y)
+                self.support = non_constant[np.argsort(p)][:self.word_length]
 
             # sort remaining indices
             self.support = np.sort(self.support)
