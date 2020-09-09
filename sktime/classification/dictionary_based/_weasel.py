@@ -7,7 +7,7 @@ __all__ = ["WEASEL"]
 
 import math
 
-# import numpy as np
+import numpy as np
 import pandas as pd
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
@@ -170,44 +170,31 @@ class WEASEL(BaseClassifier):
         final_bag_vec = None
 
         for norm in self.norm_options:
+            # transformers = []
 
-            # transformers = [SFA() for _ in range(len(self.window_sizes))]
-            # for i, window_size in enumerate(self.window_sizes):
-            #    transformers[i] =\
-            #        SFA(word_length=np.max(self.word_lengths),
-            #            alphabet_size=self.alphabet_size,
-            #            window_size=window_size,
-            #            norm=norm,
-            #            anova=self.anova,
-            #            binning_method=self.binning_strategy,
-            #            bigrams=self.bigrams,
-            #            remove_repeat_words=False,
-            #            lower_bounding=False,
-            #            save_words=True)
-            #    transformers[i].fit_transform(X, y)
-
-            for word_length in self.word_lengths:  # use the shortening trick??
+            for w, word_length in enumerate(self.word_lengths):
                 all_words = [dict() for x in range(len(X))]
-                transformers = [SFA() for _ in range(len(self.window_sizes))]
+                transformers = []
 
                 for i, window_size in enumerate(self.window_sizes):
-                    # X_sfas = transformers[i]._shorten_bags(
-                    #     word_length, np.max(self.word_lengths))
+                    # if w == 0:  # only compute once, otherwise shorten
+                    transformer = SFA(word_length=np.max(word_length),
+                                      alphabet_size=self.alphabet_size,
+                                      window_size=window_size,
+                                      norm=norm,
+                                      anova=self.anova,
+                                      binning_method=self.binning_strategy,
+                                      bigrams=self.bigrams,
+                                      remove_repeat_words=False,
+                                      lower_bounding=False,
+                                      save_words=False)
+                    sfa_words = transformer.fit_transform(X, y)
+                    transformers.append(transformer)
 
-                    transformers[i] = SFA(word_length=word_length,
-                                          alphabet_size=self.alphabet_size,
-                                          window_size=window_size,
-                                          norm=norm,
-                                          anova=self.anova,
-                                          binning_method=self.binning_strategy,
-                                          bigrams=self.bigrams,
-                                          remove_repeat_words=False,
-                                          lower_bounding=False,
-                                          save_words=False)
-                    sfa_words = transformers[i].fit_transform(X, y)
+                    # use the shortening of words trick
+                    # sfa_words = transformers[i]._shorten_bags(word_length)
 
-                    # TODO refactor: dicts not really needed here ...
-                    # bag = [series.to_dict() for series in X_sfas.iloc[:, 0]]
+                    # TODO refactor? dicts not really needed here ...
                     bag = sfa_words.iloc[:, 0]
 
                     # chi-squared test to keep only relevent features

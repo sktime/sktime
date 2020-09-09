@@ -451,7 +451,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     # TODO merge with transform???
     # assumes saved words are of word length 'max_word_length'.
-    def _shorten_bags(self, word_len, max_word_length=16):
+    def _shorten_bags(self, word_len):
         new_bags = pd.DataFrame()
         dim = []
 
@@ -462,7 +462,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             for window, word in enumerate(self.words[i]):
                 new_word = _BitWord.shorten_word(word,
-                                                 max_word_length - word_len)
+                                                 self.word_length
+                                                 - word_len)
 
                 repeat_word = (self._add_to_pyramid(bag, new_word, last_word,
                                                     window -
@@ -481,7 +482,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bigram = _BitWord.create_bigram_word(
                             _BitWord.shorten_word(
                                 self.words[i][window - self.window_size],
-                                max_word_length - word_len),
+                                self.word_length - word_len),
                             word, self.word_length)
 
                         if self.levels > 1:
