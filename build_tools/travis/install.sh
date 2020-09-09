@@ -68,6 +68,7 @@ make_conda() {
     pip install -r "$REQUIREMENTS"
 
     # Install this everywhere, I dont know why this doesnt work
+    conda install pytorch=1.5.0 -c pytorch
     pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
     # List installed environment
