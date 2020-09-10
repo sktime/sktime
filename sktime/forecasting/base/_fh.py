@@ -12,7 +12,6 @@ import pandas as pd
 
 from sktime.forecasting.base import date_offsets_to_int
 from sktime.forecasting.base import timedeltas_to_int
-
 from sktime.utils.validation.forecasting import check_fh_values
 
 RELATIVE_TYPES = (
@@ -164,5 +163,3 @@ class ForecastingHorizon:
 
         if isinstance(self.to_pandas(), pd.DatetimeIndex):
             assert isinstance(cutoff, pd.Timestamp)
-
-

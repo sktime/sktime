@@ -5,13 +5,13 @@
 __author__ = ["Markus Löning"]
 __all__ = ["_StatsModelsAdapter"]
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from sktime.forecasting.base import _subtract_time
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
-from sktime.utils.validation.forecasting import check_y_X
-from sktime.forecasting.base import _subtract_time
 
 
 class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
@@ -81,8 +81,8 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
 
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        fh_zero_based = fh.to_relative(self.cutoff) \
-                        + _subtract_time(self._y.index[-1], self._y.index[0])
+        fh_zero_based = fh.to_relative(self.cutoff) + _subtract_time(
+            self._y.index[-1], self._y.index[0])
         start, end = fh_zero_based[[0, -1]]
         y_pred = self._fitted_forecaster.predict(start, end)
 
