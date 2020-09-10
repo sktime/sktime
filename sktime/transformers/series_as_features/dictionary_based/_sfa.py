@@ -6,7 +6,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
@@ -14,6 +13,61 @@ from sktime.transformers.series_as_features.dictionary_based._sax import \
     _BitWord
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_selection import f_classif
+
+from numba import njit
+
+# The binning methods to use: equi-depth, equi-width or information gain
+binning_methods = {"equi-depth", "equi-width", "information-gain"}
+
+
+@njit()
+def _create_word(dft, word_length, alphabet_size, breakpoints):
+    word = 0
+    for i in range(word_length):
+        for bp in range(alphabet_size):
+            if dft[i] <= breakpoints[i][bp]:
+                word = (word << 2) | bp
+                break
+
+    return word
+
+
+@njit()
+def _iterate_mft(series, mft_data, phis, length, window_size, i):
+    for n in range(0, length, 2):
+        real = mft_data[n] + series[i + window_size - 1] - \
+               series[i - 1]
+        imag = mft_data[n + 1]
+        mft_data[n] = real * phis[n] - imag * phis[n + 1]
+        mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+
+
+@njit()
+def _calc_incremental_mean_std(series, end, window_size):
+    means = np.zeros(end)
+    stds = np.zeros(end)
+
+    window = series[0:window_size]
+    series_sum = np.sum(window)
+    square_sum = np.sum(np.multiply(window, window))
+
+    r_window_length = 1 / window_size
+    means[0] = series_sum * r_window_length
+    buf = square_sum * r_window_length - means[0] * means[0]
+    stds[0] = math.sqrt(buf) if buf > 0 else 0
+
+    for w in range(1, end):
+        series_sum += series[w + window_size - 1] - series[w - 1]
+        means[w] = series_sum * r_window_length
+        square_sum += series[w + window_size - 1] * series[
+            w + window_size - 1] - series[w - 1] * series[w - 1]
+        buf = square_sum * r_window_length - means[w] * means[w]
+        stds[w] = math.sqrt(buf) if buf > 0 else 0
+
+    return stds
 
 
 class SFA(BaseSeriesAsFeaturesTransformer):
@@ -41,18 +95,36 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     Parameters
     ----------
-        word_length:         int, length of word to shorten window to (using
-        PAA) (default 8)
-        alphabet_size:       int, number of values to discretise each value
-        to (default to 4)
-        window_size:         int, size of window for sliding. Input series
-        length for whole series transform (default to 12)
-        norm:                boolean, whether to mean normalise words by
-        dropping first fourier coefficient
-        remove_repeat_words: boolean, whether to use numerosity reduction (
-        default False)
-        save_words:          boolean, whether to save the words generated
-        for each series (default False)
+        word_length:         int, default = 8
+            length of word to shorten window to (using PAA)
+
+        alphabet_size:       int, default = 4
+            number of values to discretise each value to
+
+        window_size:         int, default = 12
+            size of window for sliding. Input series
+            length for whole series transform
+
+        norm:               boolean, default = False
+            mean normalise words by dropping first fourier coefficient
+
+        binning_method:      {"equi-depth", "equi-width", "information-gain"},
+                             default="equi-depth"
+            the binning method used to derive the breakpoints.
+
+        anova:               boolean, default = False
+            If True, the Fourier coefficient selection is done via a one-way
+            ANOVA test. If False, the first Fourier coefficients are selected.
+            Only applicable if labels are given
+
+        bigrams:             boolean, default = False
+            whether to create bigrams
+
+        remove_repeat_words: boolean, default = False
+            whether to use numerosity reduction (default False)
+
+        save_words:          boolean, default = False
+            whether to save the words generated for each series (default False)
 
     Attributes
     ----------
@@ -67,26 +139,41 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                  alphabet_size=4,
                  window_size=12,
                  norm=False,
-                 levels=1,
-                 igb=False,
+                 binning_method="equi-depth",
+                 anova=False,
                  bigrams=False,
                  remove_repeat_words=False,
+                 levels=1,
                  save_words=False
                  ):
         self.words = []
         self.breakpoints = []
 
-        self.word_length = word_length
+        # we cannot select more than window_size many letters in a word
+        offset = 2 if norm else 0
+        self.word_length = min(word_length, window_size - offset)
+        self.dft_length = window_size - offset if anova is True \
+            else self.word_length
+
+        # make dft_length an even number (same number of reals and imags)
+        self.dft_length = self.dft_length + self.dft_length % 2
+
+        self.support = list(range(self.word_length))
+
         self.alphabet_size = alphabet_size
         self.window_size = window_size
-        self.inverse_sqrt_win_size = 1 / math.sqrt(window_size)
+        self.inverse_sqrt_win_size = 1.0 / math.sqrt(window_size)
         self.norm = norm
         self.remove_repeat_words = remove_repeat_words
         self.save_words = save_words
 
         # TDE
         self.levels = levels
-        self.igb = igb
+
+        #
+        self.binning_method = binning_method
+        self.anova = anova
+
         self.bigrams = bigrams
         # weighting for levels going up to 7 levels
         # No real reason to go past 3
@@ -119,15 +206,18 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             raise ValueError(
                 "Word length must be an integer between 1 and 16")
 
-        if self.igb and y is None:
+        if self.binning_method == "information-gain" and y is None:
             raise ValueError(
                 "Class values must be provided for information gain binning")
+
+        if self.binning_method not in binning_methods:
+            raise TypeError('binning_method must be one of: ', binning_methods)
 
         X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
 
         self.n_instances, self.series_length = X.shape
-        self.breakpoints = self._igb(X, y) if self.igb else self._mcb(X)
+        self.breakpoints = self._binning(X, y)
 
         self._is_fitted = True
         return self
@@ -148,11 +238,15 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             words = []
 
             for window in range(dfts.shape[0]):
-                word = self._create_word(dfts[window])
+                word_raw = _create_word(
+                    dfts[window], self.word_length,
+                    self.alphabet_size, self.breakpoints)
+                word = _BitWord(word=word_raw)
+
                 words.append(word)
                 repeat_word = (self._add_to_pyramid(bag, word, last_word,
                                                     window -
-                                                    int(repeat_words/2))
+                                                    int(repeat_words / 2))
                                if self.levels > 1 else
                                self._add_to_bag(bag, word, last_word))
                 if repeat_word:
@@ -163,7 +257,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = words[window - self.window_size]\
+                        bigram = words[window - self.window_size] \
                             .create_bigram(word, self.word_length)
                         if self.levels > 1:
                             bigram = (bigram, 0)
@@ -178,59 +272,83 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         return bags
 
-    def _mcb(self, X):
+    def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         dft = np.array([self._mcb_dft(X[i, :], num_windows_per_inst) for i in
                         range(self.n_instances)])
+        dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
 
+        if y is not None:
+            y = np.repeat(y, num_windows_per_inst)
+
+        if self.anova and y is not None:
+            # non_constant = np.where(~np.isclose(
+            #                dft.var(axis=0), np.zeros_like(dft.shape[1])))[0]
+            _, p = f_classif(dft, y)
+            # self.support=non_constant[np.argsort(p)[::-1][:self.word_length]]
+            # select word-length many indices with largest f-score
+            self.support = np.argsort(p)[::-1][:self.word_length]
+
+            # sort remaining indices
+            self.support = np.sort(self.support)
+
+            # select the Fourier coefficients with highest f-score
+            dft = dft[:, self.support]
+            self.dft_length = np.max(self.support)
+            self.dft_length = self.dft_length + self.dft_length % 2  # even
+
+        if self.binning_method == "information-gain":
+            return self._igb(X, y, dft)
+        else:
+            return self._mcb(X, y, dft)
+
+    def _mcb(self, X, y, dft):
+        num_windows_per_inst = math.ceil(self.series_length / self.window_size)
         total_num_windows = self.n_instances * num_windows_per_inst
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
 
         for letter in range(self.word_length):
-            column = np.sort(
-                np.array([round(dft[inst][window][letter] * 100) / 100
-                          for window in range(num_windows_per_inst) for inst in
-                          range(self.n_instances)]))
+
+            res = [round(dft[inst][letter] * 100) / 100
+                   for inst in range(self.n_instances * num_windows_per_inst)]
+            column = np.sort(np.array(res))
 
             bin_index = 0
-            target_bin_depth = total_num_windows / self.alphabet_size
 
-            for bp in range(self.alphabet_size - 1):
-                bin_index += target_bin_depth
-                breakpoints[letter][bp] = column[int(bin_index)]
+            # use equi-depth binning
+            if self.binning_method == "equi-depth":
+                target_bin_depth = total_num_windows / self.alphabet_size
+
+                for bp in range(self.alphabet_size - 1):
+                    bin_index += target_bin_depth
+                    breakpoints[letter][bp] = column[int(bin_index)]
+
+            # use equi-width binning aka equi-frequency binning
+            elif self.binning_method == "equi-width":
+                target_bin_width = \
+                    (column[-1] - column[0]) / self.alphabet_size
+
+                for bp in range(self.alphabet_size - 1):
+                    breakpoints[letter][bp] = (bp + 1) * target_bin_width \
+                                              + column[0]
 
             breakpoints[letter][self.alphabet_size - 1] = sys.float_info.max
 
         return breakpoints
 
-    def _igb(self, X, y):
-        le = preprocessing.LabelEncoder()
-        y = le.fit_transform(y)
-
-        num_windows_per_inst = math.ceil(self.series_length / self.window_size)
-        dft = np.array([self._igb_dft(X[i, :], num_windows_per_inst, y[i])
-                        for i in range(self.n_instances)])
-
+    def _igb(self, X, y, dft):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
+        clf = DecisionTreeClassifier(criterion='entropy',
+                                     max_leaf_nodes=self.alphabet_size)
 
-        for letter in range(self.word_length):
-            column = [(round(dft[inst][window][letter][0] * 100) / 100,
-                       dft[inst][window][letter][1])
-                      for window in range(num_windows_per_inst)
-                      for inst in range(self.n_instances)]
-            column.sort(key=lambda tup: tup[0])
+        for i in range(self.word_length):
+            clf.fit(dft[:, i][:, None], y)
+            threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
+            for bp in range(len(threshold)):
+                breakpoints[i][bp] = threshold[bp]
 
-            splits = []
-            self._find_split_points(column, 0, len(column),
-                                    self.alphabet_size, splits)
-            splits.sort()
-
-            for bp in range(len(splits)):
-                breakpoints[letter][bp] = column[splits[bp]][0]
-
-            breakpoints[letter][self.alphabet_size - 1] = sys.float_info.max
-
-        return breakpoints
+            breakpoints[i][self.alphabet_size - 1] = sys.float_info.max
+        return np.sort(breakpoints, axis=1)
 
     def _mcb_dft(self, series, num_windows_per_inst):
         # Splits individual time series into windows and returns the DFT for
@@ -245,25 +363,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return [self._discrete_fourier_transform(row) for n, row in
                 enumerate(split)]
 
-    def _igb_dft(self, series, num_windows_per_inst, cls):
-        # Splits individual time series into windows and returns a DFT and
-        # class pair for each
-        split = np.split(series, np.linspace(self.window_size,
-                                             self.window_size * (
-                                                     num_windows_per_inst - 1),
-                                             num_windows_per_inst - 1,
-                                             dtype=np.int_))
-        split[-1] = series[self.series_length -
-                           self.window_size:self.series_length]
-        return [[(i, cls) for i in self._discrete_fourier_transform(row)]
-                for n, row in enumerate(split)]
-
-    def _discrete_fourier_transform(self, series, normalise=True):
-        """ Performs a discrete fourier transform using standard O(n^2)
+    def _discrete_fourier_transform(self, series):
+        """ Performs a discrete fourier transform using the fast fourier
         transform
         if self.norm is True, then the first term of the DFT is ignored
 
-        TO DO: Use a fast fourier transform
         Input
         -------
         X : The training input samples.  array-like or sparse matrix of
@@ -275,104 +379,22 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         num_atts or
         num_atts-2 if if self.norm is True
         """
+        # first two are real and imaginary parts
+        start = 2 if self.norm else 0
 
-        length = len(series)
-        output_length = int(self.word_length / 2)
-        start = 1 if self.norm else 0
+        s = np.std(series)
+        std = (s if s > 0 else 1)
 
-        std = 1
-        if normalise:
-            s = np.std(series)
-            if s != 0:
-                std = s
+        X_fft = np.fft.rfft(series)
+        reals = np.real(X_fft)
+        imags = np.imag(X_fft)  # * -1 # TODO correct for lower bounding??
 
-        dft = np.array(
-            [np.sum([[series[n] * math.cos(2 * math.pi * n * i / length),
-                      -series[n] * math.sin(2 * math.pi * n * i / length)] for
-                     n in range(length)], axis=0)
-             for i in range(start, start + output_length)]).flatten()
-
-        if normalise:
-            dft *= self.inverse_sqrt_win_size / std
-
-        return dft
-
-    def _find_split_points(self, points, start, end, remaining_symbols,
-                           splits):
-        out_dict = {}
-        in_dict = {}
-        for p in range(start, end):
-            out_dict[points[p][1]] = out_dict.get(points[p][1], 0) + 1
-
-        class_entropy = self._entropy(out_dict)
-
-        last_label = points[start][1]
-        out_dict[points[start][1]] = out_dict.get(points[start][1], 0) - 1
-        in_dict[points[start][1]] = in_dict.get(points[start][1], 0) + 1
-
-        best_gain = -1
-        best_pos = -1
-
-        for i in range(start + 1, end - 1):
-            label = points[i][1]
-            out_dict[points[i][1]] = out_dict.get(points[i][1], 0) - 1
-            in_dict[points[i][1]] = in_dict.get(points[i][1], 0) + 1
-
-            if label != last_label:
-                gain = (round(self._information_gain(class_entropy, in_dict,
-                                                     out_dict) * 1000) / 1000)
-
-                if gain >= best_gain:
-                    best_gain = gain
-                    best_pos = i
-
-            last_label = label
-
-        if best_pos > -1:
-            splits.append(best_pos)
-
-            remaining_symbols /= 2
-            if remaining_symbols > 1:
-                if best_pos - start > 2 and end - best_pos > 2:
-                    self._find_split_points(points, start, best_pos,
-                                            remaining_symbols, splits)
-                    self._find_split_points(points, best_pos, end,
-                                            remaining_symbols, splits)
-                elif end - best_pos > 4:
-                    self._find_split_points(points, best_pos,
-                                            int((end - best_pos) / 2),
-                                            remaining_symbols, splits)
-                    self._find_split_points(points,
-                                            int((end - best_pos) / 2),
-                                            end, remaining_symbols, splits)
-                elif best_pos - start > 4:
-                    self._find_split_points(points, start,
-                                            int((best_pos - start) / 2),
-                                            remaining_symbols, splits)
-                    self._find_split_points(points,
-                                            int((best_pos - start) / 2),
-                                            end, remaining_symbols, splits)
-
-        return splits
-
-    def _entropy(self, frequency_dict, total=-1):
-        if total == -1:
-            total = sum(frequency_dict.values())
-        log2 = 1.0 / math.log(2.0)
-        entropy = 0
-        for i in frequency_dict.values():
-            p = i/total
-            if p > 0:
-                entropy -= p * math.log(p) * log2
-        return entropy
-
-    def _information_gain(self, class_entropy, in_freq_dict, out_freq_dict):
-        in_total = sum(in_freq_dict.values())
-        out_total = sum(out_freq_dict.values())
-        total = in_total + out_total
-        return (class_entropy
-                - in_total / total * self._entropy(in_freq_dict, in_total)
-                - out_total / total * self._entropy(out_freq_dict, out_total))
+        length = start + self.dft_length
+        dft = np.empty((length,), dtype=reals.dtype)
+        dft[0::2] = reals[:np.int32(length / 2)]
+        dft[1::2] = imags[:np.int32(length / 2)]
+        dft *= self.inverse_sqrt_win_size / std
+        return dft[start:]
 
     def _mft(self, series):
         """
@@ -381,73 +403,79 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         :return:
         """
         start_offset = 2 if self.norm else 0
-        length = self.word_length + self.word_length % 2
+        length = self.dft_length + start_offset + self.dft_length % 2
 
-        phis = np.array([[math.cos(
-            2 * math.pi * (-((i * 2) + start_offset) / 2) / self.window_size),
-            -math.sin(2 * math.pi * (-((
-                                               i * 2) +
-                                       start_offset) / 2) /
-                      self.window_size)]
+        phis = np.array([[
+            math.cos(2 * math.pi * (-i) / self.window_size),
+            -math.sin(2 * math.pi * (-i) / self.window_size)]
             for i in range(0, int(length / 2))]).flatten()
 
         end = max(1, len(series) - self.window_size + 1)
-        stds = self._calc_incremental_mean_std(series, end)
+        stds = _calc_incremental_mean_std(series, end, self.window_size)
         transformed = np.zeros((end, length))
         mft_data = np.array([])
 
         for i in range(end):
             if i > 0:
-                for n in range(0, length, 2):
-                    real = mft_data[n] + series[i + self.window_size - 1] - \
-                           series[i - 1]
-                    imag = mft_data[n + 1]
-                    mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                    mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+                # moved to external method to use njit
+                # for n in range(0, length, 2):
+                #     real = mft_data[n] + series[i + self.window_size - 1] - \
+                #            series[i - 1]
+                #     imag = mft_data[n + 1]
+                #     mft_data[n] = real * phis[n] - imag * phis[n + 1]
+                #     mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+                _iterate_mft(series, mft_data, phis, length,
+                             self.window_size, i)
             else:
-                mft_data = self._discrete_fourier_transform(
-                    series[0:self.window_size], normalise=False)
+                X_fft = np.fft.rfft(series[0:self.window_size])
+                reals = np.real(X_fft)
+                imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
+                mft_data = np.empty((length,), dtype=reals.dtype)
+                mft_data[0::2] = reals[:np.int32(length / 2)]
+                mft_data[1::2] = imags[:np.int32(length / 2)]
 
             normalising_factor = ((1 / stds[i] if stds[i] > 0 else 1) *
                                   self.inverse_sqrt_win_size)
+
             transformed[i] = mft_data * normalising_factor
 
-        return transformed
+        return transformed[:, start_offset:][:, self.support] \
+            if self.anova else transformed[:, start_offset:]
 
-    def _calc_incremental_mean_std(self, series, end):
-        means = np.zeros(end)
-        stds = np.zeros(end)
-
-        window = series[0:self.window_size]
-        series_sum = np.sum(window)
-        square_sum = np.sum(np.multiply(window, window))
-
-        r_window_length = 1 / self.window_size
-        means[0] = series_sum * r_window_length
-        buf = square_sum * r_window_length - means[0] * means[0]
-        stds[0] = math.sqrt(buf) if buf > 0 else 0
-
-        for w in range(1, end):
-            series_sum += series[w + self.window_size - 1] - series[w - 1]
-            means[w] = series_sum * r_window_length
-            square_sum += series[w + self.window_size - 1] * series[
-                w + self.window_size - 1] - series[w - 1] * series[
-                              w - 1]
-            buf = square_sum * r_window_length - means[w] * means[w]
-            stds[w] = math.sqrt(buf) if buf > 0 else 0
-
-        return stds
-
-    def _create_word(self, dft):
-        word = _BitWord()
-
-        for i in range(self.word_length):
-            for bp in range(self.alphabet_size):
-                if dft[i] <= self.breakpoints[i][bp]:
-                    word.push(bp)
-                    break
-
-        return word
+    # moved to external method to use njit
+    # def _calc_incremental_mean_std(self, series, end):
+    #     means = np.zeros(end)
+    #     stds = np.zeros(end)
+    #
+    #     window = series[0:self.window_size]
+    #     series_sum = np.sum(window)
+    #     square_sum = np.sum(np.multiply(window, window))
+    #
+    #     r_window_length = 1 / self.window_size
+    #     means[0] = series_sum * r_window_length
+    #     buf = square_sum * r_window_length - means[0] * means[0]
+    #     stds[0] = math.sqrt(buf) if buf > 0 else 0
+    #
+    #     for w in range(1, end):
+    #         series_sum += series[w + self.window_size - 1] - series[w - 1]
+    #         means[w] = series_sum * r_window_length
+    #         square_sum += series[w + self.window_size - 1] * series[
+    #             w + self.window_size - 1] - series[w - 1] * series[w - 1]
+    #         buf = square_sum * r_window_length - means[w] * means[w]
+    #         stds[w] = math.sqrt(buf) if buf > 0 else 0
+    #
+    #     return stds
+    #
+    # def _create_word(self, dft):
+    #     word = _BitWord()
+    #
+    #     for i in range(self.word_length):
+    #         for bp in range(self.alphabet_size):
+    #             if dft[i] <= self.breakpoints[i][bp]:
+    #                 word.push(bp)
+    #                 break
+    #
+    #     return word
 
     # assumes saved words are of word length 16.
     def _shorten_bags(self, word_len):
@@ -464,7 +492,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 new_word.shorten(16 - word_len)
                 repeat_word = (self._add_to_pyramid(bag, new_word, last_word,
                                                     window -
-                                                    int(repeat_words/2))
+                                                    int(repeat_words / 2))
                                if self.levels > 1 else
                                self._add_to_bag(bag, new_word, last_word))
                 if repeat_word:

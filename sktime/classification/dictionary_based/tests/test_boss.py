@@ -47,6 +47,7 @@ boss_gunpoint_probas = np.array([
     [1.0, 0.0, ],
     [0.0, 1.0, ],
 ])
+
 individual_boss_gunpoint_probas = np.array([
     [0.0, 1.0, ],
     [0.0, 1.0, ],
@@ -61,15 +62,15 @@ individual_boss_gunpoint_probas = np.array([
 ])
 
 
-# def print_array(array):
-#     print('[')
-#     for sub_array in array:
-#         print('[', end='')
-#         for value in sub_array:
-#             print(value.astype(str), end='')
-#             print(', ', end='')
-#         print('],')
-#     print(']')
+def print_array(array):
+    print('[')
+    for sub_array in array:
+        print('[', end='')
+        for value in sub_array:
+            print(value.astype(str), end='')
+            print(', ', end='')
+        print('],')
+    print(']')
 #
 #
 # if __name__ == "__main__":
