@@ -67,8 +67,9 @@ make_conda() {
     # Install requirements from inside conda environment
     pip install -r "$REQUIREMENTS"
 
-    # Install this everywhere, I dont know why this doesnt work
-    echo This is being run!!!!!!!!!! u43204230
+    # Install pytorch and signatory for the signatures module.
+    # Note: torch must be installed via conda and signatory must be installed
+    # after pytorch.
     conda install pytorch=1.5.0 -c pytorch
     pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
@@ -79,13 +80,6 @@ make_conda() {
 
 # requirements file
 make_conda "$REQUIREMENTS"
-
-# Install signatory after the requirements due to limitations with
-# signatory needing to be installed after pytorch
-echo This is being run!!!!!!!!!! u43204230
-conda install pytorch=1.5.0 -c pytorch
-pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
-
 
 if [ "$COVERAGE" == "true" ]
 then

@@ -33,6 +33,12 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install requirements
   "${PYTHON}/pip" install -r "$REQUIREMENTS"
 
+  # Install pytorch and signatory for the signatures module.
+  # Note: torch must be installed via conda and signatory must be installed
+  # after pytorch.
+  conda install pytorch=1.5.0 -c pytorch
+  pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
+
   # Build wheel
   "${PYTHON}/python" setup.py bdist_wheel
 done
