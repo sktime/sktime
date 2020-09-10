@@ -36,7 +36,7 @@ for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install pytorch and signatory for the signatures module.
   # Note: torch must be installed via conda and signatory must be installed
   # after pytorch.
-  conda install pytorch=1.5.0 -c pytorch
+  pip install torch==1.5.0
   pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
   # Build wheel
