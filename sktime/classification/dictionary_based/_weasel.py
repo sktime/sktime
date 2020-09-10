@@ -225,13 +225,6 @@ class WEASEL(BaseClassifier):
                 #                              n_jobs=-1).fit(bag_vec, y)
                 # current_acc = clf.oob_score_
 
-                # clf = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10),
-                #                        scoring="accuracy",
-                #                        normalize=False).fit(bag_vec, y)
-                #
-                # # cross validation scores
-                # current_acc = clf.best_score_
-
                 # print("Train acc:", norm, word_length, current_acc)
 
                 if current_acc > max_acc:
