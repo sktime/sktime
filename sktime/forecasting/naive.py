@@ -8,6 +8,7 @@ __author__ = ["Markus Löning", "Piyush Gade"]
 from warnings import warn
 
 import numpy as np
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -136,6 +137,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                              alpha=DEFAULT_ALPHA):
         """Internal predict"""
         last_window, _ = self._get_last_window()
+        fh = fh.to_relative(self.cutoff)
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:

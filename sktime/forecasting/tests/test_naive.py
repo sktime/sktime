@@ -9,9 +9,9 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests import TEST_OOS_FHS
-from sktime.forecasting.tests import TEST_SPS
-from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_SPS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.utils._testing.forecasting import assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
@@ -95,7 +95,6 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
 @pytest.mark.parametrize("n_seasons", [1, 3])
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_mean_seasonal_simple(n_seasons, sp):
-
     # create 2d matrix, rows are different seasons, columns time points of
     # each season
     values = np.random.normal(size=(n_seasons, sp))

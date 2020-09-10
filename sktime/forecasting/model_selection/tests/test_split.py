@@ -6,13 +6,14 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 import pytest
+
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
-from sktime.forecasting.tests import TEST_FHS
-from sktime.forecasting.tests import TEST_STEP_LENGTHS
-from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests import TEST_YS
+from sktime.forecasting.tests._config import TEST_FHS
+from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_YS
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
 

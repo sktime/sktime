@@ -2,9 +2,10 @@ __author__ = ["@big-o"]
 
 import numpy as np
 import pytest
+
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.utils.validation.forecasting import check_fh
 

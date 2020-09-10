@@ -3,10 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["ForecastingHorizon"]
+__all__ = [
+    "ForecastingHorizon",
+    "DELEGATED_METHODS"
+]
 
-import numpy as np
 import pandas as pd
+
+from sktime.forecasting.base import date_offsets_to_int
+from sktime.forecasting.base import timedeltas_to_int
 
 from sktime.utils.validation.forecasting import check_fh_values
 
@@ -48,6 +53,7 @@ DELEGATED_METHODS = (
 def delegator(method):
     def delegated(obj, *args, **kwargs):
         return getattr(obj.to_pandas(), method)(*args, **kwargs)
+
     return delegated
 
 
@@ -78,10 +84,12 @@ class ForecastingHorizon:
         self._values = values
         self._is_relative = is_relative
 
-    def _new(self, values, is_relative=None):
+    def _new(self, values=None, is_relative=None):
+        if values is None:
+            values = self._values
         if is_relative is None:
             is_relative = self.is_relative
-        return type(self)(values, is_relative=is_relative)
+        return type(self)(values, is_relative)
 
     @property
     def is_relative(self):
@@ -95,7 +103,7 @@ class ForecastingHorizon:
 
     def to_relative(self, cutoff=None):
         if self.is_relative:
-            return self
+            return self._new()
 
         else:
             self._check_cutoff(cutoff)
@@ -105,13 +113,13 @@ class ForecastingHorizon:
                 values = date_offsets_to_int(values)
 
             if isinstance(self.to_pandas(), pd.DatetimeIndex):
-                values = timedeltas_to_int(values, cutoff)
+                values = timedeltas_to_int(values, cutoff.freqstr)
 
             return self._new(values, is_relative=True)
 
     def to_absolute(self, cutoff=None):
         if not self.is_relative:
-            return self
+            return self._new()
 
         else:
             self._check_cutoff(cutoff)
@@ -119,6 +127,9 @@ class ForecastingHorizon:
 
             if hasattr(cutoff, "freq"):
                 index *= cutoff.freq
+
+            if isinstance(cutoff, pd.Timestamp):
+                assert hasattr(cutoff, "freq")
 
             values = cutoff + index
             return self._new(values, is_relative=False)
@@ -155,12 +166,3 @@ class ForecastingHorizon:
             assert isinstance(cutoff, pd.Timestamp)
 
 
-def timedeltas_to_int(values, cutoff):
-    assert type(values) == pd.TimedeltaIndex
-    return (values / pd.Timedelta(1, cutoff.freqstr)).astype(np.int)
-
-
-def date_offsets_to_int(values):
-    assert type(values) == pd.Index
-    assert isinstance(values[0], pd.tseries.offsets.DateOffset)
-    return pd.Int64Index([value.n for value in values])

@@ -22,6 +22,7 @@ from sklearn.model_selection import check_cv
 from sklearn.model_selection._search import _check_param_grid
 from sklearn.model_selection._validation import _aggregate_score_dicts
 from sklearn.utils.metaestimators import if_delegate_has_method
+
 from sktime.exceptions import FitFailedWarning
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._base import BaseForecaster

@@ -8,8 +8,8 @@ __all__ = ["get_expected_polynomial_coefs"]
 import numpy as np
 import pytest
 
-from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):

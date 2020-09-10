@@ -17,6 +17,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -206,16 +207,16 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         if X_train is not None:
             raise NotImplementedError()
         self._set_fh(fh)
-        if np.any(self.fh <= 0):
-            raise NotImplementedError(
-                "in-sample predictions are not implemented")
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are"
+                                      " not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length)
 
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
-        self._cv = SlidingWindowSplitter(fh=self.fh,
+        self._cv = SlidingWindowSplitter(fh=self.fh.to_relative(self.cutoff),
                                          window_length=self.window_length_,
                                          step_length=self.step_length_,
                                          start_with_window=True)
@@ -313,7 +314,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         """Predict"""
         # compute prediction
         # prepare recursive predictions
-        fh_max = fh[-1]
+        fh_max = fh.to_relative(self.cutoff)[-1]
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon

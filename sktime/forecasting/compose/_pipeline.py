@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["TransformedTargetForecaster"]
 
 from sklearn.base import clone
+
 from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA

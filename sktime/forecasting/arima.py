@@ -365,16 +365,16 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False,
                               alpha=DEFAULT_ALPHA):
         # make prediction
-        n_periods = int(fh[-1])
-        index = fh.to_absolute(self.cutoff)
+        n_periods = int(fh.to_relative(self.cutoff)[-1])
+        fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
 
         if return_pred_int:
             y_pred, pred_int = self._forecaster.model_.predict(
                 n_periods=n_periods, exogenous=X,
                 return_conf_int=return_pred_int, alpha=alpha)
-            y_pred = pd.Series(y_pred[fh_idx], index=index)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=index,
+            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
+            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
                                     columns=["lower", "upper"])
             return y_pred, pred_int
         else:
@@ -383,7 +383,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
                 exogenous=X,
                 return_conf_int=return_pred_int,
                 alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=index)
+            return pd.Series(y_pred[fh_idx], index=fh_abs)
 
     def get_fitted_params(self):
         """Get fitted parameters

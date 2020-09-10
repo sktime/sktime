@@ -13,6 +13,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
+    "SUPPORTED_INDEX_TYPES"
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -21,7 +22,7 @@ import pandas as pd
 
 from sktime.utils.validation import is_int
 
-ALLOWED_INDEX_TYPES = (
+SUPPORTED_INDEX_TYPES = (
     pd.PeriodIndex,
     pd.RangeIndex,
     pd.Int64Index,
@@ -47,9 +48,11 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
         If y or X are invalid inputs
     """
     y = check_y(y, allow_empty=allow_empty, allow_constant=allow_constant)
+
     if X is not None:
         X = check_X(X)
         check_equal_time_index(y, X)
+
     return y, X
 
 
@@ -340,7 +343,7 @@ def check_fh_values(fh):
         return pd.Int64Index([fh], dtype=np.int)
 
     # check pandas index
-    elif isinstance(fh, ALLOWED_INDEX_TYPES):
+    elif isinstance(fh, SUPPORTED_INDEX_TYPES):
         pass
 
     # check numpy array and list
@@ -351,7 +354,7 @@ def check_fh_values(fh):
     else:
         allowed_types = ("int", "np.array", "list",
                          *[f"{index_type.__name__}"
-                           for index_type in ALLOWED_INDEX_TYPES])
+                           for index_type in SUPPORTED_INDEX_TYPES])
         raise TypeError(f"`fh` must be one of {allowed_types}, "
                         f"but found: {type(fh)}")
 

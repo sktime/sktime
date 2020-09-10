@@ -5,9 +5,13 @@
 __author__ = ["Markus Löning"]
 __all__ = ["_StatsModelsAdapter"]
 
+import pandas as pd
+import numpy as np
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.utils.validation.forecasting import check_y_X
+from sktime.forecasting.base import _subtract_time
 
 
 class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
@@ -36,6 +40,12 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
+        # statsmodels does not support the pd.Int64Index as required,
+        # so we coerce them here to pd.RangeIndex
+        if isinstance(y_train, pd.Series) and \
+                type(y_train.index) == pd.Int64Index:
+            y_train, X_train = _coerce_int_to_range_index(y_train, X_train)
+
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         self._fit_forecaster(y_train, X_train=X_train)
@@ -68,12 +78,17 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
         """
         if return_pred_int:
             raise NotImplementedError()
-        # Forecast all periods from start to end of pred horizon,
-        # but only return given time points in pred horizon
-        fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._fitted_forecaster.predict(start=fh_abs[0],
-                                                 end=fh_abs[-1])
-        return y_pred.loc[fh_abs.to_pandas()]
+
+        # statsmodels requires zero-based indexing starting at the
+        # beginning of the training series when passing integers
+        fh_zero_based = fh.to_relative(self.cutoff) \
+                        + _subtract_time(self._y.index[-1], self._y.index[0])
+        start, end = fh_zero_based[[0, -1]]
+        y_pred = self._fitted_forecaster.predict(start, end)
+
+        # statsmodels forecasts all periods from start to end of forecasting
+        # horizon, but only return given time points in forecasting horizon
+        return y_pred.loc[fh.to_absolute(self.cutoff).to_pandas()]
 
     def get_fitted_params(self):
         """Get fitted parameters
@@ -89,3 +104,17 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
     def _get_fitted_param_names(self):
         """Get names of fitted parameters"""
         return self._fitted_param_names
+
+
+def _coerce_int_to_range_index(y, X=None):
+    new_index = pd.RangeIndex(y.index[0], y.index[-1] + 1)
+    try:
+        np.testing.assert_array_equal(y.index, new_index)
+    except AssertionError:
+        raise ValueError("Coercion of pd.Int64Index to pd.RangeIndex "
+                         "failed. Please provide `y_train` with a "
+                         "pd.RangeIndex.")
+    y.index = new_index
+    if X is not None:
+        X.index = new_index
+    return y, X

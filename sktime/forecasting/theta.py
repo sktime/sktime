@@ -5,6 +5,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformers.single_series.detrend import Deseasonalizer
@@ -177,18 +178,16 @@ class ThetaForecaster(ExponentialSmoothing):
         return coefs[0, 0] / 2
 
     def _compute_drift(self):
+        fh = self.fh.to_relative(self.cutoff)
         if np.isclose(self.smoothing_level_, 0.0):
             # SES was constant, so revert to simple trend
-            drift = self.trend_ * self.fh
+            drift = self.trend_ * fh
         else:
             # Calculate drift from SES parameters
             n_timepoints = len(self._y)
             drift = self.trend_ * (
-                    self.fh
-                    + (1 - (
-                        1 - self.smoothing_level_) ** n_timepoints) /
-                    self.smoothing_level_
-            )
+                    fh + (1 - (1 - self.smoothing_level_) ** n_timepoints)
+                    / self.smoothing_level_)
 
         return drift
 
@@ -201,7 +200,8 @@ class ThetaForecaster(ExponentialSmoothing):
         n_timepoints = len(self._y)
 
         self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
-        sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)
+        sem = self.sigma_ * np.sqrt(self.fh.to_relative(self.cutoff) *
+                                    self.smoothing_level_ ** 2 + 1)
 
         errors = []
         for alpha in alphas:

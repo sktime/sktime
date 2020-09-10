@@ -20,21 +20,24 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import TEST_ALPHAS
-from sktime.forecasting.tests import TEST_INS_FHS
-from sktime.forecasting.tests import TEST_OOS_FHS
-from sktime.forecasting.tests import TEST_STEP_LENGTHS
-from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests import TEST_YS
+from sktime.forecasting.tests._config import SUPPORTED_INDEX_FH_COMBINATIONS
+from sktime.forecasting.tests._config import TEST_ALPHAS
+from sktime.forecasting.tests._config import TEST_INS_FHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_YS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
+from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import assert_correct_pred_time_index
 from sktime.utils._testing.forecasting import \
-    compute_expected_index_from_update_predict
+    get_expected_index_for_update_predict
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
@@ -64,6 +67,7 @@ def test_fitted_params(Forecaster):
 def test_raises_not_fitted_error(Forecaster):
     f = _construct_instance(Forecaster)
 
+    # predict is check in test suite for all estimators
     with pytest.raises(NotFittedError):
         f.update(y_test, update_params=False)
 
@@ -89,28 +93,33 @@ def assert_correct_msg(exception, msg):
     (1, 3, 0.5)  # tuple
 ])
 def test_bad_y_input(Forecaster, y):
-    expected_msg = f"`y` must be a pandas Series, but found type: {type(y)}"
-
-    with pytest.raises(TypeError) as e:
+    with pytest.raises(TypeError) as error:
         f = _construct_instance(Forecaster)
         f.fit(y, FH0)
-    assert_correct_msg(e, expected_msg)
+    expected_msg = f"`y` must be a pandas Series, but found type: {type(y)}"
+    assert_correct_msg(error, expected_msg)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("y_train", TEST_YS)
-def test_predict_time_index(Forecaster, fh, y_train):
+@pytest.mark.parametrize("index_type, fh_type, is_relative",
+                         SUPPORTED_INDEX_FH_COMBINATIONS)
+@pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
+def test_predict_time_index(Forecaster, index_type, fh_type, is_relative,
+                            steps):
+    y_train = make_forecasting_problem(index_type=index_type)
+    cutoff = y_train.index[-1]
+    fh = _make_fh(cutoff, steps, fh_type, is_relative)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh)
     y_pred = f.predict()
-    assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+    assert_correct_pred_time_index(y_pred.index, cutoff, fh)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("fh", TEST_INS_FHS)
 @pytest.mark.parametrize("y_train", TEST_YS)
 def test_predict_in_sample(Forecaster, fh, y_train):
+    # TODO
     f = _construct_instance(Forecaster)
     try:
         f.fit(y_train, fh=fh)
@@ -172,7 +181,7 @@ def test_score(Forecaster, fh):
     f.fit(y_train, fh)
     y_pred = f.predict()
 
-    fh_idx = check_fh(fh) - 1  # get zero based index
+    fh_idx = check_fh(fh).to_indexer()  # get zero based index
     expected = smape_loss(y_pred, y_test.iloc[fh_idx])
 
     # compare with actual score
@@ -196,8 +205,8 @@ def check_update_predict_y_pred(y_pred, y_test, fh, step_length):
     if isinstance(y_pred, pd.DataFrame):
         assert y_pred.shape[1] > 1
 
-    expected_index = compute_expected_index_from_update_predict(y_test, fh,
-                                                                step_length)
+    expected_index = get_expected_index_for_update_predict(y_test, fh,
+                                                           step_length)
     np.testing.assert_array_equal(y_pred.index, expected_index)
 
 

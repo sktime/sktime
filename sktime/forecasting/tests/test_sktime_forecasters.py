@@ -20,7 +20,9 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
@@ -33,6 +35,10 @@ FORECASTERS = [forecaster for (name, forecaster) in
                all_estimators(estimator_type="forecaster")
                if issubclass(forecaster, BaseSktimeForecaster)]
 FH0 = 1
+
+WINDOW_FORECASTERS = [forecaster for (name, forecaster) in
+                      all_estimators(estimator_type="forecaster")
+                      if issubclass(forecaster, BaseWindowForecaster)]
 
 # testing data
 y = make_forecasting_problem()
@@ -144,3 +150,16 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
     f.fit(y_train, FH0)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
+
+
+@pytest.mark.parametrize("Forecaster", WINDOW_FORECASTERS)
+def test_last_window(Forecaster):
+    f = _construct_instance(Forecaster)
+    # passing the same fh to both fit and predict works
+    f.fit(y_train, FH0)
+
+    actual, _ = f._get_last_window()
+    expected = y_train.iloc[-f.window_length_:]
+
+    np.testing.assert_array_equal(actual, expected)
+    assert len(actual) == f.window_length_

@@ -11,6 +11,7 @@ __all__ = [
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
+
 from sktime.base import BaseHeterogenousMetaEstimator
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import is_forecaster

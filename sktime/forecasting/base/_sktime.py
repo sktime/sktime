@@ -10,6 +10,7 @@ from contextlib import contextmanager
 import numpy as np
 import pandas as pd
 
+from sktime.forecasting.base import _subtract_time
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
@@ -348,14 +349,14 @@ class BaseSktimeForecaster(BaseForecaster):
         # enter into a detached cutoff mode
         with self._detached_cutoff():
             # set cutoff to time point before data
-            self._set_cutoff(y.index[0] - 1)
+            self._set_cutoff(_subtract_time(y.index[0], 1))
             # iterate over data
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
 
-                # we cannot use update_predict_single here, as this would
+                # we cannot use `update_predict_single` here, as this would
                 # re-set the forecasting horizon, instead we use
-                # the internal update_predict_single method
+                # the internal `_update_predict_single` method
                 y_pred = self._update_predict_single(
                     y_new, fh, X=X,
                     update_params=update_params,
@@ -502,8 +503,11 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         -------
         y_pred : pd.Series or pd.DataFrame
         """
-        cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(
-            self.fh, window_length=self.window_length_)
+        if cv is not None:
+            cv = check_cv(cv)
+        else:
+            cv = SlidingWindowSplitter(self.fh.to_relative(self.cutoff),
+                                       window_length=self.window_length_)
         return self._predict_moving_cutoff(y_test, cv, X=X_test,
                                            update_params=update_params,
                                            return_pred_int=return_pred_int,
@@ -605,16 +609,16 @@ class BaseWindowForecaster(BaseSktimeForecaster):
     def _get_last_window(self):
         """Select last window"""
         # get the start and end points of the last window
-        start = self.cutoff - self.window_length_ + 1
-        end = self.cutoff
+        cutoff = self.cutoff
+        start = _subtract_time(cutoff, self.window_length_ - 1)
 
         # get the last window of the endogenous variable
-        y = self._y.loc[start:end].to_numpy()
+        y = self._y.loc[start:cutoff].to_numpy()
 
         # if exogenous variables are given, also get the last window of
         # those
         if self._X is not None:
-            X = self._X.loc[start:end].to_numpy()
+            X = self._X.loc[start:cutoff].to_numpy()
         else:
             X = None
         return y, X

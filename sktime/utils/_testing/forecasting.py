@@ -4,7 +4,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "compute_expected_index_from_update_predict",
+    "get_expected_index_for_update_predict",
     "generate_polynomial_series",
     "generate_seasonal_time_series_data_with_trend",
     "generate_time_series_data_with_trend",
@@ -15,12 +15,14 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
+
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.data_container import detabularise
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 
 
-def compute_expected_index_from_update_predict(y, fh, step_length):
+def get_expected_index_for_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
     fh = check_fh(fh)
@@ -114,10 +116,37 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100,
     return detabularise(X)
 
 
-def make_forecasting_problem(n_timepoints=50, random_state=None):
+def make_forecasting_problem(n_timepoints=50, index_type="int",
+                             random_state=None):
     rng = check_random_state(random_state)
-    return pd.Series(rng.random(size=n_timepoints),
-                     index=pd.Int64Index(np.arange(n_timepoints)))
+    values = rng.random(size=n_timepoints)
+    index = _make_index(len(values), index_type)
+    return pd.Series(values, index)
+
+
+def _make_index(n_timepoints, index_type="int"):
+    """Helper function to make indices for testing"""
+
+    if index_type == "period":
+        start = "2000-01"
+        freq = "M"
+        return pd.period_range(start=start, periods=n_timepoints, freq=freq)
+
+    elif index_type == "datetime":
+        start = "2000-01"
+        freq = "D"
+        return pd.date_range(start=start, periods=n_timepoints, freq=freq)
+
+    elif index_type == "range":
+        start = 3  # check non-zero based indices
+        return pd.RangeIndex(start=start, stop=start + n_timepoints)
+
+    elif index_type == "int" or index_type is None:
+        start = 3
+        return pd.Int64Index(np.arange(start, start + n_timepoints))
+
+    else:
+        raise ValueError(f"index_class: {index_type} is not supported")
 
 
 def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
@@ -125,3 +154,27 @@ def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     fh = check_fh(fh)
     expected = fh.to_absolute(cutoff).to_pandas()
     y_pred_index.equals(expected)
+
+
+def _make_fh(cutoff, steps, fh_type, is_relative):
+    """Helper function to construct forecasting horizons for testing"""
+    from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
+    fh_class = INDEX_TYPE_LOOKUP[fh_type]
+
+    if isinstance(steps, (int, np.integer)):
+        steps = np.array([steps], dtype=np.int)
+
+    if is_relative:
+        return ForecastingHorizon(fh_class(steps), is_relative=is_relative)
+
+    else:
+        kwargs = {}
+
+        if fh_type == "datetime":
+            steps *= cutoff.freq
+
+        if fh_type == "period":
+            kwargs = {"freq": cutoff.freq}
+
+        values = cutoff + steps
+        return ForecastingHorizon(fh_class(values, **kwargs), is_relative)

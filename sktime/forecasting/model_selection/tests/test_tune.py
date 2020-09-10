@@ -11,6 +11,7 @@ from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import ParameterGrid
+
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import ReducedRegressionForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
@@ -18,9 +19,9 @@ from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.tests import TEST_OOS_FHS
-from sktime.forecasting.tests import TEST_STEP_LENGTHS
-from sktime.forecasting.tests import TEST_WINDOW_LENGTHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
+from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import make_forecasting_scorer
 from sktime.performance_metrics.forecasting import sMAPE

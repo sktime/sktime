@@ -9,6 +9,7 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
 from sktime.utils.validation.forecasting import check_cutoffs
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_step_length

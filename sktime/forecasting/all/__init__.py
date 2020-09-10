@@ -22,8 +22,15 @@ __all__ = [
     "sMAPE",
     "MASE",
     "smape_loss",
-    "mase_loss"
+    "mase_loss",
+    "pd",
+    "np",
+    "plt"
 ]
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 from sktime.datasets import load_airline
 from sktime.datasets import load_longley

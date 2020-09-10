@@ -8,7 +8,7 @@ __all__ = []
 import numpy as np
 import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import TEST_SPS
+from sktime.forecasting.tests._config import TEST_SPS
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from statsmodels.tsa.seasonal import seasonal_decompose

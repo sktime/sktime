@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 from pytest import raises
 
+from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_fh_values
 
@@ -63,4 +64,4 @@ def test_check_fh_values_duplicate_input_values(arg):
 @pytest.mark.parametrize("arg", good_input_args)
 def test_check_fh_values_input_conversion_to_pandas_index(arg):
     output = check_fh_values(arg)
-    assert isinstance(output, pd.Index)
+    assert type(output) in SUPPORTED_INDEX_TYPES
