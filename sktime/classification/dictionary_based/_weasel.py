@@ -73,14 +73,6 @@ class WEASEL(BaseClassifier):
 
     Parameters
     ----------
-    alphabet_size:      int, default = 4
-        number of values to discretise each value to
-
-    chi2_threshold:     int, default = 2
-        feature selection is applied based on the chi-squared test.
-        this is the threshold to use for chi-squared test on bag-of-words
-        (higher means more strict)
-
     anova:               boolean, default = True
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
@@ -103,22 +95,26 @@ class WEASEL(BaseClassifier):
     """
 
     def __init__(self,
-                 alphabet_size=4,
-                 chi2_threshold=2,
                  anova=True,
                  bigrams=True,
                  binning_strategy="information-gain",
                  random_state=None
                  ):
 
-        self.alphabet_size = alphabet_size
+        # currently other values than 4 are not supported.
+        self.alphabet_size = 4
+
+        # feature selection is applied based on the chi-squared test.
+        # this is the threshold to use for chi-squared test on bag-of-words
+        # (higher means more strict)
+        self.chi2_threshold = 2,
+
         self.anova = anova
 
         self.norm_options = [True, False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
-        self.chi2_threshold = chi2_threshold
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
