@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["get_expected_polynomial_coefs"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.trend import PolynomialTrendForecaster
@@ -44,3 +45,13 @@ def test_trend(degree, with_intercept):
 # zero trend does not work without intercept
 def test_zero_trend():
     _test_trend(degree=0, with_intercept=True)
+
+
+def test_constant_trend():
+    y = pd.Series(np.arange(30))
+    fh = -np.arange(30)  # in-sample fh
+
+    forecaster = PolynomialTrendForecaster(degree=1)
+    y_pred = forecaster.fit(y).predict(fh)
+
+    np.testing.assert_array_almost_equal(y, y_pred)

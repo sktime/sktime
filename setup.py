@@ -89,6 +89,7 @@ EXTRAS_REQUIRE = {
         'tsfresh',
         'numba',
         'matplotlib',
+        'seaborn',
         'jupyter',
         'sphinx',
         'sphinx-gallery',

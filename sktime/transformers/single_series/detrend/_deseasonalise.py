@@ -17,7 +17,7 @@ from sktime.transformers.single_series.base import \
     BaseSingleSeriesTransformer
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.forecasting.base import _subtract_time
+from sktime.utils.time_series import _subtract_time
 from sktime.utils.validation.forecasting import check_y
 
 

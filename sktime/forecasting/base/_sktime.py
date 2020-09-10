@@ -10,7 +10,7 @@ from contextlib import contextmanager
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import _subtract_time
+from sktime.utils.time_series import _subtract_time
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter

@@ -10,8 +10,8 @@ __all__ = [
 
 import pandas as pd
 
-from sktime.forecasting.base import date_offsets_to_int
-from sktime.forecasting.base import timedeltas_to_int
+from sktime.utils.time_series import _date_offsets_to_int
+from sktime.utils.time_series import _timedeltas_to_int
 from sktime.utils.validation.forecasting import check_fh_values
 
 RELATIVE_TYPES = (
@@ -69,6 +69,7 @@ class ForecastingHorizon:
         - If True, values are relative to end of training series.
         - If False, values are absolute.
     """
+
     def __new__(cls, *args, **kwargs):
         # We want the ForecastingHorizon class to be an extension of a
         # pandas index, but since subclassing pandas indices is not
@@ -152,10 +153,10 @@ class ForecastingHorizon:
             values = self.to_pandas() - cutoff
 
             if isinstance(self.to_pandas(), pd.PeriodIndex):
-                values = date_offsets_to_int(values)
+                values = _date_offsets_to_int(values)
 
             if isinstance(self.to_pandas(), pd.DatetimeIndex):
-                values = timedeltas_to_int(values, cutoff.freqstr)
+                values = _timedeltas_to_int(values, cutoff.freqstr)
 
             return self._new(values, is_relative=True)
 

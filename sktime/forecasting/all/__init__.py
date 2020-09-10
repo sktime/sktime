@@ -18,26 +18,33 @@ __all__ = [
     "ThetaForecaster",
     "AutoARIMA",
     "PolynomialTrendForecaster",
-    "plot_ys",
+    "TransformedTargetForecaster",
+    "Deseasonalizer",
+    "ReducedRegressionForecaster",
+    "ReducedTimeSeriesRegressionForecaster",
+    "EnsembleForecaster",
+    "Detrender",
     "sMAPE",
     "MASE",
     "smape_loss",
     "mase_loss",
     "pd",
     "np",
-    "plt"
+    "plot_series"
 ]
 
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 
 from sktime.datasets import load_airline
 from sktime.datasets import load_longley
 from sktime.datasets import load_lynx
 from sktime.datasets import load_shampoo_sales
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.compose import ReducedRegressionForecaster, EnsembleForecaster
+from sktime.forecasting.compose import ReducedTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
@@ -51,4 +58,6 @@ from sktime.performance_metrics.forecasting import MASE
 from sktime.performance_metrics.forecasting import mase_loss
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.performance_metrics.forecasting import smape_loss
-from sktime.utils.plotting.forecasting import plot_ys
+from sktime.transformers.single_series.detrend import Deseasonalizer
+from sktime.transformers.single_series.detrend import Detrender
+from sktime.utils.plotting import plot_series

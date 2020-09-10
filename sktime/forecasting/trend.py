@@ -16,6 +16,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.utils.time_series import _subtract_time
 
 
 class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
@@ -85,12 +86,15 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
             regressor)
 
         # transform data
-        n_timepoints = len(y_train)
-        X_train = np.arange(n_timepoints).reshape(-1, 1)
-        y_train = y_train.to_numpy()
+        idx = self._y.index
+        series_length = _subtract_time(idx[-1], idx[0])
+        if isinstance(series_length, pd.Index):
+            series_length = series_length[0]
+        x = np.arange(series_length + 1).reshape(-1, 1)
+        y = y_train.to_numpy()
 
         # fit regressor
-        self.regressor_.fit(X_train, y_train)
+        self.regressor_.fit(x, y)
         self._is_fitted = True
         return self
 
@@ -122,7 +126,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         self._set_fh(fh)
 
         # use relative fh as time index to predict
-        fh_relative = self.fh.to_relative(self.cutoff).to_numpy()
-        X_pred = fh_relative.reshape(-1, 1)
-        y_pred = self.regressor_.predict(X_pred)
+        idx = self._y.index
+        x = self.fh.to_relative(self.cutoff) + _subtract_time(idx[-1], idx[0])
+        y_pred = self.regressor_.predict(x.to_numpy().reshape(-1, 1))
         return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))

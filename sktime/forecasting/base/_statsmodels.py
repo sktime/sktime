@@ -8,7 +8,7 @@ __all__ = ["_StatsModelsAdapter"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import _subtract_time
+from sktime.utils.time_series import _subtract_time
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
