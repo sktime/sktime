@@ -46,6 +46,9 @@ Dictionary-based
 
     BOSSIndividual
     BOSSEnsemble
+    WEASEL
+    TemporalDictionaryEnsemble
+    IndividualTDE
 
 Distance-based
 --------------
