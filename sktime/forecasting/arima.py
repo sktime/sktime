@@ -7,9 +7,9 @@ __all__ = [
     "AutoARIMA"
 ]
 
-import numpy as np
 import pandas as pd
 
+from sktime.forecasting.base import _subtract_time
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -334,33 +334,30 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False,
                            alpha=DEFAULT_ALPHA):
+        # for in-sample predictions, pmdarima requires zero-based
+        # integer indicies
         fh_abs = fh.to_absolute(self.cutoff)
-        fh_idx = fh_abs - np.min(fh_abs)
-        start = fh_abs[0]
-        end = fh_abs[-1]
+        fh_zero_based = _subtract_time(fh_abs.to_pandas(), self._y.index[0])
+        start, end = fh_zero_based[[0, -1]]
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
+
+        if isinstance(alpha, (list, tuple)):
+            raise NotImplementedError()
+
+        result = self._forecaster.predict_in_sample(
+            start=start, end=end, exogenous=X, return_conf_int=return_pred_int,
+            alpha=alpha)
 
         if return_pred_int:
-
-            if isinstance(alpha, (list, tuple)):
-                raise NotImplementedError()
-            y_pred, pred_int = self._forecaster.predict_in_sample(
-                start=start,
-                end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
+            # unpack and format results
+            y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
             pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
                                     columns=["lower", "upper"])
             return y_pred, pred_int
 
         else:
-            y_pred = self._forecaster.predict_in_sample(
-                start=start, end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=fh_abs)
+            return pd.Series(result[fh_idx], index=fh_abs)
 
     def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False,
                               alpha=DEFAULT_ALPHA):
@@ -369,21 +366,18 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
 
+        result = self._forecaster.model_.predict(
+            n_periods=n_periods, exogenous=X,
+            return_conf_int=return_pred_int, alpha=alpha)
+
         if return_pred_int:
-            y_pred, pred_int = self._forecaster.model_.predict(
-                n_periods=n_periods, exogenous=X,
-                return_conf_int=return_pred_int, alpha=alpha)
+            y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
             pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
                                     columns=["lower", "upper"])
             return y_pred, pred_int
         else:
-            y_pred = self._forecaster.model_.predict(
-                n_periods=n_periods,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha)
-            return pd.Series(y_pred[fh_idx], index=fh_abs)
+            return pd.Series(result[fh_idx], index=fh_abs)
 
     def get_fitted_params(self):
         """Get fitted parameters

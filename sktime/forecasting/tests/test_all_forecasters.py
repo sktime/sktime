@@ -12,7 +12,7 @@ __all__ = [
     "test_update_predict_predicted_indices",
     "test_bad_y_input",
     "test_fitted_params",
-    "test_predict_in_sample",
+    "test_predict_time_index_in_sample_full",
     "test_predict_pred_interval",
     "test_update_predict_single",
 ]
@@ -26,7 +26,7 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import SUPPORTED_INDEX_FH_COMBINATIONS
 from sktime.forecasting.tests._config import TEST_ALPHAS
-from sktime.forecasting.tests._config import TEST_INS_FHS
+from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
@@ -103,23 +103,12 @@ def test_bad_y_input(Forecaster, y):
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("index_type, fh_type, is_relative",
                          SUPPORTED_INDEX_FH_COMBINATIONS)
-@pytest.mark.parametrize("steps", TEST_OOS_FHS)  # fh steps
-def test_predict_time_index(Forecaster, index_type, fh_type, is_relative,
-                            steps):
+@pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
+def test_predict_time_index(
+        Forecaster, index_type, fh_type, is_relative, steps):
     y_train = make_forecasting_problem(index_type=index_type)
     cutoff = y_train.index[-1]
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
-    f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
-    y_pred = f.predict()
-    assert_correct_pred_time_index(y_pred.index, cutoff, fh)
-
-
-@pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("fh", TEST_INS_FHS)
-@pytest.mark.parametrize("y_train", TEST_YS)
-def test_predict_in_sample(Forecaster, fh, y_train):
-    # TODO
     f = _construct_instance(Forecaster)
     try:
         f.fit(y_train, fh=fh)
@@ -130,10 +119,15 @@ def test_predict_in_sample(Forecaster, fh, y_train):
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize("y_train", TEST_YS)
-def test_predict_in_sample_full(Forecaster, y_train):
+@pytest.mark.parametrize("index_type, fh_type, is_relative",
+                         SUPPORTED_INDEX_FH_COMBINATIONS)
+def test_predict_time_index_in_sample_full(
+        Forecaster, index_type, fh_type, is_relative):
+    y_train = make_forecasting_problem(index_type=index_type)
+    cutoff = y_train.index[-1]
+    steps = -np.arange(len(y_train))  # full in-sample fh
+    fh = _make_fh(cutoff, steps, fh_type, is_relative)
     f = _construct_instance(Forecaster)
-    fh = -np.arange(len(y_train))  # full in-sample fh
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()

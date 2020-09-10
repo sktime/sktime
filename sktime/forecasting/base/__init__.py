@@ -43,6 +43,12 @@ def _subtract_time(a, b):
     if isinstance(b, pd.Period):
         return date_offsets_to_int(diff)
     elif isinstance(b, pd.Timestamp):
-        return timedeltas_to_int(diff, freq=a.freqstr)
+        if hasattr(a, "freq") and a.freqstr is not None:
+            freq = a.freqstr
+        elif hasattr(b, "freq") and b.freqstr is not None:
+            freq = b.freqstr
+        else:
+            raise ValueError("No `freq` information available")
+        return timedeltas_to_int(diff, freq=freq)
     else:
         return diff
