@@ -107,7 +107,7 @@ class WEASEL(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         # this is the threshold to use for chi-squared test on bag-of-words
         # (higher means more strict)
-        self.chi2_threshold = -1 # disabled by default
+        self.chi2_threshold = -1  # disabled by default
 
         self.anova = anova
 
@@ -188,7 +188,8 @@ class WEASEL(BaseClassifier):
                     transformers.append(transformer)
 
                     # use the shortening of words trick
-                    # sfa_words = transformers[i]._shorten_bags(word_length)
+                    # else:
+                    #    sfa_words = transformers[i]._shorten_bags(word_length)
 
                     bag = sfa_words.iloc[:, 0]
 
@@ -196,7 +197,8 @@ class WEASEL(BaseClassifier):
                     relevant_features = {}
                     apply_chi_squared = self.chi2_threshold > 0
                     if apply_chi_squared:
-                        bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
+                        bag_vec \
+                            = DictVectorizer(sparse=False).fit_transform(bag)
                         chi2_statistics, p = chi2(bag_vec, y)
                         relevant_features = np.where(
                            chi2_statistics >= self.chi2_threshold)[0]
@@ -228,7 +230,7 @@ class WEASEL(BaseClassifier):
                 #                              n_jobs=-1).fit(bag_vec, y)
                 # current_acc = clf.oob_score_
 
-                # print("Train acc:", norm, word_length, current_acc)
+                print("Train acc:", norm, word_length, current_acc)
 
                 if current_acc > max_acc:
                     max_acc = current_acc
@@ -244,7 +246,7 @@ class WEASEL(BaseClassifier):
         # # fit final model using all words
         # for i, window_size in enumerate(self.window_sizes):
         #     self.SFA_transformers[i] = \
-        #         SFA(word_length=np.max(self.word_lengths),
+        #         SFA(word_length=self.best_word_length,
         #             alphabet_size=self.alphabet_size,
         #             window_size=window_size,
         #             norm=norm,
