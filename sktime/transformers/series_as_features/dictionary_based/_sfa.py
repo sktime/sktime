@@ -277,7 +277,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 self.support = non_constant[np.argsort(p)][:self.word_length]
 
             # sort remaining indices
-            self.support = np.sort(self.support)
+            # self.support = np.sort(self.support)
 
             # select the Fourier coefficients with highest f-score
             dft = dft[:, self.support]
