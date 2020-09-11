@@ -12,7 +12,7 @@ python:
         - docs
 
 sphinx:
-  configuration: conf.py
+  configuration: docs/source/conf.py
 
 formats:
   - pdf
