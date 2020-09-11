@@ -430,35 +430,28 @@ def load_shampoo_sales():
     name = 'ShampooSales'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='M')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True)
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of shampoo sales"
+    return y
 
 
-def load_longley(return_X_y=False):
+def load_longley(y_name="TOTEMP"):
     """
     Load the Longley multivariate time series dataset for forecasting with
     exogenous variables.
 
     Parameters
     ----------
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+    y_name: str, optional (default="TOTEMP")
+        Name of target variable (y)
 
     Returns
     -------
-    X: pandas.DataFrame
-        The exogenous time series data for the problem.
     y: pandas.Series
         The target series to be predicted.
+    X: pandas.DataFrame
+        The exogenous time series data for the problem.
 
     Details
     -------
@@ -473,13 +466,12 @@ def load_longley(return_X_y=False):
 
     Variable description:
 
-    TOTEMP - Total employment (y)
+    TOTEMP - Total employment
     GNPDEFL - Gross national product deflator
     GNP - Gross national product
     UNEMP - Number of unemployed
     ARMED - Size of armed forces
     POP - Population
-    YEAR - Calendar year (index)
 
     References
     ----------
@@ -492,29 +484,12 @@ def load_longley(return_X_y=False):
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
-    data = data.set_index('YEAR')
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
+    data = data.set_index("YEAR")
+    data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
 
     # Get target series
-    yname = 'TOTEMP'
-    y = data.pop(yname)
-    y = pd.Series([y], name=yname)
-
-    # Get exogeneous series
-    X = pd.DataFrame(
-        [pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
-    X.columns = data.columns
-
-    if return_X_y:
-        y = y.iloc[0]
-        return X, y
-    else:
-        X[yname] = y
-        return X
+    y = data.pop(y_name)
+    return y, data
 
 
 def load_lynx():
@@ -560,15 +535,10 @@ def load_lynx():
     name = 'Lynx'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True)
+    y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
+    y.name = "Number of Lynx trappings"
+    return y
 
 
 def load_airline():
@@ -605,9 +575,9 @@ def load_airline():
     name = 'Airline'
     fname = name + '.csv'
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
+    y = pd.read_csv(path, index_col=0, squeeze=True)
 
     # make sure time index is properly formatted
-    data.index = pd.PeriodIndex(data.index, freq="M", name="Period")
-    data.name = "Number of airline passengers"
-    return data
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of airline passengers"
+    return y
