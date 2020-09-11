@@ -16,7 +16,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
-# from sklearn.feature_selection import chi2
+from sklearn.feature_selection import chi2
 from sklearn.model_selection import cross_val_score
 
 # from sktime.transformers.series_as_features.dictionary_based._sax import \
@@ -107,7 +107,7 @@ class WEASEL(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         # this is the threshold to use for chi-squared test on bag-of-words
         # (higher means more strict)
-        self.chi2_threshold = 2,
+        self.chi2_threshold = -1 # disabled by default
 
         self.anova = anova
 
@@ -190,26 +190,29 @@ class WEASEL(BaseClassifier):
                     # use the shortening of words trick
                     # sfa_words = transformers[i]._shorten_bags(word_length)
 
-                    # TODO refactor? dicts not really needed here ...
                     bag = sfa_words.iloc[:, 0]
 
                     # chi-squared test to keep only relevent features
-                    # bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
-                    # chi2_statistics, p = chi2(bag_vec, y)
-                    # relevant_features = np.where(
-                    #    chi2_statistics >= self.chi2_threshold)[0]
+                    relevant_features = {}
+                    apply_chi_squared = self.chi2_threshold > 0
+                    if apply_chi_squared:
+                        bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
+                        chi2_statistics, p = chi2(bag_vec, y)
+                        relevant_features = np.where(
+                           chi2_statistics >= self.chi2_threshold)[0]
 
                     # merging bag-of-patterns of different window_sizes
                     # to single bag-of-patterns with prefix indicating
                     # the used window-length
                     for j in range(len(bag)):
                         for (key, value) in bag[j].items():
-                            # if key in relevant_features:  # chi-squared test
-                            # append the prefices to the words to
-                            # distinguish between window-sizes
-                            word = (key << self.highest_bit) | window_size
-                            # X_all_words[j].append((word, value))
-                            all_words[j][word] = value
+                            # chi-squared test
+                            if (not apply_chi_squared) or \
+                                    (key in relevant_features):
+                                # append the prefices to the words to
+                                # distinguish between window-sizes
+                                word = (key << self.highest_bit) | window_size
+                                all_words[j][word] = value
 
                 # TODO use CountVectorizer instead on actual words ... ???
                 vectorizer = DictVectorizer(sparse=True)
