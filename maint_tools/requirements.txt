@@ -1,3 +1,4 @@
+check-manifest
 colorama
 flake8
 flake8-bugbear
