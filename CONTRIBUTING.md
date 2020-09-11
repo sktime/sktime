@@ -2,11 +2,15 @@
 
 Welcome to our contributing guidelines! sktime is a community-driven project and your help is extremely welcome! If you get stuck, please don't hesitate to [chat with us](https://gitter.im/sktime/community) or [raise an issue](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
+sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible, it'll be useful to take a look at their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
+
+
 ## Contents
 * [Areas of contribution](#Areas-of-contribution)
 * [Git and GitHub workflow](#Git-and-GitHub-workflow)
 * [Continuous integration](#Continuous-integration)
 * [Documentation](#Documentation)
+* [Dependencies](#Dependencies)
 * [Coding style](#Coding-style)
 * [Pull request checklist](#Pull-request-checklist)
 * [Reporting bugs](#Reporting-bugs)
@@ -17,14 +21,14 @@ Welcome to our contributing guidelines! sktime is a community-driven project and
 We value all kinds of contributions - not just code. We follow the
  [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
 
-The following table gives an overview of key contribution areas. 
+The following table gives an overview of key contribution areas.
 
-| Area | Contribution | 
+| Area | Contribution |
 |---|---|
 | Documentation | Improve or add docstrings, glossary terms, the user guide, and the example notebooks. |
-| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets | 
-| Code | Improve or add functionality, fix bugs | 
-| API design | Design interfaces for estimators and other functionality | 
+| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets |
+| Code | Improve or add functionality, fix bugs |
+| API design | Design interfaces for estimators and other functionality |
 | Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests |
 | Outreach | Organize talks, tutorials or workshops, write blog posts |
 | Mentoring | Onboarding and mentoring new contributors |
@@ -90,7 +94,7 @@ The preferred workflow for contributing to sktime's repository is to fork the [m
     git push --set-upstream origin my-feature-branch
     ```
 
-9. Follow [these instructions](https://help.github.com/articles/creating-a-pull-request-from-a-fork) to create a pull request from your fork. If your work is still work in progress, you can open a draft pull request. We recommend to open a pull request early, so that other contributors become aware of your work and can give you feedback early on. 
+9. Follow [these instructions](https://help.github.com/articles/creating-a-pull-request-from-a-fork) to create a pull request from your fork. If your work is still work in progress, you can open a draft pull request. We recommend to open a pull request early, so that other contributors become aware of your work and can give you feedback early on.
 
 10. To add more changes, simply repeat steps 7 - 8. Pull requests are
  updated automatically if you push new changes to the same branch.
@@ -99,11 +103,22 @@ If any of the above seems like magic to you, please look up the [Git documentati
 
 ## Continuous integration
 
-We use [pytest](https://docs.pytest.org/en/latest/) for unit testing, and continuous integration services on GitHub to automatically check if new pull requests do not break anything and comply with sktime's API.
+We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
 
-sktime follows [scikit-learn](https://scikit-learn.org/stable/)'s API whenever possible, it'll be useful to take a look at their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
 
-To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies. Steps:
+### Code quality checks
+To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using [pre-commit](https://pre-commit.com). To set up pre-commit, install a few extra tools:
+
+```bash
+pip install maint_tools/requirements.txt
+```
+
+Whenenver you make a new commit, pre-commit will then run the code quality checks.
+
+You can find the full configuration in [`.pre-commit-config.yaml`](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
+
+### Unit testing
+We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies. Steps:
 
 1.  Install all extra requirements from the root directory of sktime:
 
@@ -128,10 +143,10 @@ To check if your code passes all tests locally, you need to install the developm
 ## Documentation
 
 To build our online documentation and website locally, you need to install a few additional dependencies listed in `setup.py`. From the root directory, run:
- 
+
  ```bash
-pip install -e .[docs] 
-```  
+pip install -e .[docs]
+```
 For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
 
 To build the website, you need to run:
@@ -144,16 +159,14 @@ You can find the generated files in the `sktime/docs/_build/` folder. To view th
 
 ## Dependencies
 If you add a new dependency or change the version of a dependency, you need
- to update the following files: 
+ to update the following files:
 
- - [setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
+ - [setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation,
  - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and packaging,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
 
-We try to keep the number of core dependencies small and rely on other
- pacakges as soft dependencies when possible. 
+We try to keep the number of hard dependencies small and rely on other packages as soft dependencies when possible.
 
- 
 ## Coding style
 
 We follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) coding guidelines. A good example can be found [here](https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01).
