@@ -25,17 +25,14 @@ copyright = u'2019 - 2020, sktime developers (BSD-3-Clause License)'
 author = u' '
 
 # The short X.Y version
-import sktime
+# import sktime
 # version = '.'.join(sktime.__version__.split('.', 2)[:2])
-version = sktime.__version__
 
 # The full version, including alpha/beta/rc tags
-release = sktime.__version__
+# release = sktime.__version__
 
 # -- General configuration ---------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -93,29 +90,29 @@ autosummary_generate = True
 autodoc_default_flags = ['members', 'inherited-members']
 
 
-def linkcode_resolve(domain, info):
-    def find_source():
-        # try to find the file and line number, based on code from numpy:
-        # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
-        obj = sys.modules[info['module']]
-        for part in info['fullname'].split('.'):
-            obj = getattr(obj, part)
-        import inspect
-        import os
-        fn = inspect.getsourcefile(obj)
-        fn = os.path.relpath(fn, start=os.path.dirname(sktime.__file__))
-        source, lineno = inspect.getsourcelines(obj)
-        return fn, lineno, lineno + len(source) - 1
-
-    if domain != 'py' or not info['module']:
-        return None
-    try:
-        filename = 'sktime/%s#L%d-L%d' % find_source()
-    except Exception:
-        filename = info['module'].replace('.', '/') + '.py'
-    tag = 'master' if 'dev' in release else ('v' + release)
-    return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
-    tag, filename)
+# def linkcode_resolve(domain, info):
+#     def find_source():
+#         # try to find the file and line number, based on code from numpy:
+#         # https://github.com/numpy/numpy/blob/master/doc/source/conf.py#L286
+#         obj = sys.modules[info['module']]
+#         for part in info['fullname'].split('.'):
+#             obj = getattr(obj, part)
+#         import inspect
+#         import os
+#         fn = inspect.getsourcefile(obj)
+#         fn = os.path.relpath(fn, start=os.path.dirname(sktime.__file__))
+#         source, lineno = inspect.getsourcelines(obj)
+#         return fn, lineno, lineno + len(source) - 1
+#
+#     if domain != 'py' or not info['module']:
+#         return None
+#     try:
+#         filename = 'sktime/%s#L%d-L%d' % find_source()
+#     except Exception:
+#         filename = info['module'].replace('.', '/') + '.py'
+#     tag = 'master' if 'dev' in release else ('v' + release)
+#     return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
+#     tag, filename)
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -245,6 +242,4 @@ env.doc2path( env.docname, base=None) }}
 intersphinx_mapping = {'https://docs.python.org/': None}
 
 # -- Options for todo extension ----------------------------------------------
-
-# If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
