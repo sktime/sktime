@@ -1,5 +1,3 @@
-#!/usr/bin/env python3 -u
-# coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -7,7 +5,9 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pandas as pd
 import pytest
+from pytest import raises
 
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
@@ -15,6 +15,7 @@ from sktime.forecasting.tests._config import SUPPORTED_INDEX_FH_COMBINATIONS
 from sktime.forecasting.tests._config import TEST_FHS
 from sktime.utils._testing import make_forecasting_problem
 from sktime.utils._testing.forecasting import _make_fh
+from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
 
 
 def _assert_index_equal(a, b):
@@ -77,6 +78,49 @@ def test_fh(index_type, fh_type, is_relative, steps):
 
 
 def test_fh_method_delegation():
-    fh = _make_fh(10, np.arange(20), "int", True)
+    fh = ForecastingHorizon(1)
     for method in DELEGATED_METHODS:
         assert hasattr(fh, method)
+
+
+BAD_INPUT_ARGS = (
+    (1, 2),  # tuple
+    'some_string',  # string
+    0.1,  # float
+    -0.1,  # negative float
+    np.array([0.1, 2]),  # float in array
+)
+
+
+@pytest.mark.parametrize("arg", BAD_INPUT_ARGS)
+def test_check_fh_values_bad_input_types(arg):
+    with raises(TypeError):
+        ForecastingHorizon(arg)
+
+
+DUPLICATE_INPUT_ARGS = (
+    np.array([1, 2, 2]),
+    [3, 3, 1],
+)
+
+
+@pytest.mark.parametrize("arg", DUPLICATE_INPUT_ARGS)
+def test_check_fh_values_duplicate_input_values(arg):
+    with raises(ValueError):
+        ForecastingHorizon(arg)
+
+
+GOOD_INPUT_ARGS = (
+    pd.Int64Index([1, 2, 3]),
+    pd.period_range("2000-01-01", periods=3, freq="D"),
+    pd.date_range("2000-01-01", periods=3, freq="M"),
+    np.array([1, 2, 3]),
+    [1, 2, 3],
+    1
+)
+
+
+@pytest.mark.parametrize("arg", GOOD_INPUT_ARGS)
+def test_check_fh_values_input_conversion_to_pandas_index(arg):
+    output = ForecastingHorizon(arg, is_relative=False).to_pandas()
+    assert type(output) in SUPPORTED_INDEX_TYPES

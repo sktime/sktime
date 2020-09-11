@@ -9,7 +9,6 @@ __all__ = [
     "check_time_index",
     "check_equal_time_index",
     "check_alpha",
-    "check_fh_values",
     "check_cutoffs",
     "check_scoring",
     "check_sp",
@@ -23,9 +22,9 @@ import pandas as pd
 from sktime.utils.validation import is_int
 
 SUPPORTED_INDEX_TYPES = (
-    pd.PeriodIndex,
-    pd.RangeIndex,
     pd.Int64Index,
+    pd.RangeIndex,
+    pd.PeriodIndex,
     pd.DatetimeIndex
 )
 
@@ -111,39 +110,36 @@ def check_cv(cv):
         if cv does not have the required attributes.
     """
     from sktime.forecasting.model_selection._split import BaseSplitter
-    allowed_base_class = BaseSplitter
-    if not isinstance(cv, allowed_base_class):
-        raise TypeError(f"`cv` is not an instance of {allowed_base_class}")
+    if not isinstance(cv, BaseSplitter):
+        raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
     return cv
 
 
-def check_time_index(time_index):
+def check_time_index(index):
     """Check time index.
 
     Parameters
     ----------
-    time_index : pd.Index or np.array
+    index : pd.Index or np.array
 
     Returns
     -------
     time_index : pd.Index
     """
-    if isinstance(time_index, np.ndarray):
-        time_index = pd.Index(time_index)
+    if isinstance(index, np.ndarray):
+        index = pd.Index(index)
 
     # period or datetime index are not support yet
-    supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
-    if not isinstance(time_index, supported_index_types):
-        raise NotImplementedError(f"{type(time_index)} is not supported, "
-                                  f"please use one of "
-                                  f"{supported_index_types} instead.")
+    if not type(index) in SUPPORTED_INDEX_TYPES:
+        raise NotImplementedError(f"{type(index)} is not supported, use "
+                                  f"one of {SUPPORTED_INDEX_TYPES} instead.")
 
-    if not time_index.is_monotonic:
+    if not index.is_monotonic:
         raise ValueError(
             f"The (time) index must be sorted (monotonically increasing), "
-            f"but found: {time_index}")
+            f"but found: {index}")
 
-    return time_index
+    return index
 
 
 def check_X(X):
@@ -222,11 +218,14 @@ def check_fh(fh, enforce_relative=False):
         Validated forecasting horizon.
     """
     # Convert to ForecastingHorizon
-    from sktime.forecasting.all import ForecastingHorizon
+    from sktime.forecasting.base import ForecastingHorizon
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=True)
 
-    # Check if non-empty
+    # Check if non-empty, note we check for empty values here, rather than during
+    # construction of ForecastingHorizon because ForecastingHorizon itself will be
+    # empty in some cases, but users should not create forecasting horizons with no
+    # values
     if len(fh) == 0:
         raise ValueError(f"`fh` must not be empty, but found: {fh}")
 
@@ -321,46 +320,3 @@ def check_scoring(scoring):
     return scoring
 
 
-def check_fh_values(fh):
-    """Validate forecasting horizon fh.
-
-    Parameters
-    ----------
-    fh : int, list of int, array of int, pd.Index
-        Forecasting horizon with steps ahead to predict.
-
-    Raises
-    ------
-    TypeError : if fh do not meet criteria
-
-    Returns
-    -------
-    fh : pd.Index
-        Sorted and validated forecasting horizon.
-    """
-    # check single integer
-    if is_int(fh):
-        return pd.Int64Index([fh], dtype=np.int)
-
-    # check pandas index
-    elif isinstance(fh, SUPPORTED_INDEX_TYPES):
-        pass
-
-    # check numpy array and list
-    elif isinstance(fh, (np.ndarray, list)):
-        fh = pd.Int64Index(fh, dtype=np.int)
-
-    # raise error for other types
-    else:
-        allowed_types = ("int", "np.array", "list",
-                         *[f"{index_type.__name__}"
-                           for index_type in SUPPORTED_INDEX_TYPES])
-        raise TypeError(f"`fh` must be one of {allowed_types}, "
-                        f"but found: {type(fh)}")
-
-    # check fh does not contain duplicates
-    if len(fh) != fh.nunique():
-        raise ValueError("`fh` must not contain duplicates.")
-
-    # return sorted fh
-    return fh.sort_values()

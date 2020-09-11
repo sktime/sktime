@@ -10,11 +10,11 @@ from contextlib import contextmanager
 import numpy as np
 import pandas as pd
 
-from sktime.utils.time_series import _subtract_time
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
@@ -349,7 +349,7 @@ class BaseSktimeForecaster(BaseForecaster):
         # enter into a detached cutoff mode
         with self._detached_cutoff():
             # set cutoff to time point before data
-            self._set_cutoff(_subtract_time(y.index[0], 1))
+            self._set_cutoff(_shift(y.index[0], by=-1))
             # iterate over data
             for new_window, _ in cv.split(y):
                 y_new = y.iloc[new_window]
@@ -610,7 +610,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         """Select last window"""
         # get the start and end points of the last window
         cutoff = self.cutoff
-        start = _subtract_time(cutoff, self.window_length_ - 1)
+        start = _shift(cutoff, by=-self.window_length_ + 1)
 
         # get the last window of the endogenous variable
         y = self._y.loc[start:cutoff].to_numpy()

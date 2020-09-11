@@ -8,7 +8,6 @@ __all__ = ["_StatsModelsAdapter"]
 import numpy as np
 import pandas as pd
 
-from sktime.utils.time_series import _subtract_time
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -62,18 +61,18 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
 
         Parameters
         ----------
-        fh : int or array-like, optional (default=1)
+        fh : ForecastingHorizon
             The forecasters horizon with the steps ahead to to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
-        X : None
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
         return_pred_int : bool, optional (default=False)
         alpha : int or list, optional (default=0.95)
 
         Returns
         -------
-        y_pred : pandas.Series
+        y_pred : pd.Series
             Returns series of predicted values.
         """
         if return_pred_int:
@@ -81,9 +80,7 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
 
         # statsmodels requires zero-based indexing starting at the
         # beginning of the training series when passing integers
-        fh_zero_based = fh.to_relative(self.cutoff) + _subtract_time(
-            self._y.index[-1], self._y.index[0])
-        start, end = fh_zero_based[[0, -1]]
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
         y_pred = self._fitted_forecaster.predict(start, end)
 
         # statsmodels forecasts all periods from start to end of forecasting

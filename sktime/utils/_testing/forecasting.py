@@ -125,7 +125,7 @@ def make_forecasting_problem(n_timepoints=50, index_type="int",
 
 
 def _make_index(n_timepoints, index_type="int"):
-    """Helper function to make indices for testing"""
+    """Helper function to make indices for unit testing"""
 
     if index_type == "period":
         start = "2000-01"

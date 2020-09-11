@@ -15,9 +15,10 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformers.single_series.base import \
     BaseSingleSeriesTransformer
+from sktime.utils.datetime import _get_duration
+from sktime.utils.datetime import _get_unit
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.time_series import _subtract_time
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -49,7 +50,8 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
 
     def _align_seasonal(self, y):
         """Helper function to align seasonal components with y's time index"""
-        shift = -_subtract_time(y.index[0], self._y_index[0]) % self.sp
+        shift = -_get_duration(y.index[0], self._y_index[0], coerce_to_int=True,
+                               unit=_get_unit(self._y_index)) % self.sp
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
     def fit(self, y, **fit_params):

@@ -9,7 +9,6 @@ __all__ = [
 
 import pandas as pd
 
-from sktime.utils.time_series import _subtract_time
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -334,19 +333,19 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def _predict_in_sample(self, fh, X=None, return_pred_int=False,
                            alpha=DEFAULT_ALPHA):
-        # for in-sample predictions, pmdarima requires zero-based
-        # integer indicies
-        fh_abs = fh.to_absolute(self.cutoff)
-        fh_zero_based = _subtract_time(fh_abs.to_pandas(), self._y.index[0])
-        start, end = fh_zero_based[[0, -1]]
-        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError()
+
+        # for in-sample predictions, pmdarima requires zero-based
+        # integer indicies
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         result = self._forecaster.predict_in_sample(
             start=start, end=end, exogenous=X, return_conf_int=return_pred_int,
             alpha=alpha)
+
+        fh_abs = fh.to_absolute(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
 
         if return_pred_int:
             # unpack and format results
@@ -366,7 +365,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
 
-        result = self._forecaster.model_.predict(
+        result = self._forecaster.predict(
             n_periods=n_periods, exogenous=X,
             return_conf_int=return_pred_int, alpha=alpha)
 

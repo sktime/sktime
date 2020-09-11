@@ -1,18 +1,17 @@
-#!/usr/bin/env python3 -u
-# coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "ForecastingHorizon",
-    "DELEGATED_METHODS"
+    "ForecastingHorizon"
 ]
 
+import numpy as np
 import pandas as pd
 
-from sktime.utils.time_series import _date_offsets_to_int
-from sktime.utils.time_series import _timedeltas_to_int
-from sktime.utils.validation.forecasting import check_fh_values
+from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _get_unit
+from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
 
 RELATIVE_TYPES = (
     pd.Int64Index,
@@ -24,6 +23,8 @@ ABSOLUTE_TYPES = (
     pd.DatetimeIndex,
     pd.PeriodIndex
 )
+assert set(RELATIVE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
+assert set(ABSOLUTE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -45,22 +46,74 @@ DELEGATED_METHODS = (
     "__rmod__",
     "__rdivmod__",
     "__rpow__",
-    "__len__"
 )
 
 
 def _delegator(method):
-    # Helper function to automatically decorate ForecastingHorizon class
-    # with methods from pandas.Index and delegate method calls to wrapped
-    # pandas.Index object.
+    """Helper function to automatically decorate ForecastingHorizon class with
+    methods from pandas.Index and delegate method calls to wrapped pandas.Index
+    object."""
+
     def delegated(obj, *args, **kwargs):
         return getattr(obj.to_pandas(), method)(*args, **kwargs)
 
     return delegated
 
 
+def _check_values(values):
+    """Validate forecasting horizon values and converts them to supported
+    pandas.Index types if possible.
+
+    Parameters
+    ----------
+    values : int, list, array, certain pd.Index types
+        Forecasting horizon with steps ahead to predict.
+
+    Raises
+    ------
+    TypeError : if values type is not supported
+
+    Returns
+    -------
+    values : pd.Index
+        Sorted and validated forecasting horizon values.
+    """
+    # if values are one of the supported pandas index types, we don't have
+    # to do
+    # anything as the forecasting horizon directly wraps the index, note that
+    # isinstance() does not work here, because index types inherit from each
+    # other,
+    # hence we check for type equality here
+    if type(values) in SUPPORTED_INDEX_TYPES:
+        pass
+
+    # convert single integer to pandas index, no further checks needed
+    elif isinstance(values, (int, np.integer)):
+        return pd.Int64Index([values], dtype=np.int)
+
+    # convert np.array or list to pandas index
+    elif isinstance(values, (list, np.ndarray)):
+        values = pd.Int64Index(values, dtype=np.int)
+
+    # otherwise, raise type error
+    else:
+        allowed_types = ("int", "np.array", "list",
+                         *[f"pd.{index_type.__name__}" for index_type in
+                           SUPPORTED_INDEX_TYPES])
+        raise TypeError(f"`values` type not supported. `values` must be one of"
+                        f" {allowed_types}, but found: {type(values)}")
+
+    # check values does not contain duplicates
+    if len(values) != values.nunique():
+        raise ValueError("`values` must not contain duplicates.")
+
+    # return sorted values
+    return values.sort_values()
+
+
 class ForecastingHorizon:
     """Forecasting horizon
+
     Parameters
     ----------
     values : pd.Index, np.array, list or int
@@ -70,34 +123,38 @@ class ForecastingHorizon:
         - If False, values are absolute.
     """
 
-    def __new__(cls, *args, **kwargs):
-        # We want the ForecastingHorizon class to be an extension of a
+    def __new__(cls, values=None, is_relative=True):
+        # We want the ForecastingHorizon class to be an extension of the
         # pandas index, but since subclassing pandas indices is not
         # straightforward, we wrap the index object instead. In order to
         # still support the basic methods of a pandas index, we dynamically
         # add some basic methods and delegate the method calls to the wrapped
-        # index object
+        # index object.
         for method in DELEGATED_METHODS:
             setattr(cls, method, _delegator(method))
         return object.__new__(cls)
 
-    def __init__(self, values, is_relative=True):
-        values = check_fh_values(values)
-        assert isinstance(is_relative, bool)
+    def __init__(self, values=None, is_relative=True):
+        values = _check_values(values)
+        if not isinstance(is_relative, bool):
+            raise TypeError("`is_relative` must be a boolean")
 
         # check types, note that isinstance() does not work here because index
-        # types inherit from each other, hence we use check for type equality
+        # types inherit from each other, hence we check for type equality
+        error_msg = f"`values` type is not compatible with `is_relative=" \
+                    f"{self.is_relative}`."
         if is_relative:
-            assert type(values) in RELATIVE_TYPES
+            if not type(values) in RELATIVE_TYPES:
+                raise TypeError(error_msg)
         else:
-            assert type(values) in ABSOLUTE_TYPES
+            if not type(values) in ABSOLUTE_TYPES:
+                raise TypeError(error_msg)
 
         self._values = values
         self._is_relative = is_relative
 
     def _new(self, values=None, is_relative=None):
-        # convenience method for constructing new ForecastingHorizon based
-        # on current object
+        """Construct new ForecastingHorizon based on current object"""
         if values is None:
             values = self._values
         if is_relative is None:
@@ -106,7 +163,8 @@ class ForecastingHorizon:
 
     @property
     def is_relative(self):
-        """Whether forecasting horizon represents relative values.
+        """Whether forecasting horizon is relative to the end of the
+        training series.
 
         Returns
         -------
@@ -143,7 +201,7 @@ class ForecastingHorizon:
         Returns
         -------
         fh : ForecastingHorizon
-            In-sample values of forecasting horizon
+            Relative representation of forecasting horizon
         """
         if self.is_relative:
             return self._new()
@@ -152,11 +210,10 @@ class ForecastingHorizon:
             self._check_cutoff(cutoff)
             values = self.to_pandas() - cutoff
 
-            if isinstance(self.to_pandas(), pd.PeriodIndex):
-                values = _date_offsets_to_int(values)
-
-            if isinstance(self.to_pandas(), pd.DatetimeIndex):
-                values = _timedeltas_to_int(values, cutoff.freqstr)
+            if isinstance(self.to_pandas(),
+                          (pd.PeriodIndex, pd.DatetimeIndex)):
+                values = _coerce_duration_to_int(values,
+                                                 unit=_get_unit(cutoff))
 
             return self._new(values, is_relative=True)
 
@@ -171,7 +228,7 @@ class ForecastingHorizon:
         Returns
         -------
         fh : ForecastingHorizon
-            In-sample values of forecasting horizon
+            Absolute representation of forecasting horizon
         """
         if not self.is_relative:
             return self._new()
@@ -179,15 +236,30 @@ class ForecastingHorizon:
         else:
             self._check_cutoff(cutoff)
             index = self.to_pandas()
-
-            if hasattr(cutoff, "freq"):
-                index *= cutoff.freq
-
-            if isinstance(cutoff, pd.Timestamp):
-                assert hasattr(cutoff, "freq")
-
-            values = cutoff + index
+            values = _shift(cutoff, by=index)
             return self._new(values, is_relative=False)
+
+    def to_absolute_int(self, start, cutoff=None):
+        """Return absolute values as zero-based integer index
+        Parameters
+        ----------
+        start : pd.Period, pd.Timestamp, int
+            Start value
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one and vice versa.
+        Returns
+        -------
+        fh : ForecastingHorizon
+            Absolute representation of forecasting horizon as zero-based
+            integer index
+        """
+        self._check_cutoff(start)
+        absolute = self.to_absolute(cutoff).to_pandas()
+        values = absolute - start
+        if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+            values = _coerce_duration_to_int(values, unit=_get_unit(cutoff))
+        return self._new(values, is_relative=False)
 
     def to_in_sample(self, cutoff=None):
         """Return in-sample values
@@ -244,9 +316,10 @@ class ForecastingHorizon:
             return self.to_relative(cutoff).to_pandas() - 1
         else:
             relative = self.to_relative(cutoff)
-            return relative - relative.to_pandas().min()
+            return relative - relative.to_pandas()[0]
 
     def __repr__(self):
+        # generate repr based on wrapped index repr
         class_name = self.__class__.__name__
         pandas_repr = repr(self.to_pandas()).split('(')[-1].strip(')')
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
@@ -255,13 +328,18 @@ class ForecastingHorizon:
         # delegate getitem calls to wrapped pd.Index object
         return self.to_pandas()[item]
 
+    def __len__(self):
+        return len(self.to_pandas())
+
     def _check_cutoff(self, cutoff):
-        """Helper method to check cutoff values"""
+        """Helper function to check fh type compatibility against cutoff"""
         if cutoff is None:
             raise ValueError("`cutoff` must be provided.")
 
-        if isinstance(self.to_pandas(), pd.PeriodIndex):
+        index = self.to_pandas()
+
+        if isinstance(index, pd.PeriodIndex):
             assert isinstance(cutoff, pd.Period)
 
-        if isinstance(self.to_pandas(), pd.DatetimeIndex):
+        if isinstance(index, pd.DatetimeIndex):
             assert isinstance(cutoff, pd.Timestamp)
