@@ -46,7 +46,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
-    'sphinx.ext.linkcode',  # link to github, see linkcode_resolve() below
+    # 'sphinx.ext.linkcode',  # link to github, see linkcode_resolve() below
     'sphinx.ext.napoleon',
     'recommonmark',  # markdown rendering
     'nbsphinx',  # integrates example notebooks
