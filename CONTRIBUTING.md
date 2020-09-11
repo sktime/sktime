@@ -14,9 +14,10 @@ Welcome to our contributing guidelines! sktime is a community-driven project and
 
 ## Areas of contribution
 
-We value all contributions - not just code. We follow the [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
+We value all kinds of contributions - not just code. We follow the
+ [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
 
-The following table gives an overview of key areas of contribution. 
+The following table gives an overview of key contribution areas. 
 
 | Area | Contribution | 
 |---|---|
@@ -141,6 +142,18 @@ make docs
 
 You can find the generated files in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
 
+## Dependencies
+If you add a new dependency or change the version of a dependency, you need
+ to update the following files: 
+
+ - [setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
+ - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and packaging,
+ - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+
+We try to keep the number of core dependencies small and rely on other
+ pacakges as soft dependencies when possible. 
+
+ 
 ## Coding style
 
 We follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) coding guidelines. A good example can be found [here](https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01).
