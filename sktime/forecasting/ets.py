@@ -136,7 +136,8 @@ class AutoETS(_StatsModelsAdapter):
                                 raise ValueError('information criterion must \
                                                  either be aic, bic or aicc')
 
-                            if _ic is not None and _ic < best_information_criterion:
+                            if _ic is not None and \
+                                    _ic < best_information_criterion:
                                 best_information_criterion = _ic
                                 best_forecaster = _forecaster
                                 best_fitted_forecaster = _fitted_forecaster
