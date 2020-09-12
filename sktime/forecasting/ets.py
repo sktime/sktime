@@ -30,7 +30,7 @@ class AutoETS(_StatsModelsAdapter):
         callback=None,
         return_params=False,
         information_criterion='aic',
-        autofitting=True,
+        autofitting=False,
         allow_multiplicative_trend=False,
         restrict=True,
         additive_only=False,
