@@ -23,7 +23,7 @@ MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
-    "statsmodels": "0.11.0"
+    "statsmodels": "0.12.0"
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -163,7 +163,6 @@ cmdclass = {'clean': CleanCommand}
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
-
     class build_ext_subclass(build_ext):
 
         def build_extensions(self):
@@ -177,7 +176,6 @@ try:
                     e.extra_link_args += openmp_flag
 
             build_ext.build_extensions(self)
-
 
     cmdclass['build_ext'] = build_ext_subclass
 
