@@ -8,11 +8,12 @@ __all__ = [
 __author__ = ["Markus Löning"]
 
 from sklearn.base import clone
+
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.base._meta import MetaForecasterMixin
 from sktime.transformers.single_series.base import \
     BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
-from sktime.forecasting.base._fh import ForecastingHorizon
 
 
 class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):

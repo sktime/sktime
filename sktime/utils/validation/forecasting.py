@@ -222,9 +222,12 @@ def check_fh(fh, enforce_relative=False):
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=True)
 
-    # Check if non-empty, note we check for empty values here, rather than during
-    # construction of ForecastingHorizon because ForecastingHorizon itself will be
-    # empty in some cases, but users should not create forecasting horizons with no
+    # Check if non-empty, note we check for empty values here, rather than
+    # during
+    # construction of ForecastingHorizon because ForecastingHorizon itself
+    # will be
+    # empty in some cases, but users should not create forecasting horizons
+    # with no
     # values
     if len(fh) == 0:
         raise ValueError(f"`fh` must not be empty, but found: {fh}")
@@ -318,5 +321,3 @@ def check_scoring(scoring):
             f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
-
-

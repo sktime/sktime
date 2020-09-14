@@ -50,7 +50,8 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
 
     def _align_seasonal(self, y):
         """Helper function to align seasonal components with y's time index"""
-        shift = -_get_duration(y.index[0], self._y_index[0], coerce_to_int=True,
+        shift = -_get_duration(y.index[0], self._y_index[0],
+                               coerce_to_int=True,
                                unit=_get_unit(self._y_index)) % self.sp
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
