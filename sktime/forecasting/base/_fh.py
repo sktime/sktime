@@ -135,14 +135,14 @@ class ForecastingHorizon:
         return object.__new__(cls)
 
     def __init__(self, values=None, is_relative=True):
-        values = _check_values(values)
         if not isinstance(is_relative, bool):
             raise TypeError("`is_relative` must be a boolean")
+        values = _check_values(values)
 
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative=" \
-                    f"{self.is_relative}`."
+                    f"{is_relative}`."
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)

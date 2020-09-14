@@ -89,6 +89,7 @@ BAD_INPUT_ARGS = (
     0.1,  # float
     -0.1,  # negative float
     np.array([0.1, 2]),  # float in array
+    None,
 )
 
 
