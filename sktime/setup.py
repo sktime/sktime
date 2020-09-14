@@ -10,7 +10,7 @@ __author__ = "Markus Löning"
 import os
 
 from setuptools import find_packages
-from sktime._build_utils import maybe_cythonize_extensions
+from ._build_utils import maybe_cythonize_extensions
 
 
 def configuration(parent_package='', top_path=None):
