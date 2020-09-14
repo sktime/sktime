@@ -18,8 +18,7 @@ Contents
 Areas of contribution
 ---------------------
 
-We value all kinds of contributions - not just code. We follow the
- [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
+We value all kinds of contributions - not just code. We follow the [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
 
 The following table gives an overview of key contribution areas. 
 
@@ -154,10 +153,10 @@ Dependencies
 
 If you add a new dependency or change the version of a dependency, you need to update one or more of the following files: 
 
- - [`sktime/setup.py`](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
- - [`build_tools/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
- - [`docs/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for generating the documentation,
- - [`.binder/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+ - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
+ - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
+ - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for generating the documentation,
+ - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
 
 We try to keep the number of core dependencies small and rely on other
  pacakges as soft dependencies when possible. 
