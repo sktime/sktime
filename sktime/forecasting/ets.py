@@ -7,6 +7,137 @@ import numpy as np
 
 
 class AutoETS(_StatsModelsAdapter):
+    """
+    ETS models with both manual and automatic fitting capabilities.
+
+    Manual fitting is adapted from statsmodels' version,
+    while automatic fitting is adapted from R version of ets.
+
+    Parameters
+    ----------
+    The following parameters are the same as the ones on statsmodels
+    (https://www.statsmodels.org/stable/_modules/statsmodels/tsa/
+     exponential_smoothing/ets.html#ETSModel):
+
+    error : str, optional
+        The error model. "add" (default) or "mul".
+    trend : str or None, optional
+        The trend component model. "add", "mul", or None (default).
+    damped : bool, optional
+        Whether or not an included trend component is damped. Default is
+        False.
+    seasonal : str, optional
+        The seasonality model. "add", "mul", or None (default).
+    sp : int, optional
+        The number of periods in a complete seasonal cycle for seasonal
+        (Holt-Winters) models. For example, 4 for quarterly data with an
+        annual cycle or 7 for daily data with a weekly cycle. Required if
+        `seasonal` is not None.
+    initialization_method : str, optional
+        Method for initialization of the state space model. One of:
+
+        * 'estimated' (default)
+        * 'heuristic'
+        * 'known'
+
+        If 'known' initialization is used, then `initial_level` must be
+        passed, as well as `initial_trend` and `initial_seasonal` if
+        applicable.
+        'heuristic' uses a heuristic based on the data to estimate initial
+        level, trend, and seasonal state. 'estimated' uses the same heuristic
+        as initial guesses, but then estimates the initial states as part of
+        the fitting process.  Default is 'estimated'.
+    initial_level : float, optional
+        The initial level component. Only used if initialization is 'known'.
+    initial_trend : float, optional
+        The initial trend component. Only used if initialization is 'known'.
+    initial_seasonal : array_like, optional
+        The initial seasonal component. An array of length `seasonal_periods`.
+        Only used if initialization is 'known'.
+    bounds : dict or None, optional
+        A dictionary with parameter names as keys and the respective bounds
+        intervals as values (lists/tuples/arrays).
+        The available parameter names are, depending on the model and
+        initialization method:
+
+        * "smoothing_level"
+        * "smoothing_trend"
+        * "smoothing_seasonal"
+        * "damping_trend"
+        * "initial_level"
+        * "initial_trend"
+        * "initial_seasonal.0", ..., "initial_seasonal.<m-1>"
+
+        The default option is ``None``, in which case the traditional
+        (nonlinear) bounds as described in [1]_ are used.
+    start_params : array_like, optional
+        Initial values for parameters that will be optimized. If this is
+        ``None``, default values will be used.
+        The length of this depends on the chosen model. This should contain
+        the parameters in the following order, skipping parameters that do
+        not exist in the chosen model.
+
+        * `smoothing_level` (:math:`\alpha`)
+        * `smoothing_trend` (:math:`\beta`)
+        * `smoothing_seasonal` (:math:`\gamma`)
+        * `damping_trend` (:math:`\phi`)
+
+        If ``initialization_method`` was set to ``'estimated'`` (the
+        default), additionally, the parameters
+
+        * `initial_level` (:math:`l_{-1}`)
+        * `initial_trend` (:math:`l_{-1}`)
+        * `initial_seasonal.0` (:math:`s_{-1}`)
+        * ...
+        * `initial_seasonal.<m-1>` (:math:`s_{-m}`)
+
+        also have to be specified.
+    maxiter : int, optional
+        The maximum number of iterations to perform.
+    full_output : bool, optional
+        Set to True to have all available output in the Results object's
+        mle_retvals attribute. The output is dependent on the solver.
+        See LikelihoodModelResults notes section for more information.
+    disp : bool, optional
+        Set to True to print convergence messages.
+    callback : callable callback(xk), optional
+        Called after each iteration, as callback(xk), where xk is the
+        current parameter vector.
+    return_params : bool, optional
+        Whether or not to return only the array of maximizing parameters.
+        Default is False.
+    References
+    ----------
+    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
+        principles and practice*, 3rd edition, OTexts: Melbourne,
+        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
+
+    The following parameters are adapted from the ones on R
+    (https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets),
+    and are used for automatic model selection:
+
+    autofitting : bool, optional
+        Set True to enable automatic model selection.
+        Default is False.
+    information_criterion : str, optional
+        Information criterion to be used in model selection. One of:
+
+        * "aic"
+        * "bic"
+        * "aicc"
+
+        Default is "aic".
+    allow_multiplicative_trend : bool, optional
+        If True, models with multiplicative trend are allowed when
+        searching for a model. Otherwise, the model space excludes them.
+        Default is False.
+    restrict : bool, optional
+        If True, the models with infinite variance will not be allowed.
+        Default is True.
+    additive_only : bool, optional
+        If True, will only consider additive models.
+        Default is False.
+    """
 
     def __init__(
         self,
@@ -29,8 +160,8 @@ class AutoETS(_StatsModelsAdapter):
         disp=True,
         callback=None,
         return_params=False,
-        information_criterion='aic',
         autofitting=False,
+        information_criterion='aic',
         allow_multiplicative_trend=False,
         restrict=True,
         additive_only=False,
@@ -69,10 +200,13 @@ class AutoETS(_StatsModelsAdapter):
 
     def _fit_forecaster(self, y, X_train=None):
 
+        # Select model automatically
         if self.autofitting:
+            # Initialise best forecaster parameters
             best_forecaster = None
             best_fitted_forecaster = None
             best_information_criterion = np.inf
+
             error_range = ['add', 'mul']
             if self.allow_multiplicative_trend:
                 trend_range = ['add', 'mul', None]
@@ -81,6 +215,8 @@ class AutoETS(_StatsModelsAdapter):
             seasonal_range = ['add', 'mul', None]
             damped_range = [True, False]
 
+            # Fit model, adapted from:
+            # https://github.com/robjhyndman/forecast/blob/master/R/ets.R
             for error in error_range:
                 for trend in trend_range:
                     for seasonal in seasonal_range:
@@ -100,6 +236,7 @@ class AutoETS(_StatsModelsAdapter):
                                                            trend == 'mul' or
                                                            seasonal == 'mul'):
                                     continue
+
                             _forecaster = _ETSModel(
                                 y,
                                 error=error,
@@ -136,6 +273,7 @@ class AutoETS(_StatsModelsAdapter):
                                 raise ValueError('information criterion must \
                                                  either be aic, bic or aicc')
 
+                            # Update best model based on information criterion
                             if _ic is not None and \
                                     _ic < best_information_criterion:
                                 best_information_criterion = _ic
