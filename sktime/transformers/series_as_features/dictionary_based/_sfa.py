@@ -238,11 +238,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = (words[window - self.window_size]
-                                  << self.word_length) | word_raw
-                        # bigram = _BitWord.create_bigram_word(
-                        #     words[window - self.window_size],
-                        #     word_raw, self.word_length)
+                        bigram = _BitWord.create_bigram_word(
+                            words[window - self.window_size],
+                            word_raw, self.word_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
@@ -325,7 +323,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
-        clf = DecisionTreeClassifier(criterion='entropy',
+        clf = DecisionTreeClassifier(criterion='entropy', max_depth=2,
                                      max_leaf_nodes=self.alphabet_size,
                                      random_state=1)
 
@@ -380,12 +378,12 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         X_fft = np.fft.rfft(series)
         reals = np.real(X_fft)
-        imags = np.imag(X_fft)  # * -1 # TODO correct for lower bounding??
+        imags = np.imag(X_fft)
 
         length = start + self.dft_length
         dft = np.empty((length,), dtype=reals.dtype)
         dft[0::2] = reals[:np.uint32(length / 2)]
-        dft[1::2] = imags[:np.uint32(length / 2)]
+        dft[1::2] = imags[:np.uint32(length / 2)] * -1  # lower bounding
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
@@ -413,7 +411,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         # first run with fft
         X_fft = np.fft.rfft(series[0:self.window_size])
         reals = np.real(X_fft)
-        imags = np.imag(X_fft)  # * -1 # TODO lower bounding??
+        imags = np.imag(X_fft)
         mft_data = np.empty((length,), dtype=reals.dtype)
         mft_data[0::2] = reals[:np.uint32(length / 2)]
         mft_data[1::2] = imags[:np.uint32(length / 2)]
@@ -425,6 +423,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         SFA._iterate_mft(series, mft_data, phis,
                          self.window_size, stds,
                          transformed, self.inverse_sqrt_win_size)
+
+        # lower bounding
+        transformed[:, 1::2] = transformed[:, 1::2] * -1
 
         return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]
@@ -445,7 +446,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                        series[i - 1]
                 imag = mft_data[n + 1]
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
+                mft_data[n + 1] = (real * phis[n + 1] + phis[n] * imag)
 
             normalising_factor = inverse_sqrt_win_size / (stds[i]
                                                           if stds[i] > 1e-8

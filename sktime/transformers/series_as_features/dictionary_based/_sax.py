@@ -185,7 +185,7 @@ class _BitWord(object):
 
     @staticmethod
     def create_bigram_word(word, other_word, length):
-        return (word << length) | other_word
+        return (word << (2 * length)) | other_word
 
     @classmethod
     def shorten_word(cls, word, amount):

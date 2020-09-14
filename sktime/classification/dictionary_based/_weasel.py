@@ -17,10 +17,8 @@ from sktime.utils.validation.series_as_features import check_X_y
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
-from sklearn.model_selection import cross_val_score
 
-# from sktime.transformers.series_as_features.dictionary_based._sax import \
-#     _BitWord
+from sklearn.model_selection import cross_val_score
 
 # from numba import njit
 # from numba.typed import Dict
@@ -223,14 +221,10 @@ class WEASEL(BaseClassifier):
                 clf = LogisticRegression(max_iter=5000, solver="liblinear",
                                          dual=True, penalty="l2",
                                          random_state=self.random_state)
-                current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
 
-                # clf = RandomForestClassifier(oob_score=True,
-                #                              n_estimators=1000,
-                #                              n_jobs=-1).fit(bag_vec, y)
-                # current_acc = clf.oob_score_
+                current_acc = cross_val_score(clf, bag_vec, y, cv=10).mean()
 
-                print("Train acc:", norm, word_length, current_acc)
+                # print("Train acc:", norm, word_length, current_acc)
 
                 if current_acc > max_acc:
                     max_acc = current_acc
