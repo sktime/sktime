@@ -18,20 +18,9 @@ conda list -n testenv
 run_tests() {
     TEST_CMD="pytest --showlocals --durations=10 --pyargs"
 
-    # Get into a temporary directory to run test from the installed
-    # sktime
-    mkdir -p "$TEST_DIR"
-
-    # We need to copy the config files for the settings
-    cp setup.cfg "$TEST_DIR"
-    cp .coveragerc "$TEST_DIR"
-
-    # Move into test directory
-    cd "$TEST_DIR"
-
     # Optionally run coverage
     if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov=../"
+        TEST_CMD="$TEST_CMD --cov=sktime"
     fi
     set -x  # print executed commands to the terminal
 
