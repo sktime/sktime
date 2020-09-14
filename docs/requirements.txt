@@ -1,0 +1,11 @@
+pmdarima
+tsfresh
+numba
+matplotlib
+jupyter
+sphinx
+sphinx-gallery
+nbsphinx
+sphinx_rtd_theme
+numpydoc
+m2r2

@@ -6,10 +6,7 @@ version: 2
 python:
   version: 3.7
   install:
-    - method: pip  # install doc requirements
-      path: .
-      extra_requirements:
-        - docs
+    - requirements: docs/requirements.txt  # install requirements
     - method: setuptools  # install package itself
       path: sktime
 

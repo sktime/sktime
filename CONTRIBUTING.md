@@ -134,30 +134,30 @@ To check if your code passes all tests locally, you need to install the developm
 Documentation
 -------------
 
-To build our online documentation and website locally, you need to install a few additional dependencies listed in `setup.py`. From the root directory, run:
+To build our online documentation and website locally, you need to install a few additional dependencies listed in [`docs/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt). From the root directory, run:
  
  ```bash
-pip install -e .[docs] 
+pip install -r docs/requirements.txt
 ```  
 For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
 
-To build the website, you need to run:
+To build the website, run:
 
 ```bash
 make docs
 ```
 
-You can find the generated files in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
+You can find the generated files on your local computer in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
 
 Dependencies
 ------------
 
-If you add a new dependency or change the version of a dependency, you need
- to update the following files: 
+If you add a new dependency or change the version of a dependency, you need to update one or more of the following files: 
 
- - [setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
- - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and packaging,
- - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+ - [`sktime/setup.py`](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
+ - [`build_tools/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
+ - [`docs/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for generating the documentation,
+ - [`.binder/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
 
 We try to keep the number of core dependencies small and rely on other
  pacakges as soft dependencies when possible. 
