@@ -8,6 +8,8 @@ python:
   install:
     - requirements: build_tools/requirements.txt
     - requirements: docs/requirements.txt
+    - method: setuptools
+        path: sktime
 
 sphinx:
   configuration: docs/source/conf.py
