@@ -12,7 +12,7 @@ if [ "$COVERAGE" == "true" ]; then
   # in the GitHub UI just because the coverage report failed to
   # be published. Since we ran the tests in a separate repo, we need to
   # point the uploader to the generated coverage report.
-  bash <(curl -s https://codecov.io/bash) -f "$TEST_DIR"/.coverage || echo "Codecov upload failed"
+  bash <(curl -s https://codecov.io/bash) || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"
 fi

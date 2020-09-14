@@ -26,7 +26,6 @@ env:
     - OMP_NUM_THREADS=4
     - OPENBLAS_NUM_THREADS=4
 
-    - TEST_DIR=/tmp/sktime  # Directory where tests are run from
     - REQUIREMENTS=build_tools/requirements.txt
     - COVERAGE=true
 
