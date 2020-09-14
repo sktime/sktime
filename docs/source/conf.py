@@ -7,7 +7,6 @@
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
-import os
 import sys
 
 # -- Path setup --------------------------------------------------------------
@@ -15,7 +14,7 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../..'))
+# sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 project = u'sktime'
@@ -209,7 +208,8 @@ nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 # add Binder launch buttom at the top
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
+?filepath={{ env.doc2path( env.docname, base=None) }}
 
 |Binder|_ 
 """
