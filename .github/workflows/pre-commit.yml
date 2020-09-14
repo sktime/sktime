@@ -8,13 +8,26 @@ on:
   push:
     branches: [ master ]
 
+# run against all files
+#jobs:
+#  pre-commit:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-python@v2
+#      - uses: pre-commit/action@v2.0.0
+
+# run against only changed files
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
-      - uses: pre-commit/action@v2.0.0
-        # run only against changed files
-        with:
-          extra_args: --files $(git diff --diff-filter=d --name-only master)
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - id: file_changes
+      uses: trilom/file-changes-action@v1.2.3
+      with:
+        output: ' '
+    - uses: pre-commit/action@v2.0.0
+      with:
+        extra_args: --files ${{ steps.file_changes.outputs.files}}
