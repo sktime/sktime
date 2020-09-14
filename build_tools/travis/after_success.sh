@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# adapted from https://github.com/scikit-learn/scikit-learn/blob/master/build_tools/travis/after_success.sh
-
 # This script is meant to be called by the "after_success" step defined in
 # .travis.yml. See https://docs.travis-ci.com/ for more details.
 
@@ -9,15 +7,12 @@
 
 if [ "$COVERAGE" == "true" ];
 then
-    # Need to run codecov from a git checkout, so we copy .coverage
-    # from TEST_DIR where pytest has been run
-    cp "$TEST_DIR"/.coverage "$TRAVIS_BUILD_DIR"
-
+    # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
     # Ignore codecov failures as the codecov server is not
     # very reliable but we don't want travis to report a failure
-    # in the github UI just because the coverage report failed to
+    # in the GitHub UI just because the coverage report failed to
     # be published.
-    codecov --root "$TRAVIS_BUILD_DIR" || echo "Codecov upload failed"
+    bash <(curl -s https://codecov.io/bash) -f "$TEST_DIR"/.coverage || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"
 fi

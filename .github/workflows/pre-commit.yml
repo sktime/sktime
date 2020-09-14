@@ -1,14 +1,20 @@
+# GitHub Action to run all pre-commit checks specified in the
+#  .pre-commit-config.yaml
+
 name: pre-commit
 
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: pre-commit/action@v2.0.0
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.0
+        # run only against changed files
+        with:
+          extra_args: --files $(git diff --diff-filter=d --name-only master)

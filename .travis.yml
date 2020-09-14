@@ -28,7 +28,7 @@ env:
 
     - TEST_DIR=/tmp/sktime  # Directory where tests are run from
     - REQUIREMENTS=build_tools/requirements.txt
-    - COVERAGE=false
+    - COVERAGE=true
 
 # platforms and package environments to test
 jobs:
