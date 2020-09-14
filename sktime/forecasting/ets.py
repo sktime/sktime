@@ -77,10 +77,10 @@ class AutoETS(_StatsModelsAdapter):
         the parameters in the following order, skipping parameters that do
         not exist in the chosen model.
 
-        * `smoothing_level` (:math:`\alpha`)
-        * `smoothing_trend` (:math:`\beta`)
-        * `smoothing_seasonal` (:math:`\gamma`)
-        * `damping_trend` (:math:`\phi`)
+        * `smoothing_level` (alpha)
+        * `smoothing_trend` (beta)
+        * `smoothing_seasonal` (gamma)
+        * `damping_trend` (phi)
 
         If ``initialization_method`` was set to ``'estimated'`` (the
         default), additionally, the parameters
