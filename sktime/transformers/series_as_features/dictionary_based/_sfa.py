@@ -323,7 +323,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
-        clf = DecisionTreeClassifier(criterion='entropy', max_depth=2,
+        clf = DecisionTreeClassifier(criterion='entropy',  # max_depth=2,
                                      max_leaf_nodes=self.alphabet_size,
                                      random_state=1)
 

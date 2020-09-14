@@ -96,7 +96,7 @@ class WEASEL(BaseClassifier):
     def __init__(self,
                  anova=True,
                  bigrams=True,
-                 binning_strategy="equi-width",
+                 binning_strategy="information-gain",
                  random_state=None
                  ):
 
@@ -106,7 +106,7 @@ class WEASEL(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         # this is the threshold to use for chi-squared test on bag-of-words
         # (higher means more strict)
-        self.chi2_threshold = 2  # disabled by default
+        self.chi2_threshold = -2  # disabled by default
 
         self.anova = anova
 
@@ -117,7 +117,7 @@ class WEASEL(BaseClassifier):
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
-        self.min_window = 6
+        self.min_window = 4
         self.max_window = 350
 
         # differs from publication. here set to 4 for performance reasons
@@ -158,9 +158,9 @@ class WEASEL(BaseClassifier):
         if self.series_length < 50:
             self.win_inc = 1  # less than 50 is ok time-wise
         elif self.series_length < 100:
-            self.win_inc = 1  # less than 50 is ok time-wise
-        else :
-            self.win_inc = 2
+            self.win_inc = 2  # less than 50 is ok time-wise
+        # else :
+        #     self.win_inc = 1
 
         self.max_window = min(self.series_length, self.max_window)
         self.window_sizes = list(range(self.min_window,
@@ -168,7 +168,7 @@ class WEASEL(BaseClassifier):
                                        self.win_inc))
 
         max_acc = -1
-        self.highest_bit = (math.ceil(math.log2(self.max_window)))
+        self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
 
         final_bag_vec = None
 
@@ -228,16 +228,16 @@ class WEASEL(BaseClassifier):
                 bag_vec = vectorizer.fit_transform(all_words)
 
                 clf = LogisticRegression(max_iter=5000, solver="liblinear",
-                                         dual=True, penalty="l2", tol=0.1,
+                                         dual=True, penalty="l2",  # tol=0.1,
                                          random_state=self.random_state)
 
-                kfold = KFold(n_splits=10,
+                kfold = KFold(n_splits=5,
                               random_state=self.random_state,
                               shuffle=True)
                 current_acc = cross_val_score(clf, bag_vec, y, cv=kfold).mean()
 
-                print("Train acc:", norm, word_length, current_acc,
-                      "Bag size", bag_vec.getnnz())
+                # print("Train acc:", norm, word_length, current_acc,
+                #       "Bag size", bag_vec.getnnz())
 
                 if current_acc > max_acc:
                     max_acc = current_acc
@@ -265,7 +265,7 @@ class WEASEL(BaseClassifier):
         #             save_words=False)
         #     self.SFA_transformers[i].fit_transform(X, y)
 
-        print("Bag size", final_bag_vec.getnnz())
+        # print("Bag size", final_bag_vec.getnnz())
         self.clf.fit(final_bag_vec, y)
         self._is_fitted = True
         return self
