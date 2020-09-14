@@ -15,25 +15,19 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 project = u'sktime'
 copyright = u'2019 - 2020, sktime developers (BSD-3-Clause License)'
 author = u' '
 
-# The short X.Y version
 import sktime
 
+# The full version, including alpha/beta/rc tags
 version = sktime.__version__
 
-# The full version, including alpha/beta/rc tags
-release = sktime.__version__
-
 # -- General configuration ---------------------------------------------------
-# If your documentation needs a minimal Sphinx version, state it here.
-#
-# needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -110,7 +104,7 @@ def linkcode_resolve(domain, info):
         filename = 'sktime/%s#L%d-L%d' % find_source()
     except Exception:
         filename = info['module'].replace('.', '/') + '.py'
-    tag = 'master' if 'dev' in release else ('v' + release)
+    tag = 'master' if 'dev' in version else ('v' + version)
     return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
         tag, filename)
 
@@ -215,8 +209,7 @@ nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 # add Binder launch buttom at the top
 nbsphinx_prolog = """
 .. |binder| image:: https://mybinder.org/badge_logo.svg
-.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master
-?filepath={{ env.doc2path( env.docname, base=None) }}
+.. _Binder: https://mybinder.org/v2/gh/alan-turing-institute/sktime/master?filepath={{ env.doc2path( env.docname, base=None) }}
 
 |Binder|_ 
 """
