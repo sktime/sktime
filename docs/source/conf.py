@@ -8,13 +8,21 @@
 # http://www.sphinx-doc.org/en/master/config
 
 import sys
+import os
 
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('../..'))
+
+# When we build the docs on readthedocs, we build the package and want to
+# use the built files in order for sphinx to be able to properly read the
+# Cython files. Hence, we do not add the source code path to the system
+# path.
+ON_READTHEDOCS = os.environ.get("READTHEDOCS") == "True"
+if not ON_READTHEDOCS:
+    sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 project = u'sktime'
