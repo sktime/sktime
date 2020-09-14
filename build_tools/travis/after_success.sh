@@ -12,7 +12,7 @@ if [ "$COVERAGE" == "true" ]; then
   # be published. Since we ran the tests in a separate repo, we need to
   # point the uploader to the generated coverage report.
   # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
-  ls -la "$TEST_DIR"
+  cp "$TEST_DIR"/.coverage .
   bash <(curl -s https://codecov.io/bash) -s "$TEST_DIR" || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"

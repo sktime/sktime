@@ -19,7 +19,7 @@ on:
 
 # run against only changed files
 jobs:
-  code-quality:
+  pre-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
