@@ -95,8 +95,7 @@ EXTRAS_REQUIRE = {
         'nbsphinx',
         'sphinx_rtd_theme',
         'numpydoc',
-        # https://github.com/sphinx-doc/sphinx/issues/2840
-        # 'm2r'
+        'm2r'
     ]
 }
 SETUP_REQUIRES = [
