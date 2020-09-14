@@ -5,21 +5,20 @@
 
 # License: 3-clause BSD
 
-if [ "$COVERAGE" == "true" ];
-then
-    # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
-    # Ignore codecov failures as the codecov server is not
-    # very reliable but we don't want travis to report a failure
-    # in the GitHub UI just because the coverage report failed to
-    # be published.
-    bash <(curl -s https://codecov.io/bash) || echo "Codecov upload failed"
+if [ "$COVERAGE" == "true" ]; then
+  # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
+  # Ignore codecov failures as the codecov server is not
+  # very reliable but we don't want travis to report a failure
+  # in the GitHub UI just because the coverage report failed to
+  # be published. Since we ran the tests in a separate repo, we need to
+  # point the uploader to the generated coverage report.
+  bash <(curl -s https://codecov.io/bash) -f "$TEST_DIR"/.coverage || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"
 fi
 
 # Build website on master branch
-if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ];
-then
+if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ]; then
   # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
   pip install -e .[docs]
 
