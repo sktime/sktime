@@ -12,14 +12,25 @@ Navigation
 From here, you can navigate to:
 
 .. toctree::
+   :caption: Users
    :maxdepth: 1
 
    installation
    how_to_get_started
    api_reference
    changelog
+
+.. toctree::
+   :caption: Developers
+   :maxdepth: 1
+
    contributing
-   about
-   governance
    code_of_conduct
+   governance
+
+.. toctree::
+   :caption: About
+   :maxdepth: 1
+
+   about
    contributors
