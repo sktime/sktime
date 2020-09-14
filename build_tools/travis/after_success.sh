@@ -12,7 +12,7 @@ then
     # very reliable but we don't want travis to report a failure
     # in the GitHub UI just because the coverage report failed to
     # be published.
-    bash <(curl -s https://codecov.io/bash) -f "$TEST_DIR"/.coverage || echo "Codecov upload failed"
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"
 fi

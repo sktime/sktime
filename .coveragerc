@@ -10,3 +10,4 @@ omit =
     */sktime/_build_utils/*
     */sktime/__init__.py
     */sktime/setup.py
+    */sktime/contrib/*
