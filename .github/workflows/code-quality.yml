@@ -1,7 +1,7 @@
 # GitHub Action to run all pre-commit checks specified in the
 #  .pre-commit-config.yaml
 
-name: pre-commit
+name: code-quality
 
 on:
   pull_request:
@@ -19,7 +19,7 @@ on:
 
 # run against only changed files
 jobs:
-  pre-commit:
+  code-quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

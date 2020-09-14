@@ -6,13 +6,17 @@
 # License: 3-clause BSD
 
 if [ "$COVERAGE" == "true" ]; then
-  # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
+  # Need to run codecov from a git checkout, so we copy .coverage
+  # from TEST_DIR where pytest has been run
+  cp "$TEST_DIR"/.coverage "$TRAVIS_BUILD_DIR"
+
   # Ignore codecov failures as the codecov server is not
   # very reliable but we don't want travis to report a failure
   # in the GitHub UI just because the coverage report failed to
   # be published. Since we ran the tests in a separate repo, we need to
   # point the uploader to the generated coverage report.
-  bash <(curl -s https://codecov.io/bash) || echo "Codecov upload failed"
+    # see https://docs.codecov.io/docs/about-the-codecov-bash-uploader
+  bash <(curl -s https://codecov.io/bash) -f "$TRAVIS_BUILD_DIR"/.coverage || echo "Codecov upload failed"
 else
   echo "Skipped codecov upload"
 fi
