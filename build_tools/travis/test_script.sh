@@ -20,7 +20,7 @@ run_tests() {
 
     # Optionally run coverage
     if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --cov=sktime"
+        TEST_CMD="$TEST_CMD --cov-report=xml --cov=sktime"
     fi
     set -x  # print executed commands to the terminal
 
