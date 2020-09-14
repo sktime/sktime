@@ -3,8 +3,7 @@ tsfresh
 numba
 matplotlib
 jupyter
-sphinx
-sphinx-gallery
+sphinx==3.2.*
 nbsphinx
 sphinx_rtd_theme
 numpydoc
