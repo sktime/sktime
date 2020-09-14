@@ -7,9 +7,9 @@ python:
   version: 3.7
   install:
     - requirements: build_tools/requirements.txt
-    - requirements: docs/requirements.txt
     - method: setuptools
-      path: sktime
+      path: .
+    - requirements: docs/requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py

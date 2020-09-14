@@ -105,7 +105,7 @@ SETUP_REQUIRES = [
 # Optional setuptools features
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
-    'develop', 'release', 'bdist_egg', 'bdist_rpm',
+    'install', 'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
     '--single-version-externally-managed', 'sdist'
