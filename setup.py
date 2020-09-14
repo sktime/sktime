@@ -95,7 +95,7 @@ EXTRAS_REQUIRE = {
         'nbsphinx',
         'sphinx_rtd_theme',
         'numpydoc',
-        'm2r'
+        'm2r2'
     ]
 }
 SETUP_REQUIRES = [
