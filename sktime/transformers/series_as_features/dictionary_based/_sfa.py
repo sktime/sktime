@@ -217,6 +217,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             last_word = -1
             repeat_words = 0
             words = []  # np.zeros(dfts.shape[0], dtype=np.uint32)
+            shift_length = 2 * self.word_length
 
             for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
@@ -238,9 +239,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = _BitWord.create_bigram_word(
-                            words[window - self.window_size],
-                            word_raw, self.word_length)
+                        bigram = (words[window - self.window_size]
+                                  << shift_length) | word_raw
+                        # bigram = _BitWord.create_bigram_word(
+                        #     words[window - self.window_size],
+                        #     word_raw, self.word_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)

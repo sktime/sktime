@@ -162,3 +162,34 @@ def test_word_length():
         raise AssertionError(
             "An unexpected exception {0} raised.".format(repr(err))
         )
+
+
+# def test_reproducability():
+#     # load training data
+#     X, y = load_gunpoint(split="train", return_X_y=True)
+#     m = len(X.iloc[0]['dim_0'])
+#
+#     p = SFA(word_length=4,
+#             anova=True,
+#             alphabet_size=4,
+#             bigrams=False,
+#             window_size=m,
+#             norm=True,
+#             lower_bounding=False,
+#             binning_method="equi-depth").fit(X, y)
+#
+#     print(p.breakpoints)
+#     print(p.support)
+#
+#     print("m", m)
+#     p = SFA(word_length=4,
+#             anova=True,
+#             alphabet_size=4,
+#             bigrams=False,
+#             window_size=10,
+#             norm=False,
+#             lower_bounding=False,
+#             binning_method="equi-width").fit(X, y)
+#
+#     print(p.breakpoints)
+#     print(p.support)

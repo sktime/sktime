@@ -12,7 +12,7 @@ def test_weasel_on_gunpoint():
     # indices = np.random.RandomState(0).permutation(10)
 
     # train WEASEL
-    weasel = WEASEL(random_state=47)
+    weasel = WEASEL(random_state=47, binning_strategy="equi-depth", win_inc=4)
     weasel.fit(X_train, y_train)
 
     score = weasel.score(X_test, y_test)
