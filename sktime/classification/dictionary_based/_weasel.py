@@ -157,10 +157,10 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
 
-        # if self.series_length < 50:
-        #     self.win_inc = 1  # less than 50 is ok time-wise
-        # elif self.series_length < 100:
-        #     self.win_inc = 2  # less than 50 is ok time-wise
+        if self.series_length < 50:
+            self.win_inc = 1  # less than 50 is ok time-wise
+        elif self.series_length < 100:
+            self.win_inc = min(self.win_inc, 2)  # less than 50 is ok time-wise
         # else :
         #     self.win_inc = 1
 
@@ -235,10 +235,10 @@ class WEASEL(BaseClassifier):
                                        dual=True, penalty="l2",  # tol=0.1,
                                        random_state=self.random_state))
 
-                kfold = KFold(n_splits=5,
-                              random_state=self.random_state,
-                              shuffle=True)
-                current_acc = cross_val_score(clf, bag_vec, y, cv=kfold).mean()
+                # kfold = KFold(n_splits=5,
+                #               random_state=self.random_state,
+                #               shuffle=True)
+                current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
 
                 print("Train acc:", norm, word_length, current_acc,
                       # "Bag size", bag_vec.getnnz()
@@ -255,7 +255,10 @@ class WEASEL(BaseClassifier):
                 if max_acc == 1.0:
                     break  # there can be no better model than 1.0
 
-        # # fit final model using all words
+            if max_acc == 1.0:
+                break  # there can be no better model than 1.0
+
+            # # fit final model using all words
         # for i, window_size in enumerate(self.window_sizes):
         #     self.SFA_transformers[i] = \
         #         SFA(word_length=self.best_word_length,
