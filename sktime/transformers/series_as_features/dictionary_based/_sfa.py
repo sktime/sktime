@@ -323,7 +323,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
-        clf = DecisionTreeClassifier(criterion='entropy',  # max_depth=2,
+        clf = DecisionTreeClassifier(criterion='entropy', max_depth=2,
                                      max_leaf_nodes=self.alphabet_size,
                                      random_state=1)
 
@@ -332,7 +332,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             threshold = clf.tree_.threshold[clf.tree_.children_left != -1]
             for bp in range(len(threshold)):
                 breakpoints[i][bp] = threshold[bp]
-            breakpoints[i][self.alphabet_size - 1] = sys.float_info.max
+            for bp in range(len(threshold), self.alphabet_size):
+                breakpoints[i][bp] = sys.float_info.max
 
         return np.sort(breakpoints, axis=1)
 

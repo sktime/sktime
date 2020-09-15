@@ -20,6 +20,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
 
 from sklearn.model_selection import cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 
 # from numba import njit
 # from numba.typed import Dict
@@ -117,7 +119,7 @@ class WEASEL(BaseClassifier):
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
-        self.min_window = 4
+        self.min_window = 6
         self.max_window = 350
 
         # differs from publication. here set to 4 for performance reasons
@@ -155,10 +157,10 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
 
-        if self.series_length < 50:
-            self.win_inc = 1  # less than 50 is ok time-wise
-        elif self.series_length < 100:
-            self.win_inc = 2  # less than 50 is ok time-wise
+        # if self.series_length < 50:
+        #     self.win_inc = 1  # less than 50 is ok time-wise
+        # elif self.series_length < 100:
+        #     self.win_inc = 2  # less than 50 is ok time-wise
         # else :
         #     self.win_inc = 1
 
@@ -181,7 +183,7 @@ class WEASEL(BaseClassifier):
 
                 for i, window_size in enumerate(self.window_sizes):
                     # if w == 0:  # only compute once, otherwise shorten
-                    transformer = SFA(word_length=np.max(word_length),
+                    transformer = SFA(word_length=word_length,
                                       alphabet_size=self.alphabet_size,
                                       window_size=window_size,
                                       norm=norm,
@@ -224,20 +226,23 @@ class WEASEL(BaseClassifier):
                                 all_words[j][word] = value
 
                 # TODO use CountVectorizer instead on actual words ... ???
-                vectorizer = DictVectorizer(sparse=True)
+                vectorizer = DictVectorizer(sparse=False)
                 bag_vec = vectorizer.fit_transform(all_words)
 
-                clf = LogisticRegression(max_iter=5000, solver="liblinear",
-                                         dual=True, penalty="l2",  # tol=0.1,
-                                         random_state=self.random_state)
+                clf = make_pipeline(
+                    StandardScaler(),
+                    LogisticRegression(max_iter=5000, solver="liblinear",
+                                       dual=True, penalty="l2",  # tol=0.1,
+                                       random_state=self.random_state))
 
                 kfold = KFold(n_splits=5,
                               random_state=self.random_state,
                               shuffle=True)
                 current_acc = cross_val_score(clf, bag_vec, y, cv=kfold).mean()
 
-                # print("Train acc:", norm, word_length, current_acc,
-                #       "Bag size", bag_vec.getnnz())
+                print("Train acc:", norm, word_length, current_acc,
+                      # "Bag size", bag_vec.getnnz()
+                      )
 
                 if current_acc > max_acc:
                     max_acc = current_acc
