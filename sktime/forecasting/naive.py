@@ -9,14 +9,14 @@ from warnings import warn
 
 import numpy as np
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseLastWindowForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
 class NaiveForecaster(OptionalForecastingHorizonMixin,
-                      BaseLastWindowForecaster):
+                      BaseWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
@@ -70,7 +70,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """  # X_train is ignored
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         if self.strategy == "last":
@@ -122,7 +122,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                              f"one of: {allowed_strategies}.")
 
         # check window length
-        if self.window_length_ > len(self.oh):
+        if self.window_length_ > len(self._y):
             param = "sp" if self.strategy == "last" and self.sp != 1 \
                 else "window_length_"
             raise ValueError(
@@ -135,7 +135,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
     def _predict_last_window(self, fh, X=None, return_pred_int=False,
                              alpha=DEFAULT_ALPHA):
         """Internal predict"""
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
