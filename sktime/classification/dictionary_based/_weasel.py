@@ -20,7 +20,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
 
 from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
 # from numba import njit
@@ -113,7 +113,7 @@ class WEASEL(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         # this is the threshold to use for chi-squared test on bag-of-words
         # (higher means more strict)
-        self.chi2_threshold = -1  # disabled by default
+        self.chi2_threshold = -2  # disabled by default
 
         self.anova = anova
 
@@ -231,13 +231,13 @@ class WEASEL(BaseClassifier):
                                 all_words[j][word] = value
 
                 # TODO use CountVectorizer instead on actual words ... ???
-                vectorizer = DictVectorizer(sparse=True)
+                vectorizer = DictVectorizer(sparse=False)
                 bag_vec = vectorizer.fit_transform(all_words)
 
                 clf = make_pipeline(
-                    MaxAbsScaler(),
+                    StandardScaler(),
                     LogisticRegression(max_iter=5000, solver="liblinear",
-                                       dual=True, penalty="l2", tol=0.1,
+                                       dual=True, penalty="l2",
                                        random_state=self.random_state))
 
                 kfold = KFold(n_splits=5,
