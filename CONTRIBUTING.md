@@ -7,6 +7,7 @@ Contents
 --------
 
 * [Areas of contribution](#Areas-of-contribution)
+* [Getting started](#Getting-started)
 * [Git and GitHub workflow](#Git-and-GitHub-workflow)
 * [Continuous integration](#Continuous-integration)
 * [Documentation](#Documentation)
@@ -18,25 +19,42 @@ Contents
 Areas of contribution
 ---------------------
 
-We value all kinds of contributions - not just code. We follow the [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
+We value all kinds of contributions - not just code. We follow the
+ [allcontributors specification](https://allcontributors.org) and recognise various types of contributions. 
+ 
+Check out our [list of contributors](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md). 
 
-The following table gives an overview of key contribution areas. 
+The following table gives an overview of key contribution areas. For a more detailed overview, go to our [development roadmap](https://github.com/alan-turing-institute/sktime/issues/228). 
 
-| Area | Contribution | 
+| Area | Description | 
 |---|---|
 | Documentation | Improve or add docstrings, glossary terms, the user guide, and the example notebooks. |
-| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets | 
-| Code | Improve or add functionality, fix bugs | 
-| API design | Design interfaces for estimators and other functionality | 
-| Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests |
-| Outreach | Organize talks, tutorials or workshops, write blog posts |
-| Mentoring | Onboarding and mentoring new contributors |
-| Project management | Finding funding, organising meetings, initiating new collaborations |
+| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets. | 
+| Code | Improve or add functionality, fix bugs. | 
+| Mentoring | Onboarding and mentoring of new contributors |
+| Outreach | Organize talks, tutorials or workshops, write blog posts. |
+| Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests. |
+| API design | Design interfaces for estimators and other functionality. | 
+| Project management. | Finding funding, organising meetings, initiating new collaborations. |
+
+
+Getting started
+---------------
+
+### Good-first issues
+
+A good place to start is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, simply comment on the issue or [chat to us](https://gitter.im/sktime/community).
+
+### Mentorship programme
+We are particularly motivated to support new and/or anxious contributors and people who are looking to learn and develop their skills. For this reason, we have launched sktime's own mentorship programme. 
+
+Find out more and apply on our [website](https://sktime.org/mentoring.html)!
+
 
 Git and GitHub workflow
 -----------------------
 
-The preferred workflow for contributing to sktime's repository is to fork the [main repository](https://github.com/alan-turing-institute/sktime/) on GitHub, clone, and develop on a new branch. Steps:
+The preferred workflow for contributing to sktime's repository is to fork the [main repository](https://github.com/alan-turing-institute/sktime/) on GitHub, clone, and develop on a new branch.
 
 1.  Fork the [project repository](https://github.com/alan-turing-institute/sktime) by clicking on the \'Fork\' button near the top right of the page. This creates a copy of the code under your GitHub user account. For more details on how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
@@ -133,20 +151,20 @@ To check if your code passes all tests locally, you need to install the developm
 Documentation
 -------------
 
-To build our online documentation and website locally, you need to install a few additional dependencies listed in [`docs/requirements.txt`](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt). From the root directory, run:
+To build our online documentation and website locally, you need to install a few additional dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt). From the root directory, run:
  
  ```bash
 pip install -r docs/requirements.txt
 ```  
 For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
 
-To build the website, run:
+To build the website locally, run:
 
 ```bash
 make docs
 ```
 
-You can find the generated files on your local computer in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
+You can find the generated files in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
 
 Dependencies
 ------------
@@ -204,3 +222,4 @@ It is recommended to check that your issue complies with the following rules bef
 - Verify that your issue is not being currently addressed by other [issues](https://github.com/alan-turing-institute/sktime/issues) or [pull requests](https://github.com/alan-turing-institute/sktime/pulls).
 - Please ensure all code snippets and error messages are formatted in appropriate code blocks. See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 - Please be specific about what estimators and/or functions are involved and the shape of the data, as appropriate; please include a [reproducible](https://stackoverflow.com/help/mcve) code snippet or link to a [gist](https://gist.github.com). If an exception is raised, please provide the traceback.
+

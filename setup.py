@@ -83,21 +83,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8'
 ]
-EXTRAS_REQUIRE = {
-    'docs': [
-        'pmdarima',
-        'tsfresh',
-        'numba',
-        'matplotlib',
-        'jupyter',
-        'sphinx',
-        'sphinx-gallery',
-        'nbsphinx',
-        'sphinx_rtd_theme',
-        'numpydoc',
-        'm2r2'
-    ]
-}
+
 SETUP_REQUIRES = [
     "wheel"
 ]
@@ -265,7 +251,6 @@ def setup_package():
         python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
-        extras_require=EXTRAS_REQUIRE,
         **extra_setuptools_args
     )
 
