@@ -117,7 +117,7 @@ class WEASEL(BaseClassifier):
 
         self.anova = anova
 
-        self.norm_options = [True, False]
+        self.norm_options = [False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
@@ -125,7 +125,7 @@ class WEASEL(BaseClassifier):
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 350
+        self.max_window = 250
 
         # differs from publication. here set to 4 for performance reasons
         self.win_inc = win_inc
@@ -235,15 +235,17 @@ class WEASEL(BaseClassifier):
                 bag_vec = vectorizer.fit_transform(all_words)
 
                 clf = make_pipeline(
-                    StandardScaler(),
+                    StandardScaler(with_mean=True, copy=False),
                     LogisticRegression(max_iter=5000, solver="liblinear",
+                                       class_weight='balanced',
                                        dual=True, penalty="l2",
                                        random_state=self.random_state))
 
-                kfold = KFold(n_splits=5,
-                              random_state=self.random_state,
-                              shuffle=True)
-                current_acc = cross_val_score(clf, bag_vec, y, cv=kfold).mean()
+                # kfold = KFold(n_splits=5,
+                #               random_state=self.random_state,
+                #               shuffle=True)
+                current_acc = cross_val_score(clf, bag_vec, y,
+                                              n_jobs=-1, cv=5).mean()
 
                 print("Train acc:", norm, word_length, current_acc,
                       # "Bag size", bag_vec.getnnz()
