@@ -50,6 +50,9 @@ def plot_series(*series, labels=None):
     # create combined index
     index = series[0].index
     for y in series[1:]:
+        # check for type equality
+        if not type(index) is type(y.index):
+            raise TypeError("Found series with different index types.")
         index = index.union(y.index)
 
     # generate integer x-values
@@ -61,7 +64,7 @@ def plot_series(*series, labels=None):
     # plot series
     for x, y, color, label in zip(xs, series, colors, labels):
 
-        # scatter if little data is available or index is not continuous
+        # scatter if little data is available or index is not complete
         if len(x) <= 3 or not np.array_equal(np.arange(x[0], x[-1] + 1), x):
             plot_func = sns.scatterplot
         else:
