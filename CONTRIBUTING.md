@@ -1,9 +1,13 @@
-# How to contribute
+How to contribute
+=================
 
 Welcome to our contributing guidelines! sktime is a community-driven project and your help is extremely welcome! If you get stuck, please don't hesitate to [chat with us](https://gitter.im/sktime/community) or [raise an issue](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
-## Contents
+Contents
+--------
+
 * [Areas of contribution](#Areas-of-contribution)
+* [Getting started](#Getting-started)
 * [Git and GitHub workflow](#Git-and-GitHub-workflow)
 * [Continuous integration](#Continuous-integration)
 * [Documentation](#Documentation)
@@ -12,27 +16,45 @@ Welcome to our contributing guidelines! sktime is a community-driven project and
 * [Reporting bugs](#Reporting-bugs)
 
 
-## Areas of contribution
+Areas of contribution
+---------------------
 
 We value all kinds of contributions - not just code. We follow the
- [allcontributors specification](https://allcontributors.org) and recognise various types of contributions as described [here](https://allcontributors.org/docs/en/emoji-key).
+ [allcontributors specification](https://allcontributors.org) and recognise various types of contributions. 
+ 
+Check out our [list of contributors](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md). 
 
-The following table gives an overview of key contribution areas. 
+The following table gives an overview of key contribution areas. For a more detailed overview, go to our [development roadmap](https://github.com/alan-turing-institute/sktime/issues/228). 
 
-| Area | Contribution | 
+| Area | Description | 
 |---|---|
 | Documentation | Improve or add docstrings, glossary terms, the user guide, and the example notebooks. |
-| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets | 
-| Code | Improve or add functionality, fix bugs | 
-| API design | Design interfaces for estimators and other functionality | 
-| Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests |
-| Outreach | Organize talks, tutorials or workshops, write blog posts |
-| Mentoring | Onboarding and mentoring new contributors |
-| Project management | Finding funding, organising meetings, initiating new collaborations |
+| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets. | 
+| Code | Improve or add functionality, fix bugs. | 
+| Mentoring | Onboarding and mentoring of new contributors |
+| Outreach | Organize talks, tutorials or workshops, write blog posts. |
+| Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests. |
+| API design | Design interfaces for estimators and other functionality. | 
+| Project management. | Finding funding, organising meetings, initiating new collaborations. |
 
-## Git and GitHub workflow
 
-The preferred workflow for contributing to sktime's repository is to fork the [main repository](https://github.com/alan-turing-institute/sktime/) on GitHub, clone, and develop on a new branch. Steps:
+Getting started
+---------------
+
+### Good-first issues
+
+A good place to start is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, simply comment on the issue or [chat to us](https://gitter.im/sktime/community).
+
+### Mentorship programme
+We are particularly motivated to support new and/or anxious contributors and people who are looking to learn and develop their skills. For this reason, we have launched sktime's own mentorship programme. 
+
+Find out more and apply on our [website](https://sktime.org/mentoring.html)!
+
+
+Git and GitHub workflow
+-----------------------
+
+The preferred workflow for contributing to sktime's repository is to fork the [main repository](https://github.com/alan-turing-institute/sktime/) on GitHub, clone, and develop on a new branch.
 
 1.  Fork the [project repository](https://github.com/alan-turing-institute/sktime) by clicking on the \'Fork\' button near the top right of the page. This creates a copy of the code under your GitHub user account. For more details on how to fork a repository see [this guide](https://help.github.com/articles/fork-a-repo/).
 
@@ -97,7 +119,8 @@ The preferred workflow for contributing to sktime's repository is to fork the [m
 
 If any of the above seems like magic to you, please look up the [Git documentation](https://git-scm.com/documentation) on the web. If you get stuck, feel free to [chat with us](https://gitter.im/sktime/community) or [raise an issue](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
-## Continuous integration
+Continuous integration
+----------------------
 
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing, and continuous integration services on GitHub to automatically check if new pull requests do not break anything and comply with sktime's API.
 
@@ -125,16 +148,17 @@ To check if your code passes all tests locally, you need to install the developm
     pytest sktime/
     ```
 
-## Documentation
+Documentation
+-------------
 
-To build our online documentation and website locally, you need to install a few additional dependencies listed in `setup.py`. From the root directory, run:
+To build our online documentation and website locally, you need to install a few additional dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt). From the root directory, run:
  
  ```bash
-pip install -e .[docs] 
+pip install -r docs/requirements.txt
 ```  
 For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
 
-To build the website, you need to run:
+To build the website locally, run:
 
 ```bash
 make docs
@@ -142,19 +166,22 @@ make docs
 
 You can find the generated files in the `sktime/docs/_build/` folder. To view the website, open `sktime/docs/_build/html/index.html` with your preferred web browser.
 
-## Dependencies
-If you add a new dependency or change the version of a dependency, you need
- to update the following files: 
+Dependencies
+------------
 
- - [setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
- - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and packaging,
+If you add a new dependency or change the version of a dependency, you need to update one or more of the following files: 
+
+ - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation, 
+ - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
+ - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for generating the documentation,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
 
 We try to keep the number of core dependencies small and rely on other
  pacakges as soft dependencies when possible. 
 
  
-## Coding style
+Coding style
+------------
 
 We follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) coding guidelines. A good example can be found [here](https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01).
 
@@ -175,7 +202,8 @@ In addition, we add the following guidelines:
 -   Use absolute imports for references inside sktime.
 -   Please don't use `import *` in any case. It is considered harmful by the official Python recommendations. It makes the code harder to read as the origin of symbols is no longer explicitly referenced, but most important, it prevents using a static analysis tool like pyflakes to automatically find bugs.
 
-## Pull request checklist
+Pull request checklist
+----------------------
 
 We recommended that your contribution complies with the following rules
 before you submit a pull request:
@@ -184,7 +212,8 @@ before you submit a pull request:
 -   Often pull requests resolve one or more other issues (or pull requests). If merging your pull request means that some other issues/pull requests should be closed, you should [use keywords to create links to them](https://github.com/blog/1506-closing-issues-via-pull-requests/) (for example, `Fixes #1234`; multiple issues/PRs are allowed as long as each one is preceded by a keyword). Upon merging, those issues/pull requests will automatically be closed by GitHub. If your pull request is simply related to some other issues/PRs, create a link to them without using the keywords (for example, `See also #1234`).
 -   All public methods should have informative docstrings with sample usage presented as doctests when appropriate.
 
-## Reporting bugs
+Reporting bugs
+--------------
 
 We use GitHub issues to track all bugs and feature requests; feel free to open an issue if you have found a bug or wish to see a feature implemented.
 
@@ -193,3 +222,4 @@ It is recommended to check that your issue complies with the following rules bef
 - Verify that your issue is not being currently addressed by other [issues](https://github.com/alan-turing-institute/sktime/issues) or [pull requests](https://github.com/alan-turing-institute/sktime/pulls).
 - Please ensure all code snippets and error messages are formatted in appropriate code blocks. See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 - Please be specific about what estimators and/or functions are involved and the shape of the data, as appropriate; please include a [reproducible](https://stackoverflow.com/help/mcve) code snippet or link to a [gist](https://gist.github.com). If an exception is raised, please provide the traceback.
+
