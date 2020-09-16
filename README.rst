@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
+|travis|_ |appveyor|_ |azure|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -22,6 +22,9 @@
 
 .. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
 .. _azure: https://dev.azure.com/mloning/sktime/_build
+
+.. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
+.. _readthedocs: https://sktime.org/en/latest/?badge=latest
 
 
 sktime
@@ -195,7 +198,7 @@ How to contribute
 -----------------
 * First check out our `guide on how to contribute <https://sktime.org/contributing.html>`__.
 * `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://sktime.org/governance.html>`__ document. 
+* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://sktime.org/governance.html>`__ document.
 
 For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 

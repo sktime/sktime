@@ -1,0 +1,13 @@
+pmdarima
+tsfresh
+numba
+matplotlib
+jupyter
+sphinx==3.2.*
+nbsphinx
+sphinx_rtd_theme
+numpydoc
+m2r2
+# include pygments due to dependency compatibility issue https://github.com/jupyterlab/jupyterlab_pygments/issues/5
+pygments>=2.4.1
+
