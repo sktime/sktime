@@ -274,8 +274,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             # select word-length many indices with best f-score
             if self.word_length <= non_constant.size:
-                _, p = f_classif(dft[:, non_constant], y)
-                self.support = non_constant[np.argsort(p)][:self.word_length]
+                f, _ = f_classif(dft[:, non_constant], y)
+                self.support = non_constant[np.argsort(-f)][:self.word_length]
 
             # sort remaining indices
             # self.support = np.sort(self.support)
@@ -326,7 +326,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
-        clf = DecisionTreeClassifier(criterion='entropy', max_depth=2,
+        clf = DecisionTreeClassifier(criterion='entropy', 
                                      max_leaf_nodes=self.alphabet_size,
                                      random_state=1)
 

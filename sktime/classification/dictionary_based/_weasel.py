@@ -118,14 +118,14 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = [4, 6]  # , 6
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 250
+        self.max_window = 550
 
         # differs from publication. here set to 4 for performance reasons
         self.win_inc = win_inc
@@ -152,7 +152,7 @@ class WEASEL(BaseClassifier):
         y : array-like, shape = [n_instances] The class labels.
 
         Returns
-        -------
+        -------win_inc
         self : object
         """
 
@@ -166,13 +166,13 @@ class WEASEL(BaseClassifier):
             self.win_inc = 1  # less than 50 is ok time-wise
         elif self.series_length < 100:
             self.win_inc = min(self.win_inc, 2)  # less than 50 is ok time-wise
-        # else :
-        #     self.win_inc = 1
 
         self.max_window = min(self.series_length, self.max_window)
         self.window_sizes = list(range(self.min_window,
                                        self.max_window,
                                        self.win_inc))
+
+        print("window_sizes", self.window_sizes)
 
         max_acc = -1
         self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
@@ -180,14 +180,12 @@ class WEASEL(BaseClassifier):
         final_bag_vec = None
 
         for norm in self.norm_options:
-            # transformers = []
 
             for w, word_length in enumerate(self.word_lengths):
                 all_words = [dict() for x in range(len(X))]
                 transformers = []
 
                 for i, window_size in enumerate(self.window_sizes):
-                    # if w == 0:  # only compute once, otherwise shorten
                     transformer = SFA(word_length=word_length,
                                       alphabet_size=self.alphabet_size,
                                       window_size=window_size,
@@ -237,15 +235,13 @@ class WEASEL(BaseClassifier):
                 clf = make_pipeline(
                     StandardScaler(with_mean=True, copy=False),
                     LogisticRegression(max_iter=5000, solver="liblinear",
-                                       class_weight='balanced',
                                        dual=True, penalty="l2",
                                        random_state=self.random_state))
 
                 # kfold = KFold(n_splits=5,
                 #               random_state=self.random_state,
                 #               shuffle=True)
-                current_acc = cross_val_score(clf, bag_vec, y,
-                                              n_jobs=-1, cv=5).mean()
+                current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
 
                 print("Train acc:", norm, word_length, current_acc,
                       # "Bag size", bag_vec.getnnz()
@@ -264,21 +260,6 @@ class WEASEL(BaseClassifier):
 
             if max_acc == 1.0:
                 break  # there can be no better model than 1.0
-
-            # # fit final model using all words
-        # for i, window_size in enumerate(self.window_sizes):
-        #     self.SFA_transformers[i] = \
-        #         SFA(word_length=self.best_word_length,
-        #             alphabet_size=self.alphabet_size,
-        #             window_size=window_size,
-        #             norm=norm,
-        #             anova=self.anova,
-        #             binning_method=self.binning_strategy,
-        #             bigrams=self.bigrams,
-        #             remove_repeat_words=False,
-        #             lower_bounding=False,
-        #             save_words=False)
-        #     self.SFA_transformers[i].fit_transform(X, y)
 
         # print("Bag size", final_bag_vec.getnnz())
         self.clf.fit(final_bag_vec, y)
