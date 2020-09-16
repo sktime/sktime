@@ -45,13 +45,12 @@ def plot_series(*series, labels=None):
     for y in series:
         check_y(y)
 
-    colors = sns.color_palette("colorblind", n_colors=n_series)
-
     # create combined index
     index = series[0].index
     for y in series[1:]:
-        # check for type equality
-        if not type(index) is type(y.index):
+        # check types, note that isinstance() does not work here because index
+        # types inherit from each other, hence we check for type equality
+        if not type(index) is type(y.index):  # noqa
             raise TypeError("Found series with different index types.")
         index = index.union(y.index)
 
@@ -60,6 +59,7 @@ def plot_series(*series, labels=None):
 
     # create figure
     fig, ax = plt.subplots(1, figsize=plt.figaspect(.25))
+    colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series
     for x, y, color, label in zip(xs, series, colors, labels):
