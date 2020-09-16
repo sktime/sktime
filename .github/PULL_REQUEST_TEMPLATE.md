@@ -1,6 +1,5 @@
 <!--
-Thanks for contributing a pull request! Please ensure you have taken a look at
-the extension guidelines: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md
+Thanks for contributing a pull request! Please ensure you have taken a look at the contribution guidelines: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTING.md
 -->
 
 #### Reference Issues/PRs
@@ -21,21 +20,19 @@ A clear and concise description of what you have implemented.
 #### Does your contribution introduce a new dependency? If yes, which one? 
 
 <!--
-If your contribution does add a new dependency, we may suggest to initially develop your contribution in a separate
- companion package in https://github.com/sktime/ to keep external dependencies of the core sktime package to a minimum. 
+If your contribution does add a new hard dependency, we may suggest to initially develop your contribution in a separate companion package in https://github.com/sktime/ to keep external dependencies of the core sktime package to a minimum. 
 -->
 
 
 #### PR checklist for new estimators 
 <!--
-This is only relevant if you contribute a new estimator
- (classifiers, regressors, forecasters, etc
-.). If so, please go through the checklist below. Otherwise please ignore check list.
+This is only relevant if you contribute a new estimator (classifiers, regressors, forecasters, etc.). If so, please go through the checklist below. Otherwise please ignore the check list.
 
 - [ ] I've added unit tests and made sure they pass locally. 
 - [ ] I've updated the existing example notebooks or provided a new one to showcase how my estimator works.
 - [ ] I've updated sktime's [CODEOWNERS](https://github.com/alan-turing-institute/sktime/blob/master/CODEOWNERS) and I'm committed to maintain my algorithm.
-- [ ] I've added myself to the list of contributors
+- [ ] I've added myself to the list of contributors.
+- [ ] I've added the estimator to the online documentation.
 -->
 
 #### Any other comments?
