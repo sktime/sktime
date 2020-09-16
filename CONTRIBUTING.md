@@ -19,8 +19,7 @@ Contents
 Areas of contribution
 ---------------------
 
-We value all kinds of contributions - not just code. We follow the
- [allcontributors specification](https://allcontributors.org) and recognise various types of contributions. 
+We value all kinds of contributions - not just code. We follow the [allcontributors specification](https://allcontributors.org) and recognise various types of contributions. 
  
 Check out our [list of contributors](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md). 
 
@@ -176,8 +175,7 @@ If you add a new dependency or change the version of a dependency, you need to u
  - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for generating the documentation,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
 
-We try to keep the number of core dependencies small and rely on other
- pacakges as soft dependencies when possible. 
+We try to keep the number of core dependencies small and rely on other pacakges as soft dependencies when possible. 
 
  
 Coding style
