@@ -243,7 +243,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return dists
 
     def _worst_ensemble_acc(self):
-        min_acc = -1
+        min_acc = 1
         min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
