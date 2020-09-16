@@ -18,17 +18,15 @@ else
   echo "Skipped codecov upload"
 fi
 
-# Build website on master branch
-if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ]; then
-  # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
-  pip install -e .[docs]
 
-  # we have to manually install bug fix here to parse md docs
-  # https://github.com/sphinx-doc/sphinx/issues/2840
-  pip install git+https://github.com/crossnox/m2r@dev#egg=m2r
-
-  # generate website
-  make docs
-else
-  echo "Skipped building docs"
-fi
+# Docs are no longer deployed via travis but now instead via readthedocs
+## Build website on master branch, also see deploy section in .travis.yml
+#if [ "$TRAVIS_JOB_NAME" == "$DEPLOY_JOB_NAME" ] && [ "$TRAVIS_BRANCH" == "$DEPLOY_BRANCH" ]; then
+#  # Add packages for docs generation, specified in EXTRAS_REQUIRE in setup.py
+#  pip install -r docs/requirements.txt
+#
+#  # generate website
+#  make docs
+#else
+#  echo "Skipped building docs"
+#fi
