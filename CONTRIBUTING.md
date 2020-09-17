@@ -47,7 +47,7 @@ Getting started
 We are particularly motivated to support new and/or anxious contributors and people who are looking to learn and develop their skills.
 
 * **Good-first issues.** A good place to start is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, please comment on the issue or [chat to us](https://gitter.im/sktime/community).
-* **Mentorship programme.** We have also launched sktime's own mentorship programme. You can find out more and apply on our [website](https://sktime.org/mentoring.html)!
+* **Mentorship programme.** We have also launched sktime's own mentorship programme. You can find out more and apply on our [website](https://www.sktime.org/en/latest/mentoring.html)!
 
 
 Git and GitHub workflow
@@ -133,7 +133,7 @@ pip install -r maint_tools/requirements.txt
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
-You can find our pre-commit configuration in [`.pre-commit-config.yaml`](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
+You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
 
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
@@ -150,7 +150,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     pip install --editable .
     ```
 
-    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime and includes the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
+    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime and includes the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 3.  To run all unit tests, run:
 
@@ -167,7 +167,7 @@ To build our online documentation and website locally, you need to install a few
 pip install -r docs/requirements.txt
 ```
 
-For trouble shooting on different operating systems, please see our detailed [installation instructions](https://sktime.org/installation.html).
+For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 To build the website locally, run:
 
@@ -194,7 +194,7 @@ Coding style
 
 We follow the [PEP8](https://www.python.org/dev/peps/pep-0008/) coding guidelines. A good example can be found [here](https://gist.github.com/nateGeorge/5455d2c57fb33c1ae04706f2dc4fee01).
 
-We prefer the [pre-commit](#Code-quality-checks) workflow together with [flake8](https://flake8.pycqa.org/en/latest/) to automatically check whether your contribution complies with the PEP8 style.
+We use the [pre-commit](#Code-quality-checks) workflow together with [flake8](https://flake8.pycqa.org/en/latest/) to automatically check whether your contribution complies with the PEP8 style.
 
 For docstrings, we use the [numpy docstring standard](https://numpydoc.readthedocs.io/en/latest/format.html\#docstring-standard).
 

@@ -27,7 +27,7 @@
 .. _codecov: https://codecov.io/gh/alan-turing-institute/sktime
 
 .. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
-.. _readthedocs: https://sktime.org/en/latest/?badge=latest
+.. _readthedocs: https://www.sktime.org/en/latest/?badge=latest
 
 
 sktime
@@ -199,9 +199,9 @@ For more details, read this `issue <https://github.com/alan-turing-institute/skt
 
 How to contribute
 -----------------
-* First check out our `guide on how to contribute <https://sktime.org/contributing.html>`__.
+* First check out our `guide on how to contribute <https://www.sktime.org/en/latest/contributing.html>`__.
 * `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://sktime.org/governance.html>`__ document.
+* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://www.sktime.org/en/latest/governance.html>`__ document.
 
 For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
