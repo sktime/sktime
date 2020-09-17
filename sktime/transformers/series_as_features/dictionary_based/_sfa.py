@@ -9,8 +9,6 @@ import pandas as pd
 
 from sktime.transformers.series_as_features.base import \
     BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.dictionary_based._sax import \
-    _BitWord
 
 from sktime.utils.data_container import tabularize
 
@@ -216,14 +214,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             last_word = -1
             repeat_words = 0
-            words = []  # np.zeros(dfts.shape[0], dtype=np.uint32)
+            words = np.zeros(dfts.shape[0], dtype=np.uint32) # TODO uint64?
             shift_length = 2 * self.word_length
 
             for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
                     dfts[window], self.word_length,
                     self.alphabet_size, self.breakpoints)
-                words.append(word_raw)
+                words[j] = word_raw
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
                                                     window -
@@ -239,18 +237,17 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = (words[window - self.window_size]
-                                  << shift_length) | word_raw
-                        # bigram = _BitWord.create_bigram_word(
-                        #     words[window - self.window_size],
-                        #     word_raw, self.word_length)
+                        bigram = self.create_bigram_word(
+                            words[window - self.window_size],
+                            word_raw,
+                            shift_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
                         bag[bigram] = bag.get(bigram, 0) + 1
 
             if self.save_words:
-                self.words.append(np.array(words))
+                self.words.append(words)
 
             dim.append(
                 pd.Series(bag) if self.return_pandas_data_series else bag)
@@ -326,7 +323,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
-        clf = DecisionTreeClassifier(criterion='entropy', 
+        clf = DecisionTreeClassifier(criterion='entropy',
                                      max_leaf_nodes=self.alphabet_size,
                                      random_state=1)
 
@@ -475,7 +472,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             repeat_words = 0
 
             for window, word in enumerate(self.words[i]):
-                new_word = _BitWord.shorten_word(word,
+                new_word = self.shorten_word(word,
                                                  self.word_length
                                                  - word_len)
 
@@ -493,11 +490,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
                 if self.bigrams:
                     if window - self.window_size >= 0 and window > 0:
-                        bigram = _BitWord.create_bigram_word(
-                            _BitWord.shorten_word(
+                        bigram = self.create_bigram_word(
+                            self.shorten_word(
                                 self.words[i][window - self.window_size],
                                 self.word_length - word_len),
-                            word, self.word_length)
+                            new_word, self.word_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
@@ -527,7 +524,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             num_quadrants = pow(2, i)
             quadrant_size = self.series_length / num_quadrants
             pos = window_ind + int((self.window_size / 2))
-            quadrant = start + (pos / quadrant_size)
+            quadrant = start + int(pos / quadrant_size)
 
             bag[(word, quadrant)] = (bag.get((word, quadrant), 0)
                                      + self.level_weights[i])
@@ -575,3 +572,40 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
 
         return stds
+
+
+
+
+    # Used to represent a word for dictionary based classifiers such as BOSS
+    # an BOP.
+    # Can currently only handle an alphabet size of <= 4 and word length of
+    # <= 16.
+    # Current literature shows little reason to go beyond this, but the
+    # class will need changes/expansions
+    # if this is needed.
+    # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
+
+    @staticmethod
+    def create_bigram_word(word, other_word, length):
+        return (word << (2 * length)) | other_word
+
+    @classmethod
+    def shorten_word(cls, word, amount):
+        # shorten a word by set amount of letters
+        return cls.right_shift(word, amount * 2)
+
+    @classmethod
+    def word_list(cls, word, length):
+        # list of input integers to obtain current word
+        word_list = []
+        shift = 32 - (length * 2)
+
+        for i in range(length - 1, -1, -1):
+            word_list.append(cls.right_shift(word << shift, 32 - 2))
+            shift += 2
+
+        return word_list
+
+    @staticmethod
+    def right_shift(left, right):
+        return (left % 0x100000000) >> right
