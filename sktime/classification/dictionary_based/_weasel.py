@@ -125,7 +125,7 @@ class WEASEL(BaseClassifier):
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 550
+        self.max_window = 350
 
         # differs from publication. here set to 4 for performance reasons
         self.win_inc = win_inc
@@ -137,7 +137,6 @@ class WEASEL(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.vectorizer = None
         self.best_word_length = -1
 
         super(WEASEL, self).__init__()
@@ -172,8 +171,6 @@ class WEASEL(BaseClassifier):
                                        self.max_window,
                                        self.win_inc))
 
-        print("window_sizes", self.window_sizes)
-
         max_acc = -1
         self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
 
@@ -198,10 +195,6 @@ class WEASEL(BaseClassifier):
                                       save_words=False)
                     sfa_words = transformer.fit_transform(X, y)
                     transformers.append(transformer)
-
-                    # use the shortening of words trick
-                    # else:
-                    #    sfa_words = transformers[i]._shorten_bags(word_length)
 
                     bag = sfa_words.iloc[:, 0]
 
@@ -228,20 +221,19 @@ class WEASEL(BaseClassifier):
                                 word = (key << self.highest_bit) | window_size
                                 all_words[j][word] = value
 
-                # TODO use CountVectorizer instead on actual words ... ???
-                vectorizer = DictVectorizer(sparse=False)
-                bag_vec = vectorizer.fit_transform(all_words)
-
                 clf = make_pipeline(
+                    DictVectorizer(sparse=False),
                     StandardScaler(with_mean=True, copy=False),
-                    LogisticRegression(max_iter=5000, solver="liblinear",
-                                       dual=True, penalty="l2",
+                    LogisticRegression(max_iter=5000,
+                                       solver="liblinear",
+                                       dual=True,
+                                       penalty="l2",
                                        random_state=self.random_state))
 
-                # kfold = KFold(n_splits=5,
-                #               random_state=self.random_state,
-                #               shuffle=True)
-                current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
+                kfold = KFold(n_splits=5,
+                              random_state=self.random_state,
+                              shuffle=True)
+                current_acc = cross_val_score(clf, all_words, y, cv=kfold).mean()
 
                 print("Train acc:", norm, word_length, current_acc,
                       # "Bag size", bag_vec.getnnz()
@@ -249,11 +241,10 @@ class WEASEL(BaseClassifier):
 
                 if current_acc > max_acc:
                     max_acc = current_acc
-                    self.vectorizer = vectorizer
                     self.clf = clf
                     self.SFA_transformers = transformers
                     self.best_word_length = word_length
-                    final_bag_vec = bag_vec
+                    final_bag_vec = all_words
 
                 if max_acc == 1.0:
                     break  # there can be no better model than 1.0
@@ -271,16 +262,14 @@ class WEASEL(BaseClassifier):
         X = check_X(X, enforce_univariate=True)
 
         bag = self._transform_words(X)
-        bag_dict = self.vectorizer.transform(bag)
-        return self.clf.predict(bag_dict)
+        return self.clf.predict(bag)
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
 
         bag = self._transform_words(X)
-        bag_dict = self.vectorizer.transform(bag)
-        return self.clf.predict_proba(bag_dict)
+        return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
         bag_all_words = [dict() for _ in range(len(X))]
