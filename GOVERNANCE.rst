@@ -498,7 +498,7 @@ References
 Our governance model is inspired by various existing governance
 structures. In particular, we’d like to acknowledge:
 
-* scikit-learn’s `governance model <https://sktime.org/stable/governance.html>`__
+* scikit-learn’s `governance model <https://www.sktime.org/en/latest/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project
