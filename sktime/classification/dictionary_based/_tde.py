@@ -164,7 +164,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         start_time = time.time()
         train_time = 0
         subsample_size = int(self.n_instances * 0.7)
-        lowest_acc = 0
+        lowest_acc = 1
         lowest_acc_idx = 0
 
         if self.time_limit > 0:
