@@ -118,7 +118,7 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [2, 4, 6]
+        self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
@@ -182,10 +182,9 @@ class WEASEL(BaseClassifier):
                               window_size=window_size,
                               norm=random.choice(self.norm_options),
                               anova=random.choice([True, False]),
+                              levels=random.choice([1, 2, 3]),
                               binning_method=random.choice(
-                                  ["equi-depth",
-                                   "equi-width",
-                                   "information-gain"]),
+                                  ["equi-depth", "information-gain"]),
                               bigrams=random.choice([True, False]),
                               remove_repeat_words=False,
                               lower_bounding=False,
@@ -215,7 +214,12 @@ class WEASEL(BaseClassifier):
                             (key in relevant_features):
                         # append the prefices to the words to
                         # distinguish between window-sizes
-                        word = (key << self.highest_bit) | window_size
+                        if isinstance(key, tuple):
+                            word = (((key[0] << self.highest_bit)
+                                     | key[1]) << 3) | window_size
+                        else:
+                            word = (key << self.highest_bit) | window_size
+
                         all_words[j][word] = value
 
         self.clf = make_pipeline(
@@ -261,7 +265,12 @@ class WEASEL(BaseClassifier):
                 for (key, value) in bag[j].items():
                     # append the prefices to the words to distinguish
                     # between window-sizes
-                    word = (key << self.highest_bit) | window_size
+                    if isinstance(key, tuple):
+                        word = (((key[0] << self.highest_bit)
+                                 | key[1]) << 3) | window_size
+                    else:
+                        word = (key << self.highest_bit) | window_size
+
                     bag_all_words[j][word] = value
 
         return bag_all_words
