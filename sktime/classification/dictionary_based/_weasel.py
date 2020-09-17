@@ -6,6 +6,7 @@ __author__ = "Patrick Schäfer"
 __all__ = ["WEASEL"]
 
 import math
+import random
 
 import numpy as np
 import pandas as pd
@@ -13,13 +14,12 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sklearn.model_selection import KFold
+from sklearn.utils import check_random_state
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
 
-from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
@@ -118,7 +118,7 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]  # , 6
+        self.word_lengths = [2, 4, 6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
@@ -171,89 +171,64 @@ class WEASEL(BaseClassifier):
                                        self.max_window,
                                        self.win_inc))
 
-        max_acc = -1
         self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
 
-        final_bag_vec = None
+        all_words = [dict() for x in range(len(X))]
 
-        for norm in self.norm_options:
+        for i, window_size in enumerate(self.window_sizes):
 
-            for w, word_length in enumerate(self.word_lengths):
-                all_words = [dict() for x in range(len(X))]
-                transformers = []
+            transformer = SFA(word_length=random.choice(self.word_lengths),
+                              alphabet_size=self.alphabet_size,
+                              window_size=window_size,
+                              norm=random.choice(self.norm_options),
+                              anova=random.choice([True, False]),
+                              binning_method=random.choice(
+                                  ["equi-depth",
+                                   "equi-width",
+                                   "information-gain"]),
+                              bigrams=random.choice([True, False]),
+                              remove_repeat_words=False,
+                              lower_bounding=False,
+                              save_words=False)
+            sfa_words = transformer.fit_transform(X, y)
 
-                for i, window_size in enumerate(self.window_sizes):
-                    transformer = SFA(word_length=word_length,
-                                      alphabet_size=self.alphabet_size,
-                                      window_size=window_size,
-                                      norm=norm,
-                                      anova=self.anova,
-                                      binning_method=self.binning_strategy,
-                                      bigrams=self.bigrams,
-                                      remove_repeat_words=False,
-                                      lower_bounding=False,
-                                      save_words=False)
-                    sfa_words = transformer.fit_transform(X, y)
-                    transformers.append(transformer)
+            self.SFA_transformers.append(transformer)
+            bag = sfa_words.iloc[:, 0]
 
-                    bag = sfa_words.iloc[:, 0]
+            # chi-squared test to keep only relevent features
+            relevant_features = {}
+            apply_chi_squared = self.chi2_threshold > 0
+            if apply_chi_squared:
+                bag_vec \
+                    = DictVectorizer(sparse=False).fit_transform(bag)
+                chi2_statistics, p = chi2(bag_vec, y)
+                relevant_features = np.where(
+                   chi2_statistics >= self.chi2_threshold)[0]
 
-                    # chi-squared test to keep only relevent features
-                    relevant_features = {}
-                    apply_chi_squared = self.chi2_threshold > 0
-                    if apply_chi_squared:
-                        bag_vec \
-                            = DictVectorizer(sparse=False).fit_transform(bag)
-                        chi2_statistics, p = chi2(bag_vec, y)
-                        relevant_features = np.where(
-                           chi2_statistics >= self.chi2_threshold)[0]
+            # merging bag-of-patterns of different window_sizes
+            # to single bag-of-patterns with prefix indicating
+            # the used window-length
+            for j in range(len(bag)):
+                for (key, value) in bag[j].items():
+                    # chi-squared test
+                    if (not apply_chi_squared) or \
+                            (key in relevant_features):
+                        # append the prefices to the words to
+                        # distinguish between window-sizes
+                        word = (key << self.highest_bit) | window_size
+                        all_words[j][word] = value
 
-                    # merging bag-of-patterns of different window_sizes
-                    # to single bag-of-patterns with prefix indicating
-                    # the used window-length
-                    for j in range(len(bag)):
-                        for (key, value) in bag[j].items():
-                            # chi-squared test
-                            if (not apply_chi_squared) or \
-                                    (key in relevant_features):
-                                # append the prefices to the words to
-                                # distinguish between window-sizes
-                                word = (key << self.highest_bit) | window_size
-                                all_words[j][word] = value
-
-                clf = make_pipeline(
-                    DictVectorizer(sparse=False),
-                    StandardScaler(with_mean=True, copy=False),
-                    LogisticRegression(max_iter=5000,
-                                       solver="liblinear",
-                                       dual=True,
-                                       penalty="l2",
-                                       random_state=self.random_state))
-
-                kfold = KFold(n_splits=5,
-                              random_state=self.random_state,
-                              shuffle=True)
-                current_acc = cross_val_score(clf, all_words, y, cv=kfold).mean()
-
-                print("Train acc:", norm, word_length, current_acc,
-                      # "Bag size", bag_vec.getnnz()
-                      )
-
-                if current_acc > max_acc:
-                    max_acc = current_acc
-                    self.clf = clf
-                    self.SFA_transformers = transformers
-                    self.best_word_length = word_length
-                    final_bag_vec = all_words
-
-                if max_acc == 1.0:
-                    break  # there can be no better model than 1.0
-
-            if max_acc == 1.0:
-                break  # there can be no better model than 1.0
+        self.clf = make_pipeline(
+            DictVectorizer(sparse=False),
+            StandardScaler(with_mean=True, copy=False),
+            LogisticRegression(max_iter=5000,
+                               solver="liblinear",
+                               dual=True,
+                               penalty="l2",
+                               random_state=self.random_state))
 
         # print("Bag size", final_bag_vec.getnnz())
-        self.clf.fit(final_bag_vec, y)
+        self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
 
