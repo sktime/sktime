@@ -117,6 +117,8 @@ Paired (or second-degree) transformations:
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
 | ShapeDTW | classifiers.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
+| WEASEL | classifiers.dictionary_based.weasel.WEASEL | @patrickZIB | [Fast and Accurate Time Series Classification with WEASEL](https://dl.acm.org/doi/abs/10.1145/3132847.3132980) |
+
 ### Multivariate time series classifiers
 
 | name | sktime class | maintainer | literature
