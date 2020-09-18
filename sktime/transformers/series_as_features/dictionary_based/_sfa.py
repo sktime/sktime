@@ -383,7 +383,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         length = start + self.dft_length
         dft = np.empty((length,), dtype=reals.dtype)
         dft[0::2] = reals[:np.uint32(length / 2)]
-        dft[1::2] = imags[:np.uint32(length / 2)]  # * -1  # lower bounding
+        dft[1::2] = imags[:np.uint32(length / 2)] * -1  # lower bounding
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
@@ -425,7 +425,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                          transformed, self.inverse_sqrt_win_size)
 
         # lower bounding
-        # transformed[:, 1::2] = transformed[:, 1::2] * -1
+        transformed[:, 1::2] = transformed[:, 1::2] * -1
 
         return transformed[:, start_offset:][:, self.support] \
             if self.anova else transformed[:, start_offset:]

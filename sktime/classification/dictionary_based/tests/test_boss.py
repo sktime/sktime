@@ -17,6 +17,7 @@ def test_boss_on_gunpoint():
 
     # assert probabilities are the same
     probas = boss.predict_proba(X_test.iloc[indices])
+    print_array(probas)
     testing.assert_array_equal(probas, boss_gunpoint_probas)
 
 
