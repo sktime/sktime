@@ -214,8 +214,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             last_word = -1
             repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.uint32) # TODO uint64?
-            shift_length = 2 * self.word_length
+            words = np.zeros(dfts.shape[0], dtype=np.uint32)  # TODO uint64?
 
             for j, window in enumerate(range(dfts.shape[0])):
                 word_raw = SFA._create_word(
@@ -240,7 +239,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bigram = self.create_bigram_word(
                             words[window - self.window_size],
                             word_raw,
-                            shift_length)
+                            self.word_length)
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
@@ -472,9 +471,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             repeat_words = 0
 
             for window, word in enumerate(self.words[i]):
-                new_word = self.shorten_word(word,
-                                                 self.word_length
-                                                 - word_len)
+                new_word = self.shorten_word(word, self.word_length - word_len)
 
                 repeat_word = (self._add_to_pyramid(bag, new_word, last_word,
                                                     window -
@@ -572,9 +569,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
 
         return stds
-
-
-
 
     # Used to represent a word for dictionary based classifiers such as BOSS
     # an BOP.
