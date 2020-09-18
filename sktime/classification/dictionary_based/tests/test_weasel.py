@@ -12,7 +12,7 @@ def test_weasel_on_gunpoint():
     # indices = np.random.RandomState(0).permutation(10)
 
     # train WEASEL
-    weasel = WEASEL(random_state=47, win_inc=4, binning_strategy="equi-depth")
+    weasel = WEASEL(random_state=1379, win_inc=4)
     weasel.fit(X_train, y_train)
 
     score = weasel.score(X_test, y_test)
@@ -39,7 +39,7 @@ def test_weasel_on_power_demand():
     X_test, y_test = load_italy_power_demand(split='test', return_X_y=True)
 
     # train WEASEL
-    weasel = WEASEL(random_state=47, win_inc=4)
+    weasel = WEASEL(random_state=1379, win_inc=4)
     weasel.fit(X_train, y_train)
 
     score = weasel.score(X_test, y_test)

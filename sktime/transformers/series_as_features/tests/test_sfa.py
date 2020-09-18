@@ -1,4 +1,6 @@
 import numpy as np
+import sys
+
 from sktime.transformers.series_as_features.dictionary_based._sfa import SFA
 from sktime.datasets import load_gunpoint
 from sktime.utils.data_container import tabularize
@@ -14,6 +16,7 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
+            anova=False,
             binning_method="equi-depth").fit(X, y)
 
     # print("Equi Depth")
@@ -25,6 +28,7 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
+            anova=False,
             binning_method="equi-width").fit(X, y)
 
     # print("Equi Width")
@@ -36,6 +40,7 @@ def test_transformer():
 
     p = SFA(word_length=word_length,
             alphabet_size=alphabet_size,
+            anova=False,
             binning_method="information-gain").fit(X, y)
     # print("Information Gain")
     # print(p.breakpoints)
@@ -43,7 +48,7 @@ def test_transformer():
     assert p.breakpoints.shape == (word_length, alphabet_size)
 
     # print(p.breakpoints[1, :-1])
-    assert np.equal(0, p.breakpoints[1, :-1]).all()  # imaginary component is 0
+    assert np.equal(sys.float_info.max, p.breakpoints[1, :-1]).all()
     _ = p.transform(X, y)
 
 
@@ -129,12 +134,11 @@ def test_word_length():
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
-    word_lengths = [6, 7, 11]
+    word_lengths = [6, 7]
     alphabet_size = 4
     window_sizes = [5, 6]
 
     try:
-
         for binning in ["equi-depth", "information-gain"]:
             for word_length in word_lengths:
                 for bigrams in [True, False]:
