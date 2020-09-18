@@ -6,7 +6,6 @@ __author__ = "Patrick Schäfer"
 __all__ = ["WEASEL"]
 
 import math
-import random
 
 import numpy as np
 import pandas as pd
@@ -14,6 +13,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sklearn.utils import check_random_state
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -171,17 +171,18 @@ class WEASEL(BaseClassifier):
                                        self.win_inc))
 
         self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
+        rng = check_random_state(self.random_state)
 
         all_words = [dict() for x in range(len(X))]
 
         for i, window_size in enumerate(self.window_sizes):
 
-            transformer = SFA(word_length=random.choice(self.word_lengths),
+            transformer = SFA(word_length=rng.choice(self.word_lengths),
                               alphabet_size=self.alphabet_size,
                               window_size=window_size,
-                              norm=random.choice(self.norm_options),
+                              norm=rng.choice(self.norm_options),
                               anova=self.anova,
-                              # levels=random.choice([1, 2, 3]),
+                              # levels=rng.choice([1, 2, 3]),
                               binning_method=self.binning_strategy,
                               bigrams=self.bigrams,
                               remove_repeat_words=False,
