@@ -85,7 +85,7 @@ class WEASEL(BaseClassifier):
                          default="information-gain"
         The binning method used to derive the breakpoints.
 
-    win_inc:             int, default = 4
+    window_inc:          int, default = 4
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
@@ -102,7 +102,7 @@ class WEASEL(BaseClassifier):
                  anova=True,
                  bigrams=True,
                  binning_strategy="information-gain",
-                 win_inc=4,
+                 window_inc=4,
                  random_state=None
                  ):
 
@@ -127,7 +127,7 @@ class WEASEL(BaseClassifier):
         self.max_window = 350
 
         # differs from publication. here set to 4 for performance reasons
-        self.win_inc = win_inc
+        self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
 
@@ -160,15 +160,16 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
 
+        win_inc = self.window_inc
         if self.series_length < 50:
-            self.win_inc = 1  # less than 50 is ok time-wise
+            win_inc = 1  # less than 50 is ok time-wise
         elif self.series_length < 100:
-            self.win_inc = min(self.win_inc, 2)  # less than 50 is ok time-wise
+            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
 
         self.max_window = int(min(self.series_length, self.max_window))
         self.window_sizes = list(range(self.min_window,
                                        self.max_window,
-                                       self.win_inc))
+                                       win_inc))
 
         self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
         rng = check_random_state(self.random_state)
