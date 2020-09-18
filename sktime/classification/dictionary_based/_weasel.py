@@ -14,7 +14,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sklearn.utils import check_random_state
+from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -117,7 +117,7 @@ class WEASEL(BaseClassifier):
 
         self.anova = anova
 
-        self.norm_options = [False]
+        self.norm_options = [True, False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
@@ -166,7 +166,7 @@ class WEASEL(BaseClassifier):
         elif self.series_length < 100:
             self.win_inc = min(self.win_inc, 2)  # less than 50 is ok time-wise
 
-        self.max_window = min(self.series_length, self.max_window)
+        self.max_window = int(min(self.series_length, self.max_window))
         self.window_sizes = list(range(self.min_window,
                                        self.max_window,
                                        self.win_inc))
@@ -181,11 +181,10 @@ class WEASEL(BaseClassifier):
                               alphabet_size=self.alphabet_size,
                               window_size=window_size,
                               norm=random.choice(self.norm_options),
-                              anova=random.choice([True, False]),
-                              levels=random.choice([1, 2, 3]),
-                              binning_method=random.choice(
-                                  ["equi-depth", "information-gain"]),
-                              bigrams=random.choice([True, False]),
+                              anova=self.anova,
+                              # levels=random.choice([1, 2]),
+                              binning_method=self.binning_strategy,
+                              bigrams=self.bigrams,
                               remove_repeat_words=False,
                               lower_bounding=False,
                               save_words=False)
@@ -226,12 +225,13 @@ class WEASEL(BaseClassifier):
             DictVectorizer(sparse=False),
             StandardScaler(with_mean=True, copy=False),
             LogisticRegression(max_iter=5000,
-                               solver="liblinear",
-                               dual=True,
-                               penalty="l2",
-                               random_state=self.random_state))
+                              solver="liblinear",
+                              dual=True,
+                              penalty="l2",
+                              random_state=self.random_state)
+            # RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+            )
 
-        # print("Bag size", final_bag_vec.getnnz())
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
