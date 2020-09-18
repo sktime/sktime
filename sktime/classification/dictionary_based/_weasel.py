@@ -14,7 +14,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sklearn.ensemble import RandomForestClassifier
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
@@ -80,17 +79,17 @@ class WEASEL(BaseClassifier):
         Only applicable if labels are given
 
     bigrams:             boolean, default = True
-            whether to create bigrams of SFA words
+        whether to create bigrams of SFA words
 
-    binning_strategy:   {"equi-depth", "equi-width", "information-gain"},
-                        default="information-gain"
+    binning_strategy:    {"equi-depth", "equi-width", "information-gain"},
+                         default="information-gain"
         The binning method used to derive the breakpoints.
 
     win_inc:             int, default = 4
-            WEASEL create a BoP model for each window sizes. This is the
-            increment used to determine the next window size.
+        WEASEL create a BoP model for each window sizes. This is the
+        increment used to determine the next window size.
 
-    random_state:       int or None,
+    random_state:        int or None,
         Seed for random, integer
 
     Attributes
@@ -182,7 +181,7 @@ class WEASEL(BaseClassifier):
                               window_size=window_size,
                               norm=random.choice(self.norm_options),
                               anova=self.anova,
-                              # levels=random.choice([1, 2]),
+                              # levels=random.choice([1, 2, 3]),
                               binning_method=self.binning_strategy,
                               bigrams=self.bigrams,
                               remove_repeat_words=False,
@@ -217,7 +216,7 @@ class WEASEL(BaseClassifier):
                             word = (((key[0] << self.highest_bit)
                                      | key[1]) << 3) | window_size
                         else:
-                            word = (key << self.highest_bit) | window_size
+                            word = (key << self.highest_bit) << 3 | window_size
 
                         all_words[j][word] = value
 
@@ -225,11 +224,11 @@ class WEASEL(BaseClassifier):
             DictVectorizer(sparse=False),
             StandardScaler(with_mean=True, copy=False),
             LogisticRegression(max_iter=5000,
-                              solver="liblinear",
-                              dual=True,
-                              penalty="l2",
-                              random_state=self.random_state)
-            # RandomForestClassifier(n_estimators=1000, n_jobs=-1)
+                               solver="liblinear",
+                               dual=True,
+                               # class_weight="balanced",
+                               penalty="l2",
+                               random_state=self.random_state)
             )
 
         self.clf.fit(all_words, y)
@@ -269,7 +268,7 @@ class WEASEL(BaseClassifier):
                         word = (((key[0] << self.highest_bit)
                                  | key[1]) << 3) | window_size
                     else:
-                        word = (key << self.highest_bit) | window_size
+                        word = (key << self.highest_bit) << 3 | window_size
 
                     bag_all_words[j][word] = value
 
