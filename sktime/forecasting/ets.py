@@ -3,6 +3,8 @@ __author__ = ["Hongyi Yang"]
 
 from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+from itertools import product
+from joblib import delayed, Parallel
 import numpy as np
 
 
@@ -137,6 +139,12 @@ class AutoETS(_StatsModelsAdapter):
     additive_only : bool, optional
         If True, will only consider additive models.
         Default is False.
+
+    Parameter for parallel jobs:
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for automatic model fitting.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
     """
 
     def __init__(
@@ -165,6 +173,7 @@ class AutoETS(_StatsModelsAdapter):
         allow_multiplicative_trend=False,
         restrict=True,
         additive_only=False,
+        n_jobs=None,
         **kwargs
     ):
 
@@ -195,6 +204,7 @@ class AutoETS(_StatsModelsAdapter):
         self.allow_multiplicative_trend = allow_multiplicative_trend
         self.restrict = restrict
         self.additive_only = additive_only
+        self.n_jobs = n_jobs
 
         super(AutoETS, self).__init__()
 
@@ -215,70 +225,84 @@ class AutoETS(_StatsModelsAdapter):
             seasonal_range = ['add', 'mul', None]
             damped_range = [True, False]
 
+            # Check information criterion input
+            if self.information_criterion != 'aic' and \
+                    self.information_criterion != 'bic' and \
+                    self.information_criterion != 'aicc':
+                raise ValueError('information criterion must '
+                                 'either be aic, bic or aicc')
+
             # Fit model, adapted from:
             # https://github.com/robjhyndman/forecast/blob/master/R/ets.R
-            for error in error_range:
-                for trend in trend_range:
-                    for seasonal in seasonal_range:
-                        for damped in damped_range:
 
-                            if trend is None and damped:
-                                continue
+            # Initialise iterator
+            def _iter(error_range, trend_range, seasonal_range, damped_range):
+                for error, trend, seasonal, damped in product(error_range,
+                                                              trend_range,
+                                                              seasonal_range,
+                                                              damped_range):
+                    if trend is None and damped:
+                        continue
 
-                            if self.restrict:
-                                if error == 'add' and (trend == 'mul' or
-                                                       seasonal == 'mul'):
-                                    continue
-                                if error == 'mul' and trend == 'mul' and \
-                                        seasonal == 'add':
-                                    continue
-                                if self.additive_only and (error == 'mul' or
-                                                           trend == 'mul' or
-                                                           seasonal == 'mul'):
-                                    continue
+                    if self.restrict:
+                        if error == 'add' and (trend == 'mul' or
+                                               seasonal == 'mul'):
+                            continue
+                        if error == 'mul' and trend == 'mul' and \
+                                seasonal == 'add':
+                            continue
+                        if self.additive_only and (error == 'mul' or
+                                                   trend == 'mul' or
+                                                   seasonal == 'mul'):
+                            continue
 
-                            _forecaster = _ETSModel(
-                                y,
-                                error=error,
-                                trend=trend,
-                                damped_trend=damped,
-                                seasonal=seasonal,
-                                seasonal_periods=self.sp,
-                                initialization_method=self.
-                                initialization_method,
-                                initial_level=self.initial_level,
-                                initial_trend=self.initial_trend,
-                                initial_seasonal=self.initial_seasonal,
-                                bounds=self.bounds,
-                                dates=self.dates,
-                                freq=self.freq,
-                                missing=self.missing
-                            )
-                            _fitted_forecaster = _forecaster.fit(
-                                start_params=self.start_params,
-                                maxiter=self.maxiter,
-                                full_output=self.full_output,
-                                disp=self.disp,
-                                callback=self.callback,
-                                return_params=self.return_params
-                            )
+                    yield error, trend, seasonal, damped
 
-                            if self.information_criterion == 'aic':
-                                _ic = _fitted_forecaster.aic
-                            elif self.information_criterion == 'bic':
-                                _ic = _fitted_forecaster.bic
-                            elif self.information_criterion == 'aicc':
-                                _ic = _fitted_forecaster.aicc
-                            else:
-                                raise ValueError('information criterion must \
-                                                 either be aic, bic or aicc')
+            # Fit function
+            def _fit(error, trend, seasonal, damped):
+                _forecaster = _ETSModel(
+                    y,
+                    error=error,
+                    trend=trend,
+                    damped_trend=damped,
+                    seasonal=seasonal,
+                    seasonal_periods=self.sp,
+                    initialization_method=self.
+                    initialization_method,
+                    initial_level=self.initial_level,
+                    initial_trend=self.initial_trend,
+                    initial_seasonal=self.initial_seasonal,
+                    bounds=self.bounds,
+                    dates=self.dates,
+                    freq=self.freq,
+                    missing=self.missing
+                )
+                _fitted_forecaster = _forecaster.fit(
+                    start_params=self.start_params,
+                    maxiter=self.maxiter,
+                    full_output=self.full_output,
+                    disp=self.disp,
+                    callback=self.callback,
+                    return_params=self.return_params
+                )
+                return _forecaster, _fitted_forecaster
 
-                            # Update best model based on information criterion
-                            if _ic is not None and \
-                                    _ic < best_information_criterion:
-                                best_information_criterion = _ic
-                                best_forecaster = _forecaster
-                                best_fitted_forecaster = _fitted_forecaster
+            # Fit models
+            _fitted_results = Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit)(error, trend, seasonal, damped)
+                for error, trend, seasonal, damped in _iter(
+                        error_range, trend_range, seasonal_range, damped_range
+                    ))
+
+            # Select best model based on information criterion
+            for result in _fitted_results:
+                _ic = getattr(result[1], self.information_criterion)
+                # Update best model
+                if _ic is not None and \
+                        _ic < best_information_criterion:
+                    best_information_criterion = _ic
+                    best_forecaster = result[0]
+                    best_fitted_forecaster = result[1]
 
             self._forecaster = best_forecaster
             self._fitted_forecaster = best_fitted_forecaster
