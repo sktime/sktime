@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
@@ -108,17 +109,12 @@ class AutoETS(_StatsModelsAdapter):
     return_params : bool, optional
         Whether or not to return only the array of maximizing parameters.
         Default is False.
-    References
-    ----------
-    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
-        principles and practice*, 3rd edition, OTexts: Melbourne,
-        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
 
     The following parameters are adapted from the ones on R
     (https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets),
     and are used for automatic model selection:
 
-    autofitting : bool, optional
+    auto : bool, optional
         Set True to enable automatic model selection.
         Default is False.
     information_criterion : str, optional
@@ -145,6 +141,12 @@ class AutoETS(_StatsModelsAdapter):
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
+
+    References
+    ----------
+    [1] Hyndman, R.J., & Athanasopoulos, G. (2019) *Forecasting:
+        principles and practice*, 3rd edition, OTexts: Melbourne,
+        Australia. OTexts.com/fpp3. Accessed on April 19th 2020.
     """
 
     def __init__(
@@ -168,8 +170,8 @@ class AutoETS(_StatsModelsAdapter):
         disp=True,
         callback=None,
         return_params=False,
-        autofitting=False,
-        information_criterion='aic',
+        auto=False,
+        information_criterion="aic",
         allow_multiplicative_trend=False,
         restrict=True,
         additive_only=False,
@@ -200,7 +202,7 @@ class AutoETS(_StatsModelsAdapter):
         self.callback = callback
         self.return_params = return_params
         self.information_criterion = information_criterion
-        self.autofitting = autofitting
+        self.auto = auto
         self.allow_multiplicative_trend = allow_multiplicative_trend
         self.restrict = restrict
         self.additive_only = additive_only
@@ -211,49 +213,45 @@ class AutoETS(_StatsModelsAdapter):
     def _fit_forecaster(self, y, X_train=None):
 
         # Select model automatically
-        if self.autofitting:
-            # Initialise best forecaster parameters
-            best_forecaster = None
-            best_fitted_forecaster = None
-            best_information_criterion = np.inf
-
-            error_range = ['add', 'mul']
+        if self.auto:
+            # Initialise parameter ranges
+            error_range = ["add", "mul"]
             if self.allow_multiplicative_trend:
-                trend_range = ['add', 'mul', None]
+                trend_range = ["add", "mul", None]
             else:
-                trend_range = ['add', None]
-            seasonal_range = ['add', 'mul', None]
+                trend_range = ["add", None]
+            seasonal_range = ["add", "mul", None]
             damped_range = [True, False]
 
             # Check information criterion input
-            if self.information_criterion != 'aic' and \
-                    self.information_criterion != 'bic' and \
-                    self.information_criterion != 'aicc':
-                raise ValueError('information criterion must '
-                                 'either be aic, bic or aicc')
+            if (
+                self.information_criterion != "aic"
+                and self.information_criterion != "bic"
+                and self.information_criterion != "aicc"
+            ):
+                raise ValueError(
+                    "information criterion must " "either be aic, bic or aicc"
+                )
 
             # Fit model, adapted from:
             # https://github.com/robjhyndman/forecast/blob/master/R/ets.R
 
             # Initialise iterator
             def _iter(error_range, trend_range, seasonal_range, damped_range):
-                for error, trend, seasonal, damped in product(error_range,
-                                                              trend_range,
-                                                              seasonal_range,
-                                                              damped_range):
+                for error, trend, seasonal, damped in product(
+                    error_range, trend_range, seasonal_range, damped_range
+                ):
                     if trend is None and damped:
                         continue
 
                     if self.restrict:
-                        if error == 'add' and (trend == 'mul' or
-                                               seasonal == 'mul'):
+                        if error == "add" and (trend == "mul" or seasonal == "mul"):
                             continue
-                        if error == 'mul' and trend == 'mul' and \
-                                seasonal == 'add':
+                        if error == "mul" and trend == "mul" and seasonal == "add":
                             continue
-                        if self.additive_only and (error == 'mul' or
-                                                   trend == 'mul' or
-                                                   seasonal == 'mul'):
+                        if self.additive_only and (
+                            error == "mul" or trend == "mul" or seasonal == "mul"
+                        ):
                             continue
 
                     yield error, trend, seasonal, damped
@@ -267,15 +265,14 @@ class AutoETS(_StatsModelsAdapter):
                     damped_trend=damped,
                     seasonal=seasonal,
                     seasonal_periods=self.sp,
-                    initialization_method=self.
-                    initialization_method,
+                    initialization_method=self.initialization_method,
                     initial_level=self.initial_level,
                     initial_trend=self.initial_trend,
                     initial_seasonal=self.initial_seasonal,
                     bounds=self.bounds,
                     dates=self.dates,
                     freq=self.freq,
-                    missing=self.missing
+                    missing=self.missing,
                 )
                 _fitted_forecaster = _forecaster.fit(
                     start_params=self.start_params,
@@ -283,7 +280,7 @@ class AutoETS(_StatsModelsAdapter):
                     full_output=self.full_output,
                     disp=self.disp,
                     callback=self.callback,
-                    return_params=self.return_params
+                    return_params=self.return_params,
                 )
                 return _forecaster, _fitted_forecaster
 
@@ -291,21 +288,21 @@ class AutoETS(_StatsModelsAdapter):
             _fitted_results = Parallel(n_jobs=self.n_jobs)(
                 delayed(_fit)(error, trend, seasonal, damped)
                 for error, trend, seasonal, damped in _iter(
-                        error_range, trend_range, seasonal_range, damped_range
-                    ))
+                    error_range, trend_range, seasonal_range, damped_range
+                )
+            )
 
             # Select best model based on information criterion
-            for result in _fitted_results:
-                _ic = getattr(result[1], self.information_criterion)
-                # Update best model
-                if _ic is not None and \
-                        _ic < best_information_criterion:
-                    best_information_criterion = _ic
-                    best_forecaster = result[0]
-                    best_fitted_forecaster = result[1]
-
-            self._forecaster = best_forecaster
-            self._fitted_forecaster = best_fitted_forecaster
+            # Get index of best model
+            _index = np.argmin(
+                [
+                    getattr(result[1], self.information_criterion)
+                    for result in _fitted_results
+                ]
+            )
+            # Update best model
+            self._forecaster = _fitted_results[_index][0]
+            self._fitted_forecaster = _fitted_results[_index][1]
 
         else:
             self._forecaster = _ETSModel(
@@ -322,7 +319,7 @@ class AutoETS(_StatsModelsAdapter):
                 bounds=self.bounds,
                 dates=self.dates,
                 freq=self.freq,
-                missing=self.missing
+                missing=self.missing,
             )
 
             self._fitted_forecaster = self._forecaster.fit(
@@ -331,8 +328,13 @@ class AutoETS(_StatsModelsAdapter):
                 full_output=self.full_output,
                 disp=self.disp,
                 callback=self.callback,
-                return_params=self.return_params
+                return_params=self.return_params,
             )
 
     def summary(self):
+        """
+        Get a summary of the fitted forecaster,
+        same as the implementation in statsmodels:
+        https://www.statsmodels.org/dev/examples/notebooks/generated/ets.html
+        """
         return self._fitted_forecaster.summary()
