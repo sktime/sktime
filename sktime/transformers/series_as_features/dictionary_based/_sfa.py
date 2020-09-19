@@ -475,7 +475,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         dim = []
 
         for i in range(len(self.words)):
-            bag = dict()
+            bag = defaultdict(int)
             # bag = bag = Dict.empty(key_type=typeof((100,100.0)),
             #                  value_type=types.float64) \
             #     if self.levels > 1 else \
