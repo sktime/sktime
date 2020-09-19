@@ -1,0 +1,14 @@
+[report]
+show_missing = True
+
+[run]
+source = sktime
+include = */sktime/*
+omit =
+    */setup.py
+    */sktime/__check_build/*
+    */sktime/_build_utils/*
+    */sktime/__init__.py
+    */sktime/setup.py
+    */sktime/contrib/*
+plugins = Cython.Coverage
