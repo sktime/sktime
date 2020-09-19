@@ -182,10 +182,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         if self.binning_method not in binning_methods:
             raise TypeError('binning_method must be one of: ', binning_methods)
 
-        X = check_X(X, enforce_univariate=True)
-        # _X = nested_to_3d_numpy(X)
-        # _X = _X.reshape(_X.shape[0], _X.shape[2])
-        X = tabularize(X, return_array=True)
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X = check_X(X, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
@@ -196,12 +195,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def transform(self, X, y=None):
         self.check_is_fitted()
 
-        X = check_X(X, enforce_univariate=True)
-        # _X = nested_to_3d_numpy(X)
-        # _X = _X.reshape(_X.shape[0], _X.shape[2])
-        X = tabularize(X, return_array=True)
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X = check_X(X, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
-        bags = pd.DataFrame()
+        bags = pd.DataFrame() if self.return_pandas_data_series else [None]
         dim = []
 
         # reuse 'transformed' array

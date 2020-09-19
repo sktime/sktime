@@ -6,19 +6,19 @@ __author__ = "Patrick Schäfer"
 __all__ = ["WEASEL"]
 
 import math
-
 import numpy as np
 import pandas as pd
+
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
+from sktime.transformers.series_as_features.dictionary_based import SFA, SAX
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sklearn.utils import check_random_state
+from sktime.utils.data_container import tabularize
 
+from sklearn.utils import check_random_state
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import chi2
-
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
@@ -159,6 +159,7 @@ class WEASEL(BaseClassifier):
 
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
+        X = tabularize(X, return_array=True)
 
         win_inc = self.window_inc
         if self.series_length < 50:
@@ -189,10 +190,11 @@ class WEASEL(BaseClassifier):
                               remove_repeat_words=False,
                               lower_bounding=False,
                               save_words=False)
+
             sfa_words = transformer.fit_transform(X, y)
 
             self.SFA_transformers.append(transformer)
-            bag = sfa_words.iloc[:, 0]
+            bag = sfa_words[0]  #.iloc[:, 0]
 
             # chi-squared test to keep only relevent features
             relevant_features = {}
@@ -240,6 +242,7 @@ class WEASEL(BaseClassifier):
     def predict(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
         bag = self._transform_words(X)
         return self.clf.predict(bag)
@@ -247,6 +250,7 @@ class WEASEL(BaseClassifier):
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
@@ -257,7 +261,7 @@ class WEASEL(BaseClassifier):
 
             # SFA transform
             sfa_words = self.SFA_transformers[i].transform(X)
-            bag = sfa_words.iloc[:, 0]
+            bag = sfa_words[0]  #.iloc[:, 0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
