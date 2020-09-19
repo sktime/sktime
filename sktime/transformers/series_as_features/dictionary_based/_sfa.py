@@ -203,8 +203,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         bags = pd.DataFrame()
         dim = []
 
+        # reuse 'transformed' array
+        start_offset, length, end = self._mft_start_length_end(X[0, :])
+        transformed = np.zeros((end, length))
+        stds = np.zeros(end)
+
         for i in range(X.shape[0]):
-            dfts = self._mft(X[i, :])
+            # reuse 'transformed' array
+            dfts = self._mft(X[i, :], transformed, stds)
 
             bag = dict()
             # bag = Dict.empty(key_type=typeof((100,100.0)),
@@ -216,17 +222,18 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             repeat_words = 0
             words = np.zeros(dfts.shape[0], dtype=np.uint32)  # TODO uint64?
 
-            for j, window in enumerate(range(dfts.shape[0])):
+            for window in range(dfts.shape[0]):
                 word_raw = SFA._create_word(
                     dfts[window], self.word_length,
                     self.alphabet_size, self.breakpoints)
-                words[j] = word_raw
+                words[window] = word_raw
 
                 repeat_word = (self._add_to_pyramid(bag, word_raw, last_word,
                                                     window -
                                                     int(repeat_words / 2))
                                if self.levels > 1 else
-                               self._add_to_bag(bag, word_raw, last_word))
+                               self._add_to_bag(bag, word_raw, last_word,
+                                                window))
 
                 if repeat_word:
                     repeat_words += 1
@@ -387,26 +394,32 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         dft *= self.inverse_sqrt_win_size / std
         return dft[start:]
 
+    def _mft_start_length_end(self, series):
+        start_offset = 2 if self.norm else 0
+        length = self.dft_length + start_offset + self.dft_length % 2
+        end = max(1, len(series) - self.window_size + 1)
+        return start_offset, length, end
+
     # TODO: safe memory by directly discretizing and
     #       not storing the intermediate array?
-    def _mft(self, series):
+    def _mft(self, series, transformed=None, stds=None):
         """
 
         :param series:
         :return:
         """
-        start_offset = 2 if self.norm else 0
-        length = self.dft_length + start_offset + self.dft_length % 2
+        start_offset, length, end = self._mft_start_length_end(series)
 
         phis = np.array([[
             math.cos(2 * math.pi * (-i) / self.window_size),
             -math.sin(2 * math.pi * (-i) / self.window_size)]
             for i in range(0, int(length / 2))]).flatten()
 
-        end = max(1, len(series) - self.window_size + 1)
-        stds = SFA._calc_incremental_mean_std(series, end, self.window_size)
+        stds = SFA._calc_incremental_mean_std(series, end,
+                                              self.window_size, stds)
 
-        transformed = np.zeros((end, length))
+        if np.shape(transformed) != (end, length):
+            transformed = np.zeros((end, length))
 
         # first run with fft
         X_fft = np.fft.rfft(series[0:self.window_size])
@@ -477,7 +490,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                                                     window -
                                                     int(repeat_words / 2))
                                if self.levels > 1 else
-                               self._add_to_bag(bag, new_word, last_word))
+                               self._add_to_bag(bag, new_word, last_word,
+                                                window))
 
                 if repeat_word:
                     repeat_words += 1
@@ -504,11 +518,15 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         return new_bags
 
-    def _add_to_bag(self, bag, word, last_word):
+    def _add_to_bag(self, bag, word, last_word, offset):
         if self.remove_repeat_words and word == last_word:
             return False
 
+        # store the histogram of word counts
         bag[word] = bag.get(word, 0) + 1
+
+        # store the first position of a word, too
+        # bag[word << 16] = min(bag.get(word << 16, sys.float_info.max), offset)
 
         return True
 
@@ -546,26 +564,28 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return word
 
     @staticmethod
-    @njit("float64[:](float64[:],int32,int32)", fastmath=True)
-    def _calc_incremental_mean_std(series, end, window_size):
-        means = np.zeros(end)
-        stds = np.zeros(end)
+    @njit("float64[:](float64[:],int32,int32,float64[:])", fastmath=True)
+    def _calc_incremental_mean_std(series, end, window_size, stds=None):
+        # means = np.zeros(end)
+
+        if len(stds) != end:
+            stds = np.zeros(end)
 
         window = series[0:window_size]
         series_sum = np.sum(window)
         square_sum = np.sum(np.multiply(window, window))
 
         r_window_length = 1 / window_size
-        means[0] = series_sum * r_window_length
-        buf = square_sum * r_window_length - means[0] * means[0]
+        mean = series_sum * r_window_length
+        buf = square_sum * r_window_length - mean * mean
         stds[0] = math.sqrt(buf) if buf > 0 else 0
 
         for w in range(1, end):
             series_sum += series[w + window_size - 1] - series[w - 1]
-            means[w] = series_sum * r_window_length
+            mean = series_sum * r_window_length
             square_sum += series[w + window_size - 1] * series[
                 w + window_size - 1] - series[w - 1] * series[w - 1]
-            buf = square_sum * r_window_length - means[w] * means[w]
+            buf = square_sum * r_window_length - mean * mean
             stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
 
         return stds
@@ -580,6 +600,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
 
     @staticmethod
+    @njit(fastmath=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
 
@@ -601,5 +622,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return word_list
 
     @staticmethod
+    @njit(fastmath=True)
     def right_shift(left, right):
         return (left % 0x100000000) >> right
