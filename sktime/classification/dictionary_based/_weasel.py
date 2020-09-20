@@ -22,7 +22,7 @@ from sklearn.feature_selection import chi2
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
-# from numba import njit
+from numba import njit
 # from numba.typed import Dict
 
 
@@ -197,7 +197,7 @@ class WEASEL(BaseClassifier):
             self.SFA_transformers.append(transformer)
             bag = sfa_words[0]  # .iloc[:, 0]
 
-            # chi-squared test to keep only relevent features
+            # chi-squared test to keep only relevant features
             relevant_features = {}
             apply_chi_squared = self.chi2_threshold > 0
             if apply_chi_squared:
@@ -221,8 +221,10 @@ class WEASEL(BaseClassifier):
                             word = (((key[0] << self.highest_bit)
                                      | key[1]) << 3) | window_size
                         else:
-                            word = ((key << self.highest_bit) << 3) \
-                                   | window_size
+                            # word = ((key << self.highest_bit) << 3) \
+                            #        | window_size
+                            word = WEASEL.shift_left(key, self.highest_bit,
+                                                     window_size)
 
                         all_words[j][word] = value
 
@@ -272,7 +274,9 @@ class WEASEL(BaseClassifier):
                         word = (((key[0] << self.highest_bit)
                                  | key[1]) << 3) | window_size
                     else:
-                        word = ((key << self.highest_bit) << 3) | window_size
+                        # word = ((key << self.highest_bit) << 3) | window_size
+                        word = WEASEL.shift_left(key, self.highest_bit,
+                                                 window_size)
 
                     bag_all_words[j][word] = value
 
@@ -285,3 +289,8 @@ class WEASEL(BaseClassifier):
         elif self.series_length < 100:
             win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
         return win_inc
+
+    @staticmethod
+    @njit(fastmath=True, cache=True)
+    def shift_left(key, highest_bit, window_size):
+        return ((key << highest_bit) << 3) | window_size

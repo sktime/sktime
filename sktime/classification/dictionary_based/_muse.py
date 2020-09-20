@@ -23,7 +23,7 @@ from sklearn.feature_selection import chi2
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
-# from numba import njit
+from numba import njit
 # from numba.typed import Dict
 
 
@@ -160,7 +160,7 @@ class MUSE(BaseClassifier):
         for ind, column in enumerate(self.col_names):
             X_dim = X[column]
             X_dim = tabularize(X_dim, return_array=True)
-            series_length = len(X_dim[0])  # TODO minimum over all series???
+            series_length = len(X_dim[0])  # TODO compute minimum over all ts ?
 
             # increment window size in steps of 'win_inc'
             win_inc = self.compute_window_inc(series_length)
@@ -193,7 +193,7 @@ class MUSE(BaseClassifier):
                 self.SFA_transformers[ind].append(transformer)
                 bag = sfa_words[0]  # .iloc[:, 0]
 
-                # chi-squared test to keep only relevent features
+                # chi-squared test to keep only relevant features
                 relevant_features = {}
                 apply_chi_squared = self.chi2_threshold > 0
                 if apply_chi_squared:
@@ -214,8 +214,11 @@ class MUSE(BaseClassifier):
                                 (key in relevant_features):
                             # append the prefices to the words to
                             # distinguish between window-sizes
-                            word = ((key << highest | ind)
-                                    << self.highest_dim_bit) | window_size
+                            # word = ((key << highest | ind)
+                            #         << self.highest_dim_bit) | window_size
+                            word = MUSE.shift_left(key, highest, ind,
+                                                   self.highest_dim_bit,
+                                                   window_size)
 
                             all_words[j][word] = value
 
@@ -268,8 +271,11 @@ class MUSE(BaseClassifier):
                     for (key, value) in bag[j].items():
                         # append the prefices to the words to distinguish
                         # between window-sizes
-                        word = ((key << highest | ind)
-                                << self.highest_dim_bit) | window_size
+                        # word = ((key << highest | ind)
+                        #         << self.highest_dim_bit) | window_size
+                        word = MUSE.shift_left(key, highest, ind,
+                                               self.highest_dim_bit,
+                                               window_size)
 
                         bag_all_words[j][word] = value
 
@@ -278,7 +284,12 @@ class MUSE(BaseClassifier):
     def compute_window_inc(self, series_length):
         win_inc = self.window_inc
         if series_length < 50:
-            win_inc = 1  # less than 50 is ok time-wise
+            win_inc = 2  # less than 50 is ok time-wise
         elif series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
+            win_inc = min(self.window_inc, 4)  # less than 50 is ok time-wise
         return win_inc
+
+    @staticmethod
+    @njit(fastmath=True, cache=True)
+    def shift_left(key, highest, ind, highest_dim_bit, window_size):
+        return ((key << highest | ind) << highest_dim_bit) | window_size

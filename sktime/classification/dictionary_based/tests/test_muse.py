@@ -12,7 +12,7 @@ def test_muse_on_japanese_vowels():
     # indices = np.random.RandomState(0).permutation(10)
 
     # train WEASEL+MUSE
-    muse = MUSE(random_state=1379)
+    muse = MUSE(random_state=1379, window_inc=8)
     muse.fit(X_train, y_train)
 
     score = muse.score(X_test, y_test)
