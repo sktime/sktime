@@ -123,7 +123,7 @@ Paired (or second-degree) transformations:
 
 | name | sktime class | maintainer | literature
 | ------ | ------- | ------ | ------- |
-|  |  |  |  |
+| WEASEL+MUSE | classifiers.dictionary_based.weasel.MUSE | @patrickZIB | [Multivariate time series classification with WEASEL+ MUSE](https://arxiv.org/abs/1711.11343) |
 
 ## Composition
 

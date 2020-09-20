@@ -31,7 +31,7 @@ class MUSE(BaseClassifier):
     """ WEASEL+MUSE (MUltivariate Symbolic Extension)
 
     MUSE: implementation of MUSE from Schäfer:
-    @article{schafer2017multivariate,
+    @article{schafer2018multivariate,
       title={Multivariate time series classification with WEASEL+MUSE},
       author={Sch{\"a}fer, Patrick and Leser, Ulf},
       journal={3rd ECML/PKDD Workshop on AALTD},

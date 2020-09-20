@@ -47,6 +47,7 @@ Dictionary-based
     BOSSIndividual
     BOSSEnsemble
     WEASEL
+    MUSE
     TemporalDictionaryEnsemble
     IndividualTDE
 
