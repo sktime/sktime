@@ -151,9 +151,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word == last_word:
             return False
-
         bag[word] = bag.get(word, 0) + 1
-
         return True
 
     def _generate_breakpoints(self):
