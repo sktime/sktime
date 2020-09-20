@@ -351,7 +351,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                                              num_windows_per_inst - 1,
                                              dtype=np.int_))
         start = self.series_length - self.window_size
-        split[-1] = series[start:]
+        split[-1] = series[start:self.series_length]
 
         result = np.zeros((len(split), self.dft_length), dtype=np.float64)
 

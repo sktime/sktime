@@ -69,7 +69,7 @@ def test_dft_mft():
     dft = p._discrete_fourier_transform(X_tab[0])
     mft = p._mft(X_tab[0])
 
-    assert ((mft-dft < 0.0001).all())
+    assert ((mft - dft < 0.0001).all())
 
     # print("Windowed DFT transformation")
 
@@ -83,11 +83,11 @@ def test_dft_mft():
             mft = p._mft(X_tab[0])
             for i in range(len(X_tab[0]) - window_size + 1):
                 dft_transformed = p._discrete_fourier_transform(
-                                        X_tab[0, i:window_size+i])
-                assert(mft[i] - dft_transformed < 0.001).all()
+                    X_tab[0, i:window_size + i])
+                assert (mft[i] - dft_transformed < 0.001).all()
 
-            assert(len(mft) == len(X_tab[0]) - window_size + 1)
-            assert(len(mft[0]) == word_length)
+            assert (len(mft) == len(X_tab[0]) - window_size + 1)
+            assert (len(mft[0]) == word_length)
 
 
 def test_sfa_anova():
@@ -124,8 +124,8 @@ def test_sfa_anova():
         # print(p2.support)
         # print(p2.dft_length)
 
-        assert(p.dft_length != p2.dft_length)
-        assert(p.breakpoints != p2.breakpoints).any()
+        assert (p.dft_length != p2.dft_length)
+        assert (p.breakpoints != p2.breakpoints).any()
         _ = p2.transform(X, y)
 
 
@@ -158,7 +158,7 @@ def test_word_lengths():
                                 #      window_size)
                                 # print("dft_length", p.dft_length,
                                 #      "word_length", p.word_length)
-                                assert(p.breakpoints is not None)
+                                assert (p.breakpoints is not None)
 
                                 _ = p.transform(X, y)
 
@@ -166,7 +166,6 @@ def test_word_lengths():
         raise AssertionError(
             "An unexpected exception {0} raised.".format(repr(err))
         )
-
 
 # def test_reproducability():
 #     # load training data
