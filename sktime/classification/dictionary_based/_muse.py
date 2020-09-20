@@ -73,6 +73,10 @@ class MUSE(BaseClassifier):
         (higher means more strict). Negative values indicate that the test
         should not be performed.
 
+    use_first_order_differences:    boolean, default = True
+        If set to True will add the first order differences of each dimension
+        to the data.
+
     random_state:        int or None,
         Seed for random, integer
 
@@ -87,6 +91,7 @@ class MUSE(BaseClassifier):
                  bigrams=True,
                  window_inc=4,
                  chi2_threshold=2,
+                 use_first_order_differences=True,
                  random_state=None
                  ):
 
@@ -95,11 +100,11 @@ class MUSE(BaseClassifier):
 
         # feature selection is applied based on the chi-squared test.
         self.chi2_threshold = chi2_threshold
-
         self.anova = anova
+        self.use_first_order_differences = use_first_order_differences
 
         self.norm_options = [True, False]
-        self.word_lengths = [4]  # 6
+        self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategies = ["equi-width", "equi-depth"]
@@ -139,7 +144,9 @@ class MUSE(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=False)
         y = y.values if isinstance(y, pd.Series) else y
 
-        # TODO we currently only support 2^5 dimensions
+        # add first order differences in each dimension to TS
+        if self.use_first_order_differences:
+            X = self.add_first_order_differences(X)
 
         # Window length parameter space dependent on series length
         self.col_names = X.columns
@@ -154,8 +161,6 @@ class MUSE(BaseClassifier):
 
         # the words of all dimensions and all time series
         all_words = [dict() for _ in range(X.shape[0])]
-
-        # TODO add first order differences in each dimension to TS
 
         # On each dimension, perform SFA
         for ind, column in enumerate(self.col_names):
@@ -245,6 +250,10 @@ class MUSE(BaseClassifier):
     def _transform_words(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
+
+        if self.use_first_order_differences:
+            X = self.add_first_order_differences(X)
+
         bag_all_words = [dict() for _ in range(len(X))]
 
         # On each dimension, perform SFA
@@ -273,6 +282,15 @@ class MUSE(BaseClassifier):
                         bag_all_words[j][word] = value
 
         return bag_all_words
+
+    def add_first_order_differences(self, X):
+        X_copy = X.copy()
+        for ind, column in enumerate(X.columns):
+            X_copy[column + "_diff"] = X_copy[column]
+            for ts in X[column]:
+                ts_diff = ts.diff(1)
+                ts.replace(ts_diff)
+        return X_copy
 
     def compute_window_inc(self, series_length):
         win_inc = self.window_inc

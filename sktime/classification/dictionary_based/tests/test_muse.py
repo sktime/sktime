@@ -12,7 +12,8 @@ def test_muse_on_japanese_vowels():
     indices = np.random.RandomState(0).permutation(50)
 
     # train WEASEL+MUSE on multivariate data
-    muse = MUSE(random_state=1379, window_inc=4)
+    muse = MUSE(random_state=1379, window_inc=4,
+                use_first_order_differences=False)
     muse.fit(X_train.iloc[indices], y_train[indices])
 
     score = muse.score(X_test.iloc[indices], y_test[indices])
