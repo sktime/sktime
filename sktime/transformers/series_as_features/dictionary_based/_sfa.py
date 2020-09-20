@@ -414,6 +414,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             -math.sin(2 * math.pi * (-i) / self.window_size)]
             for i in range(0, int(length / 2))]).flatten()
 
+        if stds is None or np.shape(stds) != (end):
+            stds = np.zeros(end)
+
         stds = SFA._calc_incremental_mean_std(series, end,
                                               self.window_size, stds)
 
@@ -445,7 +448,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     @staticmethod
     @njit("(float64[:],float64[:],float64[:],int32,"
           "float64[:],float64[:,:],float64)",
-          fastmath=True
+          fastmath=True, cache=True
           )
     def _iterate_mft(series, mft_data,
                      phis, window_size,
@@ -550,6 +553,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     @njit(  # this seems to cause a problem with python 3.6??
             # "uint32(float64[:], int32, int32, float64[:,:])",
             # fastmath=True
+            cache=True
           )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
         word = 0
@@ -562,7 +566,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return word
 
     @staticmethod
-    @njit("float64[:](float64[:],int32,int32,float64[:])", fastmath=True)
+    @njit("float64[:](float64[:],int32,int32,float64[:])",
+          fastmath=True, cache=True)
     def _calc_incremental_mean_std(series, end, window_size, stds=None):
         # means = np.zeros(end)
 
@@ -598,7 +603,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
 
     @staticmethod
-    @njit(fastmath=True)
+    @njit(fastmath=True, cache=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
 
@@ -620,6 +625,6 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         return word_list
 
     @staticmethod
-    @njit(fastmath=True)
+    @njit(fastmath=True, cache=True)
     def right_shift(left, right):
         return (left % 0x100000000) >> right

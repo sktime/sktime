@@ -130,7 +130,7 @@ def test_sfa_anova():
 
 
 # test word lengths larger than the window-length
-def test_word_length():
+def test_word_lengths():
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
