@@ -155,7 +155,7 @@ class WEASEL(BaseClassifier):
         y : array-like, shape = [n_instances] The class labels.
 
         Returns
-        -------win_inc
+        -------
         self : object
         """
 
@@ -166,11 +166,7 @@ class WEASEL(BaseClassifier):
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
         X = tabularize(X, return_array=True)
 
-        win_inc = self.window_inc
-        if self.series_length < 50:
-            win_inc = 1  # less than 50 is ok time-wise
-        elif self.series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
+        win_inc = self.compute_window_inc()
 
         self.max_window = int(min(self.series_length, self.max_window))
         self.window_sizes = list(range(self.min_window,
@@ -225,7 +221,8 @@ class WEASEL(BaseClassifier):
                             word = (((key[0] << self.highest_bit)
                                      | key[1]) << 3) | window_size
                         else:
-                            word = (key << self.highest_bit) << 3 | window_size
+                            word = ((key << self.highest_bit) << 3) \
+                                   | window_size
 
                         all_words[j][word] = value
 
@@ -245,22 +242,18 @@ class WEASEL(BaseClassifier):
         return self
 
     def predict(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
-
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
-        self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
-
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
+
         bag_all_words = [dict() for _ in range(len(X))]
         for i, window_size in enumerate(self.window_sizes):
 
@@ -279,8 +272,16 @@ class WEASEL(BaseClassifier):
                         word = (((key[0] << self.highest_bit)
                                  | key[1]) << 3) | window_size
                     else:
-                        word = (key << self.highest_bit) << 3 | window_size
+                        word = ((key << self.highest_bit) << 3) | window_size
 
                     bag_all_words[j][word] = value
 
         return bag_all_words
+
+    def compute_window_inc(self):
+        win_inc = self.window_inc
+        if self.series_length < 50:
+            win_inc = 1  # less than 50 is ok time-wise
+        elif self.series_length < 100:
+            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
+        return win_inc
