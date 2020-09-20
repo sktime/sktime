@@ -12,6 +12,7 @@ import time
 
 import numpy as np
 import pandas as pd
+
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -19,6 +20,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import tabularize
 
 
 # TO DO: Make more efficient
@@ -152,6 +154,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.prev_parameters_x = []
         self.prev_parameters_y = []
 
+        X = tabularize(X, return_array=True)
+
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
         max_window = int(self.series_length * self.max_win_len_prop)
@@ -186,7 +190,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
             subsample = rng.choice(self.n_instances, size=subsample_size,
                                    replace=False)
-            X_subsample = X.iloc[subsample, :]
+            X_subsample = X[subsample]  #.iloc[subsample, :]
             y_subsample = y[subsample]
 
             tde = IndividualTDE(*parameters, alphabet_size=self.alphabet_size,
@@ -230,6 +234,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -243,7 +248,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return dists
 
     def _worst_ensemble_acc(self):
-        min_acc = 1
+        min_acc = 1.0
         min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
@@ -323,11 +328,13 @@ class IndividualTDE(BaseClassifier):
 
         self.transformer = SFA(word_length=word_length,
                                alphabet_size=alphabet_size,
-                               window_size=window_size, norm=norm,
+                               window_size=window_size,
+                               norm=norm,
                                levels=levels,
                                binning_method=binning_method,
                                bigrams=True,
                                remove_repeat_words=True,
+                               return_pandas_data_series=False,
                                save_words=False)
         self.transformed_data = []
         self.accuracy = 0
@@ -339,10 +346,13 @@ class IndividualTDE(BaseClassifier):
         super(IndividualTDE, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X, y = check_X_y(X, y, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         sfa = self.transformer.fit_transform(X, y)
-        self.transformed_data = sfa.iloc[:, 0]
+        self.transformed_data = sfa[0]  #.iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -355,13 +365,16 @@ class IndividualTDE(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X = check_X(X, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags.iloc[:, 0]
+        test_bags = test_bags[0]  #.iloc[:, 0]
 
         for i, test_bag in enumerate(test_bags):
             best_sim = -1

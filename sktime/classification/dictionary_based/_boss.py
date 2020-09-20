@@ -19,11 +19,10 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import tabularize
 
 # from numba import njit
 # from numba.typed import Dict
-
-# TODO: Make more efficient
 
 
 class BOSSEnsemble(BaseClassifier):
@@ -158,6 +157,8 @@ class BOSSEnsemble(BaseClassifier):
         self.classifiers = []
         self.weights = []
 
+        X = tabularize(X, return_array=True)
+
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length / 4
@@ -188,7 +189,7 @@ class BOSSEnsemble(BaseClassifier):
 
                 subsample = rng.choice(self.n_instances, size=subsample_size,
                                        replace=False)
-                X_subsample = X.iloc[subsample, :]
+                X_subsample = X[subsample]  #.iloc[subsample, :]
                 y_subsample = y[subsample]
 
                 boss = BOSSIndividual(*parameters,
@@ -294,6 +295,7 @@ class BOSSEnsemble(BaseClassifier):
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -395,6 +397,7 @@ class BOSSIndividual(BaseClassifier):
                                window_size=window_size, norm=norm,
                                remove_repeat_words=True,
                                bigrams=False,
+                               return_pandas_data_series=False,
                                save_words=save_words)
         self.transformed_data = []
         self.accuracy = 0
@@ -406,10 +409,13 @@ class BOSSIndividual(BaseClassifier):
         super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X, y = check_X_y(X, y, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa.iloc[:, 0]
+        self.transformed_data = sfa[0]  #.iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -422,13 +428,16 @@ class BOSSIndividual(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X = check_X(X, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags.iloc[:, 0]
+        test_bags = test_bags[0]  # .iloc[:, 0]
 
         for i, test_bag in enumerate(test_bags):
             best_dist = sys.float_info.max
@@ -479,7 +488,7 @@ class BOSSIndividual(BaseClassifier):
                                   random_state=self.random_state)
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa.iloc[:, 0]
+        new_boss.transformed_data = sfa[0]  #.iloc[:, 0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes

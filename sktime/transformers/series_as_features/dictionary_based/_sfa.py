@@ -469,7 +469,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     # TODO merge with transform???
     # assumes saved words are of word length 'max_word_length'.
     def _shorten_bags(self, word_len):
-        new_bags = pd.DataFrame()
+        new_bags = pd.DataFrame() if self.return_pandas_data_series else [None]
         dim = []
 
         for i in range(len(self.words)):
