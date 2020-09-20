@@ -223,7 +223,7 @@ class BOSSEnsemble(BaseClassifier):
             max_acc = -1
             min_max_acc = -1
 
-            for i, normalise in enumerate(self.norm_options):
+            for normalise in self.norm_options:
                 for win_size in range(self.min_window, max_window + 1,
                                       win_inc):
                     boss = BOSSIndividual(win_size, self.word_lengths[0],
@@ -439,7 +439,7 @@ class BOSSIndividual(BaseClassifier):
         test_bags = self.transformer.transform(X)
         test_bags = test_bags[0]  # .iloc[:, 0]
 
-        for i, test_bag in enumerate(test_bags):
+        for test_bag in test_bags:
             best_dist = sys.float_info.max
             nn = None
 

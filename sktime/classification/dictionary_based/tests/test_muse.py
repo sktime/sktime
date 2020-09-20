@@ -17,5 +17,5 @@ def test_muse_on_japanese_vowels():
     muse.fit(X_train.iloc[indices], y_train[indices])
 
     score = muse.score(X_test.iloc[indices], y_test[indices])
-    print(score)
+    # print(score)
     assert (score >= 0.99)

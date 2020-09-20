@@ -177,7 +177,7 @@ class WEASEL(BaseClassifier):
 
         all_words = [dict() for x in range(len(X))]
 
-        for i, window_size in enumerate(self.window_sizes):
+        for window_size in self.window_sizes:
 
             transformer = SFA(word_length=rng.choice(self.word_lengths),
                               alphabet_size=self.alphabet_size,

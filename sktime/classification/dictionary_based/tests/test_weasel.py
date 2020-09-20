@@ -16,7 +16,7 @@ def test_weasel_on_gunpoint():
     weasel.fit(X_train, y_train)
 
     score = weasel.score(X_test, y_test)
-    print(score)
+    # print(score)
     assert (score >= 0.99)
 
 # def test_weasel_on_arrow_head():
@@ -43,5 +43,5 @@ def test_weasel_on_power_demand():
     weasel.fit(X_train, y_train)
 
     score = weasel.score(X_test, y_test)
-    print(score)
+    # print(score)
     assert (score >= 0.94)

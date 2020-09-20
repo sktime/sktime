@@ -178,7 +178,7 @@ class MUSE(BaseClassifier):
 
             self.highest_bits[ind] = math.ceil(math.log2(self.max_window))+1
 
-            for i, window_size in enumerate(self.window_sizes[ind]):
+            for window_size in self.window_sizes[ind]:
 
                 transformer = SFA(word_length=rng.choice(self.word_lengths),
                                   alphabet_size=self.alphabet_size,
@@ -285,7 +285,7 @@ class MUSE(BaseClassifier):
 
     def add_first_order_differences(self, X):
         X_copy = X.copy()
-        for ind, column in enumerate(X.columns):
+        for column in X.columns:
             X_copy[str(column) + "_diff"] = X_copy[column]
             for ts in X[column]:
                 ts_diff = ts.diff(1)
