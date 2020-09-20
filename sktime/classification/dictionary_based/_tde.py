@@ -190,7 +190,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
             subsample = rng.choice(self.n_instances, size=subsample_size,
                                    replace=False)
-            X_subsample = X[subsample]  #.iloc[subsample, :]
+            X_subsample = X[subsample]  # .iloc[subsample, :]
             y_subsample = y[subsample]
 
             tde = IndividualTDE(*parameters, alphabet_size=self.alphabet_size,
@@ -352,7 +352,7 @@ class IndividualTDE(BaseClassifier):
             X = tabularize(X, return_array=True)
 
         sfa = self.transformer.fit_transform(X, y)
-        self.transformed_data = sfa[0]  #.iloc[:, 0]
+        self.transformed_data = sfa[0]  # .iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -374,7 +374,7 @@ class IndividualTDE(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags[0]  #.iloc[:, 0]
+        test_bags = test_bags[0]  # .iloc[:, 0]
 
         for i, test_bag in enumerate(test_bags):
             best_sim = -1

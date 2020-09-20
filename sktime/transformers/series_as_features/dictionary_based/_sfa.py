@@ -525,7 +525,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         bag[word] += 1
 
         # store the first position of a word, too
-        # bag[word << 16] = min(bag.get(word << 16, sys.float_info.max), offset)
+        # bag[word << 16] = min(bag.get(word << 16,sys.float_info.max), offset)
 
         return True
 

@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA, SAX
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 from sktime.utils.data_container import tabularize
@@ -194,7 +194,7 @@ class WEASEL(BaseClassifier):
             sfa_words = transformer.fit_transform(X, y)
 
             self.SFA_transformers.append(transformer)
-            bag = sfa_words[0]  #.iloc[:, 0]
+            bag = sfa_words[0]  # .iloc[:, 0]
 
             # chi-squared test to keep only relevent features
             relevant_features = {}
@@ -261,7 +261,7 @@ class WEASEL(BaseClassifier):
 
             # SFA transform
             sfa_words = self.SFA_transformers[i].transform(X)
-            bag = sfa_words[0]  #.iloc[:, 0]
+            bag = sfa_words[0]  # .iloc[:, 0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating

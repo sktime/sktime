@@ -189,7 +189,7 @@ class BOSSEnsemble(BaseClassifier):
 
                 subsample = rng.choice(self.n_instances, size=subsample_size,
                                        replace=False)
-                X_subsample = X[subsample]  #.iloc[subsample, :]
+                X_subsample = X[subsample]  # .iloc[subsample, :]
                 y_subsample = y[subsample]
 
                 boss = BOSSIndividual(*parameters,
@@ -415,7 +415,7 @@ class BOSSIndividual(BaseClassifier):
             X = tabularize(X, return_array=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa[0]  #.iloc[:, 0]
+        self.transformed_data = sfa[0]  # .iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -488,7 +488,7 @@ class BOSSIndividual(BaseClassifier):
                                   random_state=self.random_state)
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa[0]  #.iloc[:, 0]
+        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes
