@@ -286,7 +286,7 @@ class MUSE(BaseClassifier):
     def add_first_order_differences(self, X):
         X_copy = X.copy()
         for ind, column in enumerate(X.columns):
-            X_copy[column + "_diff"] = X_copy[column]
+            X_copy[str(column) + "_diff"] = X_copy[column]
             for ts in X[column]:
                 ts_diff = ts.diff(1)
                 ts.replace(ts_diff)
