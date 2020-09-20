@@ -155,7 +155,7 @@ class MUSE(BaseClassifier):
         # the words of all dimensions and all time series
         all_words = [dict() for _ in range(X.shape[0])]
 
-        # TODO add differences to each dimension
+        # TODO add first order differences in each dimension to TS
 
         # On each dimension, perform SFA
         for ind, column in enumerate(self.col_names):
