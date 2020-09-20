@@ -62,7 +62,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             size of window for sliding. Input series
             length for whole series transform
 
-        norm:               boolean, default = False
+        norm:                boolean, default = False
             mean normalise words by dropping first fourier coefficient
 
         binning_method:      {"equi-depth", "equi-width", "information-gain"},
@@ -157,14 +157,14 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, 1]
+        X: nested pandas DataFrame of shape [n_instances, 1]
             Nested dataframe with univariate time-series in cells.
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+        y: array-like, shape = [n_samples] or [n_samples, n_outputs]
             The class labels.
 
         Returns
         -------
-        self : object
+        self: object
          """
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:
@@ -350,8 +350,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                                                      num_windows_per_inst - 1),
                                              num_windows_per_inst - 1,
                                              dtype=np.int_))
-        split[-1] = series[self.series_length -
-                           self.window_size:self.series_length]
+        start = self.series_length - self.window_size
+        split[-1] = series[start:]
 
         result = np.zeros((len(split), self.dft_length), dtype=np.float64)
 
@@ -424,7 +424,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             transformed = np.zeros((end, length))
 
         # first run with fft
-        X_fft = np.fft.rfft(series[0:self.window_size])
+        X_fft = np.fft.rfft(series[:self.window_size])
         reals = np.real(X_fft)
         imags = np.imag(X_fft)
         mft_data = np.empty((length,), dtype=reals.dtype)
@@ -618,7 +618,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         word_list = []
         shift = 32 - (length * 2)
 
-        for i in range(length - 1, -1, -1):
+        for _ in range(length - 1, -1, -1):
             word_list.append(cls.right_shift(word << shift, 32 - 2))
             shift += 2
 
