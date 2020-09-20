@@ -30,10 +30,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self.ensemble_algorithm = ensemble_algorithm
         self.weights = np.ones(len(forecasters))/len(forecasters)
 
-#         if self.ensemble_algorithm.n != len(forecasters):
-#             raise ValueError("Number of Experts in Ensemble Algorithm \
-#                              doesn't equal number of Forecasters")
-
         super(EnsembleForecaster, self).__init__(forecasters=forecasters,
                                                  n_jobs=n_jobs)
 
@@ -71,15 +67,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         X_new : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        if len(y_new) >= 1 and self.ensemble_algorithm is not None:
-            fh = np.arange(len(y_new)) + 1
-            expert_predictions = np.column_stack(self._predict_forecasters(
-                                                 fh=fh, X=X_new))
-            y_new = np.array(y_new)
+        fh = np.arange(len(y_new)) + 1
+        estimator_predictions = np.column_stack(self._predict_forecasters(
+                                             fh=fh, X=X_new))
+        y_new = np.array(y_new)
 
-            self.ensemble_algorithm._update(expert_predictions.T, y_new)
-        else:
-            pass
+        self.ensemble_algorithm.update(estimator_predictions.T, y_new)
 
     def update(self, y_new, X_new=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
@@ -94,10 +87,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : an instance of self
         """
-        self._fit_ensemble(y_new, X_new=X_new)
-
         self.check_is_fitted()
         self._update_y_X(y_new, X_new)
+
+        if len(y_new) >= 1 and self.ensemble_algorithm is not None:
+            self._fit_ensemble(y_new, X_new=X_new)
+
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
 

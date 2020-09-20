@@ -8,8 +8,8 @@ import numpy as np
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
 
-from sktime.forecasting.ensemble_algorithms import NormalHedgeEnsemble,\
-                                                   NNLSEnsemble
+from sktime.forecasting.prediction_weighted_ensembler \
+    import NormalHedgeEnsemble, NNLSEnsemble
 from sktime.forecasting.online_ensemble import OnlineEnsembleForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
@@ -47,8 +47,7 @@ def test_weights_for_airline_normal_hedge():
         ensemble_algorithm=hedge_expert)
 
     forecaster.fit(y_train)
-    results = forecaster.update_predict(y_test)
-    print(results)
+    forecaster.update_predict(y_test)
 
     expected = np.array([0.17077154, 0.48156709, 0.34766137])
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
@@ -67,8 +66,7 @@ def test_weights_for_airline_nnls():
         ensemble_algorithm=hedge_expert)
 
     forecaster.fit(y_train)
-    results = forecaster.update_predict(y_test)
-    print(results)
+    forecaster.update_predict(y_test)
 
     expected = np.array([0.04720766, 0, 1.03410876])
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
