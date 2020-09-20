@@ -67,7 +67,7 @@ class MUSE(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = -1 (disabled by default)
+    chi2_threshold:      int, default = 2 (enabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the threshold to use for chi-squared test on bag-of-words
         (higher means more strict). Negative values indicate that the test
@@ -86,7 +86,7 @@ class MUSE(BaseClassifier):
                  anova=True,
                  bigrams=True,
                  window_inc=4,
-                 chi2_threshold=2,  # disabled by default
+                 chi2_threshold=2,
                  random_state=None
                  ):
 
@@ -108,7 +108,6 @@ class MUSE(BaseClassifier):
         self.min_window = 4
         self.max_window = 350
 
-        # differs from publication. here set to 4 for performance reasons
         self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
@@ -156,6 +155,8 @@ class MUSE(BaseClassifier):
         # the words of all dimensions and all time series
         all_words = [dict() for _ in range(X.shape[0])]
 
+        # TODO add differences to each dimension
+
         # On each dimension, perform SFA
         for ind, column in enumerate(self.col_names):
             X_dim = X[column]
@@ -172,8 +173,6 @@ class MUSE(BaseClassifier):
 
             self.highest_bits[ind] = (math.ceil(math.log2(self.max_window))) + 1
 
-            print("dimension", ind)
-
             for i, window_size in enumerate(self.window_sizes[ind]):
 
                 transformer = SFA(word_length=rng.choice(self.word_lengths),
@@ -181,8 +180,8 @@ class MUSE(BaseClassifier):
                                   window_size=window_size,
                                   norm=rng.choice(self.norm_options),
                                   anova=self.anova,
-                                  # levels=rng.choice([1, 2, 3]),
-                                  binning_method="equi-depth",
+                                  binning_method=
+                                  rng.choice(self.binning_strategies),
                                   bigrams=self.bigrams,
                                   remove_repeat_words=False,
                                   lower_bounding=False,
@@ -214,15 +213,11 @@ class MUSE(BaseClassifier):
                                 (key in relevant_features):
                             # append the prefices to the words to
                             # distinguish between window-sizes
-                            # word = ((key << highest | ind)
-                            #         << self.highest_dim_bit) | window_size
                             word = MUSE.shift_left(key, highest, ind,
                                                    self.highest_dim_bit,
                                                    window_size)
 
                             all_words[j][word] = value
-
-        print("done building bags")
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=False),
@@ -271,8 +266,6 @@ class MUSE(BaseClassifier):
                     for (key, value) in bag[j].items():
                         # append the prefices to the words to distinguish
                         # between window-sizes
-                        # word = ((key << highest | ind)
-                        #         << self.highest_dim_bit) | window_size
                         word = MUSE.shift_left(key, highest, ind,
                                                self.highest_dim_bit,
                                                window_size)

@@ -131,7 +131,6 @@ class WEASEL(BaseClassifier):
         self.min_window = 4
         self.max_window = 350
 
-        # differs from publication. here set to 4 for performance reasons
         self.window_inc = window_inc
         self.highest_bit = -1
         self.window_sizes = []
