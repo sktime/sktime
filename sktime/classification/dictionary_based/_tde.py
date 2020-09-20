@@ -376,7 +376,7 @@ class IndividualTDE(BaseClassifier):
         test_bags = self.transformer.transform(X)
         test_bags = test_bags[0]  # .iloc[:, 0]
 
-        for i, test_bag in enumerate(test_bags):
+        for test_bag in test_bags:
             best_sim = -1
             nn = None
 
