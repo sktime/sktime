@@ -176,7 +176,7 @@ class MUSE(BaseClassifier):
                                                 self.max_window,
                                                 win_inc)))
 
-            self.highest_bits[ind] = (math.ceil(math.log2(self.max_window))) + 1
+            self.highest_bits[ind] = math.ceil(math.log2(self.max_window))+1
 
             for i, window_size in enumerate(self.window_sizes[ind]):
 
@@ -185,8 +185,8 @@ class MUSE(BaseClassifier):
                                   window_size=window_size,
                                   norm=rng.choice(self.norm_options),
                                   anova=self.anova,
-                                  binning_method=
-                                  rng.choice(self.binning_strategies),
+                                  binning_method=rng.choice(
+                                      self.binning_strategies),
                                   bigrams=self.bigrams,
                                   remove_repeat_words=False,
                                   lower_bounding=False,
