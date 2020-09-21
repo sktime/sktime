@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
+|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -28,6 +28,9 @@
 
 .. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
 .. _readthedocs: https://www.sktime.org/en/latest/?badge=latest
+
+.. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
+.. _twitter: https://twitter.com/sktime_toolbox
 
 
 sktime
