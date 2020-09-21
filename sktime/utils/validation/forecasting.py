@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __all__ = [
     "check_y",
     "check_X",
@@ -12,7 +13,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "SUPPORTED_INDEX_TYPES"
+    "SUPPORTED_INDEX_TYPES",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -21,12 +22,7 @@ import pandas as pd
 
 from sktime.utils.validation import is_int
 
-SUPPORTED_INDEX_TYPES = (
-    pd.Int64Index,
-    pd.RangeIndex,
-    pd.PeriodIndex,
-    pd.DatetimeIndex
-)
+SUPPORTED_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
 def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
@@ -61,7 +57,7 @@ def check_y(y, allow_empty=False, allow_constant=True):
     ----------
     y : pd.Series
     allow_empty : bool, optional (default=False)
-        If True, empty `y` does not raise an error.
+        If True, empty `y` raises an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
 
@@ -76,23 +72,14 @@ def check_y(y, allow_empty=False, allow_constant=True):
     """
     # Check if pandas series or numpy array
     if not isinstance(y, pd.Series):
-        raise TypeError(
-            f"`y` must be a pandas Series, but found type: {type(y)}")
+        raise TypeError(f"`y` must be a pandas Series, but found type: {type(y)}")
 
-    # check that series is not empty
-    if len(y) < 1:
-        if not allow_empty:
-            raise ValueError(
-                f"`y` must contain at least some values, but found "
-                f"empty series: {y}.")
-
-    else:
-        if not allow_constant:
-            if np.all(y == y.iloc[0]):
-                raise ValueError("All values of `y` are the same.")
+    if not allow_constant:
+        if np.all(y == y.iloc[0]):
+            raise ValueError("All values of `y` are the same.")
 
     # check time index
-    check_time_index(y.index)
+    check_time_index(y.index, allow_empty=allow_empty)
     return y
 
 
@@ -110,34 +97,50 @@ def check_cv(cv):
         if cv does not have the required attributes.
     """
     from sktime.forecasting.model_selection._split import BaseSplitter
+
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
     return cv
 
 
-def check_time_index(index):
+def check_time_index(index, allow_empty=False):
     """Check time index.
 
     Parameters
     ----------
     index : pd.Index or np.array
+        Time index
+    allow_empty : bool, optional (default=False)
+        If True, empty `index` raises an error.
 
     Returns
     -------
     time_index : pd.Index
+        Validated time index
     """
     if isinstance(index, np.ndarray):
         index = pd.Index(index)
 
     # period or datetime index are not support yet
     if not type(index) in SUPPORTED_INDEX_TYPES:
-        raise NotImplementedError(f"{type(index)} is not supported, use "
-                                  f"one of {SUPPORTED_INDEX_TYPES} instead.")
+        raise NotImplementedError(
+            f"{type(index)} is not supported, use "
+            f"one of {SUPPORTED_INDEX_TYPES} instead."
+        )
 
+    # check time index is ordered in time
     if not index.is_monotonic:
         raise ValueError(
             f"The (time) index must be sorted (monotonically increasing), "
-            f"but found: {index}")
+            f"but found: {index}"
+        )
+
+    # check that series is not empty
+    if not allow_empty and len(index) < 1:
+        raise ValueError(
+            f"`index` must contain at least some values, but found "
+            f"empty index: {index}."
+        )
 
     return index
 
@@ -169,7 +172,8 @@ def check_window_length(window_length):
         if not is_int(window_length) or window_length < 1:
             raise ValueError(
                 f"`window_length_` must be a positive integer >= 1 or None, "
-                f"but found: {window_length}")
+                f"but found: {window_length}"
+            )
     return window_length
 
 
@@ -179,7 +183,8 @@ def check_step_length(step_length):
         if not is_int(step_length) or step_length < 1:
             raise ValueError(
                 f"`step_length` must be a positive integer >= 1 or None, "
-                f"but found: {step_length}")
+                f"but found: {step_length}"
+            )
     return step_length
 
 
@@ -219,6 +224,7 @@ def check_fh(fh, enforce_relative=False):
     """
     # Convert to ForecastingHorizon
     from sktime.forecasting.base import ForecastingHorizon
+
     if not isinstance(fh, ForecastingHorizon):
         fh = ForecastingHorizon(fh, is_relative=True)
 
@@ -277,8 +283,9 @@ def check_alpha(alpha):
     # check type
     if isinstance(alpha, list):
         if not all(isinstance(a, float) for a in alpha):
-            raise ValueError("When `alpha` is passed as a list, "
-                             "it must be a list of floats")
+            raise ValueError(
+                "When `alpha` is passed as a list, " "it must be a list of floats"
+            )
 
     elif isinstance(alpha, float):
         alpha = [alpha]  # make iterable
@@ -286,16 +293,18 @@ def check_alpha(alpha):
     # check range
     for a in alpha:
         if not 0 < a < 1:
-            raise ValueError(f"`alpha` must lie in the open interval (0, 1), "
-                             f"but found: {a}.")
+            raise ValueError(
+                f"`alpha` must lie in the open interval (0, 1), " f"but found: {a}."
+            )
 
     return alpha
 
 
 def check_cutoffs(cutoffs):
     if not isinstance(cutoffs, (np.ndarray, pd.Index)):
-        raise ValueError(f"`cutoffs` must be a np.array or pd.Index, "
-                         f"but found: {type(cutoffs)}")
+        raise ValueError(
+            f"`cutoffs` must be a np.array or pd.Index, " f"but found: {type(cutoffs)}"
+        )
     assert np.issubdtype(cutoffs.dtype, np.integer)
 
     if len(cutoffs) == 0:
@@ -305,8 +314,7 @@ def check_cutoffs(cutoffs):
 
 
 def check_scoring(scoring):
-    from sktime.performance_metrics.forecasting._classes import \
-        MetricFunctionWrapper
+    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
 
     if scoring is None:
@@ -317,7 +325,6 @@ def check_scoring(scoring):
 
     allowed_base_class = MetricFunctionWrapper
     if not isinstance(scoring, allowed_base_class):
-        raise TypeError(
-            f"`scoring` must inherit from `{allowed_base_class.__name__}`")
+        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring

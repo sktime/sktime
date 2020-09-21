@@ -1,9 +1,8 @@
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "ForecastingHorizon"
-]
+__all__ = ["ForecastingHorizon"]
 
 import numpy as np
 import pandas as pd
@@ -13,16 +12,8 @@ from sktime.utils.datetime import _get_unit
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
 
-RELATIVE_TYPES = (
-    pd.Int64Index,
-    pd.RangeIndex
-)
-ABSOLUTE_TYPES = (
-    pd.Int64Index,
-    pd.RangeIndex,
-    pd.DatetimeIndex,
-    pd.PeriodIndex
-)
+RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
+ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
 assert set(RELATIVE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
 assert set(ABSOLUTE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
 
@@ -46,6 +37,8 @@ DELEGATED_METHODS = (
     "__rmod__",
     "__rdivmod__",
     "__rpow__",
+    "__getitem__",
+    "__len__",
 )
 
 
@@ -97,11 +90,16 @@ def _check_values(values):
 
     # otherwise, raise type error
     else:
-        allowed_types = ("int", "np.array", "list",
-                         *[f"pd.{index_type.__name__}" for index_type in
-                           SUPPORTED_INDEX_TYPES])
-        raise TypeError(f"`values` type not supported. `values` must be one of"
-                        f" {allowed_types}, but found: {type(values)}")
+        allowed_types = (
+            "int",
+            "np.array",
+            "list",
+            *[f"pd.{index_type.__name__}" for index_type in SUPPORTED_INDEX_TYPES],
+        )
+        raise TypeError(
+            f"`values` type not supported. `values` must be one of"
+            f" {allowed_types}, but found: {type(values)}"
+        )
 
     # check values does not contain duplicates
     if len(values) != values.nunique():
@@ -141,8 +139,9 @@ class ForecastingHorizon:
 
         # check types, note that isinstance() does not work here because index
         # types inherit from each other, hence we check for type equality
-        error_msg = f"`values` type is not compatible with `is_relative=" \
-                    f"{is_relative}`."
+        error_msg = (
+            f"`values` type is not compatible with `is_relative=" f"{is_relative}`."
+        )
         if is_relative:
             if not type(values) in RELATIVE_TYPES:
                 raise TypeError(error_msg)
@@ -210,10 +209,8 @@ class ForecastingHorizon:
             self._check_cutoff(cutoff)
             values = self.to_pandas() - cutoff
 
-            if isinstance(self.to_pandas(),
-                          (pd.PeriodIndex, pd.DatetimeIndex)):
-                values = _coerce_duration_to_int(values,
-                                                 unit=_get_unit(cutoff))
+            if isinstance(self.to_pandas(), (pd.PeriodIndex, pd.DatetimeIndex)):
+                values = _coerce_duration_to_int(values, unit=_get_unit(cutoff))
 
             return self._new(values, is_relative=True)
 
@@ -321,15 +318,8 @@ class ForecastingHorizon:
     def __repr__(self):
         # generate repr based on wrapped index repr
         class_name = self.__class__.__name__
-        pandas_repr = repr(self.to_pandas()).split('(')[-1].strip(')')
+        pandas_repr = repr(self.to_pandas()).split("(")[-1].strip(")")
         return f"{class_name}({pandas_repr}, is_relative={self.is_relative})"
-
-    def __getitem__(self, item):
-        # delegate getitem calls to wrapped pd.Index object
-        return self.to_pandas()[item]
-
-    def __len__(self):
-        return len(self.to_pandas())
 
     def _check_cutoff(self, cutoff):
         """Helper function to check fh type compatibility against cutoff"""
