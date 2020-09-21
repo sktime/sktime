@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
+|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -28,6 +28,9 @@
 
 .. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
 .. _readthedocs: https://www.sktime.org/en/latest/?badge=latest
+
+.. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
+.. _twitter: https://twitter.com/sktime_toolbox
 
 
 sktime
@@ -63,7 +66,7 @@ Development Version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
-`advanced installation instructions <https://alan-turing-institute.github.io/sktime/installation.html>`__.
+`advanced installation instructions <https://www.sktime.org/en/latest/installation.html>`__.
 
 ------------------------------------------------------------
 
@@ -121,9 +124,9 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
+* Watch our online tutorial on Machine Learning with Time Series at the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
 * Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
-* Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
 ------------------------------------------------------------
 
