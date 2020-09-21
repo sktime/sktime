@@ -239,7 +239,7 @@ def load_japanese_vowels(split=None, return_X_y=False):
         training set is comprised of 30
         utterances for each speaker, however the test set has a varied
         distribution based on external factors of
-        timing and experimenal availability, between 24 and 88 instances per
+        timing and experimental availability, between 24 and 88 instances per
         speaker. Reference: M. Kudo, J. Toyama
         and M. Shimbo. (1999). "Multidimensional Curve Classification Using
         Passing-Through Regions". Pattern
@@ -334,7 +334,7 @@ def load_acsf1(split=None, return_X_y=False):
 
     The dataset contains the power consumption of typical appliances.
     The recordings are characterized by long idle periods and some high bursts
-    of enery consumption when the appliance is active.
+    of energy consumption when the appliance is active.
     The classes correspond to 10 categories of home appliances;
     mobile phones (via chargers), coffee machines, computer stations
     (including monitor), fridges and freezers, Hi-Fi systems (CD players),
@@ -484,7 +484,7 @@ def load_longley(return_X_y=False):
     References
     ----------
     .. [1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
-        Electronic Comptuer from the Point of View of the User."  Journal of
+        Electronic Computer from the Point of View of the User."  Journal of
         the American Statistical Association.  62.319, 819-41.
         (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
     """

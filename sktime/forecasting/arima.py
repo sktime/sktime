@@ -181,7 +181,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         only n_fits ARIMA models will be fit (stepwise must be False for this
         option to do anything).
     random_state : int, long or numpy RandomState, optional (default=None)
-        The PRNG for when random=True. Ensures replicable testingand results.
+        The PRNG for when random=True. Ensures replicable testing and results.
     n_fits : int, optional (default=10)
         If random is True and a “random search” is going to be performed,
         n_iter is the number of ARIMA models to be fit.
