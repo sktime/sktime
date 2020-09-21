@@ -124,9 +124,9 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
+* Watch our online tutorial on Machine Learning with Time Series at the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
 * Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
 * Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
-* Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
 
 ------------------------------------------------------------
 
