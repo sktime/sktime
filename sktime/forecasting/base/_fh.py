@@ -11,6 +11,7 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.datetime import _get_unit
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
+from functools import lru_cache
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
@@ -189,6 +190,10 @@ class ForecastingHorizon:
         """
         return self.to_pandas().to_numpy()
 
+    # we cache the results from `to_relative()` and `to_absolute()` calls to speed up
+    # computations, as these are the basic methods and often required internally when
+    # calling different methods
+    @lru_cache(typed=True)
     def to_relative(self, cutoff=None):
         """Return relative values
         Parameters
@@ -214,6 +219,7 @@ class ForecastingHorizon:
 
             return self._new(values, is_relative=True)
 
+    @lru_cache(typed=True)
     def to_absolute(self, cutoff=None):
         """Return absolute values
         Parameters
@@ -271,7 +277,7 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             In-sample values of forecasting horizon
         """
-        is_in_sample = self.to_relative(cutoff).to_pandas() <= 0
+        is_in_sample = self._is_in_sample(cutoff)
         in_sample = self.to_pandas()[is_in_sample]
         return self._new(in_sample)
 
@@ -288,9 +294,53 @@ class ForecastingHorizon:
         fh : ForecastingHorizon
             Out-of-sample values of forecasting horizon
         """
-        is_out_of_sample = self.to_relative(cutoff).to_pandas() > 0
+        is_out_of_sample = self._is_out_of_sample(cutoff)
         out_of_sample = self.to_pandas()[is_out_of_sample]
         return self._new(out_of_sample)
+
+    def _is_in_sample(self, cutoff=None):
+        """Get index location of in-sample values"""
+        return self.to_relative(cutoff).to_pandas() <= 0
+
+    def is_in_sample(self, cutoff=None):
+        """Whether or not the forecasting horizon is purely in-sample for given
+        cutoff.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one and vice versa.
+
+        Returns
+        -------
+        ret : bool
+            True if the forecasting horizon is purely in-sample for given cutoff.
+        """
+        return sum(self._is_in_sample(cutoff)) == len(self.to_pandas())
+
+    def _is_out_of_sample(self, cutoff=None):
+        """Get index location of out-of-sample values"""
+        # return ~self._in_sample_idx(cutoff)
+        return self.to_relative(cutoff).to_pandas() > 0
+
+    def is_out_of_sample(self, cutoff=None):
+        """Whether or not the forecasting horizon is purely out-of-sample for
+        given cutoff.
+
+        Parameters
+        ----------
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one and vice versa.
+
+        Returns
+        -------
+        ret : bool
+            True if the forecasting horizon is purely out-of-sample for given
+            cutoff.
+        """
+        return sum(self._is_out_of_sample(cutoff)) == len(self.to_pandas())
 
     def to_indexer(self, cutoff=None, from_cutoff=True):
         """Return zero-based indexer values for easy indexing into arrays.

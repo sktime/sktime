@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -25,8 +26,9 @@ def _assert_index_equal(a, b):
     assert a.equals(b)
 
 
-@pytest.mark.parametrize("index_type, fh_type, is_relative",
-                         SUPPORTED_INDEX_FH_COMBINATIONS)
+@pytest.mark.parametrize(
+    "index_type, fh_type, is_relative", SUPPORTED_INDEX_FH_COMBINATIONS
+)
 @pytest.mark.parametrize("steps", TEST_FHS)
 def test_fh(index_type, fh_type, is_relative, steps):
     # generate data
@@ -50,7 +52,9 @@ def test_fh(index_type, fh_type, is_relative, steps):
     fh_absolute = y.index[np.where(y.index == cutoff)[0] + steps].sort_values()
     fh_indexer = fh_relative - 1
     fh_oos = fh.to_pandas()[fh_relative > 0]
+    is_oos = len(fh_oos) == len(fh)
     fh_ins = fh.to_pandas()[fh_relative <= 0]
+    is_ins = len(fh_ins) == len(fh)
 
     # check outputs
     # check relative representation
@@ -67,14 +71,18 @@ def test_fh(index_type, fh_type, is_relative, steps):
     # check in-sample representation
     # we only compare the numpy array here because the expected solution is
     # formatted in a slightly different way than the generated solution
-    np.testing.assert_array_equal(fh_ins.to_numpy(),
-                                  fh.to_in_sample(cutoff).to_pandas())
+    np.testing.assert_array_equal(
+        fh_ins.to_numpy(), fh.to_in_sample(cutoff).to_pandas()
+    )
     assert fh.to_in_sample(cutoff).is_relative == is_relative
+    assert fh.is_in_sample(cutoff) == is_ins
 
     # check out-of-sample representation
-    np.testing.assert_array_equal(fh_oos.to_numpy(),
-                                  fh.to_out_of_sample(cutoff).to_pandas())
+    np.testing.assert_array_equal(
+        fh_oos.to_numpy(), fh.to_out_of_sample(cutoff).to_pandas()
+    )
     assert fh.to_out_of_sample(cutoff).is_relative == is_relative
+    assert fh.is_out_of_sample(cutoff) == is_oos
 
 
 def test_fh_method_delegation():
@@ -85,7 +93,7 @@ def test_fh_method_delegation():
 
 BAD_INPUT_ARGS = (
     (1, 2),  # tuple
-    'some_string',  # string
+    "some_string",  # string
     0.1,  # float
     -0.1,  # negative float
     np.array([0.1, 2]),  # float in array
@@ -117,7 +125,7 @@ GOOD_INPUT_ARGS = (
     pd.date_range("2000-01-01", periods=3, freq="M"),
     np.array([1, 2, 3]),
     [1, 2, 3],
-    1
+    1,
 )
 
 
