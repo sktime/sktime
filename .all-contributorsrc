@@ -491,6 +491,15 @@
         "code",
         "tutorial"
       ]
+    },
+    {
+      "login": "akanz1",
+      "name": "Andreas Kanz",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/51492342?v=4",
+      "profile": "https://github.com/akanz1",
+      "contributions": [
+        "tutorial"
+      ]
     }
   ],
   "projectName": "sktime",
