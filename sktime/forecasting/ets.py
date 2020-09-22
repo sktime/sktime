@@ -16,12 +16,18 @@ class AutoETS(_StatsModelsAdapter):
     Manual fitting is adapted from statsmodels' version,
     while automatic fitting is adapted from R version of ets.
 
+    The first few parameters are the same as the ones on statsmodels
+    (from ``error`` to ``return_params``, link:
+    https://www.statsmodels.org/stable/_modules/statsmodels/tsa/
+    exponential_smoothing/ets.html#ETSModel).
+
+    The next few parameters are adapted from the ones on R
+    (``auto`` to ``additive_only``, link:
+    https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets),
+    and are used for automatic model selection.
+
     Parameters
     ----------
-    The following parameters are the same as the ones on statsmodels
-    (https://www.statsmodels.org/stable/_modules/statsmodels/tsa/
-     exponential_smoothing/ets.html#ETSModel):
-
     error : str, optional
         The error model. "add" (default) or "mul".
     trend : str or None, optional
@@ -109,11 +115,6 @@ class AutoETS(_StatsModelsAdapter):
     return_params : bool, optional
         Whether or not to return only the array of maximizing parameters.
         Default is False.
-
-    The following parameters are adapted from the ones on R
-    (https://www.rdocumentation.org/packages/forecast/versions/8.12/topics/ets),
-    and are used for automatic model selection:
-
     auto : bool, optional
         Set True to enable automatic model selection.
         Default is False.
@@ -135,8 +136,6 @@ class AutoETS(_StatsModelsAdapter):
     additive_only : bool, optional
         If True, will only consider additive models.
         Default is False.
-
-    Parameter for parallel jobs:
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for automatic model fitting.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
