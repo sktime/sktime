@@ -1,11 +1,9 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "AutoARIMA"
-]
+__all__ = ["AutoARIMA"]
 
 import pandas as pd
 
@@ -209,20 +207,54 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         A dictionary of key-word arguments to be passed to the scoring metric.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
+
+    References
+    ----------
+    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
     """
 
-    def __init__(self, start_p=2, d=None, start_q=2, max_p=5,
-                 max_d=2, max_q=5, start_P=1, D=None, start_Q=1, max_P=2,
-                 max_D=1, max_Q=2, max_order=5, sp=1, seasonal=True,
-                 stationary=False, information_criterion='aic', alpha=0.05,
-                 test='kpss', seasonal_test='ocsb', stepwise=True, n_jobs=1,
-                 start_params=None, trend=None, method='lbfgs', maxiter=50,
-                 offset_test_args=None, seasonal_test_args=None,
-                 suppress_warnings=False, error_action='warn', trace=False,
-                 random=False, random_state=None, n_fits=10,
-                 out_of_sample_size=0, scoring='mse',
-                 scoring_args=None, with_intercept=True,
-                 **kwargs):
+    def __init__(
+        self,
+        start_p=2,
+        d=None,
+        start_q=2,
+        max_p=5,
+        max_d=2,
+        max_q=5,
+        start_P=1,
+        D=None,
+        start_Q=1,
+        max_P=2,
+        max_D=1,
+        max_Q=2,
+        max_order=5,
+        sp=1,
+        seasonal=True,
+        stationary=False,
+        information_criterion="aic",
+        alpha=0.05,
+        test="kpss",
+        seasonal_test="ocsb",
+        stepwise=True,
+        n_jobs=1,
+        start_params=None,
+        trend=None,
+        method="lbfgs",
+        maxiter=50,
+        offset_test_args=None,
+        seasonal_test_args=None,
+        suppress_warnings=False,
+        error_action="warn",
+        trace=False,
+        random=False,
+        random_state=None,
+        n_fits=10,
+        out_of_sample_size=0,
+        scoring="mse",
+        scoring_args=None,
+        with_intercept=True,
+        **kwargs
+    ):
 
         self.start_p = start_p
         self.d = d
@@ -267,24 +299,46 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
         # import inside method to avoid hard dependency
         from pmdarima.arima import AutoARIMA as _AutoARIMA
+
         self._forecaster = _AutoARIMA(
-            start_p=start_p, d=d, start_q=start_q, max_p=max_p,
-            max_d=max_d, max_q=max_q, start_P=start_P, D=D, start_Q=start_Q,
+            start_p=start_p,
+            d=d,
+            start_q=start_q,
+            max_p=max_p,
+            max_d=max_d,
+            max_q=max_q,
+            start_P=start_P,
+            D=D,
+            start_Q=start_Q,
             max_P=max_P,
-            max_D=max_D, max_Q=max_Q, max_order=max_order, m=sp,
+            max_D=max_D,
+            max_Q=max_Q,
+            max_order=max_order,
+            m=sp,
             seasonal=seasonal,
-            stationary=stationary, information_criterion=information_criterion,
+            stationary=stationary,
+            information_criterion=information_criterion,
             alpha=alpha,
-            test=test, seasonal_test=seasonal_test, stepwise=stepwise,
+            test=test,
+            seasonal_test=seasonal_test,
+            stepwise=stepwise,
             n_jobs=n_jobs,
-            start_params=None, trend=trend, method=method, maxiter=maxiter,
+            start_params=None,
+            trend=trend,
+            method=method,
+            maxiter=maxiter,
             offset_test_args=offset_test_args,
             seasonal_test_args=seasonal_test_args,
-            suppress_warnings=suppress_warnings, error_action=error_action,
+            suppress_warnings=suppress_warnings,
+            error_action=error_action,
             trace=trace,
-            random=random, random_state=random_state, n_fits=n_fits,
-            out_of_sample_size=out_of_sample_size, scoring=scoring,
-            scoring_args=scoring_args, with_intercept=with_intercept,
+            random=random,
+            random_state=random_state,
+            n_fits=n_fits,
+            out_of_sample_size=out_of_sample_size,
+            scoring=scoring,
+            scoring_args=scoring_args,
+            with_intercept=with_intercept,
             **kwargs
         )
 
@@ -314,8 +368,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         fh_oos = fh.to_out_of_sample(self.cutoff)
         fh_ins = fh.to_in_sample(self.cutoff)
 
-        kwargs = {"X": X, "return_pred_int": return_pred_int,
-                  "alpha": alpha}
+        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
         # all values are out-of-sample
         if len(fh_oos) == len(fh):
@@ -331,8 +384,9 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
             return y_ins.append(y_oos)
 
-    def _predict_in_sample(self, fh, X=None, return_pred_int=False,
-                           alpha=DEFAULT_ALPHA):
+    def _predict_in_sample(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         if isinstance(alpha, (list, tuple)):
             raise NotImplementedError()
 
@@ -341,8 +395,12 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
 
         result = self._forecaster.predict_in_sample(
-            start=start, end=end, exogenous=X, return_conf_int=return_pred_int,
-            alpha=alpha)
+            start=start,
+            end=end,
+            exogenous=X,
+            return_conf_int=return_pred_int,
+            alpha=alpha,
+        )
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
@@ -351,29 +409,35 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             # unpack and format results
             y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
-                                    columns=["lower", "upper"])
+            pred_int = pd.DataFrame(
+                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+            )
             return y_pred, pred_int
 
         else:
             return pd.Series(result[fh_idx], index=fh_abs)
 
-    def _predict_fixed_cutoff(self, fh, X=None, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA):
+    def _predict_fixed_cutoff(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         # make prediction
         n_periods = int(fh.to_relative(self.cutoff)[-1])
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff)
 
         result = self._forecaster.predict(
-            n_periods=n_periods, exogenous=X,
-            return_conf_int=return_pred_int, alpha=alpha)
+            n_periods=n_periods,
+            exogenous=X,
+            return_conf_int=return_pred_int,
+            alpha=alpha,
+        )
 
         if return_pred_int:
             y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
-            pred_int = pd.DataFrame(pred_int[fh_idx, :], index=fh_abs,
-                                    columns=["lower", "upper"])
+            pred_int = pd.DataFrame(
+                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
+            )
             return y_pred, pred_int
         else:
             return pd.Series(result[fh_idx], index=fh_abs)
