@@ -199,6 +199,13 @@ Exponential Smoothing
     :template: class.rst
 
     ExponentialSmoothing
+
+.. currentmodule:: sktime.forecasting.ets
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
     AutoETS
 
 ARIMA
