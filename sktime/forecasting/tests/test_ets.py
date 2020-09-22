@@ -7,7 +7,7 @@ from sktime.datasets import load_airline
 
 
 # test results against R implementation on airline dataset
-y = load_airline().astype("float64")
+y = load_airline()
 
 
 # Default condition

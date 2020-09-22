@@ -18,8 +18,7 @@ class AutoETS(_StatsModelsAdapter):
 
     The first few parameters are the same as the ones on statsmodels
     (from ``error`` to ``return_params``, link:
-    https://www.statsmodels.org/stable/_modules/statsmodels/tsa/
-    exponential_smoothing/ets.html#ETSModel).
+    https://www.statsmodels.org/stable/_modules/statsmodels/tsa/exponential_smoothing/ets.html#ETSModel).
 
     The next few parameters are adapted from the ones on R
     (``auto`` to ``additive_only``, link:
