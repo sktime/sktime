@@ -1,0 +1,12 @@
+# commit status check
+coverage:
+  status:
+    project:
+      default:
+        threshold: 1%
+        branches:
+          - master
+        informational: true
+
+# post coverage report as comment on PR
+comment: false

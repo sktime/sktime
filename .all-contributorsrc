@@ -481,6 +481,25 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "patrickzib",
+      "name": "Patrick Schäfer",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7783034?v=4",
+      "profile": "http://www2.informatik.hu-berlin.de/~schaefpa/",
+      "contributions": [
+        "code",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "akanz1",
+      "name": "Andreas Kanz",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/51492342?v=4",
+      "profile": "https://github.com/akanz1",
+      "contributions": [
+        "tutorial"
+      ]
     }
   ],
   "projectName": "sktime",
