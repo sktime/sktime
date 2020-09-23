@@ -73,7 +73,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------

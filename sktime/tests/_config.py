@@ -45,6 +45,7 @@ from sktime.transformers.series_as_features.summarize import \
     TSFreshFeatureExtractor
 from sktime.transformers.series_as_features.summarize import \
     TSFreshRelevantFeatureExtractor
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.transformers.single_series.adapt import \
     SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
@@ -137,5 +138,7 @@ ESTIMATOR_TEST_PARAMS = {
          "ml_task": "classification", },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {
-        "acf_lag": 10}
+        "acf_lag": 10},
+    SFA: {
+        "return_pandas_data_series": True}
 }

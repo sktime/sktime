@@ -117,7 +117,7 @@ class SingleSplit:
 
     def split(self, data, y=None, groups=None):
         """
-        Paramters
+        Parameters
         ---------
         data : pandas dataframe
             data used for cross validation

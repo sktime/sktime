@@ -27,7 +27,7 @@ class ThetaForecaster(ExponentialSmoothing):
     multiplicative
     decomposition before applying the theta method. The resulting forecasts
     are then
-    reseasonalized.
+    reseasonalised.
 
     In cases where SES results in a constant forecast, the theta forecaster
     will revert

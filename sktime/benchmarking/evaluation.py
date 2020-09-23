@@ -248,7 +248,7 @@ class Evaluator:
     def ranksum_test(self, metric_name=None):
         """
         Non-parametric test for testing consistent differences between pairs
-        of obeservations.
+        of observations.
         The test counts the number of observations that are greater, smaller
         and equal to the mean
         `<http://en.wikipedia.org/wiki/Wilcoxon_rank-sum_test>`_.
@@ -290,7 +290,7 @@ class Evaluator:
 
     def t_test_with_bonferroni_correction(self, metric_name=None, alpha=0.05):
         """
-        correction used to counteract multiple comparissons
+        correction used to counteract multiple comparisons
         https://en.wikipedia.org/wiki/Bonferroni_correction
         """
         self._check_is_evaluated()
