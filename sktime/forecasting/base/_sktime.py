@@ -142,7 +142,7 @@ class BaseSktimeForecaster(BaseForecaster):
         fh : int, list or np.array
             Forecasting horizon
         X : pd.DataFrame, optional (default=None)
-            Exogeneous time series
+            Exogenous time series
         return_pred_int : bool, optional (default=False)
             If True, returns prediction intervals for given alpha values.
         alpha : float or list, optional (default=0.95)
@@ -268,7 +268,7 @@ class BaseSktimeForecaster(BaseForecaster):
                             alpha=alpha)
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------

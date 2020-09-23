@@ -218,7 +218,7 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         return self
 
     def update(self, y_new, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
          Parameters
          ----------
