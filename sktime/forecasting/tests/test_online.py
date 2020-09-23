@@ -38,7 +38,8 @@ def test_weights_for_airline_normal_hedge():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    hedge_expert = NormalHedgeEnsemble(n_estimators=3, loss_func=mean_squared_error)
+    hedge_expert = NormalHedgeEnsemble(n_estimators=3,
+                                       loss_func=mean_squared_error)
 
     forecaster = OnlineEnsembleForecaster([
         ("av5",  NaiveForecaster(strategy="mean", window_length=5)),
@@ -57,7 +58,8 @@ def test_weights_for_airline_nnls():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    hedge_expert = NNLSEnsemble(n_estimators=3, loss_func=mean_squared_error)
+    hedge_expert = NNLSEnsemble(n_estimators=3,
+                                loss_func=mean_squared_error)
 
     forecaster = OnlineEnsembleForecaster([
         ("av5",  NaiveForecaster(strategy="mean", window_length=5)),
