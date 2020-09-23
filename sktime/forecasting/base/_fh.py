@@ -181,14 +181,19 @@ class ForecastingHorizon:
         """
         return self._values
 
-    def to_numpy(self):
+    def to_numpy(self, **kwargs):
         """Returns underlying values as np.array
+
+        Parameters
+        ----------
+        **kwargs : dict of kwargs
+            kwargs passed to `to_numpy()` on wrapped pandas index.
 
         Returns
         -------
         fh : np.ndarray
         """
-        return self.to_pandas().to_numpy()
+        return self.to_pandas().to_numpy(**kwargs)
 
     # we cache the results from `to_relative()` and `to_absolute()` calls to speed up
     # computations, as these are the basic methods and often required internally when

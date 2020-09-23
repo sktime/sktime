@@ -229,12 +229,9 @@ def check_fh(fh, enforce_relative=False):
         fh = ForecastingHorizon(fh, is_relative=True)
 
     # Check if non-empty, note we check for empty values here, rather than
-    # during
-    # construction of ForecastingHorizon because ForecastingHorizon itself
-    # will be
-    # empty in some cases, but users should not create forecasting horizons
-    # with no
-    # values
+    # during construction of ForecastingHorizon because ForecastingHorizon
+    # can be empty in some cases, but users should not create forecasting horizons
+    # with no values
     if len(fh) == 0:
         raise ValueError(f"`fh` must not be empty, but found: {fh}")
 
