@@ -8,7 +8,7 @@ from sktime.utils.validation.series_as_features import check_X
 
 class TSInterpolator(BaseSeriesAsFeaturesTransformer):
     """Transformer that rescales series for another number of points.
-        For each cell in datadrame transformer fits scipy linear interp1d
+        For each cell in dataframe transformer fits scipy linear interp1d
         and samples user defined number of points. Points are generated
         by numpy.linspace. After transformation each cell will be a numpy.array
         of defined size.

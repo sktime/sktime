@@ -176,10 +176,10 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             This estimator
         """
         if not isinstance(self.min_length, int):
-            raise ValueError(f"Min_lenght must be an integer, but found: "
+            raise ValueError(f"Min_length must be an integer, but found: "
                              f"{type(self.min_length)}")
         if self.min_length < 1:
-            raise ValueError(f"Min_lenght must be an positive integer (>= 1), "
+            raise ValueError(f"Min_length must be an positive integer (>= 1), "
                              f"but found: {self.min_length}")
         X = check_X(X)
         self.input_shape_ = X.shape

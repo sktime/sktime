@@ -500,6 +500,15 @@
       "contributions": [
         "tutorial"
       ]
+    },
+    {
+      "login": "brettkoonce",
+      "name": "brett koonce",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/11281814?v=4",
+      "profile": "https://github.com/brettkoonce",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
