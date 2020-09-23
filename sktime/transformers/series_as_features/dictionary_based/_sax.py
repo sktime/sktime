@@ -26,7 +26,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         run a sliding window across the series
         for each window
             shorten the series with PAA (Piecewise Approximate Aggregation)
-            discretise the shortened seried into fixed bins
+            discretise the shortened series into fixed bins
             form a word from these discrete values
     by default SAX produces a single word per series (window_size=0).
     SAX returns a pandas data frame where column 0 is the histogram (sparse
