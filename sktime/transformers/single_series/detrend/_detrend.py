@@ -39,7 +39,7 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
     Parameters
     ----------
     forecaster : estimator object
-        The forcasting model to remove the trend with
+        The forecasting model to remove the trend with
         (e.g. PolynomialTrendForecaster)
 
     Attributes

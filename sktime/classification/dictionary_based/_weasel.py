@@ -48,13 +48,13 @@ class WEASEL(BaseClassifier):
     #         chi2-threshold: used for feature selection to select best words
     #         anova: select best l/2 fourier coefficients other than first ones
     #         bigrams: using bigrams of SFA words
-    #         binning_strategy: the binning strategy used to disctrtize into
+    #         binning_strategy: the binning strategy used to discretise into
     #                           SFA words.
     #
     # WEASEL slides a window length w along the series. The w length window
     # is shortened to an l length word through taking a Fourier transform and
     # keeping the best l/2 complex coefficients using an anova one-sided
-    # test. These l coefficents are then discretised into alpha possible
+    # test. These l coefficients are then discretised into alpha possible
     # symbols, to form a word of length l. A histogram of words for each
     # series is formed and stored.
     # For each window-length a bag is created and all words are joint into
