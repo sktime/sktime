@@ -33,7 +33,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     TDE searches k parameter values selected using a Gaussian processes
     regressor, evaluating each with a LOOCV. It then retains s
     ensemble members.
-    There are six primary parameters for individual classifers:
+    There are six primary parameters for individual classifiers:
             alpha: alphabet size
             w: window length
             l: word length
@@ -44,7 +44,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These l
-    coefficents are then discretised into alpha possible values, to form a
+    coefficients are then discretised into alpha possible values, to form a
     word length l using breakpoints found using b. A histogram of words for
     each series is formed and stored, using a spatial pyramid of h levels.
     fit involves finding n histograms.

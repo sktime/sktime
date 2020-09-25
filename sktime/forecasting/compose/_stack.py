@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -18,8 +18,9 @@ from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SingleWindowSplitter
 
 
-class StackingForecaster(RequiredForecastingHorizonMixin,
-                         BaseHeterogenousEnsembleForecaster):
+class StackingForecaster(
+    RequiredForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster
+):
     _required_parameters = ["forecasters", "final_regressor"]
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
@@ -67,14 +68,13 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
         self.final_regressor_.fit(X_meta, y_meta)
 
         # refit forecasters on entire training series
-        self._fit_forecasters(forecasters, y_train, fh=self.fh,
-                              X_train=X_train)
+        self._fit_forecasters(forecasters, y_train, fh=self.fh, X_train=X_train)
 
         self._is_fitted = True
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -94,8 +94,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
 
-    def _predict(self, fh=None, X=None, return_pred_int=False,
-                 alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
         y_preds = np.column_stack(self._predict_forecasters(X=X))
@@ -105,5 +104,7 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
 
     def _check_final_regressor(self):
         if not is_regressor(self.final_regressor):
-            raise ValueError(f"`final_regressor` should be a regressor, "
-                             f"but found: {self.final_regressor}")
+            raise ValueError(
+                f"`final_regressor` should be a regressor, "
+                f"but found: {self.final_regressor}"
+            )

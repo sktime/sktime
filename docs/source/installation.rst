@@ -22,7 +22,7 @@ To install the development version of sktime, follow these steps:
 4. Make sure your local version is up-to-date: :code:`git pull`
 5. Build package from source using: :code:`pip install --editable .`
 
-Please read below for more detailed instrcutions for specific operating
+Please read below for more detailed instructions for specific operating
 systems.
 
 Building sktime from source also requires
@@ -166,7 +166,7 @@ can set the environment variables to these locations:
 
 Finally you can build the package using the standard command.
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 

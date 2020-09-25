@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -12,8 +12,9 @@ from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class EnsembleForecaster(OptionalForecastingHorizonMixin,
-                         BaseHeterogenousEnsembleForecaster):
+class EnsembleForecaster(
+    OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster
+):
     """Ensemble of forecasters
 
     Parameters
@@ -54,7 +55,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -75,5 +76,4 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(
-            axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)

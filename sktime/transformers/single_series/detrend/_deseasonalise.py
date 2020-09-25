@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -7,14 +7,13 @@ __all__ = [
     "Deseasonalizer",
     "Deseasonalizer",
     "ConditionalDeseasonalizer",
-    "ConditionalDeseasonalizer"
+    "ConditionalDeseasonalizer",
 ]
 
 import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.transformers.single_series.base import \
-    BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.utils.datetime import _get_duration
 from sktime.utils.datetime import _get_unit
 from sktime.utils.seasonality import autocorrelation_seasonality_test
@@ -38,8 +37,9 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         self.sp = check_sp(sp)
         allowed_models = ("additive", "multiplicative")
         if model not in allowed_models:
-            raise ValueError(f"`model` must be one of {allowed_models}, "
-                             f"but found: {model}")
+            raise ValueError(
+                f"`model` must be one of {allowed_models}, " f"but found: {model}"
+            )
         self.model = model
         self._y_index = None
         self.seasonal_ = None
@@ -50,9 +50,15 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
 
     def _align_seasonal(self, y):
         """Helper function to align seasonal components with y's time index"""
-        shift = -_get_duration(y.index[0], self._y_index[0],
-                               coerce_to_int=True,
-                               unit=_get_unit(self._y_index)) % self.sp
+        shift = (
+            -_get_duration(
+                y.index[0],
+                self._y_index[0],
+                coerce_to_int=True,
+                unit=_get_unit(self._y_index),
+            )
+            % self.sp
+        )
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
     def fit(self, y, **fit_params):
@@ -74,8 +80,13 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
 
         # apply seasonal decomposition
         self.seasonal_ = seasonal_decompose(
-            y, model=self.model, period=sp, filt=None, two_sided=True,
-            extrapolate_trend=0).seasonal.iloc[:sp]
+            y,
+            model=self.model,
+            period=sp,
+            filt=None,
+            two_sided=True,
+            extrapolate_trend=0,
+        ).seasonal.iloc[:sp]
 
         self._is_fitted = True
         return self
@@ -131,16 +142,16 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
     def update(self, y_new, update_params=False):
         """Update fitted parameters
 
-         Parameters
-         ----------
-         y_new : pd.Series
-         X_new : pd.DataFrame
-         update_params : bool, optional (default=False)
+        Parameters
+        ----------
+        y_new : pd.Series
+        X_new : pd.DataFrame
+        update_params : bool, optional (default=False)
 
-         Returns
-         -------
-         self : an instance of self
-         """
+        Returns
+        -------
+        self : an instance of self
+        """
         self.check_is_fitted()
         y_new = check_y(y_new)
         self._set_y_index(y_new)
@@ -174,12 +185,15 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         if not callable(self.seasonality_test_):
             raise ValueError(
                 f"`func` must be a function/callable, but found: "
-                f"{type(self.seasonality_test_)}")
+                f"{type(self.seasonality_test_)}"
+            )
 
         is_seasonal = self.seasonality_test_(y, sp=self.sp)
         if not isinstance(is_seasonal, (bool, np.bool_)):
-            raise ValueError(f"Return type of `func` must be boolean, "
-                             f"but found: {type(is_seasonal)}")
+            raise ValueError(
+                f"Return type of `func` must be boolean, "
+                f"but found: {type(is_seasonal)}"
+            )
         return is_seasonal
 
     def fit(self, y_train, **fit_params):
@@ -211,28 +225,32 @@ class ConditionalDeseasonalizer(Deseasonalizer):
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
             self.seasonal_ = seasonal_decompose(
-                y_train, model=self.model,
-                period=sp, filt=None,
+                y_train,
+                model=self.model,
+                period=sp,
+                filt=None,
                 two_sided=True,
-                extrapolate_trend=0).seasonal.iloc[:sp]
+                extrapolate_trend=0,
+            ).seasonal.iloc[:sp]
         else:
             # otherwise, set idempotent seasonal components
-            self.seasonal_ = np.zeros(
-                self.sp) if self.model == "additive" else np.ones(self.sp)
+            self.seasonal_ = (
+                np.zeros(self.sp) if self.model == "additive" else np.ones(self.sp)
+            )
 
         self._is_fitted = True
         return self
 
     def update(self, y_new, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
-         Parameters
-         ----------
-         y_new : pd.Series
-         update_params : bool, optional (default=False)
+        Parameters
+        ----------
+        y_new : pd.Series
+        update_params : bool, optional (default=False)
 
-         Returns
-         -------
-         self : an instance of self
-         """
+        Returns
+        -------
+        self : an instance of self
+        """
         raise NotImplementedError()
