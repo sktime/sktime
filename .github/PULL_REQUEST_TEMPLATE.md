@@ -34,7 +34,7 @@ This is only relevant if you contribute a new estimator
 
 - [ ] I've added unit tests and made sure they pass locally. 
 - [ ] I've updated the existing example notebooks or provided a new one to showcase how my estimator works.
-- [ ] I've updated sktime's [estimator overview](https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md) and I'm committed to maintain my contribution and provide bug fixes if necessary.
+- [ ] I've updated sktime's [CODEOWNERS](https://github.com/alan-turing-institute/sktime/blob/master/CODEOWNERS) and I'm committed to maintain my algorithm.
 - [ ] I've added myself to the list of contributors
 -->
 

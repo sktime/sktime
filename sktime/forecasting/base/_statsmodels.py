@@ -3,15 +3,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["BaseStatsModelsAdapter"]
+__all__ = ["_StatsModelsAdapter"]
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin,
-                             BaseSktimeForecaster):
+class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
+                          BaseSktimeForecaster):
     """Base class for interfacing statsmodels forecasting algorithms
     """
     _fitted_param_names = ()
@@ -19,7 +19,7 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin,
     def __init__(self):
         self._forecaster = None
         self._fitted_forecaster = None
-        super(BaseStatsModelsAdapter, self).__init__()
+        super(_StatsModelsAdapter, self).__init__()
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -36,9 +36,7 @@ class BaseStatsModelsAdapter(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
-
-        # update observation horizon
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         self._fit_forecaster(y_train, X_train=X_train)
         self._is_fitted = True

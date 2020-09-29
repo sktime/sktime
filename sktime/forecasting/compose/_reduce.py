@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseLastWindowForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
@@ -31,7 +31,7 @@ from sktime.utils.validation.forecasting import check_y
 ##############################################################################
 # base classes for reduction from forecasting to regression
 
-class BaseReducer(BaseLastWindowForecaster):
+class BaseReducer(BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
     _required_parameters = ["regressor"]
@@ -59,7 +59,7 @@ class BaseReducer(BaseLastWindowForecaster):
         if X_new is not None or update_params:
             raise NotImplementedError()
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
         return self
 
     def _transform(self, y_train, X_train=None):
@@ -203,11 +203,9 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         -------
         self : returns an instance of self.
         """
-        # input checks
+        self._set_y_X(y_train, X_train)
         if X_train is not None:
             raise NotImplementedError()
-
-        self._set_oh(y_train)
         self._set_fh(fh)
         if np.any(self.fh <= 0):
             raise NotImplementedError(
@@ -242,7 +240,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # use last window as new input data for time series regressors to
         # make forecasts
         # get last window from observation horizon
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
@@ -287,7 +285,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             raise NotImplementedError()
 
         # set values
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         self.step_length_ = check_step_length(self.step_length)
@@ -321,7 +319,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 

@@ -1,17 +1,12 @@
 {
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "",
   "files": [
     "CONTRIBUTORS.md"
   ],
   "imageSize": 100,
-  "commit": false,
-  "commitConvention": "none",
   "contributorsPerLine": 7,
   "contributorsSortAlphabetically": true,
-  "skipCi": "true",
+  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg)](#contributors)",
+  "skipCi": true,
   "contributors": [
     {
       "login": "fkiraly",
@@ -110,7 +105,8 @@
         "ideas",
         "projectManagement",
         "question",
-        "talk"
+        "talk",
+        "mentoring"
       ]
     },
     {
@@ -286,7 +282,8 @@
         "design",
         "ideas",
         "review",
-        "tutorial"
+        "tutorial",
+        "mentoring"
       ]
     },
     {
@@ -432,7 +429,8 @@
       "contributions": [
         "code",
         "doc",
-        "test"
+        "test",
+        "mentoring"
       ]
     },
     {
@@ -444,6 +442,50 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "lynnssi",
+      "name": "Alexandra Amidon",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/17050655?v=4",
+      "profile": "https://medium.com/@alexandra.amidon",
+      "contributions": [
+        "blog",
+        "doc",
+        "ideas"
+      ]
+    },
+    {
+      "login": "chizzi25",
+      "name": "chizzi25",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/67911243?v=4",
+      "profile": "https://github.com/chizzi25",
+      "contributions": [
+        "blog"
+      ]
+    },
+    {
+      "login": "Piyush1729",
+      "name": "Piyush1729",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/64950012?v=4",
+      "profile": "https://github.com/Piyush1729",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "sri1419",
+      "name": "sri1419",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/65078278?v=4",
+      "profile": "https://github.com/sri1419",
+      "contributions": [
+        "code"
+      ]
     }
-  ]
+  ],
+  "projectName": "sktime",
+  "projectOwner": "alan-turing-institute",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "commitConvention": "none"
 }
