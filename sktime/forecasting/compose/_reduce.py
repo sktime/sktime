@@ -11,7 +11,9 @@ __all__ = [
     "RecursiveTimeSeriesRegressionForecaster",
     "ReducedRegressionForecaster",
     "DirectRegressionForecaster",
-    "RecursiveRegressionForecaster"
+    "RecursiveRegressionForecaster",
+    "DirRecRegressionForecaster",
+    "DirRecTimeSeriesForecaster"
 ]
 
 
@@ -430,14 +432,14 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
         # iterate over forecasting horizon
         self.regressors_ = []
+
         for i in range(len(self.fh)):
             y_train = Y_train[:, i]
             regressor = clone(self.regressor)
             regressor.fit(X_train, y_train)
             self.regressors_.append(regressor)
-
-            column_to_add = "y_train_{}".format(i)
-            X_train[column_to_add] = y_train
+            X_train = np.column_stack([X_train, y_train.reshape(-1, 1)])
+            X_train = self._format_windows(X_train)
 
         self._is_fitted = True
         return self
@@ -456,17 +458,16 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
             return self._predict_nan(fh)
 
         # recursively predict iterating over forecasting horizon
-
         for i in range(fh_max):
             X_last = self._format_windows(
                 [last_window])  # convert data into required input format
 
             # make forecast using specific fitted regressor
-            y_pred[i] = self.regressor_[i].predict(
-                X_last)
-
+            y_pred[i] = self.regressors_[i].predict(X_last)
+        
             # update last window with previous prediction
             # use full window adopting from DirectReducer
+
             last_window = np.append(last_window, y_pred[i])
 
         fh_idx = fh.index_like(self.cutoff)
@@ -474,11 +475,51 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
 
 class DirRecRegressionForecaster(ReducedTabularRegressorMixin, _DirRecReducer):
+    """
+    Forecasting based on reduction to tabular regression with the
+    DirRec (hybrid) strategy
+    For the direct strategy,  a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the recusrive
+    strategy.
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
     pass
 
 
 class DirRecTimeSeriesForecaster(ReducedTimeSeriesRegressorMixin,
                                  _DirRecReducer):
+    """
+    Forecasting based on reduction to time series regression with a DirRec
+    (hybrid) reduction strategy.
+    For the direct strategy,  a separate forecaster is fitted
+    for each step ahead of the forecasting horizon and then
+    the previous forecasting horizon is added as an input
+    for training the next forecaster, following the recusrive
+    strategy.
+
+    Parameters
+    ----------
+    regressor : sktime estimator object
+        Define the type of time series regression model.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
     pass
 
 ##############################################################################
