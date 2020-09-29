@@ -465,7 +465,6 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
         # get last window from observation horizon
         last_window, _ = self._get_last_window()
-    
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
