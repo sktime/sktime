@@ -33,6 +33,7 @@ from sktime.utils.validation.forecasting import check_y
 ##############################################################################
 # base classes for reduction from forecasting to regression
 
+
 class BaseReducer(BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
@@ -411,7 +412,7 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
         if X_train is not None:
             raise NotImplementedError()
 
-        self._set_oh(y_train)
+        self._set_y_X(y_train)
         self._set_fh(fh)
         if np.any(self.fh <= 0):
             raise NotImplementedError(
@@ -451,9 +452,12 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # prepare recursive predictions
         fh_max = fh[-1]
         y_pred = np.zeros(fh_max)
+        y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
+
+        print(last_window)
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
@@ -464,7 +468,7 @@ class _DirRecReducer(RequiredForecastingHorizonMixin, BaseReducer):
 
             # make forecast using specific fitted regressor
             y_pred[i] = self.regressors_[i].predict(X_last)
-        
+
             # update last window with previous prediction
             # use full window adopting from DirectReducer
 
