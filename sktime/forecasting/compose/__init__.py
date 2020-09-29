@@ -14,6 +14,8 @@ __all__ = [
     "ReducedRegressionForecaster",
     "ReducedTimeSeriesRegressionForecaster",
     "StackingForecaster",
+    "DirRecTimeSeriesForecaster",
+    "DirRecRegressionForecaster"
 ]
 
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
@@ -28,3 +30,5 @@ from sktime.forecasting.compose._reduce import ReducedRegressionForecaster
 from sktime.forecasting.compose._reduce import \
     ReducedTimeSeriesRegressionForecaster
 from sktime.forecasting.compose._stack import StackingForecaster
+from sktime.forecasting.compose._reduce import DirRecTimeSeriesForecaster
+from sktime.forecasting.compose._reduce import DirRecRegressionForecaster
