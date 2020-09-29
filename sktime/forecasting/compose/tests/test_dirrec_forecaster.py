@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "Ayushmaan Seth"]
@@ -30,9 +30,9 @@ def extract_expected_mean(y_train, fh_length, window_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_direct(fh, window_length):
     regressor = DummyRegressor(strategy="mean")
-    forecaster = ReducedRegressionForecaster(regressor=regressor,
-                                             window_length=window_length,
-                                             strategy="direct")
+    forecaster = ReducedRegressionForecaster(
+        regressor=regressor, window_length=window_length, strategy="direct"
+    )
     forecaster.fit(y_train, fh)
     y_pred = forecaster.predict(fh)
     actual = y_pred
@@ -48,9 +48,9 @@ def test_strategy_direct(fh, window_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_recursive(fh, window_length):
     regressor = DummyRegressor()
-    forecaster = ReducedRegressionForecaster(regressor=regressor,
-                                             window_length=window_length,
-                                             strategy="recursive")
+    forecaster = ReducedRegressionForecaster(
+        regressor=regressor, window_length=window_length, strategy="recursive"
+    )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     actual = np.unique(y_pred.to_numpy())
@@ -62,9 +62,9 @@ def test_strategy_recursive(fh, window_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 def test_strategy_dirrec(fh, window_length):
     regressor = DummyRegressor(strategy="mean")
-    forecaster = ReducedRegressionForecaster(regressor=regressor,
-                                             window_length=window_length,
-                                             strategy="dirrec")
+    forecaster = ReducedRegressionForecaster(
+        regressor=regressor, window_length=window_length, strategy="dirrec"
+    )
     forecaster.fit(y_train, fh)
     y_pred = forecaster.predict(fh)
     actual = y_pred
@@ -74,4 +74,3 @@ def test_strategy_dirrec(fh, window_length):
         expected = extract_expected_mean(y_train, fh.shape[0], window_length)
 
     np.testing.assert_array_equal(actual, expected)
-
