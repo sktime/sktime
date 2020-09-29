@@ -74,3 +74,4 @@ def test_strategy_dirrec(fh, window_length):
         expected = extract_expected_mean(y_train, fh.shape[0], window_length)
 
     np.testing.assert_array_equal(actual, expected)
+
