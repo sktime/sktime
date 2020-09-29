@@ -23,7 +23,7 @@ MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
-    "statsmodels": "0.11.0"
+    "statsmodels": "0.12.0"
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -83,22 +83,7 @@ CLASSIFIERS = [
     'Programming Language :: Python :: 3.7',
     'Programming Language :: Python :: 3.8'
 ]
-EXTRAS_REQUIRE = {
-    'docs': [
-        'pmdarima',
-        'tsfresh',
-        'numba',
-        'matplotlib',
-        'jupyter',
-        'sphinx',
-        'sphinx-gallery',
-        'nbsphinx',
-        'sphinx_rtd_theme',
-        'numpydoc',
-        # https://github.com/sphinx-doc/sphinx/issues/2840
-        # 'm2r'
-    ]
-}
+
 SETUP_REQUIRES = [
     "wheel"
 ]
@@ -106,7 +91,7 @@ SETUP_REQUIRES = [
 # Optional setuptools features
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
-    'develop', 'release', 'bdist_egg', 'bdist_rpm',
+    'install', 'develop', 'release', 'bdist_egg', 'bdist_rpm',
     'bdist_wininst', 'install_egg_info', 'build_sphinx',
     'egg_info', 'easy_install', 'upload', 'bdist_wheel',
     '--single-version-externally-managed', 'sdist'
@@ -163,7 +148,6 @@ cmdclass = {'clean': CleanCommand}
 try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
-
     class build_ext_subclass(build_ext):
 
         def build_extensions(self):
@@ -177,7 +161,6 @@ try:
                     e.extra_link_args += openmp_flag
 
             build_ext.build_extensions(self)
-
 
     cmdclass['build_ext'] = build_ext_subclass
 
@@ -266,7 +249,6 @@ def setup_package():
         python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
-        extras_require=EXTRAS_REQUIRE,
         **extra_setuptools_args
     )
 

@@ -33,7 +33,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     TDE searches k parameter values selected using a Gaussian processes
     regressor, evaluating each with a LOOCV. It then retains s
     ensemble members.
-    There are six primary parameters for individual classifers:
+    There are six primary parameters for individual classifiers:
             alpha: alphabet size
             w: window length
             l: word length
@@ -44,7 +44,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These l
-    coefficents are then discretised into alpha possible values, to form a
+    coefficients are then discretised into alpha possible values, to form a
     word length l using breakpoints found using b. A histogram of words for
     each series is formed and stored, using a spatial pyramid of h levels.
     fit involves finding n histograms.
@@ -319,10 +319,14 @@ class IndividualTDE(BaseClassifier):
 
         self.random_state = random_state
 
+        binning_method = "information-gain" if igb else "equi-depth"
+
         self.transformer = SFA(word_length=word_length,
                                alphabet_size=alphabet_size,
                                window_size=window_size, norm=norm,
-                               levels=levels, igb=igb, bigrams=True,
+                               levels=levels,
+                               binning_method=binning_method,
+                               bigrams=True,
                                remove_repeat_words=True,
                                save_words=False)
         self.transformed_data = []
@@ -338,7 +342,7 @@ class IndividualTDE(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         sfa = self.transformer.fit_transform(X, y)
-        self.transformed_data = [series.to_dict() for series in sfa.iloc[:, 0]]
+        self.transformed_data = sfa.iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -357,7 +361,7 @@ class IndividualTDE(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = [series.to_dict() for series in test_bags.iloc[:, 0]]
+        test_bags = test_bags.iloc[:, 0]
 
         for i, test_bag in enumerate(test_bags):
             best_sim = -1
