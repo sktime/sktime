@@ -2,7 +2,7 @@
 # coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Markus Löning", "Sebastiaan Koel"]
+__author__ = "Markus Löning"
 __all__ = [
     "ReducedTabularRegressorMixin",
     "ReducedTimeSeriesRegressorMixin",
@@ -43,7 +43,7 @@ class BaseReducer(BaseWindowForecaster):
         self._cv = None
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -63,6 +63,8 @@ class BaseReducer(BaseWindowForecaster):
 
     def _transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
+        if X_train is not None:
+            raise NotImplementedError()
         y_train = check_y(y_train)
 
         # get integer time index
@@ -70,17 +72,11 @@ class BaseReducer(BaseWindowForecaster):
 
         # Transform target series into tabular format using
         # rolling window tabularisation
-
         x_windows = []
         y_windows = []
         for x_index, y_index in cv.split(y_train):
             x_window = y_train.iloc[x_index]
             y_window = y_train.iloc[y_index]
-
-            if X_train is not None:
-                endo_window = X_train.iloc[x_index, :].transpose()\
-                    .values.flatten()
-                x_window = np.hstack((x_window, endo_window))
 
             x_windows.append(x_window)
             y_windows.append(y_window)
@@ -207,6 +203,8 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         self : returns an instance of self.
         """
         self._set_y_X(y_train, X_train)
+        if X_train is not None:
+            raise NotImplementedError()
         self._set_fh(fh)
         if np.any(self.fh <= 0):
             raise NotImplementedError(
@@ -241,22 +239,15 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # use last window as new input data for time series regressors to
         # make forecasts
         # get last window from observation horizon
-        # To Do, implement multivariate like _RecursiveReducer
-        last_window, last_window_X = self._get_last_window()
-
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
-        if last_window_X is not None:
-            X_last = self._format_windows(
-                        [np.hstack((last_window, last_window_X.transpose()
-                                    .flatten()))])
-        else:
-            X_last = self._format_windows([last_window])
+        X_last = self._format_windows([last_window])
 
         # preallocate array for forecasted values
         y_pred = np.zeros(len(fh))
-        print(X_last)
+
         # Iterate over estimators/forecast horizon
         for i, regressor in enumerate(self.regressors_):
             y_pred[i] = regressor.predict(X_last)
@@ -287,6 +278,10 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         -------
         self : returns an instance of self.
         """
+        # input checks
+        if X_train is not None:
+            raise NotImplementedError()
+
         # set values
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
@@ -322,32 +317,20 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
-        last_window, last_window_X = self._get_last_window()
+        last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
 
         # recursively predict iterating over forecasting horizon
         for i in range(fh_max):
-
-            if last_window_X is not None:
-                # convert data into required input format
-                X_last = self._format_windows(
-                    [np.hstack((last_window, last_window_X.transpose()
-                                .flatten()))])
-            else:
-                # convert data into required input format
-                X_last = self._format_windows([last_window])
-
+            X_last = self._format_windows(
+                [last_window])  # convert data into required input format
             y_pred[i] = self.regressor_.predict(
                 X_last)  # make forecast using fitted regressor
 
-            if X is not None:
-                last_window_X = np.vstack((
-                    last_window_X, X.iloc[i, :]))[-self.window_length_:]
-
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[
-                        -self.window_length_:]
+                          -self.window_length_:]
 
         fh_idx = fh.index_like(self.cutoff)
         return y_pred[fh_idx]
