@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from numba import prange
+
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import from_nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Angus Dempster"
@@ -54,9 +54,8 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         -------
         self
         """
-        X = check_X(X)
-        _, self.n_columns = X.shape
-        n_timepoints = X.applymap(lambda series: series.size).max().max()
+        X = check_X(X, coerce_to_numpy=True)
+        _, self.n_columns, n_timepoints = X.shape
         self.kernels = _generate_kernels(
             n_timepoints, self.num_kernels, self.n_columns, self.random_state
         )
@@ -76,8 +75,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         pandas DataFrame, transformed features
         """
         self.check_is_fitted()
-        X = check_X(X)
-        _X = from_nested_to_3d_numpy(X)
+        _X = check_X(X, coerce_to_numpy=True)
         if self.normalise:
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
                 _X.std(axis=-1, keepdims=True) + 1e-8

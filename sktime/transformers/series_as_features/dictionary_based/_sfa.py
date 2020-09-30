@@ -7,18 +7,13 @@ import sys
 
 import numpy as np
 import pandas as pd
+from numba import njit
+from sklearn.feature_selection import f_classif
+from sklearn.tree import DecisionTreeClassifier
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based._sax import _BitWord
-
-from sktime.utils.data_container import from_nested_to_2d_numpy
-
 from sktime.utils.validation.series_as_features import check_X
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.feature_selection import f_classif
-
-from numba import njit
 
 # from numba import typeof
 # from numba.core import types
@@ -183,10 +178,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
 
-        X = check_X(X, enforce_univariate=True)
-        # _X = nested_to_3d_numpy(X)
-        # _X = _X.reshape(_X.shape[0], _X.shape[2])
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
@@ -197,10 +190,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     def transform(self, X, y=None):
         self.check_is_fitted()
 
-        X = check_X(X, enforce_univariate=True)
-        # _X = nested_to_3d_numpy(X)
-        # _X = _X.reshape(_X.shape[0], _X.shape[2])
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         bags = pd.DataFrame()
         dim = []

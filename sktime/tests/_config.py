@@ -127,8 +127,16 @@ ESTIMATOR_TEST_PARAMS = {
         "disable_progressbar": True,
         "show_warnings": False,
         "ml_task": "classification",
+        "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"acf_lag": 10},
     SFA: {"return_pandas_data_series": True},
 }
+NON_STATE_CHANGING_METHODS = [
+    "predict",
+    "predict_proba",
+    "decision_function",
+    "transform",
+    "inverse_transform",
+]

@@ -4,9 +4,9 @@ __all__ = ["PCATransformer"]
 
 import pandas as pd
 from sklearn.decomposition import PCA
+
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_2d_numpy_to_nested
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -47,12 +47,12 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
-        Xtab = from_nested_to_2d_numpy(X)
-        self.pca.fit(Xtab)
+        self.pca.fit(X)
         self._is_fitted = True
         return self
 
@@ -75,17 +75,12 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
           n_components - 1).
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         # Transform X using the fitted PCA
-        Xtab = from_nested_to_2d_numpy(X)
-        Xpca = pd.DataFrame(
-            data=self.pca.transform(Xtab),
-            index=Xtab.index,
-            columns=Xtab.columns[: self.pca.n_components_],
-        )
+        Xpca = pd.DataFrame(data=self.pca.transform(X))
 
         # Back-transform into time series data format
-        Xt = from_2d_numpy_to_nested(Xpca, index=X.index)
-        Xt.columns = X.columns
+        Xt = from_2d_numpy_to_nested(Xpca)
         return Xt

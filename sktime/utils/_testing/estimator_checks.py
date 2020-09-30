@@ -17,11 +17,12 @@ import joblib
 import numpy as np
 import pytest
 from sklearn import clone
-from sklearn.utils.testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
+from sklearn.utils.testing import set_random_state
+
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier
@@ -30,6 +31,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
+from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.base import (
     is_non_fittable_series_as_features_transformer,
@@ -40,18 +42,10 @@ from sktime.transformers.series_as_features.base import (
 from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _make_args
 from sktime.utils._testing import _assert_almost_equal
+from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _get_args
-
-NON_STATE_CHANGING_METHODS = [
-    "predict",
-    "predict_proba",
-    "decision_function",
-    "transform",
-    "inverse_transform",
-]
+from sktime.utils._testing import _make_args
 
 
 def check_estimator(Estimator, exclude=None):

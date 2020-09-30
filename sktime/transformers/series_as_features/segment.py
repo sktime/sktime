@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
+import math
+
 import numpy as np
 import pandas as pd
-import math
 from sklearn.utils import check_random_state
+
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import _concat_nested_arrays
-from sktime.utils.data_container import get_time_index
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import _get_column_names
+from sktime.utils.data_container import _get_time_index
 from sktime.utils.time_series import compute_relative_to_n_timepoints
-from sktime.utils.validation import is_int
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -21,7 +22,7 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
     intervals : int, np.ndarray or list of np.ndarrays with one for each
     column of input data.
         Intervals to generate.
-        - If int, intervals are generated.
+        - If int, intervals gives the number of generated intervals.
         - If ndarray, 2d np.ndarray [n_intervals, 2] with rows giving
         intervals, the first column giving start points,
         and the second column giving end points of intervals
@@ -48,17 +49,21 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, coerce_to_numpy=True)
 
-        self.input_shape_ = X.shape
+        n_instances, n_columns, n_timepoints = X.shape
+        self.input_shape_ = n_instances, n_columns, n_timepoints
 
-        # Retrieve time-series indexes from each column.
-        self._time_index = get_time_index(X)
+        self._time_index = np.arange(n_timepoints)
 
         if isinstance(self.intervals, np.ndarray):
-            self.intervals_ = self.intervals
+            self.intervals_ = list(self.intervals)
 
-        elif is_int(self.intervals):
+        elif isinstance(self.intervals, (int, np.integer)):
+            if not self.intervals <= n_timepoints // 2:
+                raise ValueError(
+                    "The number of intervals must be half the number of " "time points"
+                )
             self.intervals_ = np.array_split(self._time_index, self.intervals)
 
         else:
@@ -89,7 +94,10 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
 
         # Check inputs.
         self.check_is_fitted()
-        X = check_X(X)
+
+        # Tabularise assuming series
+        # have equal indexes in any given column
+        X = check_X(X, coerce_to_numpy=True)
 
         # Check that the input is of the same shape as the one passed
         # during fit.
@@ -107,19 +115,19 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         # Segment into intervals.
         # TODO generalise to non-equal-index cases
         intervals = []
-        colname = X.columns[0]
-        colnames = []
-        # Tabularise assuming series
-        arr = from_nested_to_2d_numpy(X, return_array=True)
-        # have equal indexes in any given column
-        for start, end in self.intervals_:
-            interval = arr[:, start:end]
+
+        # univariate, only a single column name
+        column_names = _get_column_names(X)[0]
+        new_column_names = []
+        for interval in self.intervals_:
+            start, end = interval[0], interval[-1]
+            interval = X[:, :, start:end]
             intervals.append(interval)
-            colnames.append(f"{colname}_{start}_{end}")
+            new_column_names.append(f"{column_names}_{start}_{end}")
 
         # Return nested pandas DataFrame.
         Xt = pd.DataFrame(_concat_nested_arrays(intervals, return_arrays=True))
-        Xt.columns = colnames
+        Xt.columns = new_column_names
         return Xt
 
 
@@ -189,7 +197,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
         # Retrieve time-series indexes from each column.
         # TODO generalise to columns with series of unequal length
-        self._time_index = get_time_index(X)
+        self._time_index = _get_time_index(X)
 
         # Compute random intervals for each column.
         # TODO if multiple columns are passed, introduce option to compute
@@ -275,7 +283,6 @@ class RandomIntervalSegmenter(IntervalSegmenter):
 
 
 class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
-
     """
     This class is to transform a univariate series into a
     multivariate one by extracting sets of subsequences.
@@ -326,8 +333,8 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
         """
         # get the number of attributes and instances
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         n_timepoints = X.shape[1]
         n_instances = X.shape[0]

@@ -6,6 +6,7 @@ from inspect import signature
 
 import numpy as np
 import pandas as pd
+
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base import is_forecaster
 from sktime.regression.base import is_regressor
@@ -15,11 +16,12 @@ from sktime.transformers.series_as_features.base import (
 )
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
-from sktime.utils.data_container import is_nested_dataframe
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series_as_features import make_classification_problem
 from sktime.utils._testing.series_as_features import make_regression_problem
+from sktime.utils.data_container import from_3d_numpy_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import is_nested_dataframe
 
 
 def _generate_df_from_array(array, n_rows=10, n_cols=1):
@@ -56,28 +58,41 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _make_args(estimator, method, *args, **kwargs):
+def _make_args(estimator, method, **kwargs):
     """Helper function to generate appropriate arguments for testing different
     estimator types and their methods"""
     if method == "fit":
-        return _make_fit_args(estimator, *args, **kwargs)
+        return _make_fit_args(estimator, **kwargs)
 
     elif method in ("predict", "predict_proba", "decision_function"):
-        return _make_predict_args(estimator, *args, **kwargs)
+        return _make_predict_args(estimator, **kwargs)
 
     elif method == "transform":
-        return _make_transform_args(estimator, *args, **kwargs)
+        return _make_transform_args(estimator, **kwargs)
 
     elif method == "inverse_transform":
-        args = _make_transform_args(estimator, *args, **kwargs)
+        args = _make_transform_args(estimator, **kwargs)
+
         if isinstance(estimator, Tabularizer):
-            X, y = args
-            return from_nested_to_2d_numpy(X), y
-        else:
-            return args
+            args = _handle_tabularizer_args(*args, **kwargs)
+
+        return args
 
     else:
         raise ValueError(f"Method: {method} not supported")
+
+
+def _handle_tabularizer_args(*args, **kwargs):
+    # the Tabularizer transforms a nested pd.DataFrame/3d numpy array into a
+    # 2d numpy array, so the inverse transform goes from a 2d numpy array to a
+    # nested pd.DataFrame/3d array
+    # TODO refactor Tabularizer as series-as-features composition meta-estimator,
+    #  rather than transformer or introduce special transformer type
+    X, y = args
+    if "return_numpy" in kwargs and kwargs["return_numpy"]:
+        return from_3d_numpy_to_2d_numpy(X), y
+    else:
+        return from_nested_to_2d_numpy(X), y
 
 
 def _make_fit_args(estimator, random_state=None, **kwargs):
@@ -103,26 +118,28 @@ def _make_fit_args(estimator, random_state=None, **kwargs):
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
 
-def _make_predict_args(estimator, *args, **kwargs):
+def _make_predict_args(estimator, **kwargs):
     if is_forecaster(estimator):
         fh = 1
         return (fh,)
 
     elif is_classifier(estimator):
-        X, y = make_classification_problem(*args, **kwargs)
+        X, y = make_classification_problem(**kwargs)
         return (X,)
 
     elif is_regressor(estimator):
-        X, y = make_regression_problem(*args, **kwargs)
+        X, y = make_regression_problem(**kwargs)
         return (X,)
 
     else:
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
 
-def _make_transform_args(estimator, random_state=None):
+def _make_transform_args(estimator, return_numpy=False, random_state=None):
     if is_series_as_features_transformer(estimator):
-        return make_classification_problem(random_state=random_state)
+        return make_classification_problem(
+            return_numpy=return_numpy, random_state=random_state
+        )
 
     elif is_single_series_transformer(estimator) or is_forecaster(estimator):
         y = make_forecasting_problem(random_state=random_state)
@@ -137,12 +154,18 @@ def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
     # tabularizing the data first would simplify this a bit, but does not
     # work for unequal length data
 
-    if is_nested_dataframe(x):
+    # in some cases, x and y may be empty (e.g. TSFreshRelevantFeatureExtractor) and
+    # we cannot compare individual cells, so we simply check if they are equal
+    if isinstance(x, pd.DataFrame) and x.empty:
+        assert y.empty
+        assert x.equals(y)
+
+    elif is_nested_dataframe(x):
         # make sure both inputs have the same shape
         if not x.shape == y.shape:
             raise ValueError("Found inputs with different shapes")
 
-        # iterate over columns
+        # iterate over columns, checking individuals cells
         n_columns = x.shape[1]
         for i in range(n_columns):
             xc = x.iloc[:, i].tolist()
@@ -153,7 +176,6 @@ def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
                 np.testing.assert_array_almost_equal(
                     xci, yci, decimal=decimal, err_msg=err_msg, verbose=verbose
                 )
-
     else:
         np.testing.assert_array_almost_equal(
             x, y, decimal=decimal, err_msg=err_msg, verbose=verbose

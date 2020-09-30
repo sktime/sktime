@@ -40,7 +40,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
         # Check the data
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
+        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
 
         self._check_parameters()
 

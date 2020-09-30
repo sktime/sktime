@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 __all__ = ["TruncationTransformer"]
@@ -53,12 +53,12 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
 
         if self.lower is None:
             n_instances, _ = X.shape
             arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.lower_ = TruncationTransformer.get_min_length(arr)
+            self.lower_ = self.get_min_length(arr)
         else:
             self.lower_ = self.lower
 
@@ -79,18 +79,19 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         Xt : pandas DataFrame
         """
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
 
         n_instances, _ = X.shape
 
         arr = [X.iloc[i, :].values for i in range(n_instances)]
 
-        min_length = TruncationTransformer.get_min_length(arr)
+        min_length = self.get_min_length(arr)
 
         if min_length < self.lower_:
             raise ValueError(
                 "Error: min_length of series \
-                    is less than the one found when fit or set.")
+                    is less than the one found when fit or set."
+            )
 
         # depending on inputs either find the shortest truncation.
         # or use the bounds.
@@ -99,8 +100,6 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         else:
             idxs = np.arange(self.lower_, self.upper)
 
-        truncate = [pd.Series([series.iloc[idxs]
-                               for series in out])
-                    for out in arr]
+        truncate = [pd.Series([series.iloc[idxs] for series in out]) for out in arr]
 
         return pd.DataFrame(truncate)

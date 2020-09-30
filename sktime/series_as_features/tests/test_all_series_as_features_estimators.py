@@ -8,28 +8,64 @@ __all__ = []
 import numpy as np
 import pandas as pd
 import pytest
+
 from sktime.tests._config import EXCLUDED_ESTIMATORS
+from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
 
-ALL_CLASSIFIERS = [
+CLASSIFIERS = [
     e[1]
     for e in all_estimators(estimator_type="classifier")
     if e[0] not in EXCLUDED_ESTIMATORS
 ]
 
-ALL_REGRESSORS = [
+REGRESSORS = [
     e[1]
     for e in all_estimators(estimator_type="regressor")
     if e[0] not in EXCLUDED_ESTIMATORS
 ]
 
+SERIES_AS_FEATURES_TRANSFORMERS = [
+    e[1]
+    for e in all_estimators(estimator_type="series_as_features_transformer")
+    if e[0] not in EXCLUDED_ESTIMATORS
+]
+
+ALL_SERIES_AS_FEATURES_ESTIMATORS = (
+    CLASSIFIERS + REGRESSORS + SERIES_AS_FEATURES_TRANSFORMERS
+)
+
 N_CLASSES = 3
 ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)
 
 
-@pytest.mark.parametrize("Estimator", [*ALL_CLASSIFIERS, *ALL_REGRESSORS])
+@pytest.mark.parametrize("Estimator", ALL_SERIES_AS_FEATURES_ESTIMATORS)
+def test_series_as_features_X_3d_numpy(Estimator):
+    estimator = _construct_instance(Estimator)
+    fit_args = _make_args(estimator, "fit", return_numpy=True)
+    estimator.fit(*fit_args)
+
+    for method in NON_STATE_CHANGING_METHODS:
+        if hasattr(estimator, method):
+
+            # try if methods can handle 3d numpy input data
+            try:
+                args = _make_args(estimator, method, return_numpy=True)
+                getattr(estimator, method)(*args)
+
+            # if not, check if they raise the appropriate error message
+            except ValueError as e:
+                error_msg = "This method requires X to be a nested pd.DataFrame"
+                assert error_msg in str(e), (
+                    f"{estimator.__class__.__name__} does "
+                    f"not handle 3d numpy input data "
+                    f"correctly"
+                )
+
+
+@pytest.mark.parametrize("Estimator", CLASSIFIERS + REGRESSORS)
 def test_series_as_features_multivariate_input(Estimator):
     # check if multivariate input is correctly handled
     n_columns = 2
@@ -46,6 +82,7 @@ def test_series_as_features_multivariate_input(Estimator):
     try:
         estimator.fit(X_train, y_train)
 
+        # TODO include series-as-features transformers
         for method in ("predict", "predict_proba"):
             X = _make_args(estimator, method, n_columns=n_columns)[0]
             getattr(estimator, method)(X)
@@ -59,7 +96,7 @@ def test_series_as_features_multivariate_input(Estimator):
         )
 
 
-@pytest.mark.parametrize("Estimator", ALL_CLASSIFIERS)
+@pytest.mark.parametrize("Estimator", CLASSIFIERS)
 def test_classifier_output(Estimator):
     estimator = _construct_instance(Estimator)
     X_train, y_train = _make_args(estimator, "fit", n_classes=N_CLASSES)
@@ -82,7 +119,7 @@ def test_classifier_output(Estimator):
         assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
 
-@pytest.mark.parametrize("Estimator", ALL_REGRESSORS)
+@pytest.mark.parametrize("Estimator", REGRESSORS)
 def test_regressor_output(Estimator):
     estimator = _construct_instance(Estimator)
     X_train, y_train = _make_args(estimator, "fit")

@@ -2,8 +2,8 @@
 import numpy as np
 import pandas as pd
 import pytest
+
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing import _generate_df_from_array
 
 N_ITER = 10
@@ -41,27 +41,6 @@ def test_bad_input_args(bad_interval):
     X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=2)
     with pytest.raises(ValueError):
         RandomIntervalSegmenter(n_intervals=bad_interval).fit(X)
-
-
-# Check that random state always gives same result.
-def test_random_state():
-    X = _generate_df_from_array(np.random.normal(size=10))
-    random_state = 1234
-
-    for n_intervals in [0.5, 10, "sqrt", "random", "log"]:
-        trans = RandomIntervalSegmenter(
-            n_intervals=n_intervals, random_state=random_state
-        )
-        first_Xt = trans.fit_transform(X)
-        for _ in range(N_ITER):
-            trans = RandomIntervalSegmenter(
-                n_intervals=n_intervals, random_state=random_state
-            )
-            Xt = trans.fit_transform(X)
-            np.testing.assert_array_equal(
-                from_nested_to_2d_numpy(first_Xt).values,
-                from_nested_to_2d_numpy(Xt).values,
-            )
 
 
 # Helper function for checking generated intervals.

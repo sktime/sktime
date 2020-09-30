@@ -14,8 +14,8 @@ from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
+
 from sktime.classification.base import BaseClassifier
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -112,8 +112,8 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
         n_instances, self.series_length = X.shape
 
         rng = check_random_state(self.random_state)
@@ -203,8 +203,8 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         probabilities
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         n_test_instances, series_length = X.shape
         if series_length != self.series_length:

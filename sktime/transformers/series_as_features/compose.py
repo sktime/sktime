@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
+
 from sktime.base import MetaEstimatorMixin
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.base import (
@@ -15,6 +16,7 @@ from sktime.transformers.series_as_features.base import (
 )
 from sktime.utils.data_container import _concat_nested_arrays
 from sktime.utils.data_container import from_2d_numpy_to_nested
+from sktime.utils.data_container import from_3d_numpy_to_2d_numpy
 from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
@@ -167,15 +169,18 @@ class ColumnTransformer(
                 )
 
     def fit(self, X, y=None):
+        X = check_X(X, coerce_to_pandas=True)
         super(ColumnTransformer, self).fit(X, y)
         self._is_fitted = True
         return self
 
     def transform(self, X, y=None):
         self.check_is_fitted()
+        X = check_X(X, coerce_to_pandas=True)
         return super(ColumnTransformer, self).transform(X)
 
     def fit_transform(self, X, y=None):
+        # wrap fit_transform to set _is_fitted attribute
         Xt = super(ColumnTransformer, self).fit_transform(X, y)
         self._is_fitted = True
         return Xt
@@ -206,6 +211,7 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
 
     def transform(self, X, y=None):
         """Apply the `fit_transform()` method of the transformer on each row."""
+        X = check_X(X, coerce_to_pandas=True)
         func = self.transformer.fit_transform
         return self._apply_rowwise(func, X, y)
 
@@ -222,7 +228,7 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
         """Helper function to apply transform or inverse_transform function
         on each row of data container"""
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
 
         # 1st attempt: apply, relatively fast but not robust
         # try and except, but sometimes breaks in other cases than excepted
@@ -296,4 +302,8 @@ class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
 
         # We concatenate by tabularizing all columns and then detabularizing
         # them into a single column
-        return from_2d_numpy_to_nested(from_nested_to_2d_numpy(X))
+        if isinstance(X, pd.DataFrame):
+            Xt = from_nested_to_2d_numpy(X)
+        else:
+            Xt = from_3d_numpy_to_2d_numpy(X)
+        return from_2d_numpy_to_nested(Xt)

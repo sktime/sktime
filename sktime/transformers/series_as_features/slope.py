@@ -40,7 +40,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         # Check the data
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
+        X = check_X(X, coerce_to_pandas=True)
 
         # Get information about the dataframe
         n_timepoints = len(X.iloc[0, 0])

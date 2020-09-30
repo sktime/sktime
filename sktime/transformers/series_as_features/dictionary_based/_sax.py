@@ -4,9 +4,9 @@ import sys
 import numpy as np
 import pandas as pd
 import scipy.stats
+
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
-from sktime.utils.data_container import from_nested_to_2d_numpy
 
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
@@ -90,8 +90,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         dims: Pandas data frame with first dimension in column zero
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:
             raise RuntimeError("Alphabet size must be an integer between 2 and 4")

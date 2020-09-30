@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
+
 import numpy as np
 import pandas as pd
+
+from sktime.utils._maintenance import deprecated
 
 
 def _check_equal_index(X):
@@ -59,6 +62,20 @@ def _check_equal_index(X):
         indexes.append(first_index)
 
     return indexes
+
+
+@deprecated("Please use `from_nested_to_2d_numpy` instead.")
+def tabularize(X, return_array=False):
+    return from_nested_to_2d_numpy(X, return_array)
+
+
+@deprecated("Please use `from_2d_numpy_to_nested` instead.")
+def detabularize(X, return_array=False):
+    return from_2d_numpy_to_nested(X, return_array)
+
+
+def from_3d_numpy_to_2d_numpy(X):
+    return X.reshape(X.shape[0], -1)
 
 
 def from_nested_to_2d_numpy(X, return_array=False):
@@ -228,7 +245,7 @@ def _concat_nested_arrays(arrs, return_arrays=False):
     return Xt
 
 
-def get_time_index(X):
+def _get_time_index(X):
     """Helper function to get index of time series data
 
     Parameters
@@ -241,23 +258,35 @@ def get_time_index(X):
         Index of time series
     """
 
+    def _get_index(x):
+        if hasattr(x, "index"):
+            return x.index
+        else:
+            # select last dimension for time index
+            return pd.RangeIndex(x.shape[-1])
+
     # assumes that all samples share the same the time index, only looks at
     # first row
     if isinstance(X, pd.DataFrame):
-        Xs = X.iloc[0, 0]
+        return _get_index(X.iloc[0, 0])
 
     elif isinstance(X, pd.Series):
-        Xs = X.iloc[0]
+        return _get_index(X.iloc[0])
+
+    elif isinstance(X, np.ndarray):
+        return _get_index(X)
 
     else:
         raise ValueError(
             f"X must be a pandas DataFrame or Series, but found: {type(X)}"
         )
 
-    # get time index
-    time_index = Xs.index if hasattr(Xs, "index") else pd.RangeIndex(Xs.shape[0])
 
-    return time_index
+def _get_column_names(X):
+    if isinstance(X, pd.DataFrame):
+        return X.columns
+    else:
+        return [f"col{i}" for i in range(X.shape[1])]
 
 
 def from_nested_to_long(X):
@@ -300,6 +329,12 @@ def from_nested_to_3d_numpy(X):
     X : np.ndarrray
         3-dimensional NumPy array
     """
+    # n_instances, n_columns = X.shape
+    # n_timepoints = X.iloc[0, 0].shape[0]
+    # array = np.empty((n_instances, n_columns, n_timepoints))
+    # for column in range(n_columns):
+    #     array[:, column, :] = X.iloc[:, column].tolist()
+    # return array
     return np.stack(
         X.applymap(lambda cell: cell.to_numpy())
         .apply(lambda row: np.stack(row), axis=1)

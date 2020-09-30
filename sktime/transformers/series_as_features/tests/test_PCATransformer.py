@@ -6,10 +6,9 @@ from sklearn.decomposition import PCA
 
 from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.pca import PCATransformer
-from sktime.utils.data_container import from_2d_numpy_to_nested
-from sktime.utils.data_container import get_time_index
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing import _generate_df_from_array
+from sktime.utils.data_container import from_2d_numpy_to_nested
+from sktime.utils.data_container import from_nested_to_2d_numpy
 
 
 # Check that exception is raised for bad input args.
@@ -99,20 +98,3 @@ def test_pca_results(n_components):
     Xt2 = pca_transform.fit_transform(Xs)
 
     assert np.allclose(np.asarray(Xt1), np.asarray(from_nested_to_2d_numpy(Xt2)))
-
-
-# Check output indices (row indices and columns the same, time indices start
-# from 0)
-@pytest.mark.parametrize("n_components", [1, 5, None])
-def test_indices(n_components):
-    np.random.seed(42)
-    X = from_2d_numpy_to_nested(pd.DataFrame(data=np.random.randn(10, 5)))
-    X.columns = pd.CategoricalIndex(["col_0"])
-    X.index = pd.Int64Index([i + 10 for i in range(10)])
-
-    pca = PCATransformer(n_components=n_components)
-    Xt = pca.fit_transform(X)
-
-    assert X.columns.equals(Xt.columns)
-    assert X.index.equals(Xt.index)
-    assert get_time_index(Xt).equals(pd.Int64Index(range(pca.pca.n_components_)))

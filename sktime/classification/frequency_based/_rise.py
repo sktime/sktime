@@ -8,13 +8,13 @@ __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 import math
 
 import numpy as np
-from numpy import random
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.validation import check_random_state
+
 from sktime.classification.base import BaseClassifier
-from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -85,7 +85,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         )
         self.n_estimators = n_estimators
         self.random_state = random_state
-        random.seed(random_state)
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
@@ -110,10 +109,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         n_instances, self.series_length = X.shape
+
+        rng = check_random_state(self.random_state)
 
         self.estimators_ = []
         self.n_classes = np.unique(y).shape[0]
@@ -122,10 +123,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.intervals[0][0] = 0
         self.intervals[0][1] = self.series_length
         for i in range(1, self.n_estimators):
-            self.intervals[i][0] = random.randint(
-                self.series_length - self.min_interval
-            )
-            self.intervals[i][1] = random.randint(
+            self.intervals[i][0] = rng.randint(self.series_length - self.min_interval)
+            self.intervals[i][1] = rng.randint(
                 self.intervals[i][0] + self.min_interval, self.series_length
             )
         # Check lag against global properties
@@ -199,10 +198,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         self.check_is_fitted()
-        check_X(X, enforce_univariate=True)
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
-        n_cases, n_columns = X.shape
+        n_instances, n_columns = X.shape
         if n_columns != self.series_length:
             raise TypeError(
                 " ERROR number of attributes in the train does not match "
@@ -211,10 +210,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
         for i in range(0, self.n_estimators):
-            acf_x = np.empty(shape=(n_cases, self.lags[i]))
+            acf_x = np.empty(shape=(n_instances, self.lags[i]))
             ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
-            ps_x = np.empty(shape=(n_cases, int(ps_len)))
-            for j in range(0, n_cases):
+            ps_x = np.empty(shape=(n_instances, int(ps_len)))
+            for j in range(0, n_instances):
                 acf_x[j] = acf(
                     X[j, self.intervals[i][0] : self.intervals[i][1]], self.lags[i]
                 )
