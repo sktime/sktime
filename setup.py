@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """Install script for sktime"""
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
