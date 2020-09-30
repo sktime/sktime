@@ -1,4 +1,6 @@
-__all__ = ["is_int"]
+__all__ = [
+    "is_int"
+]
 __author__ = ["Markus Löning"]
 
 import numpy as np

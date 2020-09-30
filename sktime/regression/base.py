@@ -21,7 +21,6 @@ class BaseRegressor(BaseEstimator):
 
     def score(self, X_test, y_test):
         from sklearn.metrics import r2_score
-
         return r2_score(y_test, self.predict(X_test))
 
 

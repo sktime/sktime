@@ -70,18 +70,16 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     """
 
-    def __init__(
-        self,
-        n_estimators=200,
-        random_state=None,
-        min_interval=16,
-        acf_lag=100,
-        acf_min_values=4,
-    ):
+    def __init__(self,
+                 n_estimators=200,
+                 random_state=None,
+                 min_interval=16,
+                 acf_lag=100,
+                 acf_min_values=4
+                 ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(random_state=random_state),
-            n_estimators=n_estimators,
-        )
+            n_estimators=n_estimators)
         self.n_estimators = n_estimators
         self.random_state = random_state
         random.seed(random_state)
@@ -122,11 +120,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.intervals[0][1] = self.series_length
         for i in range(1, self.n_estimators):
             self.intervals[i][0] = random.randint(
-                self.series_length - self.min_interval
-            )
+                self.series_length - self.min_interval)
             self.intervals[i][1] = random.randint(
-                self.intervals[i][0] + self.min_interval, self.series_length
-            )
+                self.intervals[i][0] + self.min_interval, self.series_length)
         # Check lag against global properties
         self.acf_lag_ = self.acf_lag
         if self.acf_lag > self.series_length - self.acf_min_values:
@@ -136,13 +132,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.lags = np.zeros(self.n_estimators, dtype=int)
         for i in range(0, self.n_estimators):
             temp_lag = self.acf_lag_
-            if (
-                temp_lag
-                > self.intervals[i][1] - self.intervals[i][0] - self.acf_min_values
-            ):
-                temp_lag = (
-                    self.intervals[i][1] - self.intervals[i][0] - self.acf_min_values
-                )
+            if (temp_lag > self.intervals[i][1] - self.intervals[i][0]
+                    - self.acf_min_values):
+                temp_lag = self.intervals[i][1] - self.intervals[i][
+                    0] - self.acf_min_values
             if temp_lag < 0:
                 temp_lag = 1
             self.lags[i] = int(temp_lag)
@@ -150,10 +143,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
             ps_x = np.empty(shape=(n_instances, int(ps_len)))
             for j in range(0, n_instances):
-                acf_x[j] = acf(
-                    X[j, self.intervals[i][0] : self.intervals[i][1]], temp_lag
-                )
-                ps_x[j] = ps(X[j, self.intervals[i][0] : self.intervals[i][1]])
+                acf_x[j] = acf(X[j, self.intervals[i][0]:self.intervals[i][1]],
+                               temp_lag)
+                ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x = np.concatenate((acf_x, ps_x), axis=1)
             #            transformed_x=acf_x
             tree = clone(self.base_estimator)
@@ -205,8 +197,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         if n_columns != self.series_length:
             raise TypeError(
                 " ERROR number of attributes in the train does not match "
-                "that in the test data"
-            )
+                "that in the test data")
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
         for i in range(0, self.n_estimators):
@@ -214,10 +205,9 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
             ps_x = np.empty(shape=(n_cases, int(ps_len)))
             for j in range(0, n_cases):
-                acf_x[j] = acf(
-                    X[j, self.intervals[i][0] : self.intervals[i][1]], self.lags[i]
-                )
-                ps_x[j] = ps(X[j, self.intervals[i][0] : self.intervals[i][1]])
+                acf_x[j] = acf(X[j, self.intervals[i][0]:self.intervals[i][1]],
+                               self.lags[i])
+                ps_x[j] = ps(X[j, self.intervals[i][0]:self.intervals[i][1]])
             transformed_x = np.concatenate((acf_x, ps_x), axis=1)
             sums += self.estimators_[i].predict_proba(transformed_x)
 
@@ -226,7 +216,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
 
 def acf(x, max_lag):
-    """autocorrelation function transform, currently calculated using
+    """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
     found it, worth testing for speed and correctness
@@ -274,7 +264,7 @@ def acf(x, max_lag):
 
 
 def matrix_acf(x, num_cases, max_lag):
-    """autocorrelation function transform, currently calculated using
+    """ autocorrelation function transform, currently calculated using
     standard stats method.
     We could use inverse of power spectrum, especially given we already have
     found it, worth testing for speed and correctness
@@ -307,7 +297,7 @@ def matrix_acf(x, num_cases, max_lag):
 
 
 def ps(x):
-    """power spectrum transform, currently calculated using np function.
+    """ power spectrum transform, currently calculated using np function.
     It would be worth looking at ff implementation, see difference in speed
     to java
     Parameters
@@ -320,5 +310,5 @@ def ps(x):
     """
     fft = np.fft.fft(x)
     fft = fft.real * fft.real + fft.imag * fft.imag
-    fft = fft[: int(len(x) / 2)]
+    fft = fft[:int(len(x) / 2)]
     return np.array(fft)

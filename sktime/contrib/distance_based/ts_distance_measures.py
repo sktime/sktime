@@ -9,6 +9,7 @@ these are in sktime.distances.elastic
 
 
 def dtw_distance(first, second, **kwargs):
+
     def dtw_single_channel(first, second, **kwargs):
         cutoff = np.inf
         try:
@@ -29,9 +30,7 @@ def dtw_distance(first, second, **kwargs):
 
         dist = lambda x1, x2: ((x1 - x2) ** 2)
 
-        pairwise_distances = np.asarray(
-            [[dist(x1, x2) for x2 in second] for x1 in first]
-        )
+        pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second] for x1 in first])
 
         # initialise edges of the warping matrix
         warp_matrix[0][0] = pairwise_distances[0][0]
@@ -54,9 +53,7 @@ def dtw_distance(first, second, **kwargs):
                 diag = warp_matrix[row - 1][column - 1]
 
                 # add the pairwise distance for [row][column] to the minimum of the three possible potential cells
-                warp_matrix[row][column] = pairwise_distances[row][column] + min(
-                    [above, left, diag]
-                )
+                warp_matrix[row][column] = pairwise_distances[row][column] + min([above, left, diag])
 
                 # check for evidence that cutoff has been beaten on this row (if using)
                 if cutoff is not None and warp_matrix[row][column] < cutoff:
@@ -86,56 +83,45 @@ def derivative_dtw_distance(first, second, **kwargs):
 
     dist = 0
     for dim in range(0, len(first)):
-        dist += dtw_distance(
-            [first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs
-        )
+        dist += dtw_distance([first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs)
     return dist
 
 
 def weighted_dtw_distance(first, second, **kwargs):
+
     def wdtw_single_channel(first, second, **kwargs):
         try:
             g = kwargs["g"]
         except:
             g = 0.0
 
-        m = len(first)
-        n = len(second)
+        m = len(first);
+        n = len(second);
 
-        weight_vector = [1 / (1 + np.exp(-g * (i - m / 2))) for i in range(0, m)]
+        weight_vector = [1/(1+np.exp(-g*(i-m/2))) for i in range(0,m)]
 
         dist = lambda x1, x2: ((x1 - x2) ** 2)
-        pairwise_distances = np.asarray(
-            [[dist(x1, x2) for x2 in second] for x1 in first]
-        )
+        pairwise_distances = np.asarray([[dist(x1, x2) for x2 in second] for x1 in first])
 
         # initialise edges of the warping matrix
         distances = np.full([n, m], np.inf)
-        distances[0][0] = weight_vector[0] * pairwise_distances[0][0]
+        distances[0][0] = weight_vector[0]*pairwise_distances[0][0]
 
         # top row
-        for i in range(1, n):
-            distances[0][i] = (
-                distances[0][i - 1] + weight_vector[i] * pairwise_distances[0][i]
-            )
+        for i in range(1,n):
+            distances[0][i] = distances[0][i - 1] + weight_vector[i] * pairwise_distances[0][i]
 
         # first column
         for i in range(1, m):
-            distances[i][0] = (
-                distances[i - 1][0] + weight_vector[i] * pairwise_distances[i][0]
-            )
+            distances[i][0] = distances[i - 1][0] + weight_vector[i] * pairwise_distances[i][0]
 
         # warp rest
-        for i in range(1, m):
-            for j in range(1, n):
-                min_dist = np.min(
-                    [distances[i][j - 1], distances[i - 1][j], distances[i - 1][j - 1]]
-                )
+        for i in range(1,m):
+            for j in range(1,n):
+                min_dist = np.min([distances[i][j - 1], distances[i - 1][j], distances[i - 1][j - 1]])
                 # print(min_dist)
-                distances[i][j] = (
-                    min_dist + weight_vector[np.abs(i - j)] * pairwise_distances[i][j]
-                )
-        return distances[m - 1][n - 1]
+                distances[i][j] = min_dist+weight_vector[np.abs(i-j)] * pairwise_distances[i][j]
+        return distances[m-1][n-1]
 
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
         return wdtw_single_channel(first, second, **kwargs)
@@ -153,13 +139,12 @@ def weighted_derivative_dtw_distance(first, second, **kwargs):
 
     dist = 0
     for dim in range(0, len(first)):
-        dist += weighted_dtw_distance(
-            [first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs
-        )
+        dist += weighted_dtw_distance([first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs)
     return dist
 
 
 def lcss_distance(first, second, **kwargs):
+
     def lcss_single_channel(first, second, **kwargs) -> float:
         try:
             delta = kwargs["delta"]
@@ -183,32 +168,31 @@ def lcss_distance(first, second, **kwargs):
                     j = -1
                 elif j >= n:
                     j = i + delta
-                elif (
-                    second[j] + epsilon >= first[i] and second[j] - epsilon <= first[i]
-                ):
+                elif second[j] + epsilon >= first[i] and second[j] - epsilon <= first[i]:
                     lcss[i + 1][j + 1] = lcss[i][j] + 1
                 elif lcss[i][j + 1] > lcss[i + 1][j]:
                     lcss[i + 1][j + 1] = lcss[i][j + 1]
                 else:
                     lcss[i + 1][j + 1] = lcss[i + 1][j]
 
-        max_val = -1
+        max_val = -1;
         for i in range(1, len(lcss[len(lcss) - 1])):
             if lcss[len(lcss) - 1][i] > max_val:
-                max_val = lcss[len(lcss) - 1][i]
+                max_val = lcss[len(lcss) - 1][i];
 
-        return 1 - (max_val / m)
+        return 1 - (max_val / m);
 
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
         return lcss_single_channel(first, second, **kwargs)
 
     dist = 0
-    for dim in range(0, len(first)):
-        dist += lcss_single_channel(first[dim], second[dim], **kwargs)
+    for dim in range(0,len(first)):
+        dist += lcss_single_channel(first[dim],second[dim],**kwargs)
     return dist
 
 
 def msm_distance(first, second, **kwargs):
+
     def msm_single_channel(first, second, **kwargs) -> float:
         try:
             c = kwargs["c"]
@@ -223,9 +207,7 @@ def msm_distance(first, second, **kwargs):
         def calc_cost(new_point, x, y):
             dist = 0
 
-            if ((x <= new_point) and (new_point <= y)) or (
-                (y <= new_point) and (new_point <= x)
-            ):
+            if ((x <= new_point) and (new_point <= y)) or ((y <= new_point) and (new_point <= x)):
                 return c
             else:
                 return c + min(np.abs(new_point - x), np.abs(new_point - y))
@@ -246,7 +228,7 @@ def msm_distance(first, second, **kwargs):
                 d3 = cost[i][j - 1] + calc_cost(second[j], first[i], second[j - 1])
                 cost[i][j] = min(d1, d2, d3)
 
-        return cost[m - 1][n - 1]
+        return cost[m - 1][n - 1];
 
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
         return msm_single_channel(first, second, **kwargs)
@@ -258,6 +240,7 @@ def msm_distance(first, second, **kwargs):
 
 
 def erp_distance(first, second, **kwargs):
+
     def erp_single_channel(first, second, **kwargs):
         """
         Adapted from:
@@ -307,25 +290,25 @@ def erp_distance(first, second, **kwargs):
             if l < 0:
                 l = 0
 
-            r = i + (band + 1)
+            r = i + (band + 1);
             if r > m - 1:
-                r = m - 1
+                r = (m - 1)
 
             for j in range(l, r + 1):
                 if np.abs(i - j) <= band:
                     val1 = first[i]
                     val2 = g
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d1 = np.sqrt(diff * diff)
 
                     val1 = g
                     val2 = second[j]
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d2 = np.sqrt(diff * diff)
 
                     val1 = first[i]
                     val2 = second[j]
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d12 = np.sqrt(diff * diff)
 
                     dist1 = d1 * d1
@@ -333,24 +316,12 @@ def erp_distance(first, second, **kwargs):
                     dist12 = d12 * d12
 
                     if i + j != 0:
-                        if i == 0 or (
-                            j != 0
-                            and (
-                                ((prev[j - 1] + dist12) > (curr[j - 1] + dist2))
-                                and ((curr[j - 1] + dist2) < (prev[j] + dist1))
-                            )
-                        ):
+                        if i == 0 or (j != 0 and (((prev[j - 1] + dist12) > (curr[j - 1] + dist2)) and ((curr[j - 1] + dist2) < (prev[j] + dist1)))):
                             # del
                             cost = curr[j - 1] + dist2
-                        elif (j == 0) or (
-                            (i != 0)
-                            and (
-                                ((prev[j - 1] + dist12) > (prev[j] + dist1))
-                                and ((prev[j] + dist1) < (curr[j - 1] + dist2))
-                            )
-                        ):
+                        elif (j == 0) or ((i != 0) and (((prev[j - 1] + dist12) > (prev[j] + dist1)) and ((prev[j] + dist1) < (curr[j - 1] + dist2)))):
                             # ins
-                            cost = prev[j] + dist1
+                            cost = prev[j] + dist1;
                         else:
                             # match
                             cost = prev[j - 1] + dist12
@@ -359,7 +330,7 @@ def erp_distance(first, second, **kwargs):
 
                     curr[j] = cost
 
-        return np.sqrt(curr[m - 1])
+        return np.sqrt(curr[m - 1]);
 
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
         return erp_single_channel(first, second, **kwargs)

@@ -11,7 +11,7 @@ bad_input_args = (
     (1, 2),  # tuple
     [],  # empty list
     np.array([]),  # empty array
-    "some_string",  # string
+    'some_string',  # string
     0.1,  # float
     -0.1,  # negative float
     [0.1, 2],  # float in list

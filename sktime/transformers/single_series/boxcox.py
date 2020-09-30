@@ -8,12 +8,14 @@ __all__ = ["BoxCoxTransformer"]
 import pandas as pd
 from scipy.special import boxcox
 from scipy.special import inv_boxcox
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import \
+    BaseSingleSeriesTransformer
 from sktime.utils.boxcox import boxcox_normmax
 from sktime.utils.validation.forecasting import check_y
 
 
 class BoxCoxTransformer(BaseSingleSeriesTransformer):
+
     def __init__(self, bounds=None, method="mle"):
         self.bounds = bounds
         self.method = method
@@ -21,7 +23,8 @@ class BoxCoxTransformer(BaseSingleSeriesTransformer):
         super(BoxCoxTransformer, self).__init__()
 
     def fit(self, y_train, **fit_params):
-        self.lambda_ = boxcox_normmax(y_train, bounds=self.bounds, method=self.method)
+        self.lambda_ = boxcox_normmax(y_train, bounds=self.bounds,
+                                      method=self.method)
         self._is_fitted = True
         return self
 

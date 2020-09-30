@@ -4,7 +4,8 @@ import numbers
 import math
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base \
+    import BaseSeriesAsFeaturesTransformer
 
 
 """
@@ -38,7 +39,6 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         scaling_factor  : float, a constant that is multiplied
                           to modify the distribution.
     """
-
     def __init__(self, num_intervals=2, num_bins=8, scaling_factor=0.1):
         self.num_intervals = num_intervals
         self.num_bins = num_bins
@@ -131,28 +131,27 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         histogram : a numpy array of shape = [num_bins].
         """
         # First step is to pad the portion on both ends once.
-        gradients = [0.0] * (len(X))
-        X = np.pad(X, 1, mode="edge")
-        histogram = [0.0] * self.num_bins
+        gradients = [0.0]*(len(X))
+        X = np.pad(X, 1, mode='edge')
+        histogram = [0.0]*self.num_bins
 
         # Calculate the gradients of each element
-        for i in range(1, len(X) - 1):
-            gradients[(i - 1)] = self.scaling_factor * 0.5 * (X[(i + 1)] - X[(i - 1)])
+        for i in range(1, len(X)-1):
+            gradients[(i-1)] = self.scaling_factor*0.5*(X[(i+1)]-X[(i-1)])
 
         # Calculate the orientations
         orients = [math.degrees(math.atan(x)) for x in gradients]
 
         # Calculate the boundaries of the histogram
-        hisBoundaries = [
-            -90 + (180 / self.num_bins) + ((180 / self.num_bins) * x)
-            for x in range(self.num_bins)
-        ]
+        hisBoundaries = [-90+(180/self.num_bins) +
+                             ((180/self.num_bins)*x)
+                         for x in range(self.num_bins)]
 
         # Construct the histogram
         for x in range(len(orients)):
             orientToAdd = orients[x]
             for y in range(len(hisBoundaries)):
-                if orientToAdd <= hisBoundaries[y]:
+                if(orientToAdd <= hisBoundaries[y]):
                     histogram[y] += 1.0
                     break
 
@@ -176,7 +175,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         beginning = 0.0
 
         while beginning < len(X):
-            output.append(X[int(beginning) : int(beginning + avg)])
+            output.append(X[int(beginning):int(beginning + avg)])
             beginning += avg
 
         return output
@@ -191,41 +190,26 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
-                raise ValueError(
-                    "num_intervals must have \
-                                  the value of at least 1"
-                )
+                raise ValueError("num_intervals must have \
+                                  the value of at least 1")
             if self.num_intervals > num_atts:
-                raise ValueError(
-                    "num_intervals cannot be higher \
-                                  than subsequence_length"
-                )
+                raise ValueError("num_intervals cannot be higher \
+                                  than subsequence_length")
         else:
-            raise TypeError(
-                "num_intervals must be an 'int'. \
-                            Found '"
-                + type(self.num_intervals).__name__
-                + "' instead."
-            )
+            raise TypeError("num_intervals must be an 'int'. \
+                            Found '" + type(self.num_intervals).__name__ +
+                            "' instead.")
 
         if isinstance(self.num_bins, int):
             if self.num_bins <= 0:
-                raise ValueError(
-                    "num_bins must have the value of \
-                                  at least 1"
-                )
+                raise ValueError("num_bins must have the value of \
+                                  at least 1")
         else:
-            raise TypeError(
-                "num_bins must be an 'int'. Found '"
-                + type(self.num_bins).__name__
-                + "' \
-                            instead."
-            )
+            raise TypeError("num_bins must be an 'int'. Found '"
+                            + type(self.num_bins).__name__ + "' \
+                            instead.")
 
         if not isinstance(self.scaling_factor, numbers.Number):
-            raise TypeError(
-                "scaling_factor must be a 'number'. \
-                            Found '"
-                + type(self.scaling_factor).__name__
-                + "' instead."
-            )
+            raise TypeError("scaling_factor must be a 'number'. \
+                            Found '" + type(self.scaling_factor).__name__ +
+                            "' instead.")

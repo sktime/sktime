@@ -54,10 +54,8 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     if y_train is not None:
         check_time_index(y_train.index)
         if y_train.index.max() >= y_test.min():
-            raise ValueError(
-                "Found `y_train` with time index which is not "
-                "before time index of `y_pred`"
-            )
+            raise ValueError("Found `y_train` with time index which is not "
+                             "before time index of `y_pred`")
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)

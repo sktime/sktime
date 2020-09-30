@@ -2,14 +2,15 @@ import numpy as np
 import pandas as pd
 import pytest
 import math
-from sktime.transformers.series_as_features.dwt import DWTTransformer
+from sktime.transformers.series_as_features.dwt \
+    import DWTTransformer
 from sktime.utils._testing import generate_df_from_array
 
 
 # Check that exception is raised for bad num levels.
 # input types - string, float, negative int, negative float, empty dict.
 # correct input is meant to be a positive integer of 0 or more.
-@pytest.mark.parametrize("bad_num_levels", ["str", 1.2, -1.2, -1, {}])
+@pytest.mark.parametrize("bad_num_levels", ['str', 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_num_levels):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
 
@@ -24,35 +25,23 @@ def test_bad_input_args(bad_num_levels):
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
 
-    X = generate_df_from_array(np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_rows=1, n_cols=1)
+    X = generate_df_from_array(np.array([4, 6, 10, 12, 8, 6, 5, 5]),
+                               n_rows=1, n_cols=1)
 
     d = DWTTransformer(num_levels=2).fit(X)
     res = d.transform(X)
-    orig = convert_list_to_dataframe(
-        [[16, 12, -6, 2, -math.sqrt(2), -math.sqrt(2), math.sqrt(2), 0]]
-    )
+    orig = convert_list_to_dataframe([[16, 12, -6, 2, -math.sqrt(2),
+                                       -math.sqrt(2), math.sqrt(2), 0]])
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res, orig)
 
-    X = generate_df_from_array(
-        np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3]), n_rows=1, n_cols=1
-    )
+    X = generate_df_from_array(np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3]),
+                               n_rows=1, n_cols=1)
     d = d.fit(X)
     res = d.transform(X)
-    orig = convert_list_to_dataframe(
-        [
-            [
-                0.75000,
-                13.25000,
-                -3.25000,
-                -4.75000,
-                -5.303301,
-                -1.414214,
-                8.131728,
-                -4.242641,
-            ]
-        ]
-    )
+    orig = convert_list_to_dataframe([[0.75000, 13.25000, -3.25000, -4.75000,
+                                       -5.303301, -1.414214, 8.131728,
+                                       -4.242641]])
     # These are equivalent but cannot exactly test if two floats are equal
     # res.iloc[0,0]
     # orig.iloc[0,0]
@@ -62,13 +51,15 @@ def test_output_of_transformer():
 # This is to test that if num_levels = 0 then no change occurs.
 def test_no_levels_does_no_change():
 
-    X = generate_df_from_array(np.array([1, 2, 3, 4, 5, 56]), n_rows=1, n_cols=1)
+    X = generate_df_from_array(np.array([1, 2, 3, 4, 5, 56]),
+                               n_rows=1, n_cols=1)
     d = DWTTransformer(num_levels=0).fit(X)
     res = d.transform(X)
     assert check_if_dataframes_are_equal(res, X)
 
 
-@pytest.mark.parametrize("num_levels,corr_series_length", [(2, 12), (3, 11), (4, 12)])
+@pytest.mark.parametrize("num_levels,corr_series_length",
+                         [(2, 12), (3, 11), (4, 12)])
 def test_output_dimensions(num_levels, corr_series_length):
 
     X = generate_df_from_array(np.ones(13), n_rows=10, n_cols=1)
@@ -89,38 +80,19 @@ def test_output_dimensions(num_levels, corr_series_length):
 # This is to check that DWT produces the same result along each dimension
 def test_dwt_performs_correcly_along_each_dim():
 
-    X = generate_df_from_array(
-        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_rows=1, n_cols=2
-    )
+    X = generate_df_from_array(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+                               n_rows=1, n_cols=2)
 
     d = DWTTransformer(num_levels=3).fit(X)
     res = d.transform(X)
-    orig = convert_list_to_dataframe(
-        [
-            [
-                9 * math.sqrt(2),
-                -4 * math.sqrt(2),
-                -2,
-                -2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-            ],
-            [
-                9 * math.sqrt(2),
-                -4 * math.sqrt(2),
-                -2,
-                -2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-                -math.sqrt(2) / 2,
-            ],
-        ]
-    )
+    orig = convert_list_to_dataframe([[9*math.sqrt(2), -4*math.sqrt(2),
+                                       -2, -2, -math.sqrt(2)/2,
+                                       -math.sqrt(2)/2, -math.sqrt(2)/2,
+                                       -math.sqrt(2)/2, -math.sqrt(2)/2],
+                                      [9*math.sqrt(2), -4*math.sqrt(2),
+                                       -2, -2, -math.sqrt(2)/2,
+                                       -math.sqrt(2)/2, -math.sqrt(2)/2,
+                                       -math.sqrt(2)/2, -math.sqrt(2)/2]])
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res, orig)
 

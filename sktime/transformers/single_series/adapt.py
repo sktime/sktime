@@ -8,7 +8,8 @@ __all__ = ["SingleSeriesTransformAdaptor"]
 import pandas as pd
 from sklearn.base import clone
 from sklearn.utils.metaestimators import if_delegate_has_method
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import \
+    BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -106,13 +107,13 @@ class SingleSeriesTransformAdaptor(BaseSingleSeriesTransformer):
     def update(self, y_new, update_params=False):
         """Update fitted parameters
 
-        Parameters
-        ----------
-        y_new : pd.Series
-        update_params : bool, optional (default=False)
+         Parameters
+         ----------
+         y_new : pd.Series
+         update_params : bool, optional (default=False)
 
-        Returns
-        -------
-        self : an instance of self
-        """
+         Returns
+         -------
+         self : an instance of self
+         """
         raise NotImplementedError("update is not implemented yet")

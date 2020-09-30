@@ -12,11 +12,9 @@ def test_transformer():
     word_length = 6
     alphabet_size = 4
 
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        binning_method="equi-depth",
-    ).fit(X, y)
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            binning_method="equi-depth").fit(X, y)
 
     # print("Equi Depth")
     # print(p.breakpoints)
@@ -25,11 +23,9 @@ def test_transformer():
     assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
     _ = p.transform(X, y)
 
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        binning_method="equi-width",
-    ).fit(X, y)
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            binning_method="equi-width").fit(X, y)
 
     # print("Equi Width")
     # print(p.breakpoints)
@@ -38,11 +34,9 @@ def test_transformer():
     assert np.equal(0, p.breakpoints[1, :-1]).all()  # imag component is 0
     _ = p.transform(X, y)
 
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        binning_method="information-gain",
-    ).fit(X, y)
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            binning_method="information-gain").fit(X, y)
     # print("Information Gain")
     # print(p.breakpoints)
 
@@ -63,37 +57,32 @@ def test_dft_mft():
 
     # print("Single DFT transformation")
     window_size = np.shape(X_tab)[1]
-    p = SFA(
-        word_length=word_length,
-        alphabet_size=alphabet_size,
-        window_size=window_size,
-        binning_method="equi-depth",
-    ).fit(X, Y)
+    p = SFA(word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            binning_method="equi-depth").fit(X, Y)
     dft = p._discrete_fourier_transform(X_tab[0])
     mft = p._mft(X_tab[0])
 
-    assert (mft - dft < 0.0001).all()
+    assert ((mft-dft < 0.0001).all())
 
     # print("Windowed DFT transformation")
 
     for norm in [True, False]:
         for window_size in [140]:
-            p = SFA(
-                word_length=word_length,
-                norm=norm,
-                alphabet_size=alphabet_size,
-                window_size=window_size,
-                binning_method="equi-depth",
-            ).fit(X, Y)
+            p = SFA(word_length=word_length,
+                    norm=norm,
+                    alphabet_size=alphabet_size,
+                    window_size=window_size,
+                    binning_method="equi-depth").fit(X, Y)
             mft = p._mft(X_tab[0])
             for i in range(len(X_tab[0]) - window_size + 1):
                 dft_transformed = p._discrete_fourier_transform(
-                    X_tab[0, i : window_size + i]
-                )
-                assert (mft[i] - dft_transformed < 0.001).all()
+                                        X_tab[0, i:window_size+i])
+                assert(mft[i] - dft_transformed < 0.001).all()
 
-            assert len(mft) == len(X_tab[0]) - window_size + 1
-            assert len(mft[0]) == word_length
+            assert(len(mft) == len(X_tab[0]) - window_size + 1)
+            assert(len(mft[0]) == word_length)
 
 
 def test_sfa_anova():
@@ -106,13 +95,11 @@ def test_sfa_anova():
     for binning in ["information-gain", "equi-depth"]:
         # print("SFA with ANOVA one-sided test")
         window_size = 32
-        p = SFA(
-            word_length=word_length,
-            anova=True,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            binning_method=binning,
-        ).fit(X, y)
+        p = SFA(word_length=word_length,
+                anova=True,
+                alphabet_size=alphabet_size,
+                window_size=window_size,
+                binning_method=binning).fit(X, y)
 
         # print(p.breakpoints)
         # print(p.support)
@@ -122,20 +109,18 @@ def test_sfa_anova():
         _ = p.transform(X, y)
 
         # print("SFA with first feq coefficients")
-        p2 = SFA(
-            word_length=word_length,
-            anova=False,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            binning_method=binning,
-        ).fit(X, y)
+        p2 = SFA(word_length=word_length,
+                 anova=False,
+                 alphabet_size=alphabet_size,
+                 window_size=window_size,
+                 binning_method=binning).fit(X, y)
 
         # print(p2.breakpoints)
         # print(p2.support)
         # print(p2.dft_length)
 
-        assert p.dft_length != p2.dft_length
-        assert (p.breakpoints != p2.breakpoints).any()
+        assert(p.dft_length != p2.dft_length)
+        assert(p.breakpoints != p2.breakpoints).any()
         _ = p2.transform(X, y)
 
 
@@ -156,24 +141,24 @@ def test_word_length():
                     for norm in [True, False]:
                         for anova in [True, False]:
                             for window_size in window_sizes:
-                                p = SFA(
-                                    word_length=word_length,
-                                    anova=anova,
-                                    alphabet_size=alphabet_size,
-                                    bigrams=bigrams,
-                                    window_size=window_size,
-                                    norm=norm,
-                                    binning_method=binning,
-                                ).fit(X, y)
+                                p = SFA(word_length=word_length,
+                                        anova=anova,
+                                        alphabet_size=alphabet_size,
+                                        bigrams=bigrams,
+                                        window_size=window_size,
+                                        norm=norm,
+                                        binning_method=binning).fit(X, y)
 
                                 # print("Norm", norm, "Anova", anova)
                                 # print(np.shape(p.breakpoints), word_length,
                                 #      window_size)
                                 # print("dft_length", p.dft_length,
                                 #      "word_length", p.word_length)
-                                assert p.breakpoints is not None
+                                assert(p.breakpoints is not None)
 
                                 _ = p.transform(X, y)
 
     except Exception as err:
-        raise AssertionError("An unexpected exception {0} raised.".format(repr(err)))
+        raise AssertionError(
+            "An unexpected exception {0} raised.".format(repr(err))
+        )

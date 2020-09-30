@@ -14,7 +14,7 @@ def configuration(parent_package="", top_path=None):
         name="mrseql",
         sources=["mrseql.pyx", "seql_learn.cpp", "SNode.cpp"],
         # sources=["mrseql_wrapper.cpp"],
-        extra_compile_args=["-std=c++11"],
+        extra_compile_args=['-std=c++11'],
         language="c++",
         # include_dirs=[numpy.get_include()]
     )

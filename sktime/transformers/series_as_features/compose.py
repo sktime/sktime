@@ -8,22 +8,23 @@ import pandas as pd
 from scipy import sparse
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    _NonFittableSeriesAsFeaturesTransformer,
-)
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    _NonFittableSeriesAsFeaturesTransformer
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import detabularize
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
-__all__ = ["ColumnTransformer", "RowTransformer", "ColumnConcatenator"]
+__all__ = ["ColumnTransformer",
+           "RowTransformer",
+           "ColumnConcatenator"]
 
 
-class ColumnTransformer(
-    _ColumnTransformer, BaseSeriesAsFeaturesTransformer, MetaEstimatorMixin
-):
+class ColumnTransformer(_ColumnTransformer, BaseSeriesAsFeaturesTransformer,
+                        MetaEstimatorMixin):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply
     takes the column transformer from sklearn
@@ -110,24 +111,23 @@ class ColumnTransformer(
         sparse matrix or a dense numpy array, which depends on the output
         of the individual transformers and the `sparse_threshold` keyword.
     """
-
     _required_parameters = ["transformers"]
 
     def __init__(
-        self,
-        transformers,
-        remainder="drop",
-        sparse_threshold=0.3,
-        n_jobs=1,
-        transformer_weights=None,
-        preserve_dataframe=True,
+            self,
+            transformers,
+            remainder="drop",
+            sparse_threshold=0.3,
+            n_jobs=1,
+            transformer_weights=None,
+            preserve_dataframe=True,
     ):
         super(ColumnTransformer, self).__init__(
             transformers=transformers,
             remainder=remainder,
             sparse_threshold=sparse_threshold,
             n_jobs=n_jobs,
-            transformer_weights=transformer_weights,
+            transformer_weights=transformer_weights
         )
         self.preserve_dataframe = preserve_dataframe
         self._is_fitted = False
@@ -143,7 +143,8 @@ class ColumnTransformer(
 
         if self.sparse_output_:
             return sparse.hstack(Xs).tocsr()
-        if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
+        if self.preserve_dataframe and (
+                pd.Series in types or pd.DataFrame in types):
             return pd.concat(Xs, axis="columns")
         return np.hstack(Xs)
 
@@ -154,16 +155,14 @@ class ColumnTransformer(
 
         Output can also be a pd.Series which is actually a 1D
         """
-        names = [
-            name for name, _, _, _ in self._iter(fitted=True, replace_strings=True)
-        ]
+        names = [name for name, _, _, _ in self._iter(fitted=True,
+                                                      replace_strings=True)]
         for Xs, name in zip(result, names):
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
-                    ""
-                    "matrix, array, or pandas DataFrame).".format(name)
-                )
+                    "" "matrix, array, or pandas DataFrame).".format(
+                        name))
 
     def fit(self, X, y=None):
         super(ColumnTransformer, self).fit(X, y)
@@ -180,7 +179,8 @@ class ColumnTransformer(
         return Xt
 
 
-class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin):
+class RowTransformer(_NonFittableSeriesAsFeaturesTransformer,
+                     MetaEstimatorMixin):
     """A convenience wrapper for row-wise transformers to apply
     transformation to all rows.
 
@@ -204,16 +204,17 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
         super(RowTransformer, self).__init__()
 
     def transform(self, X, y=None):
-        """Apply the `fit_transform()` method of the transformer on each row."""
+        """Apply the `fit_transform()` method of the transformer on each row.
+        """
         func = self.transformer.fit_transform
         return self._apply_rowwise(func, X, y)
 
     def inverse_transform(self, X, y=None):
-        """Apply the `fit_transform()` method of the transformer on each row."""
+        """Apply the `fit_transform()` method of the transformer on each row.
+        """
         if not hasattr(self.transformer, "inverse_transform"):
             raise AttributeError(
-                "Transformer does not have an inverse transform method"
-            )
+                "Transformer does not have an inverse transform method")
         func = self.transformer.inverse_transform
         return self._apply_rowwise(func, X, y)
 
@@ -244,7 +245,8 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
         # but still not very robust
         # but column is not 2d and thus breaks if transformer expects 2d input
         try:
-            Xt = pd.concat([pd.Series(col.apply(func)) for _, col in X.items()], axis=1)
+            Xt = pd.concat([pd.Series(col.apply(func))
+                            for _, col in X.items()], axis=1)
 
         # 3rd attempt: explicit for-loops, most robust but very slow
         except Exception:
@@ -259,7 +261,8 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
                 cols_t.append(rows_t)  # append transformed columns
 
             # if series-to-series transform, flatten transformed series
-            Xt = concat_nested_arrays(cols_t)  # concatenate transformed columns
+            Xt = concat_nested_arrays(
+                cols_t)  # concatenate transformed columns
 
             # tabularise/unnest series-to-primitive transforms
             xt = Xt.iloc[0, 0]

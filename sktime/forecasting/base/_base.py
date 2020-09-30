@@ -3,7 +3,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "@big-o"]
-__all__ = ["BaseForecaster", "DEFAULT_ALPHA", "is_forecaster"]
+__all__ = [
+    "BaseForecaster",
+    "DEFAULT_ALPHA",
+    "is_forecaster"
+]
 
 from sktime.base import BaseEstimator
 
@@ -41,7 +45,8 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False,
+                alpha=DEFAULT_ALPHA):
         """Make forecasts
 
         Parameters
@@ -101,15 +106,9 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict(
-        self,
-        y_test,
-        cv=None,
-        X_test=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
+                       return_pred_int=False,
+                       alpha=DEFAULT_ALPHA):
         """Make and update predictions iteratively over the test set.
 
         Parameters
@@ -130,15 +129,9 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict_single(
-        self,
-        y_new,
-        fh=None,
-        X=None,
-        update_params=False,
-        return_pred_int=False,
-        alpha=DEFAULT_ALPHA,
-    ):
+    def update_predict_single(self, y_new, fh=None, X=None,
+                              update_params=False, return_pred_int=False,
+                              alpha=DEFAULT_ALPHA):
         # when nowcasting, X may be longer than y, X must be cut to same
         # length as y so that same time points are
         # passed to update, the remaining time points of X are passed to
@@ -147,7 +140,8 @@ class BaseForecaster(BaseEstimator):
             raise NotImplementedError()
 
         self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int,
+                            alpha=alpha)
 
     def score(self, y_test, fh=None, X=None):
         """Compute the sMAPE loss for the given forecasting horizon.
@@ -173,7 +167,6 @@ class BaseForecaster(BaseEstimator):
         # no input checks needed here, they will be performed
         # in predict and loss function
         from sktime.performance_metrics.forecasting import smape_loss
-
         return smape_loss(y_test, self.predict(fh=fh, X=X))
 
     def get_fitted_params(self):

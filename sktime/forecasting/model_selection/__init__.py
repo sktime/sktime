@@ -8,7 +8,7 @@ __all__ = [
     "SingleWindowSplitter",
     "SlidingWindowSplitter",
     "temporal_train_test_split",
-    "ForecastingGridSearchCV",
+    "ForecastingGridSearchCV"
 ]
 
 from sktime.forecasting.model_selection._split import CutoffSplitter

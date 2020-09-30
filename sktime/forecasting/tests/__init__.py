@@ -15,7 +15,7 @@ TEST_INS_FHS = [
     -3,  # single in-sample
     np.array([-2, -5]),  # multiple in-sample
     0,  # last training point
-    np.array([-3, 2]),  # mixed in-sample and out-of-sample
+    np.array([-3, 2])  # mixed in-sample and out-of-sample
 ]
 TEST_FHS = TEST_OOS_FHS + TEST_INS_FHS
 TEST_SPS = [3, 7, 12]

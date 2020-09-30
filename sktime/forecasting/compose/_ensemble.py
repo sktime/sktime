@@ -11,9 +11,8 @@ from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class EnsembleForecaster(
-    OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster
-):
+class EnsembleForecaster(OptionalForecastingHorizonMixin,
+                         BaseHeterogenousEnsembleForecaster):
     """Ensemble of forecasters
 
     Parameters
@@ -75,4 +74,5 @@ class EnsembleForecaster(
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(
+            axis=1)

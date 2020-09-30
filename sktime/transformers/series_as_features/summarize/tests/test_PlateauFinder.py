@@ -9,19 +9,15 @@ from sktime.transformers.series_as_features.summarize import PlateauFinder
 def test_PlateauFinder(value):
     # generate test data
     value = np.nan
-    X = pd.DataFrame(
-        pd.Series(
-            [
-                pd.Series([value, 1, 2, 3, value, 2, 2, 3]),  # nan at start
-                pd.Series([value, value, 3, 3, value, 2, 2, 3]),
-                pd.Series([0, value, value, value, value, value, 2, value]),
-                # nan at end
-                pd.Series([0, value, value, 3, 4, 5, value, value]),
-                pd.Series([2, value, value, value, 2, value, 3, 1]),
-                pd.Series([0, value, value, 3, value, value, 2, 0]),
-            ]
-        )
-    )
+    X = pd.DataFrame(pd.Series([
+        pd.Series([value, 1, 2, 3, value, 2, 2, 3]),  # nan at start
+        pd.Series([value, value, 3, 3, value, 2, 2, 3]),
+        pd.Series([0, value, value, value, value, value, 2, value]),
+        # nan at end
+        pd.Series([0, value, value, 3, 4, 5, value, value]),
+        pd.Series([2, value, value, value, 2, value, 3, 1]),
+        pd.Series([0, value, value, 3, value, value, 2, 0])
+    ]))
     n_samples = X.shape[0]
 
     t = PlateauFinder(value=value, min_length=2)
@@ -30,22 +26,10 @@ def test_PlateauFinder(value):
     actual_starts = Xt.iloc[:, 0]
     actual_lengths = Xt.iloc[:, 1]
 
-    expected_starts = [
-        np.array([]),
-        np.array([0]),
-        np.array([1]),
-        np.array([1, 6]),
-        np.array([1]),
-        np.array([1, 4]),
-    ]
-    expected_lengths = [
-        np.array([]),
-        np.array([2]),
-        np.array([5]),
-        np.array([2, 2]),
-        np.array([3]),
-        np.array([2, 2]),
-    ]
+    expected_starts = [np.array([]), np.array([0]), np.array([1]),
+                       np.array([1, 6]), np.array([1]), np.array([1, 4])]
+    expected_lengths = [np.array([]), np.array([2]), np.array([5]),
+                        np.array([2, 2]), np.array([3]), np.array([2, 2])]
 
     # compare results
     for i in range(n_samples):

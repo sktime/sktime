@@ -3,7 +3,7 @@ Unified high-level interface for various time series related learning
 strategies.
 """
 __all__ = ["TSCStrategy", "TSRStrategy"]
-__author__ = ["Markus Löning", "Sajay Ganesh"]
+__author__ = ['Markus Löning', 'Sajay Ganesh']
 
 import pandas as pd
 from joblib import dump
@@ -47,12 +47,14 @@ class BaseStrategy(BaseEstimator):
 
     @property
     def name(self):
-        """Makes attribute accessible, but read-only."""
+        """Makes attribute accessible, but read-only.
+        """
         return self._name
 
     @property
     def estimator(self):
-        """Makes attribute accessible, but read-only."""
+        """Makes attribute accessible, but read-only.
+        """
         return self._estimator
 
     def __getitem__(self, key):
@@ -97,12 +99,11 @@ class BaseStrategy(BaseEstimator):
         Check compatibility of task with strategy
         """
         # TODO replace by task-strategy compatibility lookup registry
-        if hasattr(task, "_case"):
+        if hasattr(task, '_case'):
             if self._case != task._case:
                 raise ValueError(
                     "Strategy <-> task mismatch: The chosen strategy is "
-                    "incompatible with the given task"
-                )
+                    "incompatible with the given task")
         else:
             raise AttributeError("The passed case of the task is unknown")
 
@@ -113,11 +114,10 @@ class BaseStrategy(BaseEstimator):
 
         # Determine required estimator type from strategy case
         # TODO replace with strategy - estimator type registry lookup
-        if hasattr(self, "_traits"):
+        if hasattr(self, '_traits'):
             required = self._traits["required_estimator_type"]
-            if any(
-                estimator_type not in ESTIMATOR_TYPES for estimator_type in required
-            ):
+            if any(estimator_type not in ESTIMATOR_TYPES for estimator_type in
+                   required):
                 raise AttributeError("Required estimator type unknown")
         else:
             raise AttributeError("Required estimator type not found")
@@ -130,8 +130,7 @@ class BaseStrategy(BaseEstimator):
                 raise ValueError(
                     f"Final estimator of passed pipeline estimator must be "
                     f"of type: {required}, "
-                    f"but found: {type(final_estimator)}"
-                )
+                    f"but found: {type(final_estimator)}")
 
         # If tuning meta-estimator, check compatibility of inner estimator
         elif isinstance(estimator, (GridSearchCV, RandomizedSearchCV)):
@@ -140,16 +139,14 @@ class BaseStrategy(BaseEstimator):
                 raise ValueError(
                     f"Inner estimator of passed meta-estimator must be of "
                     f"type: {required}, "
-                    f"but found: {type(estimator)}"
-                )
+                    f"but found: {type(estimator)}")
 
         # Otherwise check estimator directly
         else:
             if not isinstance(estimator, required):
                 raise ValueError(
                     f"Passed estimator has to be of type: {required}, "
-                    f"but found: {type(estimator)}"
-                )
+                    f"but found: {type(estimator)}")
 
     @staticmethod
     def _validate_data(data):
@@ -157,7 +154,8 @@ class BaseStrategy(BaseEstimator):
         Helper function to validate input data.
         """
         if not isinstance(data, pd.DataFrame):
-            raise ValueError(f"Data must be pandas DataFrame, but found: {type(data)}")
+            raise ValueError(
+                f"Data must be pandas DataFrame, but found: {type(data)}")
 
         # TODO add input checks for contents, ie all cells be pandas Series,
         #  numpy arrays or primitives,
@@ -188,14 +186,9 @@ class BaseStrategy(BaseEstimator):
     def __repr__(self):
         strategy_name = self.__class__.__name__
         estimator_name = self.estimator.__class__.__name__
-        return "%s(%s(%s))" % (
-            strategy_name,
-            estimator_name,
-            _pprint(
-                self.get_params(deep=False),
-                offset=len(strategy_name),
-            ),
-        )
+        return '%s(%s(%s))' % (strategy_name, estimator_name,
+                               _pprint(self.get_params(deep=False),
+                                       offset=len(strategy_name), ),)
 
 
 class BaseSupervisedLearningStrategy(BaseStrategy):

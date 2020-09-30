@@ -10,9 +10,10 @@ from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
-    """Base class for interfacing statsmodels forecasting algorithms"""
-
+class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
+                          BaseSktimeForecaster):
+    """Base class for interfacing statsmodels forecasting algorithms
+    """
     _fitted_param_names = ()
 
     def __init__(self):
@@ -70,7 +71,8 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         # Forecast all periods from start to end of pred horizon,
         # but only return given time points in pred horizon
         fh_abs = fh.absolute(self.cutoff)
-        y_pred = self._fitted_forecaster.predict(start=fh_abs[0], end=fh_abs[-1])
+        y_pred = self._fitted_forecaster.predict(start=fh_abs[0],
+                                                 end=fh_abs[-1])
         return y_pred.loc[fh_abs]
 
     def get_fitted_params(self):
@@ -81,10 +83,8 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         fitted_params : dict
         """
         self.check_is_fitted()
-        return {
-            name: self._fitted_forecaster.params.get(name)
-            for name in self._get_fitted_param_names()
-        }
+        return {name: self._fitted_forecaster.params.get(name)
+                for name in self._get_fitted_param_names()}
 
     def _get_fitted_param_names(self):
         """Get names of fitted parameters"""

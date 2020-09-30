@@ -2,12 +2,15 @@
 # coding: utf-8
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__all__ = ["Detrender"]
+__all__ = [
+    "Detrender"
+]
 __author__ = ["Markus Löning"]
 
 from sklearn.base import clone
 from sktime.forecasting.base._meta import MetaForecasterMixin
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import \
+    BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 

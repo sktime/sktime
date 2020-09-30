@@ -22,24 +22,14 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
-from sktime.transformers.series_as_features.summarize import (
-    RandomIntervalFeatureExtractor,
-)
+from sktime.transformers.series_as_features.summarize import \
+    RandomIntervalFeatureExtractor
 from sktime.utils.validation.series_as_features import check_X_y
 
 
-def _parallel_build_trees(
-    tree,
-    forest,
-    X,
-    y,
-    sample_weight,
-    tree_idx,
-    n_trees,
-    verbose=0,
-    class_weight=None,
-    n_samples_bootstrap=None,
-):
+def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
+                          verbose=0, class_weight=None,
+                          n_samples_bootstrap=None):
     """
     Private function used to fit a single tree in parallel."""
     if verbose > 1:
@@ -56,22 +46,23 @@ def _parallel_build_trees(
         else:
             curr_sample_weight = sample_weight.copy()
 
-        indices = _generate_sample_indices(
-            final_estimator.random_state, n_samples, n_samples_bootstrap
-        )
+        indices = _generate_sample_indices(final_estimator.random_state,
+                                           n_samples,
+                                           n_samples_bootstrap)
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
-        if class_weight == "subsample":
+        if class_weight == 'subsample':
             with catch_warnings():
-                simplefilter("ignore", DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight("auto", y, indices)
-        elif class_weight == "balanced_subsample":
-            curr_sample_weight *= compute_sample_weight("balanced", y, indices)
-        fit_params = {f"{final_estimator_name}__sample_weight": curr_sample_weight}
+                simplefilter('ignore', DeprecationWarning)
+                curr_sample_weight *= compute_sample_weight('auto', y, indices)
+        elif class_weight == 'balanced_subsample':
+            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
+        fit_params = {
+            f'{final_estimator_name}__sample_weight': curr_sample_weight}
         tree.fit(X, y, **fit_params)
     else:
-        fit_params = {f"{final_estimator_name}__sample_weight": sample_weight}
+        fit_params = {f'{final_estimator_name}__sample_weight': sample_weight}
         tree.fit(X, y, **fit_params)
 
     return tree
@@ -83,22 +74,22 @@ class BaseTimeSeriesForest(BaseForest):
     """
 
     @abstractmethod
-    def __init__(
-        self,
-        base_estimator,
-        n_estimators=100,
-        estimator_params=tuple(),
-        bootstrap=False,
-        oob_score=False,
-        n_jobs=None,
-        random_state=None,
-        verbose=0,
-        warm_start=False,
-        class_weight=None,
-        max_samples=None,
-    ):
+    def __init__(self,
+                 base_estimator,
+                 n_estimators=100,
+                 estimator_params=tuple(),
+                 bootstrap=False,
+                 oob_score=False,
+                 n_jobs=None,
+                 random_state=None,
+                 verbose=0,
+                 warm_start=False,
+                 class_weight=None,
+                 max_samples=None):
         super(BaseTimeSeriesForest, self).__init__(
-            base_estimator, n_estimators=n_estimators, estimator_params=estimator_params
+            base_estimator,
+            n_estimators=n_estimators,
+            estimator_params=estimator_params
         )
         self.bootstrap = bootstrap
         self.oob_score = oob_score
@@ -115,7 +106,8 @@ class BaseTimeSeriesForest(BaseForest):
         sub-estimators.
         """
         estimator = clone(self.estimator_)
-        estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
+        estimator.set_params(**{p: getattr(self, p)
+                                for p in self.estimator_params})
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
@@ -163,13 +155,10 @@ class BaseTimeSeriesForest(BaseForest):
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
-            warn(
-                "A column-vector y was passed when a 1d array was"
-                " expected. Please change the shape of y to "
-                "(n_samples,), for example using ravel().",
-                DataConversionWarning,
-                stacklevel=2,
-            )
+            warn("A column-vector y was passed when a 1d array was"
+                 " expected. Please change the shape of y to "
+                 "(n_samples,), for example using ravel().",
+                 DataConversionWarning, stacklevel=2)
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
@@ -191,16 +180,16 @@ class BaseTimeSeriesForest(BaseForest):
 
         # Get bootstrap sample size
         n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples=X.shape[0], max_samples=self.max_samples
+            n_samples=X.shape[0],
+            max_samples=self.max_samples
         )
 
         # Check parameters
         self._validate_estimator()
 
         if not self.bootstrap and self.oob_score:
-            raise ValueError(
-                "Out of bag estimation only available" " if bootstrap=True"
-            )
+            raise ValueError("Out of bag estimation only available"
+                             " if bootstrap=True")
 
         random_state = check_random_state(self.random_state)
 
@@ -211,27 +200,22 @@ class BaseTimeSeriesForest(BaseForest):
         n_more_estimators = self.n_estimators - len(self.estimators_)
 
         if n_more_estimators < 0:
-            raise ValueError(
-                "n_estimators=%d must be larger or equal to "
-                "len(estimators_)=%d when warm_start==True"
-                % (self.n_estimators, len(self.estimators_))
-            )
+            raise ValueError('n_estimators=%d must be larger or equal to '
+                             'len(estimators_)=%d when warm_start==True'
+                             % (self.n_estimators, len(self.estimators_)))
 
         elif n_more_estimators == 0:
-            warn(
-                "Warm-start fitting without increasing n_estimators does not "
-                "fit new trees."
-            )
+            warn("Warm-start fitting without increasing n_estimators does not "
+                 "fit new trees.")
         else:
             if self.warm_start and len(self.estimators_) > 0:
                 # We draw from the random state to get the random state we
                 # would have got if we hadn't used a warm_start.
                 random_state.randint(MAX_INT, size=len(self.estimators_))
 
-            trees = [
-                self._make_estimator(append=False, random_state=random_state)
-                for i in range(n_more_estimators)
-            ]
+            trees = [self._make_estimator(append=False,
+                                          random_state=random_state)
+                     for i in range(n_more_estimators)]
 
             # Parallel loop: for standard random forests, the threading
             # backend is preferred as the Cython code for fitting the trees
@@ -241,19 +225,10 @@ class BaseTimeSeriesForest(BaseForest):
             # multiprocessing is more efficient.
             trees = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                 delayed(_parallel_build_trees)(
-                    t,
-                    self,
-                    X,
-                    y,
-                    sample_weight,
-                    i,
-                    len(trees),
-                    verbose=self.verbose,
-                    class_weight=self.class_weight,
-                    n_samples_bootstrap=n_samples_bootstrap,
-                )
-                for i, t in enumerate(trees)
-            )
+                    t, self, X, y, sample_weight, i, len(trees),
+                    verbose=self.verbose, class_weight=self.class_weight,
+                    n_samples_bootstrap=n_samples_bootstrap)
+                for i, t in enumerate(trees))
 
             # Collect newly grown trees
             self.estimators_.extend(trees)
@@ -278,30 +253,27 @@ class BaseTimeSeriesForest(BaseForest):
     def _validate_X_predict(self, X):
         n_features = X.shape[1] if X.ndim == 2 else 1
         if self.n_columns != n_features:
-            raise ValueError(
-                "Number of features of the model must "
-                "match the input. Model n_features is %s and "
-                "input n_features is %s " % (self.n_columns, n_features)
-            )
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is %s and "
+                             "input n_features is %s "
+                             % (self.n_columns, n_features))
 
         return X
 
     @property
     def feature_importances_(self):
-        """Compute feature importances for time series forest"""
+        """Compute feature importances for time series forest
+        """
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
         # as in modular tsf
 
-        if not isinstance(
-            self.estimators_[0].steps[0][1], RandomIntervalFeatureExtractor
-        ):
-            raise NotImplementedError(
-                "RandomIntervalFeatureExtractor must"
-                " be used as the transformer,"
-                " which must be the first step"
-                " in the base estimator."
-            )
+        if not isinstance(self.estimators_[0].steps[0][1],
+                          RandomIntervalFeatureExtractor):
+            raise NotImplementedError("RandomIntervalFeatureExtractor must"
+                                      " be used as the transformer,"
+                                      " which must be the first step"
+                                      " in the base estimator.")
 
         # get series length, assuming same length series
         tree = self.estimators_[0]

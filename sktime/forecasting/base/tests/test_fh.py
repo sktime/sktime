@@ -57,4 +57,5 @@ def test_y_test_index_input():
     # check if y_test.index can be passed as absolute horizon
     fh = FH(y_test.index, relative=False)
     cutoff = y_train.index[-1]
-    np.testing.assert_array_equal(fh.relative(cutoff), np.arange(len(y_test)) + 1)
+    np.testing.assert_array_equal(fh.relative(cutoff),
+                                  np.arange(len(y_test)) + 1)

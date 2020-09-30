@@ -4,13 +4,8 @@ transform, a contracted version and
 a randoms sampler
 """
 __author__ = ["Jason Lines", "David Guijo"]
-__all__ = [
-    "ShapeletTransform",
-    "ContractedShapeletTransform",
-    "_RandomEnumerationShapeletTransform",
-    "Shapelet",
-    "ShapeletPQ",
-]
+__all__ = ["ShapeletTransform", "ContractedShapeletTransform",
+           "_RandomEnumerationShapeletTransform", "Shapelet", "ShapeletPQ"]
 
 import heapq
 import os
@@ -23,7 +18,8 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -45,7 +41,6 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # calculations
 #
 # TO-DO: add CI tests, comments, documentation, etc.
-
 
 class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     """Shapelet Transform.
@@ -87,19 +82,19 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     the stored shapelets after a dataset has been processed
     """
 
-    def __init__(
-        self,
-        min_shapelet_length=3,
-        max_shapelet_length=np.inf,
-        max_shapelets_to_store_per_class=200,
-        random_state=None,
-        verbose=0,
-        remove_self_similar=True,
-    ):
+    def __init__(self,
+                 min_shapelet_length=3,
+                 max_shapelet_length=np.inf,
+                 max_shapelets_to_store_per_class=200,
+                 random_state=None,
+                 verbose=0,
+                 remove_self_similar=True,
+                 ):
 
         self.min_shapelet_length = min_shapelet_length
         self.max_shapelet_length = max_shapelet_length
-        self.max_shapelets_to_store_per_class = max_shapelets_to_store_per_class
+        self.max_shapelets_to_store_per_class = \
+            max_shapelets_to_store_per_class
         self.random_state = random_state
         self.verbose = verbose
         self.remove_self_similar = remove_self_similar
@@ -129,26 +124,24 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         if isinstance(y, pd.Series):
             y = y.to_numpy()
 
-        if (
-            type(self) is ContractedShapeletTransform
-            and self.time_contract_in_mins <= 0
-        ):
-            raise ValueError("Error: time limit cannot be equal to or less than 0")
+        if type(
+                self) is ContractedShapeletTransform and \
+                self.time_contract_in_mins <= 0:
+            raise ValueError(
+                "Error: time limit cannot be equal to or less than 0")
 
-        X_lens = np.array(
-            [len(X.iloc[r, 0]) for r in range(len(X))]
-        )  # note, assumes all dimensions of a case are the same
+        X_lens = np.array([len(X.iloc[r, 0]) for r in range(len(
+            X))])  # note, assumes all dimensions of a case are the same
         # length. A shapelet would not be well defined if indices do not match!
         X = np.array(
-            [
-                [X.iloc[r, c].values for c in range(len(X.columns))]
-                for r in range(len(X))
-            ]
-        )  # may need to pad with nans here for uneq length,
+            [[X.iloc[r, c].values for c in range(len(X.columns))] for r in
+             range(len(
+                 X))])  # may need to pad with nans here for uneq length,
         # look at later
 
         num_ins = len(y)
-        distinct_class_vals = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        distinct_class_vals = \
+            class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         candidates_evaluated = 0
 
@@ -157,7 +150,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         else:
             num_series_to_visit = num_ins
 
-        shapelet_heaps_by_class = {i: ShapeletPQ() for i in distinct_class_vals}
+        shapelet_heaps_by_class = {i: ShapeletPQ() for i in
+                                   distinct_class_vals}
 
         self._random_state = check_random_state(self.random_state)
 
@@ -182,28 +176,24 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 
         def _round_robin(*iterables):
             sentinel = object()
-            return (
-                a
-                for x in zip_longest(*iterables, fillvalue=sentinel)
-                for a in x
-                if a != sentinel
-            )
+            return (a for x in zip_longest(*iterables, fillvalue=sentinel) for
+                    a in x if a != sentinel)
 
-        case_ids_by_class = {i: np.where(y == i)[0] for i in distinct_class_vals}
+        case_ids_by_class = {i: np.where(y == i)[0] for i in
+                             distinct_class_vals}
 
         # if transform is random/contract then shuffle the data initially
         # when determining which cases to visit
-        if (
-            type(self) is _RandomEnumerationShapeletTransform
-            or type(self) is ContractedShapeletTransform
-        ):
+        if type(self) is _RandomEnumerationShapeletTransform or type(
+                self) is ContractedShapeletTransform:
             for i in range(len(distinct_class_vals)):
-                self._random_state.shuffle(case_ids_by_class[distinct_class_vals[i]])
+                self._random_state.shuffle(
+                    case_ids_by_class[distinct_class_vals[i]])
 
-        num_train_per_class = {i: len(case_ids_by_class[i]) for i in case_ids_by_class}
+        num_train_per_class = {i: len(case_ids_by_class[i]) for i in
+                               case_ids_by_class}
         round_robin_case_order = _round_robin(
-            *[list(v) for k, v in case_ids_by_class.items()]
-        )
+            *[list(v) for k, v in case_ids_by_class.items()])
         cases_to_visit = [(i, y[i]) for i in round_robin_case_order]
         # this dictionary will be used to store all possible starting
         # positions and shapelet lengths for a give series length. This
@@ -241,28 +231,18 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             this_class_val = cases_to_visit[case_idx][1]
 
             # minus 1 to remove this candidate from sums
-            binary_ig_this_class_count = num_train_per_class[this_class_val] - 1
-            binary_ig_other_class_count = num_ins - binary_ig_this_class_count - 1
+            binary_ig_this_class_count = num_train_per_class[
+                                             this_class_val] - 1
+            binary_ig_other_class_count = (num_ins -
+                                           binary_ig_this_class_count - 1)
 
             if self.verbose:
                 if type(self) == _RandomEnumerationShapeletTransform:
-                    print(
-                        "visiting series: "
-                        + str(series_id)
-                        + " (#"
-                        + str(case_idx + 1)
-                        + "/"
-                        + str(num_series_to_visit)
-                        + ")"
-                    )
+                    print("visiting series: " + str(series_id) + " (#" + str(
+                        case_idx + 1) + "/" + str(num_series_to_visit) + ")")
                 else:
-                    print(
-                        "visiting series: "
-                        + str(series_id)
-                        + " (#"
-                        + str(case_idx + 1)
-                        + ")"
-                    )
+                    print("visiting series: " + str(series_id) + " (#" + str(
+                        case_idx + 1) + ")")
 
             this_series_len = len(X[series_id][0])
 
@@ -275,8 +255,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 this_shapelet_length_upper_bound = this_series_len
             else:
                 this_shapelet_length_upper_bound = min(
-                    this_series_len, self.max_shapelet_length
-                )
+                    this_series_len, self.max_shapelet_length)
 
             # all possible start and lengths for shapelets within this
             # series (calculates if series length is new, a simple look-up
@@ -285,25 +264,20 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 
             # First, try to reuse if they have been calculated for a series
             # of the same length before.
-            candidate_starts_and_lens = possible_candidates_per_series_length.get(
-                this_series_len
-            )
+            candidate_starts_and_lens = \
+                possible_candidates_per_series_length.get(
+                    this_series_len)
             # else calculate them for this series length and store for
             # possible use again
             if candidate_starts_and_lens is None:
                 candidate_starts_and_lens = [
-                    [start, length]
-                    for start in range(
-                        0, this_series_len - self.min_shapelet_length + 1
-                    )
-                    for length in range(
-                        self.min_shapelet_length, this_shapelet_length_upper_bound + 1
-                    )
-                    if start + length <= this_series_len
-                ]
+                    [start, length] for start in
+                    range(0, this_series_len - self.min_shapelet_length + 1)
+                    for length in range(self.min_shapelet_length,
+                                        this_shapelet_length_upper_bound + 1)
+                    if start + length <= this_series_len]
                 possible_candidates_per_series_length[
-                    this_series_len
-                ] = candidate_starts_and_lens
+                    this_series_len] = candidate_starts_and_lens
 
             # default for full transform
             candidates_to_visit = candidate_starts_and_lens
@@ -312,16 +286,13 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             # limit search otherwise:
             if hasattr(self, "num_candidates_to_sample_per_case"):
                 num_candidates_per_case = min(
-                    self.num_candidates_to_sample_per_case, num_candidates_per_case
-                )
-                cand_idx = list(
-                    self._random_state.choice(
-                        list(range(0, len(candidate_starts_and_lens))),
-                        num_candidates_per_case,
-                        replace=False,
-                    )
-                )
-                candidates_to_visit = [candidate_starts_and_lens[x] for x in cand_idx]
+                    self.num_candidates_to_sample_per_case,
+                    num_candidates_per_case)
+                cand_idx = list(self._random_state.choice(
+                    list(range(0, len(candidate_starts_and_lens))),
+                    num_candidates_per_case, replace=False))
+                candidates_to_visit = [candidate_starts_and_lens[x] for x in
+                                       cand_idx]
 
             for candidate_idx in range(num_candidates_per_case):
 
@@ -330,20 +301,19 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 ig_cutoff = self.predefined_ig_rejection_level
                 # otherwise if we have max shapelets already, set the
                 # threshold as the IG of the current 'worst' shapelet we have
-                if (
-                    shapelet_heaps_by_class[this_class_val].get_size()
-                    >= self.max_shapelets_to_store_per_class
-                ):
+                if shapelet_heaps_by_class[
+                    this_class_val].get_size() >= \
+                        self.max_shapelets_to_store_per_class:
                     ig_cutoff = max(
-                        shapelet_heaps_by_class[this_class_val].peek()[0], ig_cutoff
-                    )
+                        shapelet_heaps_by_class[this_class_val].peek()[0],
+                        ig_cutoff)
 
                 cand_start_pos = candidates_to_visit[candidate_idx][0]
                 cand_len = candidates_to_visit[candidate_idx][1]
 
                 candidate = ShapeletTransform.zscore(
-                    X[series_id][:, cand_start_pos : cand_start_pos + cand_len]
-                )
+                    X[series_id][:, cand_start_pos: cand_start_pos + cand_len]
+                    )
 
                 # now go through all other series and get a distance from
                 # the candidate to each
@@ -383,17 +353,17 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                         start_left = 0
                         start_right = 0
 
-                    for num_cals in range(
-                        max(1, int(np.ceil((X_lens[i] - cand_len) / 2)))
-                    ):  # max
+                    for num_cals in range(max(1, int(np.ceil((X_lens[
+                                                                  i] -
+                                                              cand_len) /
+                                                             2)))):  # max
                         # used to force iteration where series len ==
                         # candidate len
                         if start_left < 0:
                             start_left = X_lens[i] - 1 - cand_len
 
                         comparison = ShapeletTransform.zscore(
-                            X[i][:, start_left : start_left + cand_len]
-                        )
+                            X[i][:, start_left: start_left + cand_len])
                         dist_left = np.linalg.norm(candidate - comparison)
                         bsf_dist = min(dist_left * dist_left, bsf_dist)
 
@@ -405,8 +375,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                         if start_right == X_lens[i] - cand_len + 1:
                             start_right = 0
                         comparison = ShapeletTransform.zscore(
-                            X[i][:, start_right : start_right + cand_len]
-                        )
+                            X[i][:, start_right: start_right + cand_len])
                         dist_right = np.linalg.norm(candidate - comparison)
                         bsf_dist = min(dist_right * dist_right, bsf_dist)
 
@@ -422,13 +391,14 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                     orderline.sort()
 
                     if len(orderline) > 2:
-                        ig_upper_bound = ShapeletTransform.calc_early_binary_ig(
-                            orderline,
-                            num_visited_this_class,
-                            num_visited_other_class,
-                            binary_ig_this_class_count - num_visited_this_class,
-                            binary_ig_other_class_count - num_visited_other_class,
-                        )
+                        ig_upper_bound = \
+                            ShapeletTransform.calc_early_binary_ig(
+                                orderline, num_visited_this_class,
+                                num_visited_other_class,
+                                binary_ig_this_class_count -
+                                num_visited_this_class,
+                                binary_ig_other_class_count -
+                                num_visited_other_class)
                         # print("upper: "+str(ig_upper_bound))
                         if ig_upper_bound <= ig_cutoff:
                             candidate_rejected = True
@@ -443,57 +413,49 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                     final_ig = ShapeletTransform.calc_binary_ig(
                         orderline,
                         binary_ig_this_class_count,
-                        binary_ig_other_class_count,
-                    )
-                    accepted_candidate = Shapelet(
-                        series_id, cand_start_pos, cand_len, final_ig, candidate
-                    )
+                        binary_ig_other_class_count)
+                    accepted_candidate = Shapelet(series_id, cand_start_pos,
+                                                  cand_len, final_ig,
+                                                  candidate)
 
                     # add to min heap to store shapelets for this class
-                    shapelet_heaps_by_class[this_class_val].push(accepted_candidate)
+                    shapelet_heaps_by_class[this_class_val].push(
+                        accepted_candidate)
 
                     # informal, but extra 10% allowance for self similar later
-                    if (
-                        shapelet_heaps_by_class[this_class_val].get_size()
-                        > self.max_shapelets_to_store_per_class * 3
-                    ):
+                    if shapelet_heaps_by_class[
+                        this_class_val].get_size() > \
+                            self.max_shapelets_to_store_per_class * 3:
                         shapelet_heaps_by_class[this_class_val].pop()
 
                 # Takes into account the use of the MAX shapelet calculation
                 # time to not exceed the time_limit (not exact, but likely a
                 # good guess).
-                if (
-                    hasattr(self, "time_contract_in_mins")
-                    and self.time_contract_in_mins > 0
-                ):
+                if hasattr(self,
+                           'time_contract_in_mins') and \
+                        self.time_contract_in_mins \
+                        > 0:
                     time_now = time_taken()
-                    time_this_shapelet = time_now - time_last_shapelet
+                    time_this_shapelet = (time_now - time_last_shapelet)
                     if time_this_shapelet > max_time_calc_shapelet:
                         max_time_calc_shapelet = time_this_shapelet
                         print(max_time_calc_shapelet)
                     time_last_shapelet = time_now
 
-                    # add a little 1% leeway to the timing incase one run was slightly faster than
-                    # another based on the CPU.
+# add a little 1% leeway to the timing incase one run was slightly faster than
+# another based on the CPU.
                     time_in_seconds = self.time_contract_in_mins * 60
                     max_shapelet_time_percentage = (
-                        max_time_calc_shapelet / 100.0
-                    ) * 0.75
-                    if (time_now + max_shapelet_time_percentage) > time_in_seconds:
+                        max_time_calc_shapelet / 100.0) * 0.75
+                    if (time_now + max_shapelet_time_percentage) > \
+                            time_in_seconds:
                         if self.verbose > 0:
                             print(
                                 "No more time available! It's been {0:02d}:{"
                                 "1:02}".format(
-                                    int(round(time_now / 60, 3)),
-                                    int(
-                                        (
-                                            round(time_now / 60, 3)
-                                            - int(round(time_now / 60, 3))
-                                        )
-                                        * 60
-                                    ),
-                                )
-                            )
+                                    int(round(time_now / 60, 3)), int((round(
+                                        time_now / 60, 3) - int(
+                                        round(time_now / 60, 3))) * 60)))
                         time_finished = True
                         break
                     else:
@@ -502,71 +464,29 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                                 print(
                                     "Candidate finished. {0:02d}:{1:02} "
                                     "remaining".format(
-                                        int(
-                                            round(
-                                                self.time_contract_in_mins
-                                                - time_now / 60,
-                                                3,
-                                            )
-                                        ),
-                                        int(
-                                            (
-                                                round(
-                                                    self.time_contract_in_mins
-                                                    - time_now / 60,
-                                                    3,
-                                                )
-                                                - int(
-                                                    round(
-                                                        (
-                                                            self.time_contract_in_mins
-                                                            - time_now
-                                                        )
-                                                        / 60,
-                                                        3,
-                                                    )
-                                                )
-                                            )
-                                            * 60
-                                        ),
-                                    )
-                                )
+                                        int(round(
+                                            self.time_contract_in_mins -
+                                            time_now / 60,
+                                            3)),
+                                        int((round(
+                                            self.time_contract_in_mins -
+                                            time_now / 60,
+                                            3) - int(
+                                            round((self.time_contract_in_mins
+                                                   - time_now) / 60, 3))) *
+                                            60)))
                             else:
                                 print(
                                     "Candidate rejected. {0:02d}:{1:02} "
-                                    "remaining".format(
-                                        int(
-                                            round(
-                                                (self.time_contract_in_mins - time_now)
-                                                / 60,
-                                                3,
-                                            )
-                                        ),
-                                        int(
-                                            (
-                                                round(
-                                                    (
-                                                        self.time_contract_in_mins
-                                                        - time_now
-                                                    )
-                                                    / 60,
-                                                    3,
-                                                )
-                                                - int(
-                                                    round(
-                                                        (
-                                                            self.time_contract_in_mins
-                                                            - time_now
-                                                        )
-                                                        / 60,
-                                                        3,
-                                                    )
-                                                )
-                                            )
-                                            * 60
-                                        ),
-                                    )
-                                )
+                                    "remaining".format(int(round(
+                                        (self.time_contract_in_mins -
+                                         time_now) / 60, 3)),
+                                        int((round(
+                                            (self.time_contract_in_mins -
+                                             time_now) / 60,
+                                            3) - int(
+                                            round((self.time_contract_in_mins -
+                                                   time_now) / 60, 3))) * 60)))
 
             # stopping condition: in case of iterative transform (i.e.
             # num_cases_to_sample have been visited)
@@ -575,7 +495,9 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             case_idx += 1
 
             if case_idx >= num_series_to_visit:
-                if hasattr(self, "time_contract_in_mins") and time_finished is not True:
+                if hasattr(self,
+                           'time_contract_in_mins') and time_finished is not \
+                        True:
                     case_idx = 0
             elif case_idx >= num_series_to_visit or time_finished:
                 if self.verbose > 0:
@@ -592,23 +514,20 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         for class_val in distinct_class_vals:
             by_class_descending_ig = sorted(
                 shapelet_heaps_by_class[class_val].get_array(),
-                key=itemgetter(0),
-                reverse=True,
-            )
+                key=itemgetter(0), reverse=True)
 
             if self.remove_self_similar and len(by_class_descending_ig) > 0:
-                by_class_descending_ig = (
+                by_class_descending_ig = \
                     ShapeletTransform.remove_self_similar_shapelets(
-                        by_class_descending_ig
-                    )
-                )
+                        by_class_descending_ig)
             else:
                 # need to extract shapelets from tuples
                 by_class_descending_ig = [x[2] for x in by_class_descending_ig]
 
             # if we have more than max_shapelet_per_class, trim to that
             # amount here
-            if len(by_class_descending_ig) > self.max_shapelets_to_store_per_class:
+            if len(by_class_descending_ig) > \
+                    self.max_shapelets_to_store_per_class:
                 max_n = self.max_shapelets_to_store_per_class
                 by_class_descending_ig = by_class_descending_ig[:max_n]
 
@@ -626,8 +545,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 "calling the transform method "
                 "will raise an Exception. Please re-fit the transform with "
                 "other data and/or "
-                "parameter options."
-            )
+                "parameter options.")
 
         self._is_fitted = True
         return self
@@ -661,12 +579,12 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 return False
 
             if (shapelet_one.start_pos >= shapelet_two.start_pos) and (
-                shapelet_one.start_pos <= shapelet_two.start_pos + shapelet_two.length
-            ):
+                    shapelet_one.start_pos <= shapelet_two.start_pos +
+                    shapelet_two.length):
                 return True
             if (shapelet_two.start_pos >= shapelet_one.start_pos) and (
-                shapelet_two.start_pos <= shapelet_one.start_pos + shapelet_one.length
-            ):
+                    shapelet_two.start_pos <= shapelet_one.start_pos +
+                    shapelet_one.length):
                 return True
 
         # [s][2] will be a tuple with (info_gain,id,Shapelet), so we need to
@@ -704,21 +622,14 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             raise RuntimeError(
                 "No shapelets were extracted in fit that exceeded the "
                 "minimum information gain threshold. Please retry with other "
-                "data and/or parameter settings."
-            )
+                "data and/or parameter settings.")
 
         _X = np.array(
-            [
-                [_X.iloc[r, c].values for c in range(len(_X.columns))]
-                for r in range(len(_X))
-            ]
-        )
-        # may need to pad with nans here for uneq length, look at later
+            [[_X.iloc[r, c].values for c in range(len(_X.columns))]
+             for r in range(len(_X))])
+# may need to pad with nans here for uneq length, look at later
 
-        output = np.zeros(
-            [len(_X), len(self.shapelets)],
-            dtype=np.float32,
-        )
+        output = np.zeros([len(_X), len(self.shapelets)], dtype=np.float32, )
 
         # for the i^th series to transform
         for i in range(0, len(_X)):
@@ -730,12 +641,11 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
                 min_dist = np.inf
                 this_shapelet_length = self.shapelets[s].length
 
-                for start_pos in range(
-                    0, len(this_series[0]) - this_shapelet_length + 1
-                ):
+                for start_pos in range(0, len(
+                        this_series[0]) - this_shapelet_length + 1):
                     comparison = ShapeletTransform.zscore(
-                        this_series[:, start_pos : (start_pos + this_shapelet_length)]
-                    )
+                        this_series[:, start_pos:(start_pos +
+                                                  this_shapelet_length)])
 
                     dist = np.linalg.norm(self.shapelets[s].data - comparison)
                     dist = dist * dist
@@ -759,17 +669,13 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     def binary_entropy(num_this_class, num_other_class):
         ent = 0
         if num_this_class != 0:
-            ent -= (
-                num_this_class
-                / (num_this_class + num_other_class)
-                * np.log2(num_this_class / (num_this_class + num_other_class))
-            )
+            ent -= num_this_class / (
+                    num_this_class + num_other_class) * np.log2(
+                num_this_class / (num_this_class + num_other_class))
         if num_other_class != 0:
-            ent -= (
-                num_other_class
-                / (num_this_class + num_other_class)
-                * np.log2(num_other_class / (num_this_class + num_other_class))
-            )
+            ent -= num_other_class / (
+                    num_this_class + num_other_class) * np.log2(
+                num_other_class / (num_this_class + num_other_class))
         return ent
 
     # could cythonise
@@ -777,9 +683,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     def calc_binary_ig(orderline, total_num_this_class, total_num_other_class):
         # def entropy(ent_class_counts, all_class_count):
 
-        initial_ent = ShapeletTransform.binary_entropy(
-            total_num_this_class, total_num_other_class
-        )
+        initial_ent = ShapeletTransform.binary_entropy(total_num_this_class,
+                                                       total_num_other_class)
         bsf_ig = 0
 
         count_this_class = 0
@@ -798,16 +703,14 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             # optimistically add this class to left side first and other to
             # right
             left_prop = (split + 1) / total_all
-            ent_left = ShapeletTransform.binary_entropy(
-                count_this_class, count_other_class
-            )
+            ent_left = ShapeletTransform.binary_entropy(count_this_class,
+                                                        count_other_class)
 
             right_prop = 1 - left_prop  # because right side must
             # optimistically contain everything else
             ent_right = ShapeletTransform.binary_entropy(
                 total_num_this_class - count_this_class,
-                total_num_other_class - count_other_class,
-            )
+                total_num_other_class - count_other_class)
 
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
@@ -816,31 +719,23 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 
     # could cythonise
     @staticmethod
-    def calc_early_binary_ig(
-        orderline,
-        num_this_class_in_orderline,
-        num_other_class_in_orderline,
-        num_to_add_this_class,
-        num_to_add_other_class,
-    ):
+    def calc_early_binary_ig(orderline, num_this_class_in_orderline,
+                             num_other_class_in_orderline,
+                             num_to_add_this_class, num_to_add_other_class):
         # def entropy(ent_class_counts, all_class_count):
 
         initial_ent = ShapeletTransform.binary_entropy(
             num_this_class_in_orderline + num_to_add_this_class,
-            num_other_class_in_orderline + num_to_add_other_class,
-        )
+            num_other_class_in_orderline + num_to_add_other_class)
         bsf_ig = 0
 
         # actual observations in orderline
         count_this_class = 0
         count_other_class = 0
 
-        total_all = (
-            num_this_class_in_orderline
-            + num_other_class_in_orderline
-            + num_to_add_this_class
-            + num_to_add_other_class
-        )
+        total_all = (num_this_class_in_orderline +
+                     num_other_class_in_orderline + num_to_add_this_class +
+                     num_to_add_other_class)
 
         # evaluate each split point
         for split in range(0, len(orderline) - 1):
@@ -854,33 +749,30 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             # right
             left_prop = (split + 1 + num_to_add_this_class) / total_all
             ent_left = ShapeletTransform.binary_entropy(
-                count_this_class + num_to_add_this_class, count_other_class
-            )
+                count_this_class + num_to_add_this_class, count_other_class)
 
             right_prop = 1 - left_prop  # because right side must
             # optimistically contain everything else
             ent_right = ShapeletTransform.binary_entropy(
                 num_this_class_in_orderline - count_this_class,
-                num_other_class_in_orderline
-                - count_other_class
-                + num_to_add_other_class,
-            )
+                num_other_class_in_orderline - count_other_class +
+                num_to_add_other_class)
 
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
 
             # now optimistically add this class to right, other to left
             left_prop = (split + 1 + num_to_add_other_class) / total_all
-            ent_left = ShapeletTransform.binary_entropy(
-                count_this_class, count_other_class + num_to_add_other_class
-            )
+            ent_left = ShapeletTransform.binary_entropy(count_this_class,
+                                                        count_other_class +
+                                                        num_to_add_other_class)
 
             right_prop = 1 - left_prop  # because right side must
             # optimistically contain everything else
             ent_right = ShapeletTransform.binary_entropy(
-                num_this_class_in_orderline - count_this_class + num_to_add_this_class,
-                num_other_class_in_orderline - count_other_class,
-            )
+                num_this_class_in_orderline - count_this_class +
+                num_to_add_this_class,
+                num_other_class_in_orderline - count_other_class)
             ig = initial_ent - left_prop * ent_left - right_prop * ent_right
             bsf_ig = max(ig, bsf_ig)
 
@@ -888,7 +780,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 
     @staticmethod
     def zscore(a, axis=0, ddof=0):
-        """A static method to return the normalised version of series.
+        """ A static method to return the normalised version of series.
         This mirrors the scipy implementation
         with a small difference - rather than allowing /0, the function
         returns output = np.zeroes(len(input)).
@@ -929,9 +821,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
             else:
                 mns = j.mean(axis=axis)
                 if axis and mns.ndim < j.ndim:
-                    zscored[i] = (j - np.expand_dims(mns, axis=axis)) / np.expand_dims(
-                        sstd, axis=axis
-                    )
+                    zscored[i] = ((j - np.expand_dims(mns, axis=axis)) /
+                                  np.expand_dims(sstd, axis=axis))
                 else:
                     zscored[i] = (j - mns) / sstd
         return zscored
@@ -992,30 +883,26 @@ class ContractedShapeletTransform(ShapeletTransform):
     """
 
     def __init__(
-        self,
-        min_shapelet_length=3,
-        max_shapelet_length=np.inf,
-        max_shapelets_to_store_per_class=200,
-        time_contract_in_mins=60,
-        num_candidates_to_sample_per_case=20,
-        random_state=None,
-        verbose=0,
-        remove_self_similar=True,
+            self,
+            min_shapelet_length=3,
+            max_shapelet_length=np.inf,
+            max_shapelets_to_store_per_class=200,
+            time_contract_in_mins=60,
+            num_candidates_to_sample_per_case=20,
+            random_state=None,
+            verbose=0,
+            remove_self_similar=True
     ):
-        self.num_candidates_to_sample_per_case = num_candidates_to_sample_per_case
+        self.num_candidates_to_sample_per_case = \
+            num_candidates_to_sample_per_case
         self.time_contract_in_mins = time_contract_in_mins
 
         self.predefined_ig_rejection_level = 0.05
         self.shapelets = None
 
-        super().__init__(
-            min_shapelet_length,
-            max_shapelet_length,
-            max_shapelets_to_store_per_class,
-            random_state,
-            verbose,
-            remove_self_similar,
-        )
+        super().__init__(min_shapelet_length, max_shapelet_length,
+                         max_shapelets_to_store_per_class, random_state,
+                         verbose, remove_self_similar)
 
 
 class _RandomEnumerationShapeletTransform(ShapeletTransform):
@@ -1048,10 +935,9 @@ class Shapelet:
         self.data = data
 
     def __str__(self):
-        return (
-            "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3},"
-            " ".format(self.series_id, self.start_pos, self.length, self.info_gain)
-        )
+        return "Series ID: {0}, start_pos: {1}, length: {2}, info_gain: {3}," \
+               " ".format(self.series_id, self.start_pos,
+                          self.length, self.info_gain)
 
 
 class ShapeletPQ:
@@ -1060,7 +946,8 @@ class ShapeletPQ:
         self._index = 0
 
     def push(self, shapelet):
-        heapq.heappush(self._queue, (shapelet.info_gain, self._index, shapelet))
+        heapq.heappush(self._queue,
+                       (shapelet.info_gain, self._index, shapelet))
         self._index += 1
 
     def pop(self):
@@ -1077,7 +964,7 @@ class ShapeletPQ:
 
 
 def write_transformed_data_to_arff(transform, labels, file_name):
-    """A simple function to save the transform obtained in arff format
+    """ A simple function to save the transform obtained in arff format
 
     Parameters
     ----------
@@ -1089,16 +976,17 @@ def write_transformed_data_to_arff(transform, labels, file_name):
         The directory to save the transform
     """
     # Create directory in case it doesn't exists
-    directory = "/".join(file_name.split("/")[:-1])
+    directory = '/'.join(file_name.split('/')[:-1])
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     num_shapelets = transform.shape[1]
     unique_labels = np.unique(labels).tolist()
 
-    with open(file_name, "w+") as f:
+    with open(file_name, 'w+') as f:
         # Headers
-        f.write("@Relation Shapelets" + file_name.split("/")[-1].split("_")[0] + "\n\n")
+        f.write("@Relation Shapelets" + file_name.split('/')[-1].split('_')[
+            0] + '\n\n')
         for i in range(0, num_shapelets):
             f.write("@attribute Shapelet_" + str(i) + " numeric\n")
         f.write("@attribute target {" + ",".join(unique_labels) + "}\n")
@@ -1111,7 +999,7 @@ def write_transformed_data_to_arff(transform, labels, file_name):
 
 
 def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
-    """A simple function to save the shapelets obtained in csv format
+    """ A simple function to save the shapelets obtained in csv format
 
     Parameters
     ----------
@@ -1128,40 +1016,27 @@ def write_shapelets_to_csv(shapelets, data, dim_to_use, time, file_name):
 
     data_aux = [[]] * len(data)
     for i in range(0, len(data)):
-        data_aux[i] = np.array([np.asarray(x) for x in np.asarray(data.iloc[i, :])])
+        data_aux[i] = np.array(
+            [np.asarray(x) for x in np.asarray(data.iloc[i, :])])
     data = data_aux.copy()
 
     # Create directory in case it doesn't exists
-    directory = "/".join(file_name.split("/")[:-1])
+    directory = '/'.join(file_name.split('/')[:-1])
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    with open(file_name, "w+") as f:
+    with open(file_name, 'w+') as f:
         # Number of shapelets and time extracting
         f.write(str(len(shapelets)) + "," + str(time) + "\n")
         for i, j in enumerate(shapelets):
-            f.write(
-                str(j.info_gain)
-                + ","
-                + str(j.series_id)
-                + ","
-                + "".join(str(j.dims)).replace(", ", ":")
-                + ","
-                + str(j.start_pos)
-                + ","
-                + str(j.length)
-                + "\n"
-            )
+            f.write(str(j.info_gain) + "," + str(j.series_id) + "," + ''.join(
+                str(j.dims)).replace(', ', ':') + "," + str(
+                j.start_pos) + "," + str(j.length) + "\n")
             for k in range(0, len(dim_to_use)):
                 f.write(
-                    ",".join(
-                        map(
-                            str,
-                            data[j.series_id][
-                                k, j.start_pos : (j.start_pos + j.length)
-                            ],
-                        )
-                    )
-                    + "\n"
-                )
+                    ",".join(map(
+                        str,
+                        data[j.series_id][k, j.start_pos:(j.start_pos +
+                                                          j.length)]))
+                    + "\n")
     f.close()

@@ -1,10 +1,8 @@
 from sktime.base import BaseEstimator
 
-__all__ = [
-    "BaseSeriesAsFeaturesTransformer",
-    "is_series_as_features_transformer",
-    "is_non_fittable_series_as_features_transformer",
-]
+__all__ = ["BaseSeriesAsFeaturesTransformer",
+           "is_series_as_features_transformer",
+           "is_non_fittable_series_as_features_transformer"]
 __author__ = ["Markus Löning", "Sajay Ganesh"]
 
 
@@ -66,7 +64,6 @@ def is_series_as_features_transformer(estimator):
 class _NonFittableSeriesAsFeaturesTransformer(BaseSeriesAsFeaturesTransformer):
     """Base class for transformers which do nothing in fit and if fittable,
     fit during transform, otherwise only transform data"""
-
     pass
 
 

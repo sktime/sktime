@@ -13,8 +13,7 @@ from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
 
 ALL_SERIES_AS_FEATURES_TRANSFORMERS = [
-    e[1]
-    for e in all_estimators("series_as_features_transformer")
+    e[1] for e in all_estimators("series_as_features_transformer")
     if e[0] not in EXCLUDED_ESTIMATORS
 ]
 

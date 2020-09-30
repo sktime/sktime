@@ -3,7 +3,9 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["PolynomialTrendForecaster"]
+__all__ = [
+    "PolynomialTrendForecaster"
+]
 
 import pandas as pd
 from sklearn.linear_model import LinearRegression
@@ -14,7 +16,8 @@ from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
+                                BaseSktimeForecaster):
     """
     Forecast time series data with a polynomial trend.
     Default settings train a linear regression model with a 1st degree
@@ -67,20 +70,19 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
 
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
-        r = (
-            self.regressor
-            if self.regressor is not None
-            else LinearRegression(fit_intercept=False)
-        )  #
-        self.regressor_ = make_pipeline(
-            PolynomialFeatures(degree=self.degree, include_bias=self.with_intercept), r
-        )
+        r = self.regressor if self.regressor is not None else LinearRegression(
+            fit_intercept=False)  #
+        self.regressor_ = make_pipeline(PolynomialFeatures(
+            degree=self.degree,
+            include_bias=self.with_intercept),
+            r)
         x = y_train.index.values.reshape(-1, 1)
         self.regressor_.fit(x, y_train.values)
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False,
+                alpha=DEFAULT_ALPHA):
         """Make forecasts for the given forecast horizon
 
         Parameters

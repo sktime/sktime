@@ -20,10 +20,9 @@ from scipy.stats.morestats import _boxcox_conf_interval
 from scipy.stats.morestats import _calc_uniform_order_statistic_medians
 
 
-def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
+def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method='pearsonr'):
     # bounds is None, use simple Brent optimisation
     if bounds is None:
-
         def optimizer(func, args):
             return optimize.brent(func, brack=brack, args=args)
 
@@ -32,8 +31,7 @@ def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         # input checks on bounds
         if not isinstance(bounds, tuple) or len(bounds) != 2:
             raise ValueError(
-                f"`bounds` must be a tuple of length 2, but found: {bounds}"
-            )
+                f"`bounds` must be a tuple of length 2, but found: {bounds}")
 
         def optimizer(func, args):
             return optimize.fminbound(func, bounds[0], bounds[1], args=args)
@@ -67,7 +65,9 @@ def boxcox_normmax(x, bounds=None, brack=(-2.0, 2.0), method="pearsonr"):
         maxlog[1] = _mle(x)
         return maxlog
 
-    methods = {"pearsonr": _pearsonr, "mle": _mle, "all": _all}
+    methods = {'pearsonr': _pearsonr,
+               'mle': _mle,
+               'all': _all}
     if method not in methods.keys():
         raise ValueError("Method %s not recognized." % method)
 
@@ -159,7 +159,7 @@ def boxcox(x, lmbda=None, bounds=None, alpha=None):
         return special.boxcox(x, lmbda)
 
     # If lmbda=None, find the lmbda that maximizes the log-likelihood function.
-    lmax = boxcox_normmax(x, bounds=bounds, method="mle")
+    lmax = boxcox_normmax(x, bounds=bounds, method='mle')
     y = boxcox(x, lmax)
 
     if alpha is None:

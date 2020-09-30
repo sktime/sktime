@@ -45,7 +45,6 @@ class BaseClassifier(BaseEstimator):
 
     def score(self, X, y):
         from sklearn.metrics import accuracy_score
-
         return accuracy_score(y, self.predict(X), normalize=True)
 
 

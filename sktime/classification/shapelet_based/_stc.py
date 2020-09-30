@@ -15,12 +15,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.shapelets import ContractedShapeletTransform
+from sktime.transformers.series_as_features.shapelets import \
+    ContractedShapeletTransform
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
-    """Shapelet Transform Classifier
+    """ Shapelet Transform Classifier
         Basic implementation along the lines of
     @article{hills14shapelet,
       title={Classification of time series by shapelet transformation},
@@ -45,7 +46,12 @@ class ShapeletTransformClassifier(BaseClassifier):
     }
     """
 
-    def __init__(self, time_contract_in_mins=300, n_estimators=500, random_state=None):
+    def __init__(
+            self,
+            time_contract_in_mins=300,
+            n_estimators=500,
+            random_state=None
+    ):
         self.time_contract_in_mins = time_contract_in_mins
         self.n_estimators = n_estimators
         self.random_state = random_state
@@ -72,32 +78,22 @@ class ShapeletTransformClassifier(BaseClassifier):
         Returns
         -------
         self : object
-        """
+         """
         X, y = check_X_y(X, y, enforce_univariate=True)
 
         # if y is a pd.series then convert to array.
         if isinstance(y, pd.Series):
             y = y.to_numpy()
 
-        # generate pipeline in fit so that random state can be propogated properly.
-        self.classifier_ = Pipeline(
-            [
-                (
-                    "st",
-                    ContractedShapeletTransform(
-                        time_contract_in_mins=self.time_contract_in_mins,
-                        verbose=False,
-                        random_state=self.random_state,
-                    ),
-                ),
-                (
-                    "rf",
-                    RandomForestClassifier(
-                        n_estimators=self.n_estimators, random_state=self.random_state
-                    ),
-                ),
-            ]
-        )
+# generate pipeline in fit so that random state can be propogated properly.
+        self.classifier_ = Pipeline([
+            ('st', ContractedShapeletTransform(
+                time_contract_in_mins=self.time_contract_in_mins,
+                verbose=False,
+                random_state=self.random_state)),
+            ('rf', RandomForestClassifier(n_estimators=self.n_estimators,
+                                          random_state=self.random_state))
+        ])
 
         self.n_classes_ = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]

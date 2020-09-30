@@ -8,11 +8,12 @@ from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
 from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    _NonFittableSeriesAsFeaturesTransformer,
-)
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    _NonFittableSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.segment import \
+    RandomIntervalSegmenter
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -91,9 +92,7 @@ class PlateauFinder(_NonFittableSeriesAsFeaturesTransformer):
         # put into dataframe
         Xt = pd.DataFrame()
         column_prefix = "%s_%s" % (
-            column_name,
-            "nan" if np.isnan(self.value) else str(self.value),
-        )
+            column_name, "nan" if np.isnan(self.value) else str(self.value))
         Xt["%s_starts" % column_prefix] = pd.Series(self._starts)
         Xt["%s_lengths" % column_prefix] = pd.Series(self._lengths)
         return Xt
@@ -110,16 +109,18 @@ class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
         for dim in range(num_dim):
             dim_data = X.iloc[:, dim]
             out = DerivativeSlopeTransformer.row_wise_get_der(dim_data)
-            output_df["der_dim_" + str(dim)] = pd.Series(out)
+            output_df['der_dim_' + str(dim)] = pd.Series(out)
 
         return output_df
 
     @staticmethod
     def row_wise_get_der(X):
+
         def get_der(x):
             der = []
             for i in range(1, len(x) - 1):
-                der.append(((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
+                der.append(
+                    ((x[i] - x[i - 1]) + ((x[i + 1] - x[i - 1]) / 2)) / 2)
             return pd.Series([der[0]] + der + [der[-1]])
 
         return [get_der(x) for x in X]
@@ -157,9 +158,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         by `np.random`.
     """
 
-    def __init__(
-        self, n_intervals="sqrt", min_length=2, features=None, random_state=None
-    ):
+    def __init__(self, n_intervals='sqrt', min_length=2, features=None,
+                 random_state=None):
         super(RandomIntervalFeatureExtractor, self).__init__(
             n_intervals=n_intervals,
             min_length=min_length,
@@ -192,14 +192,12 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         if self.features is None:
             features = [np.mean]
         elif isinstance(self.features, list) and all(
-            [callable(func) for func in self.features]
-        ):
+                [callable(func) for func in self.features]):
             features = self.features
         else:
             raise ValueError(
-                "Features must be list containing only functions (callables) "
-                "to be applied to the data columns"
-            )
+                'Features must be list containing only functions (callables) '
+                'to be applied to the data columns')
 
         X = check_X(X, enforce_univariate=True)
 
@@ -207,8 +205,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         # during fit.
         if X.shape[1] != self.input_shape_[1]:
             raise ValueError(
-                "Number of columns of input is different from what was seen" "in `fit`"
-            )
+                'Number of columns of input is different from what was seen'
+                'in `fit`')
         # Input validation
         # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx,
         # fit_idx in zip(check_equal_index(X),
@@ -221,7 +219,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         n_intervals = len(self.intervals_)
 
         # Compute features on intervals.
-        Xt = np.zeros((n_rows, n_features * n_intervals))  # Allocate output array
+        Xt = np.zeros((n_rows,
+                       n_features * n_intervals))  # Allocate output array
         # for transformed data
         columns = []
         colname = X.columns[0]
@@ -241,22 +240,22 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
                 try:
                     Xt[:, i] = func(interval, axis=1)
                 except TypeError as e:
-                    if (
-                        str(e) == f"{func.__name__}() got an unexpected "
-                        f"keyword argument 'axis'"
-                    ):
+                    if str(e) == f"{func.__name__}() got an unexpected " \
+                                 f"keyword argument 'axis'":
                         Xt[:, i] = np.apply_along_axis(func, 1, interval)
                     else:
                         raise
                 i += 1
-                columns.append(f"{colname}_{start}_{end}_{func.__name__}")
+                columns.append(
+                    f'{colname}_{start}_{end}_{func.__name__}')
 
         Xt = pd.DataFrame(Xt)
         Xt.columns = columns
         return Xt
 
 
-class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTransformer):
+class FittedParamExtractor(MetaEstimatorMixin,
+                           _NonFittableSeriesAsFeaturesTransformer):
     """
     Extract parameters of a fitted forecaster as features for a subsequent
     tabular learning task.
@@ -276,7 +275,6 @@ class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTrans
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
     """
-
     _required_parameters = ["forecaster"]
 
     def __init__(self, forecaster, param_names, n_jobs=None):
@@ -311,12 +309,12 @@ class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTrans
             return np.hstack([params[name] for name in param_names])
 
         # iterate over rows
-        extracted_params = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_extract)(clone(self.forecaster), X.iloc[i, 0], param_names)
-            for i in range(n_instances)
-        )
+        extracted_params = Parallel(n_jobs=self.n_jobs)(delayed(_fit_extract)(
+            clone(self.forecaster), X.iloc[i, 0], param_names) for i in
+                                                        range(n_instances))
 
-        return pd.DataFrame(extracted_params, index=X.index, columns=param_names)
+        return pd.DataFrame(extracted_params, index=X.index,
+                            columns=param_names)
 
     @staticmethod
     def _check_param_names(param_names):
@@ -327,11 +325,9 @@ class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTrans
                 if not isinstance(param, str):
                     raise ValueError(
                         f"All elements of `param_names` must be strings, "
-                        f"but found: {type(param)}"
-                    )
+                        f"but found: {type(param)}")
         else:
             raise ValueError(
                 f"`param_names` must be str, or a list or tuple of strings, "
-                f"but found: {type(param_names)}"
-            )
+                f"but found: {type(param_names)}")
         return param_names
