@@ -26,11 +26,11 @@ How to get started
 
 We are particularly motivated to support new and/or anxious contributors and people who are looking to learn and develop their skills.
 
-* **The Turing Way**. [The Turing Way](https://the-turing-way.netlify.app/welcome.html) is a great hand book which provides lots of resources to help you get started and learn more about open-source projects. 
+* **The Turing Way**. [The Turing Way](https://the-turing-way.netlify.app/welcome.html) is a great hand book which provides lots of resources to help you get started and learn more about open-source projects.
 * **Good-first issues.** A good place to start is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, please comment on the issue or [chat to us](https://gitter.im/sktime/community).
 * **Mentorship programme.** We have also launched sktime's own mentorship programme. You can find out more and apply on our [website](https://www.sktime.org/en/latest/mentoring.html)!
 
-sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible. We assume basic familiarity with [scikit-learn](https://scikit-learn.org/stable/). If you haven't work with scikit-learn before, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you have used scikit-learn before, it will be useful to read through their [developers' guide](https://scikit-learn.org/stable/developers/index.html). 
+sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible. We assume basic familiarity with [scikit-learn](https://scikit-learn.org/stable/). If you haven't work with scikit-learn before, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you have used scikit-learn before, it will be useful to read through their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
 
 Where to contribute
 -------------------
@@ -39,7 +39,7 @@ Where to contribute
 
 We value all kinds of contributions - not just code. We follow the [all-contributors specification](https://allcontributors.org) and recognise various types of contributions. Take a look at our [contributors](https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md)!
 
-The following table gives an overview of key contribution areas. 
+The following table gives an overview of key contribution areas.
 
 | Area | Description |
 |---|---|
@@ -143,6 +143,15 @@ Once installed, pre-commit will automatically run our code quality checks on the
 
 You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
 
+In rare circumstances, you may want to ignore a failing code quality check. First, make sure that you understand why the check is failing. If you are sure you want to ignore the check, you three options.
+
+* Add a `# noqa` (no quality assurance) comment at the end of the line you
+ want to ignore,
+* Run `git commit --no-verify`, this will bypass all pre-commit and commit
+ message hocks,
+* Add the error flag you want to ignore the to flake8 configuration in
+ [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
+
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
 
@@ -165,12 +174,12 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
     ```bash
     pytest sktime/
     ```
-    
+
 ### Infrastructure
 
 This section gives an overview of the continuous integration services we use.
 
-| Platform | Operating System | Configuration | 
+| Platform | Operating System | Configuration |
 |---|---|---|
 | [Travis](https://travis-ci.com/github/alan-turing-institute/sktime) | MacOS | [.travis.yml](https://github.com/alan-turing-institute/sktime/blob/master/.travis.yml) |
 | [Appveyor](https://ci.appveyor.com/project/mloning/sktime)  | Windows | [appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/master/appveyor.yml) |
@@ -183,11 +192,11 @@ Additional scripts used for building, unit testing and distributing files can be
 Documentation
 -------------
 
-We use [sphinx](https://www.sphinx-doc.org/en/master/) and [readthedocs](https://readthedocs.org/projects/sktime/) to build and deploy our online documention. You can find our online documentation [here](https://www.sktime.org/en/latest/). 
+We use [sphinx](https://www.sphinx-doc.org/en/master/) and [readthedocs](https://readthedocs.org/projects/sktime/) to build and deploy our online documention. You can find our online documentation [here](https://www.sktime.org/en/latest/).
 
 The source files used to generate the online documentation can be found in [docs/source/](https://github.com/alan-turing-institute/sktime/tree/master/docs/source). For example, the main configuration file for sphinx is [conf.py](https://github.com/alan-turing-institute/sktime/blob/master/docs/source/conf.py) and the main page is [index.rst](https://github.com/alan-turing-institute/sktime/blob/master/docs/source/index.rst). To add new pages, you need to add a new `.rst` file and include it in the `index.rst` file.
 
-To build the documentation locally, you need to install a few extra dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt). 
+To build the documentation locally, you need to install a few extra dependencies listed in [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt).
 
 1. Install extra requirements from the root directory, run:
 
@@ -260,7 +269,7 @@ It is recommended to check that your issue complies with the following rules bef
 Release instructions (core developers)
 --------------------------------------
 
-This section is for core developers. To make a new release, you need push-to-write access on our master branch. 
+This section is for core developers. To make a new release, you need push-to-write access on our master branch.
 
 sktime is not a pure Python package and depends on some non-Python code including Cython and C. We distribute compiled files, called wheels, for different operating systems and Python versions. More details can be found here:
 
