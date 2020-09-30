@@ -22,6 +22,7 @@ MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
+    "pmdarima": "1.7.1",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.0"
 }
