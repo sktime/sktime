@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.transformers.series_as_features.dictionary_based._paa \
-    import PAA
+from sktime.transformers.series_as_features.dictionary_based._paa import PAA
 from sktime.utils._testing import generate_df_from_array
 
 
@@ -10,8 +9,7 @@ from sktime.utils._testing import generate_df_from_array
 # input types - string, float, negative int, negative float, empty dict
 # and an int that is larger than the time series length.
 # correct input is meant to be a positive integer of 1 or more.
-@pytest.mark.parametrize("bad_num_intervals", ['str', 1.2, -1.2,
-                                               -1, {}, 11, 0])
+@pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 11, 0])
 def test_bad_input_args(bad_num_intervals):
     X = generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
 
@@ -25,9 +23,9 @@ def test_bad_input_args(bad_num_intervals):
 
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
-    X = generate_df_from_array(np.array([1, 2, 3, 4, 5, 6,
-                                        7, 8, 9, 10]),
-                               n_rows=1, n_cols=1)
+    X = generate_df_from_array(
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_rows=1, n_cols=1
+    )
 
     p = PAA(num_intervals=3).fit(X)
     res = p.transform(X)
@@ -70,8 +68,9 @@ def test_output_dimensions():
 
 # This is to check that PAA produces the same result along each dimension
 def test_paa_performs_correcly_along_each_dim():
-    X = generate_df_from_array(np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-                               n_rows=1, n_cols=2)
+    X = generate_df_from_array(
+        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_rows=1, n_cols=2
+    )
 
     p = PAA(num_intervals=3).fit(X)
     res = p.transform(X)

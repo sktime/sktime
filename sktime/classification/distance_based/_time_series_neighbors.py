@@ -98,40 +98,49 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     """
 
-    def __init__(self, n_neighbors=1, weights='uniform', algorithm='brute',
-                 metric='dtw', metric_params=None, **kwargs):
+    def __init__(
+        self,
+        n_neighbors=1,
+        weights="uniform",
+        algorithm="brute",
+        metric="dtw",
+        metric_params=None,
+        **kwargs
+    ):
 
         self._cv_for_params = False
 
-        if metric == 'dtw':
+        if metric == "dtw":
             metric = dtw_distance
-        elif metric == 'dtwcv':  # special case to force loocv grid search
+        elif metric == "dtwcv":  # special case to force loocv grid search
             # cv in training
             if metric_params is not None:
                 warnings.warn(
                     "Warning: measure parameters have been specified for "
                     "dtwcv. "
                     "These will be ignored and parameter values will be "
-                    "found using LOOCV.")
+                    "found using LOOCV."
+                )
             metric = dtw_distance
             self._cv_for_params = True
             self._param_matrix = {
-                'metric_params': [{'w': x / 100} for x in range(0, 100)]}
-        elif metric == 'ddtw':
+                "metric_params": [{"w": x / 100} for x in range(0, 100)]
+            }
+        elif metric == "ddtw":
             metric = ddtw_distance
-        elif metric == 'wdtw':
+        elif metric == "wdtw":
             metric = wdtw_distance
-        elif metric == 'wddtw':
+        elif metric == "wddtw":
             metric = wddtw_distance
-        elif metric == 'lcss':
+        elif metric == "lcss":
             metric = lcss_distance
-        elif metric == 'erp':
+        elif metric == "erp":
             metric = erp_distance
-        elif metric == 'msm':
+        elif metric == "msm":
             metric = msm_distance
-        elif metric == 'twe':
+        elif metric == "twe":
             metric = twe_distance
-        elif metric == 'mpdist':
+        elif metric == "mpdist":
             metric = mpdist
         # When mpdist is used, the subsequence length (parameter m) must be set
         # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
@@ -140,28 +149,30 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             if type(metric) is str:
                 raise ValueError(
                     "Unrecognised distance measure: " + metric + ". Allowed "
-                                                                 "values are "
-                                                                 "names from "
-                                                                 "[dtw,ddtw,"
-                                                                 "wdtw,"
-                                                                 "wddtw,"
-                                                                 "lcss,erp,"
-                                                                 "msm] or "
-                                                                 "please "
-                                                                 "pass a "
-                                                                 "callable "
-                                                                 "distance "
-                                                                 "measure "
-                                                                 "into the "
-                                                                 "constuctor "
-                                                                 "directly.")
+                    "values are "
+                    "names from "
+                    "[dtw,ddtw,"
+                    "wdtw,"
+                    "wddtw,"
+                    "lcss,erp,"
+                    "msm] or "
+                    "please "
+                    "pass a "
+                    "callable "
+                    "distance "
+                    "measure "
+                    "into the "
+                    "constuctor "
+                    "directly."
+                )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
             algorithm=algorithm,
             metric=metric,
             metric_params=metric_params,
-            **kwargs)
+            **kwargs
+        )
         self.weights = _check_weights(weights)
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -190,22 +201,25 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         # find the best, and then set this classifier's params to match
         if self._cv_for_params:
             grid = GridSearchCV(
-                estimator=KNeighborsTimeSeriesClassifier(metric=self.metric,
-                                                         n_neighbors=1,
-                                                         algorithm="brute"),
+                estimator=KNeighborsTimeSeriesClassifier(
+                    metric=self.metric, n_neighbors=1, algorithm="brute"
+                ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
-                scoring='accuracy'
+                scoring="accuracy",
             )
             grid.fit(X, y)
-            self.metric_params = grid.best_params_['metric_params']
+            self.metric_params = grid.best_params_["metric_params"]
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
-                warnings.warn("A column-vector y was passed when a 1d array "
-                              "was expected. Please change the shape of y to "
-                              "(n_samples, ), for example using ravel().",
-                              DataConversionWarning, stacklevel=2)
+                warnings.warn(
+                    "A column-vector y was passed when a 1d array "
+                    "was expected. Please change the shape of y to "
+                    "(n_samples, ), for example using ravel().",
+                    DataConversionWarning,
+                    stacklevel=2,
+                )
 
             self.outputs_2d_ = False
             y = y.reshape((-1, 1))
@@ -222,7 +236,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             temp = check_array.__wrapped__.__code__
             check_array.__wrapped__.__code__ = _check_array_ts.__code__
         else:
@@ -231,7 +245,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         fx = self._fit(X)
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
         else:
             check_array.__code__ = temp
@@ -274,20 +288,17 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
         elif n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got %d" %
-                n_neighbors
-            )
+            raise ValueError("Expected n_neighbors > 0. Got %d" % n_neighbors)
         else:
             if not np.issubdtype(type(n_neighbors), np.integer):
                 raise TypeError(
                     "n_neighbors does not take %s value, "
-                    "enter integer value" %
-                    type(n_neighbors))
+                    "enter integer value" % type(n_neighbors)
+                )
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr', allow_nd=True)
+            X = check_array(X, accept_sparse="csr", allow_nd=True)
         else:
             query_is_train = True
             X = self._fit_X
@@ -299,44 +310,51 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if n_neighbors > train_size:
             raise ValueError(
                 "Expected n_neighbors <= n_samples, "
-                " but n_samples = %d, n_neighbors = %d" %
-                (train_size, n_neighbors)
+                " but n_samples = %d, n_neighbors = %d" % (train_size, n_neighbors)
             )
         n_samples = X.shape[0]
         sample_range = np.arange(n_samples)[:, None]
 
         n_jobs = effective_n_jobs(self.n_jobs)
-        if self._fit_method == 'brute':
+        if self._fit_method == "brute":
 
-            reduce_func = partial(self._kneighbors_reduce_func,
-                                  n_neighbors=n_neighbors,
-                                  return_distance=return_distance)
+            reduce_func = partial(
+                self._kneighbors_reduce_func,
+                n_neighbors=n_neighbors,
+                return_distance=return_distance,
+            )
 
             # for efficiency, use squared euclidean distances
-            kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
-                    else self.effective_metric_params_)
+            kwds = (
+                {"squared": True}
+                if self.effective_metric_ == "euclidean"
+                else self.effective_metric_params_
+            )
 
             result = pairwise_distances_chunked(
-                X, self._fit_X, reduce_func=reduce_func,
-                metric=self.effective_metric_, n_jobs=n_jobs,
-                **kwds)
+                X,
+                self._fit_X,
+                reduce_func=reduce_func,
+                metric=self.effective_metric_,
+                n_jobs=n_jobs,
+                **kwds
+            )
 
-        elif self._fit_method in ['ball_tree', 'kd_tree']:
+        elif self._fit_method in ["ball_tree", "kd_tree"]:
             if issparse(X):
                 raise ValueError(
                     "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method)
-            if LooseVersion(joblib_version) < LooseVersion('0.12'):
+                    "or set algorithm='brute'" % self._fit_method
+                )
+            if LooseVersion(joblib_version) < LooseVersion("0.12"):
                 # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query,
-                                        check_pickle=False)
+                delayed_query = delayed(self._tree.query, check_pickle=False)
                 parallel_kwargs = {"backend": "threading"}
             else:
                 delayed_query = delayed(self._tree.query)
                 parallel_kwargs = {"prefer": "threads"}
             result = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(
-                    X[s], n_neighbors, return_distance)
+                delayed_query(X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
@@ -368,12 +386,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             dup_gr_nbrs = np.all(sample_mask, axis=1)
             sample_mask[:, 0][dup_gr_nbrs] = False
 
-            neigh_ind = np.reshape(
-                neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
+            neigh_ind = np.reshape(neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
 
             if return_distance:
-                dist = np.reshape(
-                    dist[sample_mask], (n_samples, n_neighbors - 1))
+                dist = np.reshape(dist[sample_mask], (n_samples, n_neighbors - 1))
                 return dist, neigh_ind
             return neigh_ind
 
@@ -394,7 +410,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             temp = check_array.__wrapped__.__code__
             check_array.__wrapped__.__code__ = _check_array_ts.__code__
         else:
@@ -425,7 +441,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
         else:
             check_array.__code__ = temp
@@ -450,14 +466,14 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         """
         self.check_is_fitted()
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             temp = check_array.__wrapped__.__code__
             check_array.__wrapped__.__code__ = _check_array_ts.__code__
         else:
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
@@ -493,7 +509,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if not self.outputs_2d_:
             probabilities = probabilities[0]
 
-        if hasattr(check_array, '__wrapped__'):
+        if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
         else:
             check_array.__code__ = temp

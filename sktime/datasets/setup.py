@@ -9,9 +9,10 @@ __author__ = "Markus Löning"
 # /sklearn/datasets/setup.py
 
 
-def configuration(parent_package='', top_path=None):
+def configuration(parent_package="", top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('datasets', parent_package, top_path)
+
+    config = Configuration("datasets", parent_package, top_path)
 
     # add all datasets in sub-folders
     included_datasets = (
@@ -26,7 +27,7 @@ def configuration(parent_package='', top_path=None):
         "PLAID",
         "ShampooSales",
         "Airline",
-        "ACSF1"
+        "ACSF1",
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")
@@ -34,7 +35,7 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from numpy.distutils.core import setup
 
-    setup(**configuration(top_path='').todict())
+    setup(**configuration(top_path="").todict())

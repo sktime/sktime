@@ -74,14 +74,11 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     """
 
-    def __init__(self,
-                 random_state=None,
-                 min_interval=3,
-                 n_estimators=200
-                 ):
+    def __init__(self, random_state=None, min_interval=3, n_estimators=200):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators)
+            n_estimators=n_estimators,
+        )
 
         self.random_state = random_state
         self.n_estimators = n_estimators
@@ -128,29 +125,29 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
-        self.intervals = np.zeros((self.n_estimators, self.n_intervals, 2),
-                                  dtype=int)
+        self.intervals = np.zeros((self.n_estimators, self.n_intervals, 2), dtype=int)
         for i in range(self.n_estimators):
             transformed_x = np.empty(shape=(3 * self.n_intervals, n_instances))
             # Find the random intervals for classifier i and concatentate
             # features
             for j in range(self.n_intervals):
                 self.intervals[i][j][0] = rng.randint(
-                    self.series_length - self.min_interval)
-                length = rng.randint(
-                    self.series_length - self.intervals[i][j][0] - 1)
+                    self.series_length - self.min_interval
+                )
+                length = rng.randint(self.series_length - self.intervals[i][j][0] - 1)
                 if length < self.min_interval:
                     length = self.min_interval
                 self.intervals[i][j][1] = self.intervals[i][j][0] + length
                 # Transforms here, just hard coding it, so not configurable
                 means = np.mean(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                )
                 std_dev = np.std(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                )
                 slope = self._lsq_fit(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]])
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]]
+                )
                 transformed_x[3 * j] = means
                 transformed_x[3 * j + 1] = std_dev
                 transformed_x[3 * j + 2] = slope
@@ -212,21 +209,23 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         if series_length != self.series_length:
             raise TypeError(
                 " ERROR number of attributes in the train does not match "
-                "that in the test data")
+                "that in the test data"
+            )
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(3 * self.n_intervals, n_test_instances),
-                dtype=np.float32)
+                shape=(3 * self.n_intervals, n_test_instances), dtype=np.float32
+            )
             for j in range(0, self.n_intervals):
                 means = np.mean(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                )
                 std_dev = np.std(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                )
                 slope = self._lsq_fit(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]])
+                    X[:, self.intervals[i][j][0] : self.intervals[i][j][1]]
+                )
                 transformed_x[3 * j] = means
                 transformed_x[3 * j + 1] = std_dev
                 transformed_x[3 * j + 2] = slope
@@ -237,7 +236,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         return output
 
     def _lsq_fit(self, Y):
-        """ Find the slope for each series (row) of Y
+        """Find the slope for each series (row) of Y
         Parameters
         ----------
         Y: array of shape = [n_samps, interval_size]
@@ -249,5 +248,6 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         """
         x = np.arange(Y.shape[1]) + 1
         slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
-                (x * x).mean() - x.mean() ** 2)
+            (x * x).mean() - x.mean() ** 2
+        )
         return slope

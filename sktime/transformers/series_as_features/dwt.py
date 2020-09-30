@@ -1,8 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -20,6 +19,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
     num_levels : int, number of levels to perform the Haar wavelet
                  transformation.
     """
+
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
         super(DWTTransformer, self).__init__()
@@ -108,12 +108,14 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_levels, int):
             if self.num_levels <= -1:
-                raise ValueError("num_levels must have the value" +
-                                 "of at least 0")
+                raise ValueError("num_levels must have the value" + "of at least 0")
         else:
-            raise TypeError("num_levels must be an 'int'. Found" +
-                            "'" + type(self.num_levels).__name__ +
-                            "' instead.")
+            raise TypeError(
+                "num_levels must be an 'int'. Found"
+                + "'"
+                + type(self.num_levels).__name__
+                + "' instead."
+            )
 
     def _get_approx_coefficients(self, arr):
         """
@@ -122,8 +124,8 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         new = []
         if len(arr) == 1:
             return [arr[0]]
-        for x in range(math.floor(len(arr)/2)):
-            new.append((arr[2*x]+arr[2*x+1])/math.sqrt(2))
+        for x in range(math.floor(len(arr) / 2)):
+            new.append((arr[2 * x] + arr[2 * x + 1]) / math.sqrt(2))
         return new
 
     def _get_wavelet_coefficients(self, arr):
@@ -134,6 +136,6 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         # if length is 1, just return the list back
         if len(arr) == 1:
             return [arr[0]]
-        for x in range(math.floor(len(arr)/2)):
-            new.append((arr[2*x]-arr[2*x+1])/math.sqrt(2))
+        for x in range(math.floor(len(arr) / 2)):
+            new.append((arr[2 * x] - arr[2 * x + 1]) / math.sqrt(2))
         return new

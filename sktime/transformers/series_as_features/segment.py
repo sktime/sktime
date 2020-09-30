@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 from sklearn.utils import check_random_state
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import concat_nested_arrays
 from sktime.utils.data_container import get_time_index
 from sktime.utils.data_container import tabularize
@@ -64,7 +63,8 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         else:
             raise ValueError(
                 f"Intervals must be either an integer, an array with "
-                f"start and end points, but found: {self.intervals}")
+                f"start and end points, but found: {self.intervals}"
+            )
         self._is_fitted = True
         return self
 
@@ -94,8 +94,8 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         # during fit.
         if X.shape[1] != self.input_shape_[1]:
             raise ValueError(
-                'Number of columns of input is different from what was seen'
-                'in `fit`')
+                "Number of columns of input is different from what was seen" "in `fit`"
+            )
         # # Input validation
         # if not all([np.array_equal(fit_idx, trans_idx)
         #             for trans_idx, fit_idx in zip(check_equal_index(X),
@@ -153,7 +153,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         by `np.random`.
     """
 
-    def __init__(self, n_intervals='sqrt', min_length=2, random_state=None):
+    def __init__(self, n_intervals="sqrt", min_length=2, random_state=None):
         self.min_length = min_length
         self.n_intervals = n_intervals
         self.random_state = random_state
@@ -176,11 +176,14 @@ class RandomIntervalSegmenter(IntervalSegmenter):
             This estimator
         """
         if not isinstance(self.min_length, int):
-            raise ValueError(f"Min_length must be an integer, but found: "
-                             f"{type(self.min_length)}")
+            raise ValueError(
+                f"Min_length must be an integer, but found: " f"{type(self.min_length)}"
+            )
         if self.min_length < 1:
-            raise ValueError(f"Min_length must be an positive integer (>= 1), "
-                             f"but found: {self.min_length}")
+            raise ValueError(
+                f"Min_length must be an positive integer (>= 1), "
+                f"but found: {self.min_length}"
+            )
         X = check_X(X)
         self.input_shape_ = X.shape
 
@@ -192,12 +195,12 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         # TODO if multiple columns are passed, introduce option to compute
         #  one set of shared intervals,
         #  or rely on ColumnTransformer?
-        if self.n_intervals == 'random':
+        if self.n_intervals == "random":
             self.intervals_ = self._rand_intervals_rand_n(self._time_index)
         else:
             self.intervals_ = self._rand_intervals_fixed_n(
-                self._time_index,
-                n_intervals=self.n_intervals)
+                self._time_index, n_intervals=self.n_intervals
+            )
         self._is_fitted = True
         return self
 
@@ -258,17 +261,16 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         # compute number of random intervals relative to series length (m)
         # TODO use smarter dispatch at construction to avoid evaluating
         #  if-statements here each time function is called
-        n_intervals = compute_relative_to_n_timepoints(n_timepoints,
-                                                       n=n_intervals)
+        n_intervals = compute_relative_to_n_timepoints(n_timepoints, n=n_intervals)
 
         # get start and end points of intervals
-        starts = rng.randint(n_timepoints - self.min_length + 1,
-                             size=n_intervals)
+        starts = rng.randint(n_timepoints - self.min_length + 1, size=n_intervals)
         if n_intervals == 1:
             starts = [starts]  # make it an iterable
-        ends = [start + rng.randint(self.min_length,
-                                    n_timepoints - start + 1) for start
-                in starts]
+        ends = [
+            start + rng.randint(self.min_length, n_timepoints - start + 1)
+            for start in starts
+        ]
         return np.column_stack([starts, ends])
 
 
@@ -304,6 +306,7 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
 
     Proposed in the ShapeDTW algorithm.
     """
+
     def __init__(self, window_length=5):
         self.window_length = window_length
         super(SlidingWindowSegmenter, self).__init__()
@@ -332,20 +335,18 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
         # Check the parameters are appropriate
         self._check_parameters(n_timepoints)
 
-        pad_amnt = math.floor(self.window_length/2)
-        padded_data = np.zeros((n_instances, n_timepoints + (2*pad_amnt)))
+        pad_amnt = math.floor(self.window_length / 2)
+        padded_data = np.zeros((n_instances, n_timepoints + (2 * pad_amnt)))
 
         # Pad both ends of X
         for i in range(n_instances):
-            padded_data[i] = np.pad(X[i], pad_amnt, mode='edge')
+            padded_data[i] = np.pad(X[i], pad_amnt, mode="edge")
 
-        subsequences = np.zeros((n_instances, n_timepoints,
-                                 self.window_length))
+        subsequences = np.zeros((n_instances, n_timepoints, self.window_length))
 
         # Extract subsequences
         for i in range(n_instances):
-            subsequences[i] = self._extract_subsequences(padded_data[i],
-                                                         n_timepoints)
+            subsequences[i] = self._extract_subsequences(padded_data[i], n_timepoints)
 
         # Convert this into a panda's data frame
         df = pd.DataFrame()
@@ -369,8 +370,7 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
         """
         shape = (n_timepoints, self.window_length)
         strides = (instance.itemsize, instance.itemsize)
-        return np.lib.stride_tricks.as_strided(instance,
-                                               shape=shape, strides=strides)
+        return np.lib.stride_tricks.as_strided(instance, shape=shape, strides=strides)
 
     def _check_parameters(self, n_timepoints):
         """
@@ -383,10 +383,14 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.window_length, int):
             if self.window_length <= 0:
-                raise ValueError("window_length must have the \
-                                  value of at least 1")
+                raise ValueError(
+                    "window_length must have the \
+                                  value of at least 1"
+                )
         else:
-            raise TypeError("window_length must be an 'int'. \
-                            Found '" +
-                            type(self.window_length).__name__ +
-                            "' instead.")
+            raise TypeError(
+                "window_length must be an 'int'. \
+                            Found '"
+                + type(self.window_length).__name__
+                + "' instead."
+            )

@@ -13,10 +13,10 @@ DATASET_LOADERS = (load_gunpoint, load_italy_power_demand)
 # Test output of time-series classification strategies
 @pytest.mark.parametrize("dataset", DATASET_LOADERS)
 def test_TSCStrategy(dataset):
-    train = dataset(split='train')
-    test = dataset(split='test')
+    train = dataset(split="train")
+    test = dataset(split="test")
     s = TSCStrategy(classifier)
-    task = TSCTask(target='class_val')
+    task = TSCTask(target="class_val")
     s.fit(task, train)
     y_pred = s.predict(test)
     assert y_pred.shape == test[task.target].shape

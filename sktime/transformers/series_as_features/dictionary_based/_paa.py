@@ -1,6 +1,5 @@
 import pandas as pd
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -27,9 +26,8 @@ class PAA(BaseSeriesAsFeaturesTransformer):
     num_intervals   : int, dimension of the transformed data (default 8)
 
     """
-    def __init__(self,
-                 num_intervals=8
-                 ):
+
+    def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super(PAA, self).__init__()
 
@@ -103,7 +101,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
                     current_frame += 1
 
                     frame_sum = (1 - remaining) * series[n]
-                    current_frame_size = (1 - remaining)
+                    current_frame_size = 1 - remaining
 
             # if the last frame was lost due to double imprecision
             if current_frame == self.num_intervals - 1:
@@ -127,11 +125,18 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
-                raise ValueError("num_intervals must have the \
-                                  value of at least 1")
+                raise ValueError(
+                    "num_intervals must have the \
+                                  value of at least 1"
+                )
             if self.num_intervals > num_atts:
-                raise ValueError("num_intervals cannot be higher \
-                                  than the time series length.")
+                raise ValueError(
+                    "num_intervals cannot be higher \
+                                  than the time series length."
+                )
         else:
-            raise TypeError("num_intervals must be an 'int'. Found '" +
-                            type(self.num_intervals).__name__ + "' instead.")
+            raise TypeError(
+                "num_intervals must be an 'int'. Found '"
+                + type(self.num_intervals).__name__
+                + "' instead."
+            )

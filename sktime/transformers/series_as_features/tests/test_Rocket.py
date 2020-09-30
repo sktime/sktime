@@ -18,12 +18,10 @@ def test_rocket_on_gunpoint():
 
     # test shape of transformed training data -> (number of training
     # examples, num_kernels * 2)
-    np.testing.assert_equal(X_training_transform.shape,
-                            (len(X_training), 20_000))
+    np.testing.assert_equal(X_training_transform.shape, (len(X_training), 20_000))
 
     # fit classifier
-    classifier = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10),
-                                   normalize=True)
+    classifier = RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
     classifier.fit(X_training_transform, Y_training)
 
     # load test data

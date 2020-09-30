@@ -7,7 +7,6 @@ from sktime.benchmarking.base import BaseMetric
 
 
 class PairwiseMetric(BaseMetric):
-
     def __init__(self, func, name=None, **kwargs):
         name = func.__name__ if name is None else name
         self.func = func
@@ -20,21 +19,23 @@ class PairwiseMetric(BaseMetric):
         # compute stderr based on pairwise metrics
         n_instances = len(y_true)
         pointwise_metrics = np.array(
-            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)])
+            [self.func([y_true[i]], [y_pred[i]]) for i in range(n_instances)]
+        )
         stderr = np.std(pointwise_metrics) / np.sqrt(
-            n_instances - 1)  # sample standard error of the mean
+            n_instances - 1
+        )  # sample standard error of the mean
 
         return mean, stderr
 
 
 class AggregateMetric(BaseMetric):
-
     def __init__(self, func, method="jackknife", name=None, **kwargs):
         allowed_methods = ("jackknife",)
         if method not in allowed_methods:
             raise NotImplementedError(
                 f"Provided method is not implemented yet. "
-                f"Currently only: {allowed_methods} are implemented")
+                f"Currently only: {allowed_methods} are implemented"
+            )
         self.method = method
 
         name = func.__name__ if name is None else name
@@ -72,8 +73,8 @@ class AggregateMetric(BaseMetric):
 
         # compute metrics on jackknife samples
         jack_pointwise_metric = np.array(
-            [self.func(y_true[idx], y_pred[idx], **self.kwargs)
-             for idx in jack_idx])
+            [self.func(y_true[idx], y_pred[idx], **self.kwargs) for idx in jack_idx]
+        )
 
         # compute standard error over jackknifed metrics
         jack_stderr = self._compute_jackknife_stderr(jack_pointwise_metric)

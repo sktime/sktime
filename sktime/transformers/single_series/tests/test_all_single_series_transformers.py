@@ -7,8 +7,7 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pytest
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.transformers.single_series.adapt import \
-    SingleSeriesTransformAdaptor
+from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.boxcox import BoxCoxTransformer
 from sktime.transformers.single_series.detrend import ConditionalDeseasonalizer
 from sktime.transformers.single_series.detrend import Deseasonalizer
@@ -21,7 +20,7 @@ SINGLE_SERIES_TRANSFORMERS = [
     ConditionalDeseasonalizer,
     Detrender,
     SingleSeriesTransformAdaptor,
-    BoxCoxTransformer
+    BoxCoxTransformer,
 ]
 
 # testing data

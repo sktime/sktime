@@ -13,7 +13,7 @@ __all__ = [
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "check_fh_is_relative"
+    "check_fh_is_relative",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -67,15 +67,15 @@ def check_y(y, allow_empty=False, allow_constant=True):
     """
     # Check if pandas series or numpy array
     if not isinstance(y, pd.Series):
-        raise TypeError(
-            f"`y` must be a pandas Series, but found type: {type(y)}")
+        raise TypeError(f"`y` must be a pandas Series, but found type: {type(y)}")
 
     # check that series is not empty
     if len(y) < 1:
         if not allow_empty:
             raise ValueError(
                 f"`y` must contain at least some values, but found "
-                f"empty series: {y}.")
+                f"empty series: {y}."
+            )
 
     else:
         if not allow_constant:
@@ -101,6 +101,7 @@ def check_cv(cv):
         if cv does not have the required attributes.
     """
     from sktime.forecasting.model_selection._split import BaseSplitter
+
     allowed_base_class = BaseSplitter
     if not isinstance(cv, allowed_base_class):
         raise TypeError(f"`cv` is not an instance of {allowed_base_class}")
@@ -124,14 +125,17 @@ def check_time_index(time_index):
     # period or datetime index are not support yet
     supported_index_types = (pd.RangeIndex, pd.Int64Index, pd.UInt64Index)
     if not isinstance(time_index, supported_index_types):
-        raise NotImplementedError(f"{type(time_index)} is not supported, "
-                                  f"please use one of "
-                                  f"{supported_index_types} instead.")
+        raise NotImplementedError(
+            f"{type(time_index)} is not supported, "
+            f"please use one of "
+            f"{supported_index_types} instead."
+        )
 
     if not time_index.is_monotonic:
         raise ValueError(
             f"The (time) index must be sorted (monotonically increasing), "
-            f"but found: {time_index}")
+            f"but found: {time_index}"
+        )
 
     return time_index
 
@@ -163,7 +167,8 @@ def check_window_length(window_length):
         if not is_int(window_length) or window_length < 1:
             raise ValueError(
                 f"`window_length_` must be a positive integer >= 1 or None, "
-                f"but found: {window_length}")
+                f"but found: {window_length}"
+            )
     return window_length
 
 
@@ -173,7 +178,8 @@ def check_step_length(step_length):
         if not is_int(step_length) or step_length < 1:
             raise ValueError(
                 f"`step_length` must be a positive integer >= 1 or None, "
-                f"but found: {step_length}")
+                f"but found: {step_length}"
+            )
     return step_length
 
 
@@ -210,6 +216,7 @@ def check_fh(fh):
         Checked forecasting horizon.
     """
     from sktime.forecasting.base._fh import FH
+
     if not isinstance(fh, FH):
         fh = FH(fh)
     return fh
@@ -227,6 +234,7 @@ def check_fh_is_relative(fh):
     TypeError : if fh is not relative
     """
     from sktime.forecasting import FH
+
     if isinstance(fh, FH) and not fh.is_relative:
         raise TypeError("`fh` must be relative, but found absolute `fh`")
 
@@ -270,8 +278,9 @@ def check_alpha(alpha):
     # check type
     if isinstance(alpha, list):
         if not all(isinstance(a, float) for a in alpha):
-            raise ValueError("When `alpha` is passed as a list, "
-                             "it must be a list of floats")
+            raise ValueError(
+                "When `alpha` is passed as a list, " "it must be a list of floats"
+            )
 
     elif isinstance(alpha, float):
         alpha = [alpha]  # make iterable
@@ -279,16 +288,16 @@ def check_alpha(alpha):
     # check range
     for a in alpha:
         if not 0 < a < 1:
-            raise ValueError(f"`alpha` must lie in the open interval (0, 1), "
-                             f"but found: {a}.")
+            raise ValueError(
+                f"`alpha` must lie in the open interval (0, 1), " f"but found: {a}."
+            )
 
     return alpha
 
 
 def check_cutoffs(cutoffs):
     if not isinstance(cutoffs, np.ndarray):
-        raise ValueError(
-            f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
+        raise ValueError(f"`cutoffs` must be a np.array, but found: {type(cutoffs)}")
 
     if not all([is_int(cutoff) for cutoff in cutoffs]):
         raise ValueError("All cutoff points must be integers")
@@ -303,8 +312,7 @@ def check_cutoffs(cutoffs):
 
 
 def check_scoring(scoring):
-    from sktime.performance_metrics.forecasting._classes import \
-        MetricFunctionWrapper
+    from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
 
     if scoring is None:
@@ -315,8 +323,7 @@ def check_scoring(scoring):
 
     allowed_base_class = MetricFunctionWrapper
     if not isinstance(scoring, allowed_base_class):
-        raise TypeError(
-            f"`scoring` must inherit from `{allowed_base_class.__name__}`")
+        raise TypeError(f"`scoring` must inherit from `{allowed_base_class.__name__}`")
 
     return scoring
 
@@ -345,29 +352,36 @@ def check_fh_values(values):
     # check array
     elif isinstance(values, np.ndarray):
         if values.ndim > 1:
-            raise TypeError(f"`fh` must be a 1d array, but found shape: "
-                            f"{values.shape}")
+            raise TypeError(
+                f"`fh` must be a 1d array, but found shape: " f"{values.shape}"
+            )
 
         if not np.issubdtype(values.dtype, np.integer):
-            raise TypeError(f"If `fh` is passed as an array, it must "
-                            f"be an array of integers, but found an "
-                            f"array of type: {values.dtype}")
+            raise TypeError(
+                f"If `fh` is passed as an array, it must "
+                f"be an array of integers, but found an "
+                f"array of type: {values.dtype}"
+            )
 
     # check list
     elif isinstance(values, list):
         if not np.all([is_int(h) for h in values]):
-            raise TypeError("If `fh` is passed as a list, "
-                            "it has to be a list of integers.")
+            raise TypeError(
+                "If `fh` is passed as a list, " "it has to be a list of integers."
+            )
         values = np.array(values, dtype=np.int)
 
     else:
-        raise TypeError(f"`fh` has to be either a numpy array, list, "
-                        f"or a single integer, but found: {type(values)}")
+        raise TypeError(
+            f"`fh` has to be either a numpy array, list, "
+            f"or a single integer, but found: {type(values)}"
+        )
 
     # check fh is not empty
     if len(values) < 1:
-        raise TypeError("`fh` cannot be empty, please specify now least one "
-                        "step to forecast.")
+        raise TypeError(
+            "`fh` cannot be empty, please specify now least one " "step to forecast."
+        )
 
     # check fh does not contain duplicates
     if len(values) != len(np.unique(values)):

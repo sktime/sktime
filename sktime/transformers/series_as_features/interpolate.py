@@ -1,18 +1,18 @@
 import numpy as np
 from scipy import interpolate
 
-from sktime.transformers.series_as_features.base \
-    import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 
 class TSInterpolator(BaseSeriesAsFeaturesTransformer):
     """Transformer that rescales series for another number of points.
-        For each cell in dataframe transformer fits scipy linear interp1d
-        and samples user defined number of points. Points are generated
-        by numpy.linspace. After transformation each cell will be a numpy.array
-        of defined size.
+    For each cell in dataframe transformer fits scipy linear interp1d
+    and samples user defined number of points. Points are generated
+    by numpy.linspace. After transformation each cell will be a numpy.array
+    of defined size.
     """
+
     _required_parameter = ["length"]
 
     def __init__(self, length):
@@ -41,10 +41,7 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
         -------
         numpy.array : with user defined size
         """
-        f = interpolate.interp1d(
-                list(np.linspace(0, 1, len(cell))),
-                cell.to_numpy()
-            )
+        f = interpolate.interp1d(list(np.linspace(0, 1, len(cell))), cell.to_numpy())
         return f(np.linspace(0, 1, self.length))
 
     def _resize_col(self, coll):

@@ -4,8 +4,7 @@ IndividualTDE and TDE.
 """
 
 __author__ = "Matthew Middlehurst"
-__all__ = ["TemporalDictionaryEnsemble", "IndividualTDE",
-           "histogram_intersection"]
+__all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersection"]
 
 import math
 import time
@@ -25,7 +24,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
-    """ Temporal Dictionary Ensemble (TDE)
+    """Temporal Dictionary Ensemble (TDE)
 
     todo: add bibtex when published
 
@@ -84,15 +83,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 n_parameter_samples=250,
-                 max_ensemble_size=100,
-                 time_limit=0.0,
-                 max_win_len_prop=1,
-                 min_window=10,
-                 randomly_selected_params=50,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        n_parameter_samples=250,
+        max_ensemble_size=100,
+        time_limit=0.0,
+        max_win_len_prop=1,
+        min_window=10,
+        randomly_selected_params=50,
+        random_state=None,
+    ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
@@ -172,30 +172,35 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         rng = check_random_state(self.random_state)
 
-        while (train_time < self.time_limit or num_classifiers <
-               self.n_parameter_samples) and len(possible_parameters) > 0:
+        while (
+            train_time < self.time_limit or num_classifiers < self.n_parameter_samples
+        ) and len(possible_parameters) > 0:
             if num_classifiers < self.randomly_selected_params:
                 parameters = possible_parameters.pop(
-                    rng.randint(0, len(possible_parameters)))
+                    rng.randint(0, len(possible_parameters))
+                )
             else:
                 gp = GaussianProcessRegressor(random_state=self.random_state)
                 gp.fit(self.prev_parameters_x, self.prev_parameters_y)
                 preds = gp.predict(possible_parameters)
-                parameters = possible_parameters.pop(rng.choice(
-                    np.flatnonzero(preds == preds.max())))
+                parameters = possible_parameters.pop(
+                    rng.choice(np.flatnonzero(preds == preds.max()))
+                )
 
-            subsample = rng.choice(self.n_instances, size=subsample_size,
-                                   replace=False)
+            subsample = rng.choice(self.n_instances, size=subsample_size, replace=False)
             X_subsample = X.iloc[subsample, :]
             y_subsample = y[subsample]
 
-            tde = IndividualTDE(*parameters, alphabet_size=self.alphabet_size,
-                                random_state=self.random_state)
+            tde = IndividualTDE(
+                *parameters,
+                alphabet_size=self.alphabet_size,
+                random_state=self.random_state
+            )
             tde.fit(X_subsample, y_subsample)
 
-            tde.accuracy = self._individual_train_acc(tde, y_subsample,
-                                                      subsample_size,
-                                                      lowest_acc)
+            tde.accuracy = self._individual_train_acc(
+                tde, y_subsample, subsample_size, lowest_acc
+            )
             weight = math.pow(tde.accuracy, 4)
 
             if num_classifiers < self.max_ensemble_size:
@@ -223,9 +228,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     def predict(self, X):
         rng = check_random_state(self.random_state)
-        return np.array([self.classes_[int(rng.choice(
-            np.flatnonzero(prob == prob.max())))] for prob
-                         in self.predict_proba(X)])
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in self.predict_proba(X)
+            ]
+        )
 
     def predict_proba(self, X):
         self.check_is_fitted()
@@ -256,13 +264,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = (np.ones(self.n_classes) * np.sum(self.weights))
+        divisor = np.ones(self.n_classes) * np.sum(self.weights)
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                    self.weights[n]
+                sums[
+                    self.class_dictionary.get(clf._train_predict(i), -1)
+                ] += self.weights[n]
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -271,13 +280,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return results
 
     def _unique_parameters(self, max_window, win_inc):
-        possible_parameters = [[win_size, word_len, normalise, levels, igb]
-                               for n, normalise in enumerate(self.norm_options)
-                               for win_size in
-                               range(self.min_window, max_window + 1, win_inc)
-                               for w, word_len in enumerate(self.word_lengths)
-                               for le, levels in enumerate(self.levels)
-                               for i, igb in enumerate(self.igb_options)]
+        possible_parameters = [
+            [win_size, word_len, normalise, levels, igb]
+            for n, normalise in enumerate(self.norm_options)
+            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for w, word_len in enumerate(self.word_lengths)
+            for le, levels in enumerate(self.levels)
+            for i, igb in enumerate(self.igb_options)
+        ]
 
         return possible_parameters
 
@@ -298,18 +308,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
 
 class IndividualTDE(BaseClassifier):
-    """ Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model
-    """
+    """Single TDE classifier, based off the Bag of SFA Symbols (BOSS) model"""
 
-    def __init__(self,
-                 window_size=10,
-                 word_length=8,
-                 norm=False,
-                 levels=1,
-                 igb=False,
-                 alphabet_size=4,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        window_size=10,
+        word_length=8,
+        norm=False,
+        levels=1,
+        igb=False,
+        alphabet_size=4,
+        random_state=None,
+    ):
         self.window_size = window_size
         self.word_length = word_length
         self.norm = norm
@@ -321,14 +331,17 @@ class IndividualTDE(BaseClassifier):
 
         binning_method = "information-gain" if igb else "equi-depth"
 
-        self.transformer = SFA(word_length=word_length,
-                               alphabet_size=alphabet_size,
-                               window_size=window_size, norm=norm,
-                               levels=levels,
-                               binning_method=binning_method,
-                               bigrams=True,
-                               remove_repeat_words=True,
-                               save_words=False)
+        self.transformer = SFA(
+            word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            norm=norm,
+            levels=levels,
+            binning_method=binning_method,
+            bigrams=True,
+            remove_repeat_words=True,
+            save_words=False,
+        )
         self.transformed_data = []
         self.accuracy = 0
 
@@ -413,7 +426,11 @@ def histogram_intersection(first, second):
             val_b = second.get(word, 0)
             sim += min(val_a, val_b)
     else:
-        sim = np.sum([0 if first[n] == 0 else np.min(first[n], second[n])
-                      for n in range(len(first))])
+        sim = np.sum(
+            [
+                0 if first[n] == 0 else np.min(first[n], second[n])
+                for n in range(len(first))
+            ]
+        )
 
     return sim

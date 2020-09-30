@@ -3,10 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "MetaEstimatorMixin",
-    "BaseHeterogenousMetaEstimator"
-]
+__all__ = ["MetaEstimatorMixin", "BaseHeterogenousMetaEstimator"]
 
 from abc import ABCMeta
 
@@ -17,8 +14,9 @@ class MetaEstimatorMixin:
     _required_parameters = []
 
 
-class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
-                                    metaclass=ABCMeta):
+class BaseHeterogenousMetaEstimator(
+    MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Handles parameter management for estimtators composed of named
     estimators.
 
@@ -38,9 +36,9 @@ class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
         estimators = getattr(self, attr)
         out.update(estimators)
         for name, estimator in estimators:
-            if hasattr(estimator, 'get_params'):
+            if hasattr(estimator, "get_params"):
                 for key, value in estimator.get_params(deep=True).items():
-                    out['%s__%s' % (name, key)] = value
+                    out["%s__%s" % (name, key)] = value
         return out
 
     def _set_params(self, attr, **params):
@@ -54,7 +52,7 @@ class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
         if items:
             names, _ = zip(*items)
         for name in list(params.keys()):
-            if '__' not in name and name in names:
+            if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
@@ -71,13 +69,18 @@ class BaseHeterogenousMetaEstimator(MetaEstimatorMixin, BaseEstimator,
 
     def _check_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
+            raise ValueError(
+                "Names provided are not unique: " "{0!r}".format(list(names))
+            )
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
-            raise ValueError('Estimator names conflict with constructor '
-                             'arguments: {0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
+            raise ValueError(
+                "Estimator names conflict with constructor "
+                "arguments: {0!r}".format(sorted(invalid_names))
+            )
+        invalid_names = [name for name in names if "__" in name]
         if invalid_names:
-            raise ValueError('Estimator names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
+            raise ValueError(
+                "Estimator names must not contain __: got "
+                "{0!r}".format(invalid_names)
+            )

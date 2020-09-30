@@ -8,8 +8,7 @@ import numpy as np
 from scipy.stats import boxcox
 from sklearn.preprocessing import PowerTransformer
 from sktime.datasets import load_airline
-from sktime.transformers.single_series.adapt import \
-    SingleSeriesTransformAdaptor
+from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
 
 
 def test_boxcox_transform():
@@ -19,6 +18,5 @@ def test_boxcox_transform():
     )
     actual = t.fit_transform(y)
 
-    expected, _ = boxcox(
-        np.asarray(y))  # returns fitted lambda as second output
+    expected, _ = boxcox(np.asarray(y))  # returns fitted lambda as second output
     np.testing.assert_array_equal(actual, expected)

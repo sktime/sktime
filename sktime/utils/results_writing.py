@@ -3,40 +3,63 @@ import os
 from sklearn.metrics import accuracy_score as acc
 
 
-def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
-                                y_pred, split='TEST', resample_seed=0,
-                                y_proba=None, second_line="N/A"):
+def write_results_to_uea_format(
+    path,
+    strategy_name,
+    dataset_name,
+    y_true,
+    y_pred,
+    split="TEST",
+    resample_seed=0,
+    y_proba=None,
+    second_line="N/A",
+):
     if len(y_true) != len(y_pred):
         raise IndexError(
             "The number of predicted class values is not the same as the "
-            "number of actual class values")
+            "number of actual class values"
+        )
 
     try:
         os.makedirs(
-            str(path) + "/" + str(strategy_name) + "/Predictions/" + str(
-                dataset_name) + "/")
+            str(path)
+            + "/"
+            + str(strategy_name)
+            + "/Predictions/"
+            + str(dataset_name)
+            + "/"
+        )
     except os.error:
         pass  # raises os.error if path already exists
 
-    if split == 'TRAIN' or split == 'train':
+    if split == "TRAIN" or split == "train":
         train_or_test = "train"
-    elif split == 'TEST' or split == 'test':
+    elif split == "TEST" or split == "test":
         train_or_test = "test"
     else:
-        raise ValueError(
-            "Unknown 'split' value - should be TRAIN/train or TEST/test")
+        raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    file = open(str(path) + "/" + str(strategy_name) + "/Predictions/" + str(
-        dataset_name) +
-                "/" + str(train_or_test) + "Fold" + str(
-        resample_seed) + ".csv", "w")
+    file = open(
+        str(path)
+        + "/"
+        + str(strategy_name)
+        + "/Predictions/"
+        + str(dataset_name)
+        + "/"
+        + str(train_or_test)
+        + "Fold"
+        + str(resample_seed)
+        + ".csv",
+        "w",
+    )
 
     correct = acc(y_true, y_pred)
 
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    file.write(str(strategy_name) + "," + str(dataset_name) + "," + str(
-        train_or_test) + "\n")
+    file.write(
+        str(strategy_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
+    )
 
     # the second line of the output is free form and classifier-specific;
     # usually this will record info
@@ -100,8 +123,8 @@ if __name__ == "__main__":
         dataset_name="banana_point",
         y_true=actual,
         y_pred=preds,
-        split='TEST',
+        split="TEST",
         resample_seed=0,
         y_proba=probas,
-        second_line="buildTime=100000,num_dummy_things=2"
+        second_line="buildTime=100000,num_dummy_things=2",
     )

@@ -3,10 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "BaseSingleSeriesTransformer",
-    "is_single_series_transformer"
-]
+__all__ = ["BaseSingleSeriesTransformer", "is_single_series_transformer"]
 
 from sktime.base import BaseEstimator
 
@@ -77,15 +74,15 @@ class BaseSingleSeriesTransformer(BaseEstimator):
     def update(self, y_new, update_params=False):
         """Update fitted parameters
 
-         Parameters
-         ----------
-         y_new : pd.Series
-         update_params : bool, optional (default=False)
+        Parameters
+        ----------
+        y_new : pd.Series
+        update_params : bool, optional (default=False)
 
-         Returns
-         -------
-         self : an instance of self
-         """
+        Returns
+        -------
+        self : an instance of self
+        """
         raise NotImplementedError("abstract method")
 
 

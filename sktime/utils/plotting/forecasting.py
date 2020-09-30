@@ -28,14 +28,16 @@ def plot_ys(*ys, labels=None):
 
     if labels is not None:
         if len(ys) != len(labels):
-            raise ValueError("There must be one label for each time series, "
-                             "but found inconsistent numbers of series and "
-                             "labels.")
+            raise ValueError(
+                "There must be one label for each time series, "
+                "but found inconsistent numbers of series and "
+                "labels."
+            )
         labels_ = labels
     else:
         labels_ = ["" for _ in range(len(ys))]
 
-    fig, ax = plt.subplots(1, figsize=plt.figaspect(.25))
+    fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
 
     for y, label in zip(ys, labels_):
         check_y(y)
