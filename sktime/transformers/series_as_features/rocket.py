@@ -1,10 +1,10 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from numba import njit
 from numba import prange
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import nested_to_3d_numpy
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import from_nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Angus Dempster"
@@ -37,8 +37,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
     def __init__(self, num_kernels=10_000, normalise=True, random_state=None):
         self.num_kernels = num_kernels
         self.normalise = normalise
-        self.random_state = \
-            random_state if isinstance(random_state, int) else None
+        self.random_state = random_state if isinstance(random_state, int) else None
         super(Rocket, self).__init__()
 
     def fit(self, X, y=None):
@@ -58,8 +57,9 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         X = check_X(X)
         _, self.n_columns = X.shape
         n_timepoints = X.applymap(lambda series: series.size).max().max()
-        self.kernels = _generate_kernels(n_timepoints, self.num_kernels,
-                                         self.n_columns, self.random_state)
+        self.kernels = _generate_kernels(
+            n_timepoints, self.num_kernels, self.n_columns, self.random_state
+        )
         self._is_fitted = True
         return self
 
@@ -77,16 +77,18 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         """
         self.check_is_fitted()
         X = check_X(X)
-        _X = nested_to_3d_numpy(X)
+        _X = from_nested_to_3d_numpy(X)
         if self.normalise:
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
-                    _X.std(axis=-1, keepdims=True) + 1e-8)
+                _X.std(axis=-1, keepdims=True) + 1e-8
+            )
         return pd.DataFrame(_apply_kernels(_X, self.kernels))
 
 
 @njit(
     "Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],"
-    "int32[:]))(int64,int64,int64,optional(int64))")
+    "int32[:]))(int64,int64,int64,optional(int64))"
+)
 def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
     if seed is not None:
         np.random.seed(seed)
@@ -101,9 +103,12 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
 
     channel_indices = np.zeros(num_channel_indices.sum(), dtype=np.int32)
 
-    weights = np.zeros(np.int32(np.dot(lengths.astype(np.float64),
-                                       num_channel_indices.astype(
-                                           np.float64))), dtype=np.float64)
+    weights = np.zeros(
+        np.int32(
+            np.dot(lengths.astype(np.float64), num_channel_indices.astype(np.float64))
+        ),
+        dtype=np.float64,
+    )
     biases = np.zeros(num_kernels, dtype=np.float64)
     dilations = np.zeros(num_kernels, dtype=np.int32)
     paddings = np.zeros(num_kernels, dtype=np.int32)
@@ -122,33 +127,40 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         b2 = a2 + _num_channel_indices
 
         a3 = 0  # for weights (per channel)
-        for j in range(_num_channel_indices):
+        for _ in range(_num_channel_indices):
             b3 = a3 + _length
             _weights[a3:b3] = _weights[a3:b3] - _weights[a3:b3].mean()
             a3 = b3
 
         weights[a1:b1] = _weights
 
-        channel_indices[a2:b2] = np.random.choice(np.arange(0, n_columns),
-                                                  _num_channel_indices,
-                                                  replace=False)
+        channel_indices[a2:b2] = np.random.choice(
+            np.arange(0, n_columns), _num_channel_indices, replace=False
+        )
 
         biases[i] = np.random.uniform(-1, 1)
 
-        dilation = 2 ** np.random.uniform(0, np.log2(
-            (n_timepoints - 1) / (_length - 1)))
+        dilation = 2 ** np.random.uniform(
+            0, np.log2((n_timepoints - 1) / (_length - 1))
+        )
         dilation = np.int32(dilation)
         dilations[i] = dilation
 
-        padding = ((_length - 1) * dilation) // 2 if np.random.randint(
-            2) == 1 else 0
+        padding = ((_length - 1) * dilation) // 2 if np.random.randint(2) == 1 else 0
         paddings[i] = padding
 
         a1 = b1
         a2 = b2
 
-    return (weights, lengths, biases, dilations, paddings, num_channel_indices,
-            channel_indices)
+    return (
+        weights,
+        lengths,
+        biases,
+        dilations,
+        paddings,
+        num_channel_indices,
+        channel_indices,
+    )
 
 
 @njit(fastmath=True)
@@ -185,8 +197,9 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
 
 
 @njit(fastmath=True)
-def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding,
-                               num_channel_indices, channel_indices):
+def _apply_kernel_multivariate(
+    X, weights, length, bias, dilation, padding, num_channel_indices, channel_indices
+):
     n_columns, n_timepoints = X.shape
 
     output_length = (n_timepoints + (2 * padding)) - ((length - 1) * dilation)
@@ -223,16 +236,26 @@ def _apply_kernel_multivariate(X, weights, length, bias, dilation, padding,
 @njit(
     "float64[:,:](float64[:,:,:],Tuple((float64[::1],int32[:],float64[:],"
     "int32[:],int32[:],int32[:],int32[:])))",
-    parallel=True, fastmath=True)
+    parallel=True,
+    fastmath=True,
+)
 def _apply_kernels(X, kernels):
-    (weights, lengths, biases, dilations, paddings, num_channel_indices,
-     channel_indices) = kernels
+    (
+        weights,
+        lengths,
+        biases,
+        dilations,
+        paddings,
+        num_channel_indices,
+        channel_indices,
+    ) = kernels
 
     n_instances, n_columns, _ = X.shape
     num_kernels = len(lengths)
 
-    _X = np.zeros((n_instances, num_kernels * 2),
-                  dtype=np.float64)  # 2 features per kernel
+    _X = np.zeros(
+        (n_instances, num_kernels * 2), dtype=np.float64
+    )  # 2 features per kernel
 
     for i in prange(n_instances):
 
@@ -248,23 +271,29 @@ def _apply_kernels(X, kernels):
 
             if num_channel_indices[j] == 1:
 
-                _X[i, a3:b3] = \
-                    _apply_kernel_univariate(X[i, channel_indices[a2]],
-                                             weights[a1:b1], lengths[j],
-                                             biases[j], dilations[j],
-                                             paddings[j])
+                _X[i, a3:b3] = _apply_kernel_univariate(
+                    X[i, channel_indices[a2]],
+                    weights[a1:b1],
+                    lengths[j],
+                    biases[j],
+                    dilations[j],
+                    paddings[j],
+                )
 
             else:
 
-                _weights = weights[a1:b1].reshape(
-                    (num_channel_indices[j], lengths[j]))
+                _weights = weights[a1:b1].reshape((num_channel_indices[j], lengths[j]))
 
-                _X[i, a3:b3] = \
-                    _apply_kernel_multivariate(X[i], _weights, lengths[j],
-                                               biases[j], dilations[j],
-                                               paddings[j],
-                                               num_channel_indices[j],
-                                               channel_indices[a2:b2])
+                _X[i, a3:b3] = _apply_kernel_multivariate(
+                    X[i],
+                    _weights,
+                    lengths[j],
+                    biases[j],
+                    dilations[j],
+                    paddings[j],
+                    num_channel_indices[j],
+                    channel_indices[a2:b2],
+                )
 
             a1 = b1
             a2 = b2

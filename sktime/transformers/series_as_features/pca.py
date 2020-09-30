@@ -1,17 +1,17 @@
+# -*- coding: utf-8 -*-
 __author__ = ["Patrick Rockenschaub"]
 __all__ = ["PCATransformer"]
 
 import pandas as pd
 from sklearn.decomposition import PCA
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import detabularise
-from sktime.utils.data_container import tabularize
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import from_2d_numpy_to_nested
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
 
 class PCATransformer(BaseSeriesAsFeaturesTransformer):
-    """ Transformer that applies Principle Components Analysis to a
+    """Transformer that applies Principle Components Analysis to a
     univariate time series.
 
     Provides a simple wrapper around ``sklearn.decomposition.PCA``.
@@ -51,7 +51,7 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
 
         # Transform the time series column into tabular format and
         # apply PCA to the tabular format
-        Xtab = tabularize(X)
+        Xtab = from_nested_to_2d_numpy(X)
         self.pca.fit(Xtab)
         self._is_fitted = True
         return self
@@ -78,12 +78,14 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
         X = check_X(X, enforce_univariate=True)
 
         # Transform X using the fitted PCA
-        Xtab = tabularize(X)
-        Xpca = pd.DataFrame(data=self.pca.transform(Xtab),
-                            index=Xtab.index,
-                            columns=Xtab.columns[:self.pca.n_components_])
+        Xtab = from_nested_to_2d_numpy(X)
+        Xpca = pd.DataFrame(
+            data=self.pca.transform(Xtab),
+            index=Xtab.index,
+            columns=Xtab.columns[: self.pca.n_components_],
+        )
 
         # Back-transform into time series data format
-        Xt = detabularise(Xpca, index=X.index)
+        Xt = from_2d_numpy_to_nested(Xpca, index=X.index)
         Xt.columns = X.columns
         return Xt

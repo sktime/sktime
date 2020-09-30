@@ -1,22 +1,22 @@
+# -*- coding: utf-8 -*-
 # Utilities
 import numpy as np
 import pandas as pd
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_numpy
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
 # Transforms
-from sktime.transformers.series_as_features.segment \
-    import SlidingWindowSegmenter
-from sktime.transformers.series_as_features.dictionary_based._paa \
-    import PAA
+from sktime.transformers.series_as_features.segment import SlidingWindowSegmenter
+from sktime.transformers.series_as_features.dictionary_based._paa import PAA
 from sktime.transformers.series_as_features.dwt import DWTTransformer
 from sktime.transformers.series_as_features.slope import SlopeTransformer
-from sktime.transformers.series_as_features.summarize._extract \
-    import DerivativeSlopeTransformer
+from sktime.transformers.series_as_features.summarize._extract import (
+    DerivativeSlopeTransformer,
+)
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
 
 # Classifiers
@@ -101,10 +101,14 @@ class ShapeDTW(BaseClassifier):
                                   (default = None).
     """
 
-    def __init__(self, n_neighbors=1, subsequence_length=30,
-                 shape_descriptor_function='raw',
-                 shape_descriptor_functions=['raw', 'derivative'],
-                 metric_params=None):
+    def __init__(
+        self,
+        n_neighbors=1,
+        subsequence_length=30,
+        shape_descriptor_function="raw",
+        shape_descriptor_functions=["raw", "derivative"],
+        metric_params=None,
+    ):
         self.n_neighbors = n_neighbors
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
@@ -127,10 +131,12 @@ class ShapeDTW(BaseClassifier):
         """
         # Perform preprocessing on params.
         if not (isinstance(self.shape_descriptor_function, str)):
-            raise TypeError("shape_descriptor_function must be an 'str'. \
-                            Found '" +
-                            type(self.shape_descriptor_function).__name__ +
-                            "' instead.")
+            raise TypeError(
+                "shape_descriptor_function must be an 'str'. \
+                            Found '"
+                + type(self.shape_descriptor_function).__name__
+                + "' instead."
+            )
 
         X, y = check_X_y(X, y, enforce_univariate=False)
 
@@ -170,8 +176,7 @@ class ShapeDTW(BaseClassifier):
         X - training data in a dataframe of shape [n_instances,1]
         y - training data classes of shape [n_instances].
         """
-        self.metric_params = {k.lower(): v for k,
-                              v in self.metric_params.items()}
+        self.metric_params = {k.lower(): v for k, v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
         if self.metric_params.get("weighting_factor") is not None:
@@ -179,41 +184,49 @@ class ShapeDTW(BaseClassifier):
         else:
             # Tune it otherwise
             self._param_matrix = {
-                'metric_params': [{'weighting_factor': 0.1},
-                                  {'weighting_factor': 0.125},
-                                  {'weighting_factor': (1/6)},
-                                  {'weighting_factor': 0.25},
-                                  {'weighting_factor': 0.5},
-                                  {'weighting_factor': 1},
-                                  {'weighting_factor': 2},
-                                  {'weighting_factor': 4},
-                                  {'weighting_factor': 6},
-                                  {'weighting_factor': 8},
-                                  {'weighting_factor': 10}]}
+                "metric_params": [
+                    {"weighting_factor": 0.1},
+                    {"weighting_factor": 0.125},
+                    {"weighting_factor": (1 / 6)},
+                    {"weighting_factor": 0.25},
+                    {"weighting_factor": 0.5},
+                    {"weighting_factor": 1},
+                    {"weighting_factor": 2},
+                    {"weighting_factor": 4},
+                    {"weighting_factor": 6},
+                    {"weighting_factor": 8},
+                    {"weighting_factor": 10},
+                ]
+            }
 
             n = self.n_neighbors
             sl = self.subsequence_length
             sdf = self.shape_descriptor_function
             sdfs = self.shape_descriptor_functions
             if sdfs is None or not (len(sdfs) == 2):
-                raise ValueError("When using 'compound', " +
-                                 "shape_descriptor_functions must be a " +
-                                 "string array of length 2.")
+                raise ValueError(
+                    "When using 'compound', "
+                    + "shape_descriptor_functions must be a "
+                    + "string array of length 2."
+                )
             mp = self.metric_params
 
             grid = GridSearchCV(
-                estimator=ShapeDTW(n_neighbors=n,
-                                   subsequence_length=sl,
-                                   shape_descriptor_function=sdf,
-                                   shape_descriptor_functions=sdfs,
-                                   metric_params=mp),
+                estimator=ShapeDTW(
+                    n_neighbors=n,
+                    subsequence_length=sl,
+                    shape_descriptor_function=sdf,
+                    shape_descriptor_functions=sdfs,
+                    metric_params=mp,
+                ),
                 param_grid=self._param_matrix,
                 cv=KFold(n_splits=10, shuffle=True),
-                scoring='accuracy'
+                scoring="accuracy",
             )
             grid.fit(X, y)
-            self.weighting_factor = \
-                grid.best_params_['metric_params']['weighting_factor']
+            self.weighting_factor = grid.best_params_["metric_params"][
+                "weighting_factor"
+            ]
 
     def _preprocess(self, X):
         # private method for performing the transformations on
@@ -277,16 +290,17 @@ class ShapeDTW(BaseClassifier):
         """
         # Get the appropriate transformer objects
         if self.shape_descriptor_function != "compound":
-            self.transformer = [self._get_transformer(
-                self.shape_descriptor_function)]
+            self.transformer = [self._get_transformer(self.shape_descriptor_function)]
         else:
             self.transformer = []
             for x in self.shape_descriptor_functions:
                 self.transformer.append(self._get_transformer(x))
             if not (len(self.transformer) == 2):
-                raise ValueError("When using 'compound', " +
-                                 "shape_descriptor_functions must be a " +
-                                 "string array of length 2.")
+                raise ValueError(
+                    "When using 'compound', "
+                    + "shape_descriptor_functions must be a "
+                    + "string array of length 2."
+                )
 
         # To hold the result of each transformer
         dataFrames = []
@@ -305,9 +319,9 @@ class ShapeDTW(BaseClassifier):
 
         # Combine the arrays into one dataframe
         if self.shape_descriptor_function == "compound":
-            result = self._combine_data_frames(dataFrames,
-                                               self.weighting_factor,
-                                               col_names)
+            result = self._combine_data_frames(
+                dataFrames, self.weighting_factor, col_names
+            )
         else:
             result = dataFrames[0]
             result.columns = col_names
@@ -368,8 +382,7 @@ class ShapeDTW(BaseClassifier):
             scaling_factor = parameters.get("scaling_factor_hog1d")
 
             # All 3 paramaters are None
-            if num_intervals is None and num_bins is None and \
-               scaling_factor is None:
+            if num_intervals is None and num_bins is None and scaling_factor is None:
                 return HOG1DTransformer()
 
             # 2 parameters are None
@@ -382,19 +395,22 @@ class ShapeDTW(BaseClassifier):
 
             # 1 parameter is None
             if num_intervals is None:
-                return HOG1DTransformer(scaling_factor=scaling_factor,
-                                        num_bins=num_bins)
+                return HOG1DTransformer(
+                    scaling_factor=scaling_factor, num_bins=num_bins
+                )
             if scaling_factor is None:
-                return HOG1DTransformer(num_intervals=num_intervals,
-                                        num_bins=num_bins)
+                return HOG1DTransformer(num_intervals=num_intervals, num_bins=num_bins)
             if num_bins is None:
-                return HOG1DTransformer(scaling_factor=scaling_factor,
-                                        num_intervals=num_intervals)
+                return HOG1DTransformer(
+                    scaling_factor=scaling_factor, num_intervals=num_intervals
+                )
 
             # All parameters are given
-            return HOG1DTransformer(num_intervals=num_intervals,
-                                    num_bins=num_bins,
-                                    scaling_factor=scaling_factor)
+            return HOG1DTransformer(
+                num_intervals=num_intervals,
+                num_bins=num_bins,
+                scaling_factor=scaling_factor,
+            )
         else:
             raise ValueError("Invalid shape desciptor function.")
 
@@ -403,19 +419,27 @@ class ShapeDTW(BaseClassifier):
         Helper function for checking if a user has entered in
         an invalid metric_params.
         """
-        valid_metric_params = ['num_intervals_paa', 'num_levels_dwt',
-                               'num_intervals_slope', 'num_intervals_hog1d',
-                               'num_bins_hog1d', 'scaling_factor_hog1d',
-                               'weighting_factor']
+        valid_metric_params = [
+            "num_intervals_paa",
+            "num_levels_dwt",
+            "num_intervals_slope",
+            "num_intervals_hog1d",
+            "num_bins_hog1d",
+            "scaling_factor_hog1d",
+            "weighting_factor",
+        ]
 
         names = list(parameters.keys())
 
         for x in names:
             if not (x in valid_metric_params):
-                raise ValueError(x + " is not a valid metric parameter." +
-                                 "Make sure the shape descriptor function" +
-                                 " name is at the end of the metric " +
-                                 "parameter name.")
+                raise ValueError(
+                    x
+                    + " is not a valid metric parameter."
+                    + "Make sure the shape descriptor function"
+                    + " name is at the end of the metric "
+                    + "parameter name."
+                )
 
     def _combine_data_frames(self, dataFrames, weighting_factor, col_names):
         """
@@ -431,12 +455,14 @@ class ShapeDTW(BaseClassifier):
 
         # Convert the dataframes into arrays
         for x in first_desc.columns:
-            first_desc_array.append(tabularize(first_desc[x],
-                                               return_array=True))
+            first_desc_array.append(
+                from_nested_to_2d_numpy(first_desc[x], return_array=True)
+            )
 
         for x in second_desc.columns:
-            second_desc_array.append(tabularize(second_desc[x],
-                                                return_array=True))
+            second_desc_array.append(
+                from_nested_to_2d_numpy(second_desc[x], return_array=True)
+            )
 
         # Concatenate the arrays together
         res = []
@@ -445,7 +471,7 @@ class ShapeDTW(BaseClassifier):
             for y in range(len(first_desc_array[x])):
                 dim2 = []
                 dim2.extend(first_desc_array[x][y])
-                dim2.extend(second_desc_array[x][y]*weighting_factor)
+                dim2.extend(second_desc_array[x][y] * weighting_factor)
                 dim1.append(dim2)
             res.append(dim1)
 

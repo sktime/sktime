@@ -16,7 +16,7 @@ from sktime.transformers.series_as_features.base import (
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.data_container import is_nested_dataframe
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series_as_features import make_classification_problem
 from sktime.utils._testing.series_as_features import make_regression_problem
@@ -72,7 +72,7 @@ def _make_args(estimator, method, *args, **kwargs):
         args = _make_transform_args(estimator, *args, **kwargs)
         if isinstance(estimator, Tabularizer):
             X, y = args
-            return tabularize(X), y
+            return from_nested_to_2d_numpy(X), y
         else:
             return args
 

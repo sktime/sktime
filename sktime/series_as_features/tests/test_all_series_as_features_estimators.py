@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -13,13 +13,17 @@ from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
 
-ALL_CLASSIFIERS = [e[1] for e in
-                   all_estimators(estimator_type="classifier")
-                   if e[0] not in EXCLUDED_ESTIMATORS]
+ALL_CLASSIFIERS = [
+    e[1]
+    for e in all_estimators(estimator_type="classifier")
+    if e[0] not in EXCLUDED_ESTIMATORS
+]
 
-ALL_REGRESSORS = [e[1] for e in
-                  all_estimators(estimator_type="regressor")
-                  if e[0] not in EXCLUDED_ESTIMATORS]
+ALL_REGRESSORS = [
+    e[1]
+    for e in all_estimators(estimator_type="regressor")
+    if e[0] not in EXCLUDED_ESTIMATORS
+]
 
 N_CLASSES = 3
 ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)
@@ -29,8 +33,11 @@ ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)
 def test_series_as_features_multivariate_input(Estimator):
     # check if multivariate input is correctly handled
     n_columns = 2
-    error_msg = f"X must be univariate with X.shape[1] == 1, but found: " \
-                f"X.shape[1] == {n_columns}."
+    error_msg = (
+        f"X must be univariate "
+        f"with X.shape[1] == 1, but found: "
+        f"X.shape[1] == {n_columns}."
+    )
 
     estimator = _construct_instance(Estimator)
     X_train, y_train = _make_args(estimator, "fit", n_columns=n_columns)
@@ -48,7 +55,8 @@ def test_series_as_features_multivariate_input(Estimator):
         assert error_msg in str(e), (
             f"{estimator.__class__.__name__} does not handle multivariate "
             f"data and does not raise an appropriate error when multivariate "
-            f"data is passed")
+            f"data is passed"
+        )
 
 
 @pytest.mark.parametrize("Estimator", ALL_CLASSIFIERS)
@@ -60,14 +68,14 @@ def test_classifier_output(Estimator):
     X = _make_args(estimator, "predict")[0]
 
     # check predict
-    y_pred = getattr(estimator, "predict")(X)
+    y_pred = estimator.predict(X)
     assert isinstance(y_pred, ACCEPTED_OUTPUT_TYPES)
     assert y_pred.shape == (X.shape[0],)
     assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
     # check predict proba
     if hasattr(estimator, "predict_proba"):
-        y_proba = getattr(estimator, "predict_proba")(X)
+        y_proba = estimator.predict_proba(X)
         assert isinstance(y_proba, ACCEPTED_OUTPUT_TYPES)
         assert y_proba.shape == (X.shape[0], N_CLASSES)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
@@ -83,7 +91,7 @@ def test_regressor_output(Estimator):
     X = _make_args(estimator, "predict")[0]
 
     # check predict
-    y_pred = getattr(estimator, "predict")(X)
+    y_pred = estimator.predict(X)
     assert isinstance(y_pred, ACCEPTED_OUTPUT_TYPES)
     assert y_pred.shape == (X.shape[0],)
     assert np.issubdtype(y_pred.dtype, np.floating)

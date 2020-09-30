@@ -1,15 +1,16 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = ["Tabularizer"]
 
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import detabularize
+from sklearn.utils.validation import check_array
+
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import from_2d_numpy_to_nested
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.data_container import get_time_index
-from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -48,7 +49,7 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
         """
         self.check_is_fitted()
         X = check_X(X)
-        return tabularize(X)
+        return from_nested_to_2d_numpy(X)
 
     def inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
@@ -65,7 +66,19 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
             Transformed dataframe with series in cells.
         """
         self.check_is_fitted()
-        X = check_X(X)
-        Xt = detabularize(X, index=self._index, time_index=self._time_index)
+        if len(self._columns) > 1:
+            raise NotImplementedError(
+                f"`inverse-transform` currently only "
+                f"handles univariate data, but found: "
+                f"{len(self._columns)} columns in `fit`"
+            )
+
+            # we expect a tabular pd.DataFrame or np.array here, hence we use
+            # scikit-learn's input validation function
+        X = check_array(
+            X,
+        )
+
+        Xt = from_2d_numpy_to_nested(X, index=self._index, time_index=self._time_index)
         Xt.columns = self._columns
         return Xt

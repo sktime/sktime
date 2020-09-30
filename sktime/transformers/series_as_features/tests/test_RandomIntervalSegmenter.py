@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing import _generate_df_from_array
 
 N_ITER = 10
@@ -59,7 +59,8 @@ def test_random_state():
             )
             Xt = trans.fit_transform(X)
             np.testing.assert_array_equal(
-                tabularize(first_Xt).values, tabularize(Xt).values
+                from_nested_to_2d_numpy(first_Xt).values,
+                from_nested_to_2d_numpy(Xt).values,
             )
 
 

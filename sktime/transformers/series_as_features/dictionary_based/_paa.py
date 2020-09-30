@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import pandas as pd
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import tabularize
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Matthew Middlehurst"
@@ -27,9 +27,8 @@ class PAA(BaseSeriesAsFeaturesTransformer):
     num_intervals   : int, dimension of the transformed data (default 8)
 
     """
-    def __init__(self,
-                 num_intervals=8
-                 ):
+
+    def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super(PAA, self).__init__()
 
@@ -72,7 +71,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         return result
 
     def _perform_paa_along_dim(self, X):
-        X = tabularize(X, return_array=True)
+        X = from_nested_to_2d_numpy(X, return_array=True)
 
         num_atts = X.shape[1]
         num_insts = X.shape[0]
@@ -103,7 +102,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
                     current_frame += 1
 
                     frame_sum = (1 - remaining) * series[n]
-                    current_frame_size = (1 - remaining)
+                    current_frame_size = 1 - remaining
 
             # if the last frame was lost due to double imprecision
             if current_frame == self.num_intervals - 1:
@@ -127,11 +126,18 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
-                raise ValueError("num_intervals must have the \
-                                  value of at least 1")
+                raise ValueError(
+                    "num_intervals must have the \
+                                  value of at least 1"
+                )
             if self.num_intervals > num_atts:
-                raise ValueError("num_intervals cannot be higher \
-                                  than the time series length.")
+                raise ValueError(
+                    "num_intervals cannot be higher \
+                                  than the time series length."
+                )
         else:
-            raise TypeError("num_intervals must be an 'int'. Found '" +
-                            type(self.num_intervals).__name__ + "' instead.")
+            raise TypeError(
+                "num_intervals must be an 'int'. Found '"
+                + type(self.num_intervals).__name__
+                + "' instead."
+            )

@@ -6,9 +6,9 @@ from sklearn.decomposition import PCA
 
 from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.pca import PCATransformer
-from sktime.utils.data_container import detabularize
+from sktime.utils.data_container import from_2d_numpy_to_nested
 from sktime.utils.data_container import get_time_index
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing import _generate_df_from_array
 
 
@@ -39,7 +39,7 @@ def test_bad_input_args(bad_components):
 )
 def test_pca_kwargs(kwargs):
     np.random.seed(42)
-    X = detabularize(pd.DataFrame(data=np.random.randn(10, 5)))
+    X = from_2d_numpy_to_nested(pd.DataFrame(data=np.random.randn(10, 5)))
     pca = PCATransformer(n_components=1, **kwargs)
     pca.fit_transform(X)
 
@@ -65,7 +65,9 @@ def test_early_trans_fail():
 )
 def test_output_format_dim(len_series, n_instances, n_components):
     np.random.seed(42)
-    X = detabularize(pd.DataFrame(data=np.random.randn(n_instances, len_series)))
+    X = from_2d_numpy_to_nested(
+        pd.DataFrame(data=np.random.randn(n_instances, len_series))
+    )
 
     trans = PCATransformer(n_components=n_components)
     Xt = trans.fit_transform(X)
@@ -75,7 +77,9 @@ def test_output_format_dim(len_series, n_instances, n_components):
     assert Xt.shape[0] == X.shape[0]
 
     # Check number of principal components in the output.
-    assert tabularize(Xt).shape[1] == min(n_components, tabularize(X).shape[1])
+    assert from_nested_to_2d_numpy(Xt).shape[1] == min(
+        n_components, from_nested_to_2d_numpy(X).shape[1]
+    )
 
 
 # Check that the returned values agree with those produced by
@@ -90,11 +94,11 @@ def test_pca_results(n_components):
     Xt1 = pca.fit_transform(X)
 
     # sktime
-    Xs = detabularize(X)
+    Xs = from_2d_numpy_to_nested(X)
     pca_transform = PCATransformer(n_components=n_components)
     Xt2 = pca_transform.fit_transform(Xs)
 
-    assert np.allclose(np.asarray(Xt1), np.asarray(tabularize(Xt2)))
+    assert np.allclose(np.asarray(Xt1), np.asarray(from_nested_to_2d_numpy(Xt2)))
 
 
 # Check output indices (row indices and columns the same, time indices start
@@ -102,7 +106,7 @@ def test_pca_results(n_components):
 @pytest.mark.parametrize("n_components", [1, 5, None])
 def test_indices(n_components):
     np.random.seed(42)
-    X = detabularize(pd.DataFrame(data=np.random.randn(10, 5)))
+    X = from_2d_numpy_to_nested(pd.DataFrame(data=np.random.randn(10, 5)))
     X.columns = pd.CategoricalIndex(["col_0"])
     X.index = pd.Int64Index([i + 10 for i in range(10)])
 

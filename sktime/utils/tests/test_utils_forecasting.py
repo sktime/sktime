@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_numpy
 from sktime.utils._testing import _generate_df_from_array
 from sktime.utils._testing.forecasting import _generate_polynomial_series
 from sktime.utils.time_series import add_trend
@@ -18,11 +18,11 @@ def test_tabularize():
     )
 
     # Test single series input.
-    Xt = tabularize(X.iloc[:, 0], return_array=True)
+    Xt = from_nested_to_2d_numpy(X.iloc[:, 0], return_array=True)
     assert Xt.shape[0] == X.shape[0]
     assert Xt.shape[1] == n_obs_X
 
-    Xt = tabularize(X.iloc[:, 0])
+    Xt = from_nested_to_2d_numpy(X.iloc[:, 0])
     assert Xt.index.equals(X.index)
 
     # Test dataframe input with columns having series of different length.
@@ -33,11 +33,11 @@ def test_tabularize():
     )
     X = pd.concat([X, Y], axis=1)
 
-    Xt = tabularize(X, return_array=True)
+    Xt = from_nested_to_2d_numpy(X, return_array=True)
     assert Xt.shape[0] == X.shape[0]
     assert Xt.shape[1] == (n_cols_X * n_obs_X) + (n_cols_Y * n_obs_Y)
 
-    Xt = tabularize(X)
+    Xt = from_nested_to_2d_numpy(X)
     assert Xt.index.equals(X.index)
 
 

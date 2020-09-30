@@ -7,13 +7,12 @@ __all__ = []
 import pandas as pd
 import pytest
 
+from sktime.series_as_features.tests._config import N_CLASSES
+from sktime.series_as_features.tests._config import N_COLUMNS
+from sktime.series_as_features.tests._config import N_INSTANCES
+from sktime.series_as_features.tests._config import N_TIMEPOINTS
 from sktime.utils._testing import make_classification_problem
 from sktime.utils._testing import make_regression_problem
-
-N_INSTANCES = [10, 15]
-N_COLUMNS = [3, 5]
-N_TIMEPOINTS = [3, 5]
-N_CLASSES = [2, 5]
 
 
 def _check_X_y(X, y, n_instances, n_columns, n_timepoints):
