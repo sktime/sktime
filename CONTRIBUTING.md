@@ -133,7 +133,7 @@ We use continuous integration services on GitHub to automatically check if new p
 
 
 ### Code quality checks
-To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. To set up the workflow, you need to install a few extra tools:
+To check if your code pass all checks locally, you can run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. To set up the workflow, you need to install a few extra tools:
 
 ```bash
 pip install -r maint_tools/requirements.txt
@@ -143,14 +143,12 @@ Once installed, pre-commit will automatically run our code quality checks on the
 
 You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
 
-In rare circumstances, you may want to ignore a failing code quality check. First, make sure that you understand why the check is failing. If you are sure you want to ignore the check, you three options.
+In rare circumstances you may want to ignore a failing check. Make sure you understand why the check is failing. If you are sure you want to ignore the check, you have three options:
 
 * Add a `# noqa` (no quality assurance) comment at the end of the line you
  want to ignore,
-* Run `git commit --no-verify`, this will bypass all pre-commit and commit
- message hocks,
-* Add the error flag you want to ignore the to flake8 configuration in
- [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
+* Run `git commit --no-verify` to bypass all pre-commit and commit message checks,
+* Add the error code you want to ignore to our flake8 configuration in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
 
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
@@ -276,7 +274,7 @@ sktime is not a pure Python package and depends on some non-Python code includin
 * [Python guide for packaging](https://packaging.python.org/guides/),
 * [Cython guide on compilation/distribution](https://cython.readthedocs.io/en/latest/src/userguide/source_files_and_compilation.html).
 
-We use continuous integration services to automatically build and distribute wheels across platforms and version. The release process is triggered on our continuous integration services by pushing a [tagged commit](https://git-scm.com/book/en/v2/Git-Basics-Tagging) using [semantic versioning](https://semver.org). Pushing a new tag will trigger a new build on the continuous integration services which will provide the wheels for different platforms and automatically upload them to PyPI. You can see all uploaded wheels [here](https://pypi.org/simple/sktime/).
+We use continuous integration services to automatically build and distribute wheels across platforms and versions. The release process is triggered on our continuous integration services by pushing a [tagged commit](https://git-scm.com/book/en/v2/Git-Basics-Tagging) using [semantic versioning](https://semver.org). Pushing a new tag will trigger a new build on the continuous integration services which will provide the wheels for different platforms and automatically upload them to PyPI. You can see all uploaded wheels [here](https://pypi.org/simple/sktime/).
 
 To make the release process easier, we have an interactive script that you can follow. Simply run:
 
