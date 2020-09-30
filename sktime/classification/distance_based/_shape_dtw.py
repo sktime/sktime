@@ -106,7 +106,7 @@ class ShapeDTW(BaseClassifier):
         n_neighbors=1,
         subsequence_length=30,
         shape_descriptor_function="raw",
-        shape_descriptor_functions=["raw", "derivative"],
+        shape_descriptor_functions=["raw", "derivative"],  # noqa from flake8 B006
         metric_params=None,
     ):
         self.n_neighbors = n_neighbors
