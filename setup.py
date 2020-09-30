@@ -24,7 +24,8 @@ MIN_REQUIREMENTS = {
     "pandas": "1.0.0",
     "pmdarima": "1.7.1",
     "scikit-learn": "0.23.0",
-    "statsmodels": "0.12.0"
+    "statsmodels": "0.12.0",
+    "tsfresh": "0.17.0",
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
