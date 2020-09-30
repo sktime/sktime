@@ -22,7 +22,6 @@ __all__ = [
     "load_lynx",
     "load_acsf1",
     "load_uschange",
-
 ]
 
 __author__ = ["Markus Löning", "Sajay Ganesh", "@big-o", "Sebastiaan Koel"]
