@@ -153,7 +153,7 @@ Rights and responsibilities
    * - Issue/PR management
      - Core developers are responsible for reviewing and managing issues and pull requests. This includes commenting on issues, reviewing code contributions, merging approved pull requests, and closing issues once resolved.
    * - Decision making
-     - They can partipate in the decision making process by vetoing changes and casting votes.
+     - They can participate in the decision making process by vetoing changes and casting votes.
    * - Nomination
      - They can nominate new core developers, CoC committee members and CC members.
 
@@ -462,7 +462,7 @@ with the appropriate changes to
 Note that contributors do not own their contributions. sktime is an
 open-source project, and all code is contributed under `our open-source
 license <https://github.com/alan-turing-institute/sktime/blob/master/LICENSE>`__.
-All contributors ackwoledge that they have all the rights to the code
+All contributors acknowledge that they have all the rights to the code
 they contribute to make it available under this license.
 
 The project belongs to the sktime community, and all parts of it are
@@ -498,7 +498,7 @@ References
 Our governance model is inspired by various existing governance
 structures. In particular, we’d like to acknowledge:
 
-* scikit-learn’s `governance model <https://sktime.org/stable/governance.html>`__
+* scikit-learn’s `governance model <https://www.sktime.org/en/latest/governance.html>`__
 * `The Turing Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
 * `The Art of Community <https://www.jonobacon.com/books/artofcommunity/>`__ by Jono Bacon
 * The `astropy <https://www.astropy.org>`__ project

@@ -60,14 +60,14 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
 
     Parameters
     ----------
-    min_shapelet_length                 : int, lower bound on candidatie
+    min_shapelet_length                 : int, lower bound on candidate
     shapelet lengths (default = 3)
-    max_shapelet_length                 : int, upper bound on candidatie
+    max_shapelet_length                 : int, upper bound on candidate
     shapelet lengths (default = inf or series length)
     max_shapelets_to_store_per_class    : int, upper bound on number of
     shapelets to retain from each distinct class (default = 200)
     random_state                        : RandomState, int, or none: to
-    control reandom state objects for deterministic results (default = None)
+    control random state objects for deterministic results (default = None)
     verbose                             : int, level of output printed to
     the console (for information only) (default = 0)
     remove_self_similar                 : boolean, remove overlapping
@@ -79,7 +79,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
-    the stored shapelets after a dataest has been processed
+    the stored shapelets after a dataset has been processed
     """
 
     def __init__(self,
@@ -855,9 +855,9 @@ class ContractedShapeletTransform(ShapeletTransform):
 
     Parameters
     ----------
-    min_shapelet_length                 : int, lower bound on candidatie
+    min_shapelet_length                 : int, lower bound on candidate
     shapelet lengths (default = 3)
-    max_shapelet_length                 : int, upper bound on candidatie
+    max_shapelet_length                 : int, upper bound on candidate
     shapelet lengths (default = inf or series length)
     max_shapelets_to_store_per_class    : int, upper bound on number of
     shapelets to retain from each distinct class (default = 200)
@@ -867,7 +867,7 @@ class ContractedShapeletTransform(ShapeletTransform):
     to assess per training series before moving on to
                                           the next series (default = 20)
     random_state                        : RandomState, int, or none: to
-    control reandom state objects for deterministic results (default = None)
+    control random state objects for deterministic results (default = None)
     verbose                             : int, level of output printed to
     the console (for information only) (default = 0)
     remove_self_similar                 : boolean, remove overlapping
@@ -879,7 +879,7 @@ class ContractedShapeletTransform(ShapeletTransform):
     predefined_ig_rejection_level       : float, minimum information gain
     required to keep a shapelet (default = 0.05)
     self.shapelets                      : list of Shapelet objects,
-    the stored shapelets after a dataest has been processed
+    the stored shapelets after a dataset has been processed
     """
 
     def __init__(

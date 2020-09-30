@@ -151,7 +151,7 @@ def distance_predefined_params(distance_measure, **params):
 
 def cython_wrapper(distance_measure):
     """
-    wrap a distance measure in cython convertion (to 1 column per dimension
+    wrap a distance measure in cython conversion (to 1 column per dimension
     format)
     :param distance_measure: distance measure to wrap
     :return: a distance measure which automatically formats data for cython
