@@ -32,6 +32,7 @@ from sktime.transformers.series_as_features.compose import (ColumnTransformer,
                                                             RowTransformer)
 from sktime.transformers.series_as_features.interpolate import TSInterpolator
 from sktime.transformers.series_as_features.reduce import Tabularizer
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.transformers.series_as_features.shapelets import (
     ContractedShapeletTransform, ShapeletTransform)
 from sktime.transformers.series_as_features.summarize import (
@@ -127,5 +128,7 @@ ESTIMATOR_TEST_PARAMS = {
          "ml_task": "classification", },
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {
-        "acf_lag": 10}
+        "acf_lag": 10},
+    SFA: {
+        "return_pandas_data_series": True}
 }

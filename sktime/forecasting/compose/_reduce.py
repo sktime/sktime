@@ -43,7 +43,7 @@ class BaseReducer(BaseWindowForecaster):
         self._cv = None
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------

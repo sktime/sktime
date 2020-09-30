@@ -1,3 +1,6 @@
+check-manifest
 colorama
-twine
 flake8
+flake8-bugbear
+flake8-print
+pre-commit

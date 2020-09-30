@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Utilities for loading datasets
 """
@@ -19,12 +20,12 @@ __all__ = [
     "load_shampoo_sales",
     "load_longley",
     "load_lynx",
-    "load_acsf1"
+    "load_acsf1",
 ]
 
-__author__ = ['Markus Löning', 'Sajay Ganesh', '@big-o']
+__author__ = ["Markus Löning", "Sajay Ganesh", "@big-o"]
 
-DIRNAME = 'data'
+DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
@@ -35,7 +36,7 @@ def _load_dataset(name, split, return_X_y):
     """
 
     if split in ("train", "test"):
-        fname = name + '_' + split.upper() + '.ts'
+        fname = name + "_" + split.upper() + ".ts"
         abspath = os.path.join(MODULE, DIRNAME, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
@@ -44,7 +45,7 @@ def _load_dataset(name, split, return_X_y):
         X = pd.DataFrame(dtype="object")
         y = pd.Series(dtype="object")
         for split in ("train", "test"):
-            fname = name + '_' + split.upper() + '.ts'
+            fname = name + "_" + split.upper() + ".ts"
             abspath = os.path.join(MODULE, DIRNAME, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
@@ -56,7 +57,7 @@ def _load_dataset(name, split, return_X_y):
     if return_X_y:
         return X, y
     else:
-        X['class_val'] = pd.Series(y)
+        X["class_val"] = pd.Series(y)
         return X
 
 
@@ -104,7 +105,7 @@ def load_gunpoint(split=None, return_X_y=False):
     Dataset details: http://timeseriesclassification.com/description.php
     ?Dataset=GunPoint
     """
-    name = 'GunPoint'
+    name = "GunPoint"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -147,7 +148,7 @@ def load_osuleaf(split=None, return_X_y=False):
     Dataset details: http://www.timeseriesclassification.com/description.php
     ?Dataset=OSULeaf
     """
-    name = 'OSULeaf'
+    name = "OSULeaf"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -193,63 +194,63 @@ def load_italy_power_demand(split=None, return_X_y=False):
     ?Dataset=ItalyPowerDemand
     """
 
-    name = 'ItalyPowerDemand'
+    name = "ItalyPowerDemand"
     return _load_dataset(name, split, return_X_y)
 
 
 def load_japanese_vowels(split=None, return_X_y=False):
     """
-        Loads the JapaneseVowels time series classification problem and
-        returns X and y.
+    Loads the JapaneseVowels time series classification problem and
+    returns X and y.
 
-        Parameters
-        ----------
-        split: None or str{"train", "test"}, optional (default=None)
-            Whether to load the train or test partition of the problem. By
-        default it loads both.
-        return_X_y: bool, optional (default=False)
-            If True, returns (features, target) separately instead of a
-            single dataframe with columns for
-            features and the target.
+    Parameters
+    ----------
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+    default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a
+        single dataframe with columns for
+        features and the target.
 
-        Returns
-        -------
-        X: pandas DataFrame with m rows and c columns
-            The time series data for the problem with m cases and c dimensions
-        y: numpy array
-            The class labels for each case in X
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
 
-        Details
-        -------
-        Dimensionality:     multivariate, 12
-        Series length:      29
-        Train cases:        270
-        Test cases:         370
-        Number of classes:  9
+    Details
+    -------
+    Dimensionality:     multivariate, 12
+    Series length:      29
+    Train cases:        270
+    Test cases:         370
+    Number of classes:  9
 
-        A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
-        the vowels 'a' and 'e'. A '12-degree
-        linear prediction analysis' is applied to the raw recordings to
-        obtain time-series with 12 dimensions, a
-        originally a length between 7 and 29. In this dataset, instances
-        have been padded to the longest length,
-        29. The classification task is to predict the speaker. Therefore,
-        each instance is a transformed utterance,
-        12*29 values with a single class label attached, [1...9]. The given
-        training set is comprised of 30
-        utterances for each speaker, however the test set has a varied
-        distribution based on external factors of
-        timing and experimenal availability, between 24 and 88 instances per
-        speaker. Reference: M. Kudo, J. Toyama
-        and M. Shimbo. (1999). "Multidimensional Curve Classification Using
-        Passing-Through Regions". Pattern
-        Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
+    A UCI Archive dataset. 9 Japanese-male speakers were recorded saying
+    the vowels 'a' and 'e'. A '12-degree
+    linear prediction analysis' is applied to the raw recordings to
+    obtain time-series with 12 dimensions, a
+    originally a length between 7 and 29. In this dataset, instances
+    have been padded to the longest length,
+    29. The classification task is to predict the speaker. Therefore,
+    each instance is a transformed utterance,
+    12*29 values with a single class label attached, [1...9]. The given
+    training set is comprised of 30
+    utterances for each speaker, however the test set has a varied
+    distribution based on external factors of
+    timing and experimental availability, between 24 and 88 instances per
+    speaker. Reference: M. Kudo, J. Toyama
+    and M. Shimbo. (1999). "Multidimensional Curve Classification Using
+    Passing-Through Regions". Pattern
+    Recognition Letters, Vol. 20, No. 11--13, pages 1103--1111.
 
-        Dataset details: http://timeseriesclassification.com/description.php
-        ?Dataset=JapaneseVowels
+    Dataset details: http://timeseriesclassification.com/description.php
+    ?Dataset=JapaneseVowels
     """
 
-    name = 'JapaneseVowels'
+    name = "JapaneseVowels"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -298,7 +299,7 @@ def load_arrow_head(split=None, return_X_y=False):
     ?Dataset=ArrowHead
     """
 
-    name = 'ArrowHead'
+    name = "ArrowHead"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -334,7 +335,7 @@ def load_acsf1(split=None, return_X_y=False):
 
     The dataset contains the power consumption of typical appliances.
     The recordings are characterized by long idle periods and some high bursts
-    of enery consumption when the appliance is active.
+    of energy consumption when the appliance is active.
     The classes correspond to 10 categories of home appliances;
     mobile phones (via chargers), coffee machines, computer stations
     (including monitor), fridges and freezers, Hi-Fi systems (CD players),
@@ -345,7 +346,7 @@ def load_acsf1(split=None, return_X_y=False):
     ?Dataset=ACSF1
     """
 
-    name = 'ACSF1'
+    name = "ACSF1"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -394,7 +395,7 @@ def load_basic_motions(split=None, return_X_y=False):
     ?Dataset=ArrowHead
     """
 
-    name = 'BasicMotions'
+    name = "BasicMotions"
     return _load_dataset(name, split, return_X_y)
 
 
@@ -427,8 +428,8 @@ def load_shampoo_sales():
         John Wiley & Sons: New York. Chapter 3.
     """
 
-    name = 'ShampooSales'
-    fname = name + '.csv'
+    name = "ShampooSales"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0, squeeze=True)
 
@@ -484,15 +485,15 @@ def load_longley(return_X_y=False):
     References
     ----------
     .. [1] Longley, J.W. (1967) "An Appraisal of Least Squares Programs for the
-        Electronic Comptuer from the Point of View of the User."  Journal of
+        Electronic Computer from the Point of View of the User."  Journal of
         the American Statistical Association.  62.319, 819-41.
         (https://www.itl.nist.gov/div898/strd/lls/data/LINKS/DATA/Longley.dat)
     """
-    name = 'Longley'
-    fname = name + '.csv'
+    name = "Longley"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
-    data = data.set_index('YEAR')
+    data = data.set_index("YEAR")
 
     # change period index to simple numeric index
     # TODO add support for period/datetime indexing
@@ -500,13 +501,12 @@ def load_longley(return_X_y=False):
     data = data.reset_index(drop=True)
 
     # Get target series
-    yname = 'TOTEMP'
+    yname = "TOTEMP"
     y = data.pop(yname)
     y = pd.Series([y], name=yname)
 
     # Get exogeneous series
-    X = pd.DataFrame(
-        [pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
+    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
     X.columns = data.columns
 
     if return_X_y:
@@ -557,8 +557,8 @@ def load_lynx():
     series A, 140, 411–431.
     """
 
-    name = 'Lynx'
-    fname = name + '.csv'
+    name = "Lynx"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0, squeeze=True)
 
@@ -578,7 +578,7 @@ def load_airline():
     Returns
     -------
     y : pandas Series
-        Lynx sales dataset
+        Airline passenger numbers dataset
 
     Details
     -------
@@ -602,10 +602,10 @@ def load_airline():
           Series G.
     """
 
-    name = 'Airline'
-    fname = name + '.csv'
+    name = "Airline"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
+    data = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: "float64"})
 
     # change period index to simple numeric index
     # TODO add support for period/datetime indexing
