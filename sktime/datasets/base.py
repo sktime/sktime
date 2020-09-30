@@ -617,7 +617,7 @@ def load_airline():
     return data
 
 
-def load_uschange(y_name='Consumption'):
+def load_uschange(y_name="Consumption"):
     """
     Load the multivariate time series dataset for forecasting
     Growth rates of personal consumption and personal income.
@@ -653,20 +653,20 @@ def load_uschange(y_name='Consumption'):
     ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
 
-    name = 'Uschange'
-    fname = name + '.csv'
+    name = "Uschange"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0, squeeze=True)
 
     # Sort by Quarter then set simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.sort_values('Quarter')
+    data = data.sort_values("Quarter")
     data = data.reset_index(drop=True)
     data.index = pd.Int64Index(data.index)
     data.name = name
     y = data[y_name]
-    if y_name != 'Quarter':
-        data = data.drop('Quarter', axis=1)
+    if y_name != "Quarter":
+        data = data.drop("Quarter", axis=1)
     X = data.drop(y_name, axis=1)
     return y, X

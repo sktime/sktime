@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 __all__ = ["PaddingTransformer"]
@@ -57,7 +56,7 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
 
     def _create_pad(self, series):
         out = np.full(self.pad_length_, self.fill_value, np.float)
-        out[:len(series)] = series.iloc[:len(series)]
+        out[: len(series)] = series.iloc[: len(series)]
         return out
 
     def transform(self, X, y=None):
@@ -85,10 +84,10 @@ class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
         if max_length > self.pad_length_:
             raise ValueError(
                 "Error: max_length of series \
-                    is greater than the one found when fit or set.")
+                    is greater than the one found when fit or set."
+            )
 
-        pad = [pd.Series([self._create_pad(series) for series in out])
-               for out in arr]
+        pad = [pd.Series([self._create_pad(series) for series in out]) for out in arr]
 
         return pd.DataFrame(pad)
 

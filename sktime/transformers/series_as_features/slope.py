@@ -2,8 +2,7 @@ import numpy as np
 import pandas as pd
 import math
 import statistics
-from sktime.transformers.series_as_features.base \
-    import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 
@@ -20,6 +19,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
     num_intervals   :   int, number of approx equal segments
                         to split the time series into.
     """
+
     def __init__(self, num_intervals=8):
         self.num_intervals = num_intervals
         super(SlopeTransformer, self).__init__()
@@ -118,16 +118,16 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         """
 
         # Create a list that contains 1,2,3,4,...,len(Y) for the x coordinates.
-        X = [(i+1) for i in range(len(Y))]
+        X = [(i + 1) for i in range(len(Y))]
 
         # Calculate the mean of both lists
         meanX = statistics.mean(X)
         meanY = statistics.mean(Y)
 
         # Calculate the list (yi-mean(y))^2
-        yminYbar = [(y-meanY)**2 for y in Y]
+        yminYbar = [(y - meanY) ** 2 for y in Y]
         # Calculate the list (xi-mean(x))^2
-        xminXbar = [(x-meanX)**2 for x in X]
+        xminXbar = [(x - meanX) ** 2 for x in X]
 
         # Sum them to produce w.
         w = sum(yminYbar) - sum(xminXbar)
@@ -135,17 +135,17 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         # Calculate the list (xi-mean(x))*(yi-mean(y))
         temp = []
         for x in range(len(X)):
-            temp.append((X[x]-meanX)*(Y[x]-meanY))
+            temp.append((X[x] - meanX) * (Y[x] - meanY))
 
         # Sum it and multiply by 2 to calculate r
-        r = 2*sum(temp)
+        r = 2 * sum(temp)
 
         if r == 0:
             # remove nans
             m = 0
         else:
             # Gradient is defined as (w+sqrt(w^2+r^2))/r
-            m = (w+math.sqrt(w**2+r**2))/r
+            m = (w + math.sqrt(w ** 2 + r ** 2)) / r
 
         return m
 
@@ -170,7 +170,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         beginning = 0.0
 
         while beginning < len(X):
-            output.append(X[int(beginning):int(beginning + avg)])
+            output.append(X[int(beginning) : int(beginning + avg)])
             beginning += avg
 
         return output
@@ -185,12 +185,18 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_intervals, int):
             if self.num_intervals <= 0:
-                raise ValueError("num_intervals must have the value \
-                                  of at least 1")
+                raise ValueError(
+                    "num_intervals must have the value \
+                                  of at least 1"
+                )
             if self.num_intervals > n_timepoints:
-                raise ValueError("num_intervals cannot be higher than \
-                                  subsequence_length")
+                raise ValueError(
+                    "num_intervals cannot be higher than \
+                                  subsequence_length"
+                )
         else:
-            raise TypeError("num_intervals must be an 'int'. Found '"
-                            + type(self.num_intervals).__name__ +
-                            "'instead.")
+            raise TypeError(
+                "num_intervals must be an 'int'. Found '"
+                + type(self.num_intervals).__name__
+                + "'instead."
+            )

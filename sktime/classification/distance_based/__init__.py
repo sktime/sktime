@@ -3,7 +3,7 @@ __all__ = [
     "ProximityTree",
     "ProximityForest",
     "ProximityStump",
-    "KNeighborsTimeSeriesClassifier"
+    "KNeighborsTimeSeriesClassifier",
 ]
 
 from ._elastic_ensemble import ElasticEnsemble

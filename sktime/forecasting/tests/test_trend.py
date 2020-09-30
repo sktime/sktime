@@ -34,8 +34,7 @@ def check_trend(degree, with_intercept):
     y = load_airline()
     f = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     f.fit(y)
-    a = f.regressor_.steps[-1][1].coef_[
-        ::-1]  # intercept is added in reverse order
+    a = f.regressor_.steps[-1][1].coef_[::-1]  # intercept is added in reverse order
 
     b = compute_expected_coefs(y, degree, with_intercept)
     np.testing.assert_allclose(a, b)

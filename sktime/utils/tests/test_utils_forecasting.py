@@ -12,8 +12,9 @@ from sktime.utils.time_series import remove_trend
 def test_tabularize():
     n_obs_X = 20
     n_cols_X = 3
-    X = generate_df_from_array(np.random.normal(size=n_obs_X), n_rows=10,
-                               n_cols=n_cols_X)
+    X = generate_df_from_array(
+        np.random.normal(size=n_obs_X), n_rows=10, n_cols=n_cols_X
+    )
 
     # Test single series input.
     Xt = tabularize(X.iloc[:, 0], return_array=True)
@@ -26,8 +27,9 @@ def test_tabularize():
     # Test dataframe input with columns having series of different length.
     n_obs_Y = 13
     n_cols_Y = 2
-    Y = generate_df_from_array(np.random.normal(size=n_obs_Y), n_rows=10,
-                               n_cols=n_cols_Y)
+    Y = generate_df_from_array(
+        np.random.normal(size=n_obs_Y), n_rows=10, n_cols=n_cols_Y
+    )
     X = pd.concat([X, Y], axis=1)
 
     Xt = tabularize(X, return_array=True)
@@ -39,14 +41,17 @@ def test_tabularize():
 
 
 @pytest.mark.parametrize("order", [0, 1, 2])  # polynomial order
-@pytest.mark.parametrize("n_obs",
-                         [1, 10, 20])  # number of time series observations
+@pytest.mark.parametrize("n_obs", [1, 10, 20])  # number of time series observations
 @pytest.mark.parametrize("n_samples", [1, 10, 20])  # number of samples
 def test_fit_remove_add_trend(order, n_samples, n_obs):
     # generate random polynomial series data
     coefs = np.random.normal(size=order + 1).reshape(-1, 1)
-    x = np.column_stack([generate_polynomial_series(n_obs, order, coefs=coefs)
-                         for _ in range(n_samples)]).T
+    x = np.column_stack(
+        [
+            generate_polynomial_series(n_obs, order, coefs=coefs)
+            for _ in range(n_samples)
+        ]
+    ).T
     # assert x.shape == (n_samples, n_obs)
 
     # check shape of fitted coefficients

@@ -1,5 +1,3 @@
-__all__ = [
-    "TimeSeriesForestRegressor"
-]
+__all__ = ["TimeSeriesForestRegressor"]
 
 from sktime.regression.compose._ensemble import TimeSeriesForestRegressor

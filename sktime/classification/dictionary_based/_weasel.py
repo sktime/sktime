@@ -16,6 +16,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.linear_model import LogisticRegression
+
 # from sklearn.feature_selection import chi2
 from sklearn.model_selection import cross_val_score
 
@@ -27,7 +28,7 @@ from sklearn.model_selection import cross_val_score
 
 
 class WEASEL(BaseClassifier):
-    """ Word ExtrAction for time SEries cLassification (WEASEL)
+    """Word ExtrAction for time SEries cLassification (WEASEL)
 
     WEASEL: implementation of WEASEL from Schäfer:
     @inproceedings{schafer2017fast,
@@ -94,12 +95,13 @@ class WEASEL(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 anova=True,
-                 bigrams=True,
-                 binning_strategy="information-gain",
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        anova=True,
+        bigrams=True,
+        binning_strategy="information-gain",
+        random_state=None,
+    ):
 
         # currently other values than 4 are not supported.
         self.alphabet_size = 4
@@ -107,7 +109,7 @@ class WEASEL(BaseClassifier):
         # feature selection is applied based on the chi-squared test.
         # this is the threshold to use for chi-squared test on bag-of-words
         # (higher means more strict)
-        self.chi2_threshold = 2,
+        self.chi2_threshold = (2,)
 
         self.anova = anova
 
@@ -156,12 +158,10 @@ class WEASEL(BaseClassifier):
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
         self.max_window = min(self.series_length, self.max_window)
-        self.window_sizes = list(range(self.min_window,
-                                       self.max_window,
-                                       self.win_inc))
+        self.window_sizes = list(range(self.min_window, self.max_window, self.win_inc))
 
         max_acc = -1
-        self.highest_bit = (math.ceil(math.log2(self.max_window))+1)
+        self.highest_bit = math.ceil(math.log2(self.max_window)) + 1
 
         final_bag_vec = None
 
@@ -174,16 +174,18 @@ class WEASEL(BaseClassifier):
 
                 for i, window_size in enumerate(self.window_sizes):
                     # if w == 0:  # only compute once, otherwise shorten
-                    transformer = SFA(word_length=np.max(word_length),
-                                      alphabet_size=self.alphabet_size,
-                                      window_size=window_size,
-                                      norm=norm,
-                                      anova=self.anova,
-                                      binning_method=self.binning_strategy,
-                                      bigrams=self.bigrams,
-                                      remove_repeat_words=False,
-                                      lower_bounding=False,
-                                      save_words=False)
+                    transformer = SFA(
+                        word_length=np.max(word_length),
+                        alphabet_size=self.alphabet_size,
+                        window_size=window_size,
+                        norm=norm,
+                        anova=self.anova,
+                        binning_method=self.binning_strategy,
+                        bigrams=self.bigrams,
+                        remove_repeat_words=False,
+                        lower_bounding=False,
+                        save_words=False,
+                    )
                     sfa_words = transformer.fit_transform(X, y)
                     transformers.append(transformer)
 
@@ -215,9 +217,13 @@ class WEASEL(BaseClassifier):
                 vectorizer = DictVectorizer(sparse=True)
                 bag_vec = vectorizer.fit_transform(all_words)
 
-                clf = LogisticRegression(max_iter=5000, solver="liblinear",
-                                         dual=True, penalty="l2",
-                                         random_state=self.random_state)
+                clf = LogisticRegression(
+                    max_iter=5000,
+                    solver="liblinear",
+                    dual=True,
+                    penalty="l2",
+                    random_state=self.random_state,
+                )
                 current_acc = cross_val_score(clf, bag_vec, y, cv=5).mean()
 
                 # clf = RandomForestClassifier(oob_score=True,

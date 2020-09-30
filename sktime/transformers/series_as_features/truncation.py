@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 __all__ = ["TruncationTransformer"]
@@ -90,7 +89,8 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         if min_length < self.lower_:
             raise ValueError(
                 "Error: min_length of series \
-                    is less than the one found when fit or set.")
+                    is less than the one found when fit or set."
+            )
 
         # depending on inputs either find the shortest truncation.
         # or use the bounds.
@@ -99,8 +99,6 @@ class TruncationTransformer(BaseSeriesAsFeaturesTransformer):
         else:
             idxs = np.arange(self.lower_, self.upper)
 
-        truncate = [pd.Series([series.iloc[idxs]
-                               for series in out])
-                    for out in arr]
+        truncate = [pd.Series([series.iloc[idxs] for series in out]) for out in arr]
 
         return pd.DataFrame(truncate)

@@ -3,10 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "PresplitFilesCV",
-    "SingleSplit"
-]
+__all__ = ["PresplitFilesCV", "SingleSplit"]
 
 import numpy as np
 import pandas as pd
@@ -41,11 +38,12 @@ class PresplitFilesCV:
         """
         # check input
         if not isinstance(data, pd.DataFrame):
+            raise ValueError(f"Data must be pandas DataFrame, but found {type(data)}")
+        if not np.all(data.index.unique().isin(["train", "test"])):
             raise ValueError(
-                f'Data must be pandas DataFrame, but found {type(data)}')
-        if not np.all(data.index.unique().isin(['train', 'test'])):
-            raise ValueError('Train-test split not properly defined in '
-                             'index of passed pandas DataFrame')
+                "Train-test split not properly defined in "
+                "index of passed pandas DataFrame"
+            )
 
         # this is a bit of a hack, PresplitFilesCV would need to talk to the
         # data loader during orchestration,
@@ -55,8 +53,8 @@ class PresplitFilesCV:
         # dataframe, and split them here again
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
-        train = idx[data.index == 'train']
-        test = idx[data.index == 'test']
+        train = idx[data.index == "train"]
+        test = idx[data.index == "test"]
         yield train, test
 
         # if additionally a cv iterator is provided, yield the predefined
@@ -107,8 +105,14 @@ class SingleSplit:
         the class labels.
     """
 
-    def __init__(self, test_size=0.25, train_size=None, random_state=None,
-                 shuffle=True, stratify=None):
+    def __init__(
+        self,
+        test_size=0.25,
+        train_size=None,
+        random_state=None,
+        shuffle=True,
+        stratify=None,
+    ):
         self._test_size = test_size
         self._train_size = train_size
         self._random_state = random_state
@@ -128,16 +132,18 @@ class SingleSplit:
             (train, test) indexes
         """
         if not isinstance(data, pd.DataFrame):
-            raise ValueError('Data must be provided as a pandas DataFrame')
+            raise ValueError("Data must be provided as a pandas DataFrame")
         n_instances = data.shape[0]
         idx = np.arange(n_instances)
 
-        yield train_test_split(idx,
-                               test_size=self._test_size,
-                               train_size=self._train_size,
-                               random_state=self._random_state,
-                               shuffle=self._shuffle,
-                               stratify=self._stratify)
+        yield train_test_split(
+            idx,
+            test_size=self._test_size,
+            train_size=self._train_size,
+            random_state=self._random_state,
+            shuffle=self._shuffle,
+            stratify=self._stratify,
+        )
 
     @staticmethod
     def get_n_splits():

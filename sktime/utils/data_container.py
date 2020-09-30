@@ -28,27 +28,33 @@ def _check_equal_index(X):
     for c, col in enumerate(X.columns):
 
         # Get index from first row, can be either pd.Series or np.array.
-        first_index = X.iloc[0, c].index if hasattr(X.iloc[0, c],
-                                                    'index') else np.arange(
-            X.iloc[c, 0].shape[0])
+        first_index = (
+            X.iloc[0, c].index
+            if hasattr(X.iloc[0, c], "index")
+            else np.arange(X.iloc[c, 0].shape[0])
+        )
 
         # Series must contain at least 2 observations, otherwise should be
         # primitive.
         if len(first_index) < 2:
             raise ValueError(
-                f'Time series must contain at least 2 observations, '
-                f'but found: '
-                f'{len(first_index)} observations in column: {col}')
+                f"Time series must contain at least 2 observations, "
+                f"but found: "
+                f"{len(first_index)} observations in column: {col}"
+            )
 
         # Check index for all rows.
         for i in range(1, X.shape[0]):
-            index = X.iloc[i, c].index if hasattr(X.iloc[i, c],
-                                                  'index') else np.arange(
-                X.iloc[c, 0].shape[0])
+            index = (
+                X.iloc[i, c].index
+                if hasattr(X.iloc[i, c], "index")
+                else np.arange(X.iloc[c, 0].shape[0])
+            )
             if not np.array_equal(first_index, index):
                 raise ValueError(
-                    f'Found time series with unequal index in column {col}. '
-                    f'Input time-series must have the same index.')
+                    f"Found time series with unequal index in column {col}. "
+                    f"Input time-series must have the same index."
+                )
         indexes.append(first_index)
 
     return indexes
@@ -98,13 +104,16 @@ def tabularize(X, return_array=False):
                 raise
 
         if Xt.ndim != 2:
-            raise ValueError("Tabularization failed, it's possible that not "
-                             "all series were of equal length")
+            raise ValueError(
+                "Tabularization failed, it's possible that not "
+                "all series were of equal length"
+            )
 
     else:
         raise ValueError(
             f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}")
+            f"but found: {type(X)}"
+        )
 
     if return_array:
         return Xt
@@ -113,18 +122,22 @@ def tabularize(X, return_array=False):
 
     # create column names from time index
     if X.ndim == 1:
-        time_index = X.iloc[0].index if hasattr(X.iloc[0],
-                                                'index') else np.arange(
-            X.iloc[0].shape[0])
-        columns = [f'{X.name}__{i}' for i in time_index]
+        time_index = (
+            X.iloc[0].index
+            if hasattr(X.iloc[0], "index")
+            else np.arange(X.iloc[0].shape[0])
+        )
+        columns = [f"{X.name}__{i}" for i in time_index]
 
     else:
         columns = []
         for colname, col in X.items():
-            time_index = col.iloc[0].index if hasattr(col.iloc[0],
-                                                      'index') else np.arange(
-                col.iloc[0].shape[0])
-            columns.extend([f'{colname}__{i}' for i in time_index])
+            time_index = (
+                col.iloc[0].index
+                if hasattr(col.iloc[0], "index")
+                else np.arange(col.iloc[0].shape[0])
+            )
+            columns.extend([f"{colname}__{i}" for i in time_index])
 
     Xt.index = X.index
     Xt.columns = columns
@@ -157,7 +170,8 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
         raise ValueError(
             "`Time_index` cannot be specified when `return_arrays` is True, "
             "time index can only be set to "
-            "pandas Series")
+            "pandas Series"
+        )
 
     container = np.array if return_arrays else pd.Series
 
@@ -165,11 +179,13 @@ def detabularize(X, index=None, time_index=None, return_arrays=False):
 
     if time_index is None:
         time_index = np.arange(n_timepoints)
-    kwargs = {'index': time_index}
+    kwargs = {"index": time_index}
 
-    Xt = pd.DataFrame(pd.Series(
-        [container(X.iloc[i, :].values, **kwargs) for i in
-         range(n_instances)]))
+    Xt = pd.DataFrame(
+        pd.Series(
+            [container(X.iloc[i, :].values, **kwargs) for i in range(n_instances)]
+        )
+    )
 
     if index is not None:
         Xt.index = index
@@ -201,13 +217,17 @@ def concat_nested_arrays(arrs, return_arrays=False):
         Transformed dataframe with nested column for each input array.
     """
     if return_arrays:
-        Xt = pd.DataFrame(np.column_stack(
-            [pd.Series([np.array(vals) for vals in interval])
-             for interval in arrs]))
+        Xt = pd.DataFrame(
+            np.column_stack(
+                [pd.Series([np.array(vals) for vals in interval]) for interval in arrs]
+            )
+        )
     else:
-        Xt = pd.DataFrame(np.column_stack(
-            [pd.Series([pd.Series(vals) for vals in interval])
-             for interval in arrs]))
+        Xt = pd.DataFrame(
+            np.column_stack(
+                [pd.Series([pd.Series(vals) for vals in interval]) for interval in arrs]
+            )
+        )
     return Xt
 
 
@@ -234,11 +254,11 @@ def get_time_index(X):
 
     else:
         raise ValueError(
-            f"X must be a pandas DataFrame or Series, but found: {type(X)}")
+            f"X must be a pandas DataFrame or Series, but found: {type(X)}"
+        )
 
     # get time index
-    time_index = Xs.index if hasattr(Xs, 'index') else pd.RangeIndex(
-        Xs.shape[0])
+    time_index = Xs.index if hasattr(Xs, "index") else pd.RangeIndex(Xs.shape[0])
 
     return time_index
 
@@ -284,8 +304,11 @@ def nested_to_3d_numpy(X, a=None, b=None):
     NumPy ndarray, converted NumPy ndarray
     """
     return np.stack(
-        X.iloc[a:b].applymap(lambda cell: cell.to_numpy()).apply(
-            lambda row: np.stack(row), axis=1).to_numpy())
+        X.iloc[a:b]
+        .applymap(lambda cell: cell.to_numpy())
+        .apply(lambda row: np.stack(row), axis=1)
+        .to_numpy()
+    )
 
 
 def from_3d_numpy_to_nested(X):
@@ -304,11 +327,13 @@ def from_3d_numpy_to_nested(X):
     n_instances = X.shape[0]
     n_variables = X.shape[1]
     for variable in range(n_variables):
-        df['var_' + str(variable)] = [pd.Series(X[instance][variable])
-                                      for instance in range(n_instances)]
+        df["var_" + str(variable)] = [
+            pd.Series(X[instance][variable]) for instance in range(n_instances)
+        ]
     return df
 
 
 def is_nested_dataframe(X):
-    return isinstance(X, pd.DataFrame) and isinstance(X.iloc[0, 0],
-                                                      (np.ndarray, pd.Series))
+    return isinstance(X, pd.DataFrame) and isinstance(
+        X.iloc[0, 0], (np.ndarray, pd.Series)
+    )

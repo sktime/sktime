@@ -9,7 +9,7 @@ __all__ = [
     "RandomIntervalFeatureExtractor",
     "FittedParamExtractor",
     "TSFreshRelevantFeatureExtractor",
-    "TSFreshFeatureExtractor"
+    "TSFreshFeatureExtractor",
 ]
 
 from ._extract import DerivativeSlopeTransformer

@@ -8,7 +8,7 @@ __all__ = [
     "load_longley",
     "load_lynx",
     "load_shampoo_sales",
-    "load_uschange"
+    "load_uschange",
 ]
 
 from sktime.datasets.base import load_airline

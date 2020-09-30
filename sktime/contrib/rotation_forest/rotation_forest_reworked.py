@@ -56,16 +56,18 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
     /weka/classifiers/meta/RotationForest.java
     """
 
-    def __init__(self,
-                 n_estimators=200,
-                 n_column_subsets=3,
-                 p_instance_subset=0.75,
-                 random_state=None,
-                 verbose=0):
+    def __init__(
+        self,
+        n_estimators=200,
+        n_column_subsets=3,
+        p_instance_subset=0.75,
+        random_state=None,
+        verbose=0,
+    ):
 
         super(RotationForestClassifier, self).__init__(
-            base_estimator=DecisionTreeClassifier(),
-            n_estimators=n_estimators)
+            base_estimator=DecisionTreeClassifier(), n_estimators=n_estimators
+        )
 
         # settable parameters
         self.verbose = verbose
@@ -97,10 +99,13 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
 
         y = np.atleast_1d(y)
         if y.ndim == 2 and y.shape[1] == 1:
-            warn("A column-vector y was passed when a 1d array was"
-                 " expected. Please change the shape of y to "
-                 "(n_samples,), for example using ravel().",
-                 DataConversionWarning, stacklevel=2)
+            warn(
+                "A column-vector y was passed when a 1d array was"
+                " expected. Please change the shape of y to "
+                "(n_samples,), for example using ravel().",
+                DataConversionWarning,
+                stacklevel=2,
+            )
 
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
@@ -112,19 +117,18 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
         self.n_outputs_ = y.shape[1]
 
         # get number of instances in random subsets
-        self.n_instances_in_subset = int(
-            self.n_instances_ * self.p_instance_subset)
+        self.n_instances_in_subset = int(self.n_instances_ * self.p_instance_subset)
 
         # check if there are at least as many samples as columns in subset
         # for PCA,
         # as n_components will be min(n_samples, n_columns)
-        n_columns_in_subset = int(
-            np.ceil(self.n_columns_ / self.n_column_subsets))
+        n_columns_in_subset = int(np.ceil(self.n_columns_ / self.n_column_subsets))
         if self.n_instances_in_subset < n_columns_in_subset:
             raise ValueError(
                 "There are fewer instances than columns in random subsets, "
                 "hence PCA cannot compute components for all columns, please "
-                "change `n_column_subsets` or `p_instance_subset`")
+                "change `n_column_subsets` or `p_instance_subset`"
+            )
 
         # Z-normalise the data
         X_norm = self._normalise_X(X)
@@ -138,16 +142,14 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
             # randomly split columns into disjoint subsets
             columns = np.arange(self.n_columns_)
             self._rng.shuffle(columns)
-            self.column_subsets_[i] = np.array_split(columns,
-                                                     self.n_column_subsets)
+            self.column_subsets_[i] = np.array_split(columns, self.n_column_subsets)
 
             # initialise list of transformers
             self.transformers_[i] = []
 
             for column_subset in self.column_subsets_[i]:
                 # select random subset of instances by classes
-                instance_subset = self._get_random_instance_subset_by_classes(
-                    y)
+                instance_subset = self._get_random_instance_subset_by_classes(y)
 
                 # fit transformer on subset of instances and columns
                 transformer = clone(self.base_transformer)
@@ -155,8 +157,7 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
                 self.transformers_[i].append(transformer)
 
                 # transform on subset of columns but all instances
-                Xt[:, column_subset] = transformer.transform(
-                    X_norm[:, column_subset])
+                Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
 
             # fit estimator on transformed data
             estimator = clone(self.base_estimator)
@@ -180,9 +181,9 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
         isin_classes = np.where(np.isin(y, classes))[0]
 
         # randomly select bootstrap subset of instances for selected classes
-        instance_subset = rng.choice(isin_classes,
-                                     size=self.n_instances_in_subset,
-                                     replace=True)
+        instance_subset = rng.choice(
+            isin_classes, size=self.n_instances_in_subset, replace=True
+        )
         return instance_subset[:, None]
 
     def _normalise_X(self, X):
@@ -213,8 +214,7 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
                 transformer = self.transformers_[i][j]
 
                 # transform data
-                Xt[:, column_subset] = transformer.transform(
-                    X_norm[:, column_subset])
+                Xt[:, column_subset] = transformer.transform(X_norm[:, column_subset])
 
             # predict on transformed data
             proba = estimator.predict_proba(Xt)

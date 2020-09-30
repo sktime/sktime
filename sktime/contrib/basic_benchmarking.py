@@ -10,8 +10,7 @@ from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
 from sktime.transformers.series_as_features.compose import RowTransformer
-from sktime.transformers.series_as_features.segment import \
-    RandomIntervalSegmenter
+from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
@@ -123,7 +122,7 @@ benchmark_datasets = [
     "WordSynonyms",
     "Worms",
     "WormsTwoClass",
-    "Yoga"
+    "Yoga",
 ]
 
 data_dir = "Z:/ArchiveData/Univariate_ts/"
@@ -140,7 +139,7 @@ def powerspectrum(x, **kwargs):
     x = np.asarray(x).ravel()
     fft = np.fft.fft(x)
     ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[:ps.shape[0] // 2].ravel()
+    return ps[: ps.shape[0] // 2].ravel()
 
 
 def tsf_benchmarking():
@@ -148,29 +147,57 @@ def tsf_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         tsf = ib.TimeSeriesForest(n_estimators=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir,
-                           results_path=results_dir, cls_name="PythonTSF",
-                           classifier=tsf, dataset=dataset, train_file=False)
+        exp.run_experiment(
+            overwrite=False,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name="PythonTSF",
+            classifier=tsf,
+            dataset=dataset,
+            train_file=False,
+        )
         steps = [
-            ('segment', RandomIntervalSegmenter(n_intervals='sqrt')),
-            ('transform', FeatureUnion([
-                ('mean', RowTransformer(
-                    FunctionTransformer(func=np.mean, validate=False))),
-                ('std', RowTransformer(
-                    FunctionTransformer(func=np.std, validate=False))),
-                ('slope', RowTransformer(
-                    FunctionTransformer(func=time_series_slope,
-                                        validate=False)))
-            ])),
-            ('clf', DecisionTreeClassifier())
+            ("segment", RandomIntervalSegmenter(n_intervals="sqrt")),
+            (
+                "transform",
+                FeatureUnion(
+                    [
+                        (
+                            "mean",
+                            RowTransformer(
+                                FunctionTransformer(func=np.mean, validate=False)
+                            ),
+                        ),
+                        (
+                            "std",
+                            RowTransformer(
+                                FunctionTransformer(func=np.std, validate=False)
+                            ),
+                        ),
+                        (
+                            "slope",
+                            RowTransformer(
+                                FunctionTransformer(
+                                    func=time_series_slope, validate=False
+                                )
+                            ),
+                        ),
+                    ]
+                ),
+            ),
+            ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        tsf = TimeSeriesForestClassifier(estimator=base_estimator,
-                                         n_estimators=100)
-        exp.run_experiment(overwrite=False, problem_path=data_dir,
-                           results_path=results_dir,
-                           cls_name="PythonTSFComposite",
-                           classifier=tsf, dataset=dataset, train_file=False)
+        tsf = TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
+        exp.run_experiment(
+            overwrite=False,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name="PythonTSFComposite",
+            classifier=tsf,
+            dataset=dataset,
+            train_file=False,
+        )
 
 
 def rise_benchmarking():
@@ -178,40 +205,68 @@ def rise_benchmarking():
         dataset = benchmark_datasets[i]
         print(str(i) + " problem = " + dataset)
         rise = fb.RandomIntervalSpectralForest(n_estimators=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir,
-                           results_path=results_dir, cls_name="PythonRISE",
-                           classifier=rise, dataset=dataset, train_file=False)
+        exp.run_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name="PythonRISE",
+            classifier=rise,
+            dataset=dataset,
+            train_file=False,
+        )
         steps = [
-            ('segment', RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-            ('transform', FeatureUnion([
-                ('acf', RowTransformer(
-                    FunctionTransformer(func=acf_coefs, validate=False))),
-                ('ps', RowTransformer(
-                    FunctionTransformer(func=powerspectrum, validate=False)))
-            ])),
-            ('tabularise', Tabularizer()),
-            ('clf', DecisionTreeClassifier())
+            ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
+            (
+                "transform",
+                FeatureUnion(
+                    [
+                        (
+                            "acf",
+                            RowTransformer(
+                                FunctionTransformer(func=acf_coefs, validate=False)
+                            ),
+                        ),
+                        (
+                            "ps",
+                            RowTransformer(
+                                FunctionTransformer(func=powerspectrum, validate=False)
+                            ),
+                        ),
+                    ]
+                ),
+            ),
+            ("tabularise", Tabularizer()),
+            ("clf", DecisionTreeClassifier()),
         ]
         base_estimator = Pipeline(steps)
-        rise = TimeSeriesForestClassifier(estimator=base_estimator,
-                                          n_estimators=100)
-        exp.run_experiment(overwrite=True, problem_path=data_dir,
-                           results_path=results_dir,
-                           cls_name="PythonRISEComposite",
-                           classifier=rise, dataset=dataset, train_file=False)
+        rise = TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
+        exp.run_experiment(
+            overwrite=True,
+            problem_path=data_dir,
+            results_path=results_dir,
+            cls_name="PythonRISEComposite",
+            classifier=rise,
+            dataset=dataset,
+            train_file=False,
+        )
 
 
 def boss_benchmarking():
     for i in range(0, int(len(benchmark_datasets))):
         dataset = benchmark_datasets[i]
-        print(str(
-            i) + " problem = " + dataset + " writing to " + results_dir +
-              "/BOSS/")
+        print(
+            str(i) + " problem = " + dataset + " writing to " + results_dir + "/BOSS/"
+        )
         boss = db.BOSSEnsemble()
-        exp.run_experiment(overwrite=False, problem_path=data_dir,
-                           results_path=results_dir + "/BOSS/",
-                           cls_name="PythonBOSS",
-                           classifier=boss, dataset=dataset, train_file=False)
+        exp.run_experiment(
+            overwrite=False,
+            problem_path=data_dir,
+            results_path=results_dir + "/BOSS/",
+            cls_name="PythonBOSS",
+            classifier=boss,
+            dataset=dataset,
+            train_file=False,
+        )
 
 
 distance_test = [
@@ -223,19 +278,27 @@ distance_test = [
 def elastic_distance_benchmarking():
     for i in range(0, int(len(distance_test))):
         dataset = distance_test[i]
-        print(str(
-            i) + " problem = " + dataset + " writing to " + results_dir +
-              "/DTW/")
+        print(str(i) + " problem = " + dataset + " writing to " + results_dir + "/DTW/")
         dtw = dist.KNeighborsTimeSeriesClassifier(metric="dtw")
-        exp.run_experiment(overwrite=False, problem_path=data_dir,
-                           results_path=results_dir + "/DTW/",
-                           cls_name="PythonDTW",
-                           classifier=dtw, dataset=dataset, train_file=False)
+        exp.run_experiment(
+            overwrite=False,
+            problem_path=data_dir,
+            results_path=results_dir + "/DTW/",
+            cls_name="PythonDTW",
+            classifier=dtw,
+            dataset=dataset,
+            train_file=False,
+        )
         twe = dist.KNeighborsTimeSeriesClassifier(metric="dtw")
-        exp.run_experiment(overwrite=False, problem_path=data_dir,
-                           results_path=results_dir + "/DTW/",
-                           cls_name="PythonTWE",
-                           classifier=twe, dataset=dataset, train_file=False)
+        exp.run_experiment(
+            overwrite=False,
+            problem_path=data_dir,
+            results_path=results_dir + "/DTW/",
+            cls_name="PythonTWE",
+            classifier=twe,
+            dataset=dataset,
+            train_file=False,
+        )
 
 
 if __name__ == "__main__":

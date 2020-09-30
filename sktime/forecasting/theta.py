@@ -97,8 +97,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.smoothing_level_ = None
         self.drift_ = None
         self.se_ = None
-        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level,
-                                              sp=sp)
+        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -120,15 +119,13 @@ class ThetaForecaster(ExponentialSmoothing):
             warn("`sp` is ignored when `deseasonalise`=False")
 
         if self.deseasonalise:
-            self.deseasonaliser_ = Deseasonalizer(sp=self.sp,
-                                                  model="multiplicative")
+            self.deseasonaliser_ = Deseasonalizer(sp=self.sp, model="multiplicative")
             y_train = self.deseasonaliser_.fit_transform(y_train)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y_train, fh=fh)
-        self.smoothing_level_ = self._fitted_forecaster.params[
-            "smoothing_level"]
+        self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
         self.trend_ = self._compute_trend(y_train)
@@ -153,9 +150,9 @@ class ThetaForecaster(ExponentialSmoothing):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        y_pred = super(ThetaForecaster, self)._predict(fh, X=X,
-                                                       return_pred_int=False,
-                                                       alpha=alpha)
+        y_pred = super(ThetaForecaster, self)._predict(
+            fh, X=X, return_pred_int=False, alpha=alpha
+        )
 
         # Add drift.
         drift = self._compute_drift()
@@ -184,10 +181,9 @@ class ThetaForecaster(ExponentialSmoothing):
             # Calculate drift from SES parameters
             n_timepoints = len(self._y)
             drift = self.trend_ * (
-                    self.fh
-                    + (1 - (
-                        1 - self.smoothing_level_) ** n_timepoints) /
-                    self.smoothing_level_
+                self.fh
+                + (1 - (1 - self.smoothing_level_) ** n_timepoints)
+                / self.smoothing_level_
             )
 
         return drift
@@ -207,18 +203,17 @@ class ThetaForecaster(ExponentialSmoothing):
         for alpha in alphas:
             z = zscore(1 - alpha)
             error = z * sem
-            errors.append(
-                pd.Series(error, index=self.fh.absolute(self.cutoff)))
+            errors.append(pd.Series(error, index=self.fh.absolute(self.cutoff)))
 
         return errors
 
     def update(self, y_new, X_new=None, update_params=True):
-        super(ThetaForecaster, self).update(y_new, X_new=X_new,
-                                            update_params=update_params)
+        super(ThetaForecaster, self).update(
+            y_new, X_new=X_new, update_params=update_params
+        )
         if update_params:
             if self.deseasonalise:
                 y_new = self.deseasonaliser_.transform(y_new)
-            self.smoothing_level_ = self._fitted_forecaster.params[
-                "smoothing_level"]
+            self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y_new)
         return self
