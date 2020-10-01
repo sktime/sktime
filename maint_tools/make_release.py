@@ -24,12 +24,15 @@ import colorama
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("maint_tools", "")
 PACKAGE_NAME = "sktime"
-URLS = {
-    "docs_local": f"file:///{ROOT_DIR}docs/_build/html/index.html",
-    "docs_online": "https://alan-turing-institute.github.io/sktime/",
-    "pypi": f"https://pypi.org/simple/{PACKAGE_NAME}/",
-    "github_new_pr": "https://github.com/alan-turing-institute/sktime/compare",
-}
+
+
+class URLs:
+    DOCS_LOCAL = "file://" + os.path.realpath(
+        os.path.join(ROOT_DIR, "docs/_build/html/index.html")
+    )
+    DOCS_ONLINE = "https://alan-turing-institute.github.io/sktime/"
+    PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
+    GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
 
 def read(*parts):
@@ -243,25 +246,25 @@ class CheckCIStatus(Step):
 class CheckOnlineDocs(Step):
     def action(self, context):
         self.instruct("Check online docs")
-        open_website(URLS["docs_online"])
+        open_website(URLs.DOCS_ONLINE)
 
 
 class CheckLocalDocs(Step):
     def action(self, context):
         self.instruct("Check local docs")
-        open_website(URLS["docs_local"])
+        open_website(URLs.DOCS_LOCAL)
 
 
 class CheckPyPIFiles(Step):
     def action(self, context):
         self.instruct("Check PyPI files")
-        open_website(URLS["pypi"])
+        open_website(URLs.PYPI)
 
 
 class OpenGitHubPR(Step):
     def action(self, context):
         self.instruct("Open PR from dev to master on GitHub")
-        open_website(URLS["github_new_pr"])
+        open_website(URLs.GITHUB_NEW_PR)
 
 
 class MergeGitHubPR(Step):
