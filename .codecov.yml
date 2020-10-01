@@ -3,10 +3,13 @@ coverage:
   status:
     project:
       default:
-        threshold: 1%
-        branches:
-          - master
+#        treshold: 1%
         informational: true
+    patch: off
 
 # post coverage report as comment on PR
 comment: false
+
+# enable codecov to report to GitHub status checks
+github_checks:
+  annotations: true
