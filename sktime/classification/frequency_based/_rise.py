@@ -157,7 +157,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             #            transformed_x=acf_x
             tree = clone(self.base_estimator)
             # set random state, but not the same, so that estimators vary
-            tree.set_params(rng.randint(np.iinfo(np.int32).max))
+            tree.set_params(**{"random_state": rng.randint(np.iinfo(np.int32).max)})
             tree.fit(transformed_x, y)
             self.estimators_.append(tree)
 
