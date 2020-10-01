@@ -177,6 +177,7 @@ class MakeDist(Step):
 
 class PushToTestPyPI(Step):
     def action(self, context):
+        self.instruct("Upload to TestPyPI")
         cmd = "twine upload --repository-url https://test.pypi.org/legacy/ " "dist/*"
         self.do_cmd(cmd)
 
