@@ -8,42 +8,37 @@ __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDED_ESTIMATORS", "EXCLUDED_TESTS"]
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+
 from sktime.classification.compose import ColumnEnsembleClassifier
+from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
-from sktime.forecasting.compose import (
-    DirectRegressionForecaster,
-    DirectTimeSeriesRegressionForecaster,
-    EnsembleForecaster,
-    RecursiveRegressionForecaster,
-    RecursiveTimeSeriesRegressionForecaster,
-    StackingForecaster,
-    TransformedTargetForecaster,
-)
+from sktime.forecasting.compose import DirectRegressionForecaster
+from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import EnsembleForecaster
+from sktime.forecasting.compose import RecursiveRegressionForecaster
+from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+from sktime.forecasting.compose import StackingForecaster
+from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.forecasting.model_selection import (
-    ForecastingGridSearchCV,
-    SingleWindowSplitter,
-)
+from sktime.forecasting.model_selection import ForecastingGridSearchCV
+from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.transformers.series_as_features.compose import (
-    ColumnTransformer,
-    RowTransformer,
-)
+from sktime.regression.compose import TimeSeriesForestRegressor
+from sktime.transformers.series_as_features.compose import ColumnTransformer
+from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.transformers.series_as_features.interpolate import TSInterpolator
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.transformers.series_as_features.shapelets import (
-    ContractedShapeletTransform,
-    ShapeletTransform,
-)
+from sktime.transformers.series_as_features.shapelets import ContractedShapeletTransform
+from sktime.transformers.series_as_features.shapelets import ShapeletTransform
+from sktime.transformers.series_as_features.summarize import FittedParamExtractor
+from sktime.transformers.series_as_features.summarize import TSFreshFeatureExtractor
 from sktime.transformers.series_as_features.summarize import (
-    FittedParamExtractor,
-    TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
 from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
@@ -69,7 +64,7 @@ TRANSFORMERS = [
     ("transformer2", RowTransformer(TRANSFORMER)),
 ]
 REGRESSOR = LinearRegression()
-TIME_SERIES_CLASSIFIER = TimeSeriesForest(random_state=1)
+TIME_SERIES_CLASSIFIER = TimeSeriesForest(n_estimators=5, random_state=1)
 TIME_SERIES_CLASSIFIERS = [
     ("tsf1", TIME_SERIES_CLASSIFIER),
     ("tsf2", TIME_SERIES_CLASSIFIER),
@@ -115,7 +110,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     # ARIMA requires d > start where start = 0 for full in-sample predictions
     AutoARIMA: {"d": 0, "suppress_warnings": True},
-    ShapeletTransformClassifier: {"time_contract_in_mins": 0.125},
+    ShapeletTransformClassifier: {"n_estimators": 5, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
     ShapeletTransform: {
         "max_shapelets_to_store_per_class": 1,
@@ -130,9 +125,15 @@ ESTIMATOR_TEST_PARAMS = {
         "fdr_level": 0.01,
     },
     TSInterpolator: {"length": 10},
-    RandomIntervalSpectralForest: {"acf_lag": 10},
+    RandomIntervalSpectralForest: {"n_estimators": 5, "acf_lag": 10},
     SFA: {"return_pandas_data_series": True},
+    TimeSeriesForest: {"n_estimators": 5},
+    TimeSeriesForestClassifier: {"n_estimators": 5},
+    TimeSeriesForestRegressor: {"n_estimators": 5},
 }
+
+# these methods should not change the state of the estimator, that is, they should
+# not change fitted parameters or hyper-parameters
 NON_STATE_CHANGING_METHODS = [
     "predict",
     "predict_proba",

@@ -13,7 +13,6 @@ from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
-
 from sktime.classification.base import BaseClassifier
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
@@ -157,6 +156,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             transformed_x = np.concatenate((acf_x, ps_x), axis=1)
             #            transformed_x=acf_x
             tree = clone(self.base_estimator)
+            # set random state, but not the same, so that estimators vary
+            tree.set_params(rng.randint(np.iinfo(np.int32).max))
             tree.fit(transformed_x, y)
             self.estimators_.append(tree)
 
