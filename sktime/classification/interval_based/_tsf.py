@@ -24,6 +24,87 @@ from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
 
+def _lsq_fit(Y):
+    """Find the slope for each series (row) of Y
+    Parameters
+    ----------
+    Y: array of shape = [n_samps, interval_size]
+
+    Returns
+    ----------
+    slope: array of shape = [n_samps]
+
+    """
+    x = np.arange(Y.shape[1]) + 1
+    slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
+        (x * x).mean() - x.mean() ** 2
+    )
+    return slope
+
+
+def _transform(X, intervals):
+    """
+    Compute the mean, standard deviation and slope for given intervals
+    of input data X.
+    """
+    n_instances, _ = X.shape
+    n_intervals, _ = intervals.shape
+    transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
+    for j in range(n_intervals):
+        X_slice = X[:, intervals[j][0]: intervals[j][1]]
+        means = np.mean(X_slice, axis=1)
+        std_dev = np.std(X_slice, axis=1)
+        slope = _lsq_fit(X_slice)
+        transformed_x[3 * j] = means
+        transformed_x[3 * j + 1] = std_dev
+        transformed_x[3 * j + 2] = slope
+
+    return transformed_x.T
+
+
+def _get_intervals(n_intervals, min_interval, series_length, random_state=None):
+    """
+    Generate random intervals for given parameters.
+    """
+    rng = check_random_state(random_state)
+    intervals = np.zeros((n_intervals, 2), dtype=int)
+    for j in range(n_intervals):
+        intervals[j][0] = rng.randint(series_length - min_interval)
+        length = rng.randint(series_length - intervals[j][0] - 1)
+        if length < min_interval:
+            length = min_interval
+        intervals[j][1] = intervals[j][0] + length
+    return intervals
+
+
+def _fit_estimator(X, y, base_estimator, n_intervals, min_interval, random_state=None):
+    """
+    Fit an estimator - a clone of base_estimator - on input data (X, y)
+    transformed using the randomly generated intervals.
+    """
+
+    estimator = clone(base_estimator)
+    if random_state is not None:
+        _set_random_states(estimator, random_state)
+
+    _, series_length = X.shape
+    intervals = _get_intervals(n_intervals, min_interval, series_length, random_state)
+    transformed_x = _transform(X, intervals)
+
+    estimator.fit(transformed_x, y)
+
+    return estimator, intervals
+
+
+def _predict_proba_for_estimator(X, estimator, intervals):
+    """
+    Find probability estimates for each class for all cases in X using
+    given estimator and intervals.
+    """
+    transformed_x = _transform(X, intervals)
+    return estimator.predict_proba(transformed_x)
+
+
 class TimeSeriesForest(ForestClassifier, BaseClassifier):
     """Time-Series Forest Classifier.
 
@@ -109,66 +190,6 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    @classmethod
-    def _get_intervals(
-        cls, n_intervals, min_interval, series_length, random_state=None
-    ):
-        """
-        Generate random intervals for given parameters.
-        """
-        rng = check_random_state(random_state)
-        intervals = np.zeros((n_intervals, 2), dtype=int)
-        for j in range(n_intervals):
-            intervals[j][0] = rng.randint(series_length - min_interval)
-            length = rng.randint(series_length - intervals[j][0] - 1)
-            if length < min_interval:
-                length = min_interval
-            intervals[j][1] = intervals[j][0] + length
-        return intervals
-
-    @classmethod
-    def _get_transformed_data(cls, X, intervals):
-        """
-        Compute the mean, standard deviation and slope for given intervals
-        of input data X.
-        """
-        n_instances, _ = X.shape
-        n_intervals, _ = intervals.shape
-        transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
-        for j in range(n_intervals):
-            X_slice = X[:, intervals[j][0]: intervals[j][1]]
-            means = np.mean(X_slice, axis=1)
-            std_dev = np.std(X_slice, axis=1)
-            slope = cls._lsq_fit(X_slice)
-            transformed_x[3 * j] = means
-            transformed_x[3 * j + 1] = std_dev
-            transformed_x[3 * j + 2] = slope
-
-        return transformed_x.T
-
-    @classmethod
-    def _fit_estimator(
-        cls, X, y, base_estimator, n_intervals, min_interval, random_state=None
-    ):
-        """
-        Fit an estimator - a clone of base_estimator - on input data (X, y)
-        transformed using the randomly generated intervals.
-        """
-
-        estimator = clone(base_estimator)
-        if random_state is not None:
-            _set_random_states(estimator, random_state)
-
-        _, series_length = X.shape
-        intervals = cls._get_intervals(
-            n_intervals, min_interval, series_length, random_state
-        )
-        transformed_x = cls._get_transformed_data(X, intervals)
-
-        estimator.fit(transformed_x, y)
-
-        return estimator, intervals
-
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
         intervals and summary features
@@ -205,7 +226,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         self.intervals = []
 
         for estimator, intervals in Parallel(n_jobs=self.n_jobs)(
-            delayed(self.__class__._fit_estimator)(
+            delayed(_fit_estimator)(
                 X,
                 y,
                 self.base_estimator,
@@ -238,15 +259,6 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         """
         proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
-
-    @classmethod
-    def _predict_proba_for_estimator(cls, X, estimator, intervals):
-        """
-        Find probability estimates for each class for all cases in X using
-        given estimator and intervals.
-        """
-        transformed_x = cls._get_transformed_data(X, intervals)
-        return estimator.predict_proba(transformed_x)
 
     def predict_proba(self, X):
         """
@@ -285,7 +297,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
         for proba in Parallel(n_jobs=self.n_jobs)(
-            delayed(self.__class__._predict_proba_for_estimator)(
+            delayed(_predict_proba_for_estimator)(
                 X, self.classifiers[i], self.intervals[i]
             )
             for i in range(self.n_estimators)
@@ -294,21 +306,3 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
         output = sums / (np.ones(self.n_classes) * self.n_estimators)
         return output
-
-    @classmethod
-    def _lsq_fit(cls, Y):
-        """Find the slope for each series (row) of Y
-        Parameters
-        ----------
-        Y: array of shape = [n_samps, interval_size]
-
-        Returns
-        ----------
-        slope: array of shape = [n_samps]
-
-        """
-        x = np.arange(Y.shape[1]) + 1
-        slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
-            (x * x).mean() - x.mean() ** 2
-        )
-        return slope
