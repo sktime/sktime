@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Do-nothing script for making a release
@@ -19,31 +19,32 @@ import codecs
 import os
 import re
 import webbrowser
-import platform
 
 import colorama
 
-ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).strip("maint_tools")
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("maint_tools", "")
 PACKAGE_NAME = "sktime"
-URLS = {
-    "docs_local": f"file:///{ROOT_DIR}docs/_build/html/index.html",
-    "docs_online": "https://alan-turing-institute.github.io/sktime/",
-    "pypi": f"https://pypi.org/simple/{PACKAGE_NAME}/",
-    "github_new_pr": "https://github.com/alan-turing-institute/sktime/compare"
-}
+
+
+class URLs:
+    DOCS_LOCAL = "file://" + os.path.realpath(
+        os.path.join(ROOT_DIR, "docs/_build/html/index.html")
+    )
+    DOCS_ONLINE = "https://alan-turing-institute.github.io/sktime/"
+    PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
+    GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    with codecs.open(os.path.join(ROOT_DIR, *parts), 'r') as fp:
+    with codecs.open(os.path.join(ROOT_DIR, *parts), "r") as fp:
         return fp.read()
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     else:
@@ -75,16 +76,15 @@ def colored(msg, color=None, style=None):
 
 def cprint(msg, color=None, style=None):
     """Coloured printing"""
-    print(colored(msg, color=color, style=style))
+    print(colored(msg, color=color, style=style))  # noqa
 
 
 def wait_for_enter():
     input(colored("\nPress Enter to continue", style="dim"))
-    print()
+    print()  # noqa
 
 
 class Step:
-
     def pre(self, context):
         pass
 
@@ -123,14 +123,15 @@ class Step:
 
 
 class ConfirmGitStatus(Step):
-
     def __init__(self, branch):
         self.branch = branch
 
     def action(self, context):
-        self.instruct(f"Make sure you're on: {self.branch}, you're local "
-                      f"branch is up-to-date, and all new changes are merged "
-                      f"in.")
+        self.instruct(
+            f"Make sure you're on: {self.branch}, you're local "
+            f"branch is up-to-date, and all new changes are merged "
+            f"in."
+        )
         self.do_cmd(f"git checkout {self.branch}")
         self.do_cmd("git pull")
 
@@ -152,12 +153,11 @@ class UpdateChangelog(Step):
 
 class BumpVersion(Step):
     def action(self, context):
-        self.instruct(f"Update __init__.py with new version")
+        self.instruct("Update __init__.py with new version")
 
     def post(self, context):
         wait_for_enter()
-        context["version"] = find_version(context['package_name'],
-                                          '__init__.py')
+        context["version"] = find_version(context["package_name"], "__init__.py")
 
 
 class MakeClean(Step):
@@ -177,17 +177,14 @@ class MakeDist(Step):
 
 class PushToTestPyPI(Step):
     def action(self, context):
-        self.do_cmd(
-            "twine upload --repository-url https://test.pypi.org/legacy/ "
-            "dist/*"
-        )
+        self.instruct("Upload to TestPyPI")
+        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ " "dist/*"
+        self.do_cmd(cmd)
 
 
 class InstallFromTestPyPI(Step):
     def action(self, context):
-        self.instruct(
-            f"Check installation from TestPyPI"
-        )
+        self.instruct("Check installation from TestPyPI")
         self.print_run(f"mkdir {context['testdir']}")
         self.print_run(f"cd {context['testdir']}")
         self.print_cmd("conda remove -n testenv --all -y")
@@ -201,15 +198,18 @@ class InstallFromTestPyPI(Step):
             f"{context['package_name']}=={context['version']}"
         )
 
+
 class CheckVersionNumber(Step):
     def action(self, context):
         self.instruct(
             f"Ensure that the following command gives version: "
+            f""
             f"{context['version']}"
         )
         self.do_cmd(
             f"python -c 'import {context['package_name']}; print("
-            f"{context['package_name']}.__version__)'")
+            f"{context['package_name']}.__version__)'"
+        )
 
 
 class DeactivateTestEnvironment(Step):
@@ -241,37 +241,31 @@ class PushToGitHub(Step):
 
 class CheckCIStatus(Step):
     def action(self, context):
-        self.instruct(
-            "Wait for CI to complete and check status"
-        )
+        self.instruct("Wait for CI to complete and check status")
 
 
 class CheckOnlineDocs(Step):
     def action(self, context):
-        self.instruct(
-            "Check online docs"
-        )
-        open_website(URLS["docs_online"])
+        self.instruct("Check online docs")
+        open_website(URLs.DOCS_ONLINE)
 
 
 class CheckLocalDocs(Step):
     def action(self, context):
-        self.instruct(
-            "Check local docs"
-        )
-        open_website(URLS["docs_local"])
+        self.instruct("Check local docs")
+        open_website(URLs.DOCS_LOCAL)
 
 
 class CheckPyPIFiles(Step):
     def action(self, context):
         self.instruct("Check PyPI files")
-        open_website(URLS["pypi"])
+        open_website(URLs.PYPI)
 
 
 class OpenGitHubPR(Step):
     def action(self, context):
         self.instruct("Open PR from dev to master on GitHub")
-        open_website(URLS["github_new_pr"])
+        open_website(URLs.GITHUB_NEW_PR)
 
 
 class MergeGitHubPR(Step):
@@ -280,7 +274,6 @@ class MergeGitHubPR(Step):
 
 
 class PushTagToGitHub(Step):
-
     def action(self, context):
         self.do_cmd("git push -u --tags origin master")
 
@@ -327,7 +320,7 @@ def main():
         PushTagToGitHub(),
         CheckCIStatus(),
         CheckOnlineDocs(),
-        CheckPyPIFiles()
+        CheckPyPIFiles(),
     ]
     context = dict()
     context["package_name"] = PACKAGE_NAME
