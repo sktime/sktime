@@ -1,32 +1,30 @@
-__all__ = [
-    "_construct_instance",
-    "_make_args",
-    "_assert_almost_equal"
-]
+# -*- coding: utf-8 -*-
+__all__ = ["_construct_instance", "_make_args", "_assert_almost_equal"]
 __author__ = ["Markus Löning"]
 
 import numpy as np
 import pandas as pd
 from sktime.classification.base import is_classifier
-from sktime.forecasting.base import is_forecaster
+from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import is_regressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-from sktime.transformers.series_as_features.base import \
-    is_series_as_features_transformer
+from sktime.transformers.series_as_features.base import (
+    is_series_as_features_transformer,
+)
 from sktime.transformers.series_as_features.reduce import Tabularizer
 from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils.data_container import is_nested_dataframe
 from sktime.utils.data_container import tabularize
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils._testing.series_as_features import \
-    make_classification_problem
+from sktime.utils._testing.series_as_features import make_classification_problem
 from sktime.utils._testing.series_as_features import make_regression_problem
 
 
 def generate_df_from_array(array, n_rows=10, n_cols=1):
     return pd.DataFrame(
         [[pd.Series(array) for _ in range(n_cols)] for _ in range(n_rows)],
-        columns=[f'col{c}' for c in range(n_cols)])
+        columns=[f"col{c}" for c in range(n_cols)],
+    )
 
 
 def _construct_instance(Estimator):
@@ -44,9 +42,11 @@ def _construct_instance(Estimator):
         if hasattr(Estimator, "_required_parameters"):
             required_parameters = getattr(Estimator, "required_parameters", [])
             if len(required_parameters) > 0:
-                raise ValueError(f"Estimator: {Estimator} requires "
-                                 f"non-default parameters for construction, "
-                                 f"but none have been found")
+                raise ValueError(
+                    f"Estimator: {Estimator} requires "
+                    f"non-default parameters for construction, "
+                    f"but none have been found"
+                )
 
         # construct with default parameters if none are required
         estimator = Estimator()
@@ -149,9 +149,10 @@ def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
             # iterate over rows, checking if cells are equal
             for xci, yci in zip(xc, yc):
                 np.testing.assert_array_almost_equal(
-                    xci, yci, decimal=decimal, err_msg=err_msg,
-                    verbose=verbose)
+                    xci, yci, decimal=decimal, err_msg=err_msg, verbose=verbose
+                )
 
     else:
         np.testing.assert_array_almost_equal(
-            x, y, decimal=decimal, err_msg=err_msg, verbose=verbose)
+            x, y, decimal=decimal, err_msg=err_msg, verbose=verbose
+        )

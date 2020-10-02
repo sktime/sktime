@@ -1,11 +1,12 @@
-__author__ = ["Markus Löning"]
+# -*- coding: utf-8 -*-
 __all__ = [
     "compute_relative_to_n_timepoints",
     "time_series_slope",
     "fit_trend",
     "remove_trend",
-    "add_trend"
+    "add_trend",
 ]
+__author__ = ["Markus Löning"]
 
 import numpy as np
 from sklearn.utils import check_array
@@ -33,11 +34,10 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     # check input: n_timepoints
     if not np.issubdtype(type(n_timepoints), np.dtype(int).type):
         raise ValueError(
-            f"`n_timepoints` must be an integer, but found: "
-            f"{type(n_timepoints)}")
+            f"`n_timepoints` must be an integer, but found: " f"{type(n_timepoints)}"
+        )
     if not n_timepoints >= 1:
-        raise ValueError(
-            f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
+        raise ValueError(f"`n_timepoints` must be >= 1, but found: {n_timepoints}")
 
     # compute number of splits
     allowed_strings = ["sqrt", "log"]
@@ -48,10 +48,13 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
             raise ValueError(
                 f"If `n_intervals` is an integer, it must be smaller "
                 f"than `n_timepoints`, but found:  `n_intervals`={n} "
-                f"and `n_timepoints`={n_timepoints}")
+                f"and `n_timepoints`={n_timepoints}"
+            )
         if n < 1:
-            raise ValueError(f"If `n_intervals` is an integer, "
-                             f"`n_intervals` must be >= 1, but found: {n}")
+            raise ValueError(
+                f"If `n_intervals` is an integer, "
+                f"`n_intervals` must be >= 1, but found: {n}"
+            )
         n_intervals_ = n
 
     # function
@@ -63,11 +66,9 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
         if n not in allowed_strings:
             raise ValueError(
                 f"If `n_intervals` is a string, `n_intervals` must be "
-                f"in {allowed_strings}, but found: {n}")
-        str_func_map = {
-            "sqrt": np.sqrt,
-            "log": np.log
-        }
+                f"in {allowed_strings}, but found: {n}"
+            )
+        str_func_map = {"sqrt": np.sqrt, "log": np.log}
         func = str_func_map[n]
         n_intervals_ = func(n_timepoints)
 
@@ -76,14 +77,16 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
         if not (0 < n <= 1):
             raise ValueError(
                 f"If `n_intervals` is a float, `n_intervals` must be > 0 "
-                f"and <= 1, but found: {n}")
+                f"and <= 1, but found: {n}"
+            )
         n_intervals_ = n * n_timepoints
 
     else:
         raise ValueError(
             f"`n_intervals` must be either one of the allowed string options "
             f"in "
-            f"{allowed_strings}, an integer or a float number.")
+            f"{allowed_strings}, an integer or a float number."
+        )
 
     # make sure n_intervals is an integer and there is at least one interval
     n_intervals_ = np.maximum(1, np.int(n_intervals_))
@@ -114,8 +117,7 @@ def time_series_slope(y):
     else:
         x = np.arange(len_series)  # time index
         x_mean = (len_series - 1) / 2  # faster than x.mean()
-        return (np.mean(x * y) - x_mean * np.mean(y)) / (
-                    np.mean(x ** 2) - x_mean ** 2)
+        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
 
 
 def fit_trend(x, order=0):
@@ -211,7 +213,8 @@ def remove_trend(x, coefs, time_index=None):
             time_index = check_time_index(time_index)
             if not len(time_index) == x.shape[1]:
                 raise ValueError(
-                    'Length of passed index does not match length of passed x')
+                    "Length of passed index does not match length of passed x"
+                )
 
         poly_terms = np.vander(time_index, N=order + 1)
         xt = x - np.dot(poly_terms, coefs.T).T
@@ -264,7 +267,8 @@ def add_trend(x, coefs, time_index=None):
 
             if not len(time_index) == x.shape[1]:
                 raise ValueError(
-                    'Length of passed index does not match length of passed x')
+                    "Length of passed index does not match length of passed x"
+                )
 
         poly_terms = np.vander(time_index, N=order + 1)
         xt = x + np.dot(poly_terms, coefs.T).T

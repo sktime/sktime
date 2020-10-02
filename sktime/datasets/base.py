@@ -5,9 +5,10 @@ Utilities for loading datasets
 
 import os
 
+import numpy as np
 import pandas as pd
 
-from ..utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
@@ -432,35 +433,28 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='M')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of shampoo sales"
+    return y
 
 
-def load_longley(return_X_y=False):
+def load_longley(y_name="TOTEMP"):
     """
     Load the Longley multivariate time series dataset for forecasting with
     exogenous variables.
 
     Parameters
     ----------
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+    y_name: str, optional (default="TOTEMP")
+        Name of target variable (y)
 
     Returns
     -------
-    X: pandas.DataFrame
-        The exogenous time series data for the problem.
     y: pandas.Series
         The target series to be predicted.
+    X: pandas.DataFrame
+        The exogenous time series data for the problem.
 
     Details
     -------
@@ -475,13 +469,12 @@ def load_longley(return_X_y=False):
 
     Variable description:
 
-    TOTEMP - Total employment (y)
+    TOTEMP - Total employment
     GNPDEFL - Gross national product deflator
     GNP - Gross national product
     UNEMP - Number of unemployed
     ARMED - Size of armed forces
     POP - Population
-    YEAR - Calendar year (index)
 
     References
     ----------
@@ -495,27 +488,12 @@ def load_longley(return_X_y=False):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
+    data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
+    data = data.astype(np.float)
 
     # Get target series
-    yname = "TOTEMP"
-    y = data.pop(yname)
-    y = pd.Series([y], name=yname)
-
-    # Get exogeneous series
-    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
-    X.columns = data.columns
-
-    if return_X_y:
-        y = y.iloc[0]
-        return X, y
-    else:
-        X[yname] = y
-        return X
+    y = data.pop(y_name)
+    return y, data
 
 
 def load_lynx():
@@ -561,25 +539,20 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
+    y.name = "Number of Lynx trappings"
+    return y
 
 
 def load_airline():
     """
-    Load the airline univariate time series dataset for forecasting.
+    Load the airline univariate time series dataset [1].
 
     Returns
     -------
-    y : pandas Series
-        Airline passenger numbers dataset
+    y : pd.Series
+     Time series
 
     Details
     -------
@@ -606,18 +579,15 @@ def load_airline():
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: "float64"})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
 
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    # make sure time index is properly formatted
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of airline passengers"
+    return y
 
 
-def load_uschange(y_name='Consumption'):
+def load_uschange(y_name="Consumption"):
     """
     Load the multivariate time series dataset for forecasting
     Growth rates of personal consumption and personal income.
@@ -653,20 +623,20 @@ def load_uschange(y_name='Consumption'):
     ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
     """
 
-    name = 'Uschange'
-    fname = name + '.csv'
+    name = "Uschange"
+    fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0, squeeze=True)
 
     # Sort by Quarter then set simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.sort_values('Quarter')
+    data = data.sort_values("Quarter")
     data = data.reset_index(drop=True)
     data.index = pd.Int64Index(data.index)
     data.name = name
     y = data[y_name]
-    if y_name != 'Quarter':
-        data = data.drop('Quarter', axis=1)
+    if y_name != "Quarter":
+        data = data.drop("Quarter", axis=1)
     X = data.drop(y_name, axis=1)
     return y, X
