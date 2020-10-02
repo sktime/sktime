@@ -5,8 +5,8 @@
 __author__ = ["Markus Löning"]
 __all__ = ["AutoARIMA"]
 
-import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -207,6 +207,10 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         A dictionary of key-word arguments to be passed to the scoring metric.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term.
+
+    References
+    ----------
+    https://alkaline-ml.com/pmdarima/modules/generated/pmdarima.arima.AutoARIMA.html
     """
 
     def __init__(
@@ -249,7 +253,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         scoring="mse",
         scoring_args=None,
         with_intercept=True,
-        **kwargs,
+        **kwargs
     ):
 
         self.start_p = start_p
@@ -294,12 +298,8 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
         super(AutoARIMA, self).__init__()
 
         # import inside method to avoid hard dependency
-        try:
-            from pmdarima.arima import AutoARIMA as _AutoARIMA
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install pmdarima` to install pmdarima"
-            ) from e
+        from pmdarima.arima import AutoARIMA as _AutoARIMA
+
         self._forecaster = _AutoARIMA(
             start_p=start_p,
             d=d,
@@ -339,7 +339,7 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             scoring=scoring,
             scoring_args=scoring_args,
             with_intercept=with_intercept,
-            **kwargs,
+            **kwargs
         )
 
     def fit(self, y_train, fh=None, X_train=None, **fit_args):
@@ -365,56 +365,49 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # distinguish between in-sample and out-of-sample prediction
-        is_in_sample = fh <= 0
-        is_out_of_sample = np.logical_not(is_in_sample)
+        fh_oos = fh.to_out_of_sample(self.cutoff)
+        fh_ins = fh.to_in_sample(self.cutoff)
 
-        # pure out-of-sample prediction
-        if np.all(is_out_of_sample):
-            return self._predict_out_of_sample(
-                fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA
-            )
+        kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
-        # pure in-sample prediction
-        elif np.all(is_in_sample):
-            return self._predict_in_sample(
-                fh, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA
-            )
+        # all values are out-of-sample
+        if len(fh_oos) == len(fh):
+            return self._predict_fixed_cutoff(fh_oos, **kwargs)
 
-        # mixed in-sample and out-of-sample prediction
+        # all values are in-sample
+        elif len(fh_ins) == len(fh):
+            return self._predict_in_sample(fh_ins, **kwargs)
+
+        # both in-sample and out-of-sample values
         else:
-            fh_in_sample = fh[is_in_sample]
-            fh_out_of_sample = fh[is_out_of_sample]
-
-            y_pred_in = self._predict_in_sample(
-                fh_in_sample, X=X, return_pred_int=return_pred_int, alpha=DEFAULT_ALPHA
-            )
-            y_pred_out = self._predict_out_of_sample(
-                fh_out_of_sample,
-                X=X,
-                return_pred_int=return_pred_int,
-                alpha=DEFAULT_ALPHA,
-            )
-            return y_pred_in.append(y_pred_out)
+            y_ins = self._predict_in_sample(fh_ins, **kwargs)
+            y_oos = self._predict_fixed_cutoff(fh_oos, **kwargs)
+            return y_ins.append(y_oos)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
-        fh_abs = fh.absolute(self.cutoff)
-        fh_idx = fh_abs - np.min(fh_abs)
-        start = fh_abs[0]
-        end = fh_abs[-1]
+        if isinstance(alpha, (list, tuple)):
+            raise NotImplementedError()
+
+        # for in-sample predictions, pmdarima requires zero-based
+        # integer indicies
+        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+
+        result = self._forecaster.predict_in_sample(
+            start=start,
+            end=end,
+            exogenous=X,
+            return_conf_int=return_pred_int,
+            alpha=alpha,
+        )
+
+        fh_abs = fh.to_absolute(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
 
         if return_pred_int:
-
-            if isinstance(alpha, (list, tuple)):
-                raise NotImplementedError()
-            y_pred, pred_int = self._forecaster.predict_in_sample(
-                start=start,
-                end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha,
-            )
+            # unpack and format results
+            y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
             pred_int = pd.DataFrame(
                 pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
@@ -422,43 +415,32 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             return y_pred, pred_int
 
         else:
-            y_pred = self._forecaster.predict_in_sample(
-                start=start,
-                end=end,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha,
-            )
-            return pd.Series(y_pred[fh_idx], index=fh_abs)
+            return pd.Series(result[fh_idx], index=fh_abs)
 
-    def _predict_out_of_sample(
+    def _predict_fixed_cutoff(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         # make prediction
-        n_periods = int(fh[-1])
-        index = fh.absolute(self.cutoff)
-        fh_idx = fh.index_like(self.cutoff)
+        n_periods = int(fh.to_relative(self.cutoff)[-1])
+        fh_abs = fh.to_absolute(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff)
+
+        result = self._forecaster.predict(
+            n_periods=n_periods,
+            exogenous=X,
+            return_conf_int=return_pred_int,
+            alpha=alpha,
+        )
 
         if return_pred_int:
-            y_pred, pred_int = self._forecaster.model_.predict(
-                n_periods=n_periods,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha,
-            )
-            y_pred = pd.Series(y_pred[fh_idx], index=index)
+            y_pred, pred_int = result
+            y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
             pred_int = pd.DataFrame(
-                pred_int[fh_idx, :], index=index, columns=["lower", "upper"]
+                pred_int[fh_idx, :], index=fh_abs, columns=["lower", "upper"]
             )
             return y_pred, pred_int
         else:
-            y_pred = self._forecaster.model_.predict(
-                n_periods=n_periods,
-                exogenous=X,
-                return_conf_int=return_pred_int,
-                alpha=alpha,
-            )
-            return pd.Series(y_pred[fh_idx], index=index)
+            return pd.Series(result[fh_idx], index=fh_abs)
 
     def get_fitted_params(self):
         """Get fitted parameters
