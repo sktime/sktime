@@ -1,11 +1,9 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "PolynomialTrendForecaster"
-]
+__all__ = ["PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
@@ -19,8 +17,7 @@ from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.utils.datetime import _get_duration
 
 
-class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
-                                BaseSktimeForecaster):
+class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
     """
     Forecast time series data with a polynomial trend.
     Default settings train a linear regression model with a 1st degree
@@ -67,8 +64,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         self : returns an instance of self.
         """
         if X_train is not None:
-            raise NotImplementedError("Exogeneous variables are not "
-                                      "yet supported")
+            raise NotImplementedError("Exogeneous variables are not " "yet supported")
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
@@ -81,9 +77,9 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
 
         # make pipeline with polynomial features
         self.regressor_ = make_pipeline(
-            PolynomialFeatures(degree=self.degree,
-                               include_bias=self.with_intercept),
-            regressor)
+            PolynomialFeatures(degree=self.degree, include_bias=self.with_intercept),
+            regressor,
+        )
 
         # transform data
         n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
@@ -94,8 +90,7 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False,
-                alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make forecasts for the given forecast horizon
 
         Parameters

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = ["@big-o"]
 
 import numpy as np

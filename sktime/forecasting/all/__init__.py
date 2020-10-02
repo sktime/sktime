@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
 __all__ = [
@@ -30,7 +30,7 @@ __all__ = [
     "mase_loss",
     "pd",
     "np",
-    "plot_series"
+    "plot_series",
 ]
 
 import numpy as np

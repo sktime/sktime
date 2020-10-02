@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -25,8 +25,7 @@ def get_expected_polynomial_coefs(y, degree, with_intercept=True):
 def _test_trend(degree, with_intercept):
     """Helper function to check trend"""
     y = make_forecasting_problem()
-    forecaster = PolynomialTrendForecaster(
-        degree=degree, with_intercept=with_intercept)
+    forecaster = PolynomialTrendForecaster(degree=degree, with_intercept=with_intercept)
     forecaster.fit(y)
 
     # check coefficients

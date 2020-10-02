@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = "Markus Löning"
 __all__ = ["all_estimators"]
 
@@ -44,10 +45,10 @@ def all_estimators(estimator_type=None):
     from sktime.forecasting.base._base import BaseForecaster
     from sktime.classification.base import BaseClassifier
     from sktime.regression.base import BaseRegressor
-    from sktime.transformers.series_as_features.base import \
-        BaseSeriesAsFeaturesTransformer
-    from sktime.transformers.single_series.base import \
-        BaseSingleSeriesTransformer
+    from sktime.transformers.series_as_features.base import (
+        BaseSeriesAsFeaturesTransformer,
+    )
+    from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
@@ -64,20 +65,20 @@ def all_estimators(estimator_type=None):
     # packages
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=FutureWarning)
-        for _, modname, _ in pkgutil.walk_packages(
-                path=[root], prefix="sktime."):
+        for _, modname, _ in pkgutil.walk_packages(path=[root], prefix="sktime."):
             mod_parts = modname.split(".")
 
             # filter modules
-            if any(part in modules_to_ignore for part in
-                   mod_parts) or "._" in modname:
+            if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
                 continue
 
             module = import_module(modname)
             classes = inspect.getmembers(module, inspect.isclass)
-            classes = [(name, klass) for name, klass in classes
-                       if
-                       not (name.startswith("_") or name.startswith("Base"))]
+            classes = [
+                (name, klass)
+                for name, klass in classes
+                if not (name.startswith("_") or name.startswith("Base"))
+            ]
             all_classes.extend(classes)
 
     all_classes = set(all_classes)
@@ -90,9 +91,14 @@ def all_estimators(estimator_type=None):
         "single_series_transformer": BaseSingleSeriesTransformer,
         "forecaster": BaseForecaster,
     }
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], tuple(base_classes.values())) and
-                      c[0] not in base_classes.keys())]
+    estimators = [
+        c
+        for c in all_classes
+        if (
+            issubclass(c[1], tuple(base_classes.values()))
+            and c[0] not in base_classes.keys()
+        )
+    ]
 
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
@@ -107,8 +113,9 @@ def all_estimators(estimator_type=None):
         for name, base_class in base_classes.items():
             if name in estimator_type:
                 estimator_type.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], base_class)])
+                filtered_estimators.extend(
+                    [est for est in estimators if issubclass(est[1], base_class)]
+                )
         estimators = filtered_estimators
 
         # raise error if any filter names are still left
@@ -117,13 +124,14 @@ def all_estimators(estimator_type=None):
             "regressor",
             "single_series_transformer",
             "series_as_features_transformer",
-            "forecaster"
+            "forecaster",
         )
         if estimator_type:
             raise ValueError(
                 f"Parameter `estimator_type` must be None, a string, "
                 f"or a list of strings. Allowed strings values are: "
-                f"{allowed_filters}. But found: {repr(estimator_type)}")
+                f"{allowed_filters}. But found: {repr(estimator_type)}"
+            )
 
     # drop duplicates, sort for reproducibility
     # itemgetter is used to ensure the sort does not extend to the 2nd item of

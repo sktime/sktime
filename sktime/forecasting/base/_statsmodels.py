@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -13,10 +13,9 @@ from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
-                          BaseSktimeForecaster):
-    """Base class for interfacing statsmodels forecasting algorithms
-    """
+class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+    """Base class for interfacing statsmodels forecasting algorithms"""
+
     _fitted_param_names = ()
 
     def __init__(self):
@@ -41,8 +40,7 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y_train, pd.Series) and \
-                type(y_train.index) == pd.Int64Index:
+        if isinstance(y_train, pd.Series) and type(y_train.index) == pd.Int64Index:
             y_train, X_train = _coerce_int_to_range_index(y_train, X_train)
 
         self._set_y_X(y_train, X_train)
@@ -95,8 +93,10 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin,
         fitted_params : dict
         """
         self.check_is_fitted()
-        return {name: self._fitted_forecaster.params.get(name)
-                for name in self._get_fitted_param_names()}
+        return {
+            name: self._fitted_forecaster.params.get(name)
+            for name in self._get_fitted_param_names()
+        }
 
     def _get_fitted_param_names(self):
         """Get names of fitted parameters"""
@@ -108,9 +108,11 @@ def _coerce_int_to_range_index(y, X=None):
     try:
         np.testing.assert_array_equal(y.index, new_index)
     except AssertionError:
-        raise ValueError("Coercion of pd.Int64Index to pd.RangeIndex "
-                         "failed. Please provide `y_train` with a "
-                         "pd.RangeIndex.")
+        raise ValueError(
+            "Coercion of pd.Int64Index to pd.RangeIndex "
+            "failed. Please provide `y_train` with a "
+            "pd.RangeIndex."
+        )
     y.index = new_index
     if X is not None:
         X.index = new_index

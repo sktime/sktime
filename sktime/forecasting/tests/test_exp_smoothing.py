@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = ["Markus Löning", "@big-o"]
 __all__ = ["test_set_params"]
 

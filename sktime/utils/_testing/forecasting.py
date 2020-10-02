@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -9,7 +9,7 @@ __all__ = [
     "generate_seasonal_time_series_data_with_trend",
     "generate_time_series_data_with_trend",
     "make_forecasting_problem",
-    "generate_time_series"
+    "generate_time_series",
 ]
 
 import numpy as np
@@ -66,8 +66,9 @@ def generate_polynomial_series(n, order, coefs=None):
     return x.ravel()
 
 
-def generate_time_series_data_with_trend(n_instances=1, n_timepoints=100,
-                                         order=0, coefs=None, noise=False):
+def generate_time_series_data_with_trend(
+    n_instances=1, n_timepoints=100, order=0, coefs=None, noise=False
+):
     """Helper function to generate time series/panel data with polynomial
     trend"""
     samples = []
@@ -87,22 +88,22 @@ def generate_time_series_data_with_trend(n_instances=1, n_timepoints=100,
     return detabularise(X)
 
 
-def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100,
-                                                  order=0, sp=1,
-                                                  model='additive'):
+def generate_seasonal_time_series_data_with_trend(
+    n_samples=1, n_obs=100, order=0, sp=1, model="additive"
+):
     """Helper function to generate time series/panel data with polynomial
     trend and seasonal component"""
     if sp == 1:
-        return generate_time_series_data_with_trend(n_instances=n_samples,
-                                                    n_timepoints=n_obs,
-                                                    order=order)
+        return generate_time_series_data_with_trend(
+            n_instances=n_samples, n_timepoints=n_obs, order=order
+        )
 
     samples = []
     for _ in range(n_samples):
         # coefs = np.random.normal(scale=0.01, size=(order + 1, 1))
         s = generate_polynomial_series(n_obs, order)
 
-        if model == 'additive':
+        if model == "additive":
             s[::sp] = s[::sp] + 0.1
         else:
             s[::sp] = s[::sp] * 1.1
@@ -116,8 +117,7 @@ def generate_seasonal_time_series_data_with_trend(n_samples=1, n_obs=100,
     return detabularise(X)
 
 
-def make_forecasting_problem(n_timepoints=50, index_type="int",
-                             random_state=None):
+def make_forecasting_problem(n_timepoints=50, index_type="int", random_state=None):
     rng = check_random_state(random_state)
     values = rng.random(size=n_timepoints)
     index = _make_index(len(values), index_type)
@@ -159,6 +159,7 @@ def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
 def _make_fh(cutoff, steps, fh_type, is_relative):
     """Helper function to construct forecasting horizons for testing"""
     from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
+
     fh_class = INDEX_TYPE_LOOKUP[fh_type]
 
     if isinstance(steps, (int, np.integer)):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
 __all__ = [
@@ -12,7 +12,7 @@ __all__ = [
     "TEST_OOS_FHS",
     "TEST_WINDOW_LENGTHS",
     "SUPPORTED_INDEX_FH_COMBINATIONS",
-    "INDEX_TYPE_LOOKUP"
+    "INDEX_TYPE_LOOKUP",
 ]
 
 import numpy as np
@@ -28,7 +28,7 @@ TEST_INS_FHS = [
     -3,  # single in-sample
     np.array([-2, -5]),  # multiple in-sample
     0,  # last training point
-    np.array([-3, 2])  # mixed in-sample and out-of-sample
+    np.array([-3, 2]),  # mixed in-sample and out-of-sample
 ]
 TEST_FHS = TEST_OOS_FHS + TEST_INS_FHS
 TEST_SPS = [3, 7, 12]
@@ -50,12 +50,12 @@ SUPPORTED_INDEX_FH_COMBINATIONS = [
     ("period", "int", True),
     ("period", "period", False),
     ("datetime", "int", True),
-    ("datetime", "datetime", False)
+    ("datetime", "datetime", False),
 ]
 
 INDEX_TYPE_LOOKUP = {
     "int": pd.Int64Index,
     "range": pd.RangeIndex,
     "datetime": pd.DatetimeIndex,
-    "period": pd.PeriodIndex
+    "period": pd.PeriodIndex,
 }

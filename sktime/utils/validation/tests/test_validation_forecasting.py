@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -11,11 +11,7 @@ from pytest import raises
 
 from sktime.utils.validation.forecasting import check_fh
 
-empty_input = (
-    np.array([]),
-    [],
-    pd.Int64Index([])
-)
+empty_input = (np.array([]), [], pd.Int64Index([]))
 
 
 @pytest.mark.parametrize("arg", empty_input)

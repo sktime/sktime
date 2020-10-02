@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["plot_series"]
@@ -34,9 +34,11 @@ def plot_series(*series, labels=None):
     n_series = len(series)
     if labels is not None:
         if n_series != len(labels):
-            raise ValueError("There must be one label for each time series, "
-                             "but found inconsistent numbers of series and "
-                             "labels.")
+            raise ValueError(
+                "There must be one label for each time series, "
+                "but found inconsistent numbers of series and "
+                "labels."
+            )
         legend = True
     else:
         labels = ["" for _ in range(n_series)]
@@ -58,7 +60,7 @@ def plot_series(*series, labels=None):
     xs = [np.argwhere(index.isin(y.index)).ravel() for y in series]
 
     # create figure
-    fig, ax = plt.subplots(1, figsize=plt.figaspect(.25))
+    fig, ax = plt.subplots(1, figsize=plt.figaspect(0.25))
     colors = sns.color_palette("colorblind", n_colors=n_series)
 
     # plot series

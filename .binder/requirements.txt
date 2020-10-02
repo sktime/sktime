@@ -1,7 +1,7 @@
+matplotlib
+numba
+pmdarima
+scikit-posthocs
+seaborn
 sktime
 tsfresh
-pmdarima
-numba
-scikit-posthocs
-matplotlib
-seaborn

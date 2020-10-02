@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
 __all__ = []
@@ -9,8 +9,7 @@ def test_polynomial_detrending():
     import numpy as np
     import pandas as pd
 
-    from sktime.forecasting.tests.test_trend import \
-        get_expected_polynomial_coefs
+    from sktime.forecasting.tests.test_trend import get_expected_polynomial_coefs
     from sktime.forecasting.trend import PolynomialTrendForecaster
     from sktime.transformers.single_series.detrend import Detrender
 
@@ -21,8 +20,9 @@ def test_polynomial_detrending():
 
     # check coefficients
     actual_coefs = transformer.forecaster_.regressor_.steps[-1][-1].coef_
-    expected_coefs = get_expected_polynomial_coefs(
-        y, degree=1, with_intercept=True)[::-1]
+    expected_coefs = get_expected_polynomial_coefs(y, degree=1, with_intercept=True)[
+        ::-1
+    ]
     np.testing.assert_array_almost_equal(actual_coefs, expected_coefs)
 
     # check trend

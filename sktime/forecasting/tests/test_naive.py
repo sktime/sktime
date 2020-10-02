@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "Piyush Gade"]
@@ -66,10 +66,8 @@ def test_strategy_last_seasonal(fh, sp):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_mean_seasonal(fh, sp, window_length):
-    if ((window_length is not None and window_length > sp) or
-            (window_length is None)):
-        f = NaiveForecaster(strategy="mean", sp=sp,
-                            window_length=window_length)
+    if (window_length is not None and window_length > sp) or (window_length is None):
+        f = NaiveForecaster(strategy="mean", sp=sp, window_length=window_length)
         f.fit(y_train)
         y_pred = f.predict(fh)
 
@@ -83,11 +81,14 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         fh = check_fh(fh)  # get well formatted fh
         reps = np.int(np.ceil(max(fh) / sp))
         last_window = y_train.iloc[-window_length:].values
-        last_window = np.pad(last_window, (0, sp - len(last_window) % sp),
-                             'constant', constant_values=np.nan)
+        last_window = np.pad(
+            last_window,
+            (0, sp - len(last_window) % sp),
+            "constant",
+            constant_values=np.nan,
+        )
 
-        last_window = last_window.reshape(np.int(np.ceil(len(last_window) /
-                                                         sp)), sp)
+        last_window = last_window.reshape(np.int(np.ceil(len(last_window) / sp)), sp)
         expected = np.tile(np.nanmean(last_window, axis=0), reps=reps)[fh - 1]
         np.testing.assert_array_equal(y_pred, expected)
 
@@ -112,13 +113,11 @@ def test_strategy_mean_seasonal_simple(n_seasons, sp):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length",
-                         [*TEST_WINDOW_LENGTHS, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_unit_slope(fh, window_length):
     # drift strategy for constant slope 1
     if window_length != 1:
-        f = NaiveForecaster(strategy="drift",
-                            window_length=window_length)
+        f = NaiveForecaster(strategy="drift", window_length=window_length)
         f.fit(y_train)
         y_pred = f.predict(fh)
 
@@ -133,14 +132,12 @@ def test_strategy_drift_unit_slope(fh, window_length):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length",
-                         [*TEST_WINDOW_LENGTHS, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_flat_line(fh, window_length):
     # test for flat time series data
     if window_length != 1:
         y_train = pd.Series(np.ones(20))
-        f = NaiveForecaster(strategy="drift",
-                            window_length=window_length)
+        f = NaiveForecaster(strategy="drift", window_length=window_length)
         f.fit(y_train)
         y_pred = f.predict(fh)
 
@@ -155,8 +152,7 @@ def test_strategy_drift_flat_line(fh, window_length):
 
 
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
-@pytest.mark.parametrize("window_length",
-                         [*TEST_WINDOW_LENGTHS, None])
+@pytest.mark.parametrize("window_length", [*TEST_WINDOW_LENGTHS, None])
 def test_strategy_drift_window_length(fh, window_length):
     # test for checking if window_length is properly working
     if window_length != 1:
@@ -165,13 +161,11 @@ def test_strategy_drift_window_length(fh, window_length):
 
         values = np.random.normal(size=window_length)
         y = pd.Series(values)
-        f = NaiveForecaster(strategy="drift",
-                            window_length=window_length)
+        f = NaiveForecaster(strategy="drift", window_length=window_length)
         f.fit(y)
         y_pred = f.predict(fh)
 
-        slope = (values[-1] -
-                 values[0]) / (window_length - 1)
+        slope = (values[-1] - values[0]) / (window_length - 1)
 
         # get well formatted fh values
         fh = check_fh(fh)

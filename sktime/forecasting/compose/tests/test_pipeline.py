@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
@@ -20,11 +20,13 @@ def test_pipeline():
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
 
-    forecaster = TransformedTargetForecaster([
-        ("t1", Deseasonalizer(sp=12, model="multiplicative")),
-        ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
-        ("forecaster", NaiveForecaster())
-    ])
+    forecaster = TransformedTargetForecaster(
+        [
+            ("t1", Deseasonalizer(sp=12, model="multiplicative")),
+            ("t2", Detrender(PolynomialTrendForecaster(degree=1))),
+            ("forecaster", NaiveForecaster()),
+        ]
+    )
     fh = np.arange(len(y_test)) + 1
     forecaster.fit(y_train, fh)
     actual = forecaster.predict()
