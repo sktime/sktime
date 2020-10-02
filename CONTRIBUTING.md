@@ -53,7 +53,6 @@ We value all kinds of contributions - not just code. The following table gives a
 | API design | Design interfaces for estimators and other functionality |
 | Project management | Finding funding, organising meetings, initiating new collaborations |
 
-
 ### Roadmap
 
 For a more detailed overview of current and future work, check out our [development roadmap](https://github.com/alan-turing-institute/sktime/issues/228).
@@ -149,11 +148,11 @@ The preferred workflow for contributing to sktime's repository is to fork the [m
 
 If any of the above seems like magic to you, please look up the [Git documentation](https://git-scm.com/documentation) on the web. If you get stuck, feel free to [chat with us](https://gitter.im/sktime/community) or [raise an issue](https://github.com/alan-turing-institute/sktime/issues/new/choose).
 
+
 Continuous integration
 ----------------------
 
 We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
-
 
 ### Code quality checks
 To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. To set up the workflow, you need to install a few extra tools:
@@ -263,7 +262,6 @@ This section gives an overview of the infrastructure and continuous integration 
 | [Codecov]() | Test coverage | [codecov.yml](https://github.com/alan-turing-institute/sktime/blob/master/codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/master/.coveragerc) |
 
 Additional scripts used for building, unit testing and distributing can be found in [build_tools/](https://github.com/alan-turing-institute/sktime/tree/master/build_tools).
-
 
 
 Release instructions
