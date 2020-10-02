@@ -31,7 +31,7 @@ from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTran
 from sktime.transformers.series_as_features.summarize import DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -158,12 +158,12 @@ def cython_wrapper(distance_measure):
 
     def distance(instance_a, instance_b, **params):
         # find distance
-        instance_a = from_nested_to_2d_numpy(
+        instance_a = from_nested_to_2d_array(
             instance_a, return_array=True
         )  # todo use specific
         # dimension rather than whole
         # thing?
-        instance_b = from_nested_to_2d_numpy(
+        instance_b = from_nested_to_2d_array(
             instance_b, return_array=True
         )  # todo use specific
         # dimension rather than whole thing?

@@ -66,19 +66,19 @@ def _check_equal_index(X):
 
 @deprecated("Please use `from_nested_to_2d_numpy` instead.")
 def tabularize(X, return_array=False):
-    return from_nested_to_2d_numpy(X, return_array)
+    return from_nested_to_2d_array(X, return_array)
 
 
 @deprecated("Please use `from_2d_numpy_to_nested` instead.")
 def detabularize(X, return_array=False):
-    return from_2d_numpy_to_nested(X, return_array)
+    return from_2d_array_to_nested(X, return_array)
 
 
-def from_3d_numpy_to_2d_numpy(X):
+def from_3d_numpy_to_2d_array(X):
     return X.reshape(X.shape[0], -1)
 
 
-def from_nested_to_2d_numpy(X, return_array=False):
+def from_nested_to_2d_array(X, return_array=False):
     """Convert nested pandas DataFrames or Series with numpy arrays or
     pandas Series in cells into tabular
     pandas DataFrame with primitives in cells, i.e. a data frame with the
@@ -162,7 +162,7 @@ def from_nested_to_2d_numpy(X, return_array=False):
     return Xt
 
 
-def from_2d_numpy_to_nested(X, index=None, time_index=None, return_arrays=False):
+def from_2d_array_to_nested(X, index=None, time_index=None, return_arrays=False):
     """Convert tabular pandas DataFrame with only primitives in cells into
     nested pandas DataFrame with a single column.
 
@@ -305,7 +305,7 @@ def from_nested_to_long(X):
     columns = []
 
     for i in range(len(X.columns)):
-        df = from_nested_to_2d_numpy(X.iloc[:, i])
+        df = from_nested_to_2d_array(X.iloc[:, i])
         df = df.reset_index()
         df = df.melt(id_vars="index")
         df["column"] = df["variable"].str.split("__").str[0]

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from sktime.transformers.series_as_features.segment import SlidingWindowSegmenter
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 
 # Check that exception is raised for bad window length.
@@ -11,7 +11,7 @@ from sktime.utils._testing import _generate_df_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_window_length", ["str", 1.2, -1.2, -1, {}])
 def test_bad_input_args(bad_window_length):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_window_length, int):
         with pytest.raises(TypeError):
@@ -23,7 +23,9 @@ def test_bad_input_args(bad_window_length):
 
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
-    X = _generate_df_from_array(np.array([1, 2, 3, 4, 5, 6]), n_rows=1, n_cols=1)
+    X = _make_nested_from_array(
+        np.array([1, 2, 3, 4, 5, 6]), n_instances=1, n_columns=1
+    )
 
     st = SlidingWindowSegmenter(window_length=1).fit(X)
     res = st.transform(X)
@@ -64,7 +66,9 @@ def test_output_of_transformer():
     "time_series_length,window_length", [(5, 1), (10, 5), (15, 9), (20, 13), (25, 19)]
 )
 def test_output_dimensions(time_series_length, window_length):
-    X = _generate_df_from_array(np.ones(time_series_length), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(
+        np.ones(time_series_length), n_instances=10, n_columns=1
+    )
 
     st = SlidingWindowSegmenter(window_length=window_length).fit(X)
     res = st.transform(X)
@@ -82,7 +86,7 @@ def test_output_dimensions(time_series_length, window_length):
 # Test that subsequence transformer fails when a multivariate ts
 # is fed into it.
 def test_fails_if_multivariate():
-    X = _generate_df_from_array(np.ones(5), n_rows=10, n_cols=5)
+    X = _make_nested_from_array(np.ones(5), n_instances=10, n_columns=5)
 
     with pytest.raises(ValueError):
         SlidingWindowSegmenter().fit(X).transform(X)

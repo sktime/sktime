@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 from sktime.classification.distance_based._shape_dtw import ShapeDTW
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 from sktime.transformers.series_as_features.dictionary_based._paa import PAA
 from sktime.transformers.series_as_features.dwt import DWTTransformer
@@ -21,7 +21,7 @@ from sktime.datasets import load_italy_power_demand
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_subsequence_length", ["str", 0.5, -1, -0.5, {}])
 def test_subsequence_length(bad_subsequence_length):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
     y = np.zeros(10)
 
     if not isinstance(bad_subsequence_length, int):
@@ -35,7 +35,7 @@ def test_subsequence_length(bad_subsequence_length):
 # Check shape_descriptor_function parameter
 @pytest.mark.parametrize("bad_sdf", [3, "raw4", {}])
 def test_shape_descriptor_function(bad_sdf):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
     y = np.zeros(10)
 
     if not isinstance(bad_sdf, str):
@@ -49,7 +49,7 @@ def test_shape_descriptor_function(bad_sdf):
 # Check shape_descriptor_functions parameter
 @pytest.mark.parametrize("bad_sdfs", [[], ["raw"], ["raw", "derivative"]])
 def test_shape_descriptor_functions(bad_sdfs):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
     y = np.zeros(10)
 
     if not len(bad_sdfs) == 2:
@@ -67,7 +67,7 @@ def test_shape_descriptor_functions(bad_sdfs):
 # check that the metric_params are being fed in correctly
 def test_metric_params():
 
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
     y = np.zeros(10)
 
     # test the raw shape descriptor

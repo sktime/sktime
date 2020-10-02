@@ -10,8 +10,8 @@ from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import ColumnTransformer
 from sktime.transformers.series_as_features.compose import RowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.utils.data_container import from_nested_to_2d_numpy
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():
@@ -43,8 +43,8 @@ def test_row_transformer_function_transformer_series_to_series():
 
 def test_row_transformer_sklearn_transfomer():
     mu = 10
-    X = _generate_df_from_array(
-        np.random.normal(loc=mu, scale=5, size=(100,)), n_rows=10, n_cols=1
+    X = _make_nested_from_array(
+        np.random.normal(loc=mu, scale=5, size=(100,)), n_instances=10, n_columns=1
     )
     t = StandardScaler(with_mean=True, with_std=True)
     r = RowTransformer(t)
@@ -68,8 +68,8 @@ def test_row_transformer_transform_inverse_transform():
         Xit.iloc[0, 0], (pd.Series, np.ndarray)
     )  # check series-to-series transforms
     np.testing.assert_array_almost_equal(
-        from_nested_to_2d_numpy(X).values,
-        from_nested_to_2d_numpy(Xit).values,
+        from_nested_to_2d_array(X).values,
+        from_nested_to_2d_array(Xit).values,
         decimal=5,
     )
 
@@ -116,7 +116,7 @@ def test_RowTransformer_pipeline():
             X = pd.DataFrame(X)
         Xt = pd.concat(
             [
-                pd.Series(from_nested_to_2d_numpy(col).iloc[:, 0])
+                pd.Series(from_nested_to_2d_array(col).iloc[:, 0])
                 for _, col in X.items()
             ],
             axis=1,

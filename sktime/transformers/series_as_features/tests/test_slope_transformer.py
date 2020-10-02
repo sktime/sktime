@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import math
 from sktime.transformers.series_as_features.slope import SlopeTransformer
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 
 # Check that exception is raised for bad num levels.
@@ -12,7 +12,7 @@ from sktime.utils._testing import _generate_df_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_input_args(bad_num_intervals):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_num_intervals, int):
         with pytest.raises(TypeError):
@@ -25,8 +25,8 @@ def test_bad_input_args(bad_num_intervals):
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
 
-    X = _generate_df_from_array(
-        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_rows=1, n_cols=1
+    X = _make_nested_from_array(
+        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=1
     )
 
     s = SlopeTransformer(num_intervals=2).fit(X)
@@ -37,8 +37,8 @@ def test_output_of_transformer():
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res, orig)
 
-    X = _generate_df_from_array(
-        np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3, 0.2]), n_rows=1, n_cols=1
+    X = _make_nested_from_array(
+        np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3, 0.2]), n_instances=1, n_columns=1
     )
     s = s.fit(X)
     res = s.transform(X)
@@ -57,7 +57,7 @@ def test_output_of_transformer():
 @pytest.mark.parametrize("num_intervals,corr_series_length", [(2, 2), (5, 5), (8, 8)])
 def test_output_dimensions(num_intervals, corr_series_length):
 
-    X = _generate_df_from_array(np.ones(13), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(13), n_instances=10, n_columns=1)
 
     s = SlopeTransformer(num_intervals=num_intervals).fit(X)
     res = s.transform(X)
@@ -75,8 +75,8 @@ def test_output_dimensions(num_intervals, corr_series_length):
 # This is to check that Slope produces the same result along each dimension
 def test_slope_performs_correcly_along_each_dim():
 
-    X = _generate_df_from_array(
-        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_rows=1, n_cols=2
+    X = _make_nested_from_array(
+        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=2
     )
 
     s = SlopeTransformer(num_intervals=2).fit(X)

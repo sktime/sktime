@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import numbers
 import math
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
@@ -76,7 +76,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         for x in col_names:
             # Convert one of the columns in the dataframe to a numpy array
-            arr = from_nested_to_2d_numpy(pd.DataFrame(X[x]), return_array=True)
+            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_array=True)
 
             # Get the HOG1Ds of each time series
             transformedData = []

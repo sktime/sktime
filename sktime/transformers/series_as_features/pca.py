@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import from_2d_numpy_to_nested
+from sktime.utils.data_container import from_2d_array_to_nested
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -82,5 +82,5 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
         Xpca = pd.DataFrame(data=self.pca.transform(X))
 
         # Back-transform into time series data format
-        Xt = from_2d_numpy_to_nested(Xpca)
+        Xt = from_2d_array_to_nested(Xpca)
         return Xt

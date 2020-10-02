@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
@@ -456,12 +456,12 @@ class ShapeDTW(BaseClassifier):
         # Convert the dataframes into arrays
         for x in first_desc.columns:
             first_desc_array.append(
-                from_nested_to_2d_numpy(first_desc[x], return_array=True)
+                from_nested_to_2d_array(first_desc[x], return_array=True)
             )
 
         for x in second_desc.columns:
             second_desc_array.append(
-                from_nested_to_2d_numpy(second_desc[x], return_array=True)
+                from_nested_to_2d_array(second_desc[x], return_array=True)
             )
 
         # Concatenate the arrays together

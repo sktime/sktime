@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.classification.base import is_classifier
-from sktime.forecasting.base import is_forecaster
+from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import is_regressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.transformers.series_as_features.base import (
@@ -19,16 +19,9 @@ from sktime.transformers.single_series.base import is_single_series_transformer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.series_as_features import make_classification_problem
 from sktime.utils._testing.series_as_features import make_regression_problem
-from sktime.utils.data_container import from_3d_numpy_to_2d_numpy
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_3d_numpy_to_2d_array
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.data_container import is_nested_dataframe
-
-
-def _generate_df_from_array(array, n_rows=10, n_cols=1):
-    return pd.DataFrame(
-        [[pd.Series(array) for _ in range(n_cols)] for _ in range(n_rows)],
-        columns=[f"col{c}" for c in range(n_cols)],
-    )
 
 
 def _construct_instance(Estimator):
@@ -90,9 +83,9 @@ def _handle_tabularizer_args(*args, **kwargs):
     #  rather than transformer or introduce special transformer type
     X, y = args
     if "return_numpy" in kwargs and kwargs["return_numpy"]:
-        return from_3d_numpy_to_2d_numpy(X), y
+        return from_3d_numpy_to_2d_array(X), y
     else:
-        return from_nested_to_2d_numpy(X), y
+        return from_nested_to_2d_array(X), y
 
 
 def _make_fit_args(estimator, random_state=None, **kwargs):

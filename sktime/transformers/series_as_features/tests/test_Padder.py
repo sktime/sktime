@@ -4,7 +4,7 @@ from sktime.datasets.base import _load_dataset
 from sktime.transformers.series_as_features.padder import PaddingTransformer
 
 # from sklearn.ensemble import RandomForestClassifier
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 
 # import pandas as pd
 
@@ -22,7 +22,7 @@ def test_padding_transformer():
 
     # when we tabulrize the data it has 12 dimensions
     # and we've padded them to there normal length of 29
-    data = from_nested_to_2d_numpy(Xt)
+    data = from_nested_to_2d_array(Xt)
     assert len(data.columns) == 29 * 12
 
 
@@ -39,7 +39,7 @@ def test_padding_paramterised_transformer():
 
     # when we tabulrize the data it has 12 dimensions
     # and we've truncated them all to (10-2) long.
-    data = from_nested_to_2d_numpy(Xt)
+    data = from_nested_to_2d_array(Xt)
     assert len(data.columns) == 40 * 12
 
 
@@ -56,5 +56,5 @@ def test_padding_fill_value_transformer():
 
     # when we tabulrize the data it has 12 dimensions
     # and we've truncated them all to (10-2) long.
-    data = from_nested_to_2d_numpy(Xt)
+    data = from_nested_to_2d_array(Xt)
     assert len(data.columns) == 40 * 12

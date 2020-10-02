@@ -11,9 +11,9 @@ from sklearn.utils.validation import check_array
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.data_container import _get_column_names
 from sktime.utils.data_container import _get_time_index
-from sktime.utils.data_container import from_2d_numpy_to_nested
-from sktime.utils.data_container import from_3d_numpy_to_2d_numpy
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_2d_array_to_nested
+from sktime.utils.data_container import from_3d_numpy_to_2d_array
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -53,9 +53,9 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
         self.check_is_fitted()
         X = check_X(X)
         if isinstance(X, pd.DataFrame):
-            return from_nested_to_2d_numpy(X)
+            return from_nested_to_2d_array(X)
         else:
-            return from_3d_numpy_to_2d_numpy(X)
+            return from_3d_numpy_to_2d_array(X)
 
     def inverse_transform(self, X, y=None):
         """Transform tabular pandas dataframe into nested dataframe.
@@ -83,6 +83,6 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
             # scikit-learn's input validation function
         X = check_array(X)
 
-        Xt = from_2d_numpy_to_nested(X, time_index=self._time_index)
+        Xt = from_2d_array_to_nested(X, time_index=self._time_index)
         Xt.columns = self._columns
         return Xt

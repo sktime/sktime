@@ -6,15 +6,15 @@ from sklearn.decomposition import PCA
 
 from sktime.exceptions import NotFittedError
 from sktime.transformers.series_as_features.pca import PCATransformer
-from sktime.utils._testing import _generate_df_from_array
-from sktime.utils.data_container import from_2d_numpy_to_nested
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils._testing.series_as_features import _make_nested_from_array
+from sktime.utils.data_container import from_2d_array_to_nested
+from sktime.utils.data_container import from_nested_to_2d_array
 
 
 # Check that exception is raised for bad input args.
 @pytest.mark.parametrize("bad_components", ["str", 1.2, -1.2, -1, 11])
 def test_bad_input_args(bad_components):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if isinstance(bad_components, str):
         with pytest.raises(TypeError):
@@ -38,14 +38,14 @@ def test_bad_input_args(bad_components):
 )
 def test_pca_kwargs(kwargs):
     np.random.seed(42)
-    X = from_2d_numpy_to_nested(pd.DataFrame(data=np.random.randn(10, 5)))
+    X = from_2d_array_to_nested(pd.DataFrame(data=np.random.randn(10, 5)))
     pca = PCATransformer(n_components=1, **kwargs)
     pca.fit_transform(X)
 
 
 # Test that PCATransformer fails if attempt to transform before fit
 def test_early_trans_fail():
-    X = _generate_df_from_array(np.ones(10), n_rows=1, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=1, n_columns=1)
     pca = PCATransformer(n_components=1)
 
     with pytest.raises(NotFittedError):
@@ -64,7 +64,7 @@ def test_early_trans_fail():
 )
 def test_output_format_dim(len_series, n_instances, n_components):
     np.random.seed(42)
-    X = from_2d_numpy_to_nested(
+    X = from_2d_array_to_nested(
         pd.DataFrame(data=np.random.randn(n_instances, len_series))
     )
 
@@ -76,8 +76,8 @@ def test_output_format_dim(len_series, n_instances, n_components):
     assert Xt.shape[0] == X.shape[0]
 
     # Check number of principal components in the output.
-    assert from_nested_to_2d_numpy(Xt).shape[1] == min(
-        n_components, from_nested_to_2d_numpy(X).shape[1]
+    assert from_nested_to_2d_array(Xt).shape[1] == min(
+        n_components, from_nested_to_2d_array(X).shape[1]
     )
 
 
@@ -93,8 +93,8 @@ def test_pca_results(n_components):
     Xt1 = pca.fit_transform(X)
 
     # sktime
-    Xs = from_2d_numpy_to_nested(X)
+    Xs = from_2d_array_to_nested(X)
     pca_transform = PCATransformer(n_components=n_components)
     Xt2 = pca_transform.fit_transform(Xs)
 
-    assert np.allclose(np.asarray(Xt1), np.asarray(from_nested_to_2d_numpy(Xt2)))
+    assert np.allclose(np.asarray(Xt1), np.asarray(from_nested_to_2d_array(Xt2)))

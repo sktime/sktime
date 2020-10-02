@@ -4,7 +4,7 @@ from sktime.datasets.base import _load_dataset
 from sktime.transformers.series_as_features.truncation import TruncationTransformer
 
 # from sklearn.ensemble import RandomForestClassifier
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 
 # import pandas as pd
 
@@ -22,7 +22,7 @@ def test_truncation_transformer():
 
     # when we tabulrize the data it has 12 dimensions
     # and we've truncated them all to 5 long.
-    data = from_nested_to_2d_numpy(Xt)
+    data = from_nested_to_2d_array(Xt)
     assert len(data.columns) == 5 * 12
 
 
@@ -39,5 +39,5 @@ def test_truncation_paramterised_transformer():
 
     # when we tabulrize the data it has 12 dimensions
     # and we've truncated them all to (10-2) long.
-    data = from_nested_to_2d_numpy(Xt)
+    data = from_nested_to_2d_array(Xt)
     assert len(data.columns) == 8 * 12

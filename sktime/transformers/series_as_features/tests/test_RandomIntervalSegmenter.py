@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 N_ITER = 10
 
@@ -14,7 +14,9 @@ N_ITER = 10
 @pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [0.1, 1.0, 1, 3, 10, "sqrt", "random", "log"])
 def test_output_format_dim(n_timepoints, n_instances, n_intervals):
-    X = _generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
+    X = _make_nested_from_array(
+        np.ones(n_timepoints), n_instances=n_instances, n_columns=1
+    )
 
     trans = RandomIntervalSegmenter(n_intervals=n_intervals)
     Xt = trans.fit_transform(X)
@@ -38,7 +40,7 @@ def test_output_format_dim(n_timepoints, n_instances, n_intervals):
 # Check that exception is raised for bad input args.
 @pytest.mark.parametrize("bad_interval", [0, -0, "str", 1.2, -1.2, -1])
 def test_bad_input_args(bad_interval):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=2)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=2)
     with pytest.raises(ValueError):
         RandomIntervalSegmenter(n_intervals=bad_interval).fit(X)
 

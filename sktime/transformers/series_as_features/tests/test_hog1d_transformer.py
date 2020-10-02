@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 import numbers
 from sktime.transformers.series_as_features.hog1d import HOG1DTransformer
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 
 
 # Check that exception is raised for bad num intervals.
@@ -13,7 +13,7 @@ from sktime.utils._testing import _generate_df_from_array
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 11, 0])
 def test_bad_num_intervals(bad_num_intervals):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_num_intervals, int):
         with pytest.raises(TypeError):
@@ -29,7 +29,7 @@ def test_bad_num_intervals(bad_num_intervals):
 # correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.parametrize("bad_num_bins", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_num_bins(bad_num_bins):
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_num_bins, int):
         with pytest.raises(TypeError):
@@ -47,7 +47,7 @@ def test_bad_num_bins(bad_num_bins):
 @pytest.mark.parametrize("bad_scaling_factor", ["str", 1.2, -1.2, -1, {}, 0])
 def test_bad_scaling_factor(bad_scaling_factor):
 
-    X = _generate_df_from_array(np.ones(10), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
 
     if not isinstance(bad_scaling_factor, numbers.Number):
         with pytest.raises(TypeError):
@@ -59,8 +59,8 @@ def test_bad_scaling_factor(bad_scaling_factor):
 # Check the transformer has changed the data correctly.
 def test_output_of_transformer():
 
-    X = _generate_df_from_array(
-        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_rows=1, n_cols=1
+    X = _make_nested_from_array(
+        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=1
     )
 
     h = HOG1DTransformer().fit(X)
@@ -69,8 +69,8 @@ def test_output_of_transformer():
     orig.columns = X.columns
     assert check_if_dataframes_are_equal(res, orig)
 
-    X = _generate_df_from_array(
-        np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3, 0.2]), n_rows=1, n_cols=1
+    X = _make_nested_from_array(
+        np.array([-5, 2.5, 1, 3, 10, -1.5, 6, 12, -3, 0.2]), n_instances=1, n_columns=1
     )
     h = h.fit(X)
     res = h.transform(X)
@@ -84,7 +84,7 @@ def test_output_of_transformer():
 @pytest.mark.parametrize("num_bins,corr_series_length", [(4, 8), (8, 16), (12, 24)])
 def test_output_dimensions(num_bins, corr_series_length):
 
-    X = _generate_df_from_array(np.ones(13), n_rows=10, n_cols=1)
+    X = _make_nested_from_array(np.ones(13), n_instances=10, n_columns=1)
 
     h = HOG1DTransformer(num_bins=num_bins).fit(X)
     res = h.transform(X)
@@ -102,8 +102,8 @@ def test_output_dimensions(num_bins, corr_series_length):
 # This is to check that HOG1D produces the same result along each dimension
 def test_hog1d_performs_correcly_along_each_dim():
 
-    X = _generate_df_from_array(
-        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_rows=1, n_cols=2
+    X = _make_nested_from_array(
+        np.array([4, 6, 10, 12, 8, 6, 5, 5]), n_instances=1, n_columns=2
     )
 
     h = HOG1DTransformer().fit(X)

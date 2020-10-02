@@ -27,8 +27,8 @@ from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.base import is_classifier
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.base import is_forecaster
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
@@ -60,14 +60,11 @@ def check_estimator(Estimator, exclude=None):
     AssertionError
         If Estimator does not comply
     """
-    for check in yield_estimator_checks():
-
-        # check if associated test is not included in the exclusion list
-        if check.__name__ not in exclude:
-            check(Estimator)
+    for check in yield_estimator_checks(exclude=exclude):
+        check(Estimator)
 
 
-def yield_estimator_checks():
+def yield_estimator_checks(exclude=None):
     """Iterator to yield estimator checks"""
     checks = [
         check_inheritance,
@@ -86,7 +83,11 @@ def yield_estimator_checks():
         check_methods_do_not_change_state,
         check_persistence_via_pickle,
     ]
-    yield from checks
+    for check in checks:
+        # check if associated test is not included in the exclusion list
+        if check.__name__ in exclude:
+            continue
+        yield check
 
 
 def check_required_params(Estimator):

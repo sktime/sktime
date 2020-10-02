@@ -4,7 +4,7 @@ import pandas as pd
 import math
 import statistics
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -53,7 +53,7 @@ class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
 
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
-            arr = from_nested_to_2d_numpy(pd.DataFrame(X[x]), return_array=True)
+            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_array=True)
 
             # Calculate gradients
             transformedData = []

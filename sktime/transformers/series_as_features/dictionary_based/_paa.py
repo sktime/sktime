@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Matthew Middlehurst"
@@ -71,7 +71,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         return result
 
     def _perform_paa_along_dim(self, X):
-        X = from_nested_to_2d_numpy(X, return_array=True)
+        X = from_nested_to_2d_array(X, return_array=True)
 
         num_atts = X.shape[1]
         num_insts = X.shape[0]

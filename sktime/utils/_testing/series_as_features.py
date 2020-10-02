@@ -84,7 +84,7 @@ def make_classification_problem(
 
 
 def make_regression_problem(
-    n_instances=5, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
+    n_instances=15, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
 ):
     y = _make_regression_y(
         n_instances, random_state=random_state, return_numpy=return_numpy
@@ -93,3 +93,10 @@ def make_regression_problem(
         y, n_columns, n_timepoints, return_numpy=return_numpy, random_state=random_state
     )
     return X, y
+
+
+def _make_nested_from_array(array, n_instances=10, n_columns=1):
+    return pd.DataFrame(
+        [[pd.Series(array) for _ in range(n_columns)] for _ in range(n_instances)],
+        columns=[f"col{c}" for c in range(n_columns)],
+    )

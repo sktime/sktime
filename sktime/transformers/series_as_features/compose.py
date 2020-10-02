@@ -15,9 +15,9 @@ from sktime.transformers.series_as_features.base import (
     _NonFittableSeriesAsFeaturesTransformer,
 )
 from sktime.utils.data_container import _concat_nested_arrays
-from sktime.utils.data_container import from_2d_numpy_to_nested
-from sktime.utils.data_container import from_3d_numpy_to_2d_numpy
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_2d_array_to_nested
+from sktime.utils.data_container import from_3d_numpy_to_2d_array
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
@@ -271,7 +271,7 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin
             # tabularise/unnest series-to-primitive transforms
             xt = Xt.iloc[0, 0]
             if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
-                Xt = from_nested_to_2d_numpy(Xt)
+                Xt = from_nested_to_2d_array(Xt)
         return Xt
 
 
@@ -303,7 +303,7 @@ class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
         # We concatenate by tabularizing all columns and then detabularizing
         # them into a single column
         if isinstance(X, pd.DataFrame):
-            Xt = from_nested_to_2d_numpy(X)
+            Xt = from_nested_to_2d_array(X)
         else:
-            Xt = from_3d_numpy_to_2d_numpy(X)
-        return from_2d_numpy_to_nested(Xt)
+            Xt = from_3d_numpy_to_2d_array(X)
+        return from_2d_array_to_nested(Xt)

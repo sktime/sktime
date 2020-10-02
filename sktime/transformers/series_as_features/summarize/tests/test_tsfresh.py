@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.model_selection import train_test_split
 from sktime.transformers.series_as_features.summarize import TSFreshFeatureExtractor
-from sktime.utils.data_container import from_nested_to_2d_numpy
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils._testing.series_as_features import make_classification_problem
 
 
@@ -20,7 +20,7 @@ def test_tsfresh_extractor(default_fc_parameters):
 
     Xt = transformer.fit_transform(X_train, y_train)
     actual = Xt.filter(like="__mean", axis=1).values.ravel()
-    expected = from_nested_to_2d_numpy(X_train).mean(axis=1).values
+    expected = from_nested_to_2d_array(X_train).mean(axis=1).values
 
     assert expected[0] == X_train.iloc[0, 0].mean()
     np.testing.assert_allclose(actual, expected)

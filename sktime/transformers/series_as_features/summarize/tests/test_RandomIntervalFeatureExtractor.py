@@ -11,7 +11,7 @@ from sktime.transformers.series_as_features.segment import RandomIntervalSegment
 from sktime.transformers.series_as_features.summarize import (
     RandomIntervalFeatureExtractor,
 )
-from sktime.utils._testing import _generate_df_from_array
+from sktime.utils._testing.series_as_features import _make_nested_from_array
 from sktime.utils.time_series import time_series_slope
 
 
@@ -23,7 +23,9 @@ from sktime.utils.time_series import time_series_slope
     "features", [[np.mean], [np.mean, np.median], [np.mean, np.median, np.mean]]
 )
 def test_output_format_dim(n_instances, n_timepoints, n_intervals, features):
-    X = _generate_df_from_array(np.ones(n_timepoints), n_rows=n_instances, n_cols=1)
+    X = _make_nested_from_array(
+        np.ones(n_timepoints), n_instances=n_instances, n_columns=1
+    )
     n_rows, n_cols = X.shape
     trans = RandomIntervalFeatureExtractor(n_intervals=n_intervals, features=features)
     Xt = trans.fit_transform(X)
@@ -55,7 +57,7 @@ def test_bad_features(bad_features):
 @pytest.mark.parametrize("n_intervals", [1, 3, "log", "sqrt", "random"])
 def test_results(n_instances, n_timepoints, n_intervals):
     x = np.random.normal(size=n_timepoints)
-    X = _generate_df_from_array(x, n_rows=n_instances, n_cols=1)
+    X = _make_nested_from_array(x, n_instances=n_instances, n_columns=1)
     t = RandomIntervalFeatureExtractor(
         n_intervals=n_intervals, features=[np.mean, np.std, time_series_slope]
     )
