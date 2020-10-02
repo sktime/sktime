@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pytest
-from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import train_test_split
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.datasets import load_gunpoint
@@ -15,9 +14,6 @@ def test_on_gunpoint(n_jobs):
 
     tsf = TimeSeriesForest(random_state=42, n_estimators=20, n_jobs=n_jobs)
     tsf.fit(X_train, y_train)
-
-    n_classes = len(np.unique(y))
-    proba = tsf.predict_proba(X_test)
 
     tsf_score = tsf.score(X_test, y_test)
 
