@@ -22,10 +22,9 @@ class StackingForecaster(RequiredForecastingHorizonMixin,
     _required_parameters = ["forecasters", "final_regressor"]
 
     def __init__(self, forecasters, final_regressor, n_jobs=None):
+        super(StackingForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
         self.final_regressor = final_regressor
         self.final_regressor_ = None
-        self.n_jobs = n_jobs
-        super(StackingForecaster, self).__init__(forecasters=forecasters)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.

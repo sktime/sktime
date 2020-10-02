@@ -27,8 +27,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None):
-        self.n_jobs = n_jobs
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters)
+        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
