@@ -1,15 +1,36 @@
 Changelog
 =========
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
-The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
-
-We keep track of changes in this file since v0.4.0.
-
-
-[0.4.2] - 2020-xx-xx
+[0.4.3] - 2020-xx-xx
 --------------------
+
+
+[0.4.2] - 2020-10-01
+--------------------
+
+Added
+~~~~~
+* ETSModel with auto-fitting capability (#393) @HYang1996
+* WEASEL classifier (#391) @patrickzib
+* Full support for exogenous data in forecasting framework (#382) @mloning, (#380) @mloning
+* Multivariate dataset for US consumption over time (#385) @SebasKoel
+* Governance document (#324) @mloning, @fkiraly
+
+Fixed
+~~~~~
+* Documentation fixes (#400) @brettkoonce, (#399) @akanz1, (#404) @alwinw
+
+Changed
+~~~~~~~
+* Move documentation to ReadTheDocs with support for versioned documentation (#395) @mloning
+* Refactored SFA implementation (additional features and speed improvements) (#389) @patrickzib
+* Move prediction interval API to base classes in forecasting framework (#387) @big-o
+* Documentation improvements (#364) @mloning
+* Update CI and maintenance tools (#394) @mloning
+
+All contributors: @HYang1996, @SebasKoel, @fkiraly, @akanz1, @alwinw, @big-o, @brettkoonce, @mloning, @patrickzib
 
 
 [0.4.1] - 2020-07-09
@@ -69,7 +90,6 @@ Removed
 ~~~~~~~
 - A few redundant classes for the series-as-features setting in favour of scikit-learn's implementations: :code:`Pipeline` and :code:`GridSearchCV`
 - :code:`HomogeneousColumnEnsembleClassifier` in favour of more flexible :code:`ColumnEnsembleClassifier`
-
 
 Fixed
 ~~~~~
