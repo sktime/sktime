@@ -27,9 +27,13 @@ MIN_REQUIREMENTS = {
     "statsmodels": "0.12.0",
 }
 EXTRAS_REQUIRE = {
-    "series_as_features": ["tsfresh>=0.17.0"],
-    "auto_ARIMA": ["pmdarima>=1.7.1"],
-    "evaluator": ["scikit_posthocs>= 0.6.5"],
+    "all_extras": [
+        "tsfresh>=0.17.0",
+        "pmdarima>=1.7.1",
+        "scikit_posthocs>= 0.6.5",
+        "seaborn>=0.11.0",
+        "matplotlib>=3.3.2",
+    ],
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
