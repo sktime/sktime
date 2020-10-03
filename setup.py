@@ -23,10 +23,8 @@ MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
-    "pmdarima": "1.7.1",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.0",
-    "tsfresh": "0.17.1",
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -134,7 +132,7 @@ class CleanCommand(Clean):
         cwd = os.path.abspath(os.path.dirname(__file__))
         remove_c_files = not os.path.exists(os.path.join(cwd, "PKG-INFO"))
         if remove_c_files:
-            print("Will remove generated .c files")
+            print("Will remove generated .c files")  # noqa: T001
         if os.path.exists("build"):
             shutil.rmtree("build")
         for dirpath, dirnames, filenames in os.walk("sktime"):
