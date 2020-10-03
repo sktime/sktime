@@ -71,7 +71,6 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/sophijka"><img src="https://avatars2.githubusercontent.com/u/47450591?v=4?s=100" width="100px;" alt=""/><br /><sub><b>sophijka</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=sophijka" title="Documentation">📖</a> <a href="#maintenance-sophijka" title="Maintenance">🚧</a></td>
     <td align="center"><a href="https://github.com/sri1419"><img src="https://avatars2.githubusercontent.com/u/65078278?v=4?s=100" width="100px;" alt=""/><br /><sub><b>sri1419</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=sri1419" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/vedazeren"><img src="https://avatars3.githubusercontent.com/u/63582874?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vedazeren</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Code">💻</a> <a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Tests">⚠️</a></td>
-    <td align="center"><a href="https://github.com/alwinw"><img src="https://avatars3.githubusercontent.com/u/16846521?s=80&v=4" width="100px;" alt=""/><br /><sub><b>alwinw</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=alwinw" title="Documentation">📖</a></td>
   </tr>
 </table>
 
