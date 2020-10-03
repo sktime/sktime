@@ -8,9 +8,11 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 from warnings import warn
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.check_imports import _check_imports
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
+
+_check_imports("tsfresh")
 
 
 class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
@@ -68,22 +70,17 @@ class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
     def _get_extraction_params(self):
         """Helper function to set default parameters from tsfresh"""
         # lazy imports to avoid hard dependency
-        try:
-            from tsfresh.defaults import CHUNKSIZE
-            from tsfresh.defaults import DISABLE_PROGRESSBAR
-            from tsfresh.utilities.dataframe_functions import impute
-            from tsfresh.defaults import N_PROCESSES
-            from tsfresh.defaults import PROFILING
-            from tsfresh.defaults import PROFILING_FILENAME
-            from tsfresh.defaults import PROFILING_SORTING
-            from tsfresh.defaults import SHOW_WARNINGS
-            from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
-            from tsfresh.feature_extraction.settings import EfficientFCParameters
-            from tsfresh.feature_extraction.settings import MinimalFCParameters
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install tsfresh` to install tsfresh"
-            ) from e
+        from tsfresh.defaults import CHUNKSIZE
+        from tsfresh.defaults import DISABLE_PROGRESSBAR
+        from tsfresh.utilities.dataframe_functions import impute
+        from tsfresh.defaults import N_PROCESSES
+        from tsfresh.defaults import PROFILING
+        from tsfresh.defaults import PROFILING_FILENAME
+        from tsfresh.defaults import PROFILING_SORTING
+        from tsfresh.defaults import SHOW_WARNINGS
+        from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
+        from tsfresh.feature_extraction.settings import EfficientFCParameters
+        from tsfresh.feature_extraction.settings import MinimalFCParameters
 
         # Set defaults from tsfresh
         extraction_params = {
@@ -164,12 +161,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         Xt = from_nested_to_long(X)
 
         # lazy imports to avoid hard dependency
-        try:
-            from tsfresh import extract_features
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install tsfresh` to install tsfresh"
-            ) from e
+        from tsfresh import extract_features
 
         extraction_params = self._get_extraction_params()
         Xt = extract_features(
@@ -243,17 +235,12 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
     def _get_selection_params(self):
         """Helper function to set default values from tsfresh"""
         # lazy imports to avoid hard dependency
-        try:
-            from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
-            from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
-            from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
-            from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
-            from tsfresh.defaults import FDR_LEVEL
-            from tsfresh.defaults import HYPOTHESES_INDEPENDENT
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install tsfresh` to install tsfresh"
-            ) from e
+        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_BINARY_FEATURE
+        from tsfresh.defaults import TEST_FOR_BINARY_TARGET_REAL_FEATURE
+        from tsfresh.defaults import TEST_FOR_REAL_TARGET_BINARY_FEATURE
+        from tsfresh.defaults import TEST_FOR_REAL_TARGET_REAL_FEATURE
+        from tsfresh.defaults import FDR_LEVEL
+        from tsfresh.defaults import HYPOTHESES_INDEPENDENT
 
         # Set defaults
         selection_params = {
@@ -288,12 +275,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         self : an instance of self
         """
         # lazy imports to avoid hard dependency
-        try:
-            from tsfresh.transformers.feature_selector import FeatureSelector
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install tsfresh` to install tsfresh"
-            ) from e
+        from tsfresh.transformers.feature_selector import FeatureSelector
 
         # input checks
         if y is None:

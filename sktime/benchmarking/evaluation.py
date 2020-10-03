@@ -8,12 +8,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.stats import ranksums
-from scipy.stats import ttest_ind
+from scipy.stats import ranksums, ttest_ind
+
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
+from sktime.utils.check_imports import _check_imports
 
 plt.style.use("seaborn-ticks")
+
+
+_check_imports("scikit_posthocs")
 
 
 class Evaluator:
@@ -400,12 +404,7 @@ class Evaluator:
         <https://github.com/maximtrp/scikit-posthocs>`_.
         """
         # lazy import to avoid hard dependency
-        try:
-            from scikit_posthocs import posthoc_nemenyi
-        except ModuleNotFoundError as e:
-            raise Exception(
-                f"{e}, please run `pip install scikit_posthocs` to install scikit_posthocs"  # noqa: E501
-            ) from e
+        from scikit_posthocs import posthoc_nemenyi
 
         self._check_is_evaluated()
         metric_name = self._validate_metric_name(metric_name)
