@@ -11,17 +11,24 @@ To find out more about how to take part in sktime's community, check out our [go
 Contents
 --------
 
-* [How to get started](#Getting-started)
-* [Where to contribute](#Where-to-contribute?)
-* [Acknowledging contributions](#Acknowledging-contributions)
-* [Reporting bugs](#Reporting-bugs)
-* [Git and GitHub workflow](#Git-and-GitHub-workflow)
-* [Continuous integration](#Continuous-integration)
-* [Documentation](#Documentation)
-* [Dependencies](#Dependencies)
-* [Coding style](#Coding-style)
-* [Infrastructure](#Infrastructure)
-* [Release instructions](#Release-instructions)
+- [How to contribute](#how-to-contribute)
+  - [Contents](#contents)
+  - [How to get started](#how-to-get-started)
+  - [Where to contribute](#where-to-contribute)
+    - [Areas of contribution](#areas-of-contribution)
+    - [Roadmap](#roadmap)
+  - [Acknowledging contributions](#acknowledging-contributions)
+  - [Reporting bugs](#reporting-bugs)
+  - [Git and GitHub workflow](#git-and-github-workflow)
+  - [Continuous integration](#continuous-integration)
+    - [Code quality checks](#code-quality-checks)
+    - [Unit testing](#unit-testing)
+    - [Test coverage](#test-coverage)
+  - [Documentation](#documentation)
+  - [Dependencies](#dependencies)
+  - [Coding style](#coding-style)
+  - [Infrastructure](#infrastructure)
+  - [Release instructions](#release-instructions)
 
 
 How to get started
@@ -42,16 +49,16 @@ Where to contribute
 
 We value all kinds of contributions - not just code. The following table gives an overview of key contribution areas.
 
-| Area | Description |
-|---|---|
-| Documentation | Improve or add docstrings, glossary terms, the user guide, and the example notebooks |
-| Testing | Report bugs, improve or add unit tests, conduct field testing on real-world data sets |
-| Code | Improve or add functionality, fix bugs |
-| Mentoring | Onboarding and mentoring of new contributors |
-| Outreach | Organize talks, tutorials or workshops, write blog posts |
-| Maintenance | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests |
-| API design | Design interfaces for estimators and other functionality |
-| Project management | Finding funding, organising meetings, initiating new collaborations |
+| Area               | Description                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Documentation      | Improve or add docstrings, glossary terms, the user guide, and the example notebooks                                  |
+| Testing            | Report bugs, improve or add unit tests, conduct field testing on real-world data sets                                 |
+| Code               | Improve or add functionality, fix bugs                                                                                |
+| Mentoring          | Onboarding and mentoring of new contributors                                                                          |
+| Outreach           | Organize talks, tutorials or workshops, write blog posts                                                              |
+| Maintenance        | Improve development operations (continuous integration pipeline, GitHub bots), manage and review issues/pull requests |
+| API design         | Design interfaces for estimators and other functionality                                                              |
+| Project management | Finding funding, organising meetings, initiating new collaborations                                                   |
 
 
 ### Roadmap
@@ -172,7 +179,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
 1.  Install extra requirements from the root directory of sktime:
 
     ```bash
-    pip install -r build_tools/requirements.txt
+    pip install --editable .[all_extras]
     ```
 
 2.  Install the development version from the root directory:
@@ -253,14 +260,14 @@ Infrastructure
 
 This section gives an overview of the infrastructure and continuous integration services we use.
 
-| Platform | Operation | Configuration |
-|---|---|---|
-| [Travis](https://travis-ci.com/github/alan-turing-institute/sktime) | Build/test/distribute on MacOS | [.travis.yml](https://github.com/alan-turing-institute/sktime/blob/master/.travis.yml) |
-| [Appveyor](https://ci.appveyor.com/project/mloning/sktime)  | Build/test/distribute on Windows | [appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/master/appveyor.yml) |
-| [Azure Pipelines](https://dev.azure.com/mloning/sktime) | Build/test/distribute on Linux ([manylinux](https://github.com/pypa/manylinux)) | [azure-pipelines.yml](https://github.com/alan-turing-institute/sktime/blob/master/azure-pipelines.yml) |
-| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Code quality checks | [.github/workflows/code-quality.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml) |
-| [Read the Docs](https://readthedocs.org) | Build/deploy documentation | [.readthedocs.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml) |
-| [Codecov]() | Test coverage | [codecov.yml](https://github.com/alan-turing-institute/sktime/blob/master/codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/master/.coveragerc) |
+| Platform                                                                  | Operation                                                                       | Configuration                                                                                                                                                                  |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Travis](https://travis-ci.com/github/alan-turing-institute/sktime)       | Build/test/distribute on MacOS                                                  | [.travis.yml](https://github.com/alan-turing-institute/sktime/blob/master/.travis.yml)                                                                                         |
+| [Appveyor](https://ci.appveyor.com/project/mloning/sktime)                | Build/test/distribute on Windows                                                | [appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/master/appveyor.yml)                                                                                       |
+| [Azure Pipelines](https://dev.azure.com/mloning/sktime)                   | Build/test/distribute on Linux ([manylinux](https://github.com/pypa/manylinux)) | [azure-pipelines.yml](https://github.com/alan-turing-institute/sktime/blob/master/azure-pipelines.yml)                                                                         |
+| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Code quality checks                                                             | [.github/workflows/code-quality.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml)                                           |
+| [Read the Docs](https://readthedocs.org)                                  | Build/deploy documentation                                                      | [.readthedocs.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml)                                                             |
+| [Codecov]()                                                               | Test coverage                                                                   | [codecov.yml](https://github.com/alan-turing-institute/sktime/blob/master/codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/master/.coveragerc) |
 
 Additional scripts used for building, unit testing and distributing can be found in [build_tools/](https://github.com/alan-turing-institute/sktime/tree/master/build_tools).
 

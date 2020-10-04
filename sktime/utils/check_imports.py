@@ -2,7 +2,21 @@
 from importlib import import_module
 
 
-def _check_imports(*packages):
+def _check_soft_deps(*packages):
+    """
+    Check if the packages which are soft dependencies
+    for sktime are installed
+
+    Parameters
+    ----------
+    packages : single or multiple packages to check
+
+    Raises
+    ------
+    ModuleNotFoundError
+        User friendly error with suggested action to
+        install all soft dependencies
+    """
     for package in packages:
         try:
             import_module(package)

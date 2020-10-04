@@ -4,7 +4,7 @@ import pandas as pd
 
 from numba import njit, prange
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.check_imports import _check_imports
+from sktime.utils.check_imports import _check_soft_deps
 from sktime.utils.data_container import nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 
@@ -12,7 +12,7 @@ __author__ = "Angus Dempster"
 __all__ = ["Rocket"]
 
 
-_check_imports("numba")
+_check_soft_deps("numba")
 
 
 class Rocket(BaseSeriesAsFeaturesTransformer):

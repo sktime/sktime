@@ -12,9 +12,9 @@ from sktime.forecasting.base._sktime import (
     BaseSktimeForecaster,
     OptionalForecastingHorizonMixin,
 )
-from sktime.utils.check_imports import _check_imports
+from sktime.utils.check_imports import _check_soft_deps
 
-_check_imports("pmdarima")
+_check_soft_deps("pmdarima")
 
 
 class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):

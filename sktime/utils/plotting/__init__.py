@@ -9,10 +9,10 @@ import warnings
 
 import numpy as np
 
-from sktime.utils.check_imports import _check_imports
+from sktime.utils.check_imports import _check_soft_deps
 from sktime.utils.validation.forecasting import check_y
 
-_check_imports("matplotlib", "seaborn")
+_check_soft_deps("matplotlib", "seaborn")
 
 
 def plot_series(*series, labels=None):
