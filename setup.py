@@ -55,7 +55,7 @@ def find_version(*file_paths):
         raise RuntimeError("Unable to find version string.")
 
 
-WEBSITE = "https://alan-turing-institute.github.io/sktime/"
+WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
 DESCRIPTION = (
     "scikit-learn compatible Python toolbox for machine learning " "with time series"
