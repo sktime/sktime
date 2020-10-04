@@ -17,7 +17,7 @@ from sktime.utils.check_imports import _check_imports
 plt.style.use("seaborn-ticks")
 
 
-_check_imports("scikit_posthocs")
+_check_imports("matplotlib", "scikit_posthocs")
 
 
 class Evaluator:
