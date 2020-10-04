@@ -28,11 +28,13 @@ MIN_REQUIREMENTS = {
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
-        "tsfresh>=0.17.0",
+        "cython>=0.29.0",
+        "matplotlib>=3.3.2",
+        "numba<=0.50.*",
         "pmdarima>=1.7.1",
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
-        "matplotlib>=3.3.2",
+        "tsfresh>=0.17.0",
     ],
 }
 
@@ -57,9 +59,7 @@ def find_version(*file_paths):
 
 WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
-DESCRIPTION = (
-    "scikit-learn compatible Python toolbox for machine learning " "with time series"
-)
+DESCRIPTION = "A unified Python toolbox for machine learning " "with time series"
 with codecs.open("README.rst", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "F. Király"
