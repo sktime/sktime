@@ -29,12 +29,14 @@ def generate_df_from_array(array, n_rows=10, n_cols=1):
         columns=[f'col{c}' for c in range(n_cols)])
 
 
-def _construct_instance(Estimator, **extra_params):
+def _construct_instance(Estimator):
     """Construct Estimator instance if possible"""
 
     # construct with parameter configuration for testing
     if Estimator in ESTIMATOR_TEST_PARAMS:
-        params = dict(ESTIMATOR_TEST_PARAMS[Estimator])
+        params = ESTIMATOR_TEST_PARAMS[Estimator]
+        estimator = Estimator(**params)
+
     # otherwise construct with default parameters
     else:
         # if non-default parameters are required, but none have been found,
@@ -47,10 +49,8 @@ def _construct_instance(Estimator, **extra_params):
                                  f"but none have been found")
 
         # construct with default parameters if none are required
-        params = {}
+        estimator = Estimator()
 
-    params.update(extra_params)
-    estimator = Estimator(**params)
     return estimator
 
 

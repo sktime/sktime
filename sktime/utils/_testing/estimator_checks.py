@@ -438,20 +438,20 @@ def check_multiprocessing_determinism(Estimator):
         ops = ["predict", "predict_proba", "transform"]
         for op in ops:
             if hasattr(estimator, op):
-                X_test = _make_args(estimator, op)[0]
+                args = _make_args(estimator, op)[0]
                 result_set = []
                 for n_jobs in [1, 4]:
-                    estimator = _construct_instance(Estimator, n_jobs=n_jobs)
+                    estimator.set_params(n_jobs=n_jobs)
                     if hasattr(estimator, 'n_jobs'):
                         assert estimator.n_jobs == n_jobs
                     set_random_state(estimator)
                     estimator.fit(*fit_args)
-                    result_set.append(getattr(estimator, op)(X_test))
+                    result_set.append(getattr(estimator, op)(args))
 
                 if isinstance(result_set[0], pd.DataFrame):
                     assert_frame_equal(result_set[0], result_set[1])
                 else:
-                    np.testing.assert_array_almost_equal(
+                    np.testing.assert_array_equal(
                         result_set[0],
                         result_set[1],
                         err_msg="Results for test set not equal "
