@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ BOSS classifiers
 dictionary based BOSS classifiers based on SFA transform. Contains a single
 BOSS and a BOSS ensemble
@@ -19,15 +20,14 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.data_container import tabularize
 
 # from numba import njit
 # from numba.typed import Dict
 
-# TODO: Make more efficient
-
 
 class BOSSEnsemble(BaseClassifier):
-    """ Bag of SFA Symbols (BOSS)
+    """Bag of SFA Symbols (BOSS)
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from Schafer:
     @article
@@ -94,16 +94,17 @@ class BOSSEnsemble(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 randomised_ensemble=False,
-                 n_parameter_samples=250,
-                 threshold=0.92,
-                 max_ensemble_size=500,
-                 max_win_len_prop=1,
-                 time_limit=0.0,
-                 min_window=10,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        randomised_ensemble=False,
+        n_parameter_samples=250,
+        threshold=0.92,
+        max_ensemble_size=500,
+        max_win_len_prop=1,
+        time_limit=0.0,
+        min_window=10,
+        random_state=None,
+    ):
         self.randomised_ensemble = randomised_ensemble
         self.n_parameter_samples = n_parameter_samples
         self.threshold = threshold
@@ -158,6 +159,8 @@ class BOSSEnsemble(BaseClassifier):
         self.classifiers = []
         self.weights = []
 
+        X = tabularize(X, return_array=True)
+
         # Window length parameter space dependent on series length
 
         max_window_searches = self.series_length / 4
@@ -181,26 +184,32 @@ class BOSSEnsemble(BaseClassifier):
             if self.time_limit > 0:
                 self.n_parameter_samples = 0
 
-            while (train_time < self.time_limit or num_classifiers <
-                   self.n_parameter_samples) and len(possible_parameters) > 0:
+            while (
+                train_time < self.time_limit
+                or num_classifiers < self.n_parameter_samples
+            ) and len(possible_parameters) > 0:
                 parameters = possible_parameters.pop(
-                    rng.randint(0, len(possible_parameters)))
+                    rng.randint(0, len(possible_parameters))
+                )
 
-                subsample = rng.choice(self.n_instances, size=subsample_size,
-                                       replace=False)
-                X_subsample = X.iloc[subsample, :]
+                subsample = rng.choice(
+                    self.n_instances, size=subsample_size, replace=False
+                )
+                X_subsample = X[subsample]  # .iloc[subsample, :]
                 y_subsample = y[subsample]
 
-                boss = BOSSIndividual(*parameters,
-                                      alphabet_size=self.alphabet_size,
-                                      save_words=False,
-                                      random_state=self.random_state)
+                boss = BOSSIndividual(
+                    *parameters,
+                    alphabet_size=self.alphabet_size,
+                    save_words=False,
+                    random_state=self.random_state
+                )
                 boss.fit(X_subsample, y_subsample)
                 boss._clean()
 
-                boss.accuracy = self._individual_train_acc(boss, y_subsample,
-                                                           subsample_size,
-                                                           lowest_acc)
+                boss.accuracy = self._individual_train_acc(
+                    boss, y_subsample, subsample_size, lowest_acc
+                )
                 weight = math.pow(boss.accuracy, 4)
 
                 if num_classifiers < self.max_ensemble_size:
@@ -222,13 +231,16 @@ class BOSSEnsemble(BaseClassifier):
             max_acc = -1
             min_max_acc = -1
 
-            for i, normalise in enumerate(self.norm_options):
-                for win_size in range(self.min_window, max_window + 1,
-                                      win_inc):
-                    boss = BOSSIndividual(win_size, self.word_lengths[0],
-                                          normalise, self.alphabet_size,
-                                          save_words=True,
-                                          random_state=self.random_state)
+            for normalise in self.norm_options:
+                for win_size in range(self.min_window, max_window + 1, win_inc):
+                    boss = BOSSIndividual(
+                        win_size,
+                        self.word_lengths[0],
+                        normalise,
+                        self.alphabet_size,
+                        save_words=True,
+                        random_state=self.random_state,
+                    )
                     boss.fit(X, y)
 
                     best_classifier_for_win_size = boss
@@ -242,7 +254,8 @@ class BOSSEnsemble(BaseClassifier):
                             boss = boss._shorten_bags(word_len)
 
                         boss.accuracy = self._individual_train_acc(
-                            boss, y, self.n_instances, best_acc_for_win_size)
+                            boss, y, self.n_instances, best_acc_for_win_size
+                        )
 
                         # print(win_size, boss.accuracy)
                         if boss.accuracy >= best_acc_for_win_size:
@@ -250,32 +263,35 @@ class BOSSEnsemble(BaseClassifier):
                             best_classifier_for_win_size = boss
                             best_word_len = word_len
 
-                    if self._include_in_ensemble(best_acc_for_win_size,
-                                                 max_acc,
-                                                 min_max_acc,
-                                                 len(self.classifiers)):
+                    if self._include_in_ensemble(
+                        best_acc_for_win_size,
+                        max_acc,
+                        min_max_acc,
+                        len(self.classifiers),
+                    ):
                         best_classifier_for_win_size._clean()
-                        best_classifier_for_win_size._set_word_len(
-                            best_word_len)
+                        best_classifier_for_win_size._set_word_len(best_word_len)
                         self.classifiers.append(best_classifier_for_win_size)
 
                         # print("appending", best_acc_for_win_size, win_size)
                         if best_acc_for_win_size > max_acc:
                             max_acc = best_acc_for_win_size
-                            self.classifiers = list(compress(
-                                self.classifiers, [
-                                    classifier.accuracy >= max_acc *
-                                    self.threshold for c, classifier in
-                                    enumerate(self.classifiers)]))
+                            self.classifiers = list(
+                                compress(
+                                    self.classifiers,
+                                    [
+                                        classifier.accuracy >= max_acc * self.threshold
+                                        for c, classifier in enumerate(self.classifiers)
+                                    ],
+                                )
+                            )
 
-                        min_max_acc, min_acc_ind = \
-                            self._worst_ensemble_acc()
+                        min_max_acc, min_acc_ind = self._worst_ensemble_acc()
 
                         if len(self.classifiers) > self.max_ensemble_size:
                             if min_acc_ind > -1:
                                 del self.classifiers[min_acc_ind]
-                                min_max_acc, min_acc_ind = \
-                                    self._worst_ensemble_acc()
+                                min_max_acc, min_acc_ind = self._worst_ensemble_acc()
 
             self.weights = [1 for n in range(len(self.classifiers))]
 
@@ -287,13 +303,17 @@ class BOSSEnsemble(BaseClassifier):
 
     def predict(self, X):
         rng = check_random_state(self.random_state)
-        return np.array([self.classes_[int(rng.choice(
-            np.flatnonzero(prob == prob.max())))] for prob
-                in self.predict_proba(X)])
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in self.predict_proba(X)
+            ]
+        )
 
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
+        X = tabularize(X, return_array=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -328,13 +348,14 @@ class BOSSEnsemble(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = (np.ones(self.n_classes) * np.sum(self.weights))
+        divisor = np.ones(self.n_classes) * np.sum(self.weights)
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                    self.weights[n]
+                sums[
+                    self.class_dictionary.get(clf._train_predict(i), -1)
+                ] += self.weights[n]
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -343,11 +364,12 @@ class BOSSEnsemble(BaseClassifier):
         return results
 
     def _unique_parameters(self, max_window, win_inc):
-        possible_parameters = [[win_size, word_len, normalise] for n, normalise
-                               in enumerate(self.norm_options)
-                               for win_size in
-                               range(self.min_window, max_window + 1, win_inc)
-                               for g, word_len in enumerate(self.word_lengths)]
+        possible_parameters = [
+            [win_size, word_len, normalise]
+            for n, normalise in enumerate(self.norm_options)
+            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for g, word_len in enumerate(self.word_lengths)
+        ]
 
         return possible_parameters
 
@@ -368,20 +390,21 @@ class BOSSEnsemble(BaseClassifier):
 
 
 class BOSSIndividual(BaseClassifier):
-    """ Single Bag of SFA Symbols (BOSS) classifier
+    """Single Bag of SFA Symbols (BOSS) classifier
 
     Bag of SFA Symbols Ensemble: implementation of BOSS from Schaffer :
     @article
     """
 
-    def __init__(self,
-                 window_size=10,
-                 word_length=8,
-                 norm=False,
-                 alphabet_size=4,
-                 save_words=True,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        window_size=10,
+        word_length=8,
+        norm=False,
+        alphabet_size=4,
+        save_words=True,
+        random_state=None,
+    ):
         self.window_size = window_size
         self.word_length = word_length
         self.norm = norm
@@ -390,12 +413,16 @@ class BOSSIndividual(BaseClassifier):
         self.save_words = save_words
         self.random_state = random_state
 
-        self.transformer = SFA(word_length=word_length,
-                               alphabet_size=alphabet_size,
-                               window_size=window_size, norm=norm,
-                               remove_repeat_words=True,
-                               bigrams=False,
-                               save_words=save_words)
+        self.transformer = SFA(
+            word_length=word_length,
+            alphabet_size=alphabet_size,
+            window_size=window_size,
+            norm=norm,
+            remove_repeat_words=True,
+            bigrams=False,
+            return_pandas_data_series=False,
+            save_words=save_words,
+        )
         self.transformed_data = []
         self.accuracy = 0
 
@@ -406,10 +433,13 @@ class BOSSIndividual(BaseClassifier):
         super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X, y = check_X_y(X, y, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa.iloc[:, 0]
+        self.transformed_data = sfa[0]  # .iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -422,23 +452,25 @@ class BOSSIndividual(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+
+        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
+            X = check_X(X, enforce_univariate=True)
+            X = tabularize(X, return_array=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags.iloc[:, 0]
+        test_bags = test_bags[0]  # .iloc[:, 0]
 
-        for i, test_bag in enumerate(test_bags):
+        for test_bag in test_bags:
             best_dist = sys.float_info.max
             nn = None
 
             for n, bag in enumerate(self.transformed_data):
                 dist = boss_distance(test_bag, bag, best_dist)
 
-                if dist < best_dist or (dist == best_dist and rng.random()
-                                        < 0.5):
+                if dist < best_dist or (dist == best_dist and rng.random() < 0.5):
                     best_dist = dist
                     nn = self.class_vals[n]
 
@@ -473,13 +505,17 @@ class BOSSIndividual(BaseClassifier):
         return nn
 
     def _shorten_bags(self, word_len):
-        new_boss = BOSSIndividual(self.window_size, word_len,
-                                  self.norm, self.alphabet_size,
-                                  save_words=self.save_words,
-                                  random_state=self.random_state)
+        new_boss = BOSSIndividual(
+            self.window_size,
+            word_len,
+            self.norm,
+            self.alphabet_size,
+            save_words=self.save_words,
+            random_state=self.random_state,
+        )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa.iloc[:, 0]
+        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes
@@ -502,20 +538,24 @@ class BOSSIndividual(BaseClassifier):
 # def _dist(val_a, val_b):
 #     return (val_a - val_b) * (val_a - val_b)
 
+
 def boss_distance(first, second, best_dist=sys.float_info.max):
     dist = 0
 
     if isinstance(first, dict):
         for word, val_a in first.items():
             val_b = second.get(word, 0)
-            buf = (val_a - val_b)
+            buf = val_a - val_b
             dist += buf * buf
 
             if dist > best_dist:
                 return sys.float_info.max
     else:
-        dist = np.sum([0 if first[n] == 0 else (first[n] - second[n]) * (
-                first[n] - second[n])
-                       for n in range(len(first))])
+        dist = np.sum(
+            [
+                0 if first[n] == 0 else (first[n] - second[n]) * (first[n] - second[n])
+                for n in range(len(first))
+            ]
+        )
 
     return dist
