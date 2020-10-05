@@ -12,9 +12,7 @@ import numpy as np
 from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
-from sklearn.ensemble._base import _set_random_states
 from sklearn.ensemble._forest import ForestClassifier
-from sklearn.ensemble._forest import MAX_INT
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -51,7 +49,7 @@ def _transform(X, intervals):
     n_intervals, _ = intervals.shape
     transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
     for j in range(n_intervals):
-        X_slice = X[:, intervals[j][0]: intervals[j][1]]
+        X_slice = X[:, intervals[j][0] : intervals[j][1]]
         means = np.mean(X_slice, axis=1)
         std_dev = np.std(X_slice, axis=1)
         slope = _lsq_fit(X_slice)
@@ -62,11 +60,10 @@ def _transform(X, intervals):
     return transformed_x.T
 
 
-def _get_intervals(n_intervals, min_interval, series_length, random_state=None):
+def _get_intervals(n_intervals, min_interval, series_length, rng):
     """
     Generate random intervals for given parameters.
     """
-    rng = check_random_state(random_state)
     intervals = np.zeros((n_intervals, 2), dtype=int)
     for j in range(n_intervals):
         intervals[j][0] = rng.randint(series_length - min_interval)
@@ -77,23 +74,19 @@ def _get_intervals(n_intervals, min_interval, series_length, random_state=None):
     return intervals
 
 
-def _fit_estimator(X, y, base_estimator, n_intervals, min_interval, random_state=None):
+def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
     """
     Fit an estimator - a clone of base_estimator - on input data (X, y)
     transformed using the randomly generated intervals.
     """
 
     estimator = clone(base_estimator)
-    if random_state is not None:
-        _set_random_states(estimator, random_state)
+    estimator.set_params(random_state=random_state)
 
-    _, series_length = X.shape
-    intervals = _get_intervals(n_intervals, min_interval, series_length, random_state)
     transformed_x = _transform(X, intervals)
-
     estimator.fit(transformed_x, y)
 
-    return estimator, intervals
+    return estimator
 
 
 def _predict_proba_for_estimator(X, estimator, intervals):
@@ -222,22 +215,21 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
 
-        self.classifiers = []
-        self.intervals = []
+        self.intervals = [
+            _get_intervals(self.n_intervals, self.min_interval, self.series_length, rng)
+            for _ in range(self.n_estimators)
+        ]
 
-        for estimator, intervals in Parallel(n_jobs=self.n_jobs)(
+        self.classifiers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
                 X,
                 y,
                 self.base_estimator,
-                self.n_intervals,
-                self.min_interval,
-                rng.randint(MAX_INT),
+                self.intervals[i],
+                self.random_state,
             )
-            for _ in range(self.n_estimators)
-        ):
-            self.classifiers.append(estimator)
-            self.intervals.append(intervals)
+            for i in range(self.n_estimators)
+        )
 
         self._is_fitted = True
         return self
