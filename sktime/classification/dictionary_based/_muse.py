@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ WEASEL+MUSE classifier
 multivariate dictionary based classifier based on SFA transform, dictionaries
 and linear regression.
@@ -24,11 +25,12 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 
 from numba import njit
+
 # from numba.typed import Dict
 
 
 class MUSE(BaseClassifier):
-    """ WEASEL+MUSE (MUltivariate Symbolic Extension)
+    """WEASEL+MUSE (MUltivariate Symbolic Extension)
 
     MUSE: implementation of MUSE from Schäfer:
     @article{schafer2018multivariate,
@@ -86,14 +88,15 @@ class MUSE(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 anova=True,
-                 bigrams=True,
-                 window_inc=4,
-                 chi2_threshold=2,
-                 use_first_order_differences=True,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        anova=True,
+        bigrams=True,
+        window_inc=4,
+        chi2_threshold=2,
+        use_first_order_differences=True,
+        random_state=None,
+    ):
 
         # currently other values than 4 are not supported.
         self.alphabet_size = 4
@@ -172,25 +175,26 @@ class MUSE(BaseClassifier):
             win_inc = self.compute_window_inc(series_length)
 
             self.max_window = int(min(series_length, self.max_window))
-            self.window_sizes.append(list(range(self.min_window,
-                                                self.max_window,
-                                                win_inc)))
+            self.window_sizes.append(
+                list(range(self.min_window, self.max_window, win_inc))
+            )
 
-            self.highest_bits[ind] = math.ceil(math.log2(self.max_window))+1
+            self.highest_bits[ind] = math.ceil(math.log2(self.max_window)) + 1
 
             for window_size in self.window_sizes[ind]:
 
-                transformer = SFA(word_length=rng.choice(self.word_lengths),
-                                  alphabet_size=self.alphabet_size,
-                                  window_size=window_size,
-                                  norm=rng.choice(self.norm_options),
-                                  anova=self.anova,
-                                  binning_method=rng.choice(
-                                      self.binning_strategies),
-                                  bigrams=self.bigrams,
-                                  remove_repeat_words=False,
-                                  lower_bounding=False,
-                                  save_words=False)
+                transformer = SFA(
+                    word_length=rng.choice(self.word_lengths),
+                    alphabet_size=self.alphabet_size,
+                    window_size=window_size,
+                    norm=rng.choice(self.norm_options),
+                    anova=self.anova,
+                    binning_method=rng.choice(self.binning_strategies),
+                    bigrams=self.bigrams,
+                    remove_repeat_words=False,
+                    lower_bounding=False,
+                    save_words=False,
+                )
 
                 sfa_words = transformer.fit_transform(X_dim, y)
 
@@ -201,11 +205,11 @@ class MUSE(BaseClassifier):
                 relevant_features = {}
                 apply_chi_squared = self.chi2_threshold > 0
                 if apply_chi_squared:
-                    bag_vec \
-                        = DictVectorizer(sparse=False).fit_transform(bag)
+                    bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
                     chi2_statistics, p = chi2(bag_vec, y)
                     relevant_features = np.where(
-                       chi2_statistics >= self.chi2_threshold)[0]
+                        chi2_statistics >= self.chi2_threshold
+                    )[0]
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
@@ -214,26 +218,27 @@ class MUSE(BaseClassifier):
                 for j in range(len(bag)):
                     for (key, value) in bag[j].items():
                         # chi-squared test
-                        if (not apply_chi_squared) or \
-                                (key in relevant_features):
+                        if (not apply_chi_squared) or (key in relevant_features):
                             # append the prefices to the words to
                             # distinguish between window-sizes
-                            word = MUSE.shift_left(key, highest, ind,
-                                                   self.highest_dim_bit,
-                                                   window_size)
+                            word = MUSE.shift_left(
+                                key, highest, ind, self.highest_dim_bit, window_size
+                            )
 
                             all_words[j][word] = value
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=False),
             StandardScaler(with_mean=True, copy=False),
-            LogisticRegression(max_iter=5000,
-                               solver="liblinear",
-                               dual=True,
-                               # class_weight="balanced",
-                               penalty="l2",
-                               random_state=self.random_state)
-            )
+            LogisticRegression(
+                max_iter=5000,
+                solver="liblinear",
+                dual=True,
+                # class_weight="balanced",
+                penalty="l2",
+                random_state=self.random_state,
+            ),
+        )
 
         self.clf.fit(all_words, y)
         self._is_fitted = True
@@ -275,9 +280,9 @@ class MUSE(BaseClassifier):
                     for (key, value) in bag[j].items():
                         # append the prefices to the words to distinguish
                         # between window-sizes
-                        word = MUSE.shift_left(key, highest, ind,
-                                               self.highest_dim_bit,
-                                               window_size)
+                        word = MUSE.shift_left(
+                            key, highest, ind, self.highest_dim_bit, window_size
+                        )
 
                         bag_all_words[j][word] = value
 
