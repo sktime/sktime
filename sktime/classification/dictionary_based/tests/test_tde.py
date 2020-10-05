@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from numpy import testing
 
-from sktime.classification.dictionary_based._tde import \
-    TemporalDictionaryEnsemble, IndividualTDE
+from sktime.classification.dictionary_based._tde import (
+    TemporalDictionaryEnsemble,
+    IndividualTDE,
+)
 from sktime.datasets import load_gunpoint
 
 
