@@ -491,6 +491,33 @@
         "code",
         "tutorial"
       ]
+    },
+    {
+      "login": "akanz1",
+      "name": "Andreas Kanz",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/51492342?v=4",
+      "profile": "https://github.com/akanz1",
+      "contributions": [
+        "tutorial"
+      ]
+    },
+    {
+      "login": "brettkoonce",
+      "name": "brett koonce",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/11281814?v=4",
+      "profile": "https://github.com/brettkoonce",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alwinw",
+      "name": "Alwin",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/16846521?v=4",
+      "profile": "https://github.com/alwinw",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",

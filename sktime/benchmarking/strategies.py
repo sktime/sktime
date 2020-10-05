@@ -72,7 +72,7 @@ class BaseStrategy(BaseEstimator):
         Parameters
         ----------
         task : Task
-            Task encapsualting metadata information on feature and target
+            Task encapsulating metadata information on feature and target
             variables to which to fit the data to.
         data : pandas.DataFrame
             Dataframe with feature and target variables as specified in task.

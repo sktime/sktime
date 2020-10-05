@@ -12,7 +12,7 @@ from sktime.base import BaseEstimator
 
 
 class BaseSingleSeriesTransformer(BaseEstimator):
-    """Base class for series-to-series tranformers"""
+    """Base class for series-to-series transformers"""
 
     def fit(self, y_train, **fit_params):
         """Fit to data.

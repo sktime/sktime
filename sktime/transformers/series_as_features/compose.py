@@ -71,7 +71,7 @@ class ColumnTransformer(_ColumnTransformer, BaseSeriesAsFeaturesTransformer,
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support `fit` and `transform`.
     sparse_threshold : float, default = 0.3
-        If the output of the different transfromers contains sparse matrices,
+        If the output of the different transformers contains sparse matrices,
         these will be stacked as a sparse matrix if the overall density is
         lower than this value. Use ``sparse_threshold=0`` to always return
         dense.  When the transformed output consists of all dense data, the
@@ -273,13 +273,13 @@ class RowTransformer(_NonFittableSeriesAsFeaturesTransformer,
 
 class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
     """Transformer that concatenates multivariate time series/panel data
-    into long univiariate time series/panel
+    into long univariate time series/panel
         data by simply concatenating times series in time.
     """
 
     def transform(self, X, y=None):
         """Concatenate multivariate time series/panel data into long
-        univiariate time series/panel
+        univariate time series/panel
         data by simply concatenating times series in time.
 
         Parameters
