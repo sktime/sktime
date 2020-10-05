@@ -1,16 +1,15 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__all__ = [
-    "Detrender"
-]
+__all__ = ["Detrender"]
 __author__ = ["Markus Löning"]
 
 from sklearn.base import clone
+
+from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.base._meta import MetaForecasterMixin
-from sktime.transformers.single_series.base import \
-    BaseSingleSeriesTransformer
+from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -91,8 +90,9 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         """
         self.check_is_fitted()
         y = check_y(y)
-        fh = self._get_relative_fh(y)
-        y_pred = self.forecaster_.predict(fh=fh, X=X)
+
+        fh = ForecastingHorizon(y.index, is_relative=False)
+        y_pred = self.forecaster_.predict(fh, X=X)
         return y - y_pred
 
     def inverse_transform(self, y, X=None):
@@ -113,12 +113,9 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         """
         self.check_is_fitted()
         y = check_y(y)
-        fh = self._get_relative_fh(y)
+        fh = ForecastingHorizon(y.index, is_relative=False)
         y_pred = self.forecaster_.predict(fh=fh, X=X)
         return y + y_pred
-
-    def _get_relative_fh(self, y):
-        return y.index.values - self.forecaster_.cutoff
 
     def update(self, y_new, update_params=False):
         """
