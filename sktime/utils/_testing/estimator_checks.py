@@ -435,10 +435,9 @@ def check_multiprocessing_determinism(Estimator):
     if 'n_jobs' in signature(Estimator.__init__).parameters:
         estimator = _construct_instance(Estimator)
         fit_args = _make_args(estimator, "fit")
-        ops = ["predict", "predict_proba", "transform"]
-        for op in ops:
-            if hasattr(estimator, op):
-                args = _make_args(estimator, op)[0]
+        for method in NON_STATE_CHANGING_METHODS:
+            if hasattr(estimator, method):
+                args = _make_args(estimator, method)[0]
                 result_set = []
                 for n_jobs in [1, 4]:
                     estimator.set_params(n_jobs=n_jobs)
@@ -446,7 +445,7 @@ def check_multiprocessing_determinism(Estimator):
                         assert estimator.n_jobs == n_jobs
                     set_random_state(estimator)
                     estimator.fit(*fit_args)
-                    result_set.append(getattr(estimator, op)(args))
+                    result_set.append(getattr(estimator, method)(args))
 
                 if isinstance(result_set[0], pd.DataFrame):
                     assert_frame_equal(result_set[0], result_set[1])
