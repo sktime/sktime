@@ -30,7 +30,7 @@ class URLs:
     DOCS_LOCAL = "file://" + os.path.realpath(
         os.path.join(ROOT_DIR, "docs/_build/html/index.html")
     )
-    DOCS_ONLINE = "https://alan-turing-institute.github.io/sktime/"
+    DOCS_ONLINE = "https://www.sktime.org"
     PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
     GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
