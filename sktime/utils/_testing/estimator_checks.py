@@ -457,7 +457,7 @@ def check_persistence_via_pickle(Estimator):
 
 
 def check_multiprocessing_determinism(Estimator):
-    if 'n_jobs' in signature(Estimator.__init__).parameters:
+    if "n_jobs" in signature(Estimator.__init__).parameters:
         estimator = _construct_instance(Estimator)
         fit_args = _make_args(estimator, "fit")
         for method in NON_STATE_CHANGING_METHODS:
@@ -466,7 +466,7 @@ def check_multiprocessing_determinism(Estimator):
                 result_set = []
                 for n_jobs in [1, 4]:
                     estimator.set_params(n_jobs=n_jobs)
-                    if hasattr(estimator, 'n_jobs'):
+                    if hasattr(estimator, "n_jobs"):
                         assert estimator.n_jobs == n_jobs
                     set_random_state(estimator)
                     estimator.fit(*fit_args)
@@ -479,5 +479,5 @@ def check_multiprocessing_determinism(Estimator):
                         result_set[0],
                         result_set[1],
                         err_msg="Results for test set not equal "
-                                "between 1 and 4 job run",
+                        "between 1 and 4 job run",
                     )
