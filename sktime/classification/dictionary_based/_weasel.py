@@ -108,7 +108,7 @@ class WEASEL(BaseClassifier):
                  anova=True,
                  bigrams=True,
                  binning_strategy="information-gain",
-                 window_inc=4,
+                 window_inc=2,
                  chi2_threshold=2,  # enabled by default
                  random_state=None
                  ):
@@ -121,8 +121,8 @@ class WEASEL(BaseClassifier):
 
         self.anova = anova
 
-        self.norm_options = [True, False]
-        self.word_lengths = [4, 6]
+        self.norm_options = [False]
+        self.word_lengths = [4]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
@@ -202,11 +202,13 @@ class WEASEL(BaseClassifier):
             if apply_chi_squared:
                 vectorizer = DictVectorizer(sparse=False)
                 bag_vec = vectorizer.fit_transform(bag)
+
                 chi2_statistics, p = chi2(bag_vec, y)
-                relevant_features_idx = \
-                    np.where(chi2_statistics >= self.chi2_threshold)[0]
+                # relevant_features_idx = \
+                #     np.where(chi2_statistics >= self.chi2_threshold)[0]
+                relevant_features_idx = np.argsort(-chi2_statistics)[:100]
                 relevant_features = \
-                    np.array(vectorizer.feature_names_)[relevant_features_idx]
+                    set(np.array(vectorizer.feature_names_)[relevant_features_idx])
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
@@ -231,7 +233,7 @@ class WEASEL(BaseClassifier):
 
         self.clf = make_pipeline(
             DictVectorizer(sparse=False),
-            StandardScaler(with_mean=True, copy=False),
+            StandardScaler(copy=False),
             LogisticRegression(max_iter=5000,
                                solver="liblinear",
                                dual=True,
@@ -288,7 +290,7 @@ class WEASEL(BaseClassifier):
         if self.series_length < 50:
             win_inc = 1  # less than 50 is ok time-wise
         elif self.series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
+            win_inc = min(self.window_inc, 2)  # less than 100 is ok time-wise
         return win_inc
 
     @staticmethod
