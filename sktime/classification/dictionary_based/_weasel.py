@@ -202,14 +202,13 @@ class WEASEL(BaseClassifier):
             relevant_features = {}
             apply_chi_squared = self.chi2_threshold > 0
             if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=False)
+                vectorizer = DictVectorizer(sparse=True)
                 bag_vec = vectorizer.fit_transform(bag)
 
                 if len(vectorizer.feature_names_) > 1000:
                     chi2_statistics, p = chi2(bag_vec, y)
                     relevant_features_idx = \
                         np.where(chi2_statistics >= self.chi2_threshold)[0]
-                    # relevant_features_idx = np.argsort(-chi2_statistics)[:100]
                     relevant_features = \
                         set(np.array(vectorizer.feature_names_)[relevant_features_idx])
                     relevant_features_count += len(relevant_features_idx)
@@ -225,7 +224,7 @@ class WEASEL(BaseClassifier):
                     # chi-squared test
                     if (not apply_chi_squared) or \
                             (key in relevant_features):
-                        # append the prefices to the words to
+                        # append the prefixes to the words to
                         # distinguish between window-sizes
                         if isinstance(key, tuple):
                             word = (((key[0] << self.highest_bit)
@@ -249,7 +248,7 @@ class WEASEL(BaseClassifier):
                                random_state=self.random_state)
             )
 
-        print ("Size of dict", relevant_features_count)
+        print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
