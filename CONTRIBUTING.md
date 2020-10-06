@@ -11,24 +11,22 @@ To find out more about how to take part in sktime's community, check out our [go
 Contents
 --------
 
-- [How to contribute](#how-to-contribute)
-  - [Contents](#contents)
-  - [How to get started](#how-to-get-started)
-  - [Where to contribute](#where-to-contribute)
-    - [Areas of contribution](#areas-of-contribution)
-    - [Roadmap](#roadmap)
-  - [Acknowledging contributions](#acknowledging-contributions)
-  - [Reporting bugs](#reporting-bugs)
-  - [Git and GitHub workflow](#git-and-github-workflow)
-  - [Continuous integration](#continuous-integration)
-    - [Code quality checks](#code-quality-checks)
-    - [Unit testing](#unit-testing)
-    - [Test coverage](#test-coverage)
-  - [Documentation](#documentation)
-  - [Dependencies](#dependencies)
-  - [Coding style](#coding-style)
-  - [Infrastructure](#infrastructure)
-  - [Release instructions](#release-instructions)
+- [How to get started](#how-to-get-started)
+- [Where to contribute](#where-to-contribute)
+  - [Areas of contribution](#areas-of-contribution)
+  - [Roadmap](#roadmap)
+- [Acknowledging contributions](#acknowledging-contributions)
+- [Reporting bugs](#reporting-bugs)
+- [Git and GitHub workflow](#git-and-github-workflow)
+- [Continuous integration](#continuous-integration)
+  - [Code quality checks](#code-quality-checks)
+  - [Unit testing](#unit-testing)
+  - [Test coverage](#test-coverage)
+- [Documentation](#documentation)
+- [Dependencies](#dependencies)
+- [Coding style](#coding-style)
+- [Infrastructure](#infrastructure)
+- [Release instructions](#release-instructions)
 
 
 How to get started
@@ -177,21 +175,15 @@ You can find our pre-commit configuration in [.pre-commit-config.yaml](https://g
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
 
-1.  Install extra requirements from the root directory of sktime:
+1.  Install the development version with all extra requirements from the root directory of sktime:
 
     ```bash
     pip install --editable .[all_extras]
     ```
 
-2.  Install the development version from the root directory:
+    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
-    ```bash
-    pip install --editable .
-    ```
-
-    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime and includes the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
-
-3.  To run all unit tests, run:
+2.  To run all unit tests, run:
 
     ```bash
     pytest sktime/
