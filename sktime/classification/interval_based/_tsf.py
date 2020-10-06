@@ -1,22 +1,100 @@
+# -*- coding: utf-8 -*-
 """ Time Series Forest Classifier (TSF).
 Implementation of Deng's Time Series Forest, with minor changes
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["Tony Bagnall", "kkoziara"]
 __all__ = ["TimeSeriesForest"]
 
 import math
 
 import numpy as np
+from joblib import Parallel
+from joblib import delayed
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
+
 from sktime.classification.base import BaseClassifier
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
+
+
+def _lsq_fit(Y):
+    """Find the slope for each series (row) of Y
+    Parameters
+    ----------
+    Y: array of shape = (n_instances, interval_size)
+
+    Returns
+    ----------
+    slope: array of shape = (n_instances,)
+
+    """
+    x = np.arange(Y.shape[1]) + 1
+    slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
+        (x * x).mean() - x.mean() ** 2
+    )
+    return slope
+
+
+def _transform(X, intervals):
+    """
+    Compute the mean, standard deviation and slope for given intervals
+    of input data X.
+    """
+    n_instances, _ = X.shape
+    n_intervals, _ = intervals.shape
+    transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
+    for j in range(n_intervals):
+        X_slice = X[:, intervals[j][0] : intervals[j][1]]
+        means = np.mean(X_slice, axis=1)
+        std_dev = np.std(X_slice, axis=1)
+        slope = _lsq_fit(X_slice)
+        transformed_x[3 * j] = means
+        transformed_x[3 * j + 1] = std_dev
+        transformed_x[3 * j + 2] = slope
+
+    return transformed_x.T
+
+
+def _get_intervals(n_intervals, min_interval, series_length, rng):
+    """
+    Generate random intervals for given parameters.
+    """
+    intervals = np.zeros((n_intervals, 2), dtype=int)
+    for j in range(n_intervals):
+        intervals[j][0] = rng.randint(series_length - min_interval)
+        length = rng.randint(series_length - intervals[j][0] - 1)
+        if length < min_interval:
+            length = min_interval
+        intervals[j][1] = intervals[j][0] + length
+    return intervals
+
+
+def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
+    """
+    Fit an estimator - a clone of base_estimator - on input data (X, y)
+    transformed using the randomly generated intervals.
+    """
+
+    estimator = clone(base_estimator)
+    estimator.set_params(random_state=random_state)
+
+    transformed_x = _transform(X, intervals)
+    return estimator.fit(transformed_x, y)
+
+
+def _predict_proba_for_estimator(X, estimator, intervals):
+    """
+    Find probability estimates for each class for all cases in X using
+    given estimator and intervals.
+    """
+    transformed_x = _transform(X, intervals)
+    return estimator.predict_proba(transformed_x)
 
 
 class TimeSeriesForest(ForestClassifier, BaseClassifier):
@@ -59,6 +137,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     I think!)
     min_interval    : int, minimum width of an interval, optional (default
     to 3)
+    n_jobs          : int, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``-1`` means using all processors.
 
     Attributes
     ----------
@@ -74,24 +155,28 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     """
 
-    def __init__(self,
-                 random_state=None,
-                 min_interval=3,
-                 n_estimators=200
-                 ):
+    def __init__(
+        self,
+        random_state=None,
+        min_interval=3,
+        n_estimators=200,
+        n_jobs=1,
+    ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators)
+            n_estimators=n_estimators,
+        )
 
         self.random_state = random_state
         self.n_estimators = n_estimators
         self.min_interval = min_interval
+        self.n_jobs = n_jobs
         # The following set in method fit
         self.n_classes = 0
         self.series_length = 0
         self.n_intervals = 0
-        self.classifiers = []
-        self.intervals = []
+        self.estimators_ = []
+        self.intervals_ = []
         self.classes_ = []
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -116,7 +201,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         """
         X, y = check_X_y(X, y, enforce_univariate=True)
         X = tabularize(X, return_array=True)
-        n_instances, self.series_length = X.shape
+        _, self.series_length = X.shape
 
         rng = check_random_state(self.random_state)
 
@@ -128,37 +213,23 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
-        self.intervals = np.zeros((self.n_estimators, self.n_intervals, 2),
-                                  dtype=int)
-        for i in range(self.n_estimators):
-            transformed_x = np.empty(shape=(3 * self.n_intervals, n_instances))
-            # Find the random intervals for classifier i and concatentate
-            # features
-            for j in range(self.n_intervals):
-                self.intervals[i][j][0] = rng.randint(
-                    self.series_length - self.min_interval)
-                length = rng.randint(
-                    self.series_length - self.intervals[i][j][0] - 1)
-                if length < self.min_interval:
-                    length = self.min_interval
-                self.intervals[i][j][1] = self.intervals[i][j][0] + length
-                # Transforms here, just hard coding it, so not configurable
-                means = np.mean(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
-                std_dev = np.std(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
-                slope = self._lsq_fit(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]])
-                transformed_x[3 * j] = means
-                transformed_x[3 * j + 1] = std_dev
-                transformed_x[3 * j + 2] = slope
-            tree = clone(self.base_estimator)
-            tree.set_params(**{"random_state": self.random_state})
-            transformed_x = transformed_x.T
-            tree.fit(transformed_x, y)
-            self.classifiers.append(tree)
+
+        self.intervals_ = [
+            _get_intervals(self.n_intervals, self.min_interval, self.series_length, rng)
+            for _ in range(self.n_estimators)
+        ]
+
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_estimator)(
+                X,
+                y,
+                self.base_estimator,
+                self.intervals_[i],
+                self.random_state,
+            )
+            for i in range(self.n_estimators)
+        )
+
         self._is_fitted = True
         return self
 
@@ -193,61 +264,29 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             yet have
             multivariate capability.
 
-        Local variables
-        ----------
-        n_test_instances     : int, number of cases to classify
-        series_length    : int, number of attributes in X, must match
-        _num_atts determined in fit
-
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        output : nd.array of shape = (n_instances, n_classes)
+            Predicted probabilities
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
         X = tabularize(X, return_array=True)
 
-        n_test_instances, series_length = X.shape
+        _, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
                 " ERROR number of attributes in the train does not match "
-                "that in the test data")
-        sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
-        for i in range(0, self.n_estimators):
-            transformed_x = np.empty(
-                shape=(3 * self.n_intervals, n_test_instances),
-                dtype=np.float32)
-            for j in range(0, self.n_intervals):
-                means = np.mean(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
-                std_dev = np.std(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                    axis=1)
-                slope = self._lsq_fit(
-                    X[:, self.intervals[i][j][0]:self.intervals[i][j][1]])
-                transformed_x[3 * j] = means
-                transformed_x[3 * j + 1] = std_dev
-                transformed_x[3 * j + 2] = slope
-            transformed_x = transformed_x.T
-            sums += self.classifiers[i].predict_proba(transformed_x)
+                "that in the test data"
+            )
+        y_probas = Parallel(n_jobs=self.n_jobs)(
+            delayed(_predict_proba_for_estimator)(
+                X, self.estimators_[i], self.intervals_[i]
+            )
+            for i in range(self.n_estimators)
+        )
 
-        output = sums / (np.ones(self.n_classes) * self.n_estimators)
+        output = np.sum(y_probas, axis=0) / (
+            np.ones(self.n_classes) * self.n_estimators
+        )
         return output
-
-    def _lsq_fit(self, Y):
-        """ Find the slope for each series (row) of Y
-        Parameters
-        ----------
-        Y: array of shape = [n_samps, interval_size]
-
-        Returns
-        ----------
-        slope: array of shape = [n_samps]
-
-        """
-        x = np.arange(Y.shape[1]) + 1
-        slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
-                (x * x).mean() - x.mean() ** 2)
-        return slope
