@@ -89,7 +89,7 @@ class WEASEL(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = -1 (disabled by default)
+    chi2_threshold:      int, default = 2 (enabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the threshold to use for chi-squared test on bag-of-words
         (higher means more strict). Negative values indicate that the test
@@ -109,7 +109,7 @@ class WEASEL(BaseClassifier):
                  bigrams=True,
                  binning_strategy="information-gain",
                  window_inc=4,
-                 chi2_threshold=-1,  # disabled by default
+                 chi2_threshold=2,  # enabled by default
                  random_state=None
                  ):
 
