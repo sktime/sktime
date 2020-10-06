@@ -56,7 +56,7 @@ def check_X(
 
     if not isinstance(X, SUPPORTED_X_TYPES):
         raise ValueError(
-            f"X must be a pd.DataFrame or a np.array, " f"but found: {(type(X))}"
+            f"X must be a pd.DataFrame or a np.array, " f"but found: {type(X)}"
         )
 
     # check np.array
@@ -71,13 +71,11 @@ def check_X(
         if coerce_to_pandas:
             X = from_3d_numpy_to_nested(X)
 
-    # check number of columns
-    n_columns = X.shape[1]
-
     # enforce minimum number of columns
+    n_columns = X.shape[1]
     if n_columns < enforce_min_columns:
         raise ValueError(
-            f"X must contain at least: {enforce_min_columns} columns,"
+            f"X must contain at least: {enforce_min_columns} columns, "
             f"but found only: {n_columns}."
         )
 
@@ -88,7 +86,6 @@ def check_X(
             f"X.shape[1] == {n_columns}."
         )
 
-    # check number of instances
     # enforce minimum number of instances
     if enforce_min_instances > 0:
         _enforce_min_instances(X, min_instances=enforce_min_instances)

@@ -34,29 +34,32 @@ def test_check_X_bad_input_args(X):
 
 def test_check_enforce_min_instances():
     X, y = make_classification_problem(n_instances=3)
-    with pytest.raises(ValueError):
+    msg = r"instance"
+    with pytest.raises(ValueError, match=msg):
         check_X(X, enforce_min_instances=4)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, enforce_min_instances=4)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         check_y(y, enforce_min_instances=4)
 
 
 def test_check_X_enforce_univariate():
     X, y = make_classification_problem(n_columns=2)
-    with pytest.raises(ValueError):
+    msg = r"univariate"
+    with pytest.raises(ValueError, match=msg):
         check_X(X, enforce_univariate=True)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=msg):
         check_X_y(X, y, enforce_univariate=True)
 
 
 def test_check_X_enforce_min_columns():
     X, y = make_classification_problem(n_columns=2)
-    with pytest.raises(ValueError):
+    msg = r"columns"
+    with pytest.raises(ValueError, match=msg):
         check_X(X, enforce_min_columns=3)
 
-    with pytest.raises(ValueError):
-        check_X(X, y, enforce_min_columns=3)
+    with pytest.raises(ValueError, match=msg):
+        check_X_y(X, y, enforce_min_columns=3)
