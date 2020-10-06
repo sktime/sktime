@@ -11,24 +11,22 @@ To find out more about how to take part in sktime's community, check out our [go
 Contents
 --------
 
-- [How to contribute](#how-to-contribute)
-  - [Contents](#contents)
-  - [How to get started](#how-to-get-started)
-  - [Where to contribute](#where-to-contribute)
-    - [Areas of contribution](#areas-of-contribution)
-    - [Roadmap](#roadmap)
-  - [Acknowledging contributions](#acknowledging-contributions)
-  - [Reporting bugs](#reporting-bugs)
-  - [Git and GitHub workflow](#git-and-github-workflow)
-  - [Continuous integration](#continuous-integration)
-    - [Code quality checks](#code-quality-checks)
-    - [Unit testing](#unit-testing)
-    - [Test coverage](#test-coverage)
-  - [Documentation](#documentation)
-  - [Dependencies](#dependencies)
-  - [Coding style](#coding-style)
-  - [Infrastructure](#infrastructure)
-  - [Release instructions](#release-instructions)
+- [How to get started](#how-to-get-started)
+- [Where to contribute](#where-to-contribute)
+  - [Areas of contribution](#areas-of-contribution)
+  - [Roadmap](#roadmap)
+- [Acknowledging contributions](#acknowledging-contributions)
+- [Reporting bugs](#reporting-bugs)
+- [Git and GitHub workflow](#git-and-github-workflow)
+- [Continuous integration](#continuous-integration)
+  - [Code quality checks](#code-quality-checks)
+  - [Unit testing](#unit-testing)
+  - [Test coverage](#test-coverage)
+- [Documentation](#documentation)
+- [Dependencies](#dependencies)
+- [Coding style](#coding-style)
+- [Infrastructure](#infrastructure)
+- [Release instructions](#release-instructions)
 
 
 How to get started
@@ -36,9 +34,10 @@ How to get started
 
 We are particularly motivated to support new and/or anxious contributors and people who are looking to learn and develop their skills.
 
-* **The Turing Way**. An great handbook and community for open science to find lots of useful resources. Check out their [Guide for Reproducible Research](https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html) to get started and learn more about open-source collaboration.
-* **scikit-learn's developer guide.** sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible. We assume basic familiarity with [scikit-learn](https://scikit-learn.org/stable/). If you're new to scikit-learn before, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you are familiar with scikit-learn, check out their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
-* **Good-first issues.** A good place to start is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, please comment on the issue or [chat to us](https://gitter.im/sktime/community).
+* **The Turing Way**. A great [handbook](https://the-turing-way.netlify.app/welcome) and [community](https://github.com/alan-turing-institute/the-turing-way) for open science to find lots of useful resources. Check out their [Guide for Reproducible Research](https://the-turing-way.netlify.app/reproducible-research/reproducible-research.html) to get started and learn more about open-source collaboration.
+* **GitHub's Open Source Guides.** Take a look at their [How to Contribute Guide](https://opensource.guide/how-to-contribute/) to find out more about what it means to contribute.
+* **scikit-learn's developer guide.** sktime follows [scikit-learn](https://scikit-learn.or/stable/)'s API whenever possible. We assume basic familiarity with scikit-learn. If you're new to scikit-learn, take a look at their [getting-started guide](https://scikit-learn.org/stable/getting_started.html). If you're already familiar with scikit-learn, you may still learn something new from their [developers' guide](https://scikit-learn.org/stable/developers/index.html).
+* **Good-first issues.** A good place for starting to contribute to sktime is our list of [good-first issues](https://github.com/alan-turing-institute/sktime/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22). If you are interested in one of them, please comment on the issue or [chat to us](https://gitter.im/sktime/community).
 * **Mentorship programme.** We have also launched sktime's own mentorship programme. You can find out more and apply on our [website](https://www.sktime.org/en/latest/mentoring.html)!
 
 
@@ -176,21 +175,15 @@ You can find our pre-commit configuration in [.pre-commit-config.yaml](https://g
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
 
-1.  Install extra requirements from the root directory of sktime:
+1.  Install the development version with all extra requirements from the root directory of sktime:
 
     ```bash
     pip install --editable .[all_extras]
     ```
 
-2.  Install the development version from the root directory:
+    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
-    ```bash
-    pip install --editable .
-    ```
-
-    This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime and includes the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
-
-3.  To run all unit tests, run:
+2.  To run all unit tests, run:
 
     ```bash
     pytest sktime/

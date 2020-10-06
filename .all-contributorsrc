@@ -518,6 +518,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "kkoziara",
+      "name": "kkoziara",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/4346849?v=4",
+      "profile": "https://github.com/kkoziara",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "projectName": "sktime",

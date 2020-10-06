@@ -15,7 +15,9 @@ from inspect import signature
 
 import joblib
 import numpy as np
+import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from sklearn import clone
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.estimator_checks import (
@@ -91,6 +93,7 @@ def yield_estimator_checks():
         check_fit_does_not_overwrite_hyper_params,
         check_methods_do_not_change_state,
         check_persistence_via_pickle,
+        check_multiprocessing_determinism,
     ]
     yield from checks
 
@@ -451,3 +454,30 @@ def check_persistence_via_pickle(Estimator):
     for method in results:
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
         _assert_almost_equal(results[method], unpickled_result)
+
+
+def check_multiprocessing_determinism(Estimator):
+    if "n_jobs" in signature(Estimator.__init__).parameters:
+        estimator = _construct_instance(Estimator)
+        fit_args = _make_args(estimator, "fit")
+        for method in NON_STATE_CHANGING_METHODS:
+            if hasattr(estimator, method):
+                args = _make_args(estimator, method)[0]
+                result_set = []
+                for n_jobs in [1, 4]:
+                    estimator.set_params(n_jobs=n_jobs)
+                    if hasattr(estimator, "n_jobs"):
+                        assert estimator.n_jobs == n_jobs
+                    set_random_state(estimator)
+                    estimator.fit(*fit_args)
+                    result_set.append(getattr(estimator, method)(args))
+
+                if isinstance(result_set[0], pd.DataFrame):
+                    assert_frame_equal(result_set[0], result_set[1])
+                else:
+                    np.testing.assert_array_equal(
+                        result_set[0],
+                        result_set[1],
+                        err_msg="Results for test set not equal "
+                        "between 1 and 4 job run",
+                    )
