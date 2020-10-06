@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
-__all__ = ["_construct_instance", "_make_args", "_assert_almost_equal"]
+__all__ = [
+    "_construct_instance",
+    "_make_args",
+    "_assert_array_almost_equal",
+    "_assert_array_equal",
+]
 __author__ = ["Markus Löning"]
 
 from inspect import signature
 
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 from sktime.classification.base import is_classifier
 from sktime.forecasting.base._base import is_forecaster
@@ -142,16 +148,17 @@ def _make_transform_args(estimator, return_numpy=False, random_state=None):
         raise ValueError(f"Estimator type: {type(estimator)} not supported")
 
 
-def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
-    # we iterate over columns and rows make cell-wise comparisons,
-    # tabularizing the data first would simplify this a bit, but does not
+def _compare_nested_frame(func, x, y, **kwargs):
+    """Helper function to compare two nested pd.DataFrames"""
+    # we iterate over columns and rows to make cell-wise comparisons,
+    # tabularizing the data first would simplify this, but does not
     # work for unequal length data
 
     # in some cases, x and y may be empty (e.g. TSFreshRelevantFeatureExtractor) and
     # we cannot compare individual cells, so we simply check if they are equal
-    if isinstance(x, pd.DataFrame) and x.empty:
-        assert y.empty
-        assert x.equals(y)
+    assert isinstance(x, pd.DataFrame)
+    if x.empty:
+        assert_frame_equal(x, y)
 
     elif is_nested_dataframe(x):
         # make sure both inputs have the same shape
@@ -166,13 +173,23 @@ def _assert_almost_equal(x, y, decimal=6, err_msg="", verbose=True):
 
             # iterate over rows, checking if cells are equal
             for xci, yci in zip(xc, yc):
-                np.testing.assert_array_almost_equal(
-                    xci, yci, decimal=decimal, err_msg=err_msg, verbose=verbose
-                )
+                func(xci, yci, **kwargs)
+
+
+def _assert_array_almost_equal(x, y, decimal=6, err_msg=""):
+    func = np.testing.assert_array_almost_equal
+    if isinstance(x, pd.DataFrame):
+        _compare_nested_frame(func, x, y, decimal=decimal, err_msg=err_msg)
     else:
-        np.testing.assert_array_almost_equal(
-            x, y, decimal=decimal, err_msg=err_msg, verbose=verbose
-        )
+        func(x, y, decimal=decimal, err_msg=err_msg)
+
+
+def _assert_array_equal(x, y, err_msg=""):
+    func = np.testing.assert_array_equal
+    if isinstance(x, pd.DataFrame):
+        _compare_nested_frame(func, x, y, err_msg=err_msg)
+    else:
+        func(x, y, err_msg=err_msg)
 
 
 def _get_args(function, varargs=False):

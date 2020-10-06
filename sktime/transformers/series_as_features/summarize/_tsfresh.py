@@ -10,7 +10,9 @@ from warnings import warn
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X_y
 
 _check_soft_dependencies("tsfresh")
 
@@ -69,6 +71,9 @@ class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
 
     def _get_extraction_params(self):
         """Helper function to set default parameters from tsfresh"""
+        # make n_jobs compatible with scikit-learn
+        self.n_jobs = check_n_jobs(self.n_jobs)
+
         # lazy imports to avoid hard dependency
         from tsfresh.defaults import CHUNKSIZE
         from tsfresh.defaults import DISABLE_PROGRESSBAR
