@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "Sebastiaan Koel"]
@@ -17,6 +17,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
@@ -210,8 +211,8 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         """
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
-        if np.any(self.fh <= 0):
-            raise NotImplementedError("in-sample predictions are not implemented")
+        if len(self.fh.to_in_sample(self.cutoff)) > 0:
+            raise NotImplementedError("In-sample predictions are" " not implemented")
 
         self.step_length_ = check_step_length(self.step_length)
         self.window_length_ = check_window_length(self.window_length)
@@ -219,7 +220,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         # for the direct reduction strategy, a separate forecaster is fitted
         # for each step ahead of the forecasting horizon
         self._cv = SlidingWindowSplitter(
-            fh=self.fh,
+            fh=self.fh.to_relative(self.cutoff),
             window_length=self.window_length_,
             step_length=self.step_length_,
             start_with_window=True,
@@ -324,7 +325,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         """Predict"""
         # compute prediction
         # prepare recursive predictions
-        fh_max = fh[-1]
+        fh_max = fh.to_relative(self.cutoff)[-1]
         y_pred = np.zeros(fh_max)
 
         # get last window from observation horizon
@@ -356,12 +357,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self.window_length_:]
 
-        fh_idx = fh.index_like(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
-
-    # def _predict_in_sample(self, fh, X=None, return_pred_int=False,
-    # alpha=None):
-    #     raise NotImplementedError()
 
 
 ##############################################################################

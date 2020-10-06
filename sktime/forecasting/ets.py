@@ -165,7 +165,7 @@ class AutoETS(_StatsModelsAdapter):
         start_params=None,
         maxiter=1000,
         full_output=True,
-        disp=True,
+        disp=False,
         callback=None,
         return_params=False,
         auto=False,
