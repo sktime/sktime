@@ -78,7 +78,7 @@ def from_3d_numpy_to_2d_array(X):
     return X.reshape(X.shape[0], -1)
 
 
-def from_nested_to_2d_array(X, return_array=False):
+def from_nested_to_2d_array(X, return_numpy=False):
     """Convert nested pandas DataFrames or Series with numpy arrays or
     pandas Series in cells into tabular
     pandas DataFrame with primitives in cells, i.e. a data frame with the
@@ -89,7 +89,7 @@ def from_nested_to_2d_array(X, return_array=False):
     Parameters
     ----------
     X : nested pandas DataFrame or nested Series
-    return_array : bool, optional (default=False)
+    return_numpy : bool, optional (default=False)
         - If True, returns a numpy array of the tabular data.
         - If False, returns a pandas dataframe with row and column names.
 
@@ -133,7 +133,7 @@ def from_nested_to_2d_array(X, return_array=False):
             f"but found: {type(X)}"
         )
 
-    if return_array:
+    if return_numpy:
         return Xt
 
     Xt = pd.DataFrame(Xt)
@@ -162,14 +162,14 @@ def from_nested_to_2d_array(X, return_array=False):
     return Xt
 
 
-def from_2d_array_to_nested(X, index=None, time_index=None, return_arrays=False):
+def from_2d_array_to_nested(X, index=None, time_index=None, cells_as_numpy=False):
     """Convert tabular pandas DataFrame with only primitives in cells into
     nested pandas DataFrame with a single column.
 
     Parameters
     ----------
     X : pandas DataFrame
-    return_arrays : bool, optional (default=False)
+    cells_as_numpy : bool, optional (default=False)
         - If True, returns a numpy arrays within cells of nested pandas
         DataFrame.
         - If False, returns a pandas Series within cells.
@@ -184,7 +184,7 @@ def from_2d_array_to_nested(X, index=None, time_index=None, return_arrays=False)
         Transformed dataframe in nested format
     """
 
-    if (time_index is not None) and return_arrays:
+    if (time_index is not None) and cells_as_numpy:
         raise ValueError(
             "`Time_index` cannot be specified when `return_arrays` is True, "
             "time index can only be set to "
@@ -193,7 +193,7 @@ def from_2d_array_to_nested(X, index=None, time_index=None, return_arrays=False)
     if isinstance(X, pd.DataFrame):
         X = X.to_numpy()
 
-    container = np.array if return_arrays else pd.Series
+    container = np.array if cells_as_numpy else pd.Series
 
     # for 2d numpy array, rows represent instances, columns represent time points
     n_instances, n_timepoints = X.shape

@@ -163,7 +163,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         start_time = time.time()
         train_time = 0
         subsample_size = int(self.n_instances * 0.7)
-        lowest_acc = 0
+        lowest_acc = 1
         lowest_acc_idx = 0
 
         if self.time_limit > 0:
@@ -250,7 +250,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         return dists
 
     def _worst_ensemble_acc(self):
-        min_acc = -1
+        min_acc = 1.0
         min_acc_idx = 0
 
         for c, classifier in enumerate(self.classifiers):
@@ -351,10 +351,10 @@ class IndividualTDE(BaseClassifier):
         super(IndividualTDE, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True)
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X, y)
-        self.transformed_data = sfa.iloc[:, 0]
+        self.transformed_data = sfa[0]  # .iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -367,13 +367,13 @@ class IndividualTDE(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags.iloc[:, 0]
+        test_bags = test_bags[0]  # .iloc[:, 0]
 
         for test_bag in test_bags:
             best_sim = -1

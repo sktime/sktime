@@ -76,7 +76,7 @@ class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
 
         for x in col_names:
             # Convert one of the columns in the dataframe to a numpy array
-            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_array=True)
+            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
 
             # Get the HOG1Ds of each time series
             transformedData = []

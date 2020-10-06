@@ -155,9 +155,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word == last_word:
             return False
-
         bag[word] = bag.get(word, 0) + 1
-
         return True
 
     def _generate_breakpoints(self):
@@ -184,39 +182,3 @@ class SAX(BaseSeriesAsFeaturesTransformer):
                 sys.float_info.max,
             ],
         }[self.alphabet_size]
-
-
-class _BitWord(object):
-    # Used to represent a word for dictionary based classifiers such as BOSS
-    # an BOP.
-    # Can currently only handle an alphabet size of <= 4 and word length of
-    # <= 16.
-    # Current literature shows little reason to go beyond this, but the
-    # class will need changes/expansions
-    # if this is needed.
-    # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
-
-    @staticmethod
-    def create_bigram_word(word, other_word, length):
-        return (word << length) | other_word
-
-    @classmethod
-    def shorten_word(cls, word, amount):
-        # shorten a word by set amount of letters
-        return cls.right_shift(word, amount * 2)
-
-    @classmethod
-    def word_list(cls, word, length):
-        # list of input integers to obtain current word
-        word_list = []
-        shift = 32 - (length * 2)
-
-        for _ in range(length - 1, -1, -1):
-            word_list.append(cls.right_shift(word << shift, 32 - 2))
-            shift += 2
-
-        return word_list
-
-    @staticmethod
-    def right_shift(left, right):
-        return (left % 0x100000000) >> right

@@ -159,12 +159,12 @@ def cython_wrapper(distance_measure):
     def distance(instance_a, instance_b, **params):
         # find distance
         instance_a = from_nested_to_2d_array(
-            instance_a, return_array=True
+            instance_a, return_numpy=True
         )  # todo use specific
         # dimension rather than whole
         # thing?
         instance_b = from_nested_to_2d_array(
-            instance_b, return_array=True
+            instance_b, return_numpy=True
         )  # todo use specific
         # dimension rather than whole thing?
         instance_a = np.transpose(instance_a)

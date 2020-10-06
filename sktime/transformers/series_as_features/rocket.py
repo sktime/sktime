@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-import pandas as pd
-from numba import njit
-from numba import prange
-
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.validation.series_as_features import check_X
-
 __author__ = "Angus Dempster"
 __all__ = ["Rocket"]
+
+import numpy as np
+import pandas as pd
+
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation.series_as_features import check_X
+
+_check_soft_dependencies("numba")
+from numba import njit  # noqa: E402
+from numba import prange  # noqa: E402
 
 
 class Rocket(BaseSeriesAsFeaturesTransformer):

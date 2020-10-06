@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+import sys
+
 import numpy as np
-from sktime.transformers.series_as_features.dictionary_based._sfa import SFA
+
 from sktime.datasets import load_gunpoint
+from sktime.transformers.series_as_features.dictionary_based._sfa import SFA
 from sktime.utils.data_container import from_nested_to_2d_array
 
 
@@ -16,6 +19,7 @@ def test_transformer():
     p = SFA(
         word_length=word_length,
         alphabet_size=alphabet_size,
+        anova=False,
         binning_method="equi-depth",
     ).fit(X, y)
 
@@ -29,6 +33,7 @@ def test_transformer():
     p = SFA(
         word_length=word_length,
         alphabet_size=alphabet_size,
+        anova=False,
         binning_method="equi-width",
     ).fit(X, y)
 
@@ -42,6 +47,7 @@ def test_transformer():
     p = SFA(
         word_length=word_length,
         alphabet_size=alphabet_size,
+        anova=False,
         binning_method="information-gain",
     ).fit(X, y)
     # print("Information Gain")
@@ -50,14 +56,14 @@ def test_transformer():
     assert p.breakpoints.shape == (word_length, alphabet_size)
 
     # print(p.breakpoints[1, :-1])
-    assert np.equal(0, p.breakpoints[1, :-1]).all()  # imaginary component is 0
+    assert np.equal(sys.float_info.max, p.breakpoints[1, :-1]).all()
     _ = p.transform(X, y)
 
 
 def test_dft_mft():
     # load training data
     X, Y = load_gunpoint(split="train", return_X_y=True)
-    X_tab = from_nested_to_2d_array(X, return_array=True)
+    X_tab = from_nested_to_2d_array(X, return_numpy=True)
 
     word_length = 6
     alphabet_size = 4
@@ -141,16 +147,15 @@ def test_sfa_anova():
 
 
 # test word lengths larger than the window-length
-def test_word_length():
+def test_word_lengths():
     # load training data
     X, y = load_gunpoint(split="train", return_X_y=True)
 
-    word_lengths = [6, 7, 11]
+    word_lengths = [6, 7]
     alphabet_size = 4
     window_sizes = [5, 6]
 
     try:
-
         for binning in ["equi-depth", "information-gain"]:
             for word_length in word_lengths:
                 for bigrams in [True, False]:
@@ -178,3 +183,34 @@ def test_word_length():
 
     except Exception as err:
         raise AssertionError("An unexpected exception {0} raised.".format(repr(err)))
+
+
+# def test_reproducability():
+#     # load training data
+#     X, y = load_gunpoint(split="train", return_X_y=True)
+#     m = len(X.iloc[0]['dim_0'])
+#
+#     p = SFA(word_length=4,
+#             anova=True,
+#             alphabet_size=4,
+#             bigrams=False,
+#             window_size=m,
+#             norm=True,
+#             lower_bounding=False,
+#             binning_method="equi-depth").fit(X, y)
+#
+#     print(p.breakpoints)
+#     print(p.support)
+#
+#     print("m", m)
+#     p = SFA(word_length=4,
+#             anova=True,
+#             alphabet_size=4,
+#             bigrams=False,
+#             window_size=10,
+#             norm=False,
+#             lower_bounding=False,
+#             binning_method="equi-width").fit(X, y)
+#
+#     print(p.breakpoints)
+#     print(p.support)

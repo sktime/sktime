@@ -25,8 +25,6 @@ from sktime.utils.validation.series_as_features import check_X_y
 # from numba import njit
 # from numba.typed import Dict
 
-# TODO: Make more efficient
-
 
 class BOSSEnsemble(BaseClassifier):
     """Bag of SFA Symbols (BOSS)
@@ -160,7 +158,6 @@ class BOSSEnsemble(BaseClassifier):
         self.weights = []
 
         # Window length parameter space dependent on series length
-
         max_window_searches = self.series_length / 4
         max_window = int(self.series_length * self.max_win_len_prop)
         win_inc = int((max_window - self.min_window) / max_window_searches)
@@ -193,7 +190,7 @@ class BOSSEnsemble(BaseClassifier):
                 subsample = rng.choice(
                     self.n_instances, size=subsample_size, replace=False
                 )
-                X_subsample = X[subsample, :]
+                X_subsample = X[subsample]  # .iloc[subsample, :]
                 y_subsample = y[subsample]
 
                 boss = BOSSIndividual(
@@ -429,10 +426,11 @@ class BOSSIndividual(BaseClassifier):
         super(BOSSIndividual, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True)
+
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa.iloc[:, 0]
+        self.transformed_data = sfa[0]  # .iloc[:, 0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -445,13 +443,13 @@ class BOSSIndividual(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags.iloc[:, 0]
+        test_bags = test_bags[0]  # .iloc[:, 0]
 
         for test_bag in test_bags:
             best_dist = sys.float_info.max
@@ -505,7 +503,7 @@ class BOSSIndividual(BaseClassifier):
         )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa.iloc[:, 0]
+        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes

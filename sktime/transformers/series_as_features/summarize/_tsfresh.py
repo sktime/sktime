@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Ayushmaan Seth", "Markus Löning"]
+__author__ = ["Ayushmaan Seth", "Markus Löning", "Alwin Wang"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.series_as_features import check_X, check_X_y
+
+_check_soft_dependencies("tsfresh")
 
 
 class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
@@ -242,7 +244,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
 
         # Set defaults
         selection_params = {
-            "test_for_binary_target_binary_feature": TEST_FOR_BINARY_TARGET_BINARY_FEATURE,  # noqa
+            "test_for_binary_target_binary_feature": TEST_FOR_BINARY_TARGET_BINARY_FEATURE,  # noqa: E501
             "test_for_binary_target_real_feature": TEST_FOR_BINARY_TARGET_REAL_FEATURE,
             "test_for_real_target_binary_feature": TEST_FOR_REAL_TARGET_BINARY_FEATURE,
             "test_for_real_target_real_feature": TEST_FOR_REAL_TARGET_REAL_FEATURE,

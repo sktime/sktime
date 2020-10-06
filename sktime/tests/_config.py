@@ -109,7 +109,13 @@ ESTIMATOR_TEST_PARAMS = {
         "transformers": [(name, estimator, [0]) for name, estimator in TRANSFORMERS]
     },
     # ARIMA requires d > start where start = 0 for full in-sample predictions
-    AutoARIMA: {"d": 0, "suppress_warnings": True},
+    AutoARIMA: {
+        "d": 0,
+        "suppress_warnings": True,
+        "max_p": 2,
+        "max_q": 2,
+        "seasonal": False,
+    },
     ShapeletTransformClassifier: {"n_estimators": 5, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
     ShapeletTransform: {

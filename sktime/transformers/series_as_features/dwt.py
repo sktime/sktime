@@ -50,7 +50,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         df = pd.DataFrame()
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
-            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_array=True)
+            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
 
             transformedData = self._extract_wavelet_coefficients(arr)
 

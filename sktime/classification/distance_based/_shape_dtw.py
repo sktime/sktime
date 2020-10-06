@@ -456,12 +456,12 @@ class ShapeDTW(BaseClassifier):
         # Convert the dataframes into arrays
         for x in first_desc.columns:
             first_desc_array.append(
-                from_nested_to_2d_array(first_desc[x], return_array=True)
+                from_nested_to_2d_array(first_desc[x], return_numpy=True)
             )
 
         for x in second_desc.columns:
             second_desc_array.append(
-                from_nested_to_2d_array(second_desc[x], return_array=True)
+                from_nested_to_2d_array(second_desc[x], return_numpy=True)
             )
 
         # Concatenate the arrays together

@@ -71,7 +71,7 @@ class PAA(BaseSeriesAsFeaturesTransformer):
         return result
 
     def _perform_paa_along_dim(self, X):
-        X = from_nested_to_2d_array(X, return_array=True)
+        X = from_nested_to_2d_array(X, return_numpy=True)
 
         num_atts = X.shape[1]
         num_insts = X.shape[0]
