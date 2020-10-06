@@ -129,7 +129,7 @@ class WEASEL(BaseClassifier):
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 350
+        self.max_window = 250
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -177,6 +177,8 @@ class WEASEL(BaseClassifier):
 
         all_words = [dict() for x in range(len(X))]
 
+        relevant_features_count = 0
+
         for i, window_size in enumerate(self.window_sizes):
 
             transformer = SFA(word_length=rng.choice(self.word_lengths),
@@ -203,12 +205,17 @@ class WEASEL(BaseClassifier):
                 vectorizer = DictVectorizer(sparse=False)
                 bag_vec = vectorizer.fit_transform(bag)
 
-                chi2_statistics, p = chi2(bag_vec, y)
-                # relevant_features_idx = \
-                #     np.where(chi2_statistics >= self.chi2_threshold)[0]
-                relevant_features_idx = np.argsort(-chi2_statistics)[:100]
-                relevant_features = \
-                    set(np.array(vectorizer.feature_names_)[relevant_features_idx])
+                if len(vectorizer.feature_names_) > 1000:
+                    chi2_statistics, p = chi2(bag_vec, y)
+                    relevant_features_idx = \
+                        np.where(chi2_statistics >= self.chi2_threshold)[0]
+                    # relevant_features_idx = np.argsort(-chi2_statistics)[:100]
+                    relevant_features = \
+                        set(np.array(vectorizer.feature_names_)[relevant_features_idx])
+                    relevant_features_count += len(relevant_features_idx)
+                else:
+                    relevant_features_count += len(vectorizer.feature_names_)
+                    apply_chi_squared = False
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
@@ -242,6 +249,7 @@ class WEASEL(BaseClassifier):
                                random_state=self.random_state)
             )
 
+        print ("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
