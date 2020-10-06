@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-import pytest
 from sklearn.model_selection import train_test_split
+
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.datasets import load_gunpoint
 
-
-gunpoint_probas = np.array(
+# expected y_proba
+expected = np.array(
     [
         [1.0, 0.0],
         [1.0, 0.0],
@@ -32,19 +32,12 @@ gunpoint_probas = np.array(
 )
 
 
-@pytest.mark.parametrize("n_jobs", [1, 4])
-def test_on_gunpoint(n_jobs):
-    np.random.seed(42)
+def test_y_proba_on_gunpoint():
     X, y = load_gunpoint(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1)
-
-    tsf = TimeSeriesForest(random_state=42, n_estimators=20, n_jobs=n_jobs)
-    tsf.fit(X_train, y_train)
-
-    tsf_score = tsf.score(X_test, y_test)
-
-    assert tsf_score == 1.0, "Classifier performs worse than expected"
-
-    probas = tsf.predict_proba(X_test)
-
-    np.testing.assert_array_equal(probas, gunpoint_probas, "Incorrect probabilities")
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.1, random_state=42
+    )
+    estimator = TimeSeriesForest(random_state=42, n_estimators=20)
+    estimator.fit(X_train, y_train)
+    actual = estimator.predict_proba(X_test)
+    np.testing.assert_array_equal(actual, expected)

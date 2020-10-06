@@ -3,7 +3,7 @@
 Implementation of Deng's Time Series Forest, with minor changes
 """
 
-__author__ = ["Tony Bagnall"]
+__author__ = ["Tony Bagnall", "kkoziara"]
 __all__ = ["TimeSeriesForest"]
 
 import math
@@ -16,6 +16,7 @@ from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
+
 from sktime.classification.base import BaseClassifier
 from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
@@ -26,11 +27,11 @@ def _lsq_fit(Y):
     """Find the slope for each series (row) of Y
     Parameters
     ----------
-    Y: array of shape = [n_samps, interval_size]
+    Y: array of shape = (n_instances, interval_size)
 
     Returns
     ----------
-    slope: array of shape = [n_samps]
+    slope: array of shape = (n_instances,)
 
     """
     x = np.arange(Y.shape[1]) + 1
@@ -84,9 +85,7 @@ def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
     estimator.set_params(random_state=random_state)
 
     transformed_x = _transform(X, intervals)
-    estimator.fit(transformed_x, y)
-
-    return estimator
+    return estimator.fit(transformed_x, y)
 
 
 def _predict_proba_for_estimator(X, estimator, intervals):
@@ -176,8 +175,8 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         self.n_classes = 0
         self.series_length = 0
         self.n_intervals = 0
-        self.classifiers = []
-        self.intervals = []
+        self.estimators_ = []
+        self.intervals_ = []
         self.classes_ = []
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -215,17 +214,17 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
 
-        self.intervals = [
+        self.intervals_ = [
             _get_intervals(self.n_intervals, self.min_interval, self.series_length, rng)
             for _ in range(self.n_estimators)
         ]
 
-        self.classifiers = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_estimator)(
                 X,
                 y,
                 self.base_estimator,
-                self.intervals[i],
+                self.intervals_[i],
                 self.random_state,
             )
             for i in range(self.n_estimators)
@@ -265,16 +264,10 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             yet have
             multivariate capability.
 
-        Local variables
-        ----------
-        n_test_instances     : int, number of cases to classify
-        series_length    : int, number of attributes in X, must match
-        _num_atts determined in fit
-
         Returns
         -------
-        output : array of shape = [n_test_instances, num_classes] of
-        probabilities
+        output : nd.array of shape = (n_instances, n_classes)
+            Predicted probabilities
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True)
@@ -286,15 +279,14 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
                 " ERROR number of attributes in the train does not match "
                 "that in the test data"
             )
-        sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
-
-        for proba in Parallel(n_jobs=self.n_jobs)(
+        y_probas = Parallel(n_jobs=self.n_jobs)(
             delayed(_predict_proba_for_estimator)(
-                X, self.classifiers[i], self.intervals[i]
+                X, self.estimators_[i], self.intervals_[i]
             )
             for i in range(self.n_estimators)
-        ):
-            sums += proba
+        )
 
-        output = sums / (np.ones(self.n_classes) * self.n_estimators)
+        output = np.sum(y_probas, axis=0) / (
+            np.ones(self.n_classes) * self.n_estimators
+        )
         return output
