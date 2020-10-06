@@ -28,7 +28,7 @@ env:
 
     - TEST_DIR=/tmp/sktime  # Directory where tests are run from
     - REQUIREMENTS=build_tools/requirements.txt
-    - COVERAGE=false
+    - COVERAGE=true
 
 # platforms and package environments to test
 jobs:
@@ -77,15 +77,18 @@ before_deploy:
   - cd $TRAVIS_BUILD_DIR
 
 deploy:
-  # deploy website on master branch
-  - provider: pages
-    skip_cleanup: true  # skip clean up which would delete build artifacts
-    local_dir: "./docs/_build/html"
-    github_token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
-    keep_history: false
-    on:
-      branch: $DEPLOY_BRANCH  # deploy only on master
-      condition: $TRAVIS_JOB_NAME = $DEPLOY_JOB_NAME  # deploy only on macOS build
+
+# Docs are no longer deployed via travis but now instead via readthedocs
+#  # deploy website on master branch
+#  - provider: pages
+#    skip_cleanup: true  # skip clean up which would delete build artifacts
+#    local_dir: "./docs/_build/html"
+#    github_token: $GITHUB_TOKEN  # Generated in Github settings page of your repo, set in travis settings
+#    keep_history: false
+#    fqdn: sktime.org  # set custom domain
+#    on:
+#      branch: $DEPLOY_BRANCH  # deploy only on master
+#      condition: $TRAVIS_JOB_NAME = $DEPLOY_JOB_NAME  # deploy only on macOS build
 
 #  # release is deployed only on tagged commits on master
 #  - provider: releases

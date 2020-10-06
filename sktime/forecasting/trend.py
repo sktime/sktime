@@ -1,23 +1,23 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = [
-    "PolynomialTrendForecaster"
-]
+__all__ = ["PolynomialTrendForecaster"]
 
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
+
 from sktime.forecasting.base._sktime import BaseSktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.utils.datetime import _get_duration
 
 
-class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
-                                BaseSktimeForecaster):
+class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
     """
     Forecast time series data with a polynomial trend.
     Default settings train a linear regression model with a 1st degree
@@ -64,25 +64,33 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
         self : returns an instance of self.
         """
         if X_train is not None:
-            raise NotImplementedError()
-        self._set_oh(y_train)
+            raise NotImplementedError("Exogeneous variables are not " "yet supported")
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         # for default regressor, set fit_intercept=False as we generate a
         # dummy variable in polynomial features
-        r = self.regressor if self.regressor is not None else LinearRegression(
-            fit_intercept=False)  #
-        self.regressor_ = make_pipeline(PolynomialFeatures(
-            degree=self.degree,
-            include_bias=self.with_intercept),
-            r)
-        x = y_train.index.values.reshape(-1, 1)
-        self.regressor_.fit(x, y_train.values)
+        if self.regressor is None:
+            regressor = LinearRegression(fit_intercept=False)
+        else:
+            regressor = self.regressor
+
+        # make pipeline with polynomial features
+        self.regressor_ = make_pipeline(
+            PolynomialFeatures(degree=self.degree, include_bias=self.with_intercept),
+            regressor,
+        )
+
+        # transform data
+        n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
+        X_train = np.arange(n_timepoints).reshape(-1, 1)
+
+        # fit regressor
+        self.regressor_.fit(X_train, y_train)
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False,
-                alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make forecasts for the given forecast horizon
 
         Parameters
@@ -107,7 +115,9 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin,
             raise NotImplementedError()
         self.check_is_fitted()
         self._set_fh(fh)
-        fh_abs = self.fh.absolute(self.cutoff)
-        x = fh_abs.reshape(-1, 1)
-        y_pred = self.regressor_.predict(x)
-        return pd.Series(y_pred, index=fh_abs)
+
+        # use relative fh as time index to predict
+        fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)
+        X_pred = fh.to_numpy().reshape(-1, 1)
+        y_pred = self.regressor_.predict(X_pred)
+        return pd.Series(y_pred, index=self.fh.to_absolute(self.cutoff))

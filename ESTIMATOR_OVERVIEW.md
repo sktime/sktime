@@ -1,4 +1,4 @@
-# Overview of sktime's estimators 
+# Overview of sktime's estimators
 
 ## Table of contents
 * [Transformers (simple)](#Transformers-(simple))
@@ -24,7 +24,7 @@ Simple (or first-degree) transformations:
 | ------ | ------- | ------ | ------- |
 | e.g. Fourier transform | | |
 
-#### Nested data frame to nested data frame 
+#### Nested data frame to nested data frame
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 | Interval segmenter  (fixed) | transformers.compose.IntervalSegmenter | @mloning  |  |
@@ -33,7 +33,7 @@ Simple (or first-degree) transformations:
 | Symbolic Aggregate Approximation  | transformers.series_as_features.dictionary_based.SAX | @MatthewMiddlehurst  | [ Lin et al (2007) - Experiencing SAX: a novel symbolic representation of time series](https://link.springer.com/article/10.1007/s10618-007-0064-z) |
 | Symbolic Fourier Approximation  | transformers.series_as_features.dictionary_based.SFA | @MatthewMiddlehurst  | [ Schäfer (2012) - SFA: a symbolic fourier approximation and index for similarity](https://dl.acm.org/doi/abs/10.1145/2247596.2247656) |
 
-#### Nested data frame to tabular data frame 
+#### Nested data frame to tabular data frame
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
@@ -76,7 +76,7 @@ Simple (or first-degree) transformations:
 | n-ts-to-df | 1-ts-to-df | Apply row-wise | transformers.compose.RowwiseTransformer | @mloning |  |
 
 # Transformers (paired)
-Paired (or second-degree) transformations: 
+Paired (or second-degree) transformations:
 
 > Note: the interface for 2nd degree transformers is currently under re-factoring, and currently not consistent or homogenous.
 
@@ -117,11 +117,13 @@ Paired (or second-degree) transformations:
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
 | ShapeDTW | classifiers.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
+| WEASEL | classifiers.dictionary_based.weasel.WEASEL | @patrickZIB | [Fast and Accurate Time Series Classification with WEASEL](https://dl.acm.org/doi/abs/10.1145/3132847.3132980) |
+
 ### Multivariate time series classifiers
 
 | name | sktime class | maintainer | literature
 | ------ | ------- | ------ | ------- |
-|  |  |  |  |
+| WEASEL+MUSE | classifiers.dictionary_based.weasel.MUSE | @patrickZIB | [Multivariate time series classification with WEASEL+ MUSE](https://arxiv.org/abs/1711.11343) |
 
 ## Composition
 
@@ -169,8 +171,8 @@ Paired (or second-degree) transformations:
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
-| Naive forecaster | NaiveForecaster | @mloning | 
-| Holt-Winters exponential smoothing forecaster | ExpSmoothingForecaster | @mloning, @big-o | 
+| Naive forecaster | NaiveForecaster | @mloning |
+| Holt-Winters exponential smoothing forecaster | ExpSmoothingForecaster | @mloning, @big-o |
 | Theta forecaster | ThetaForecaster | @big-o | [Unmasking the Theta method](https://www.sciencedirect.com/science/article/pii/S0169207001001431)
 
 ### Multivariate Time Series Forecasting
@@ -207,5 +209,3 @@ Paired (or second-degree) transformations:
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 |  |  |  |  |
-
-

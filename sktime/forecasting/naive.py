@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __all__ = ["NaiveForecaster"]
@@ -8,15 +8,15 @@ __author__ = ["Markus Löning", "Piyush Gade"]
 from warnings import warn
 
 import numpy as np
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseLastWindowForecaster
+from sktime.forecasting.base._sktime import BaseWindowForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_window_length
 
 
-class NaiveForecaster(OptionalForecastingHorizonMixin,
-                      BaseLastWindowForecaster):
+class NaiveForecaster(OptionalForecastingHorizonMixin, BaseWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
@@ -70,15 +70,17 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """  # X_train is ignored
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
 
         if self.strategy == "last":
             if self.sp == 1:
                 if self.window_length is not None:
-                    warn("For the `last` strategy, "
-                         "the `window_length` value will be ignored if `sp` "
-                         "== 1.")
+                    warn(
+                        "For the `last` strategy, "
+                        "the `window_length` value will be ignored if `sp` "
+                        "== 1."
+                    )
                 self.window_length_ = 1
 
             else:
@@ -92,9 +94,11 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
             # check window length is greater than sp for seasonal mean
             if self.window_length is not None and self.sp != 1:
                 if self.window_length < self.sp:
-                    raise ValueError(f"The `window_length`: "
-                                     f"{self.window_length} is smaller than "
-                                     f"`sp`: {self.sp}.")
+                    raise ValueError(
+                        f"The `window_length`: "
+                        f"{self.window_length} is smaller than "
+                        f"`sp`: {self.sp}."
+                    )
             self.window_length_ = check_window_length(self.window_length)
             self.sp_ = check_sp(self.sp)
 
@@ -104,38 +108,45 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
 
         elif self.strategy == "drift":
             if self.sp != 1:
-                warn("For the `drift` strategy, "
-                     "the `sp` value will be ignored.")
+                warn("For the `drift` strategy, " "the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length)
             if self.window_length is None:
                 self.window_length_ = len(y_train)
             if self.window_length == 1:
-                raise ValueError(f"For the `drift` strategy, "
-                                 f"the `window_length`: {self.window_length} "
-                                 f"value must be greater than one.")
+                raise ValueError(
+                    f"For the `drift` strategy, "
+                    f"the `window_length`: {self.window_length} "
+                    f"value must be greater than one."
+                )
 
         else:
             allowed_strategies = ("last", "mean", "drift")
-            raise ValueError(f"Unknown strategy: {self.strategy}. Expected "
-                             f"one of: {allowed_strategies}.")
+            raise ValueError(
+                f"Unknown strategy: {self.strategy}. Expected "
+                f"one of: {allowed_strategies}."
+            )
 
         # check window length
-        if self.window_length_ > len(self.oh):
-            param = "sp" if self.strategy == "last" and self.sp != 1 \
-                else "window_length_"
+        if self.window_length_ > len(self._y):
+            param = (
+                "sp" if self.strategy == "last" and self.sp != 1 else "window_length_"
+            )
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
-                f"the training series.")
+                f"the training series."
+            )
 
         self._is_fitted = True
         return self
 
-    def _predict_last_window(self, fh, X=None, return_pred_int=False,
-                             alpha=DEFAULT_ALPHA):
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
+    ):
         """Internal predict"""
-        last_window = self._get_last_window()
+        last_window, _ = self._get_last_window()
+        fh = fh.to_relative(self.cutoff)
 
         # if last window only contains missing values, return nan
         if np.all(np.isnan(last_window)) or len(last_window) == 0:
@@ -155,7 +166,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                     last_window = np.tile(last_window, reps=reps)
 
                 # get zero-based index by subtracting the minimum
-                fh_idx = fh.index_like(self.cutoff)
+                fh_idx = fh.to_indexer(self.cutoff)
                 return last_window[fh_idx]
 
         elif self.strategy == "mean":
@@ -170,12 +181,12 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                     pad_width = self.sp_ - remainder
                 else:
                     pad_width = 0
-                last_window = np.hstack([last_window,
-                                         np.full(pad_width, np.nan)])
+                last_window = np.hstack([last_window, np.full(pad_width, np.nan)])
 
                 # reshape last window, one column per season
-                last_window = last_window.reshape(np.int(np.ceil(
-                    self.window_length_ / self.sp_)), self.sp_)
+                last_window = last_window.reshape(
+                    np.int(np.ceil(self.window_length_ / self.sp_)), self.sp_
+                )
 
                 # compute seasonal mean, averaging over rows
                 y_pred = np.nanmean(last_window, axis=0)
@@ -191,23 +202,26 @@ class NaiveForecaster(OptionalForecastingHorizonMixin,
                     y_pred = np.tile(y_pred, reps=reps)
 
                 # get zero-based index by subtracting the minimum
-                fh_idx = fh.index_like(self.cutoff)
+                fh_idx = fh.to_indexer(self.cutoff)
                 return y_pred[fh_idx]
 
         # if self.strategy == "drift":
         else:
             if self.window_length_ != 1:
                 if np.any(np.isnan(last_window[[0, -1]])):
-                    raise ValueError(f"For {self.strategy},"
-                                     f"first and last elements in the last "
-                                     f"window must not be a missing value.")
+                    raise ValueError(
+                        f"For {self.strategy},"
+                        f"first and last elements in the last "
+                        f"window must not be a missing value."
+                    )
                 else:
                     # formula for slope
-                    slope = (last_window[-1] -
-                             last_window[0]) / (self.window_length_ - 1)
+                    slope = (last_window[-1] - last_window[0]) / (
+                        self.window_length_ - 1
+                    )
 
                     # get zero-based index by subtracting the minimum
-                    fh_idx = fh.index_like(self.cutoff)
+                    fh_idx = fh.to_indexer(self.cutoff)
 
                     # linear extrapolation
                     y_pred = last_window[-1] + (fh_idx + 1) * slope

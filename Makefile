@@ -50,6 +50,5 @@ dist: ## Make Python source distribution
 docs: doc
 
 doc: ## Build documentation with Sphinx
-	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
 

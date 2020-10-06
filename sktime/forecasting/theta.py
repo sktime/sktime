@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __all__ = ["ThetaForecaster"]
 __author__ = ["@big-o", "Markus Löning"]
 
@@ -5,12 +6,12 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
-from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -28,7 +29,7 @@ class ThetaForecaster(ExponentialSmoothing):
     multiplicative
     decomposition before applying the theta method. The resulting forecasts
     are then
-    reseasonalized.
+    reseasonalised.
 
     In cases where SES results in a constant forecast, the theta forecaster
     will revert
@@ -98,8 +99,7 @@ class ThetaForecaster(ExponentialSmoothing):
         self.smoothing_level_ = None
         self.drift_ = None
         self.se_ = None
-        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level,
-                                              sp=sp)
+        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -121,15 +121,13 @@ class ThetaForecaster(ExponentialSmoothing):
             warn("`sp` is ignored when `deseasonalise`=False")
 
         if self.deseasonalise:
-            self.deseasonaliser_ = Deseasonalizer(sp=self.sp,
-                                                  model="multiplicative")
+            self.deseasonaliser_ = Deseasonalizer(sp=self.sp, model="multiplicative")
             y_train = self.deseasonaliser_.fit_transform(y_train)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y_train, fh=fh)
-        self.smoothing_level_ = self._fitted_forecaster.params[
-            "smoothing_level"]
+        self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
         self.trend_ = self._compute_trend(y_train)
@@ -154,9 +152,9 @@ class ThetaForecaster(ExponentialSmoothing):
         y_pred : pandas.Series
             Returns series of predicted values.
         """
-        y_pred = super(ThetaForecaster, self)._predict(fh, X=X,
-                                                       return_pred_int=False,
-                                                       alpha=alpha)
+        y_pred = super(ThetaForecaster, self)._predict(
+            fh, X=X, return_pred_int=False, alpha=alpha
+        )
 
         # Add drift.
         drift = self._compute_drift()
@@ -178,85 +176,49 @@ class ThetaForecaster(ExponentialSmoothing):
         return coefs[0, 0] / 2
 
     def _compute_drift(self):
+        fh = self.fh.to_relative(self.cutoff)
         if np.isclose(self.smoothing_level_, 0.0):
             # SES was constant, so revert to simple trend
-            drift = self.trend_ * self.fh
+            drift = self.trend_ * fh
         else:
             # Calculate drift from SES parameters
-            n_timepoints = len(self.oh)
+            n_timepoints = len(self._y)
             drift = self.trend_ * (
-                    self.fh
-                    + (1 - (
-                        1 - self.smoothing_level_) ** n_timepoints) /
-                    self.smoothing_level_
+                fh
+                + (1 - (1 - self.smoothing_level_) ** n_timepoints)
+                / self.smoothing_level_
             )
 
         return drift
 
-    def _compute_pred_errors(self, alpha=DEFAULT_ALPHA):
+    def _compute_pred_err(self, alphas):
         """
         Get the prediction errors for the forecast.
         """
         self.check_is_fitted()
-        alpha = check_alpha(alpha)
 
-        n_timepoints = len(self.oh)
+        n_timepoints = len(self._y)
 
         self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
-        sem = self.sigma_ * np.sqrt(self._fh * self.smoothing_level_ ** 2 + 1)
+        sem = self.sigma_ * np.sqrt(
+            self.fh.to_relative(self.cutoff) * self.smoothing_level_ ** 2 + 1
+        )
 
         errors = []
-        for a in alpha:
-            z = zscore(1 - a)
+        for alpha in alphas:
+            z = zscore(1 - alpha)
             error = z * sem
-            errors.append(
-                pd.Series(error, index=self.fh.absolute(self.cutoff)))
+            errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
 
-        # for a single alpha value, unwrap list
-        if len(errors) == 1:
-            return errors[0]
-
-        # otherwise, return list of errors
         return errors
 
     def update(self, y_new, X_new=None, update_params=True):
-        super(ThetaForecaster, self).update(y_new, X_new=X_new,
-                                            update_params=update_params)
+        super(ThetaForecaster, self).update(
+            y_new, X_new=X_new, update_params=update_params
+        )
         if update_params:
             if self.deseasonalise:
                 y_new = self.deseasonaliser_.transform(y_new)
-            self.smoothing_level_ = self._fitted_forecaster.params[
-                "smoothing_level"]
+            self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y_new)
         return self
-
-    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
-        """
-        Get the prediction intervals for the forecast. If alpha is iterable,
-        multiple
-        intervals will be calculated.
-        """
-        errors = self._compute_pred_errors(alpha=alpha)
-
-        # for multiple alphas, errors come in a list;
-        # for single alpha, they come as a single pd.Series,
-        # wrap it here into a list to make it iterable,
-        # to avoid code duplication
-        if isinstance(errors, pd.Series):
-            errors = [errors]
-
-        # compute prediction intervals
-        pred_int = [
-            pd.DataFrame({
-                "lower": y_pred - error,
-                "upper": y_pred + error
-            })
-            for error in errors
-        ]
-
-        # for a single alpha, return single pd.DataFrame
-        if len(pred_int) == 1:
-            return pred_int[0]
-
-        # otherwise return list of pd.DataFrames
-        return pred_int

@@ -1,18 +1,20 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
 __all__ = ["EnsembleForecaster"]
 
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
 from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
 
 
-class EnsembleForecaster(OptionalForecastingHorizonMixin,
-                         BaseHeterogenousEnsembleForecaster):
+class EnsembleForecaster(
+    OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster
+):
     """Ensemble of forecasters
 
     Parameters
@@ -27,8 +29,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
     _required_parameters = ["forecasters"]
 
     def __init__(self, forecasters, n_jobs=None):
-        self.n_jobs = n_jobs
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters)
+        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -45,7 +46,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
         -------
         self : returns an instance of self.
         """
-        self._set_oh(y_train)
+        self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
@@ -53,7 +54,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
         return self
 
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -66,7 +67,7 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
         self : an instance of self
         """
         self.check_is_fitted()
-        self._set_oh(y_new)
+        self._update_y_X(y_new, X_new)
         for forecaster in self.forecasters_:
             forecaster.update(y_new, X_new=X_new, update_params=update_params)
         return self
@@ -74,5 +75,4 @@ class EnsembleForecaster(OptionalForecastingHorizonMixin,
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(
-            axis=1)
+        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)
