@@ -122,14 +122,14 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]  # TODO
+        self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 350   # TODO
+        self.max_window = 350
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -196,7 +196,7 @@ class WEASEL(BaseClassifier):
             sfa_words = transformer.fit_transform(X, y)
 
             self.SFA_transformers.append(transformer)
-            bag = sfa_words[0]  # .iloc[:, 0]
+            bag = sfa_words[0]
 
             # chi-squared test to keep only relevant features
             relevant_features = {}
@@ -248,7 +248,7 @@ class WEASEL(BaseClassifier):
                                random_state=self.random_state)
             )
 
-        print("Size of dict", relevant_features_count)
+        print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
@@ -271,7 +271,7 @@ class WEASEL(BaseClassifier):
 
             # SFA transform
             sfa_words = self.SFA_transformers[i].transform(X)
-            bag = sfa_words[0]  # .iloc[:, 0]
+            bag = sfa_words[0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
