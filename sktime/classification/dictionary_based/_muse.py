@@ -201,11 +201,18 @@ class MUSE(BaseClassifier):
                 relevant_features = {}
                 apply_chi_squared = self.chi2_threshold > 0
                 if apply_chi_squared:
-                    bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
-                    chi2_statistics, p = chi2(bag_vec, y)
-                    relevant_features = np.where(
-                        chi2_statistics >= self.chi2_threshold
-                    )[0]
+                    vectorizer = DictVectorizer(sparse=True)
+                    bag_vec = vectorizer.fit_transform(bag)
+
+                    if len(vectorizer.feature_names_) > 1000:
+                        chi2_statistics, p = chi2(bag_vec, y)
+                        relevant_features_idx = \
+                            np.where(chi2_statistics >= self.chi2_threshold)[0]
+                        relevant_features = \
+                            set(np.array(vectorizer.feature_names_)[
+                                    relevant_features_idx])
+                    else:
+                        apply_chi_squared = False
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
