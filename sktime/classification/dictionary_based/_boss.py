@@ -20,7 +20,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
 
 
 # from numba import njit
@@ -157,8 +156,6 @@ class BOSSEnsemble(BaseClassifier):
 
         self.classifiers = []
         self.weights = []
-
-        X = tabularize(X, return_array=True)
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4

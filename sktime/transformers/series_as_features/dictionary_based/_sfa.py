@@ -328,7 +328,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
             criterion="entropy",
             max_depth=np.log2(self.alphabet_size),
             max_leaf_nodes=self.alphabet_size,
-            random_state=1
+            random_state=1,
         )
 
         for i in range(self.word_length):
@@ -477,7 +477,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 real = mft_data[n] + series[i + window_size - 1] - series[i - 1]
                 imag = mft_data[n + 1]
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
-                mft_data[n + 1] = (real * phis[n + 1] + phis[n] * imag)
+                mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
             normalising_factor = inverse_sqrt_win_size / (
                 stds[i] if stds[i] > 1e-8 else 1
