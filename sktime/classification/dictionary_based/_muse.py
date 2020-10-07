@@ -84,6 +84,7 @@ class MUSE(BaseClassifier):
 
 
     """
+
     def __init__(
         self,
         anova=True,
@@ -206,11 +207,12 @@ class MUSE(BaseClassifier):
 
                     if len(vectorizer.feature_names_) > 1000:
                         chi2_statistics, p = chi2(bag_vec, y)
-                        relevant_features_idx = \
-                            np.where(chi2_statistics >= self.chi2_threshold)[0]
-                        relevant_features = \
-                            set(np.array(vectorizer.feature_names_)[
-                                    relevant_features_idx])
+                        relevant_features_idx = np.where(
+                            chi2_statistics >= self.chi2_threshold
+                        )[0]
+                        relevant_features = set(
+                            np.array(vectorizer.feature_names_)[relevant_features_idx]
+                        )
                     else:
                         apply_chi_squared = False
 

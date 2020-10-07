@@ -20,7 +20,6 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
 
 # from sklearn.feature_selection import chi2
 # from numba.typed import Dict
@@ -175,7 +174,7 @@ class WEASEL(BaseClassifier):
 
         relevant_features_count = 0
 
-        for i, window_size in enumerate(self.window_sizes):
+        for window_size in self.window_sizes:
 
             transformer = SFA(
                 word_length=rng.choice(self.word_lengths),
@@ -205,10 +204,12 @@ class WEASEL(BaseClassifier):
 
                 if len(vectorizer.feature_names_) > 1000:
                     chi2_statistics, p = chi2(bag_vec, y)
-                    relevant_features_idx = \
-                        np.where(chi2_statistics >= self.chi2_threshold)[0]
-                    relevant_features = \
-                        set(np.array(vectorizer.feature_names_)[relevant_features_idx])
+                    relevant_features_idx = np.where(
+                        chi2_statistics >= self.chi2_threshold
+                    )[0]
+                    relevant_features = set(
+                        np.array(vectorizer.feature_names_)[relevant_features_idx]
+                    )
                     relevant_features_count += len(relevant_features_idx)
                 else:
                     relevant_features_count += len(vectorizer.feature_names_)
@@ -220,8 +221,7 @@ class WEASEL(BaseClassifier):
             for j in range(len(bag)):
                 for (key, value) in bag[j].items():
                     # chi-squared test
-                    if (not apply_chi_squared) or \
-                            (key in relevant_features):
+                    if (not apply_chi_squared) or (key in relevant_features):
                         # append the prefixes to the words to
                         # distinguish between window-sizes
                         if isinstance(key, tuple):
@@ -238,15 +238,17 @@ class WEASEL(BaseClassifier):
         self.clf = make_pipeline(
             DictVectorizer(sparse=False),
             StandardScaler(copy=False),
-            LogisticRegression(max_iter=5000,
-                               solver="liblinear",
-                               dual=True,
-                               # class_weight="balanced",
-                               penalty="l2",
-                               random_state=self.random_state)
-            )
+            LogisticRegression(
+                max_iter=5000,
+                solver="liblinear",
+                dual=True,
+                # class_weight="balanced",
+                penalty="l2",
+                random_state=self.random_state,
+            ),
+        )
 
-        print("Size of dict", relevant_features_count)  # TODO uncomment
+        # print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
