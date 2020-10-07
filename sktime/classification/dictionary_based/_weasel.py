@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ WEASEL classifier
 dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
@@ -7,7 +8,13 @@ __all__ = ["WEASEL"]
 
 import math
 import numpy as np
-import pandas as pd
+from numba import njit
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_selection import chi2
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
@@ -15,19 +22,12 @@ from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 from sktime.utils.data_container import tabularize
 
-from sklearn.utils import check_random_state
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import chi2
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-
-from numba import njit
+# from sklearn.feature_selection import chi2
 # from numba.typed import Dict
 
 
 class WEASEL(BaseClassifier):
-    """ Word ExtrAction for time SEries cLassification (WEASEL)
+    """Word ExtrAction for time SEries cLassification (WEASEL)
 
     WEASEL: implementation of WEASEL from Schäfer:
     @inproceedings{schafer2017fast,
@@ -89,7 +89,7 @@ class WEASEL(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = 2 (enabled by default)
+    chi2_threshold:      int, default = -1 (disabled by default)
         Feature selection is applied based on the chi-squared test.
         This is the threshold to use for chi-squared test on bag-of-words
         (higher means more strict). Negative values indicate that the test
@@ -104,14 +104,15 @@ class WEASEL(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 anova=True,
-                 bigrams=True,
-                 binning_strategy="information-gain",
-                 window_inc=2,
-                 chi2_threshold=2,  # enabled by default
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        anova=True,
+        bigrams=True,
+        binning_strategy="information-gain",
+        window_inc=4,
+        chi2_threshold=-1,  # disabled by default
+        random_state=None,
+    ):
 
         # currently greater values than 4 are not supported.
         self.alphabet_size = 4
@@ -157,22 +158,17 @@ class WEASEL(BaseClassifier):
         -------
         self : object
         """
-
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        y = y.values if isinstance(y, pd.Series) else y
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         # Window length parameter space dependent on series length
-        self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
-        X = tabularize(X, return_array=True)
+        self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
         win_inc = self.compute_window_inc()
 
         self.max_window = int(min(self.series_length, self.max_window))
-        self.window_sizes = list(range(self.min_window,
-                                       self.max_window,
-                                       win_inc))
+        self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
 
-        self.highest_bit = (math.ceil(math.log2(self.max_window)))+1
+        self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
         rng = check_random_state(self.random_state)
 
         all_words = [dict() for x in range(len(X))]
@@ -181,17 +177,19 @@ class WEASEL(BaseClassifier):
 
         for i, window_size in enumerate(self.window_sizes):
 
-            transformer = SFA(word_length=rng.choice(self.word_lengths),
-                              alphabet_size=self.alphabet_size,
-                              window_size=window_size,
-                              norm=rng.choice(self.norm_options),
-                              anova=self.anova,
-                              # levels=rng.choice([1, 2, 3]),
-                              binning_method=self.binning_strategy,
-                              bigrams=self.bigrams,
-                              remove_repeat_words=False,
-                              lower_bounding=False,
-                              save_words=False)
+            transformer = SFA(
+                word_length=rng.choice(self.word_lengths),
+                alphabet_size=self.alphabet_size,
+                window_size=window_size,
+                norm=rng.choice(self.norm_options),
+                anova=self.anova,
+                # levels=rng.choice([1, 2, 3]),
+                binning_method=self.binning_strategy,
+                bigrams=self.bigrams,
+                remove_repeat_words=False,
+                lower_bounding=False,
+                save_words=False,
+            )
 
             sfa_words = transformer.fit_transform(X, y)
 
@@ -227,13 +225,13 @@ class WEASEL(BaseClassifier):
                         # append the prefixes to the words to
                         # distinguish between window-sizes
                         if isinstance(key, tuple):
-                            word = (((key[0] << self.highest_bit)
-                                     | key[1]) << 3) | window_size
+                            word = (
+                                ((key[0] << self.highest_bit) | key[1]) << 3
+                            ) | window_size
                         else:
                             # word = ((key << self.highest_bit) << 3) \
                             #        | window_size
-                            word = WEASEL.shift_left(key, self.highest_bit,
-                                                     window_size)
+                            word = WEASEL.shift_left(key, self.highest_bit, window_size)
 
                         all_words[j][word] = value
 
@@ -254,17 +252,21 @@ class WEASEL(BaseClassifier):
         return self
 
     def predict(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag_all_words = [dict() for _ in range(len(X))]
         for i, window_size in enumerate(self.window_sizes):
@@ -281,12 +283,12 @@ class WEASEL(BaseClassifier):
                     # append the prefices to the words to distinguish
                     # between window-sizes
                     if isinstance(key, tuple):
-                        word = (((key[0] << self.highest_bit)
-                                 | key[1]) << 3) | window_size
+                        word = (
+                            ((key[0] << self.highest_bit) | key[1]) << 3
+                        ) | window_size
                     else:
                         # word = ((key << self.highest_bit) << 3) | window_size
-                        word = WEASEL.shift_left(key, self.highest_bit,
-                                                 window_size)
+                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
 
                     bag_all_words[j][word] = value
 
