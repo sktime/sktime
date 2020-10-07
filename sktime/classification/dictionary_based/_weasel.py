@@ -108,8 +108,8 @@ class WEASEL(BaseClassifier):
         anova=True,
         bigrams=True,
         binning_strategy="information-gain",
-        window_inc=4,
-        chi2_threshold=2,  # disabled by default
+        window_inc=2,
+        chi2_threshold=1,
         random_state=None,
     ):
 
@@ -129,7 +129,7 @@ class WEASEL(BaseClassifier):
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 350
+        self.max_window = 100
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -300,9 +300,9 @@ class WEASEL(BaseClassifier):
     def compute_window_inc(self):
         win_inc = self.window_inc
         if self.series_length < 50:
-            win_inc = 1  # less than 50 is ok time-wise
+            win_inc = 1  # less than 50 is ok runtime-wise
         elif self.series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 100 is ok time-wise
+            win_inc = min(self.window_inc, 2)  # less than 100 is ok runtime-wise
         return win_inc
 
     @staticmethod
