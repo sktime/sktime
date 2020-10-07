@@ -109,7 +109,7 @@ class WEASEL(BaseClassifier):
         bigrams=True,
         binning_strategy="information-gain",
         window_inc=2,
-        chi2_threshold=1,
+        chi2_threshold=2,
         random_state=None,
     ):
 
@@ -248,7 +248,7 @@ class WEASEL(BaseClassifier):
             ),
         )
 
-        # print("Size of dict", relevant_features_count)  # TODO uncomment
+        print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
