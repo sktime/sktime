@@ -493,7 +493,7 @@ def load_longley(y_name="TOTEMP"):
 
     # Get target series
     y = data.pop(y_name)
-    return y, data
+    return data, y
 
 
 def load_lynx():
