@@ -5,19 +5,18 @@
 __author__ = ["Markus Löning"]
 __all__ = [
     "get_expected_index_for_update_predict",
-    "generate_polynomial_series",
-    "generate_seasonal_time_series_data_with_trend",
-    "generate_time_series_data_with_trend",
+    "_generate_polynomial_series",
     "make_forecasting_problem",
-    "generate_time_series",
+    "_make_series",
+    "get_expected_index_for_update_predict",
+    "make_forecasting_problem",
 ]
 
 import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.utils.data_container import detabularise
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_y
 
@@ -46,17 +45,18 @@ def get_expected_index_for_update_predict(y, fh, step_length):
     return np.unique(pred_index)
 
 
-def generate_time_series(n_timepoints=75, positive=True, non_zero_index=False):
-    a = np.random.normal(size=n_timepoints)
-    if positive:
-        a -= np.min(a) - 1
+def _make_series(n_timepoints=75, all_positive=True, non_zero_index=False):
+    """Helper function to generate single time series"""
+    series = np.random.normal(size=n_timepoints)
+    if all_positive:
+        series -= np.min(series) - 1
     index = np.arange(n_timepoints)
     if non_zero_index:
         index += 30
-    return pd.Series(a, index=pd.Int64Index(index))
+    return pd.Series(series, index=pd.Int64Index(index))
 
 
-def generate_polynomial_series(n, order, coefs=None):
+def _generate_polynomial_series(n, order, coefs=None):
     """Helper function to generate polynomial series of given order and
     coefficients"""
     if coefs is None:
@@ -64,57 +64,6 @@ def generate_polynomial_series(n, order, coefs=None):
 
     x = np.vander(np.arange(n), N=order + 1).dot(coefs)
     return x.ravel()
-
-
-def generate_time_series_data_with_trend(
-    n_instances=1, n_timepoints=100, order=0, coefs=None, noise=False
-):
-    """Helper function to generate time series/panel data with polynomial
-    trend"""
-    samples = []
-    for _ in range(n_instances):
-        s = generate_polynomial_series(n_timepoints, order=order, coefs=coefs)
-
-        if noise:
-            s = s + np.random.normal(size=n_timepoints)
-
-        index = np.arange(n_timepoints)
-        y = pd.Series(s, index=index)
-
-        samples.append(y)
-
-    X = pd.DataFrame(samples)
-    assert X.shape == (n_instances, n_timepoints)
-    return detabularise(X)
-
-
-def generate_seasonal_time_series_data_with_trend(
-    n_samples=1, n_obs=100, order=0, sp=1, model="additive"
-):
-    """Helper function to generate time series/panel data with polynomial
-    trend and seasonal component"""
-    if sp == 1:
-        return generate_time_series_data_with_trend(
-            n_instances=n_samples, n_timepoints=n_obs, order=order
-        )
-
-    samples = []
-    for _ in range(n_samples):
-        # coefs = np.random.normal(scale=0.01, size=(order + 1, 1))
-        s = generate_polynomial_series(n_obs, order)
-
-        if model == "additive":
-            s[::sp] = s[::sp] + 0.1
-        else:
-            s[::sp] = s[::sp] * 1.1
-
-        index = np.arange(n_obs)
-        y = pd.Series(s, index=index)
-        samples.append(y)
-
-    X = pd.DataFrame(samples)
-    assert X.shape == (n_samples, n_obs)
-    return detabularise(X)
 
 
 def make_forecasting_problem(n_timepoints=50, index_type="int", random_state=None):
