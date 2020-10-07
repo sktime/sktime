@@ -11,16 +11,14 @@ import math
 import time
 
 import numpy as np
-import pandas as pd
-
-from sklearn.utils.multiclass import class_distribution
-from sklearn.utils import check_random_state
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.utils import check_random_state
+from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
 
 
 # TO DO: Make more efficient
@@ -139,12 +137,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         -------
         self : object
         """
-
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        y = y.values if isinstance(y, pd.Series) else y
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         self.time_limit = self.time_limit * 60
-        self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
+        self.n_instances, self.series_length = X.shape[0], X.shape[-1]
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -154,8 +150,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.weights = []
         self.prev_parameters_x = []
         self.prev_parameters_y = []
-
-        X = tabularize(X, return_array=True)
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
@@ -193,7 +187,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 )
 
             subsample = rng.choice(self.n_instances, size=subsample_size, replace=False)
-            X_subsample = X[subsample]  # .iloc[subsample, :]
+            X_subsample = X[subsample]
             y_subsample = y[subsample]
 
             tde = IndividualTDE(
@@ -242,8 +236,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     def predict_proba(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -346,7 +339,6 @@ class IndividualTDE(BaseClassifier):
             binning_method=binning_method,
             bigrams=True,
             remove_repeat_words=True,
-            return_pandas_data_series=False,
             save_words=False,
         )
         self.transformed_data = []
@@ -359,10 +351,7 @@ class IndividualTDE(BaseClassifier):
         super(IndividualTDE, self).__init__()
 
     def fit(self, X, y):
-
-        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
-            X, y = check_X_y(X, y, enforce_univariate=True)
-            X = tabularize(X, return_array=True)
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X, y)
         self.transformed_data = sfa[0]  # .iloc[:, 0]
@@ -378,10 +367,7 @@ class IndividualTDE(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-
-        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
-            X = check_X(X, enforce_univariate=True)
-            X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 

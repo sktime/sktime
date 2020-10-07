@@ -4,21 +4,16 @@ __all__ = ["SFA"]
 
 import math
 import sys
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from numba import njit
+from sklearn.feature_selection import f_classif
+from sklearn.tree import DecisionTreeClassifier
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-
-from sktime.utils.data_container import tabularize
-
 from sktime.utils.validation.series_as_features import check_X
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.feature_selection import f_classif
-from collections import defaultdict
-
-from numba import njit
 
 # from numba import typeof
 # from numba.core import types
@@ -183,9 +178,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         if self.binning_method not in binning_methods:
             raise TypeError("binning_method must be one of: ", binning_methods)
 
-        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
-            X = check_X(X, enforce_univariate=True)
-            X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         self.n_instances, self.series_length = X.shape
         self.breakpoints = self._binning(X, y)
@@ -195,10 +189,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X, y=None):
         self.check_is_fitted()
-
-        if isinstance(X, pd.Series) or isinstance(X, pd.DataFrame):
-            X = check_X(X, enforce_univariate=True)
-            X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         bags = pd.DataFrame() if self.return_pandas_data_series else [None]
         dim = []

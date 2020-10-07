@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import sys
 
-from sktime.transformers.series_as_features.dictionary_based._sfa import SFA
+import numpy as np
+
 from sktime.datasets import load_gunpoint
-from sktime.utils.data_container import tabularize
+from sktime.transformers.series_as_features.dictionary_based._sfa import SFA
+from sktime.utils.data_container import from_nested_to_2d_array
 
 
 # Check the transformer has changed the data correctly.
@@ -62,7 +63,7 @@ def test_transformer():
 def test_dft_mft():
     # load training data
     X, Y = load_gunpoint(split="train", return_X_y=True)
-    X_tab = tabularize(X, return_array=True)
+    X_tab = from_nested_to_2d_array(X, return_numpy=True)
 
     word_length = 6
     alphabet_size = 4

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
+__author__ = "Angus Dempster"
+__all__ = ["Rocket"]
+
 import numpy as np
 import pandas as pd
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.check_imports import _check_soft_deps
-from sktime.utils.data_container import nested_to_3d_numpy
+from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.validation.series_as_features import check_X
 
-_check_soft_deps("numba")
-from numba import njit, prange  # noqa: E402
-
-__author__ = "Angus Dempster"
-__all__ = ["Rocket"]
+_check_soft_dependencies("numba")
+from numba import njit  # noqa: E402
+from numba import prange  # noqa: E402
 
 
 class Rocket(BaseSeriesAsFeaturesTransformer):
@@ -57,9 +57,8 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         -------
         self
         """
-        X = check_X(X)
-        _, self.n_columns = X.shape
-        n_timepoints = X.applymap(lambda series: series.size).max().max()
+        X = check_X(X, coerce_to_numpy=True)
+        _, self.n_columns, n_timepoints = X.shape
         self.kernels = _generate_kernels(
             n_timepoints, self.num_kernels, self.n_columns, self.random_state
         )
@@ -79,8 +78,7 @@ class Rocket(BaseSeriesAsFeaturesTransformer):
         pandas DataFrame, transformed features
         """
         self.check_is_fitted()
-        X = check_X(X)
-        _X = nested_to_3d_numpy(X)
+        _X = check_X(X, coerce_to_numpy=True)
         if self.normalise:
             _X = (_X - _X.mean(axis=-1, keepdims=True)) / (
                 _X.std(axis=-1, keepdims=True) + 1e-8
@@ -130,7 +128,7 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
         b2 = a2 + _num_channel_indices
 
         a3 = 0  # for weights (per channel)
-        for _j in range(_num_channel_indices):
+        for _ in range(_num_channel_indices):
             b3 = a3 + _length
             _weights[a3:b3] = _weights[a3:b3] - _weights[a3:b3].mean()
             a3 = b3
