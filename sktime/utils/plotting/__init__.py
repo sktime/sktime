@@ -9,10 +9,8 @@ import warnings
 
 import numpy as np
 
-from sktime.utils.check_imports import _check_soft_deps
+from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
-
-_check_soft_deps("matplotlib", "seaborn")
 
 
 def plot_series(*series, labels=None):
@@ -30,9 +28,9 @@ def plot_series(*series, labels=None):
     fig : plt.Figure
     ax : plt.Axis
     """
-    # lazy imports to avoid hard dependency
-    import seaborn as sns
+    _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    import seaborn as sns
 
     n_series = len(series)
     if labels is not None:

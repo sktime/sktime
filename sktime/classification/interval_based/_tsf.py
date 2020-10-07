@@ -18,7 +18,6 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.data_container import tabularize
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -199,9 +198,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
-        _, self.series_length = X.shape
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
+        n_instances, self.series_length = X.shape
 
         rng = check_random_state(self.random_state)
 
@@ -270,8 +269,8 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             Predicted probabilities
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         _, series_length = X.shape
         if series_length != self.series_length:

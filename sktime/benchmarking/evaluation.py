@@ -12,12 +12,12 @@ from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.check_imports import _check_soft_deps
+from sktime.utils.check_imports import _check_soft_dependencies
 
 plt.style.use("seaborn-ticks")
 
 
-_check_soft_deps("matplotlib", "scikit_posthocs")
+_check_soft_dependencies("matplotlib", "scikit_posthocs")
 
 
 class Evaluator:

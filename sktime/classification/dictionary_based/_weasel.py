@@ -7,23 +7,23 @@ __author__ = "Patrick Schäfer"
 __all__ = ["WEASEL"]
 
 import math
+
 import numpy as np
-import pandas as pd
+from numba import njit
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_selection import chi2
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
 
-from sklearn.utils import check_random_state
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import chi2
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 
-from numba import njit
+# from sklearn.feature_selection import chi2
 
 # from numba.typed import Dict
 
@@ -160,13 +160,10 @@ class WEASEL(BaseClassifier):
         -------
         self : object
         """
-
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        y = y.values if isinstance(y, pd.Series) else y
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         # Window length parameter space dependent on series length
-        self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
-        X = tabularize(X, return_array=True)
+        self.n_instances, self.series_length = X.shape[0], X.shape[-1]
 
         win_inc = self.compute_window_inc()
 
@@ -245,17 +242,21 @@ class WEASEL(BaseClassifier):
         return self
 
     def predict(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+
         bag = self._transform_words(X)
         return self.clf.predict(bag)
 
     def predict_proba(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
     def _transform_words(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag_all_words = [dict() for _ in range(len(X))]
         for i, window_size in enumerate(self.window_sizes):

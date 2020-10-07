@@ -2,27 +2,31 @@
 from importlib import import_module
 
 
-def _check_soft_deps(*packages):
+def _check_soft_dependencies(*packages):
     """
-    Check if the packages which are soft dependencies
-    for sktime are installed
+    Check if all soft dependencies are installed and raise appropriate error message
+    when not.
 
     Parameters
     ----------
-    packages : single or multiple packages to check
+    packages : str
+        One or more package names to check
 
     Raises
     ------
     ModuleNotFoundError
-        User friendly error with suggested action to
-        install all soft dependencies
+        User friendly error with suggested action to install all required soft
+        dependencies
     """
     for package in packages:
         try:
             import_module(package)
         except ModuleNotFoundError as e:
-            raise ModuleNotFoundError(
+            msg = (
                 f"{e}. \n"
-                f"{package} is a soft dependency in sktime and is not included in the sktime installation.\n"  # noqa: E501
-                f"Please run `pip install {package}` or to install all soft dependencies run `pip install sktime[all_extras]`"  # noqa: E501
-            ) from e
+                f"{package} is a soft dependency and not included in the "
+                f"sktime installation.\n"
+                f"Please run `pip install {package}`. Alternatively, to install all "
+                f"soft dependencies, run `pip install sktime[all_extras]`"
+            )
+            raise ModuleNotFoundError(msg) from e

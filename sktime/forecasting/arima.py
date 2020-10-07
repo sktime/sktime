@@ -8,13 +8,11 @@ __all__ = ["AutoARIMA"]
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import (
-    BaseSktimeForecaster,
-    OptionalForecastingHorizonMixin,
-)
-from sktime.utils.check_imports import _check_soft_deps
+from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.utils.check_imports import _check_soft_dependencies
 
-_check_soft_deps("pmdarima")
+_check_soft_dependencies("pmdarima")
 
 
 class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
