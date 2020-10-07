@@ -8,23 +8,22 @@ __author__ = "Patrick Schäfer"
 __all__ = ["MUSE"]
 
 import math
+
 import numpy as np
-import pandas as pd
+from numba import njit
+from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_selection import chi2
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.series_as_features.dictionary_based import SFA
+from sktime.utils.data_container import from_nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
 
-from sklearn.utils import check_random_state
-from sklearn.feature_extraction import DictVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.feature_selection import chi2
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-
-from numba import njit
 
 # from numba.typed import Dict
 
@@ -144,8 +143,8 @@ class MUSE(BaseClassifier):
         self : object
         """
 
-        X, y = check_X_y(X, y, enforce_univariate=False)
-        y = y.values if isinstance(y, pd.Series) else y
+        X, y = check_X_y(X, y, coerce_to_pandas=True)
+        y = np.asarray(y)
 
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
@@ -167,9 +166,9 @@ class MUSE(BaseClassifier):
 
         # On each dimension, perform SFA
         for ind, column in enumerate(self.col_names):
-            X_dim = X[column]
-            X_dim = tabularize(X_dim, return_array=True)
-            series_length = len(X_dim[0])  # TODO compute minimum over all ts ?
+            X_dim = X[[column]]
+            X_dim = from_nested_to_3d_numpy(X_dim)
+            series_length = X_dim.shape[-1]  # TODO compute minimum over all ts ?
 
             # increment window size in steps of 'win_inc'
             win_inc = self.compute_window_inc(series_length)
@@ -254,7 +253,7 @@ class MUSE(BaseClassifier):
 
     def _transform_words(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
+        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
 
         if self.use_first_order_differences:
             X = self.add_first_order_differences(X)
@@ -263,8 +262,8 @@ class MUSE(BaseClassifier):
 
         # On each dimension, perform SFA
         for ind, column in enumerate(self.col_names):
-            X_dim = X[column]
-            X_dim = tabularize(X_dim, return_array=True)
+            X_dim = X[[column]]
+            X_dim = from_nested_to_3d_numpy(X_dim)
 
             for i, window_size in enumerate(self.window_sizes[ind]):
 

@@ -8,11 +8,13 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 from warnings import warn
 
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.check_imports import _check_soft_deps
+from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.data_container import from_nested_to_long
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation import check_n_jobs
+from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.series_as_features import check_X_y
 
-_check_soft_deps("tsfresh")
+_check_soft_dependencies("tsfresh")
 
 
 class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
@@ -62,13 +64,16 @@ class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self
         """
-        check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
         self.default_fc_parameters_ = self._get_extraction_params()
         self._is_fitted = True
         return self
 
     def _get_extraction_params(self):
         """Helper function to set default parameters from tsfresh"""
+        # make n_jobs compatible with scikit-learn
+        self.n_jobs = check_n_jobs(self.n_jobs)
+
         # lazy imports to avoid hard dependency
         from tsfresh.defaults import CHUNKSIZE
         from tsfresh.defaults import DISABLE_PROGRESSBAR
@@ -150,7 +155,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         """
         # input checks
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
 
         # tsfresh requires unique index, returns only values for
         # unique index values
@@ -280,7 +285,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
         # input checks
         if y is None:
             raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
-        X, y = check_X_y(X, y)
+        X, y = check_X_y(X, y, coerce_to_pandas=True)
 
         self.extractor_ = TSFreshFeatureExtractor(
             default_fc_parameters=self.default_fc_parameters,
@@ -324,7 +329,7 @@ class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
           Transformed pandas DataFrame
         """
         self.check_is_fitted()
-        X = check_X(X)
+        X = check_X(X, coerce_to_pandas=True)
         Xt = self.extractor_.transform(X)
         Xt = self.selector_.transform(Xt)
         return Xt.reindex(X.index)
