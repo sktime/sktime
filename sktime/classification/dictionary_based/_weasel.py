@@ -109,7 +109,7 @@ class WEASEL(BaseClassifier):
         bigrams=True,
         binning_strategy="information-gain",
         window_inc=2,
-        chi2_threshold=2,
+        chi2_threshold=1,
         random_state=None,
     ):
 
