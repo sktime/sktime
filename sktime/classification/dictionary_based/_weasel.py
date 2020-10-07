@@ -113,7 +113,7 @@ class WEASEL(BaseClassifier):
                  random_state=None
                  ):
 
-        # currently other values than 4 are not supported.
+        # currently greater values than 4 are not supported.
         self.alphabet_size = 4
 
         # feature selection is applied based on the chi-squared test.
@@ -122,14 +122,14 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = [4, 6]  # TODO
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
         self.min_window = 4
-        self.max_window = 250
+        self.max_window = 350   # TODO
 
         self.window_inc = window_inc
         self.highest_bit = -1
