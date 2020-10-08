@@ -211,7 +211,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             last_word = -1
             repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.uint32)  # TODO uint64?
+            words = np.zeros(dfts.shape[0], dtype=np.uint64)
 
             for window in range(dfts.shape[0]):
                 word_raw = SFA._create_word(
