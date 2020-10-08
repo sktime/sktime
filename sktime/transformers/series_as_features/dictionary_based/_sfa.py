@@ -623,8 +623,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
 
     @staticmethod
-    @njit("int64(int64,int64,int64)",
-          fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
 

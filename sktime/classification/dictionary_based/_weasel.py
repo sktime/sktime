@@ -122,7 +122,7 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [4, 6]
+        self.word_lengths = [6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
@@ -307,7 +307,6 @@ class WEASEL(BaseClassifier):
         return win_inc
 
     @staticmethod
-    @njit("int64(int64,int64,int64)",
-          fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
     def shift_left(key, highest_bit, window_size):
         return (key << highest_bit) | window_size
