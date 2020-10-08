@@ -199,7 +199,7 @@ class WEASEL(BaseClassifier):
             relevant_features = {}
             apply_chi_squared = self.chi2_threshold > 0
             if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=True)
+                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                 bag_vec = vectorizer.fit_transform(bag)
 
                 if len(vectorizer.feature_names_) > 1000:
@@ -236,7 +236,7 @@ class WEASEL(BaseClassifier):
                         all_words[j][word] = value
 
         self.clf = make_pipeline(
-            DictVectorizer(sparse=False),
+            DictVectorizer(sparse=False, sort=False),
             StandardScaler(copy=False),
             LogisticRegression(
                 max_iter=5000,
@@ -244,6 +244,7 @@ class WEASEL(BaseClassifier):
                 dual=True,
                 # class_weight="balanced",
                 penalty="l2",
+                tol=0.1,
                 random_state=self.random_state,
             ),
         )
