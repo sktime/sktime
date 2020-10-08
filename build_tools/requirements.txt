@@ -1,10 +1,10 @@
+cython>=0.29.0
+numba<=0.50.*
 pandas>=1.0.0
-scikit-learn==0.23.*
-statsmodels>=0.11.1
-numba
+pmdarima
 pytest
 pytest-cov
-cython>=0.29.0
-tsfresh
+scikit-learn==0.23.*
 scikit-posthocs
-pmdarima
+statsmodels>=0.12.*
+tsfresh

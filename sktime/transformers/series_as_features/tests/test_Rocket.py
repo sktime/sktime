@@ -7,7 +7,7 @@ from sktime.transformers.series_as_features.rocket import Rocket
 
 def test_rocket_on_gunpoint():
     # load training data
-    X_training, Y_training = load_gunpoint(split="TRAIN", return_X_y=True)
+    X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
 
     # 'fit' ROCKET -> infer data dimensions, generate random kernels
     ROCKET = Rocket(num_kernels=10_000)
@@ -27,7 +27,7 @@ def test_rocket_on_gunpoint():
     classifier.fit(X_training_transform, Y_training)
 
     # load test data
-    X_test, Y_test = load_gunpoint(split="TEST", return_X_y=True)
+    X_test, Y_test = load_gunpoint(split="test", return_X_y=True)
 
     # transform test data
     X_test_transform = ROCKET.transform(X_test)

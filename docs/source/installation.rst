@@ -14,22 +14,18 @@ But note that the package is actively being developed and currently not feature 
 
 Development version
 -------------------
-The installation instruction below are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
-
-To install the development version of sktime, follow these steps:
+To install the latest development version of sktime, follow these steps:
 
 1. Download the repository: :code:`git clone https://github.com/alan-turing-institute/sktime.git`
 2. Move into the root directory of the repository: :code:`cd sktime`
-3. Switch to development branch: :code:`git checkout dev`
+3. Make sure you are on the master branch: :code:`git checkout master`
 4. Make sure your local version is up-to-date: :code:`git pull`
-5. Build package from source using: :code:`pip install --editable .`
-
-Please read below for details and more advanced instructions.
+5. Build package from source using: :code:`pip install --editable .` Please read below for more detailed instructions for specific operating systems.
 
 Building sktime from source also requires
 
-- Cython >= 0.28.5
-- OpenMP
+- Cython >= 0.28.5 (available through :code:`pip install cython`)
+- OpenMP (see below for instructions)
 
 .. note::
 
@@ -38,34 +34,20 @@ Building sktime from source also requires
    not recommended since it will force some estimators to run in sequential
    mode and their ``n_jobs`` parameter will be ignored.
 
-Running tests requires
+To run our tests and generate our documentation, you need to follow a few extra steps as described in our section on :ref:`contributing`.
 
-.. |PytestMinVersion| replace:: 3.3.0
+Retrieving other stable versions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- pytest >=\ |PytestMinVersion|
-
-Generating the documentation and website requires
-
-- nbsphinx
-- sphinx_rtd_theme
-- `pandoc <https://pandoc.org/installing.html>`_
-
-
-Retrieving the latest code
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-We use `Git <https://git-scm.com/>`_ for version control and
-`GitHub <https://github.com/>`_ for hosting our main repository.
-
-You can check out the latest sources with the command:
+If you want to build a previous version, you can run:
 
 .. code-block:: bash
 
-    git clone git://github.com/alan-turing-institute/sktime.git
+ ``git checkout <VERSION>``
 
-If you want to build a stable version, you can ``git checkout <VERSION>``
-to get the code for that particular version, or download an zip archive of
-the version from github. To see which versions are available, run ``git tag``.
+This will checkout the code for that particular version. To see which versions are available, run ``git tag``.
+
+You can also `download <https://github.com/alan-turing-institute/sktime/releases>`_ a zip archive of the version from GitHub.
 
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
@@ -131,6 +113,12 @@ Then you need to set the following environment variables:
 
 Finally you can build the package using the standard command.
 
+Alternatively, if you have other compilers, such as gcc, installed, the following one-liner will do the job:
+
+.. code-block::
+
+   env CC=$(which gcc-9) CXX=$(which g++-9) pip install --editable .
+
 FreeBSD
 *******
 
@@ -155,7 +143,7 @@ can set the environment variables to these locations:
 
 Finally you can build the package using the standard command.
 
-For the upcomming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
+For the upcoming FreeBSD 12.1 and 11.3 versions, OpenMP will be included in
 the base system and these steps will not be necessary.
 
 
@@ -179,7 +167,6 @@ and then:
 .. code-block:: bash
 
     pip3 install numpy scipy cython
-
 
 When precompiled wheels are not avalaible for your architecture, you can
 install the system versions:
@@ -273,3 +260,9 @@ build step:
     python setup.py build --compiler=my_compiler install
 
 where ``my_compiler`` should be one of ``mingw32`` or ``msvc``.
+
+
+References
+----------
+
+The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.

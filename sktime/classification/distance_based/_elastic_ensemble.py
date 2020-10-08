@@ -55,7 +55,7 @@ class ElasticEnsemble(BaseClassifier):
     which distance measures to include optional (default='all')
     proportion_of_param_option          :    the proportion of the parameter
     grid space to search optional(default =1, i.e. all)
-    proportion_train_in_param_finding   : proprtion of the train set to use
+    proportion_train_in_param_finding   : proportion of the train set to use
     in the parameter search optional (default =1, i.e. all)
     proportion_train_for_test           : proportion of the train set to use
     in classifying new cases optional (default =1, i.e. all)
@@ -104,7 +104,7 @@ class ElasticEnsemble(BaseClassifier):
         super(ElasticEnsemble, self).__init__()
 
     def fit(self, X, y):
-        """Build an ensemble of 1-NN classifiers from th training set (X, y),
+        """Build an ensemble of 1-NN classifiers from the training set (X, y),
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]

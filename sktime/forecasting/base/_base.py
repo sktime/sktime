@@ -15,7 +15,14 @@ DEFAULT_ALPHA = 0.05
 
 
 class BaseForecaster(BaseEstimator):
-    """Base forecaster"""
+    """Base forecaster
+
+    The base forecaster specifies the methods and method
+    signatures that all forecasters have to implement.
+
+    Specific implementations of these methods is deferred to concrete
+    forecasters.
+    """
 
     def __init__(self):
         self._is_fitted = False
@@ -48,6 +55,7 @@ class BaseForecaster(BaseEstimator):
         X : pd.DataFrame, optional (default=None)
         return_pred_int : bool, optional (default=False)
         alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
 
         Returns
         -------
@@ -58,8 +66,33 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
+    def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
+        """
+        Get the prediction intervals for a forecast.
+
+        If alpha is iterable, multiple intervals will be calculated.
+
+        Parameters
+        ----------
+
+        y_pred : pd.Series
+            Point predictions.
+
+        alpha : float or list, optional (default=0.95)
+            A significance level or list of significance levels.
+
+        Returns
+        -------
+
+        intervals : pd.DataFrame
+            A table of upper and lower bounds for each point prediction in
+            ``y_pred``. If ``alpha`` was iterable, then ``intervals`` will be a
+            list of such tables.
+        """
+        raise NotImplementedError("abstract method")
+
     def update(self, y_new, X_new=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------
@@ -147,7 +180,7 @@ class BaseForecaster(BaseEstimator):
 
 
 def is_forecaster(estimator):
-    """Return True if the given estimator is (probably) a forecaster.
+    """Return True if the given estimator is a forecaster.
 
     Parameters
     ----------

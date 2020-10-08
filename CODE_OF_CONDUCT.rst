@@ -40,7 +40,7 @@ workshops, and communications online via GitHub.
 
 The lead investigator of the sktime - Dr Franz Király - is responsible
 for enforcing the Code of Conduct. He can be contacted by emailing
-fkiraly@turing.ac.uk.
+f.kiraly@ucl.ac.uk.
 
 Reports may be reviewed by other members of the core development team,
 unless there is a conflict of interest, and will be kept confidential.
@@ -157,7 +157,7 @@ details).
 This Code of Conduct is not intended as a static set of rules by which
 everyone must abide. Rather, you are invited to make suggestions for
 updates or clarifications by contacting Dr Franz Király at
-fkiraly@turing.ac.uk or by making a pull request to this document on
+f.kiraly@ucl.ac.uk or by making a pull request to this document on
 GitHub.
 
 3 Incident Reporting Guidelines
@@ -167,7 +167,7 @@ GitHub.
 ~~~~~~~~~~~~~~~~~~
 
 If you feel able to, please contact Dr Franz Király by email at
-fkiraly@turing.ac.uk.
+f.kiraly@ucl.ac.uk.
 
 3.2 Alternate contact points
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -201,9 +201,9 @@ respectful and not include any harassing behaviours.
 
 The provisional Code of Conduct committee is:
 
--  Dr Franz Király: fkiraly@turing.ac.uk
+-  Dr Franz Király: f.kiraly@ucl.ac.uk
 -  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning.17@ucl.ac.uk
+-  Markus Löning: markus.loning@gmail.com
 
 As the community grows, we will seek to build a larger committee
 including members outside of the core development team.
@@ -308,8 +308,8 @@ In the event of any conflict of interest such that Dr Franz Király is
 not able to evaluate or enforce the reported violation, Dr Tony Bagnall
 will take Dr Franz Király's place.
 
-5. Acknowledgements
--------------------
+5 Acknowledgements
+------------------
 
 This code is adapted from the `The Turing
 Way <https://github.com/alan-turing-institute/the-turing-way>`__ project

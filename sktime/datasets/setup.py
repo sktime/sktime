@@ -18,13 +18,16 @@ def configuration(parent_package='', top_path=None):
         "ArrowHead",
         "BasicMotions",
         "GunPoint",
+        "OSULeaf",
         "ItalyPowerDemand",
         "JapaneseVowels",
         "Longley",
         "Lynx",
         "PLAID",
         "ShampooSales",
-        "Airline"
+        "Airline",
+        "ACSF1",
+        "Uschange"
     )
     for dataset in included_datasets:
         config.add_data_dir(f"data/{dataset}")

@@ -165,7 +165,7 @@ def test_single_dataset_single_strategy_against_sklearn(dataset, cv,
 
 # simple test of sign test and ranks
 def test_stat():
-    data = load_gunpoint()
+    data = load_gunpoint(split="train")
     dataset = RAMDataset(dataset=data, name="gunpoint")
     task = TSCTask(target="class_val")
 

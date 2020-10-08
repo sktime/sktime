@@ -1,17 +1,12 @@
 {
-  "projectName": "sktime",
-  "projectOwner": "alan-turing-institute",
-  "repoType": "github",
-  "repoHost": "",
   "files": [
     "CONTRIBUTORS.md"
   ],
   "imageSize": 100,
-  "commit": false,
-  "commitConvention": "none",
   "contributorsPerLine": 7,
   "contributorsSortAlphabetically": true,
-  "skipCi": "true",
+  "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg)](#contributors)",
+  "skipCi": true,
   "contributors": [
     {
       "login": "fkiraly",
@@ -110,7 +105,8 @@
         "ideas",
         "projectManagement",
         "question",
-        "talk"
+        "talk",
+        "mentoring"
       ]
     },
     {
@@ -143,7 +139,9 @@
       "avatar_url": "https://avatars0.githubusercontent.com/u/25731235?v=4",
       "profile": "http://www.timeseriesclassification.com",
       "contributions": [
-        "code"
+        "code",
+        "doc",
+        "test"
       ]
     },
     {
@@ -258,7 +256,10 @@
       "contributions": [
         "code",
         "review",
-        "test"
+        "test",
+        "doc",
+        "eventOrganizing",
+        "tutorial"
       ]
     },
     {
@@ -281,7 +282,8 @@
         "design",
         "ideas",
         "review",
-        "tutorial"
+        "tutorial",
+        "mentoring"
       ]
     },
     {
@@ -332,6 +334,207 @@
       "contributions": [
         "bug"
       ]
+    },
+    {
+      "login": "abandus",
+      "name": "abandus",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/46486474?v=4",
+      "profile": "https://github.com/abandus",
+      "contributions": [
+        "ideas",
+        "code"
+      ]
+    },
+    {
+      "login": "Pangoraw",
+      "name": "Paul",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/9824244?v=4",
+      "profile": "https://ber.gp",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "vedazeren",
+      "name": "vedazeren",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/63582874?v=4",
+      "profile": "https://github.com/vedazeren",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "hiqbal2",
+      "name": "hiqbal2",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/10302415?v=4",
+      "profile": "https://github.com/hiqbal2",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "btrtts",
+      "name": "btrtts",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/66252156?v=4",
+      "profile": "https://github.com/btrtts",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "marielledado",
+      "name": "Marielle",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/13499809?v=4",
+      "profile": "https://twitter.com/marielli",
+      "contributions": [
+        "doc",
+        "code",
+        "ideas"
+      ]
+    },
+    {
+      "login": "Cheukting",
+      "name": "Cheuk Ting Ho",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/28761465?v=4",
+      "profile": "http://cheuk.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "sophijka",
+      "name": "sophijka",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/47450591?v=4",
+      "profile": "https://github.com/sophijka",
+      "contributions": [
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "Quaterion",
+      "name": "Quaterion",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/23200273?v=4",
+      "profile": "https://github.com/Quaterion",
+      "contributions": [
+        "bug"
+      ]
+    },
+    {
+      "login": "ABostrom",
+      "name": "Aaron Bostrom",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/9571933?v=4",
+      "profile": "https://github.com/ABostrom",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "mentoring"
+      ]
+    },
+    {
+      "login": "BandaSaiTejaReddy",
+      "name": "BANDASAITEJAREDDY",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/31387911?v=4",
+      "profile": "https://github.com/BandaSaiTejaReddy",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "lynnssi",
+      "name": "Alexandra Amidon",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/17050655?v=4",
+      "profile": "https://medium.com/@alexandra.amidon",
+      "contributions": [
+        "blog",
+        "doc",
+        "ideas"
+      ]
+    },
+    {
+      "login": "chizzi25",
+      "name": "chizzi25",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/67911243?v=4",
+      "profile": "https://github.com/chizzi25",
+      "contributions": [
+        "blog"
+      ]
+    },
+    {
+      "login": "Piyush1729",
+      "name": "Piyush1729",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/64950012?v=4",
+      "profile": "https://github.com/Piyush1729",
+      "contributions": [
+        "code",
+        "review"
+      ]
+    },
+    {
+      "login": "sri1419",
+      "name": "sri1419",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/65078278?v=4",
+      "profile": "https://github.com/sri1419",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "patrickzib",
+      "name": "Patrick Schäfer",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/7783034?v=4",
+      "profile": "http://www2.informatik.hu-berlin.de/~schaefpa/",
+      "contributions": [
+        "code",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "akanz1",
+      "name": "Andreas Kanz",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/51492342?v=4",
+      "profile": "https://github.com/akanz1",
+      "contributions": [
+        "tutorial"
+      ]
+    },
+    {
+      "login": "brettkoonce",
+      "name": "brett koonce",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/11281814?v=4",
+      "profile": "https://github.com/brettkoonce",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "alwinw",
+      "name": "Alwin",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/16846521?v=4",
+      "profile": "https://github.com/alwinw",
+      "contributions": [
+        "doc",
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "kkoziara",
+      "name": "kkoziara",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/4346849?v=4",
+      "profile": "https://github.com/kkoziara",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
-  ]
+  ],
+  "projectName": "sktime",
+  "projectOwner": "alan-turing-institute",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "commitConvention": "none"
 }

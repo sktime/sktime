@@ -25,6 +25,8 @@ install: ## Install for the current user using the default python command
 test: ## Run unit tests
 	pytest --cov-report html --cov=sktime --showlocals --durations=20 --pyargs $(PACKAGE)
 
+tests: test
+
 lint:  ## Run linting
 	$(MAINT_DIR)/linting.sh
 
@@ -43,11 +45,10 @@ clean: ## Clean build dist and egg directories left after install
 	find . -type d -name '__pycache__' -empty -delete
 
 dist: ## Make Python source distribution
-	python setup.py sdist
+	python setup.py sdist bdist_wheel
 
 docs: doc
 
 doc: ## Build documentation with Sphinx
-	rm -rf $(DOC_DIR)/source/contributors.rst && m2r CONTRIBUTORS.md && mv CONTRIBUTORS.rst $(DOC_DIR)/source/contributors.rst
 	$(MAKE) -C $(DOC_DIR) html
 

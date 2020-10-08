@@ -1,14 +1,16 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """
 Do-nothing script for making a release
 
 This idea comes from here:
-- https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to-gradual-automation/
+- https://blog.danslimmon.com/2019/07/15/do-nothing-scripting-the-key-to
+-gradual-automation/
 
 The script is adapted from:
-- https://github.com/alan-turing-institute/CleverCSV/blob/master/make_release.py
+- https://github.com/alan-turing-institute/CleverCSV/blob/master
+/make_release.py
 """
 
 __author__ = ["Markus Löning"]
@@ -20,19 +22,23 @@ import webbrowser
 
 import colorama
 
-ROOTDIR = os.path.abspath(os.path.dirname(__file__)).strip("maint_tools")
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("maint_tools", "")
 PACKAGE_NAME = "sktime"
-URLS = {
-    "docs_local": f"file:///{ROOTDIR}docs/_build/html/index.html",
-    "docs_online": "https://alan-turing-institute.github.io/sktime/",
-    "pypi": f"https://pypi.org/simple/{PACKAGE_NAME}/"
-}
+
+
+class URLs:
+    DOCS_LOCAL = "file://" + os.path.realpath(
+        os.path.join(ROOT_DIR, "docs/_build/html/index.html")
+    )
+    DOCS_ONLINE = "https://www.sktime.org"
+    PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
+    GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
 
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    with codecs.open(os.path.join(ROOTDIR, *parts), 'r') as fp:
+    with codecs.open(os.path.join(ROOT_DIR, *parts), "r") as fp:
         return fp.read()
 
 
@@ -70,16 +76,15 @@ def colored(msg, color=None, style=None):
 
 def cprint(msg, color=None, style=None):
     """Coloured printing"""
-    print(colored(msg, color=color, style=style))
+    print(colored(msg, color=color, style=style))  # noqa
 
 
 def wait_for_enter():
     input(colored("\nPress Enter to continue", style="dim"))
-    print()
+    print()  # noqa
 
 
 class Step:
-
     def pre(self, context):
         pass
 
@@ -118,9 +123,17 @@ class Step:
 
 
 class ConfirmGitStatus(Step):
+    def __init__(self, branch):
+        self.branch = branch
+
     def action(self, context):
-        self.instruct("Make sure you're on master and changes are merged in")
-        self.print_run("git checkout master")
+        self.instruct(
+            f"Make sure you're on: {self.branch}, you're local "
+            f"branch is up-to-date, and all new changes are merged "
+            f"in."
+        )
+        self.do_cmd(f"git checkout {self.branch}")
+        self.do_cmd("git pull")
 
 
 class RunTests(Step):
@@ -140,11 +153,11 @@ class UpdateChangelog(Step):
 
 class BumpVersion(Step):
     def action(self, context):
-        self.instruct(f"Update __init__.py with new version")
+        self.instruct("Update __init__.py with new version")
 
     def post(self, context):
         wait_for_enter()
-        context["version"] = find_version(context['package_name'], '__init__.py')
+        context["version"] = find_version(context["package_name"], "__init__.py")
 
 
 class MakeClean(Step):
@@ -164,42 +177,54 @@ class MakeDist(Step):
 
 class PushToTestPyPI(Step):
     def action(self, context):
-        self.do_cmd(
-            "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
-        )
+        self.instruct("Upload to TestPyPI")
+        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ " "dist/*"
+        self.do_cmd(cmd)
 
 
 class InstallFromTestPyPI(Step):
     def action(self, context):
-        self.instruct(
-            f"Check installation from TestPyPI"
-        )
-        self.print_run("cd /tmp/")
-        self.print_cmd("rm -rf ./venv")
-        self.print_cmd("virtualenv ./venv")
-        self.print_cmd("source ./venv/bin/activate")
+        self.instruct("Check installation from TestPyPI")
+        self.print_run(f"mkdir {context['testdir']}")
+        self.print_run(f"cd {context['testdir']}")
+        self.print_cmd("conda remove -n testenv --all -y")
+        self.print_cmd("conda create -n testenv python=3.7")
+        self.print_cmd("conda activate testenv")
+
+        # use extra-index-url to install dependencies
         self.print_cmd(
-            "pip install --index-url https://test.pypi.org/simple/ "
-            "--extra-index-url https://pypi.org/simple {context['package_name']}=={context['version']}"
+            f"pip install --index-url https://test.pypi.org/simple/ "
+            f"--extra-index-url https://pypi.org/simple "
+            f"{context['package_name']}=={context['version']}"
         )
 
 
 class CheckVersionNumber(Step):
     def action(self, context):
         self.instruct(
-            f"Ensure that the following command gives version: {context['version']}"
+            f"Ensure that the following command gives version: "
+            f""
+            f"{context['version']}"
         )
-        self.do_cmd(f"python -c 'import {context['package_name']}; print({context['package_name']}.__version__)'")
+        self.do_cmd(
+            f"python -c 'import {context['package_name']}; print("
+            f"{context['package_name']}.__version__)'"
+        )
 
 
-class DeactivateVenv(Step):
+class DeactivateTestEnvironment(Step):
     def action(self, context):
-        self.print_run("deactivate")
+        self.instruct("Deactivate and remove test environment.")
+        self.print_run("conda deactivate")
+
         self.instruct("Go back to the project directory")
+        self.print_cmd("cd ..")
+        self.print_cmd(f"rm -r {context['testdir']}")
 
 
-class GitTagVersion(Step):
+class GitTagRelease(Step):
     def action(self, context):
+        self.instruct("Tag version as a release")
         self.do_cmd(f"git tag v{context['version']}")
 
 
@@ -209,95 +234,98 @@ class GitTagPreRelease(Step):
         self.print_run(f"git tag v{context['version']}-rc.1")
 
 
-class GitAddCommit(Step):
-    def action(self, context):
-        self.instruct("Add everything to git and commit")
-
-
-class GitAddRelease(Step):
-    def action(self, context):
-        self.instruct("Add CHANGELOG & README to git")
-        self.instruct(
-            f"Commit with title: {context['package_name']} {context['version']}"
-        )
-
-
-class PushToPyPI(Step):
-    def action(self, context):
-        self.do_cmd("twine upload dist/*")
-
-
 class PushToGitHub(Step):
     def action(self, context):
-        self.do_cmd("git push -u --tags origin master")
+        self.instruct("Add and commit to git, then push to GitHub")
 
 
 class CheckCIStatus(Step):
     def action(self, context):
-        self.instruct(
-            "Wait for CI to complete and check status"
-        )
+        self.instruct("Wait for CI to complete and check status")
 
 
 class CheckOnlineDocs(Step):
     def action(self, context):
-        self.instruct(
-            "Check online docs"
-        )
-        open_website(URLS["docs_online"])
+        self.instruct("Check online docs")
+        open_website(URLs.DOCS_ONLINE)
 
 
 class CheckLocalDocs(Step):
     def action(self, context):
-        self.instruct(
-            "Check local docs"
-        )
-        open_website(URLS["docs_local"])
+        self.instruct("Check local docs")
+        open_website(URLs.DOCS_LOCAL)
 
 
 class CheckPyPIFiles(Step):
     def action(self, context):
-        self.instruct(
-            "Check PyPI files"
-        )
-        open_website(URLS["pypi"])
+        self.instruct("Check PyPI files")
+        open_website(URLs.PYPI)
+
+
+class OpenGitHubPR(Step):
+    def action(self, context):
+        self.instruct("Open PR from dev to master on GitHub")
+        open_website(URLs.GITHUB_NEW_PR)
+
+
+class MergeGitHubPR(Step):
+    def action(self, context):
+        self.instruct("Review and merge PR from dev into master on GitHub")
+
+
+class PushTagToGitHub(Step):
+    def action(self, context):
+        self.do_cmd("git push -u --tags origin master")
 
 
 def main():
     colorama.init()
     steps = [
-        ConfirmGitStatus(),
+        # ConfirmGitStatus(branch="dev"),
+        # # run checks locally
+        # MakeClean(),
+        # RunLinting(),
+        # RunTests(),
+        # UpdateChangelog(),
+        # MakeDocs(),
+        # CheckLocalDocs(),
+        # BumpVersion(),
+        # CheckVersionNumber(),
+        # # run CI checks online
+        # PushToGitHub(),
+        # OpenGitHubPR(),
+        # CheckCIStatus(),
+        # MergeGitHubPR(),
+        # CheckCIStatus(),
+        # CheckOnlineDocs(),
+        # check TestPyPI locally
+        ConfirmGitStatus(branch="master"),
         MakeClean(),
-        RunLinting(),
-        RunTests(),
+        BumpVersion(),
+        CheckVersionNumber(),
+        UpdateChangelog(),
         MakeDocs(),
         CheckLocalDocs(),
-        PushToGitHub(),  # trigger CI to run tests
-        CheckCIStatus(),
-        CheckOnlineDocs(),
-        BumpVersion(),
-        GitAddCommit(),
-        GitTagPreRelease(),
-        PushToGitHub(),  # trigger CI to run tests
-        CheckCIStatus(),
-        UpdateChangelog(),
-        MakeClean(),
-        MakeDocs(),
         MakeDist(),
         PushToTestPyPI(),
         InstallFromTestPyPI(),
-        CheckVersionNumber(),
-        DeactivateVenv(),
-        GitAddRelease(),
-        PushToPyPI(),
-        GitTagVersion(),
-        PushToGitHub(),  # triggers Travis to build and deploy on tag
+        DeactivateTestEnvironment(),
+        PushToGitHub(),
+        # check pre-release online
+        # GitTagPreRelease(),
+        # PushTagToGitHub(),
+        CheckCIStatus(),
+        # make release
+        GitTagRelease(),
+        PushTagToGitHub(),
         CheckCIStatus(),
         CheckOnlineDocs(),
-        CheckPyPIFiles()
+        CheckPyPIFiles(),
     ]
     context = dict()
     context["package_name"] = PACKAGE_NAME
+    context["version"] = find_version(context["package_name"], "__init__.py")
+    context["testdir"] = "temp/"
     for step in steps:
         step.run(context)
     cprint("\nDone!", color="yellow", style="bright")

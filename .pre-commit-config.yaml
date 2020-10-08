@@ -1,0 +1,34 @@
+repos:
+- repo: https://github.com/psf/black
+  rev: 20.8b1
+  hooks:
+  - id: black
+    language_version: python3
+    # args: [--line-length 79]
+
+- repo: https://github.com/pycqa/flake8
+  rev: 3.8.3
+  hooks:
+  - id: flake8
+    exclude: docs/conf.py
+    additional_dependencies: [flake8-bugbear, flake8-print]
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v3.2.0
+  hooks:
+  - id: check-added-large-files
+  - id: check-case-conflict
+  - id: check-merge-conflict
+  - id: check-symlinks
+  - id: check-yaml
+  - id: debug-statements
+  - id: end-of-file-fixer
+  - id: fix-encoding-pragma
+  - id: requirements-txt-fixer
+  - id: trailing-whitespace
+
+- repo: https://github.com/mgedmin/check-manifest
+  rev: "0.42"
+  hooks:
+  - id: check-manifest
+    stages: [manual]

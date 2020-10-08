@@ -6,6 +6,7 @@ __pycache__/
 # C extensions
 *.so
 *.c
+*mrseql.cpp
 
 # Distribution / packaging
 .Python
@@ -72,8 +73,11 @@ instance/
 
 # Sphinx documentation
 docs/_build/
-doc/_build/
-doc/generated/
+# automatically generated content
+docs/source/modules/auto_generated/
+
+# automatically sym-linked example notebooks
+docs/source/examples
 
 # PyBuilder
 target/

@@ -1,5 +1,7 @@
-sktime
-tsfresh
+matplotlib
+numba
 pmdarima
 scikit-posthocs
-matplotlib
+seaborn
+sktime
+tsfresh
