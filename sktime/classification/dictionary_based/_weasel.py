@@ -308,4 +308,4 @@ class WEASEL(BaseClassifier):
     @staticmethod
     @njit(fastmath=True, cache=True)
     def shift_left(key, highest_bit, window_size):
-        return ((key << highest_bit) << 3) | window_size
+        return (key << highest_bit) | window_size
