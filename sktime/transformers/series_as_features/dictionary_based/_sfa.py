@@ -211,7 +211,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
             last_word = -1
             repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.uint64)
+            words = np.zeros(dfts.shape[0], dtype=np.int64)
 
             for window in range(dfts.shape[0]):
                 word_raw = SFA._create_word(
@@ -575,7 +575,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         cache=True
     )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
-        word = 0
+        word = np.int64(0)
         for i in range(word_length):
             for bp in range(alphabet_size):
                 if dft[i] <= breakpoints[i][bp]:
@@ -623,7 +623,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)",
+          fastmath=True, cache=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
 

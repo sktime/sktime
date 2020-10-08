@@ -306,6 +306,7 @@ class WEASEL(BaseClassifier):
         return win_inc
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)",
+          fastmath=True, cache=True)
     def shift_left(key, highest_bit, window_size):
         return (key << highest_bit) | window_size
