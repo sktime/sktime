@@ -1,7 +1,7 @@
+# -*- coding: utf-8 -*-
 import torch
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 
 def make_augmentation_pipeline(aug_list):
@@ -30,23 +30,21 @@ def make_augmentation_pipeline(aug_list):
     """
     # Assertions
     types = [tuple, list, None, str]
-    assert any([type(aug_list) == t for t in types]), (
-        "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
-    )
+    assert any(
+        [type(aug_list) == t for t in types]
+    ), "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
     aug_list = [aug_list] if isinstance(aug_list, str) else aug_list
 
     # Dictionary of augmentations
     AUGMENTATIONS = {
-        'leadlag': _LeadLag(),
-        'ir': _InvisibilityReset(),
-        'addtime': _AddTime(),
-        'cumsum': _CumulativeSum(),
-        'basepoint': _BasePoint()
+        "leadlag": _LeadLag(),
+        "ir": _InvisibilityReset(),
+        "addtime": _AddTime(),
+        "cumsum": _CumulativeSum(),
+        "basepoint": _BasePoint(),
     }
 
-    pipeline = Pipeline([
-        (tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list
-    ])
+    pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
 
     return pipeline
 
@@ -58,6 +56,7 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
     first index. The time channel will be of length L and scaled to exist in
     [0, 1].
     """
+
     def fit(self, X, y=None):
         self._is_fitted = True
         return self
@@ -78,6 +77,7 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
+
     def fit(self, X, y=None):
         self._is_fitted = True
         return self
@@ -113,6 +113,7 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
         - https://arxiv.org/pdf/1310.4054.pdf
         - https://arxiv.org/pdf/1307.7244.pdf
     """
+
     def fit(self, X, y=None):
         self._is_fitted = True
         return self
@@ -141,6 +142,7 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     append_zero: bool
         Set True to append zero to the path before taking the cumulative sum.
     """
+
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
 
@@ -159,6 +161,7 @@ class _BasePoint(BaseSeriesAsFeaturesTransformer):
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
+
     def fit(self, X, y=None):
         self._is_fitted = True
         return self

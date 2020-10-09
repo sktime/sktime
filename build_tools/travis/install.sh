@@ -108,5 +108,3 @@ fi
 build_tools/travis/travis_fastfail.sh
 
 set +e
-
-
