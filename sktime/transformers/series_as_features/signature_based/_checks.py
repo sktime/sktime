@@ -7,7 +7,7 @@ import functools
 import torch
 import pandas as pd
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.utils.data_container import nested_to_3d_numpy
+from sktime.utils.data_container import from_nested_to_3d_numpy
 
 
 def handle_sktime_signatures(check_fitted=False):
@@ -59,5 +59,5 @@ def sktime_to_tensor(data):
     the sktime format.
     """
     if not isinstance(data, torch.Tensor):
-        data = torch.Tensor(nested_to_3d_numpy(data)).transpose(1, 2)
+        data = torch.Tensor(from_nested_to_3d_numpy(data)).transpose(1, 2)
     return data
