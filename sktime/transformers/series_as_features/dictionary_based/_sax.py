@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
 
 #    TO DO: verify this returned pandas is consistent with sktime
@@ -18,7 +18,7 @@ from sktime.utils.validation.series_as_features import check_X
 __author__ = "Matthew Middlehurst"
 
 
-class SAX(BaseSeriesAsFeaturesTransformer):
+class SAX(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """SAX (Symbolic Aggregate approXimation) Transformer, as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
@@ -57,6 +57,8 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         words:      histor = []
 
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(
         self,

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from joblib import Parallel
@@ -6,50 +7,50 @@ from scipy import sparse
 from sklearn.pipeline import FeatureUnion as _FeatureUnion
 from sklearn.pipeline import _fit_transform_one
 from sklearn.pipeline import _transform_one
-from sktime.base import BaseEstimator
-from sktime.base import MetaEstimatorMixin
+
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 
 __all__ = ["FeatureUnion"]
 __author__ = ["Markus Löning"]
 
 
-class FeatureUnion(_FeatureUnion, BaseEstimator, MetaEstimatorMixin):
+class FeatureUnion(_FeatureUnion, _SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """Concatenates results of multiple transformer objects.
-        This estimator applies a list of transformer objects in parallel to the
-        input data, then concatenates the results. This is useful to combine
-        several feature extraction mechanisms into a single transformer.
-        Parameters of the transformers may be set using its name and the
-        parameter
-        name separated by a '__'. A transformer may be replaced entirely by
-        setting the parameter with its name to another transformer,
-        or removed by setting to 'drop' or ``None``.
-        Parameters
-        ----------
-        transformer_list : list of (string, transformer) tuples
-            List of transformer objects to be applied to the data. The first
-            half of each tuple is the name of the transformer.
-        n_jobs : int or None, optional (default=None)
-            Number of jobs to run in parallel.
-            ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
-            context.
-            ``-1`` means using all processors.
-        transformer_weights : dict, optional
-            Multiplicative weights for features per transformer.
-            Keys are transformer names, values the weights.
+    This estimator applies a list of transformer objects in parallel to the
+    input data, then concatenates the results. This is useful to combine
+    several feature extraction mechanisms into a single transformer.
+    Parameters of the transformers may be set using its name and the
+    parameter
+    name separated by a '__'. A transformer may be replaced entirely by
+    setting the parameter with its name to another transformer,
+    or removed by setting to 'drop' or ``None``.
+    Parameters
+    ----------
+    transformer_list : list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        context.
+        ``-1`` means using all processors.
+    transformer_weights : dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
     """
 
+    _required_parameters = ["transformer_list"]
+
     def __init__(
-            self,
-            transformer_list,
-            n_jobs=None,
-            transformer_weights=None,
-            preserve_dataframe=True
+        self,
+        transformer_list,
+        n_jobs=None,
+        transformer_weights=None,
+        preserve_dataframe=True,
     ):
         self.preserve_dataframe = preserve_dataframe
         super(FeatureUnion, self).__init__(
-            transformer_list,
-            n_jobs=n_jobs,
-            transformer_weights=transformer_weights
+            transformer_list, n_jobs=n_jobs, transformer_weights=transformer_weights
         )
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -72,9 +73,9 @@ class FeatureUnion(_FeatureUnion, BaseEstimator, MetaEstimatorMixin):
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, X, y, weight,
-                                        **fit_params)
-            for name, trans, weight in self._iter())
+            delayed(_fit_transform_one)(trans, X, y, weight, **fit_params)
+            for name, trans, weight in self._iter()
+        )
 
         if not result:
             # All transformers are None
@@ -107,7 +108,8 @@ class FeatureUnion(_FeatureUnion, BaseEstimator, MetaEstimatorMixin):
         self.check_is_fitted()
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
-            for name, trans, weight in self._iter())
+            for name, trans, weight in self._iter()
+        )
 
         if not Xs:
             # All transformers are None
@@ -127,8 +129,7 @@ class FeatureUnion(_FeatureUnion, BaseEstimator, MetaEstimatorMixin):
             Xs = sparse.hstack(Xs).tocsr()
 
         types = set(type(X) for X in Xs)
-        if self.preserve_dataframe and (
-                pd.Series in types or pd.DataFrame in types):
+        if self.preserve_dataframe and (pd.Series in types or pd.DataFrame in types):
             return pd.concat(Xs, axis=1)
 
         else:

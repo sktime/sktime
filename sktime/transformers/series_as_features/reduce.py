@@ -8,16 +8,14 @@ __all__ = ["Tabularizer"]
 import pandas as pd
 from sklearn.utils.validation import check_array
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import _get_column_names
-from sktime.utils.data_container import _get_time_index
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.utils.data_container import from_2d_array_to_nested
 from sktime.utils.data_container import from_3d_numpy_to_2d_array
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 
-class Tabularizer(BaseSeriesAsFeaturesTransformer):
+class Tabularizer(_SeriesAsFeaturesToTabularTransformer):
     """
     A transformer that turns time series/panel data into tabular data.
 
@@ -28,13 +26,6 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
     time-series/panel data into a format that is accepted by standard
     validation learning algorithms (as in sklearn).
     """
-
-    def fit(self, X, y=None):
-        X = check_X(X)
-        self._columns = _get_column_names(X)
-        self._time_index = _get_time_index(X)
-        self._is_fitted = True
-        return self
 
     def transform(self, X, y=None):
         """Transform nested pandas dataframe into tabular dataframe.
@@ -72,17 +63,7 @@ class Tabularizer(BaseSeriesAsFeaturesTransformer):
             Transformed dataframe with series in cells.
         """
         self.check_is_fitted()
-        if len(self._columns) > 1:
-            raise NotImplementedError(
-                f"`inverse-transform` currently only "
-                f"handles univariate data, but found: "
-                f"{len(self._columns)} columns in `fit`"
-            )
-
-            # we expect a tabular pd.DataFrame or np.array here, hence we use
-            # scikit-learn's input validation function
+        # We expect a tabular pd.DataFrame or np.array here, hence we use
+        # scikit-learn's input validation function.
         X = check_array(X)
-
-        Xt = from_2d_array_to_nested(X, time_index=self._time_index)
-        Xt.columns = self._columns
-        return Xt
+        return from_2d_array_to_nested(X)

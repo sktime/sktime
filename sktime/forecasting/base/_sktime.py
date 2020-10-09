@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "@big-o"]
-__all__ = ["BaseSktimeForecaster", "BaseWindowForecaster"]
+__all__ = ["_SktimeForecaster", "_BaseWindowForecaster"]
 
 from contextlib import contextmanager
 
@@ -22,7 +22,7 @@ from sktime.utils.validation.forecasting import check_y
 from sktime.utils.validation.forecasting import check_y_X
 
 
-class BaseSktimeForecaster(BaseForecaster):
+class _SktimeForecaster(BaseForecaster):
     """Base class for forecaster implemented in sktime"""
 
     def __init__(self):
@@ -33,7 +33,7 @@ class BaseSktimeForecaster(BaseForecaster):
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
-        super(BaseSktimeForecaster, self).__init__()
+        super(_SktimeForecaster, self).__init__()
 
     def _set_y_X(self, y, X=None):
         """Set training data.
@@ -46,7 +46,7 @@ class BaseSktimeForecaster(BaseForecaster):
             Exogenous time series
         """
         # set initial training data
-        self._y, self._X = check_y_X(y, X=X, allow_empty=False)
+        self._y, self._X = check_y_X(y, X, allow_empty=False)
 
         # set initial cutoff to the end of the training data
         self._set_cutoff(y.index[-1])
@@ -62,7 +62,7 @@ class BaseSktimeForecaster(BaseForecaster):
             Exogenous time series
         """
         # update only for non-empty data
-        y, X = check_y_X(y, X=X, allow_empty=True)
+        y, X = check_y_X(y, X, allow_empty=True)
 
         if len(y) > 0:
             self._y = y.combine_first(self._y)
@@ -131,7 +131,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         raise NotImplementedError()
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         raise NotImplementedError("abstract method")
 
     def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
@@ -156,7 +156,7 @@ class BaseSktimeForecaster(BaseForecaster):
         """
         self.check_is_fitted()
         self._set_fh(fh)
-        return self._predict(self.fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        return self._predict(self.fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
     def compute_pred_int(self, y_pred, alpha=DEFAULT_ALPHA):
         """
@@ -255,7 +255,7 @@ class BaseSktimeForecaster(BaseForecaster):
         return self._update_predict_single(
             y_new,
             self.fh,
-            X=X,
+            X,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -263,7 +263,7 @@ class BaseSktimeForecaster(BaseForecaster):
 
     def _update_predict_single(
         self,
-        y_new,
+        y,
         fh,
         X=None,
         update_params=False,
@@ -276,16 +276,16 @@ class BaseSktimeForecaster(BaseForecaster):
         sequentially, but can be overwritten by subclasses
         to implement more efficient updating algorithms when available.
         """
-        self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        self.update(y, X, update_params=update_params)
+        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Update fitted parameters
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
@@ -299,14 +299,14 @@ class BaseSktimeForecaster(BaseForecaster):
                 f"parameters."
             )
         self.check_is_fitted()
-        self._update_y_X(y_new, X_new)
+        self._update_y_X(y, X)
         return self
 
     def update_predict(
         self,
-        y_test,
+        y,
         cv=None,
-        X_test=None,
+        X=None,
         update_params=False,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
@@ -315,9 +315,9 @@ class BaseSktimeForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y_test : pd.Series
+        y : pd.Series
         cv : temporal cross-validation generator, optional (default=None)
-        X_test : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
@@ -332,12 +332,12 @@ class BaseSktimeForecaster(BaseForecaster):
 
         if return_pred_int:
             raise NotImplementedError()
-        y_test = check_y(y_test)
+        y = check_y(y)
         cv = check_cv(cv) if cv is not None else SlidingWindowSplitter(fh=self.fh)
         return self._predict_moving_cutoff(
-            y_test,
+            y,
             cv,
-            X=X_test,
+            X,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -388,7 +388,7 @@ class BaseSktimeForecaster(BaseForecaster):
                 y_pred = self._update_predict_single(
                     y_new,
                     fh,
-                    X=X,
+                    X,
                     update_params=update_params,
                     return_pred_int=return_pred_int,
                     alpha=alpha,
@@ -414,7 +414,7 @@ class BaseSktimeForecaster(BaseForecaster):
         raise NotImplementedError("abstract method")
 
 
-class OptionalForecastingHorizonMixin:
+class _OptionalForecastingHorizonMixin:
     """Mixin class for forecasters which can take the forecasting horizon
     either
     during fit or predict."""
@@ -458,7 +458,7 @@ class OptionalForecastingHorizonMixin:
             self._fh = fh
 
 
-class RequiredForecastingHorizonMixin:
+class _RequiredForecastingHorizonMixin:
     """Mixin class for forecasters which require the forecasting horizon
     during fit."""
 
@@ -513,19 +513,19 @@ class RequiredForecastingHorizonMixin:
                 self._fh = fh
 
 
-class BaseWindowForecaster(BaseSktimeForecaster):
+class _BaseWindowForecaster(_SktimeForecaster):
     """Base class for forecasters that use """
 
     def __init__(self, window_length=None):
-        super(BaseWindowForecaster, self).__init__()
+        super(_BaseWindowForecaster, self).__init__()
         self.window_length = window_length
         self.window_length_ = None
 
     def update_predict(
         self,
-        y_test,
+        y,
         cv=None,
-        X_test=None,
+        X=None,
         update_params=False,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
@@ -534,9 +534,9 @@ class BaseWindowForecaster(BaseSktimeForecaster):
 
         Parameters
         ----------
-        y_test : pd.Series
+        y : pd.Series
         cv : temporal cross-validation generator, optional (default=None)
-        X_test : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
@@ -552,9 +552,9 @@ class BaseWindowForecaster(BaseSktimeForecaster):
                 self.fh.to_relative(self.cutoff), window_length=self.window_length_
             )
         return self._predict_moving_cutoff(
-            y_test,
+            y,
             cv,
-            X=X_test,
+            X,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -568,13 +568,13 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
         # all values are out-of-sample
-        if fh.is_out_of_sample(self.cutoff):
+        if fh.is_all_out_of_sample(self.cutoff):
             return self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
 
         # all values are in-sample
-        elif fh.is_in_sample(self.cutoff):
+        elif fh.is_all_in_sample(self.cutoff):
             return self._predict_in_sample(fh.to_in_sample(self.cutoff), **kwargs)
 
         # both in-sample and out-of-sample values
@@ -604,7 +604,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         """
         # assert all(fh > 0)
         y_pred = self._predict_last_window(
-            fh, X=X, return_pred_int=return_pred_int, alpha=alpha
+            fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
         index = fh.to_absolute(self.cutoff)
         return pd.Series(y_pred, index=index)
@@ -636,7 +636,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         return self._predict_moving_cutoff(
             y_train,
             cv,
-            X=X,
+            X,
             update_params=False,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -684,7 +684,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
 
     def _update_predict_single(
         self,
-        y_new,
+        y,
         fh,
         X=None,
         update_params=False,
@@ -699,7 +699,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
 
         Parameters
         ----------
-        y_new
+        y
         fh
         X
         update_params
@@ -712,8 +712,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         """
         if X is not None:
             raise NotImplementedError()
-        self.update(y_new, X_new=X, update_params=update_params)
-        return self._predict(fh, X=X, return_pred_int=return_pred_int, alpha=alpha)
+        self.update(y, X, update_params=update_params)
+        return self._predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
 
 def _format_moving_cutoff_predictions(y_preds, cutoffs):

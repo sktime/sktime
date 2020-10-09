@@ -2,14 +2,14 @@
 import numpy as np
 import pandas as pd
 import math
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Vincent Nicholson"
 
 
-class DWTTransformer(BaseSeriesAsFeaturesTransformer):
+class DWTTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
 
     """
     The Discrete Wavelet Transform Transformer. This class performs

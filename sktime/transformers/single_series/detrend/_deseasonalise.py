@@ -13,15 +13,15 @@ __all__ = [
 import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
+from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils.datetime import _get_duration
 from sktime.utils.datetime import _get_unit
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.series import check_series
 
 
-class Deseasonalizer(BaseSingleSeriesTransformer):
+class Deseasonalizer(_SeriesToSeriesTransformer):
     """A transformer that removes a seasonal and trend components from time
     series
 
@@ -32,6 +32,8 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
     model : str {"additive", "multiplicative"}, optional (default="additive")
         Model to use for estimating seasonal component
     """
+
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
 
     def __init__(self, sp=1, model="additive"):
         self.sp = check_sp(sp)
@@ -49,7 +51,7 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         self._y_index = y.index
 
     def _align_seasonal(self, y):
-        """Helper function to align seasonal components with y's time index"""
+        """Align seasonal components with y's time index"""
         shift = (
             -_get_duration(
                 y.index[0],
@@ -61,26 +63,26 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         )
         return np.resize(np.roll(self.seasonal_, shift=shift), y.shape[0])
 
-    def fit(self, y, **fit_params):
+    def fit(self, Z, X=None):
         """Fit to data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
+        X : pd.DataFrame
         fit_params : dict
 
         Returns
         -------
         self : an instance of self
         """
-
-        y = check_y(y)
-        self._set_y_index(y)
+        z = check_series(Z, enforce_univariate=True)
+        self._set_y_index(z)
         sp = check_sp(self.sp)
 
         # apply seasonal decomposition
         self.seasonal_ = seasonal_decompose(
-            y,
+            z,
             model=self.model,
             period=sp,
             filt=None,
@@ -103,13 +105,14 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         else:
             return y * seasonal
 
-    def transform(self, y, **transform_params):
+    def transform(self, Z, X=None):
         """Transform data.
         Returns a transformed version of y.
 
         Parameters
         ----------
         y : pd.Series
+        X : pd.DataFrame
 
         Returns
         -------
@@ -117,17 +120,18 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
             Transformed time series.
         """
         self.check_is_fitted()
-        y = check_y(y)
-        seasonal = self._align_seasonal(y)
-        return self._transform(y, seasonal)
+        z = check_series(Z, enforce_univariate=True)
+        seasonal = self._align_seasonal(z)
+        return self._transform(z, seasonal)
 
-    def inverse_transform(self, y, **transform_params):
+    def inverse_transform(self, Z, X=None):
         """Inverse transform data.
         Returns a transformed version of y.
 
         Parameters
         ----------
         y : pd.Series
+        X : pd.DataFrame
 
         Returns
         -------
@@ -135,17 +139,17 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
             Transformed time series.
         """
         self.check_is_fitted()
-        y = check_y(y)
-        seasonal = self._align_seasonal(y)
-        return self._inverse_transform(y, seasonal)
+        z = check_series(Z, enforce_univariate=True)
+        seasonal = self._align_seasonal(z)
+        return self._inverse_transform(z, seasonal)
 
-    def update(self, y_new, update_params=False):
+    def update(self, Z, X=None, update_params=False):
         """Update fitted parameters
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
@@ -153,8 +157,8 @@ class Deseasonalizer(BaseSingleSeriesTransformer):
         self : an instance of self
         """
         self.check_is_fitted()
-        y_new = check_y(y_new)
-        self._set_y_index(y_new)
+        z = check_series(Z, enforce_univariate=True)
+        self._set_y_index(z)
         return self
 
 
@@ -196,21 +200,20 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             )
         return is_seasonal
 
-    def fit(self, y_train, **fit_params):
+    def fit(self, Z, X=None):
         """Fit to data.
 
         Parameters
         ----------
         y_train : pd.Series
-        fit_params : dict
 
         Returns
         -------
         self : an instance of self
         """
 
-        y_train = check_y(y_train)
-        self._set_y_index(y_train)
+        z = check_series(Z, enforce_univariate=True)
+        self._set_y_index(z)
         sp = check_sp(self.sp)
 
         # set default condition
@@ -220,12 +223,12 @@ class ConditionalDeseasonalizer(Deseasonalizer):
             self.seasonality_test_ = self.seasonality_test
 
         # check if data meets condition
-        self.is_seasonal_ = self._check_condition(y_train)
+        self.is_seasonal_ = self._check_condition(z)
 
         if self.is_seasonal_:
             # if condition is met, apply de-seasonalisation
             self.seasonal_ = seasonal_decompose(
-                y_train,
+                z,
                 model=self.model,
                 period=sp,
                 filt=None,
@@ -240,17 +243,3 @@ class ConditionalDeseasonalizer(Deseasonalizer):
 
         self._is_fitted = True
         return self
-
-    def update(self, y_new, update_params=False):
-        """Update fitted parameters
-
-        Parameters
-        ----------
-        y_new : pd.Series
-        update_params : bool, optional (default=False)
-
-        Returns
-        -------
-        self : an instance of self
-        """
-        raise NotImplementedError()

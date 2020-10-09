@@ -1,4 +1,4 @@
-
+# -*- coding: utf-8 -*-
 """
 Configurable time series ensembles
 """
@@ -18,13 +18,13 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformers.series_as_features.summarize import \
-    RandomIntervalFeatureExtractor
+from sktime.transformers.series_as_features.summarize import (
+    RandomIntervalFeatureExtractor,
+)
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
-from sktime.series_as_features.base.estimators._ensemble import \
-    BaseTimeSeriesForest
+from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
 class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
@@ -176,26 +176,29 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
     """
-    def __init__(self,
-                 estimator=None,
-                 n_estimators=100,
-                 criterion='entropy',
-                 max_depth=None,
-                 min_samples_split=2,
-                 min_samples_leaf=1,
-                 min_weight_fraction_leaf=0.,
-                 max_features=None,
-                 max_leaf_nodes=None,
-                 min_impurity_decrease=0.,
-                 min_impurity_split=None,
-                 bootstrap=False,
-                 oob_score=False,
-                 n_jobs=None,
-                 random_state=None,
-                 verbose=0,
-                 warm_start=False,
-                 class_weight=None,
-                 max_samples=None):
+
+    def __init__(
+        self,
+        estimator=None,
+        n_estimators=100,
+        criterion="entropy",
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        min_weight_fraction_leaf=0.0,
+        max_features=None,
+        max_leaf_nodes=None,
+        min_impurity_decrease=0.0,
+        min_impurity_split=None,
+        bootstrap=False,
+        oob_score=False,
+        n_jobs=None,
+        random_state=None,
+        verbose=0,
+        warm_start=False,
+        class_weight=None,
+        max_samples=None,
+    ):
 
         self.estimator = estimator
 
@@ -224,7 +227,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            max_samples=max_samples
+            max_samples=max_samples,
         )
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -233,36 +236,43 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     def _validate_estimator(self):
 
         if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError("n_estimators must be an integer, "
-                             "got {0}.".format(type(self.n_estimators)))
+            raise ValueError(
+                "n_estimators must be an integer, "
+                "got {0}.".format(type(self.n_estimators))
+            )
 
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than zero, "
-                             "got {0}.".format(self.n_estimators))
+            raise ValueError(
+                "n_estimators must be greater than zero, "
+                "got {0}.".format(self.n_estimators)
+            )
 
         # Set base estimator
         if self.estimator is None:
             # Set default time series forest
             features = [np.mean, np.std, time_series_slope]
-            steps = [('transform',
-                      RandomIntervalFeatureExtractor(
-                          n_intervals='sqrt',
-                          features=features,
-                          random_state=self.random_state)),
-                     ('clf', DecisionTreeClassifier(
-                         random_state=self.random_state))]
+            steps = [
+                (
+                    "transform",
+                    RandomIntervalFeatureExtractor(
+                        n_intervals="sqrt",
+                        features=features,
+                        random_state=self.random_state,
+                    ),
+                ),
+                ("clf", DecisionTreeClassifier(random_state=self.random_state)),
+            ]
             self.estimator_ = Pipeline(steps)
 
         else:
             # else check given estimator is a pipeline with prior
             # transformations and final decision tree
             if not isinstance(self.estimator, Pipeline):
-                raise ValueError('`estimator` must be '
-                                 'pipeline with transforms.')
-            if not isinstance(self.estimator.steps[-1][1],
-                              DecisionTreeClassifier):
-                raise ValueError('Last step in `estimator` must be '
-                                 'DecisionTreeClassifier.')
+                raise ValueError("`estimator` must be " "pipeline with transforms.")
+            if not isinstance(self.estimator.steps[-1][1], DecisionTreeClassifier):
+                raise ValueError(
+                    "Last step in `estimator` must be " "DecisionTreeClassifier."
+                )
             self.estimator_ = self.estimator
 
         # Set parameters according to naming in pipeline
@@ -278,8 +288,10 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             "min_impurity_split": self.min_impurity_split,
         }
         final_estimator = self.estimator_.steps[-1][0]
-        self.estimator_params = {f'{final_estimator}__{pname}': pval
-                                 for pname, pval in estimator_params.items()}
+        self.estimator_params = {
+            f"{final_estimator}__{pname}": pval
+            for pname, pval in estimator_params.items()
+        }
 
         # Set renamed estimator parameters
         for pname, pval in self.estimator_params.items():
@@ -312,13 +324,12 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             n_samples = proba[0].shape[0]
             # all dtypes should be the same, so just take the first
             class_type = self.classes_[0].dtype
-            predictions = np.empty((n_samples, self.n_outputs_),
-                                   dtype=class_type)
+            predictions = np.empty((n_samples, self.n_outputs_), dtype=class_type)
 
             for k in range(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
-                                                                    axis=1),
-                                                          axis=0)
+                predictions[:, k] = self.classes_[k].take(
+                    np.argmax(proba[k], axis=1), axis=0
+                )
 
             return predictions
 
@@ -382,7 +393,8 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(e.predict_proba)(X) for e in self.estimators_)
+            delayed(e.predict_proba)(X) for e in self.estimators_
+        )
 
         return np.sum(all_proba, axis=0) / len(self.estimators_)
 
@@ -396,17 +408,17 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
         oob_decision_function = []
         oob_score = 0.0
-        predictions = [np.zeros((n_samples, n_classes_[k]))
-                       for k in range(self.n_outputs_)]
+        predictions = [
+            np.zeros((n_samples, n_classes_[k])) for k in range(self.n_outputs_)
+        ]
 
-        n_samples_bootstrap = _get_n_samples_bootstrap(
-            n_samples, self.max_samples
-        )
+        n_samples_bootstrap = _get_n_samples_bootstrap(n_samples, self.max_samples)
 
         for estimator in self.estimators_:
             final_estimator = estimator.steps[-1][1]
             unsampled_indices = _generate_unsampled_indices(
-                final_estimator.random_state, n_samples, n_samples_bootstrap)
+                final_estimator.random_state, n_samples, n_samples_bootstrap
+            )
             p_estimator = estimator.predict_proba(X.iloc[unsampled_indices, :])
 
             if self.n_outputs_ == 1:
@@ -417,15 +429,15 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
         for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
-                warn("Some inputs do not have OOB scores. "
-                     "This probably means too few trees were used "
-                     "to compute any reliable oob estimates.")
+                warn(
+                    "Some inputs do not have OOB scores. "
+                    "This probably means too few trees were used "
+                    "to compute any reliable oob estimates."
+                )
 
-            decision = (predictions[k] /
-                        predictions[k].sum(axis=1)[:, np.newaxis])
+            decision = predictions[k] / predictions[k].sum(axis=1)[:, np.newaxis]
             oob_decision_function.append(decision)
-            oob_score += np.mean(y[:, k] ==
-                                 np.argmax(predictions[k], axis=1), axis=0)
+            oob_score += np.mean(y[:, k] == np.argmax(predictions[k], axis=1), axis=0)
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
@@ -448,39 +460,41 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
 
         y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = \
-                np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(
+                y[:, k], return_inverse=True
+            )
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
         y = y_store_unique_indices
 
         if self.class_weight is not None:
-            valid_presets = ('balanced', 'balanced_subsample')
+            valid_presets = ("balanced", "balanced_subsample")
             if isinstance(self.class_weight, str):
                 if self.class_weight not in valid_presets:
-                    raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample".'
-                                     'Given "%s".'
-                                     % self.class_weight)
+                    raise ValueError(
+                        "Valid presets for class_weight include "
+                        '"balanced" and "balanced_subsample".'
+                        'Given "%s".' % self.class_weight
+                    )
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or '
-                         '"balanced_subsample" are '
-                         'not recommended for warm_start if the fitted data '
-                         'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight '
-                         '("balanced", classes, y). In place of y you can use '
-                         'a large enough sample of the full training set '
-                         'target to properly estimate the class frequency '
-                         'distributions. Pass the resulting weights as the '
-                         'class_weight parameter.')
+                    warn(
+                        'class_weight presets "balanced" or '
+                        '"balanced_subsample" are '
+                        "not recommended for warm_start if the fitted data "
+                        "differs from the full dataset. In order to use "
+                        '"balanced" weights, use compute_class_weight '
+                        '("balanced", classes, y). In place of y you can use '
+                        "a large enough sample of the full training set "
+                        "target to properly estimate the class frequency "
+                        "distributions. Pass the resulting weights as the "
+                        "class_weight parameter."
+                    )
 
-            if (self.class_weight != 'balanced_subsample' or
-                    not self.bootstrap):
+            if self.class_weight != "balanced_subsample" or not self.bootstrap:
                 if self.class_weight == "balanced_subsample":
                     class_weight = "balanced"
                 else:
                     class_weight = self.class_weight
-                expanded_class_weight = compute_sample_weight(class_weight,
-                                                              y_original)
+                expanded_class_weight = compute_sample_weight(class_weight, y_original)
 
         return y, expanded_class_weight

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Matthew Middlehurst"
 
 
-class PAA(BaseSeriesAsFeaturesTransformer):
+class PAA(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """
     (PAA) Piecewise Aggregate Approximation Transformer, as described in
     Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.

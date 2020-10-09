@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.data_container import _concat_nested_arrays
 from sktime.utils.data_container import _get_column_names
 from sktime.utils.data_container import _get_time_index
@@ -13,7 +13,7 @@ from sktime.utils.time_series import compute_relative_to_n_timepoints
 from sktime.utils.validation.series_as_features import check_X
 
 
-class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
+class IntervalSegmenter(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """
     Interval segmentation transformer.
 
@@ -27,6 +27,8 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         intervals, the first column giving start points,
         and the second column giving end points of intervals
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(self, intervals=10):
         self.intervals = intervals
@@ -49,7 +51,7 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         -------
         self : an instance of self.
         """
-        X = check_X(X, coerce_to_numpy=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         n_instances, n_columns, n_timepoints = X.shape
         self.input_shape_ = n_instances, n_columns, n_timepoints
@@ -97,20 +99,8 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
 
         # Tabularise assuming series
         # have equal indexes in any given column
-        X = check_X(X, coerce_to_numpy=True)
-
-        # Check that the input is of the same shape as the one passed
-        # during fit.
-        if X.shape[1] != self.input_shape_[1]:
-            raise ValueError(
-                "Number of columns of input is different from what was seen" "in `fit`"
-            )
-        # # Input validation
-        # if not all([np.array_equal(fit_idx, trans_idx)
-        #             for trans_idx, fit_idx in zip(check_equal_index(X),
-        #             self._time_index)]):
-        #     raise ValueError('Indexes of input time-series are different
-        #     from what was seen in `fit`')
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         # Segment into intervals.
         # TODO generalise to non-equal-index cases
@@ -121,7 +111,7 @@ class IntervalSegmenter(BaseSeriesAsFeaturesTransformer):
         new_column_names = []
         for interval in self.intervals_:
             start, end = interval[0], interval[-1]
-            interval = X[:, :, start:end]
+            interval = X[:, start:end]
             intervals.append(interval)
             new_column_names.append(f"{column_names}_{start}_{end}")
 
@@ -282,7 +272,7 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         return np.column_stack([starts, ends])
 
 
-class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
+class SlidingWindowSegmenter(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """
     This class is to transform a univariate series into a
     multivariate one by extracting sets of subsequences.
@@ -313,6 +303,8 @@ class SlidingWindowSegmenter(BaseSeriesAsFeaturesTransformer):
 
     Proposed in the ShapeDTW algorithm.
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(self, window_length=5):
         self.window_length = window_length

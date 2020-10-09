@@ -12,7 +12,7 @@ from numba import njit
 from sklearn.feature_selection import f_classif
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 # from numba import typeof
@@ -23,7 +23,7 @@ from sktime.utils.validation.series_as_features import check_X
 binning_methods = {"equi-depth", "equi-width", "information-gain"}
 
 
-class SFA(BaseSeriesAsFeaturesTransformer):
+class SFA(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """SFA (Symbolic Fourier Approximation) Transformer, as described in
 
     @inproceedings{schafer2012sfa,
@@ -91,6 +91,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         num_insts = 0
         num_atts = 0
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(
         self,

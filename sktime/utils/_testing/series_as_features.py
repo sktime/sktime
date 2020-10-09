@@ -12,36 +12,38 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
+from sktime.utils.data_container import from_3d_numpy_to_nested
+
 
 def _make_series_as_features_X(
-    y, n_columns, n_timepoints, return_numpy=False, random_state=None
+    n_instances=20,
+    n_columns=1,
+    n_timepoints=20,
+    y=None,
+    return_numpy=False,
+    random_state=None,
 ):
-    n_instances = len(y)
+    # If target variable y is given, we ignore n_instances and instead generate as
+    # many instances as in the target variable
+    if y is not None:
+        y = np.asarray(y)
+        n_instances = len(y)
     rng = check_random_state(random_state)
 
-    # 3d numpy array
+    # Generate data as 3d numpy array
+    X = rng.normal(scale=0.5, size=(n_instances, n_columns, n_timepoints))
+
+    # Generate association between data and target variable
+    if y is not None:
+        X = X + (y * 100).reshape(-1, 1, 1)
+
     if return_numpy:
-        X = np.empty((n_instances, n_columns, n_timepoints))
-        for i in range(n_instances):
-            for j in range(n_columns):
-                X[i, j, :] = rng.normal(loc=y[i] * 100, scale=0.5, size=n_timepoints)
         return X
-
-    # nested pandas DataFrame
     else:
-        columns = []
-        for _ in range(n_columns):
-            rows = []
-            for j in range(n_instances):
-                # we use the y value for the mean of the generated time series
-                row = pd.Series(rng.normal(loc=y[j] * 20, scale=0.5, size=n_timepoints))
-                rows.append(row)
-            column = pd.Series(rows)
-            columns.append(column)
-        return pd.DataFrame(columns).T
+        return from_3d_numpy_to_nested(X)
 
 
-def _make_regression_y(n_instances=10, return_numpy=True, random_state=None):
+def _make_regression_y(n_instances=20, return_numpy=True, random_state=None):
     rng = check_random_state(random_state)
     y = rng.normal(size=n_instances)
     if return_numpy:
@@ -51,7 +53,7 @@ def _make_regression_y(n_instances=10, return_numpy=True, random_state=None):
 
 
 def _make_classification_y(
-    n_instances=10, n_classes=2, return_numpy=True, random_state=None
+    n_instances=20, n_classes=2, return_numpy=True, random_state=None
 ):
     if not n_instances > n_classes:
         raise ValueError("n_instances must be bigger than n_classes")
@@ -66,7 +68,7 @@ def _make_classification_y(
 
 
 def make_classification_problem(
-    n_instances=15,
+    n_instances=20,
     n_columns=1,
     n_timepoints=20,
     n_classes=2,
@@ -77,25 +79,33 @@ def make_classification_problem(
         n_instances, n_classes, return_numpy=return_numpy, random_state=random_state
     )
     X = _make_series_as_features_X(
-        y, n_columns, n_timepoints, return_numpy=return_numpy, random_state=random_state
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_numpy=return_numpy,
+        random_state=random_state,
+        y=y,
     )
 
     return X, y
 
 
 def make_regression_problem(
-    n_instances=15, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
+    n_instances=20, n_columns=1, n_timepoints=20, return_numpy=False, random_state=None
 ):
     y = _make_regression_y(
         n_instances, random_state=random_state, return_numpy=return_numpy
     )
     X = _make_series_as_features_X(
-        y, n_columns, n_timepoints, return_numpy=return_numpy, random_state=random_state
+        n_columns=n_columns,
+        n_timepoints=n_timepoints,
+        return_numpy=return_numpy,
+        random_state=random_state,
+        y=y,
     )
     return X, y
 
 
-def _make_nested_from_array(array, n_instances=10, n_columns=1):
+def _make_nested_from_array(array, n_instances=20, n_columns=1):
     return pd.DataFrame(
         [[pd.Series(array) for _ in range(n_columns)] for _ in range(n_instances)],
         columns=[f"col{c}" for c in range(n_columns)],

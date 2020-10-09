@@ -10,10 +10,12 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_consistent_length
 
-from sktime.utils.data_container import from_nested_to_3d_numpy, from_3d_numpy_to_nested
+from sktime.utils.data_container import from_3d_numpy_to_nested
+from sktime.utils.data_container import from_nested_to_3d_numpy
 from sktime.utils.data_container import is_nested_dataframe
 
-SUPPORTED_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
+VALID_X_TYPES = (pd.DataFrame, np.ndarray)  # nested pd.DataFrame and 3d np.array
+VALID_Y_TYPES = (pd.Series, np.ndarray)  # 1-d vector
 
 
 def check_X(
@@ -54,7 +56,7 @@ def check_X(
             "`coerce_to_pandas` and `coerce_to_numpy` cannot " "both be set to True"
         )
 
-    if not isinstance(X, SUPPORTED_X_TYPES):
+    if not isinstance(X, VALID_X_TYPES):
         raise ValueError(
             f"X must be a pd.DataFrame or a np.array, " f"but found: {type(X)}"
         )
@@ -122,7 +124,7 @@ def check_y(y, enforce_min_instances=1, coerce_to_numpy=False):
     ValueError
         If y is an invalid input
     """
-    if not isinstance(y, (pd.Series, np.ndarray)):
+    if not isinstance(y, VALID_Y_TYPES):
         raise ValueError(
             f"y must be either a pd.Series or a np.ndarray, "
             f"but found type: {type(y)}"

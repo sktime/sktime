@@ -70,10 +70,10 @@ def _check_scores(scores, scorer):
     return scores
 
 
-def _update_score(forecaster, cv, y_test, X_test, scorer):
+def _update_score(forecaster, cv, y, X, scorer):
     """Make, update and evaluate forecasts"""
-    y_pred = forecaster.update_predict(y_test, cv=cv, X_test=X_test)
-    return _score(y_test, y_pred, scorer)
+    y_pred = forecaster.update_predict(y, cv=cv, X=X)
+    return _score(y, y_pred, scorer)
 
 
 def _split(y, X, cv):
@@ -124,7 +124,7 @@ def _fit_and_score(
     # Fit forecaster
     start_time = time.time()
     try:
-        forecaster.fit(y_train, fh, X_train=X_train, **fit_params)
+        forecaster.fit(y_train, X_train, fh)
 
     except Exception as e:
         # Note fit time as time until error
@@ -191,18 +191,18 @@ class BaseGridSearch(BaseForecaster):
         super(BaseGridSearch, self).__init__()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update")
-        self.best_forecaster_.update(y_new, X_new=X_new, update_params=update_params)
+        self.best_forecaster_.update(y, X, update_params=update_params)
         return self
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update_predict(
         self,
-        y_test,
+        y,
         cv=None,
-        X_test=None,
+        X=None,
         update_params=False,
         return_pred_int=False,
         alpha=DEFAULT_ALPHA,
@@ -212,9 +212,9 @@ class BaseGridSearch(BaseForecaster):
         """
         self.check_is_fitted("update_predict")
         return self.best_forecaster_.update_predict(
-            y_test,
+            y,
             cv=cv,
-            X_test=X_test,
+            X=X,
             update_params=update_params,
             return_pred_int=return_pred_int,
             alpha=alpha,
@@ -223,7 +223,7 @@ class BaseGridSearch(BaseForecaster):
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def update_predict_single(
         self,
-        y_new,
+        y,
         fh=None,
         X=None,
         update_params=False,
@@ -233,7 +233,7 @@ class BaseGridSearch(BaseForecaster):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("update_predict_single")
         return self.best_forecaster_.update_predict_single(
-            y_new,
+            y,
             fh=fh,
             X=X,
             update_params=update_params,
@@ -246,14 +246,14 @@ class BaseGridSearch(BaseForecaster):
         """Call predict on the forecaster with the best found parameters."""
         self.check_is_fitted("predict")
         return self.best_forecaster_.predict(
-            fh=fh, X=X, return_pred_int=return_pred_int, alpha=alpha
+            fh, X, return_pred_int=return_pred_int, alpha=alpha
         )
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def transform(self, y, **transform_params):
+    def transform(self, y, X=None):
         """Call transform on the forecaster with the best found parameters."""
         self.check_is_fitted("transform")
-        return self.best_forecaster_.transform(y, **transform_params)
+        return self.best_forecaster_.transform(y, X)
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
     def get_fitted_params(self):
@@ -268,7 +268,7 @@ class BaseGridSearch(BaseForecaster):
         return self.best_forecaster_.get_fitted_params()
 
     @if_delegate_has_method(delegate=("best_forecaster_", "forecaster"))
-    def inverse_transform(self, y):
+    def inverse_transform(self, y, X=None):
         """Call inverse_transform on the forecaster with the best found params.
         Only available if the underlying forecaster implements
         ``inverse_transform`` and ``refit=True``.
@@ -279,9 +279,9 @@ class BaseGridSearch(BaseForecaster):
             underlying forecaster.
         """
         self.check_is_fitted("inverse_transform")
-        return self.best_forecaster_.inverse_transform(y)
+        return self.best_forecaster_.inverse_transform(y, X)
 
-    def score(self, y_test, fh=None, X=None):
+    def score(self, y, X=None, fh=None):
         """Returns the score on the given data, if the forecaster has been
         refit.
         This uses the score defined by ``scoring`` where provided, and the
@@ -290,7 +290,7 @@ class BaseGridSearch(BaseForecaster):
         ----------
         X : pandas.DataFrame, shape=[n_obs, n_vars], optional (default=None)
             An optional 2-d dataframe of exogenous variables.
-        y_test : pandas.Series
+        y : pandas.Series
             Target time series to which to compare the forecasts.
         Returns
         -------
@@ -303,8 +303,8 @@ class BaseGridSearch(BaseForecaster):
                 "and the forecaster doesn't provide one %s" % self.best_forecaster_
             )
         score = self.scorer_
-        y_pred = self.best_forecaster_.predict(fh, X=X)
-        return score(y_test, y_pred)
+        y_pred = self.best_forecaster_.predict(fh, X)
+        return score(y, y_pred)
 
     def _run_search(self, evaluate_candidates):
         raise NotImplementedError("_run_search not implemented.")
@@ -385,22 +385,22 @@ class BaseGridSearch(BaseForecaster):
             else:
                 self.best_forecaster_.check_is_fitted()
 
-    def fit(self, y_train, fh=None, X_train=None, **fit_params):
+    def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
-        y_train = check_y(y_train)
+        y = check_y(y)
 
         # validate cross-validator
         cv = check_cv(self.cv)
@@ -429,7 +429,7 @@ class BaseGridSearch(BaseForecaster):
             n_candidates = len(candidate_params)
 
             if self.verbose > 0:
-                n_splits = cv.get_n_splits(y_train)
+                n_splits = cv.get_n_splits(y)
                 print(  # noqa
                     "Fitting {0} folds for each of {1} candidates,"
                     " totalling {2} fits".format(
@@ -442,14 +442,14 @@ class BaseGridSearch(BaseForecaster):
                 r = _fit_and_score(
                     clone(base_forecaster),
                     cv,
-                    y_train,
-                    X_train,
+                    y,
+                    X,
                     parameters=parameters,
                     **fit_and_score_kwargs
                 )
                 out.append(r)
 
-            n_splits = cv.get_n_splits(y_train)
+            n_splits = cv.get_n_splits(y)
 
             if len(out) < 1:
                 raise ValueError(
@@ -475,14 +475,14 @@ class BaseGridSearch(BaseForecaster):
 
         if self.refit:
             refit_start_time = time.time()
-            self.best_forecaster_.fit(y_train, fh=fh, X_train=X_train, **fit_params)
+            self.best_forecaster_.fit(y, X, fh)
             self.refit_time_ = time.time() - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers[scoring.name]
 
         self.cv_results_ = results
-        self.n_splits_ = cv.get_n_splits(y_train)
+        self.n_splits_ = cv.get_n_splits(y)
 
         self._is_fitted = True
         return self

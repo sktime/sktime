@@ -7,25 +7,30 @@ transformers as building blocks.
 import numpy as np
 import pandas as pd
 from scipy import sparse
+from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    _NonFittableSeriesAsFeaturesTransformer,
-)
-from sktime.utils.data_container import _concat_nested_arrays
+from sktime.transformers.base import _BaseTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
+from sktime.transformers.base import _SeriesToPrimitivesTransformer
+from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils.data_container import from_2d_array_to_nested
 from sktime.utils.data_container import from_3d_numpy_to_2d_array
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]
-__all__ = ["ColumnTransformer", "RowTransformer", "ColumnConcatenator"]
+__all__ = [
+    "ColumnTransformer",
+    "SeriesToPrimitivesRowTransformer",
+    "SeriesToSeriesRowTransformer",
+    "ColumnConcatenator",
+]
 
 
 class ColumnTransformer(
-    _ColumnTransformer, BaseSeriesAsFeaturesTransformer, MetaEstimatorMixin
+    _ColumnTransformer, _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 ):
     """
     Applies transformers to columns of an array or pandas DataFrame. Simply
@@ -186,96 +191,7 @@ class ColumnTransformer(
         return Xt
 
 
-class RowTransformer(_NonFittableSeriesAsFeaturesTransformer, MetaEstimatorMixin):
-    """A convenience wrapper for row-wise transformers to apply
-    transformation to all rows.
-
-    This estimator allows to create a transformer that works on all rows
-    from a passed transformer that works on a
-    single row. This is useful for applying transformers to the time-series
-    in the rows.
-
-    Parameters
-    ----------
-    transformer : estimator
-        An estimator that can work on a row (i.e. a univariate time-series
-        in form of a numpy array or pandas Series.
-        must support `fit` and `transform`
-    """
-
-    _required_parameters = ["transformer"]
-
-    def __init__(self, transformer):
-        self.transformer = transformer
-        super(RowTransformer, self).__init__()
-
-    def transform(self, X, y=None):
-        """Apply the `fit_transform()` method of the transformer on each row."""
-        X = check_X(X, coerce_to_pandas=True)
-        func = self.transformer.fit_transform
-        return self._apply_rowwise(func, X, y)
-
-    def inverse_transform(self, X, y=None):
-        """Apply the `fit_transform()` method of the transformer on each row."""
-        if not hasattr(self.transformer, "inverse_transform"):
-            raise AttributeError(
-                "Transformer does not have an inverse transform method"
-            )
-        func = self.transformer.inverse_transform
-        return self._apply_rowwise(func, X, y)
-
-    def _apply_rowwise(self, func, X, y=None):
-        """Helper function to apply transform or inverse_transform function
-        on each row of data container"""
-        self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
-
-        # 1st attempt: apply, relatively fast but not robust
-        # try and except, but sometimes breaks in other cases than excepted
-        # ValueError
-        # Works on single column, but on multiple columns only if columns
-        # have equal-length series.
-        # try:
-        #     Xt = X.apply(self.transformer.fit_transform)
-        #
-        # # Otherwise call apply on each column separately.
-        # except ValueError as e:
-        #     if str(e) == "arrays must all be same length":
-        #         Xt = pd.concat([pd.Series(col.apply(
-        #         self.transformer.fit_transform)) for _, col in X.items()],
-        #         axis=1)
-        #     else:
-        #         raise
-
-        # 2nd attempt: apply but iterate over columns, still relatively fast
-        # but still not very robust
-        # but column is not 2d and thus breaks if transformer expects 2d input
-        try:
-            Xt = pd.concat([pd.Series(col.apply(func)) for _, col in X.items()], axis=1)
-
-        # 3rd attempt: explicit for-loops, most robust but very slow
-        except Exception:
-            cols_t = []
-            for c in range(X.shape[1]):  # loop over columns
-                col = X.iloc[:, c]
-                rows_t = []
-                for row in col:  # loop over rows in each column
-                    row_2d = pd.DataFrame(row)  # convert into 2d dataframe
-                    row_t = func(row_2d).ravel()  # apply transform
-                    rows_t.append(row_t)  # append transformed rows
-                cols_t.append(rows_t)  # append transformed columns
-
-            # if series-to-series transform, flatten transformed series
-            Xt = _concat_nested_arrays(cols_t)  # concatenate transformed columns
-
-            # tabularise/unnest series-to-primitive transforms
-            xt = Xt.iloc[0, 0]
-            if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
-                Xt = from_nested_to_2d_array(Xt)
-        return Xt
-
-
-class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
+class ColumnConcatenator(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """Transformer that concatenates multivariate time series/panel data
     into long univariate time series/panel
         data by simply concatenating times series in time.
@@ -307,3 +223,206 @@ class ColumnConcatenator(BaseSeriesAsFeaturesTransformer):
         else:
             Xt = from_3d_numpy_to_2d_array(X)
         return from_2d_array_to_nested(Xt)
+
+
+def _from_nested_to_series(x):
+    """Helper function to un-nest series"""
+    if x.shape[0] == 1:
+        return np.asarray(x.iloc[0]).reshape(-1, 1)
+    else:
+        data = x.tolist()
+        if not len(set([len(x) for x in data])) == 1:
+            raise NotImplementedError(
+                "Unequal length multivariate data are not supported yet."
+            )
+        return pd.DataFrame(data).T
+
+
+def _make_column_names(columns, prefix):
+    """Helper function to generate column names"""
+    if len(prefix) > 0:
+        prefix = prefix + "_"
+    return [f"{prefix}{column}" for column in columns]
+
+
+class _RowTransformer(_BaseTransformer):
+    """Base class for RowTransformer"""
+
+    _required_parameters = ["transformer"]
+    _tags = {"fit-in-transform": True, "univariate-only": True}
+
+    def __init__(self, transformer, prefix="", check_transformer=True):
+        self.transformer = transformer
+        self.check_transformer = check_transformer
+        self.prefix = prefix
+        super(_RowTransformer, self).__init__()
+
+    def _check_transformer(self):
+        """Check transformer type compatibility"""
+        assert hasattr(self, "_valid_transformer_type")
+        if self.check_transformer and not isinstance(
+            self.transformer, self._valid_transformer_type
+        ):
+            raise TypeError(
+                f"transformer must be a " f"{self._valid_transformer_type.__name__}"
+            )
+
+    @staticmethod
+    def _iter_rows(X):
+        for i, (_, x) in enumerate(X.iterrows()):
+            x = _from_nested_to_series(x)
+            yield i, x
+
+    def _prepare(self, X):
+        self.check_is_fitted()
+        X = check_X(X, coerce_to_pandas=True)
+        self._check_transformer()
+        n_instances = X.shape[0]
+        self.transformer_ = [clone(self.transformer) for _ in range(n_instances)]
+        return X
+
+
+class SeriesToPrimitivesRowTransformer(
+    _RowTransformer, _SeriesAsFeaturesToTabularTransformer
+):
+    _valid_transformer_type = _SeriesToPrimitivesTransformer
+
+    def transform(self, X, y=None):
+        X = self._prepare(X)
+        Xt = np.zeros(X.shape)
+        for i, x in self._iter_rows(X):
+            Xt[i] = self.transformer_[i].fit_transform(x)
+        return pd.DataFrame(Xt, columns=_make_column_names(X.columns, self.prefix))
+
+
+class SeriesToSeriesRowTransformer(
+    _RowTransformer, _SeriesAsFeaturesToSeriesAsFeaturesTransformer
+):
+    _valid_transformer_type = _SeriesToSeriesTransformer
+
+    def transform(self, X, y=None):
+        X = self._prepare(X)
+        Xt = None
+        for i, x in self._iter_rows(X):
+            xt = self.transformer_[i].fit_transform(x)
+            Xt = pd.concat([Xt, from_2d_array_to_nested(xt.T)], axis=1)
+        Xt = Xt.T
+        Xt.columns = _make_column_names(X.columns, self.prefix)
+        return Xt
+
+
+def make_row_transformer(transformer, transformer_type=None, **kwargs):
+    """Factory function for creating InstanceTransformer based on transform type"""
+    if transformer_type is not None:
+        valid_transformer_types = ("series-to-series", "series-to-primitives")
+        if transformer_type not in valid_transformer_types:
+            raise ValueError(
+                f"Invalid `transformer_type`. Please choose one of "
+                f"{valid_transformer_types}."
+            )
+
+    else:
+        if isinstance(transformer, _SeriesToSeriesTransformer):
+            transformer_type = "series-to-series"
+        elif isinstance(transformer, _SeriesToPrimitivesTransformer):
+            transformer_type = "series-to-primitives"
+        else:
+            raise TypeError(
+                "transformer type not understood. Please specify " "`transformer_type`."
+            )
+
+    if transformer_type == "series-to-series":
+        return SeriesToSeriesRowTransformer(transformer, **kwargs)
+    else:
+        return SeriesToPrimitivesRowTransformer(transformer, **kwargs)
+
+
+# class RowTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
+#     """A convenience wrapper for row-wise transformers to apply
+#     transformation to all rows.
+#
+#     This estimator allows to create a transformer that works on all rows
+#     from a passed transformer that works on a
+#     single row. This is useful for applying transformers to the time-series
+#     in the rows.
+#
+#     Parameters
+#     ----------
+#     transformer : estimator
+#         An estimator that can work on a row (i.e. a univariate time-series
+#         in form of a numpy array or pandas Series.
+#         must support `fit` and `transform`
+#     """
+#
+#     _required_parameters = ["transformer"]
+#     _tags = {"fit-in-transform": True}
+#
+#     def __init__(self, transformer):
+#         self.transformer = transformer
+#         super(RowTransformer, self).__init__()
+#
+#     def transform(self, X, y=None):
+#         """Apply the `fit_transform()` method of the transformer on each row."""
+#         X = check_X(X, coerce_to_pandas=True)
+#         func = self.transformer.fit_transform
+#         return self._apply_rowwise(func, X, y)
+#
+#     def inverse_transform(self, X, y=None):
+#         """Apply the `fit_transform()` method of the transformer on each row."""
+#         if not hasattr(self.transformer, "inverse_transform"):
+#             raise AttributeError(
+#                 "Transformer does not have an inverse transform method"
+#             )
+#         func = self.transformer.inverse_transform
+#         return self._apply_rowwise(func, X, y)
+#
+#     def _apply_rowwise(self, func, X, y=None):
+#         """Helper function to apply transform or inverse_transform function
+#         on each row of data container"""
+#         self.check_is_fitted()
+#         X = check_X(X, coerce_to_pandas=True)
+#
+#         # 1st attempt: apply, relatively fast but not robust
+#         # try and except, but sometimes breaks in other cases than excepted
+#         # ValueError
+#         # Works on single column, but on multiple columns only if columns
+#         # have equal-length series.
+#         # try:
+#         #     Xt = X.apply(self.transformer.fit_transform)
+#         #
+#         # # Otherwise call apply on each column separately.
+#         # except ValueError as e:
+#         #     if str(e) == "arrays must all be same length":
+#         #         Xt = pd.concat([pd.Series(col.apply(
+#         #         self.transformer.fit_transform)) for _, col in X.items()],
+#         #         axis=1)
+#         #     else:
+#         #         raise
+#
+#         # 2nd attempt: apply but iterate over columns, still relatively fast
+#         # but still not very robust
+#         # but column is not 2d and thus breaks if transformer expects 2d input
+#         try:
+#             Xt = pd.concat([pd.Series(col.apply(func)) for _, col in X.items()],
+#             axis=1)
+#
+#         # 3rd attempt: explicit for-loops, most robust but very slow
+#         except Exception:
+#             cols_t = []
+#             for c in range(X.shape[1]):  # loop over columns
+#                 col = X.iloc[:, c]
+#                 rows_t = []
+#                 for row in col:  # loop over rows in each column
+#                     row_2d = pd.DataFrame(row)  # convert into 2d dataframe
+#                     row_t = func(row_2d).ravel()  # apply transform
+#                     rows_t.append(row_t)  # append transformed rows
+#                 cols_t.append(rows_t)  # append transformed columns
+#
+#             # if series-to-series transform, flatten transformed series
+#             Xt = _concat_nested_arrays(cols_t)  # concatenate transformed columns
+#
+#             # tabularise/unnest series-to-primitive transforms
+#             xt = Xt.iloc[0, 0]
+#             if isinstance(xt, (pd.Series, np.ndarray)) and len(xt) == 1:
+#                 Xt = from_nested_to_2d_array(Xt)
+#         return Xt

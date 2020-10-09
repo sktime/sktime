@@ -8,12 +8,11 @@ __author__ = ["Markus Löning"]
 from sklearn.base import clone
 
 from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.forecasting.base._meta import MetaForecasterMixin
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
-from sktime.utils.validation.forecasting import check_y
+from sktime.transformers.base import _SeriesToSeriesTransformer
+from sktime.utils.validation.series import check_series
 
 
-class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
+class Detrender(_SeriesToSeriesTransformer):
     """
     Remove a trend from a series.
     This transformer uses any forecaster and returns the in-sample residuals
@@ -47,38 +46,42 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         Model that defines the trend in the series
     """
 
+    _required_parameters = ["forecaster"]
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+
     def __init__(self, forecaster):
         self.forecaster = forecaster
         self.forecaster_ = None
         super(Detrender, self).__init__()
 
-    def fit(self, y_train, X_train=None):
+    def fit(self, Z, X=None):
         """
         Compute the trend in the series
 
         Parameters
         ----------
-        y_train : pd.Series
-            Time series to fit a trend to
-        X_train : pd.DataFrame, optional (default=None)
+        Y : pd.Series
+            Endogenous time series to fit a trend to.
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables
 
         Returns
         -------
         self : an instance of self
         """
+        z = check_series(Z, enforce_univariate=True)
         forecaster = clone(self.forecaster)
-        self.forecaster_ = forecaster.fit(y_train, X_train=X_train)
+        self.forecaster_ = forecaster.fit(z, X)
         self._is_fitted = True
         return self
 
-    def transform(self, y, X=None):
+    def transform(self, Z, X=None):
         """
         Remove trend from the data.
 
         Parameters
         ----------
-        y : pd.Series, list
+        y : pd.Series
             Time series to be detrended
         X : pd.DataFrame, optional (default=False)
             Exogenous variables
@@ -89,13 +92,12 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
             De-trended series
         """
         self.check_is_fitted()
-        y = check_y(y)
+        z = check_series(Z, enforce_univariate=True)
+        fh = ForecastingHorizon(z.index, is_relative=False)
+        z_pred = self.forecaster_.predict(fh, X)
+        return z - z_pred
 
-        fh = ForecastingHorizon(y.index, is_relative=False)
-        y_pred = self.forecaster_.predict(fh, X=X)
-        return y - y_pred
-
-    def inverse_transform(self, y, X=None):
+    def inverse_transform(self, Z, X=None):
         """
         Add trend back to a time series
 
@@ -112,12 +114,12 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
             Series with the trend
         """
         self.check_is_fitted()
-        y = check_y(y)
-        fh = ForecastingHorizon(y.index, is_relative=False)
-        y_pred = self.forecaster_.predict(fh=fh, X=X)
-        return y + y_pred
+        z = check_series(Z, enforce_univariate=True)
+        fh = ForecastingHorizon(z.index, is_relative=False)
+        z_pred = self.forecaster_.predict(fh, X)
+        return z + z_pred
 
-    def update(self, y_new, update_params=False):
+    def update(self, Z, X=None, update_params=False):
         """
         Update the parameters of the detrending estimator with new data
 
@@ -132,5 +134,6 @@ class Detrender(MetaForecasterMixin, BaseSingleSeriesTransformer):
         -------
         self : an instance of self
         """
-        self.forecaster_.update(y_new, update_params=update_params)
+        z = check_series(Z, enforce_univariate=True, allow_empty=True)
+        self.forecaster_.update(z, X, update_params=update_params)
         return self

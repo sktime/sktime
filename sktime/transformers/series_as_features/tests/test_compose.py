@@ -2,22 +2,26 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
+
 from sktime.datasets import load_basic_motions
 from sktime.datasets import load_gunpoint
-from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.compose import ColumnTransformer
-from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.compose import (
+    SeriesToPrimitivesRowTransformer,
+)
+from sktime.transformers.series_as_features.compose import SeriesToSeriesRowTransformer
 from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils._testing.series_as_features import _make_nested_from_array
+from sktime.utils.data_container import from_nested_to_2d_array
 
 
 def test_row_transformer_function_transformer_series_to_primitives():
     X, y = load_gunpoint(return_X_y=True)
     ft = FunctionTransformer(func=np.mean, validate=False)
-    t = RowTransformer(ft)
+    t = SeriesToPrimitivesRowTransformer(ft, check_transformer=False)
     Xt = t.fit_transform(X, y)
     assert Xt.shape == X.shape
     assert isinstance(Xt.iloc[0, 0], float)  # check series-to-primitive transforms
@@ -33,7 +37,7 @@ def test_row_transformer_function_transformer_series_to_series():
         return ps[: ps.shape[0] // 2]
 
     ft = FunctionTransformer(func=powerspectrum, validate=False)
-    t = RowTransformer(ft)
+    t = SeriesToSeriesRowTransformer(ft, check_transformer=False)
     Xt = t.fit_transform(X, y)
     assert Xt.shape == X.shape
     assert isinstance(
@@ -47,7 +51,7 @@ def test_row_transformer_sklearn_transfomer():
         np.random.normal(loc=mu, scale=5, size=(100,)), n_instances=10, n_columns=1
     )
     t = StandardScaler(with_mean=True, with_std=True)
-    r = RowTransformer(t)
+    r = SeriesToSeriesRowTransformer(t, check_transformer=False)
 
     Xt = r.fit_transform(X)
     assert Xt.shape == X.shape
@@ -56,22 +60,6 @@ def test_row_transformer_sklearn_transfomer():
     )  # check series-to-series transform
     np.testing.assert_almost_equal(Xt.iloc[0, 0].mean(), 0)  # check standardisation
     np.testing.assert_almost_equal(Xt.iloc[0, 0].std(), 1, decimal=2)
-
-
-def test_row_transformer_transform_inverse_transform():
-    X, y = load_gunpoint(return_X_y=True)
-    t = RowTransformer(StandardScaler())
-    Xt = t.fit_transform(X)
-    Xit = t.inverse_transform(Xt)
-    assert Xit.shape == X.shape
-    assert isinstance(
-        Xit.iloc[0, 0], (pd.Series, np.ndarray)
-    )  # check series-to-series transforms
-    np.testing.assert_array_almost_equal(
-        from_nested_to_2d_array(X).values,
-        from_nested_to_2d_array(Xit).values,
-        decimal=5,
-    )
 
 
 def test_ColumnTransformer_pipeline():
@@ -142,10 +130,20 @@ def test_RowTransformer_pipeline():
         [
             (
                 "mean",
-                RowTransformer(FunctionTransformer(func=np.mean, validate=False)),
+                SeriesToPrimitivesRowTransformer(
+                    FunctionTransformer(func=np.mean, validate=False),
+                    check_transformer=False,
+                ),
                 ["dim_0"],
             ),
-            ("first", FunctionTransformer(func=row_first, validate=False), ["dim_1"]),
+            (
+                "first",
+                SeriesToPrimitivesRowTransformer(
+                    FunctionTransformer(func=lambda x: x[0], validate=False),
+                    check_transformer=False,
+                ),
+                ["dim_1"],
+            ),
         ]
     )
     estimator = RandomForestClassifier(n_estimators=2, random_state=1)

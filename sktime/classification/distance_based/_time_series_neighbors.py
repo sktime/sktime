@@ -28,7 +28,6 @@ from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
-from sktime.classification.base import BaseClassifier
 from sktime.distances.elastic_cython import ddtw_distance
 from sktime.distances.elastic_cython import dtw_distance
 from sktime.distances.elastic_cython import erp_distance
@@ -37,11 +36,11 @@ from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
+
+from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import from_nested_to_3d_numpy
-
 
 """
 Please note that many aspects of this class are taken from scikit-learn's
@@ -191,9 +190,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Target values of shape = [n_samples]
 
         """
-        X, y = check_X_y(X, y, enforce_univariate=False)
+        X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
         y = np.asarray(y)
-        X = from_nested_to_3d_numpy(X)
         check_classification_targets(y)
 
         # print(X)
@@ -283,8 +281,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             Indices of the nearest points in the population matrix.
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
-        X = from_nested_to_3d_numpy(X)
+        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors

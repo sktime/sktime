@@ -24,13 +24,13 @@ import pytest
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests._config import SUPPORTED_INDEX_FH_COMBINATIONS
 from sktime.forecasting.tests._config import TEST_ALPHAS
 from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import TEST_YS
+from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
@@ -42,7 +42,7 @@ from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters
 FORECASTERS = [
-    forecaster for (name, forecaster) in all_estimators(estimator_type="forecaster")
+    forecaster for (name, forecaster) in all_estimators(estimator_types="forecaster")
 ]
 FH0 = 1
 
@@ -54,7 +54,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 def test_fitted_params(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     try:
         params = f.get_fitted_params()
         assert isinstance(params, dict)
@@ -91,16 +91,14 @@ def assert_correct_msg(exception, msg):
     "y", [np.random.random(size=3), [1, 3, 0.5], (1, 3, 0.5)]  # array  # list  # tuple
 )
 def test_bad_y_input(Forecaster, y):
-    with pytest.raises(TypeError) as error:
+    with pytest.raises(TypeError, match=r"must be a pandas Series"):
         f = _construct_instance(Forecaster)
-        f.fit(y, FH0)
-    expected_msg = f"`y` must be a pandas Series, but found type: {type(y)}"
-    assert_correct_msg(error, expected_msg)
+        f.fit(y, fh=FH0)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize(
-    "index_type, fh_type, is_relative", SUPPORTED_INDEX_FH_COMBINATIONS
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
 @pytest.mark.parametrize("steps", TEST_FHS)  # fh steps
 def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps):
@@ -118,7 +116,7 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize(
-    "index_type, fh_type, is_relative", SUPPORTED_INDEX_FH_COMBINATIONS
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
 def test_predict_time_index_in_sample_full(
     Forecaster, index_type, fh_type, is_relative
@@ -172,7 +170,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
 def test_score(Forecaster, fh):
     # compute expected score
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
     y_pred = f.predict()
 
     fh_idx = check_fh(fh).to_indexer()  # get zero based index
@@ -180,7 +178,7 @@ def test_score(Forecaster, fh):
 
     # compare with actual score
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
     actual = f.score(y_test.iloc[fh_idx], fh=fh)
     assert actual == expected
 
@@ -189,7 +187,7 @@ def test_score(Forecaster, fh):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 def test_update_predict_single(Forecaster, fh):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
     y_pred = f.update_predict_single(y_test)
     assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
@@ -214,7 +212,7 @@ def test_update_predict_predicted_indices(
     y_train, y_test = temporal_train_test_split(y)
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
     try:
         y_pred = f.update_predict(y_test, cv=cv)
         check_update_predict_y_pred(y_pred, y_test, fh, step_length)

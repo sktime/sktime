@@ -12,11 +12,11 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
-from sktime.forecasting.tests._config import SUPPORTED_INDEX_FH_COMBINATIONS
+from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.forecasting.tests._config import TEST_FHS
 from sktime.utils._testing import make_forecasting_problem
 from sktime.utils._testing.forecasting import _make_fh
-from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
+from sktime.utils.validation.series import VALID_INDEX_TYPES
 
 
 def _assert_index_equal(a, b):
@@ -27,7 +27,7 @@ def _assert_index_equal(a, b):
 
 
 @pytest.mark.parametrize(
-    "index_type, fh_type, is_relative", SUPPORTED_INDEX_FH_COMBINATIONS
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
 )
 @pytest.mark.parametrize("steps", TEST_FHS)
 def test_fh(index_type, fh_type, is_relative, steps):
@@ -75,14 +75,14 @@ def test_fh(index_type, fh_type, is_relative, steps):
         fh_ins.to_numpy(), fh.to_in_sample(cutoff).to_pandas()
     )
     assert fh.to_in_sample(cutoff).is_relative == is_relative
-    assert fh.is_in_sample(cutoff) == is_ins
+    assert fh.is_all_in_sample(cutoff) == is_ins
 
     # check out-of-sample representation
     np.testing.assert_array_equal(
         fh_oos.to_numpy(), fh.to_out_of_sample(cutoff).to_pandas()
     )
     assert fh.to_out_of_sample(cutoff).is_relative == is_relative
-    assert fh.is_out_of_sample(cutoff) == is_oos
+    assert fh.is_all_out_of_sample(cutoff) == is_oos
 
 
 def test_fh_method_delegation():
@@ -132,4 +132,4 @@ GOOD_INPUT_ARGS = (
 @pytest.mark.parametrize("arg", GOOD_INPUT_ARGS)
 def test_check_fh_values_input_conversion_to_pandas_index(arg):
     output = ForecastingHorizon(arg, is_relative=False).to_pandas()
-    assert type(output) in SUPPORTED_INDEX_TYPES
+    assert type(output) in VALID_INDEX_TYPES

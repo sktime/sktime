@@ -5,12 +5,12 @@ __all__ = ["PCATransformer"]
 import pandas as pd
 from sklearn.decomposition import PCA
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_2d_array_to_nested
 from sktime.utils.validation.series_as_features import check_X
 
 
-class PCATransformer(BaseSeriesAsFeaturesTransformer):
+class PCATransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """Transformer that applies Principle Components Analysis to a
     univariate time series.
 
@@ -28,6 +28,8 @@ class PCATransformer(BaseSeriesAsFeaturesTransformer):
         See ``sklearn.decomposition.PCA``
         documentation for a detailed description of all options.
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(self, n_components=None, **kwargs):
         self.n_components = n_components

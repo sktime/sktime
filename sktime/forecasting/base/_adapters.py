@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 
-class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing statsmodels forecasting algorithms"""
 
     _fitted_param_names = ()
@@ -23,16 +23,16 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         self._fitted_forecaster = None
         super(_StatsModelsAdapter, self).__init__()
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
@@ -40,12 +40,12 @@ class _StatsModelsAdapter(OptionalForecastingHorizonMixin, BaseSktimeForecaster)
         """
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y_train, pd.Series) and type(y_train.index) == pd.Int64Index:
-            y_train, X_train = _coerce_int_to_range_index(y_train, X_train)
+        if isinstance(y, pd.Series) and type(y.index) == pd.Int64Index:
+            y, X = _coerce_int_to_range_index(y, X)
 
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
-        self._fit_forecaster(y_train, X_train=X_train)
+        self._fit_forecaster(y, X)
         self._is_fitted = True
         return self
 

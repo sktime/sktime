@@ -12,22 +12,31 @@ from inspect import signature
 import numpy as np
 import pandas as pd
 from pandas.testing import assert_frame_equal
+from sklearn.utils.validation import check_random_state
 
-from sktime.classification.base import is_classifier
-from sktime.forecasting.base._base import is_forecaster
-from sktime.regression.base import is_regressor
+from sktime.classification.base import BaseClassifier
+from sktime.forecasting.base._base import BaseForecaster
+from sktime.regression.base import _BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
-from sktime.transformers.series_as_features.base import (
-    is_series_as_features_transformer,
-)
-from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.single_series.base import is_single_series_transformer
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
+from sktime.tests._config import VALID_ESTIMATOR_TYPES
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
+from sktime.transformers.base import _SeriesToPrimitivesTransformer
+from sktime.transformers.base import _SeriesToSeriesTransformer
+from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.series_as_features import _make_series_as_features_X
 from sktime.utils._testing.series_as_features import make_classification_problem
 from sktime.utils._testing.series_as_features import make_regression_problem
-from sktime.utils.data_container import from_3d_numpy_to_2d_array
-from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.data_container import is_nested_dataframe
+
+
+def _get_err_msg(estimator):
+    return (
+        f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
+        f"{VALID_ESTIMATOR_TYPES}"
+    )
 
 
 def _construct_instance(Estimator):
@@ -62,116 +71,167 @@ def _make_args(estimator, method, **kwargs):
     estimator types and their methods"""
     if method == "fit":
         return _make_fit_args(estimator, **kwargs)
-
+    if method == "update":
+        raise NotImplementedError()
     elif method in ("predict", "predict_proba", "decision_function"):
         return _make_predict_args(estimator, **kwargs)
-
     elif method == "transform":
         return _make_transform_args(estimator, **kwargs)
-
     elif method == "inverse_transform":
-        args = _make_transform_args(estimator, **kwargs)
-
-        if isinstance(estimator, Tabularizer):
-            args = _handle_tabularizer_args(*args, **kwargs)
-
-        return args
-
+        return _make_inverse_transform_args(estimator, **kwargs)
+    elif method == "fit-transform":
+        return _make_fit_transform_args(estimator, **kwargs)
     else:
         raise ValueError(f"Method: {method} not supported")
 
 
-def _handle_tabularizer_args(*args, **kwargs):
-    # the Tabularizer transforms a nested pd.DataFrame/3d numpy array into a
-    # 2d numpy array, so the inverse transform goes from a 2d numpy array to a
-    # nested pd.DataFrame/3d array
-    # TODO refactor Tabularizer as series-as-features composition meta-estimator,
-    #  rather than transformer or introduce special transformer type
-    X, y = args
-    if "return_numpy" in kwargs and kwargs["return_numpy"]:
-        return from_3d_numpy_to_2d_array(X), y
-    else:
-        return from_nested_to_2d_array(X), y
-
-
-def _make_fit_args(estimator, random_state=None, **kwargs):
-    if is_forecaster(estimator):
-        y = make_forecasting_problem(random_state=random_state, **kwargs)
-        fh = 1
-        return y, fh
-
-    elif is_classifier(estimator):
-        return make_classification_problem(random_state=random_state, **kwargs)
-
-    elif is_regressor(estimator):
-        return make_regression_problem(random_state=random_state, **kwargs)
-
-    elif is_series_as_features_transformer(estimator):
-        return make_classification_problem(random_state=random_state, **kwargs)
-
-    elif is_single_series_transformer(estimator):
-        y = make_forecasting_problem(random_state=random_state, **kwargs)
+def _make_fit_transform_args(estimator, **kwargs):
+    # For forecasters which are also transformers (e.g. pipelines), we cannot
+    # the forecasting horizon to transform, so we only generate a series here. Note
+    # that this will fail for forecasters which require the forecasting horizon in fit.
+    if isinstance(estimator, BaseForecaster) and isinstance(
+        estimator, _SeriesToSeriesTransformer
+    ):
+        y = _make_series(**kwargs)
         return (y,)
-
     else:
-        raise ValueError(f"Estimator type: {type(estimator)} not supported")
+        return _make_fit_args(estimator, **kwargs)
+
+
+def _make_fit_args(estimator, **kwargs):
+    if isinstance(estimator, BaseForecaster):
+        y = make_forecasting_problem(**kwargs)
+        fh = 1
+        X = None
+        return y, X, fh
+    elif isinstance(estimator, BaseClassifier):
+        return make_classification_problem(**kwargs)
+    elif isinstance(estimator, _BaseRegressor):
+        return make_regression_problem(**kwargs)
+    elif isinstance(
+        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
+    ):
+        X = _make_series(**kwargs)
+        return (X,)
+    elif isinstance(
+        estimator,
+        (
+            _SeriesAsFeaturesToTabularTransformer,
+            _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+        ),
+    ):
+        return make_classification_problem(**kwargs)
+    else:
+        raise ValueError(_get_err_msg(estimator))
 
 
 def _make_predict_args(estimator, **kwargs):
-    if is_forecaster(estimator):
+    if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-
-    elif is_classifier(estimator):
-        X, y = make_classification_problem(**kwargs)
+    elif isinstance(estimator, (BaseClassifier, _BaseRegressor)):
+        X = _make_series_as_features_X(**kwargs)
         return (X,)
+    else:
+        raise ValueError(_get_err_msg(estimator))
 
-    elif is_regressor(estimator):
-        X, y = make_regression_problem(**kwargs)
+
+def _make_transform_args(estimator, **kwargs):
+    if isinstance(
+        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
+    ):
+        X = _make_series(**kwargs)
         return (X,)
-
+    elif isinstance(
+        estimator,
+        (
+            _SeriesAsFeaturesToTabularTransformer,
+            _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+        ),
+    ):
+        X = _make_series_as_features_X(**kwargs)
+        return (X,)
     else:
-        raise ValueError(f"Estimator type: {type(estimator)} not supported")
+        raise ValueError(_get_err_msg(estimator))
 
 
-def _make_transform_args(estimator, return_numpy=False, random_state=None):
-    if is_series_as_features_transformer(estimator):
-        return make_classification_problem(
-            return_numpy=return_numpy, random_state=random_state
-        )
-
-    elif is_single_series_transformer(estimator) or is_forecaster(estimator):
-        y = make_forecasting_problem(random_state=random_state)
-        return (y,)
-
+def _make_inverse_transform_args(estimator, **kwargs):
+    if isinstance(estimator, _SeriesToPrimitivesTransformer):
+        X = _make_primitives(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _SeriesToSeriesTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _SeriesAsFeaturesToTabularTransformer):
+        X = _make_tabular_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _SeriesAsFeaturesToSeriesAsFeaturesTransformer):
+        X = _make_series_as_features_X(**kwargs)
+        return (X,)
     else:
-        raise ValueError(f"Estimator type: {type(estimator)} not supported")
+        raise ValueError(_get_err_msg(estimator))
+
+
+def _make_primitives(n_columns=1, random_state=None):
+    """Generate one or more primitives. Useful for checking inverse-transform
+    of series-to-primitives transformer"""
+    rng = check_random_state(random_state)
+    if n_columns == 1:
+        return rng.rand()
+    return np.rand(size=(n_columns,))
+
+
+def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
+    """Generate tabular X. Useful for checking inverse-transform
+    of series-as-features-to-tabular transformer"""
+    rng = check_random_state(random_state)
+    data = rng.rand(n_instances, n_columns)
+    if return_numpy:
+        return data
+    else:
+        return pd.DataFrame(data)
 
 
 def _compare_nested_frame(func, x, y, **kwargs):
-    """Helper function to compare two nested pd.DataFrames"""
-    # we iterate over columns and rows to make cell-wise comparisons,
-    # tabularizing the data first would simplify this, but does not
-    # work for unequal length data
+    """Helper function to compare two nested pd.DataFrames
 
-    # in some cases, x and y may be empty (e.g. TSFreshRelevantFeatureExtractor) and
-    # we cannot compare individual cells, so we simply check if they are equal
+    Parameters
+    ----------
+    func : function
+        Function from np.testing for comparing arrays.
+    x : pd.DataFrame
+    y : pd.DataFrame
+    kwargs : dict
+        Keyword argument for function
+
+    Raises
+    ------
+    AssertionError
+        If x and y are not equal
+    """
+    # We iterate over columns and rows to make cell-wise comparisons.
+    # Tabularizing the data first would simplify this, but does not
+    # work for unequal length data.
+
+    # In rare cases, x and y may be empty (e.g. TSFreshRelevantFeatureExtractor) and
+    # we cannot compare individual cells, so we simply check if everything else is
+    # equal here.
     assert isinstance(x, pd.DataFrame)
     if x.empty:
         assert_frame_equal(x, y)
 
     elif is_nested_dataframe(x):
-        # make sure both inputs have the same shape
+        # Check if both inputs have the same shape
         if not x.shape == y.shape:
             raise ValueError("Found inputs with different shapes")
 
-        # iterate over columns, checking individuals cells
+        # Iterate over columns
         n_columns = x.shape[1]
         for i in range(n_columns):
             xc = x.iloc[:, i].tolist()
             yc = y.iloc[:, i].tolist()
 
-            # iterate over rows, checking if cells are equal
+            # Iterate over rows, checking if individual cells are equal
             for xci, yci in zip(xc, yc):
                 func(xci, yci, **kwargs)
 
@@ -215,3 +275,9 @@ def _get_args(function, varargs=False):
         return args, varargs
     else:
         return args
+
+
+def _has_tag(Estimator, tag):
+    assert tag in VALID_ESTIMATOR_TAGS
+    # Check if tag is in all tags
+    return Estimator._all_tags().get(tag, False)

@@ -2,29 +2,29 @@
 import numpy as np
 import pandas as pd
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 
-def sliding_dot_products(q, t, q_len, t_len):
+def _sliding_dot_products(q, t, q_len, t_len):
     """
     Computes the sliding dot products between a query and a time series.
 
     Parameters
     ----------
-        q: numpy.array
-            Query.
-        t: numpy.array
-            Time series.
-        q_len: int
-            Length of the query.
-        t_len: int
-            Length of the time series.
+    q: numpy.array
+        Query.
+    t: numpy.array
+        Time series.
+    q_len: int
+        Length of the query.
+    t_len: int
+        Length of the time series.
 
-    Output
-    ------
-        dot_prod: numpy.array
-                    Sliding dot products between q and t.
+    Returns
+    -------
+    dot_prod: numpy.array
+                Sliding dot products between q and t.
     """
 
     # Reversing query and padding both query and time series
@@ -47,7 +47,9 @@ def sliding_dot_products(q, t, q_len, t_len):
     return dot_prod
 
 
-def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_t_subs):
+def _calculate_distance_profile(
+    dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_t_subs
+):
     """
     Calculates the distance profile for the given query.
 
@@ -91,7 +93,7 @@ def calculate_distance_profile(dot_prod, q_mean, q_std, t_mean, t_std, q_len, n_
     return d
 
 
-def minimum_distance(mp, ip, dp, i, m, dp_len):
+def _minimum_distance(mp, ip, dp, i, m, dp_len):
     """
     Finds the minimum distance in the distance profile, considering the
     exclusion zone.
@@ -135,7 +137,7 @@ def minimum_distance(mp, ip, dp, i, m, dp_len):
     return mp, ip
 
 
-def stomp_self(ts, m):
+def _stomp_self(ts, m):
     """
     STOMP implementation for self-similarity join.
 
@@ -168,7 +170,7 @@ def stomp_self(ts, m):
 
     # Compute the dot products between the first subsequence and every other
     # subsequence
-    dot_prod = sliding_dot_products(ts[0:m], ts, m, ts_len)
+    dot_prod = _sliding_dot_products(ts[0:m], ts, m, ts_len)
     first_dot_prod = np.copy(dot_prod)
 
     # Initialization
@@ -176,12 +178,12 @@ def stomp_self(ts, m):
     ip = np.zeros(n_subs)  # index profile
 
     # Compute the distance profile for the first subsequence
-    dp = calculate_distance_profile(
+    dp = _calculate_distance_profile(
         dot_prod, ts_mean[0], ts_std[0], ts_mean, ts_std, m, n_subs
     )
 
     # Updates the matrix profile
-    mp, ip = minimum_distance(mp, ip, dp, 0, m, n_subs)
+    mp, ip = _minimum_distance(mp, ip, dp, 0, m, n_subs)
 
     for i in range(1, n_subs):
         for j in range(n_subs - 1, 0, -1):
@@ -190,15 +192,15 @@ def stomp_self(ts, m):
             )  # compute the next dot products
             # using the previous ones
         dot_prod[0] = first_dot_prod[i]
-        dp = calculate_distance_profile(
+        dp = _calculate_distance_profile(
             dot_prod, ts_mean[i], ts_std[i], ts_mean, ts_std, m, n_subs
         )
-        mp, ip = minimum_distance(mp, ip, dp, i, m, n_subs)
+        mp, ip = _minimum_distance(mp, ip, dp, i, m, n_subs)
 
     return mp
 
 
-class MatrixProfile(BaseSeriesAsFeaturesTransformer):
+class MatrixProfile(_SeriesAsFeaturesToTabularTransformer):
     """
     Takes as input a time series dataset and returns the matrix profile and
     index profile for each time series of the dataset.
@@ -212,6 +214,8 @@ class MatrixProfile(BaseSeriesAsFeaturesTransformer):
     corresponding time series.
     """
 
+    _tags = {"univariate-only": True}
+
     def __init__(self, m=10):
         self.m = m  # subsequence length
         super(MatrixProfile, self).__init__()
@@ -223,19 +227,19 @@ class MatrixProfile(BaseSeriesAsFeaturesTransformer):
 
         Parameters
         ----------
-            X: pandas.DataFrame
-               Time series dataset.
+        X: pandas.DataFrame
+           Time series dataset.
 
-        Output
-        ------
-            Xt: pandas.DataFrame
-                Dataframe with the same number of rows as the input.
-                The number of columns equals the number of subsequences
-                of the desired length in each time series.
+        Returns
+        -------
+        Xt: pandas.DataFrame
+            Dataframe with the same number of rows as the input.
+            The number of columns equals the number of subsequences
+            of the desired length in each time series.
         """
         # Input checks
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         n_instances = X.shape[0]
-        Xt = pd.DataFrame([stomp_self(X[i], self.m) for i in range(n_instances)])
+        Xt = pd.DataFrame([_stomp_self(X[i], self.m) for i in range(n_instances)])
         return Xt

@@ -25,7 +25,7 @@ import pandas as pd
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
@@ -50,7 +50,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # TO-DO: add CI tests, comments, documentation, etc.
 
 
-class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
+class ShapeletTransform(_SeriesAsFeaturesToTabularTransformer):
     """Shapelet Transform.
 
     Original journal publication:
@@ -89,6 +89,8 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
     self.shapelets                      : list of Shapelet objects,
     the stored shapelets after a dataset has been processed
     """
+
+    _tags = {"univariate-only": True}
 
     def __init__(
         self,
@@ -678,7 +680,7 @@ class ShapeletTransform(BaseSeriesAsFeaturesTransformer):
         return to_return
 
     # transform a set of data into distances to each extracted shapelet
-    def transform(self, X, y=None, **transform_params):
+    def transform(self, X, y=None):
         """Transforms X according to the extracted shapelets (self.shapelets)
 
         Parameters

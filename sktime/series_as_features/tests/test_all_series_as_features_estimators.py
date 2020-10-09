@@ -3,46 +3,51 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = [
+    "test_classifier_output",
+    "test_regressor_output",
+    "test_series_as_features_multivariate_input",
+    "test_series_as_features_3d_numpy_input",
+]
 
 import numpy as np
-import pandas as pd
 import pytest
 
+from sktime.series_as_features.tests._config import ACCEPTED_OUTPUT_TYPES
 from sktime.tests._config import EXCLUDED_ESTIMATORS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_args
 
-CLASSIFIERS = [
-    e[1]
-    for e in all_estimators(estimator_type="classifier")
-    if e[0] not in EXCLUDED_ESTIMATORS
-]
+CLASSIFIERS = all_estimators(
+    "classifier", return_names=False, exclude_estimators=EXCLUDED_ESTIMATORS
+)
+REGRESSORS = all_estimators(
+    "regressor", return_names=False, exclude_estimators=EXCLUDED_ESTIMATORS
+)
 
-REGRESSORS = [
-    e[1]
-    for e in all_estimators(estimator_type="regressor")
-    if e[0] not in EXCLUDED_ESTIMATORS
-]
-
-SERIES_AS_FEATURES_TRANSFORMERS = [
-    e[1]
-    for e in all_estimators(estimator_type="series_as_features_transformer")
-    if e[0] not in EXCLUDED_ESTIMATORS
-]
+SERIES_AS_FEATURES_TRANSFORMERS = all_estimators(
+    estimator_types=[
+        _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+        _SeriesAsFeaturesToTabularTransformer,
+    ],
+    return_names=False,
+    exclude_estimators=EXCLUDED_ESTIMATORS,
+)
 
 ALL_SERIES_AS_FEATURES_ESTIMATORS = (
     CLASSIFIERS + REGRESSORS + SERIES_AS_FEATURES_TRANSFORMERS
 )
 
+# We here only check the ouput for a single number of classes
 N_CLASSES = 3
-ACCEPTED_OUTPUT_TYPES = (np.ndarray, pd.Series)
 
 
 @pytest.mark.parametrize("Estimator", ALL_SERIES_AS_FEATURES_ESTIMATORS)
-def test_series_as_features_X_3d_numpy(Estimator):
+def test_series_as_features_3d_numpy_input(Estimator):
     estimator = _construct_instance(Estimator)
     fit_args = _make_args(estimator, "fit", return_numpy=True)
     estimator.fit(*fit_args)
@@ -81,13 +86,11 @@ def test_series_as_features_multivariate_input(Estimator):
     # check if estimator can handle multivariate data
     try:
         estimator.fit(X_train, y_train)
-
-        # TODO include series-as-features transformers
         for method in ("predict", "predict_proba"):
             X = _make_args(estimator, method, n_columns=n_columns)[0]
             getattr(estimator, method)(X)
 
-    # if not, check if error with appropriate message is raised
+    # if not, check if we raise error with appropriate message
     except ValueError as e:
         assert error_msg in str(e), (
             f"{estimator.__class__.__name__} does not handle multivariate "
@@ -102,21 +105,20 @@ def test_classifier_output(Estimator):
     X_train, y_train = _make_args(estimator, "fit", n_classes=N_CLASSES)
     estimator.fit(X_train, y_train)
 
-    X = _make_args(estimator, "predict")[0]
+    X_new = _make_args(estimator, "predict")[0]
 
     # check predict
-    y_pred = estimator.predict(X)
+    y_pred = estimator.predict(X_new)
     assert isinstance(y_pred, ACCEPTED_OUTPUT_TYPES)
-    assert y_pred.shape == (X.shape[0],)
+    assert y_pred.shape == (X_new.shape[0],)
     assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
     # check predict proba
     if hasattr(estimator, "predict_proba"):
-        y_proba = estimator.predict_proba(X)
+        y_proba = estimator.predict_proba(X_new)
         assert isinstance(y_proba, ACCEPTED_OUTPUT_TYPES)
-        assert y_proba.shape == (X.shape[0], N_CLASSES)
+        assert y_proba.shape == (X_new.shape[0], N_CLASSES)
         np.testing.assert_allclose(y_proba.sum(axis=1), 1)
-        assert np.all(np.isin(np.unique(y_pred), np.unique(y_train)))
 
 
 @pytest.mark.parametrize("Estimator", REGRESSORS)
@@ -125,10 +127,10 @@ def test_regressor_output(Estimator):
     X_train, y_train = _make_args(estimator, "fit")
     estimator.fit(X_train, y_train)
 
-    X = _make_args(estimator, "predict")[0]
+    X_new = _make_args(estimator, "predict")[0]
 
     # check predict
-    y_pred = estimator.predict(X)
+    y_pred = estimator.predict(X_new)
     assert isinstance(y_pred, ACCEPTED_OUTPUT_TYPES)
-    assert y_pred.shape == (X.shape[0],)
+    assert y_pred.shape == (X_new.shape[0],)
     assert np.issubdtype(y_pred.dtype, np.floating)

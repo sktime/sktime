@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
 
 __all__ = ["PaddingTransformer"]
 __author__ = ["Aaron Bostrom"]
 
 
-class PaddingTransformer(BaseSeriesAsFeaturesTransformer):
+class PaddingTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """PaddingTransformer docstring
 
     Pads the input dataset to either a optional fixed length

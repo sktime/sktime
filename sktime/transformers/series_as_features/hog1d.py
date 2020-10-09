@@ -5,8 +5,7 @@ import numbers
 import math
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 
 """
 The HOG1D Transformer proposed by:
@@ -24,7 +23,7 @@ The HOG1D Transformer proposed by:
 """
 
 
-class HOG1DTransformer(BaseSeriesAsFeaturesTransformer):
+class HOG1DTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
 
     """
     This class is to calculate the HOG1D transform of a

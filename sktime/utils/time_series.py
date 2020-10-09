@@ -97,23 +97,14 @@ def time_series_slope(y):
     ----------
     y : array_like
         Time-series.
-    axis : int
-        Axis along which the time-series slope is computed.
 
     Returns
     -------
     slope : float
         Slope of time-series.
     """
-    y = np.asarray(y).ravel()
-    len_series = len(y)
-
-    if len_series < 2:
-        return 0
-    else:
-        x = np.arange(len_series)  # time index
-        x_mean = (len_series - 1) / 2  # faster than x.mean()
-        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
+    x = np.arange(y.shape[0]).reshape(-1, 1) + 1
+    return np.linalg.lstsq(x, y, rcond=None)[0].ravel()
 
 
 def fit_trend(x, order=0):

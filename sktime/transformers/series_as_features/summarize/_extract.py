@@ -8,16 +8,13 @@ from joblib import Parallel
 from joblib import delayed
 from sklearn.base import clone
 
-from sktime.base import MetaEstimatorMixin
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    _NonFittableSeriesAsFeaturesTransformer,
-)
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 from sktime.utils.validation.series_as_features import check_X
 
 
-class PlateauFinder(_NonFittableSeriesAsFeaturesTransformer):
+class PlateauFinder(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """Transformer that finds segments of the same given value, plateau in
     the time series, and
     returns the starting indices and lengths.
@@ -31,6 +28,8 @@ class PlateauFinder(_NonFittableSeriesAsFeaturesTransformer):
         If min_length is set to 1, the transformer can be used as a value
         finder.
     """
+
+    _tags = {"fit-in-transform": True, "univariate-only": True}
 
     def __init__(self, value=np.nan, min_length=2):
         self.value = value
@@ -99,7 +98,7 @@ class PlateauFinder(_NonFittableSeriesAsFeaturesTransformer):
         return Xt
 
 
-class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
+class DerivativeSlopeTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     # TODO add docstrings
     def transform(self, X, y=None):
         self.check_is_fitted()
@@ -125,7 +124,19 @@ class DerivativeSlopeTransformer(BaseSeriesAsFeaturesTransformer):
         return [get_der(x) for x in X]
 
 
-class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
+def _check_features(features):
+    if features is None:
+        return [np.mean]
+    elif isinstance(features, list) and all([callable(func) for func in features]):
+        return features
+    else:
+        raise ValueError(
+            "Features must be list containing only functions (callables) "
+            "to be applied to the data columns"
+        )
+
+
+class RandomIntervalFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
     """
     Transformer that segments time-series into random intervals
     and subsequently extracts series-to-primitives features from each interval.
@@ -157,15 +168,45 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         by `np.random`.
     """
 
+    _tags = {"univariate-only": True}
+
     def __init__(
         self, n_intervals="sqrt", min_length=2, features=None, random_state=None
     ):
-        super(RandomIntervalFeatureExtractor, self).__init__(
-            n_intervals=n_intervals,
-            min_length=min_length,
-            random_state=random_state,
-        )
+        self.n_intervals = n_intervals
+        self.min_length = min_length
+        self.random_state = random_state
         self.features = features
+        super(RandomIntervalFeatureExtractor, self).__init__()
+
+    def fit(self, X, y=None):
+        """
+        Fit transformer, generating random interval indices.
+
+        Parameters
+        ----------
+        X : pandas DataFrame of shape [n_samples, n_features]
+            Input data
+        y : pandas Series, shape (n_samples, ...), optional
+            Targets for supervised learning.
+
+        Returns
+        -------
+        self : RandomIntervalSegmenter
+            This estimator
+        """
+        # We use composition rather than inheritance here, because this transformer
+        # has a different transform type (returns tabular) compared to the
+        # RandomIntervalSegmenter (returns series-as-features).
+        self._interval_segmenter = RandomIntervalSegmenter(
+            self.n_intervals, self.min_length, self.random_state
+        )
+        self._interval_segmenter.fit(X, y)
+        self.intervals_ = self._interval_segmenter.intervals_
+        self.input_shape_ = self._interval_segmenter.input_shape_
+        self._time_index = self._interval_segmenter._time_index
+        self._is_fitted = True
+        return self
 
     def transform(self, X, y=None):
         """
@@ -189,18 +230,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
 
         # Check input of feature calculators, i.e list of functions to be
         # applied to time-series
-        if self.features is None:
-            features = [np.mean]
-        elif isinstance(self.features, list) and all(
-            [callable(func) for func in self.features]
-        ):
-            features = self.features
-        else:
-            raise ValueError(
-                "Features must be list containing only functions (callables) "
-                "to be applied to the data columns"
-            )
-
+        features = _check_features(self.features)
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         # Check that the input is of the same shape as the one passed
@@ -218,7 +248,8 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         n_instances, n_columns, _ = X.shape
         n_features = len(features)
 
-        n_intervals = len(self.intervals_)
+        intervals = self.intervals_
+        n_intervals = len(intervals)
 
         # Compute features on intervals.
         Xt = np.zeros((n_instances, n_features * n_intervals))  # Allocate output array
@@ -229,7 +260,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         i = 0
         for func in features:
             # TODO generalise to series-to-series functions and function kwargs
-            for start, end in self.intervals_:
+            for start, end in intervals:
                 interval = X[:, :, start:end]
 
                 # Try to use optimised computations over axis if possible,
@@ -254,7 +285,7 @@ class RandomIntervalFeatureExtractor(RandomIntervalSegmenter):
         return Xt
 
 
-class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTransformer):
+class FittedParamExtractor(_SeriesAsFeaturesToTabularTransformer):
     """
     Extract parameters of a fitted forecaster as features for a subsequent
     tabular learning task.
@@ -276,6 +307,7 @@ class FittedParamExtractor(MetaEstimatorMixin, _NonFittableSeriesAsFeaturesTrans
     """
 
     _required_parameters = ["forecaster"]
+    _tags = {"fit-in-transform": True, "univariate-only": True}
 
     def __init__(self, forecaster, param_names, n_jobs=None):
         self.forecaster = forecaster

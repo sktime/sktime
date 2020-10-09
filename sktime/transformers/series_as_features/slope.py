@@ -3,12 +3,12 @@ import numpy as np
 import pandas as pd
 import math
 import statistics
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 
-class SlopeTransformer(BaseSeriesAsFeaturesTransformer):
+class SlopeTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     """
     Class to perform the Slope transformation on a time series
     dataframe. It splits a time series into num_intervals segments.

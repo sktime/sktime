@@ -6,7 +6,9 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sktime.utils._testing import make_classification_problem
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformers.series_as_features.compose import RowTransformer
+from sktime.transformers.series_as_features.compose import (
+    SeriesToPrimitivesRowTransformer,
+)
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 from sktime.transformers.series_as_features.summarize import (
     RandomIntervalFeatureExtractor,
@@ -84,16 +86,18 @@ def test_different_implementations():
     X_train, y_train = make_classification_problem()
 
     # Compare with chained transformations.
-    tran1 = RandomIntervalSegmenter(n_intervals="sqrt", random_state=random_state)
-    tran2 = RowTransformer(FunctionTransformer(func=np.mean, validate=False))
+    tran1 = RandomIntervalSegmenter(n_intervals=1, random_state=random_state)
+    tran2 = SeriesToPrimitivesRowTransformer(
+        FunctionTransformer(func=np.mean, validate=False), check_transformer=False
+    )
     A = tran2.fit_transform(tran1.fit_transform(X_train))
 
     tran = RandomIntervalFeatureExtractor(
-        n_intervals="sqrt", features=[np.mean], random_state=random_state
+        n_intervals=1, features=[np.mean], random_state=random_state
     )
     B = tran.fit_transform(X_train)
 
-    np.testing.assert_array_equal(A, B)
+    np.testing.assert_array_almost_equal(A, B)
 
 
 # Compare with transformer pipeline using TSFeatureUnion.
@@ -103,7 +107,7 @@ def test_different_pipelines():
     steps = [
         (
             "segment",
-            RandomIntervalSegmenter(n_intervals="sqrt", random_state=random_state),
+            RandomIntervalSegmenter(n_intervals=1, random_state=random_state),
         ),
         (
             "transform",
@@ -111,20 +115,23 @@ def test_different_pipelines():
                 [
                     (
                         "mean",
-                        RowTransformer(
-                            FunctionTransformer(func=np.mean, validate=False)
+                        SeriesToPrimitivesRowTransformer(
+                            FunctionTransformer(func=np.mean, validate=False),
+                            check_transformer=False,
                         ),
                     ),
                     (
                         "std",
-                        RowTransformer(
-                            FunctionTransformer(func=np.std, validate=False)
+                        SeriesToPrimitivesRowTransformer(
+                            FunctionTransformer(func=np.std, validate=False),
+                            check_transformer=False,
                         ),
                     ),
                     (
                         "slope",
-                        RowTransformer(
-                            FunctionTransformer(func=time_series_slope, validate=False)
+                        SeriesToPrimitivesRowTransformer(
+                            FunctionTransformer(func=time_series_slope, validate=False),
+                            check_transformer=False,
                         ),
                     ),
                 ]
@@ -134,7 +141,7 @@ def test_different_pipelines():
     pipe = Pipeline(steps)
     a = pipe.fit_transform(X_train)
     tran = RandomIntervalFeatureExtractor(
-        n_intervals="sqrt",
+        n_intervals=1,
         features=[np.mean, np.std, time_series_slope],
         random_state=random_state,
     )

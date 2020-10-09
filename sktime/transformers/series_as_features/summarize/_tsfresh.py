@@ -7,7 +7,7 @@ __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
 from warnings import warn
 
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.data_container import from_nested_to_long
 from sktime.utils.validation import check_n_jobs
@@ -17,7 +17,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 _check_soft_dependencies("tsfresh")
 
 
-class BaseTSFreshFeatureExtractor(BaseSeriesAsFeaturesTransformer):
+class BaseTSFreshFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
     """Base adapter class for tsfresh transformers"""
 
     def __init__(
