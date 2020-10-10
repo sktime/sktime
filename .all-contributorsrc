@@ -516,7 +516,19 @@
       "avatar_url": "https://avatars3.githubusercontent.com/u/16846521?v=4",
       "profile": "https://github.com/alwinw",
       "contributions": [
-        "doc"
+        "doc",
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "kkoziara",
+      "name": "kkoziara",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/4346849?v=4",
+      "profile": "https://github.com/kkoziara",
+      "contributions": [
+        "code",
+        "bug"
       ]
     }
   ],

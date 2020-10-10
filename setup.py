@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 """Install script for sktime"""
 
 # adapted from https://github.com/scikit-learn/scikit-learn/blob/master
@@ -23,7 +24,18 @@ MIN_REQUIREMENTS = {
     "numpy": "1.18.0",
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
-    "statsmodels": "0.12.0"
+    "statsmodels": "0.12.0",
+}
+EXTRAS_REQUIRE = {
+    "all_extras": [
+        "cython>=0.29.0",
+        "matplotlib>=3.3.2",
+        "numba<=0.50.*",
+        "pmdarima>=1.7.1",
+        "scikit_posthocs>= 0.6.5",
+        "seaborn>=0.11.0",
+        "tsfresh>=0.17.0",
+    ],
 }
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -32,69 +44,77 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 def read(*parts):
     # intentionally *not* adding an encoding option to open, See:
     #   https://github.com/pypa/virtualenv/issues/201#issuecomment-3145690
-    with codecs.open(os.path.join(HERE, *parts), 'r') as fp:
+    with codecs.open(os.path.join(HERE, *parts), "r") as fp:
         return fp.read()
 
 
 def find_version(*file_paths):
     version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
     else:
         raise RuntimeError("Unable to find version string.")
 
 
-WEBSITE = 'https://alan-turing-institute.github.io/sktime/'
-DISTNAME = 'sktime'
-DESCRIPTION = 'scikit-learn compatible Python toolbox for machine learning ' \
-              'with time series'
-with codecs.open('README.rst', encoding='utf-8-sig') as f:
+WEBSITE = "https://www.sktime.org"
+DISTNAME = "sktime"
+DESCRIPTION = "A unified Python toolbox for machine learning " "with time series"
+with codecs.open("README.rst", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
-MAINTAINER = 'F. Király'
-MAINTAINER_EMAIL = 'fkiraly@turing.ac.uk'
-URL = 'https://github.com/alan-turing-institute/sktime'
-LICENSE = 'BSD-3-Clause'
-DOWNLOAD_URL = 'https://pypi.org/project/sktime/#files'
+MAINTAINER = "F. Király"
+MAINTAINER_EMAIL = "fkiraly@turing.ac.uk"
+URL = "https://github.com/alan-turing-institute/sktime"
+LICENSE = "BSD-3-Clause"
+DOWNLOAD_URL = "https://pypi.org/project/sktime/#files"
 PROJECT_URLS = {
-    'Issue Tracker': 'https://github.com/alan-turing-institute/sktime/issues',
-    'Documentation': WEBSITE,
-    'Source Code': 'https://github.com/alan-turing-institute/sktime'
+    "Issue Tracker": "https://github.com/alan-turing-institute/sktime/issues",
+    "Documentation": WEBSITE,
+    "Source Code": "https://github.com/alan-turing-institute/sktime",
 }
-VERSION = find_version('sktime', '__init__.py')
+VERSION = find_version("sktime", "__init__.py")
 INSTALL_REQUIRES = [
-    *["{}>={}".format(package, version) for package, version in
-      MIN_REQUIREMENTS.items()],
-    "wheel"
+    *[
+        "{}>={}".format(package, version)
+        for package, version in MIN_REQUIREMENTS.items()
+    ],
+    "wheel",
 ]
 CLASSIFIERS = [
-    'Intended Audience :: Science/Research',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved',
-    'Programming Language :: Python',
-    'Topic :: Software Development',
-    'Topic :: Scientific/Engineering',
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Operating System :: Unix',
-    'Operating System :: MacOS',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8'
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved",
+    "Programming Language :: Python",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
 ]
 
-SETUP_REQUIRES = [
-    "wheel"
-]
+SETUP_REQUIRES = ["wheel"]
 
 # Optional setuptools features
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
-    'install', 'develop', 'release', 'bdist_egg', 'bdist_rpm',
-    'bdist_wininst', 'install_egg_info', 'build_sphinx',
-    'egg_info', 'easy_install', 'upload', 'bdist_wheel',
-    '--single-version-externally-managed', 'sdist'
+    "install",
+    "develop",
+    "release",
+    "bdist_egg",
+    "bdist_rpm",
+    "bdist_wininst",
+    "install_egg_info",
+    "build_sphinx",
+    "egg_info",
+    "easy_install",
+    "upload",
+    "bdist_wheel",
+    "--single-version-externally-managed",
+    "sdist",
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
     # We need to import setuptools early, if we want setuptools features,
@@ -103,7 +123,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True
+        include_package_data=True,
     )
 
 else:
@@ -119,28 +139,30 @@ class CleanCommand(Clean):
 
         # Remove c files if we are not within a sdist package
         cwd = os.path.abspath(os.path.dirname(__file__))
-        remove_c_files = not os.path.exists(os.path.join(cwd, 'PKG-INFO'))
+        remove_c_files = not os.path.exists(os.path.join(cwd, "PKG-INFO"))
         if remove_c_files:
-            print('Will remove generated .c files')
-        if os.path.exists('build'):
-            shutil.rmtree('build')
-        for dirpath, dirnames, filenames in os.walk('sktime'):
+            print("Will remove generated .c files")  # noqa: T001
+        if os.path.exists("build"):
+            shutil.rmtree("build")
+        for dirpath, dirnames, filenames in os.walk("sktime"):
             for filename in filenames:
-                if any(filename.endswith(suffix) for suffix in
-                       (".so", ".pyd", ".dll", ".pyc")):
+                if any(
+                    filename.endswith(suffix)
+                    for suffix in (".so", ".pyd", ".dll", ".pyc")
+                ):
                     os.unlink(os.path.join(dirpath, filename))
                     continue
                 extension = os.path.splitext(filename)[1]
-                if remove_c_files and extension in ['.c', '.cpp']:
-                    pyx_file = str.replace(filename, extension, '.pyx')
+                if remove_c_files and extension in [".c", ".cpp"]:
+                    pyx_file = str.replace(filename, extension, ".pyx")
                     if os.path.exists(os.path.join(dirpath, pyx_file)):
                         os.unlink(os.path.join(dirpath, filename))
             for dirname in dirnames:
-                if dirname == '__pycache__':
+                if dirname == "__pycache__":
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {"clean": CleanCommand}
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
@@ -149,11 +171,10 @@ try:
     from numpy.distutils.command.build_ext import build_ext  # noqa
 
     class build_ext_subclass(build_ext):
-
         def build_extensions(self):
             from sktime._build_utils.openmp_helpers import get_openmp_flag
 
-            if not os.getenv('SKTIME_NO_OPENMP'):
+            if not os.getenv("SKTIME_NO_OPENMP"):
                 openmp_flag = get_openmp_flag(self.compiler)
 
                 for e in self.extensions:
@@ -162,7 +183,7 @@ try:
 
             build_ext.build_extensions(self)
 
-    cmdclass['build_ext'] = build_ext_subclass
+    cmdclass["build_ext"] = build_ext_subclass
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
@@ -170,9 +191,9 @@ except ImportError:
     pass
 
 
-def configuration(parent_package='', top_path=None):
-    if os.path.exists('MANIFEST'):
-        os.remove('MANIFEST')
+def configuration(parent_package="", top_path=None):
+    if os.path.exists("MANIFEST"):
+        os.remove("MANIFEST")
 
     from numpy.distutils.misc_util import Configuration
 
@@ -184,9 +205,9 @@ def configuration(parent_package='', top_path=None):
         ignore_setup_xxx_py=True,
         assume_default_configuration=True,
         delegate_options_to_subpackages=True,
-        quiet=True
+        quiet=True,
     )
-    config.add_subpackage('sktime')
+    config.add_subpackage("sktime")
 
     return config
 
@@ -204,32 +225,36 @@ def check_package_status(package, min_version):
     try:
         module = importlib.import_module(package)
         package_version = module.__version__
-        package_status['up_to_date'] = parse_version(
-            package_version) >= parse_version(min_version)
-        package_status['version'] = package_version
+        package_status["up_to_date"] = parse_version(package_version) >= parse_version(
+            min_version
+        )
+        package_status["version"] = package_version
     except ImportError:
         traceback.print_exc()
-        package_status['up_to_date'] = False
-        package_status['version'] = ""
+        package_status["up_to_date"] = False
+        package_status["version"] = ""
 
-    req_str = "sktime requires {} >= {}.\n".format(
-        package, min_version)
+    req_str = "sktime requires {} >= {}.\n".format(package, min_version)
 
-    instructions = ("Installation instructions are available on the "
-                    "sktime website: "
-                    "https://alan-turing-institute.github.io/sktime"
-                    "/installation.html\n")
+    instructions = (
+        "Installation instructions are available on the "
+        "sktime website: "
+        "https://www.sktime.org/en/latest"
+        "/installation.html\n"
+    )
 
-    if package_status['up_to_date'] is False:
-        if package_status['version']:
-            raise ImportError("Your installation of {} "
-                              "{} is out-of-date.\n{}{}"
-                              .format(package, package_status['version'],
-                                      req_str, instructions))
+    if package_status["up_to_date"] is False:
+        if package_status["version"]:
+            raise ImportError(
+                "Your installation of {} "
+                "{} is out-of-date.\n{}{}".format(
+                    package, package_status["version"], req_str, instructions
+                )
+            )
         else:
-            raise ImportError("{} is not "
-                              "installed.\n{}{}"
-                              .format(package, req_str, instructions))
+            raise ImportError(
+                "{} is not " "installed.\n{}{}".format(package, req_str, instructions)
+            )
 
 
 def setup_package():
@@ -249,6 +274,7 @@ def setup_package():
         python_requires=">={}".format(MIN_PYTHON_VERSION),
         setup_requires=SETUP_REQUIRES,
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
         **extra_setuptools_args
     )
 
@@ -257,35 +283,34 @@ def setup_package():
     # pip is used to install sktime when Numpy is not yet
     # present in the system.
     if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    '--version',
-                                                    'clean'))):
+        len(sys.argv) >= 2
+        and (
+            "--help" in sys.argv[1:]
+            or sys.argv[1] in ("--help-commands", "egg_info", "--version", "clean")
+        )
+    ):
         try:
             from setuptools import setup
         except ImportError:
             from distutils.core import setup
 
-        metadata['version'] = VERSION
+        metadata["version"] = VERSION
 
     # otherwise check Python and required package versions
     else:
-        if sys.version_info < tuple(
-                [int(i) for i in MIN_PYTHON_VERSION.split(".")]):
+        if sys.version_info < tuple([int(i) for i in MIN_PYTHON_VERSION.split(".")]):
             raise RuntimeError(
                 "sktime requires Python %s or later. The current"
                 " Python version is %s installed in %s."
-                % (MIN_PYTHON_VERSION,
-                   platform.python_version(),
-                   sys.executable))
+                % (MIN_PYTHON_VERSION, platform.python_version(), sys.executable)
+            )
 
         for package, version in MIN_REQUIREMENTS.items():
             check_package_status(package, version)
 
         from numpy.distutils.core import setup
 
-        metadata['configuration'] = configuration
+        metadata["configuration"] = configuration
 
     setup(**metadata)
 

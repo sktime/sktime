@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["Markus Löning", "@big-o"]
 
+from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
+
 from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
-from statsmodels.tsa.holtwinters import \
-    ExponentialSmoothing as _ExponentialSmoothing
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
@@ -54,23 +55,29 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     """
 
     _fitted_param_names = (
-        "initial_level", "initial_slope", "initial_seasons", "smoothing_level",
-        "smoothing_slope", "smoothing_seasonal", "damping_slope")
+        "initial_level",
+        "initial_slope",
+        "initial_seasons",
+        "smoothing_level",
+        "smoothing_slope",
+        "smoothing_seasonal",
+        "damping_slope",
+    )
 
     def __init__(
-            self,
-            trend=None,
-            damped=False,
-            seasonal=None,
-            sp=None,
-            smoothing_level=None,
-            smoothing_slope=None,
-            smoothing_seasonal=None,
-            damping_slope=None,
-            optimized=True,
-            use_boxcox=False,
-            remove_bias=False,
-            use_basinhopping=False,
+        self,
+        trend=None,
+        damped=False,
+        seasonal=None,
+        sp=None,
+        smoothing_level=None,
+        smoothing_slope=None,
+        smoothing_seasonal=None,
+        damping_slope=None,
+        optimized=True,
+        use_boxcox=False,
+        remove_bias=False,
+        use_basinhopping=False,
     ):
         # Model params
         self.trend = trend
