@@ -6,6 +6,7 @@ Contains a reusable decorator function to handle the sklearn signature checks.
 import functools
 import torch
 import pandas as pd
+import numpy as np
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
 
@@ -28,6 +29,13 @@ def handle_sktime_signatures(check_fitted=False):
         """
         @functools.wraps(func)
         def wrapper(self, data, labels=None, **kwargs):
+            is_df = isinstance(data, pd.DataFrame)
+            is_arr = isinstance(data, (np.ndarray, np.generic))
+            is_tens = isinstance(data, torch.Tensor)
+            assert any([is_df, is_arr, is_tens]), "Signature methods only " \
+                                                  "accept sktime dataframe " \
+                                                  "format, numpy arrays or " \
+                                                  "pytorch Tensors."
             # Data checks
             if labels is None:
                 check_X(data, enforce_univariate=False)
@@ -38,17 +46,22 @@ def handle_sktime_signatures(check_fitted=False):
                 self.check_is_fitted()
             # Keep the dataframe index as output is required to be of the
             # same format
-            data_idx = data.index
-            # Make tensor data
-            tensor_data = sktime_to_tensor(data)
+            if is_df:
+                data_idx = data.index
+                # Make tensor data
+                tensor_data = sktime_to_tensor(data)
+            if is_arr:
+                tensor_data = torch.Tensor(data).transpose(1, 2)
             # Allow the function to be called on the checked and converted data
             if labels is None:
                 output = func(self, tensor_data, **kwargs)
             else:
                 output = func(self, tensor_data, labels, **kwargs)
             # Rebuild into a dataframe if the output is a tensor
-            if isinstance(output, torch.Tensor):
+            if all([is_df, isinstance(output, torch.Tensor)]):
                 output = pd.DataFrame(index=data_idx, data=output)
+            if all([is_arr, isinstance(output, torch.Tensor)]):
+                output = output.numpy()
             return output
         return wrapper
     return real_decorator
