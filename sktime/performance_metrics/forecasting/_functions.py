@@ -1,5 +1,5 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import numpy as np
@@ -54,8 +54,10 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
     if y_train is not None:
         check_time_index(y_train.index)
         if y_train.index.max() >= y_test.index.min():
-            raise ValueError("Found `y_train` with time index which is not "
-                             "before time index of `y_test`")
+            raise ValueError(
+                "Found `y_train` with time index which is not "
+                "before time index of `y_test`"
+            )
 
     #  naive seasonal prediction
     y_train = np.asarray(y_train)
