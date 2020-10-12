@@ -18,11 +18,11 @@ from sklearn.pipeline import Pipeline
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseForecaster
-from sktime.regression.base import _BaseRegressor
+from sktime.regression.base import BaseRegressor
 
 # TODO implement task-strategy-estimator compatibility lookup registry using
 #  strategy traits
-REGRESSOR_TYPES = (_BaseRegressor, RegressorMixin)
+REGRESSOR_TYPES = (BaseRegressor, RegressorMixin)
 CLASSIFIER_TYPES = (BaseClassifier, ClassifierMixin)
 FORECASTER_TYPES = (BaseForecaster,)
 ESTIMATOR_TYPES = REGRESSOR_TYPES + CLASSIFIER_TYPES + FORECASTER_TYPES

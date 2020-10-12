@@ -7,12 +7,12 @@ __all__ = ["BaseEstimator"]
 
 import inspect
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator as _BaseEstimator
 
 from sktime.exceptions import NotFittedError
 
 
-class BaseEstimator(BaseEstimator):
+class BaseEstimator(_BaseEstimator):
     """Base class for defining estimators in sktime. Extends scikit-learn's
     BaseEstimator.
     """

@@ -16,7 +16,7 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._base import BaseForecaster
-from sktime.regression.base import _BaseRegressor
+from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
@@ -106,7 +106,7 @@ def _make_fit_args(estimator, **kwargs):
         return y, X, fh
     elif isinstance(estimator, BaseClassifier):
         return make_classification_problem(**kwargs)
-    elif isinstance(estimator, _BaseRegressor):
+    elif isinstance(estimator, BaseRegressor):
         return make_regression_problem(**kwargs)
     elif isinstance(
         estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
@@ -129,7 +129,7 @@ def _make_predict_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         fh = 1
         return (fh,)
-    elif isinstance(estimator, (BaseClassifier, _BaseRegressor)):
+    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
         X = _make_series_as_features_X(**kwargs)
         return (X,)
     else:

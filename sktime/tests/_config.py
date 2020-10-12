@@ -33,7 +33,7 @@ from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.regression.base import _BaseRegressor
+from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.base import _BaseTransformer
@@ -202,7 +202,7 @@ VALID_TRANSFORMER_TYPES = (
 )
 VALID_ESTIMATOR_BASE_TYPES = (
     BaseClassifier,
-    _BaseRegressor,
+    BaseRegressor,
     BaseForecaster,
     _BaseTransformer,
 )
@@ -214,7 +214,7 @@ VALID_ESTIMATOR_TYPES = (
 
 VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "classifier": BaseClassifier,
-    "regressor": _BaseRegressor,
+    "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
     "transformer": _BaseTransformer,
 }

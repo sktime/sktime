@@ -3,12 +3,12 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["_BaseRegressor"]
+__all__ = ["BaseRegressor"]
 
 from sktime.base import BaseEstimator
 
 
-class _BaseRegressor(BaseEstimator):
+class BaseRegressor(BaseEstimator):
     """
     Base class for regressors, for identification.
     """

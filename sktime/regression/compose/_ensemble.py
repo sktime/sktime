@@ -19,11 +19,11 @@ from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.regression.base import _BaseRegressor
+from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, _BaseRegressor):
+class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time-Series Forest Regressor.
 
     A time series forest is a meta estimator and an adaptation of the random
