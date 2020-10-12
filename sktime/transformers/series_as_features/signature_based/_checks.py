@@ -32,18 +32,18 @@ def handle_sktime_signatures(check_fitted=False):
         def wrapper(self, data, labels=None, **kwargs):
             # Data checks
             if labels is None:
-                data = check_X(data, enforce_univariate=False,
-                               coerce_to_pandas=True)
+                data = check_X(data, enforce_univariate=False, coerce_to_pandas=True)
             else:
                 data, labels = check_X_y(
-                    data, labels, enforce_univariate=False,
-                    coerce_to_pandas=True)
+                    data, labels, enforce_univariate=False, coerce_to_pandas=True
+                )
             # Make it a tensor, swap to [N, C, L] as this is sktime format
             # signature code assumes the channels are the end dimension
             data_idx = data.index
             if not isinstance(data, torch.Tensor):
-                tensor_data = torch.Tensor(from_nested_to_3d_numpy(
-                    data)).transpose(1, 2)
+                tensor_data = torch.Tensor(from_nested_to_3d_numpy(data)).transpose(
+                    1, 2
+                )
             else:
                 tensor_data = data
             # Fit checks

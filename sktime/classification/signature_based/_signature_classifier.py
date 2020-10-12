@@ -199,8 +199,7 @@ def basic_signature_hyperopt(X, y, cv=5, n_iter=10, return_gs=False, random_stat
 
     # Run a random grid search and return the gs object
     gs = RandomizedSearchCV(
-        estimator, signature_grid, cv=cv, n_iter=n_iter,
-        random_state=random_state
+        estimator, signature_grid, cv=cv, n_iter=n_iter, random_state=random_state
     )
     gs.fit(X, y)
 
