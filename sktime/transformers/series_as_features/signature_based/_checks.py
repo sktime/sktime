@@ -23,10 +23,12 @@ def handle_sktime_signatures(check_fitted=False):
     If this is in sktime format data, it will check the data and labels are of
     the correct form, and then
     """
+
     def real_decorator(func):
         """Reusable decorator to handle the sktime checks and convert the data
         to a torch Tensor.
         """
+
         @functools.wraps(func)
         def wrapper(self, data, labels=None, **kwargs):
             is_df = isinstance(data, pd.DataFrame)
@@ -65,7 +67,9 @@ def handle_sktime_signatures(check_fitted=False):
             if all([is_arr, isinstance(output, torch.Tensor)]):
                 output = output.numpy()
             return output
+
         return wrapper
+
     return real_decorator
 
 

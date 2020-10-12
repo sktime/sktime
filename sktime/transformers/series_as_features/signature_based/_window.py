@@ -66,6 +66,7 @@ class _Window:
     time series. These lists are grouped into another list for situations
     where we consider windows of multiple scales.
     """
+
     def num_windows(self, length):
         """Method that returns the total number of windows in the set.
 
@@ -82,6 +83,7 @@ class _Window:
 
 class _Global(_Window):
     """ A single window over the full data. """
+
     def __call__(self, length=None):
         return [[_Pair(None, None)]]
 
@@ -108,6 +110,7 @@ class _ExpandingSliding(_Window):
                 yield _Pair(start, end)
                 start += self.start_step
                 end += self.end_step
+
         return [list(_call())]
 
 
@@ -115,6 +118,7 @@ class _Sliding(_ExpandingSliding):
     """A window starting at zero and going to some point that increases
     between windows.
     """
+
     def __init__(self, length, step):
         """
         Parameters
@@ -129,6 +133,7 @@ class _Sliding(_ExpandingSliding):
 
 class _Expanding(_ExpandingSliding):
     """ A window of fixed length, slid along the dataset. """
+
     def __init__(self, length, step):
         """
         Parameters
@@ -163,6 +168,7 @@ class _Dyadic(_Window):
     depth: int, The depth of the dyadic window, explained in the class
         description.
     """
+
     def __init__(self, depth):
         super(_Dyadic, self).__init__()
         self.depth = depth

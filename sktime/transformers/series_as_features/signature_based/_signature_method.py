@@ -40,6 +40,7 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
         all the steps to extract the signature features.
     """
+    
     def __init__(
         self,
         scaling="stdsc",

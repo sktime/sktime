@@ -35,6 +35,7 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
 
     # TODO allow scaling to be passed as an sklearn transformer.
     """
+
     def __init__(self, scaling):
         self.scaling = scaling
 

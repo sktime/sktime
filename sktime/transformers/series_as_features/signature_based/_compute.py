@@ -25,6 +25,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
     """
+
     def __init__(
         self,
         window_name=None,
