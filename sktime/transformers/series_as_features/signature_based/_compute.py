@@ -5,12 +5,12 @@ Class for signature computation over windows.
 """
 import torch
 import signatory
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.signature_based._window import \
-    window_getter
-from sktime.transformers.series_as_features.signature_based._rescaling import \
-    rescale_path, rescale_signature
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.signature_based._window import window_getter
+from sktime.transformers.series_as_features.signature_based._rescaling import (
+    rescale_path,
+    rescale_signature,
+)
 
 
 class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
@@ -25,15 +25,16 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
     ----------
     num_intervals: int, dimension of the transformed data (default 8)
     """
-    def __init__(self,
-                 window_name=None,
-                 window_depth=None,
-                 window_length=None,
-                 window_step=None,
-                 sig_tfm=None,
-                 sig_depth=None,
-                 rescaling=None
-                 ):
+    def __init__(
+        self,
+        window_name=None,
+        window_depth=None,
+        window_length=None,
+        window_step=None,
+        sig_tfm=None,
+        sig_depth=None,
+        rescaling=None,
+        ):
         super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth
@@ -43,11 +44,10 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         self.depth = sig_depth
         self.rescaling = rescaling
 
-        self.window = window_getter(self.window_name,
-                                    self.window_depth,
-                                    self.window_length,
-                                    self.window_step
-                                    )
+        self.window = window_getter(
+            self.window_name, self.window_depth, self.window_length,
+            self.window_step
+        )
 
     def fit(self, data, labels=None):
         self._is_fitted = True
@@ -58,7 +58,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         self.check_is_fitted()
 
         # Path rescaling
-        if self.rescaling == 'pre':
+        if self.rescaling == "pre":
             data = rescale_path(data, self.depth)
 
         # Prepare for signature computation
@@ -74,7 +74,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                 # Signature computation step
                 signature = transform(window.start, window.end)
                 # Rescale if specified
-                if self.rescaling == 'post':
+                if self.rescaling == "post":
                     signature = rescale_signature(
                         signature, data.size(2), self.depth
                     )

@@ -1,14 +1,18 @@
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.signature_based._compute import \
-    _WindowSignatureTransform
-from sktime.transformers.series_as_features.signature_based._augmentations \
-    import make_augmentation_pipeline
-from sktime.transformers.series_as_features.signature_based._rescaling import \
-    TrickScaler
-from sktime.transformers.series_as_features.signature_based._checks import \
-    handle_sktime_signatures
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.signature_based._compute import (
+    _WindowSignatureTransform,
+)
+from sktime.transformers.series_as_features.signature_based._augmentations import (
+    make_augmentation_pipeline,
+)
+from sktime.transformers.series_as_features.signature_based._rescaling import (
+    TrickScaler,
+)
+from sktime.transformers.series_as_features.signature_based._checks import (
+    handle_sktime_signatures,
+)
 
 
 class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
@@ -36,17 +40,18 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
         all the steps to extract the signature features.
     """
-    def __init__(self,
-                 scaling='stdsc',
-                 augmentation_list=('basepoint', 'addtime'),
-                 window_name='dyadic',
-                 window_depth=3,
-                 window_length=None,
-                 window_step=None,
-                 rescaling=None,
-                 sig_tfm='signature',
-                 depth=4,
-                 ):
+    def __init__(
+        self,
+        scaling='stdsc',
+        augmentation_list=('basepoint', 'addtime'),
+        window_name='dyadic',
+        window_depth=3,
+        window_length=None,
+        window_step=None,
+        rescaling=None,
+        sig_tfm='signature',
+        depth=4,
+        ):
         super(GeneralisedSignatureMethod, self).__init__()
         self.scaling = scaling
         self.augmentation_list = augmentation_list
@@ -71,15 +76,17 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
             window_step=self.window_step,
             sig_tfm=self.sig_tfm,
             sig_depth=self.depth,
-            rescaling=self.rescaling
+            rescaling=self.rescaling,
         )
 
         # The so-called 'signature method' as defined in the reference paper
-        self.signature_method = Pipeline([
-            ('scaling', scaling_step),
-            ('augmentations', augmentation_step),
-            ('window_and_transform', transform_step),
-        ])
+        self.signature_method = Pipeline(
+            [
+                ('scaling', scaling_step),
+                ('augmentations', augmentation_step),
+                ('window_and_transform', transform_step),
+            ]
+        )
 
     @handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels=None):

@@ -13,14 +13,10 @@ Code based on window code written by Patrick Kidger.
 import collections as co
 
 
-_Pair = co.namedtuple('Pair', ('start', 'end'))
+_Pair = co.namedtuple("Pair", ("start", "end"))
 
 
-def window_getter(window_name,
-                  window_depth=None,
-                  window_length=None,
-                  window_step=None
-                  ):
+def window_getter(window_name, window_depth=None, window_length=None, window_step=None):
     """Gets the window method correspondent to the given string and initialises
     with specified parameters.
 
@@ -42,18 +38,20 @@ def window_getter(window_name,
         denote the start and end indexes of each window.
     """
     # Setup all available windows here
-    length_step = {'length': window_length, 'step': window_step}
+    length_step = {"length": window_length, "step": window_step}
     window_dict = {
-        'global': (_Global, {}),
-        'sliding': (_Sliding, length_step),
-        'expanding': (_Expanding, length_step),
-        'dyadic': (_Dyadic, {'depth': window_depth}),
+        "global": (_Global, {}),
+        "sliding": (_Sliding, length_step),
+        "expanding": (_Expanding, length_step),
+        "dyadic": (_Dyadic, {"depth": window_depth}),
     }
 
     if window_name not in window_dict.keys():
-        raise ValueError("Window name must be one of: {}. Got: {}.".format(
-            window_dict.keys(), window_name
-        ))
+        raise ValueError(
+            "Window name must be one of: {}. Got: {}.".format(
+                window_dict.keys(), window_name
+            )
+        )
 
     window_cls, window_kwargs = window_dict[window_name]
     return window_cls(**window_kwargs)

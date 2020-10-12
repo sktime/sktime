@@ -9,10 +9,13 @@ Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import torch
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, \
-    FunctionTransformer
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sklearn.preprocessing import (
+    StandardScaler,
+    MinMaxScaler,
+    MaxAbsScaler,
+    FunctionTransformer,
+)
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 import signatory
 
 
@@ -36,10 +39,10 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
         self.scaling = scaling
 
         # Checks
-        allowed_values = ['stdsc', 'minmax', 'maxabs', None]
+        allowed_values = ["stdsc", "minmax", "maxabs", None]
         if scaling not in allowed_values:
-            raise ValueError('scaling param {} not recognised. Must be one '
-                             'of {}.'.format(scaling, allowed_values))
+            raise ValueError("scaling param {} not recognised. Must be one "
+                             "of {}.".format(scaling, allowed_values))
 
     def _trick(self, X):
         return X.reshape(-1, X.shape[2])
@@ -50,11 +53,11 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
     def fit(self, X, y=None):
         # Setup the scaler
         scaling = self.scaling
-        if scaling == 'stdsc':
+        if scaling == "stdsc":
             self.scaler = StandardScaler()
-        elif scaling == 'maxabs':
+        elif scaling == "maxabs":
             self.scaler = MaxAbsScaler()
-        elif scaling == 'minmax':
+        elif scaling == "minmax":
             self.scaler = MinMaxScaler()
         elif scaling is None:
             self.scaler = FunctionTransformer(func=None)
