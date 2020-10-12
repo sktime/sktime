@@ -169,7 +169,6 @@ class ColumnTransformer(
             if not (getattr(Xs, "ndim", 0) == 2 or isinstance(Xs, pd.Series)):
                 raise ValueError(
                     "The output of the '{0}' transformer should be 2D (scipy "
-                    ""
                     "matrix, array, or pandas DataFrame).".format(name)
                 )
 
@@ -185,7 +184,7 @@ class ColumnTransformer(
         return super(ColumnTransformer, self).transform(X)
 
     def fit_transform(self, X, y=None):
-        # wrap fit_transform to set _is_fitted attribute
+        # Wrap fit_transform to set _is_fitted attribute
         Xt = super(ColumnTransformer, self).fit_transform(X, y)
         self._is_fitted = True
         return Xt
@@ -249,7 +248,7 @@ class _RowTransformer(_BaseTransformer):
     """Base class for RowTransformer"""
 
     _required_parameters = ["transformer"]
-    _tags = {"fit-in-transform": True, "univariate-only": True}
+    _tags = {"fit-in-transform": True}
 
     def __init__(self, transformer, prefix="", check_transformer=True):
         self.transformer = transformer
@@ -267,18 +266,11 @@ class _RowTransformer(_BaseTransformer):
                 f"transformer must be a " f"{self._valid_transformer_type.__name__}"
             )
 
-    @staticmethod
-    def _iter_rows(X):
-        for i, (_, x) in enumerate(X.iterrows()):
-            x = _from_nested_to_series(x)
-            yield i, x
-
     def _prepare(self, X):
         self.check_is_fitted()
         self._check_transformer()
-        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-        n_instances = X.shape[0]
-        self.transformer_ = [clone(self.transformer) for _ in range(n_instances)]
+        X = check_X(X, coerce_to_numpy=True)
+        self.transformer_ = [clone(self.transformer) for _ in range(X.shape[0])]
         return X
 
 
@@ -289,10 +281,12 @@ class SeriesToPrimitivesRowTransformer(
 
     def transform(self, X, y=None):
         X = self._prepare(X)
-        Xt = np.zeros(X.shape)
-        for i, x in self._iter_rows(X):
-            Xt[i] = self.transformer_[i].fit_transform(x)
-        return pd.DataFrame(Xt, columns=_make_column_names(X.columns, self.prefix))
+        Xt = np.zeros(X.shape[:2])
+        for i in range(X.shape[0]):
+            # We need to maintain the number of dimension when we slice, so that we
+            # still pass a 2-dimensional array to the transformer
+            Xt[i] = self.transformer_[i].fit_transform(X[i].T)
+        return pd.DataFrame(Xt)
 
 
 class SeriesToSeriesRowTransformer(
@@ -302,13 +296,11 @@ class SeriesToSeriesRowTransformer(
 
     def transform(self, X, y=None):
         X = self._prepare(X)
-        Xt = None
-        for i, x in self._iter_rows(X):
-            xt = self.transformer_[i].fit_transform(x)
-            Xt = pd.concat([Xt, from_2d_array_to_nested(xt.T)], axis=1)
-        Xt = Xt.T
-        Xt.columns = _make_column_names(X.columns, self.prefix)
-        return Xt
+        xts = list()
+        for i in range(X.shape[0]):
+            xt = self.transformer_[i].fit_transform(X[i].T)
+            xts.append(from_2d_array_to_nested(xt.T).T)
+        return pd.concat(xts, axis=0)
 
 
 def make_row_transformer(transformer, transformer_type=None, **kwargs):
@@ -320,7 +312,6 @@ def make_row_transformer(transformer, transformer_type=None, **kwargs):
                 f"Invalid `transformer_type`. Please choose one of "
                 f"{valid_transformer_types}."
             )
-
     else:
         if isinstance(transformer, _SeriesToSeriesTransformer):
             transformer_type = "series-to-series"
@@ -330,7 +321,6 @@ def make_row_transformer(transformer, transformer_type=None, **kwargs):
             raise TypeError(
                 "transformer type not understood. Please specify " "`transformer_type`."
             )
-
     if transformer_type == "series-to-series":
         return SeriesToSeriesRowTransformer(transformer, **kwargs)
     else:

@@ -132,7 +132,7 @@ def fit_trend(x, order=0):
 
 
 def time_series_slope(y, axis=0):
-    """Find the slope for each series (row) of Y
+    """Find the slope for each series of y
     Parameters
     ----------
     y: np.ndarray
@@ -145,11 +145,19 @@ def time_series_slope(y, axis=0):
     slope : np.ndarray
         Time series slope
     """
+    # Make sure y is always at least 2-dimensional
     if y.ndim == 1:
         y = y.reshape(-1, 1)
-    if axis == 1:
-        y = y.T
-    x = np.arange(y.shape[0]).reshape(-1, 1) + 1
-    return (np.mean(y * x, axis=0) - np.mean(x) * np.mean(y, axis=0)) / (
-        (x * x).mean() - x.mean() ** 2
+
+    # Generate time index with correct shape for broadcasting
+    shape = np.ones(y.ndim, dtype=np.int)
+    shape[axis] *= -1
+    x = np.arange(y.shape[axis]).reshape(shape) + 1
+
+    # Precompute mean
+    x_mean = x.mean()
+
+    # Compute slope along given axis
+    return (np.mean(y * x, axis=axis) - x_mean * np.mean(y, axis=axis)) / (
+        (x * x).mean() - x_mean ** 2
     )

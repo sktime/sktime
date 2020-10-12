@@ -77,7 +77,9 @@ EXCLUDED_TESTS = {
 # We here configure estimators for basic unit testing, including setting of
 # required hyper-parameters and setting of hyper-parameters for faster training.
 SERIES_TO_SERIES_TRANSFORMER = StandardScaler()
-SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(np.mean, check_inverse=False)
+SERIES_TO_PRIMITIVES_TRANSFORMER = FunctionTransformer(
+    np.mean, kw_args={"axis": 0}, check_inverse=False
+)
 TRANSFORMERS = [
     (
         "transformer1",
