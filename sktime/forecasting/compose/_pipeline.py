@@ -8,8 +8,8 @@ __all__ = ["TransformedTargetForecaster"]
 from sklearn.base import clone
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.transformers.base import _SeriesToSeriesTransformer
@@ -135,7 +135,7 @@ class TransformedTargetForecaster(
         return y_pred
 
     def update(self, y, X=None, update_params=False):
-        """Update fitted paramters
+        """Update fitted parameters
 
         Parameters
         ----------

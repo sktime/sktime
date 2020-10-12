@@ -171,10 +171,16 @@ class RandomIntervalFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
     _tags = {"univariate-only": True}
 
     def __init__(
-        self, n_intervals="sqrt", min_length=2, features=None, random_state=None
+        self,
+        n_intervals="sqrt",
+        min_length=None,
+        max_length=None,
+        features=None,
+        random_state=None,
     ):
         self.n_intervals = n_intervals
         self.min_length = min_length
+        self.max_length = max_length
         self.random_state = random_state
         self.features = features
         super(RandomIntervalFeatureExtractor, self).__init__()
@@ -199,7 +205,7 @@ class RandomIntervalFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
         # has a different transform type (returns tabular) compared to the
         # RandomIntervalSegmenter (returns series-as-features).
         self._interval_segmenter = RandomIntervalSegmenter(
-            self.n_intervals, self.min_length, self.random_state
+            self.n_intervals, self.min_length, self.max_length, self.random_state
         )
         self._interval_segmenter.fit(X, y)
         self.intervals_ = self._interval_segmenter.intervals_
@@ -255,7 +261,6 @@ class RandomIntervalFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
         Xt = np.zeros((n_instances, n_features * n_intervals))  # Allocate output array
         # for transformed data
         columns = []
-        colname = [f"col{i}" for i in range(n_columns)]
 
         i = 0
         for func in features:
@@ -278,7 +283,7 @@ class RandomIntervalFeatureExtractor(_SeriesAsFeaturesToTabularTransformer):
                     else:
                         raise
                 i += 1
-                columns.append(f"{colname}_{start}_{end}_{func.__name__}")
+                columns.append(f"{start}_{end}_{func.__name__}")
 
         Xt = pd.DataFrame(Xt)
         Xt.columns = columns

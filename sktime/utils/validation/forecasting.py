@@ -5,7 +5,6 @@ __all__ = [
     "check_y_X",
     "check_fh",
     "check_cv",
-    "check_window_length",
     "check_step_length",
     "check_alpha",
     "check_cutoffs",
@@ -121,17 +120,6 @@ def check_cv(cv):
     if not isinstance(cv, BaseSplitter):
         raise TypeError(f"`cv` is not an instance of {BaseSplitter}")
     return cv
-
-
-def check_window_length(window_length):
-    """Validate window length"""
-    if window_length is not None:
-        if not is_int(window_length) or window_length < 1:
-            raise ValueError(
-                f"`window_length_` must be a positive integer >= 1 or None, "
-                f"but found: {window_length}"
-            )
-    return window_length
 
 
 def check_step_length(step_length):

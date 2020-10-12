@@ -5,6 +5,10 @@ import pytest
 
 from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
 from sktime.utils._testing.series_as_features import _make_nested_from_array
+from sktime.transformers.series_as_features.segment import (
+    _rand_intervals_fixed_n,
+    _rand_intervals_rand_n,
+)
 
 N_ITER = 10
 
@@ -51,11 +55,10 @@ def test_bad_input_args(bad_interval):
 )  # run repeatedly
 @pytest.mark.parametrize("n_intervals", ["sqrt", "log", 0.1, 1, 3])
 def test_rand_intervals_fixed_n(random_state, n_intervals):
-    tran = RandomIntervalSegmenter(random_state=random_state)
     series_len = 30
     x = np.arange(series_len)
 
-    intervals = tran._rand_intervals_fixed_n(x, n_intervals=n_intervals)
+    intervals = _rand_intervals_fixed_n(x, n_intervals=n_intervals)
     assert intervals.ndim == 2
     assert np.issubdtype(intervals.dtype, np.integer)
     # assert intervals.shape[0] == np.unique(intervals, axis=0).shape[0]  #
@@ -72,11 +75,10 @@ def test_rand_intervals_fixed_n(random_state, n_intervals):
     "random_state", list(np.random.randint(100, size=10))
 )  # run repeatedly
 def test_rand_intervals_rand_n(random_state):
-    tran = RandomIntervalSegmenter(random_state=random_state)
     series_len = 30
     x = np.arange(series_len)
 
-    intervals = tran._rand_intervals_rand_n(x)
+    intervals = _rand_intervals_rand_n(x)
     assert intervals.ndim == 2
     assert np.issubdtype(intervals.dtype, np.integer)
     # assert intervals.shape[0] == np.unique(intervals, axis=0).shape[0]  #
@@ -91,13 +93,16 @@ def test_rand_intervals_rand_n(random_state):
 
 # Check minimum length.
 @pytest.mark.parametrize("min_length", [1, 3])
+@pytest.mark.parametrize("max_length", [4, 5])
 @pytest.mark.parametrize("n_intervals", ["sqrt", "log", 0.1, 1, 3])
-def test_min_length(n_intervals, min_length):
+def test_min_length(n_intervals, min_length, max_length):
     series_len = 30
     x = np.arange(series_len)
 
-    tran = RandomIntervalSegmenter(n_intervals=n_intervals, min_length=min_length)
-    intervals = tran._rand_intervals_fixed_n(x, n_intervals=n_intervals)
+    intervals = _rand_intervals_fixed_n(
+        x, n_intervals=n_intervals, min_length=min_length, max_length=max_length
+    )
     starts = intervals[:, 0]
     ends = intervals[:, 1]
     assert np.all(ends - starts >= min_length)  # minimum length
+    assert np.all(ends - starts <= max_length)  # minimum length

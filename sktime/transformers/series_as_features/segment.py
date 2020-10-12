@@ -9,7 +9,8 @@ from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransfor
 from sktime.utils.data_container import _concat_nested_arrays
 from sktime.utils.data_container import _get_column_names
 from sktime.utils.data_container import _get_time_index
-from sktime.utils.time_series import compute_relative_to_n_timepoints
+from sktime.utils.time_series import _get_n_from_n_timepoints
+from sktime.utils.validation import check_window_length
 from sktime.utils.validation.series_as_features import check_X
 
 
@@ -151,9 +152,12 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         by `np.random`.
     """
 
-    def __init__(self, n_intervals="sqrt", min_length=2, random_state=None):
-        self.min_length = min_length
+    def __init__(
+        self, n_intervals="sqrt", min_length=None, max_length=None, random_state=None
+    ):
         self.n_intervals = n_intervals
+        self.min_length = min_length
+        self.max_length = max_length
         self.random_state = random_state
         super(RandomIntervalSegmenter, self).__init__()
 
@@ -173,16 +177,17 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         self : RandomIntervalSegmenter
             This estimator
         """
-        if not isinstance(self.min_length, int):
-            raise ValueError(
-                f"Min_length must be an integer, but found: " f"{type(self.min_length)}"
-            )
-        if self.min_length < 1:
-            raise ValueError(
-                f"Min_length must be an positive integer (>= 1), "
-                f"but found: {self.min_length}"
-            )
-        X = check_X(X)
+        check_window_length(self.min_length, "`min_length`")
+        check_window_length(self.max_length, "`max_length`")
+        if self.min_length is None:
+            min_length = 2
+        else:
+            min_length = self.min_length
+        if self.max_length is not None:
+            if not min_length < self.max_length:
+                raise ValueError("`max_length` must be bigger than `min_length`.")
+
+        X = check_X(X, enforce_univariate=True)
         self.input_shape_ = X.shape
 
         # Retrieve time-series indexes from each column.
@@ -194,82 +199,89 @@ class RandomIntervalSegmenter(IntervalSegmenter):
         #  one set of shared intervals,
         #  or rely on ColumnTransformer?
         if self.n_intervals == "random":
-            self.intervals_ = self._rand_intervals_rand_n(self._time_index)
+            if self.min_length is not None or self.max_length is not None:
+                raise ValueError(
+                    "Setting `min_length` or `max_length` is not yet "
+                    "implemented for `n_intervals='random'`."
+                )
+            self.intervals_ = _rand_intervals_rand_n(
+                self._time_index, random_state=self.random_state
+            )
         else:
-            self.intervals_ = self._rand_intervals_fixed_n(
-                self._time_index, n_intervals=self.n_intervals
+            self.intervals_ = _rand_intervals_fixed_n(
+                self._time_index,
+                n_intervals=self.n_intervals,
+                min_length=min_length,
+                max_length=self.max_length,
+                random_state=self.random_state,
             )
         self._is_fitted = True
         return self
 
-    def _rand_intervals_rand_n(self, x):
-        """
-        Compute a random number of intervals from index (x) with
-        random starting points and lengths. Intervals are unique, but may
-        overlap.
 
-        Parameters
-        ----------
-        x : array_like, shape = [n_observations]
+def _rand_intervals_rand_n(x, random_state=None):
+    """
+    Compute a random number of intervals from index (x) with
+    random starting points and lengths. Intervals are unique, but may
+    overlap.
 
-        Returns
-        -------
-        intervals : array-like, shape = [n, 2]
-            2d array containing start and end points of intervals
+    Parameters
+    ----------
+    x : array_like, shape = (n_timepoints,)
 
-        References
-        ----------
-        ..[1] Deng, Houtao, et al. "A time series forest for classification
-        and feature extraction."
-            Information Sciences 239 (2013): 142-153.
-        """
-        rng = check_random_state(self.random_state)
-        starts = []
-        ends = []
-        n_timepoints = x.shape[0]  # series length
-        W = rng.randint(1, n_timepoints, size=int(np.sqrt(n_timepoints)))
-        for w in W:
-            size = n_timepoints - w + 1
-            start = rng.randint(size, size=int(np.sqrt(size)))
-            starts.extend(start)
-            for s in start:
-                end = s + w
-                ends.append(end)
-        return np.column_stack([starts, ends])
+    Returns
+    -------
+    intervals : array-like, shape = (n_intervals, 2)
+        2d array containing start and end points of intervals
 
-    def _rand_intervals_fixed_n(self, x, n_intervals):
-        """
-        Compute a fixed number (n) of intervals from index (x) with
-        random starting points and lengths. Intervals may overlap and may
-        not be unique.
+    References
+    ----------
+    ..[1] Deng, Houtao, et al. "A time series forest for classification
+    and feature extraction."
+        Information Sciences 239 (2013): 142-153.
+    """
+    rng = check_random_state(random_state)
+    starts = []
+    ends = []
+    n_timepoints = x.shape[0]  # series length
+    W = rng.randint(1, n_timepoints, size=int(np.sqrt(n_timepoints)))
+    for w in W:
+        size = n_timepoints - w + 1
+        start = rng.randint(size, size=int(np.sqrt(size)))
+        starts.extend(start)
+        for s in start:
+            end = s + w
+            ends.append(end)
+    return np.column_stack([starts, ends])
 
-        Parameters
-        ----------
-        x : array_like, shape = [n_observations,]
-            Array containing the time-series index.
-        n_intervals : 'sqrt', 'log', float or int
 
-        Returns
-        -------
-        intervals : array-like, shape = [n, 2]
-            2d array containing start and end points of intervals
-        """
-        rng = check_random_state(self.random_state)
-        n_timepoints = len(x)
-        # compute number of random intervals relative to series length (m)
-        # TODO use smarter dispatch at construction to avoid evaluating
-        #  if-statements here each time function is called
-        n_intervals = compute_relative_to_n_timepoints(n_timepoints, n=n_intervals)
+def _rand_intervals_fixed_n(
+    x, n_intervals, min_length=1, max_length=None, random_state=None
+):
+    """
+    Compute a fixed number (n) of intervals from index (x) with
+    random starting points and lengths. Intervals may overlap and may
+    not be unique.
 
-        # get start and end points of intervals
-        starts = rng.randint(n_timepoints - self.min_length + 1, size=n_intervals)
-        if n_intervals == 1:
-            starts = [starts]  # make it an iterable
-        ends = [
-            start + rng.randint(self.min_length, n_timepoints - start + 1)
-            for start in starts
-        ]
-        return np.column_stack([starts, ends])
+    Parameters
+    ----------
+    x : array_like, shape = (n_timepoints,)
+        Array containing the time-series index.
+    n_intervals : 'sqrt', 'log', float or int
+
+    Returns
+    -------
+    intervals : array-like, shape = (n_intervals, 2)
+        2d array containing start and end points of intervals
+    """
+    rng = check_random_state(random_state)
+    n_timepoints = x.shape[0]
+    n_intervals = _get_n_from_n_timepoints(n_timepoints, n_intervals)
+    starts = rng.randint(0, n_timepoints - min_length + 1, size=(n_intervals,))
+    if max_length is None:
+        max_length = n_timepoints - starts
+    ends = rng.randint(starts + min_length, starts + max_length + 1)
+    return np.column_stack([starts, ends])
 
 
 class SlidingWindowSegmenter(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
@@ -304,7 +316,7 @@ class SlidingWindowSegmenter(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
     Proposed in the ShapeDTW algorithm.
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate-only": True, "fit-in-transform": True}
 
     def __init__(self, window_length=5):
         self.window_length = window_length

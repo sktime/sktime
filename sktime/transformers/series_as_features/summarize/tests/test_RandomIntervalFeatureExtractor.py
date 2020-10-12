@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
-from sktime.utils._testing import make_classification_problem
+
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.series_as_features.compose import (
     SeriesToPrimitivesRowTransformer,
@@ -13,6 +13,7 @@ from sktime.transformers.series_as_features.segment import RandomIntervalSegment
 from sktime.transformers.series_as_features.summarize import (
     RandomIntervalFeatureExtractor,
 )
+from sktime.utils._testing import make_classification_problem
 from sktime.utils._testing.series_as_features import _make_nested_from_array
 from sktime.utils.time_series import time_series_slope
 
@@ -54,30 +55,29 @@ def test_bad_features(bad_features):
 
 
 # Check specific results
-@pytest.mark.parametrize("n_instances", [1, 3])
+@pytest.mark.parametrize("n_instances", [3, 5])
 @pytest.mark.parametrize("n_timepoints", [10, 20])
 @pytest.mark.parametrize("n_intervals", [1, 3, "log", "sqrt", "random"])
 def test_results(n_instances, n_timepoints, n_intervals):
-    x = np.random.normal(size=n_timepoints)
-    X = _make_nested_from_array(x, n_instances=n_instances, n_columns=1)
-    t = RandomIntervalFeatureExtractor(
-        n_intervals=n_intervals, features=[np.mean, np.std, time_series_slope]
+    X, _ = make_classification_problem(
+        n_instances=n_instances, n_timepoints=n_timepoints, return_numpy=True
     )
-    Xt = t.fit_transform(X)
+    transformer = RandomIntervalFeatureExtractor(
+        n_intervals=n_intervals, features=[np.mean, np.std]
+    )
+    Xt = transformer.fit_transform(X)
+    Xt = Xt.loc[:, ~Xt.columns.duplicated()]
     # Check results
-    intervals = t.intervals_
+    intervals = transformer.intervals_
     for start, end in intervals:
-        expected_mean = np.mean(x[start:end])
-        expected_std = np.std(x[start:end])
-        expected_slope = time_series_slope(x[start:end])
+        expected_mean = np.mean(X[:, 0, start:end], axis=-1)
+        expected_std = np.std(X[:, 0, start:end], axis=-1)
 
-        actual_means = Xt.filter(like=f"*_{start}_{end}_mean").values
-        actual_stds = Xt.filter(like=f"_{start}_{end}_std").values
-        actual_slopes = Xt.filter(like=f"_{start}_{end}_time_series_slope").values
+        actual_means = Xt.loc[:, f"{start}_{end}_mean"].to_numpy().ravel()
+        actual_stds = Xt.loc[:, f"{start}_{end}_std"].to_numpy().ravel()
 
-        assert np.all(actual_means == expected_mean)
-        assert np.all(actual_stds == expected_std)
-        assert np.all(actual_slopes == expected_slope)
+        np.testing.assert_array_equal(actual_means, expected_mean)
+        np.testing.assert_array_equal(actual_stds, expected_std)
 
 
 # Test against equivalent pipelines.

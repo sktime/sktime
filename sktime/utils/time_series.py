@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __all__ = [
-    "compute_relative_to_n_timepoints",
+    "_get_n_from_n_timepoints",
     "time_series_slope",
     "fit_trend",
 ]
@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.utils import check_array
 
 
-def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
+def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     """
     Get number of intervals from number of time points for various allowed
     input arguments.

@@ -154,7 +154,7 @@ ESTIMATOR_TEST_PARAMS = {
         "max_q": 2,
         "seasonal": False,
     },
-    ShapeletTransformClassifier: {"n_estimators": 5, "time_contract_in_mins": 0.125},
+    ShapeletTransformClassifier: {"n_estimators": 3, "time_contract_in_mins": 0.125},
     ContractedShapeletTransform: {"time_contract_in_mins": 0.125},
     ShapeletTransform: {
         "max_shapelets_to_store_per_class": 1,
@@ -190,7 +190,7 @@ NON_STATE_CHANGING_METHODS = (
 # estimators into different categories. This is useful for defining and running
 # common tests for estimators with the same tags.
 VALID_ESTIMATOR_TAGS = (
-    "fit-in-transform",  # non-fittable
+    "fit-in-transform",  # fitted in transform or non-fittable
     "univariate-only",
     "transform-returns-same-time-index",
 )

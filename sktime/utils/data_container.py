@@ -64,12 +64,12 @@ def _check_equal_index(X):
     return indexes
 
 
-@deprecated("Please use `from_nested_to_2d_numpy` instead.")
+@deprecated("Please use `from_nested_to_2d_array` instead.")
 def tabularize(X, return_array=False):
     return from_nested_to_2d_array(X, return_array)
 
 
-@deprecated("Please use `from_2d_numpy_to_nested` instead.")
+@deprecated("Please use `from_2d_array_to_nested` instead.")
 def detabularize(X, return_array=False):
     return from_2d_array_to_nested(X, return_array)
 

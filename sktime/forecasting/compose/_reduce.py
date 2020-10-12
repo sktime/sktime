@@ -24,7 +24,7 @@ from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_y
 
 

@@ -54,11 +54,11 @@ class SAX(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
 
     Attributes
     ----------
-        words:      histor = []
+        words:      history = []
 
     """
 
-    _tags = {"univariate-only": True}
+    _tags = {"univariate-only": True, "fit-in-transform": True}
 
     def __init__(
         self,

@@ -426,34 +426,27 @@ class _OptionalForecastingHorizonMixin:
         ----------
         fh : None, int, list or np.ndarray
         """
-        if hasattr(self, "is_fitted"):
-            is_fitted = self.is_fitted
-        else:
-            raise AttributeError("No `is_fitted` attribute found")
-
         if fh is None:
-            if is_fitted:
+            if self.is_fitted:
                 # if no fh passed and there is none already, raise error
                 if self._fh is None:
                     raise ValueError(
                         "The forecasting horizon `fh` must be passed "
-                        "either "
-                        "to `fit` or `predict`, "
+                        "either to `fit` or `predict`, "
                         "but was found in neither."
                     )
                 # otherwise if no fh passed, but there is one already,
                 # we can simply use that one
         else:
-            # if fh is passed, validate first, then check if there is one
+            # If fh is passed, validate first, then check if there is one
             # already,
             # and overwrite
 
-            # a warning should only be raised if fh passed to fit is
-            # overwritten, but no warning is required
-            # when no fh has been provided in fit, and different fhs are
-            # passed to predict, but this requires
-            # to keep track of whether fh has been passed to fit or not,
-            # hence not implemented for cutoff
+            # A warning should only be raised if fh passed to fit is
+            # overwritten, but no warning is required when no fh has been provided in
+            # fit, and different fhs are passed to predict, but this requires
+            # to keep track of whether fh has been passed to fit or not, hence not
+            # implemented for cutoff.
             fh = check_fh(fh)
             self._fh = fh
 
@@ -476,13 +469,8 @@ class _RequiredForecastingHorizonMixin:
             f"depends on `fh`. "
         )
 
-        if hasattr(self, "is_fitted"):
-            is_fitted = self.is_fitted
-        else:
-            raise AttributeError("No `is_fitted` attribute found")
-
         if fh is None:
-            if is_fitted:
+            if self.is_fitted:
                 # intended workflow, no fh is passed when the forecaster is
                 # already fitted
                 pass
@@ -495,7 +483,7 @@ class _RequiredForecastingHorizonMixin:
                 )
         else:
             fh = check_fh(fh)
-            if is_fitted:
+            if self.is_fitted:
                 if not np.array_equal(fh, self._fh):
                     # raise error if existing fh and new one don't match
                     raise ValueError(

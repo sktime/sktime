@@ -15,9 +15,10 @@ from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
 from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils import all_estimators
+from sktime.utils._testing import _assert_array_almost_equal
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _has_tag
-from sktime.utils._testing import _make_args, _assert_array_almost_equal
+from sktime.utils._testing import _make_args
 from sktime.utils.data_container import is_nested_dataframe
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
@@ -35,8 +36,19 @@ def check_transformer(Estimator):
 
 def _construct_fit_transform(Estimator, **kwargs):
     estimator = _construct_instance(Estimator)
-    args = _make_args(estimator, "fit-transform", **kwargs)
+
+    # For forecasters which are also transformers (e.g. pipelines), we cannot
+    # the forecasting horizon to transform, so we only return the first two
+    # arguments here. Note that this will fail for forecasters which require the
+    # forecasting horizon in fit.
+    args = _make_args(estimator, "fit", **kwargs)[:2]
     return estimator.fit_transform(*args)
+
+
+def _construct_fit(Estimator, **kwargs):
+    estimator = _construct_instance(Estimator)
+    args = _make_args(estimator, "fit", **kwargs)[:2]
+    return estimator.fit(*args)
 
 
 def check_series_to_primitive_transform_univariate(Estimator):
@@ -44,11 +56,21 @@ def check_series_to_primitive_transform_univariate(Estimator):
     assert isinstance(out, (int, np.integer, float, np.floating, str))
 
 
+def _check_raises_error(Estimator, **kwargs):
+    with pytest.raises(ValueError, match=r"univariate"):
+        if _has_tag(Estimator, "fit-in-transform"):
+            # As some estimators have an empty fit method, we here check if they
+            # raise the appropriate error in transform rather than fit.
+            _construct_fit_transform(Estimator, **kwargs)
+        else:
+            # All other estimators should raise the error in fit.
+            _construct_fit(Estimator, **kwargs)
+
+
 def check_series_to_primitive_transform_multivariate(Estimator):
     n_columns = 3
     if _has_tag(Estimator, "univariate-only"):
-        with pytest.raises(ValueError, match=r"univariate"):
-            _construct_fit_transform(Estimator, n_columns=n_columns)
+        _check_raises_error(Estimator, n_columns=n_columns)
     else:
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
         assert isinstance(out, (pd.DataFrame, np.ndarray))
@@ -66,10 +88,7 @@ def check_series_to_series_transform_multivariate(Estimator):
     n_columns = 3
     n_timepoints = 5
     if _has_tag(Estimator, "univariate-only"):
-        with pytest.raises(ValueError, match=r"univariate"):
-            _construct_fit_transform(
-                Estimator, n_timepoints=n_timepoints, n_columns=n_columns
-            )
+        _check_raises_error(Estimator, n_timepoints=n_timepoints, n_columns=n_columns)
     else:
         out = _construct_fit_transform(
             Estimator, n_timepoints=n_timepoints, n_columns=n_columns
@@ -87,16 +106,10 @@ def check_series_as_features_to_tabular_transform_univariate(Estimator):
 
 def check_series_as_features_to_tabular_transform_multivariate(Estimator):
     n_instances = 5
-    n_columns = 3
     if _has_tag(Estimator, "univariate-only"):
-        with pytest.raises(ValueError, match=r"univariate"):
-            _construct_fit_transform(
-                Estimator, n_instances=n_instances, n_columns=n_columns
-            )
+        _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
     else:
-        out = _construct_fit_transform(
-            Estimator, n_instances=n_instances, n_columns=n_columns
-        )
+        out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
         assert isinstance(out, (pd.DataFrame, np.ndarray))
         assert out.shape[0] == n_instances
 
@@ -115,8 +128,7 @@ def check_series_as_features_to_series_as_features_transform_univariate(Estimato
 def check_series_as_features_to_series_as_features_transform_multivariate(Estimator):
     n_instances = 5
     if _has_tag(Estimator, "univariate-only"):
-        with pytest.raises(ValueError, match=r"univariate"):
-            _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
+        _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
     else:
         out = _construct_fit_transform(Estimator, n_instances=n_instances, n_columns=3)
         assert isinstance(out, (pd.DataFrame, np.ndarray))

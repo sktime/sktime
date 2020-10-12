@@ -13,7 +13,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation import check_window_length
 
 
 class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):

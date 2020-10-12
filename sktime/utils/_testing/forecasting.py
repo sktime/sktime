@@ -55,10 +55,11 @@ def _generate_polynomial_series(n, order, coefs=None):
 
 
 def make_forecasting_problem(
-    n_timepoints=50, all_positive=True, index_type=None, random_state=None
+    n_timepoints=50, n_columns=1, all_positive=True, index_type=None, random_state=None
 ):
     return _make_series(
         n_timepoints=n_timepoints,
+        n_columns=n_columns,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,

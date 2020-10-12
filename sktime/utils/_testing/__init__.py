@@ -79,23 +79,8 @@ def _make_args(estimator, method, **kwargs):
         return _make_transform_args(estimator, **kwargs)
     elif method == "inverse_transform":
         return _make_inverse_transform_args(estimator, **kwargs)
-    elif method == "fit-transform":
-        return _make_fit_transform_args(estimator, **kwargs)
     else:
         raise ValueError(f"Method: {method} not supported")
-
-
-def _make_fit_transform_args(estimator, **kwargs):
-    # For forecasters which are also transformers (e.g. pipelines), we cannot
-    # the forecasting horizon to transform, so we only generate a series here. Note
-    # that this will fail for forecasters which require the forecasting horizon in fit.
-    if isinstance(estimator, BaseForecaster) and isinstance(
-        estimator, _SeriesToSeriesTransformer
-    ):
-        y = _make_series(**kwargs)
-        return (y,)
-    else:
-        return _make_fit_args(estimator, **kwargs)
 
 
 def _make_fit_args(estimator, **kwargs):
@@ -178,18 +163,18 @@ def _make_primitives(n_columns=1, random_state=None):
     rng = check_random_state(random_state)
     if n_columns == 1:
         return rng.rand()
-    return np.rand(size=(n_columns,))
+    return rng.rand(size=(n_columns,))
 
 
 def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
     """Generate tabular X. Useful for checking inverse-transform
     of series-as-features-to-tabular transformer"""
     rng = check_random_state(random_state)
-    data = rng.rand(n_instances, n_columns)
+    X = rng.rand(n_instances, n_columns)
     if return_numpy:
-        return data
+        return X
     else:
-        return pd.DataFrame(data)
+        return pd.DataFrame(X)
 
 
 def _compare_nested_frame(func, x, y, **kwargs):
