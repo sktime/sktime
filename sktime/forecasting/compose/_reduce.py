@@ -351,11 +351,11 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
             if X is not None:
                 last_window_X = np.vstack((last_window_X, X.iloc[i, :]))[
-                    -self.window_length_:
+                    -self.window_length_ :
                 ]
 
             # update last window with previous prediction
-            last_window = np.append(last_window, y_pred[i])[-self.window_length_:]
+            last_window = np.append(last_window, y_pred[i])[-self.window_length_ :]
 
         fh_idx = fh.to_indexer(self.cutoff)
         return y_pred[fh_idx]
