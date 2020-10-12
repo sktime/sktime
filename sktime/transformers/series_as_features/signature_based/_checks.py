@@ -31,52 +31,34 @@ def handle_sktime_signatures(check_fitted=False):
 
         @functools.wraps(func)
         def wrapper(self, data, labels=None, **kwargs):
-            is_df = isinstance(data, pd.DataFrame)
-            is_arr = isinstance(data, (np.ndarray, np.generic))
-            is_tens = isinstance(data, torch.Tensor)
-            assert any([is_df, is_arr, is_tens]), (
-                "Signature methods only "
-                "accept sktime dataframe "
-                "format, numpy arrays or "
-                "pytorch Tensors."
-            )
             # Data checks
             if labels is None:
-                check_X(data, enforce_univariate=False)
+                data = check_X(data, enforce_univariate=False,
+                               coerce_to_pandas=True)
             else:
-                check_X_y(data, labels, enforce_univariate=False)
+                data, labels = check_X_y(
+                    data, labels, enforce_univariate=False,
+                    coerce_to_pandas=True)
+            # Make it a tensor, swap to [N, C, L] as this is sktime format
+            # signature code assumes the channels are the end dimension
+            data_idx = data.index
+            if not isinstance(data, torch.Tensor):
+                tensor_data = torch.Tensor(from_nested_to_3d_numpy(
+                    data)).transpose(1, 2)
+            else:
+                tensor_data = data
             # Fit checks
             if check_fitted:
                 self.check_is_fitted()
-            # Keep the dataframe index as output is required to be of the
-            # same format
-            if is_df:
-                data_idx = data.index
-                # Make tensor data
-                tensor_data = sktime_to_tensor(data)
-            if is_arr:
-                tensor_data = torch.Tensor(data).transpose(1, 2)
             # Allow the function to be called on the checked and converted data
             if labels is None:
                 output = func(self, tensor_data, **kwargs)
             else:
                 output = func(self, tensor_data, labels, **kwargs)
-            # Rebuild into a dataframe if the output is a tensor
-            if all([is_df, isinstance(output, torch.Tensor)]):
+            if isinstance(output, torch.Tensor):
                 output = pd.DataFrame(index=data_idx, data=output)
-            if all([is_arr, isinstance(output, torch.Tensor)]):
-                output = output.numpy()
             return output
 
         return wrapper
 
     return real_decorator
-
-
-def sktime_to_tensor(data):
-    """Signature functionality requires torch tensors. This converts from
-    the sktime format.
-    """
-    if not isinstance(data, torch.Tensor):
-        data = torch.Tensor(from_nested_to_3d_numpy(data)).transpose(1, 2)
-    return data
