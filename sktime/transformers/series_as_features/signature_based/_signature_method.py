@@ -1,12 +1,11 @@
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import \
+    BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.transformers.series_as_features.signature_based._augmentations import (
-    make_augmentation_pipeline,
-)
+from sktime.transformers.series_as_features.signature_based._augmentations  \
+    import make_augmentation_pipeline
 from sktime.transformers.series_as_features.signature_based._rescaling import (
     TrickScaler,
 )
@@ -40,7 +39,6 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     signature_method: sklearn.Pipeline, A sklearn pipeline object that contains
         all the steps to extract the signature features.
     """
-    
     def __init__(
         self,
         scaling="stdsc",
@@ -98,9 +96,3 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     @handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
-
-
-if __name__ == '__main__':
-    from sktime.transformers.series_as_features.tests \
-        .test_all_series_as_features_transformers import test_transformed_data_has_same_index_as_input_data
-    test_transformed_data_has_same_index_as_input_data(GeneralisedSignatureMethod)
