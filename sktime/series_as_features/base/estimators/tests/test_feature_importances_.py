@@ -2,16 +2,22 @@
 import numpy as np
 import pytest
 from sklearn.base import clone
+from sklearn.pipeline import FeatureUnion
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
-from sktime.datasets import load_arrow_head
+from sktime.transformers.series_as_features.compose import (
+    SeriesToPrimitivesRowTransformer,
+)
+from sktime.transformers.series_as_features.segment import IntervalSegmenter
 from sktime.transformers.series_as_features.summarize._extract import (
     RandomIntervalFeatureExtractor,
 )
+from sktime.utils._testing.series_as_features import make_classification_problem
 
-X_train, y_train = load_arrow_head(return_X_y=True)
+X_train, y_train = make_classification_problem()
 
 
 # Check results of a simple case of single estimator, single feature and
@@ -37,6 +43,25 @@ def test_feature_importances_single_feature_interval_and_estimator():
     clf1.fit(X_train, y_train)
 
     # Extract the interval and the estimator, and compute using pipelines
+    intervals = clf1.estimators_[0].steps[0][1].intervals_
+    steps = [
+        ("segment", IntervalSegmenter(intervals)),
+        (
+            "transform",
+            FeatureUnion(
+                [
+                    (
+                        "mean",
+                        SeriesToPrimitivesRowTransformer(
+                            FunctionTransformer(func=np.mean, validate=False),
+                            check_transformer=False,
+                        ),
+                    )
+                ]
+            ),
+        ),
+        ("clf", clone(clf1.estimators_[0].steps[-1][1])),
+    ]
     clf2 = Pipeline(steps)
     clf2.fit(X_train, y_train)
 
@@ -81,12 +106,26 @@ def test_feature_importances_multi_intervals_estimators(n_intervals, n_estimator
     for i in range(n_estimators):
         intervals = clf1.estimators_[i].steps[0][1].intervals_
         steps = [
+            ("segment", IntervalSegmenter(intervals)),
             (
                 "transform",
-                RandomIntervalFeatureExtractor(
-                    n_intervals=n_intervals,
-                    features=features,
-                    random_state=random_state,
+                FeatureUnion(
+                    [
+                        (
+                            "mean",
+                            SeriesToPrimitivesRowTransformer(
+                                FunctionTransformer(func=np.mean, validate=False),
+                                check_transformer=False,
+                            ),
+                        ),
+                        (
+                            "std",
+                            SeriesToPrimitivesRowTransformer(
+                                FunctionTransformer(func=np.std, validate=False),
+                                check_transformer=False,
+                            ),
+                        ),
+                    ]
                 ),
             ),
             ("clf", clone(clf1.estimators_[i].steps[-1][1])),

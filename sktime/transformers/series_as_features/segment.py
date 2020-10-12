@@ -116,7 +116,7 @@ class IntervalSegmenter(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
             new_column_names.append(f"{column_names}_{start}_{end}")
 
         # Return nested pandas DataFrame.
-        Xt = pd.DataFrame(_concat_nested_arrays(intervals, return_arrays=True))
+        Xt = pd.DataFrame(_concat_nested_arrays(intervals))
         Xt.columns = new_column_names
         return Xt
 

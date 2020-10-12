@@ -49,7 +49,8 @@ def test_predict_proba():
 
 
 # Compare results from different but equivalent implementations
-@pytest.mark.parametrize("n_intervals", ["log", 1, 3])
+# @pytest.mark.parametrize("n_intervals", ["log", 1, 3])
+@pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 3])
 def test_equivalent_model_specifications(n_intervals, n_estimators):
     random_state = 1234

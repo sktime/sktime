@@ -29,7 +29,7 @@ def test_FeatureUnion_pipeline():
     # pipeline with segmentation plus multiple feature extraction
 
     steps = [
-        ("segment", RandomIntervalSegmenter(n_intervals=3)),
+        ("segment", RandomIntervalSegmenter(n_intervals=1)),
         (
             "transform",
             FeatureUnion([("mean", mean_transformer), ("std", std_transformer)]),
