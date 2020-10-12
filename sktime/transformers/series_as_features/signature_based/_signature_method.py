@@ -42,16 +42,16 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     """
     def __init__(
         self,
-        scaling='stdsc',
-        augmentation_list=('basepoint', 'addtime'),
-        window_name='dyadic',
+        scaling="stdsc",
+        augmentation_list=("basepoint", "addtime"),
+        window_name="dyadic",
         window_depth=3,
         window_length=None,
         window_step=None,
         rescaling=None,
-        sig_tfm='signature',
+        sig_tfm="signature",
         depth=4,
-        ):
+    ):
         super(GeneralisedSignatureMethod, self).__init__()
         self.scaling = scaling
         self.augmentation_list = augmentation_list
@@ -82,9 +82,9 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
         # The so-called 'signature method' as defined in the reference paper
         self.signature_method = Pipeline(
             [
-                ('scaling', scaling_step),
-                ('augmentations', augmentation_step),
-                ('window_and_transform', transform_step),
+                ("scaling", scaling_step),
+                ("augmentations", augmentation_step),
+                ("window_and_transform", transform_step),
             ]
         )
 

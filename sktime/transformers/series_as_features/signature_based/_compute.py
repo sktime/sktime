@@ -34,7 +34,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         sig_tfm=None,
         sig_depth=None,
         rescaling=None,
-        ):
+    ):
         super().__init__()
         self.window_name = window_name
         self.window_depth = window_depth
@@ -45,8 +45,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         self.rescaling = rescaling
 
         self.window = window_getter(
-            self.window_name, self.window_depth, self.window_length,
-            self.window_step
+            self.window_name, self.window_depth, self.window_length, self.window_step
         )
 
     def fit(self, data, labels=None):
@@ -75,9 +74,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
                 signature = transform(window.start, window.end)
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = rescale_signature(
-                        signature, data.size(2), self.depth
-                    )
+                    signature = rescale_signature(signature, data.size(2), self.depth)
 
                 signature_group.append(signature)
             signatures.append(signature_group)

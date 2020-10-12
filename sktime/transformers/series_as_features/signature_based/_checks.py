@@ -33,9 +33,9 @@ def handle_sktime_signatures(check_fitted=False):
             is_arr = isinstance(data, (np.ndarray, np.generic))
             is_tens = isinstance(data, torch.Tensor)
             assert any([is_df, is_arr, is_tens]), (
-                "Signature methods only " \
-                "accept sktime dataframe " \
-                "format, numpy arrays or " \
+                "Signature methods only "
+                "accept sktime dataframe "
+                "format, numpy arrays or "
                 "pytorch Tensors."
             )
             # Data checks

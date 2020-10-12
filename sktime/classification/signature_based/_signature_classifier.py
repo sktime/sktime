@@ -82,7 +82,7 @@ class SignatureClassifier(BaseClassifier):
         sig_tfm="signature",
         depth=4,
         random_state=None,
-        ):
+    ):
         super(SignatureClassifier, self).__init__()
         self.classifier = classifier
         self.scaling = scaling

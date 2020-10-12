@@ -41,8 +41,10 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
         # Checks
         allowed_values = ["stdsc", "minmax", "maxabs", None]
         if scaling not in allowed_values:
-            raise ValueError("scaling param {} not recognised. Must be one "
-                             "of {}.".format(scaling, allowed_values))
+            raise ValueError(
+                "scaling param {} not recognised. Must be one "
+                "of {}.".format(scaling, allowed_values)
+            )
 
     def _trick(self, X):
         return X.reshape(-1, X.shape[2])
