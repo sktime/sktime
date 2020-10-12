@@ -18,26 +18,9 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
+from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
-
-
-def _lsq_fit(Y):
-    """Find the slope for each series (row) of Y
-    Parameters
-    ----------
-    Y: array of shape = (n_instances, interval_size)
-
-    Returns
-    ----------
-    slope: array of shape = (n_instances,)
-
-    """
-    x = np.arange(Y.shape[1]) + 1
-    slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
-        (x * x).mean() - x.mean() ** 2
-    )
-    return slope
 
 
 def _transform(X, intervals):
@@ -52,7 +35,7 @@ def _transform(X, intervals):
         X_slice = X[:, intervals[j][0] : intervals[j][1]]
         means = np.mean(X_slice, axis=1)
         std_dev = np.std(X_slice, axis=1)
-        slope = _lsq_fit(X_slice)
+        slope = time_series_slope(X_slice, axis=1)
         transformed_x[3 * j] = means
         transformed_x[3 * j + 1] = std_dev
         transformed_x[3 * j + 2] = slope

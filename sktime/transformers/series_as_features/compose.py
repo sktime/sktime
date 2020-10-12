@@ -275,8 +275,8 @@ class _RowTransformer(_BaseTransformer):
 
     def _prepare(self, X):
         self.check_is_fitted()
-        X = check_X(X, coerce_to_pandas=True)
         self._check_transformer()
+        X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
         n_instances = X.shape[0]
         self.transformer_ = [clone(self.transformer) for _ in range(n_instances)]
         return X

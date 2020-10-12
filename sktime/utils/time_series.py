@@ -89,24 +89,6 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     return n_intervals_
 
 
-def time_series_slope(y):
-    """
-    Compute slope of time series (y) using ordinary least squares.
-
-    Parameters
-    ----------
-    y : array_like
-        Time-series.
-
-    Returns
-    -------
-    slope : float
-        Slope of time-series.
-    """
-    x = np.arange(y.shape[0]).reshape(-1, 1) + 1
-    return np.linalg.lstsq(x, y, rcond=None)[0].ravel()
-
-
 def fit_trend(x, order=0):
     """Fit linear regression with polynomial terms of given order
 
@@ -147,3 +129,27 @@ def fit_trend(x, order=0):
         coefs = coefs.T
 
     return coefs
+
+
+def time_series_slope(y, axis=0):
+    """Find the slope for each series (row) of Y
+    Parameters
+    ----------
+    y: np.ndarray
+        Time series
+    axis : int, optional (default=0)
+        Axis along which to compute slope
+
+    Returns
+    ----------
+    slope : np.ndarray
+        Time series slope
+    """
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+    if axis == 1:
+        y = y.T
+    x = np.arange(y.shape[0]).reshape(-1, 1) + 1
+    return (np.mean(y * x, axis=0) - np.mean(x) * np.mean(y, axis=0)) / (
+        (x * x).mean() - x.mean() ** 2
+    )
