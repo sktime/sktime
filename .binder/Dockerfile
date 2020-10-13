@@ -21,19 +21,6 @@ RUN chown -R ${NB_UID} ${HOME}
 USER ${USERR}
 WORKDIR ${HOME}
 
-## Clone repo
-#ARG REPO_DIR=${HOME}
-#ENV REPO_DIR ${REPO_DIR}
-#WORKDIR ${REPO_DIR}
-#RUN git clone https://github.com/alan-turing-institute/sktime.git
-#WORKDIR ${REPO_DIR}/sktime
-
-# Check out master branch
-#RUN git checkout master
-
-# Install latest version
-RUN pip install --no-cache-dir -r build_tools/requirements.txt
+# Install extra requirements and latest version
+RUN pip install --upgrade pip --no-cache-dir -r .binder/requirements.txt
 RUN pip install --no-cache-dir .
-
-# Install exta requirements for notebooks
-RUN pip install --no-cache-dir -r .binder/requirements.txt
