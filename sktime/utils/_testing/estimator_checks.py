@@ -31,7 +31,7 @@ from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._base import is_forecaster
 from sktime.regression.base import BaseRegressor
 from sktime.regression.base import is_regressor
-from sktime.tests._config import NON_STATE_CHANGING_METHODS
+from sktime.tests._config import NON_STATE_CHANGING_METHODS, DEFAULT_METRIC_INSTANCES
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.base import (
     is_non_fittable_series_as_features_transformer,
@@ -281,6 +281,9 @@ def check_constructor(Estimator):
         param_value = params[param.name]
         if isinstance(param_value, np.ndarray):
             np.testing.assert_array_equal(param_value, param.default)
+        if param.name == "metric" and callable(param_value):
+            function_metric = DEFAULT_METRIC_INSTANCES[param.default]
+            assert function_metric == param_value, param.name
         else:
             if bool(isinstance(param_value, numbers.Real) and np.isnan(param_value)):
                 # Allows to set default parameters to np.nan
