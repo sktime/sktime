@@ -29,8 +29,8 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array
 from sktime.classification.base import BaseClassifier
+
 from sktime.distances.elastic_cython import ddtw_distance
-from sktime.distances.elastic_cython import dtw_distance
 from sktime.distances.elastic_cython import erp_distance
 from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
@@ -38,6 +38,10 @@ from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
+
+from tslearn.metrics import cdist_dtw as dtw_distance
+from tslearn.metrics import cdist_soft_dtw as soft_dtw_distance
+
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
@@ -143,6 +147,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             metric = twe_distance
         elif metric == "mpdist":
             metric = mpdist
+        elif metric == "soft_dtw":
+            metric = soft_dtw_distance
         # When mpdist is used, the subsequence length (parameter m) must be set
         # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
         # metric='mpdist', metric_params={'m':30})
@@ -152,10 +158,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "Unrecognised distance measure: " + metric + ". Allowed "
                     "values are "
                     "names from "
-                    "[dtw,ddtw,"
-                    "wdtw,"
-                    "wddtw,"
-                    "lcss,erp,"
+                    "[dtw, ddtw, softdtw, "
+                    "wdtw, "
+                    "wddtw, "
+                    "lcss,erp, "
                     "msm] or "
                     "please "
                     "pass a "

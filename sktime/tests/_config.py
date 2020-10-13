@@ -41,13 +41,14 @@ from sktime.transformers.series_as_features.summarize import TSFreshFeatureExtra
 from sktime.transformers.series_as_features.summarize import (
     TSFreshRelevantFeatureExtractor,
 )
+from tslearn.metrics import cdist_dtw as dtw_distance
+
 from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
 from sktime.transformers.single_series.detrend import Detrender
 
 # TODO fix estimators to pass all tests
 EXCLUDED_ESTIMATORS = [
     "ElasticEnsemble",
-    "KNeighborsTimeSeriesClassifier",
     "ProximityForest",
     "ProximityStump",
     "ProximityTree",
@@ -136,6 +137,11 @@ ESTIMATOR_TEST_PARAMS = {
     TimeSeriesForest: {"n_estimators": 5},
     TimeSeriesForestClassifier: {"n_estimators": 5},
     TimeSeriesForestRegressor: {"n_estimators": 5},
+}
+
+
+DEFAULT_METRIC_INSTANCES = {
+    "dtw": dtw_distance,
 }
 
 # these methods should not change the state of the estimator, that is, they should
