@@ -3,5 +3,4 @@ numba
 pmdarima
 scikit-posthocs
 seaborn
-sktime
 tsfresh
