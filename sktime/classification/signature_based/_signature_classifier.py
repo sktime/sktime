@@ -8,6 +8,7 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
+# -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline

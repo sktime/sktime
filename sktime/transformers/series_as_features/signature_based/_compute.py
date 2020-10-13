@@ -3,6 +3,7 @@ compute.py
 =======================
 Class for signature computation over windows.
 """
+# -*- coding: utf-8 -*-
 import torch
 import signatory
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._compute import (
