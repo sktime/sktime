@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from sktime.utils.check_imports import _check_soft_dependencies
+_check_soft_dependencies('torch', 'signatory')
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._compute import (
