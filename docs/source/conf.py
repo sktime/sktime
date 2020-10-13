@@ -32,15 +32,14 @@ COPYRIGHT = "2019 - 2020 (BSD-3-Clause License)"
 AUTHOR = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
-VERSION = sktime.__version__
-TAG = f"v{VERSION}"
+CURRENT_VERSION = f"v{sktime.__version__}"
 
 # If on readthedocs, and we're building the latest version, update tag to generate
 # correct links in notebooks
 if ON_READTHEDOCS:
     READTHEDOCS_VERSION = os.environ.get("READTHEDOCS_VERSION")
     if READTHEDOCS_VERSION == "latest":
-        TAG = "master"
+        CURRENT_VERSION = "master"
 
 # -- General configuration ---------------------------------------------------
 
@@ -120,9 +119,8 @@ def linkcode_resolve(domain, info):
         filename = "sktime/%s#L%d-L%d" % find_source()
     except Exception:
         filename = info["module"].replace(".", "/") + ".py"
-    tag = "master" if "dev" in VERSION else ("v" + VERSION)
     return "https://github.com/alan-turing-institute/sktime/blob/%s/%s" % (
-        tag,
+        CURRENT_VERSION,
         filename,
     )
 
@@ -230,10 +228,7 @@ nbsphinx_timeout = 600  # time out in secs, set to -1 to disable timeout
 CURRENT_FILE = "{{ env.doc2path( env.docname, base=None) }}"
 
 # make sure Binder points to latest stable release, not master
-BINDER_URL = (
-    f"https://mybinder.org/v2/gh/alan-turing-institute/sktime/"
-    f"{TAG}?filepath={CURRENT_FILE}"
-)
+BINDER_URL = f"https://mybinder.org/v2/gh/alan-turing-institute/sktime/{CURRENT_VERSION}?filepath={CURRENT_FILE}"  # noqa
 nbsphinx_prolog = f"""
 .. |binder| image:: https://mybinder.org/badge_logo.svg
 .. _Binder: {BINDER_URL}
@@ -242,9 +237,7 @@ nbsphinx_prolog = f"""
 """
 
 # add link to original notebook at the bottom
-NOTEBOOK_URL = (
-    f"https://github.com/alan-turing-institute/sktime/tree/{TAG}/" f"{CURRENT_FILE}"
-)
+NOTEBOOK_URL = f"https://github.com/alan-turing-institute/sktime/tree/{CURRENT_VERSION}/{CURRENT_FILE}"  # noqa
 nbsphinx_epilog = f"""
 ----
 
