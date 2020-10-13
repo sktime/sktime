@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 import numpy as np
 
 __author__ = "Jason Lines"
 
 
 def dtw_distance(first, second, **kwargs):
+
     def dtw_single_channel(first, second, **kwargs):
         cutoff = np.inf
         try:
@@ -25,14 +25,15 @@ def dtw_distance(first, second, **kwargs):
             return (x1 - x2) ** 2
 
         pairwise_distances = np.asarray(
-            [[dist(x1, x2) for x2 in second] for x1 in first]
-        )
+            [[dist(x1, x2) for x2 in second] for x1 in first])
 
         # initialise edges of the warping matrix
         warp_matrix[0][0] = pairwise_distances[0][0]
         for i in range(1, window_size):
-            warp_matrix[0][i] = pairwise_distances[0][i] + warp_matrix[0][i - 1]
-            warp_matrix[i][0] = pairwise_distances[i][0] + warp_matrix[i - 1][0]
+            warp_matrix[0][i] = pairwise_distances[0][i] + warp_matrix[0][
+                i - 1]
+            warp_matrix[i][0] = pairwise_distances[i][0] + warp_matrix[i - 1][
+                0]
 
         # now visit all allowed cells, calculate the value as the distance
         # in this cell + min(top, left, or top-left)
@@ -52,9 +53,9 @@ def dtw_distance(first, second, **kwargs):
 
                 # add the pairwise distance for [row][column] to the minimum
                 # of the three possible potential cells
-                warp_matrix[row][column] = pairwise_distances[row][column] + min(
-                    [above, left, diag]
-                )
+                warp_matrix[row][column] = pairwise_distances[row][
+                                               column] + min(
+                    [above, left, diag])
 
                 # check for evidence that cutoff has been beaten on this row
                 # (if using)
@@ -86,9 +87,8 @@ def derivative_dtw_distance(first, second, **kwargs):
 
     dist = 0
     for dim in range(0, len(first)):
-        dist += dtw_distance(
-            [first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs
-        )
+        dist += dtw_distance([first[dim].diff()[1:]], [second[dim].diff()[1:]],
+                             **kwargs)
     return dist
 
 
@@ -102,14 +102,14 @@ def weighted_dtw_distance(first, second, **kwargs):
         m = len(first)
         n = len(second)
 
-        weight_vector = [1 / (1 + np.exp(-g * (i - m / 2))) for i in range(0, m)]
+        weight_vector = [1 / (1 + np.exp(-g * (i - m / 2))) for i in
+                         range(0, m)]
 
         def dist(x1, x2):
             return (x1 - x2) ** 2
 
         pairwise_distances = np.asarray(
-            [[dist(x1, x2) for x2 in second] for x1 in first]
-        )
+            [[dist(x1, x2) for x2 in second] for x1 in first])
 
         # initialise edges of the warping matrix
         distances = np.full([n, m], np.inf)
@@ -117,26 +117,22 @@ def weighted_dtw_distance(first, second, **kwargs):
 
         # top row
         for i in range(1, n):
-            distances[0][i] = (
-                distances[0][i - 1] + weight_vector[i] * pairwise_distances[0][i]
-            )
+            distances[0][i] = distances[0][i - 1] + weight_vector[i] * \
+                              pairwise_distances[0][i]
 
         # first column
         for i in range(1, m):
-            distances[i][0] = (
-                distances[i - 1][0] + weight_vector[i] * pairwise_distances[i][0]
-            )
+            distances[i][0] = distances[i - 1][0] + weight_vector[i] * \
+                              pairwise_distances[i][0]
 
         # warp rest
         for i in range(1, m):
             for j in range(1, n):
-                min_dist = np.min(
-                    [distances[i][j - 1], distances[i - 1][j], distances[i - 1][j - 1]]
-                )
+                min_dist = np.min([distances[i][j - 1], distances[i - 1][j],
+                                   distances[i - 1][j - 1]])
                 # print(min_dist)
-                distances[i][j] = (
-                    min_dist + weight_vector[np.abs(i - j)] * pairwise_distances[i][j]
-                )
+                distances[i][j] = (min_dist + weight_vector[np.abs(i - j)] *
+                                   pairwise_distances[i][j])
         return distances[m - 1][n - 1]
 
     if isinstance(first, np.ndarray) and isinstance(first[0], float) is True:
@@ -154,9 +150,8 @@ def weighted_derivative_dtw_distance(first, second, **kwargs):
 
     dist = 0
     for dim in range(0, len(first)):
-        dist += weighted_dtw_distance(
-            [first[dim].diff()[1:]], [second[dim].diff()[1:]], **kwargs
-        )
+        dist += weighted_dtw_distance([first[dim].diff()[1:]],
+                                      [second[dim].diff()[1:]], **kwargs)
     return dist
 
 
@@ -184,9 +179,8 @@ def lcss_distance(first, second, **kwargs):
                     j = -1
                 elif j >= n:
                     j = i + delta
-                elif (
-                    second[j] + epsilon >= first[i] and second[j] - epsilon <= first[i]
-                ):
+                elif (second[j] + epsilon >= first[i]
+                      and second[j] - epsilon <= first[i]):
                     lcss[i + 1][j + 1] = lcss[i][j] + 1
                 elif lcss[i][j + 1] > lcss[i + 1][j]:
                     lcss[i + 1][j + 1] = lcss[i][j + 1]
@@ -223,8 +217,7 @@ def msm_distance(first, second, **kwargs):
 
         def calc_cost(new_point, x, y):
             if ((x <= new_point) and (new_point <= y)) or (
-                (y <= new_point) and (new_point <= x)
-            ):
+                    (y <= new_point) and (new_point <= x)):
                 return c
             else:
                 return c + min(np.abs(new_point - x), np.abs(new_point - y))
@@ -232,17 +225,21 @@ def msm_distance(first, second, **kwargs):
         # Initialization
         cost[0][0] = np.abs(first[0] - second[0])
         for i in range(1, m):
-            cost[i][0] = cost[i - 1][0] + calc_cost(first[i], first[i - 1], second[0])
+            cost[i][0] = cost[i - 1][0] + calc_cost(first[i], first[i - 1],
+                                                    second[0])
 
         for i in range(1, n):
-            cost[0][i] = cost[0][i - 1] + calc_cost(second[i], first[0], second[i - 1])
+            cost[0][i] = cost[0][i - 1] + calc_cost(second[i], first[0],
+                                                    second[i - 1])
 
         # Main Loop
         for i in range(1, m):
             for j in range(1, n):
                 d1 = cost[i - 1][j - 1] + np.abs(first[i] - second[j])
-                d2 = cost[i - 1][j] + calc_cost(first[i], first[i - 1], second[j])
-                d3 = cost[i][j - 1] + calc_cost(second[j], first[i], second[j - 1])
+                d2 = cost[i - 1][j] + calc_cost(first[i], first[i - 1],
+                                                second[j])
+                d3 = cost[i][j - 1] + calc_cost(second[j], first[i],
+                                                second[j - 1])
                 cost[i][j] = min(d1, d2, d3)
 
         return cost[m - 1][n - 1]
@@ -312,23 +309,23 @@ def erp_distance(first, second, **kwargs):
 
             r = i + (band + 1)
             if r > m - 1:
-                r = m - 1
+                r = (m - 1)
 
             for j in range(ll, r + 1):
                 if np.abs(i - j) <= band:
                     val1 = first[i]
                     val2 = g
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d1 = np.sqrt(diff * diff)
 
                     val1 = g
                     val2 = second[j]
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d2 = np.sqrt(diff * diff)
 
                     val1 = first[i]
                     val2 = second[j]
-                    diff = val1 - val2
+                    diff = (val1 - val2)
                     d12 = np.sqrt(diff * diff)
 
                     dist1 = d1 * d1
@@ -336,22 +333,20 @@ def erp_distance(first, second, **kwargs):
                     dist12 = d12 * d12
 
                     if i + j != 0:
-                        if i == 0 or (
-                            j != 0
-                            and (
-                                ((prev[j - 1] + dist12) > (curr[j - 1] + dist2))
-                                and ((curr[j - 1] + dist2) < (prev[j] + dist1))
-                            )
-                        ):
+                        if i == 0 or (j != 0 and (((prev[j - 1] + dist12) > (
+                                curr[j - 1] + dist2)) and ((curr[
+                                                                j - 1] +
+                                                            dist2) < (
+                                                                   prev[
+                                                                       j] +
+                                                                   dist1)))):
                             # del
                             cost = curr[j - 1] + dist2
-                        elif (j == 0) or (
-                            (i != 0)
-                            and (
-                                ((prev[j - 1] + dist12) > (prev[j] + dist1))
-                                and ((prev[j] + dist1) < (curr[j - 1] + dist2))
-                            )
-                        ):
+                        elif ((j == 0) or
+                              ((i != 0) and
+                               (((prev[j - 1] + dist12) > (prev[j] + dist1))
+                                and ((prev[j] + dist1) < (curr[j - 1]
+                                                          + dist2))))):
                             # ins
                             cost = prev[j] + dist1
                         else:
