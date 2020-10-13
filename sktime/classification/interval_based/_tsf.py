@@ -19,8 +19,8 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.time_series import time_series_slope
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 def _transform(X, intervals):

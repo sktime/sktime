@@ -10,12 +10,12 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
-from sktime.transformers.series_as_features.compose import make_row_transformer
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.panel.compose import make_row_transformer
+from sktime.transformers.panel.segment import RandomIntervalSegmenter
 
-from sktime.transformers.series_as_features.reduce import Tabularizer
+from sktime.transformers.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
-from sktime.series_as_features.compose import FeatureUnion
+from sktime.panel.compose import FeatureUnion
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.utils.time_series import time_series_slope
 import sktime.classification.interval_based._tsf as ib

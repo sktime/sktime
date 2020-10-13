@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDED_ESTIMATORS", "EXCLUDED_TESTS"]
+__all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -35,33 +35,33 @@ from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
-from sktime.series_as_features.compose import FeatureUnion
+from sktime.panel.compose import FeatureUnion
 from sktime.transformers.base import _BaseTransformer
-from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
-from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
+from sktime.transformers.base import _PanelToPanelTransformer
+from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
 from sktime.transformers.base import _SeriesToSeriesTransformer
-from sktime.transformers.series_as_features.compose import ColumnTransformer
-from sktime.transformers.series_as_features.compose import (
+from sktime.transformers.panel.compose import ColumnTransformer
+from sktime.transformers.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
-from sktime.transformers.series_as_features.compose import SeriesToSeriesRowTransformer
-from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.transformers.series_as_features.interpolate import TSInterpolator
-from sktime.transformers.series_as_features.reduce import Tabularizer
-from sktime.transformers.series_as_features.shapelets import ContractedShapeletTransform
-from sktime.transformers.series_as_features.shapelets import ShapeletTransform
-from sktime.transformers.series_as_features.summarize import FittedParamExtractor
-from sktime.transformers.series_as_features.summarize import TSFreshFeatureExtractor
-from sktime.transformers.series_as_features.summarize import (
+from sktime.transformers.panel.compose import SeriesToSeriesRowTransformer
+from sktime.transformers.panel.dictionary_based import SFA
+from sktime.transformers.panel.interpolate import TSInterpolator
+from sktime.transformers.panel.reduce import Tabularizer
+from sktime.transformers.panel.shapelets import ContractedShapeletTransform
+from sktime.transformers.panel.shapelets import ShapeletTransform
+from sktime.transformers.panel.summarize import FittedParamExtractor
+from sktime.transformers.panel.summarize import TSFreshFeatureExtractor
+from sktime.transformers.panel.summarize import (
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformers.single_series.adapt import SingleSeriesTransformAdaptor
-from sktime.transformers.single_series.detrend import Detrender
+from sktime.transformers.series.adapt import TabularToSeriesAdaptor
+from sktime.transformers.series.detrend import Detrender
 
 # The following estimators currently do not pass all unit tests or fail some of them
 # and are excluded until fixed.
-EXCLUDED_ESTIMATORS = [
+EXCLUDE_ESTIMATORS = [
     "ElasticEnsemble",
     "KNeighborsTimeSeriesClassifier",
     "ProximityForest",
@@ -126,7 +126,7 @@ ESTIMATOR_TEST_PARAMS = {
         "param_grid": {"window_length": [2, 5]},
         "scoring": sMAPE(),
     },
-    SingleSeriesTransformAdaptor: {"transformer": StandardScaler()},
+    TabularToSeriesAdaptor: {"transformer": StandardScaler()},
     ColumnEnsembleClassifier: {
         "estimators": [
             (name, estimator, 0) for (name, estimator) in TIME_SERIES_CLASSIFIERS
@@ -199,8 +199,8 @@ VALID_ESTIMATOR_TAGS = (
 VALID_TRANSFORMER_TYPES = (
     _SeriesToPrimitivesTransformer,
     _SeriesToSeriesTransformer,
-    _SeriesAsFeaturesToTabularTransformer,
-    _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+    _PanelToTabularTransformer,
+    _PanelToPanelTransformer,
 )
 VALID_ESTIMATOR_BASE_TYPES = (
     BaseClassifier,

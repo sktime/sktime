@@ -8,10 +8,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.series_as_features.tests._config import N_CLASSES
-from sktime.series_as_features.tests._config import N_COLUMNS
-from sktime.series_as_features.tests._config import N_INSTANCES
-from sktime.series_as_features.tests._config import N_TIMEPOINTS
+from sktime.panel.tests._config import N_CLASSES
+from sktime.panel.tests._config import N_COLUMNS
+from sktime.panel.tests._config import N_INSTANCES
+from sktime.panel.tests._config import N_TIMEPOINTS
 from sktime.utils._testing import make_classification_problem
 from sktime.utils._testing import make_regression_problem
 

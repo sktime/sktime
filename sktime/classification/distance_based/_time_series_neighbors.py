@@ -39,8 +39,8 @@ from sktime.distances.elastic_cython import wdtw_distance
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 """
 Please note that many aspects of this class are taken from scikit-learn's

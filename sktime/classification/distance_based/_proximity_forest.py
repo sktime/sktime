@@ -27,13 +27,13 @@ from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wdtw_distance
-from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.summarize import DerivativeSlopeTransformer
+from sktime.transformers.base import _PanelToPanelTransformer
+from sktime.transformers.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
 from sktime.utils.data_container import from_nested_to_2d_array
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 # todo unit tests / sort out current unit tests
@@ -44,7 +44,7 @@ from sktime.utils.validation.series_as_features import check_X_y
 # todo duck-type functions
 
 
-class _CachedTransformer(_SeriesAsFeaturesToSeriesAsFeaturesTransformer):
+class _CachedTransformer(_PanelToPanelTransformer):
     """Transformer container that transforms data and adds the transformed
     version to a cache.
     If the transformation is called again on already seen data the data is

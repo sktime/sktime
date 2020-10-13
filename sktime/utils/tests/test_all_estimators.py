@@ -6,7 +6,7 @@ __all__ = []
 
 import pytest
 
-from sktime.tests._config import EXCLUDED_ESTIMATORS
+from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPE_LOOKUP
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
 from sktime.utils import all_estimators
@@ -29,7 +29,7 @@ def test_all_estimators_return_names(return_names):
     assert all([isinstance(estimator, type) for estimator in estimators])
 
 
-@pytest.mark.parametrize("exclude_estimators", ["NaiveForecaster", EXCLUDED_ESTIMATORS])
+@pytest.mark.parametrize("exclude_estimators", ["NaiveForecaster", EXCLUDE_ESTIMATORS])
 def test_all_estimators_exclude_estimators(exclude_estimators):
     estimators = all_estimators(
         return_names=True, exclude_estimators=exclude_estimators

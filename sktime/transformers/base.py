@@ -6,8 +6,8 @@ __all__ = [
     "_BaseTransformer",
     "_SeriesToPrimitivesTransformer",
     "_SeriesToSeriesTransformer",
-    "_SeriesAsFeaturesToTabularTransformer",
-    "_SeriesAsFeaturesToSeriesAsFeaturesTransformer",
+    "_PanelToTabularTransformer",
+    "_PanelToPanelTransformer",
 ]
 
 from typing import Union
@@ -29,8 +29,8 @@ UnivariateSeries = Union[pd.Series, np.ndarray]
 MultivariateSeries = Union[pd.DataFrame, np.ndarray]
 Series = Union[UnivariateSeries, MultivariateSeries]
 
-# series-as-features/panel/longitudinal data
-SeriesAsFeatures = Union[pd.DataFrame, np.ndarray]
+# panel/longitudinal/series-as-features data
+Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 
 class _BaseTransformer(BaseEstimator):
@@ -111,15 +111,15 @@ class _SeriesToSeriesTransformer(_BaseTransformer):
         raise NotImplementedError("abstract method")
 
 
-class _SeriesAsFeaturesToTabularTransformer(_BaseTransformer):
-    """Transformer base class for series-as-features to tabular transforms"""
+class _PanelToTabularTransformer(_BaseTransformer):
+    """Transformer base class for panel to tabular transforms"""
 
-    def transform(self, X: SeriesAsFeatures, y=None) -> Tabular:
+    def transform(self, X: Panel, y=None) -> Tabular:
         raise NotImplementedError("abstract method")
 
 
-class _SeriesAsFeaturesToSeriesAsFeaturesTransformer(_BaseTransformer):
-    """Transformer base class for series-as-features to series-as-features transforms"""
+class _PanelToPanelTransformer(_BaseTransformer):
+    """Transformer base class for panel to panel transforms"""
 
-    def transform(self, X: SeriesAsFeatures, y=None) -> SeriesAsFeatures:
+    def transform(self, X: Panel, y=None) -> Panel:
         raise NotImplementedError("abstract method")

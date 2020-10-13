@@ -20,15 +20,15 @@ from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.tests._config import VALID_ESTIMATOR_TYPES
-from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
-from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
+from sktime.transformers.base import _PanelToPanelTransformer
+from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
 from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils._testing.series_as_features import _make_series_as_features_X
-from sktime.utils._testing.series_as_features import make_classification_problem
-from sktime.utils._testing.series_as_features import make_regression_problem
+from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils._testing.panel import make_regression_problem
 from sktime.utils.data_container import is_nested_dataframe
 
 
@@ -101,8 +101,8 @@ def _make_fit_args(estimator, **kwargs):
     elif isinstance(
         estimator,
         (
-            _SeriesAsFeaturesToTabularTransformer,
-            _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+            _PanelToTabularTransformer,
+            _PanelToPanelTransformer,
         ),
     ):
         return make_classification_problem(**kwargs)
@@ -115,7 +115,7 @@ def _make_predict_args(estimator, **kwargs):
         fh = 1
         return (fh,)
     elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
-        X = _make_series_as_features_X(**kwargs)
+        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -130,11 +130,11 @@ def _make_transform_args(estimator, **kwargs):
     elif isinstance(
         estimator,
         (
-            _SeriesAsFeaturesToTabularTransformer,
-            _SeriesAsFeaturesToSeriesAsFeaturesTransformer,
+            _PanelToTabularTransformer,
+            _PanelToPanelTransformer,
         ),
     ):
-        X = _make_series_as_features_X(**kwargs)
+        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -147,11 +147,11 @@ def _make_inverse_transform_args(estimator, **kwargs):
     elif isinstance(estimator, _SeriesToSeriesTransformer):
         X = _make_series(**kwargs)
         return (X,)
-    elif isinstance(estimator, _SeriesAsFeaturesToTabularTransformer):
+    elif isinstance(estimator, _PanelToTabularTransformer):
         X = _make_tabular_X(**kwargs)
         return (X,)
-    elif isinstance(estimator, _SeriesAsFeaturesToSeriesAsFeaturesTransformer):
-        X = _make_series_as_features_X(**kwargs)
+    elif isinstance(estimator, _PanelToPanelTransformer):
+        X = _make_panel_X(**kwargs)
         return (X,)
     else:
         raise ValueError(_get_err_msg(estimator))
@@ -168,7 +168,7 @@ def _make_primitives(n_columns=1, random_state=None):
 
 def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
     """Generate tabular X. Useful for checking inverse-transform
-    of series-as-features-to-tabular transformer"""
+    of panel-to-tabular transformer"""
     rng = check_random_state(random_state)
     X = rng.rand(n_instances, n_columns)
     if return_numpy:

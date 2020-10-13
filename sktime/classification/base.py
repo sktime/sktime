@@ -5,7 +5,7 @@ __author__ = ["Markus Löning"]
 from sktime.base import BaseEstimator
 
 from sktime.utils import comparison
-from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.panel import check_X
 
 
 class BaseClassifier(BaseEstimator):

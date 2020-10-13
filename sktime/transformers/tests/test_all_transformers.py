@@ -10,8 +10,8 @@ import pytest
 
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
 from sktime.transformers.base import _BaseTransformer
-from sktime.transformers.base import _SeriesAsFeaturesToSeriesAsFeaturesTransformer
-from sktime.transformers.base import _SeriesAsFeaturesToTabularTransformer
+from sktime.transformers.base import _PanelToPanelTransformer
+from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
 from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils import all_estimators
@@ -97,14 +97,14 @@ def check_series_to_series_transform_multivariate(Estimator):
         assert out.shape == (n_timepoints, n_columns)
 
 
-def check_series_as_features_to_tabular_transform_univariate(Estimator):
+def check_panel_to_tabular_transform_univariate(Estimator):
     n_instances = 5
     out = _construct_fit_transform(Estimator, n_instances=n_instances)
     assert isinstance(out, (pd.DataFrame, np.ndarray))
     assert out.shape[0] == n_instances
 
 
-def check_series_as_features_to_tabular_transform_multivariate(Estimator):
+def check_panel_to_tabular_transform_multivariate(Estimator):
     n_instances = 5
     if _has_tag(Estimator, "univariate-only"):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
@@ -114,7 +114,7 @@ def check_series_as_features_to_tabular_transform_multivariate(Estimator):
         assert out.shape[0] == n_instances
 
 
-def check_series_as_features_to_series_as_features_transform_univariate(Estimator):
+def check_panel_to_panel_transform_univariate(Estimator):
     n_instances = 5
     out = _construct_fit_transform(Estimator, n_instances=n_instances)
     assert isinstance(out, (pd.DataFrame, np.ndarray))
@@ -125,7 +125,7 @@ def check_series_as_features_to_series_as_features_transform_univariate(Estimato
         assert is_nested_dataframe(out)
 
 
-def check_series_as_features_to_series_as_features_transform_multivariate(Estimator):
+def check_panel_to_panel_transform_multivariate(Estimator):
     n_instances = 5
     if _has_tag(Estimator, "univariate-only"):
         _check_raises_error(Estimator, n_instances=n_instances, n_columns=3)
@@ -173,13 +173,13 @@ series_to_series_checks = [
     check_series_to_series_transform_univariate,
     check_series_to_series_transform_multivariate,
 ]
-series_as_features_to_tabular_checks = [
-    check_series_as_features_to_tabular_transform_univariate,
-    check_series_as_features_to_tabular_transform_multivariate,
+panel_to_tabular_checks = [
+    check_panel_to_tabular_transform_univariate,
+    check_panel_to_tabular_transform_multivariate,
 ]
-series_as_features_to_series_as_features_checks = [
-    check_series_as_features_to_series_as_features_transform_univariate,
-    check_series_as_features_to_series_as_features_transform_multivariate,
+panel_to_panel_checks = [
+    check_panel_to_panel_transform_univariate,
+    check_panel_to_panel_transform_multivariate,
 ]
 
 
@@ -191,9 +191,9 @@ def _yield_transformer_checks(Estimator):
         yield from series_to_primitive_checks
     if issubclass(Estimator, _SeriesToSeriesTransformer):
         yield from series_to_series_checks
-    if issubclass(Estimator, _SeriesAsFeaturesToTabularTransformer):
-        yield from series_as_features_to_tabular_checks
-    if issubclass(Estimator, _SeriesAsFeaturesToSeriesAsFeaturesTransformer):
-        yield from series_as_features_to_series_as_features_checks
+    if issubclass(Estimator, _PanelToTabularTransformer):
+        yield from panel_to_tabular_checks
+    if issubclass(Estimator, _PanelToPanelTransformer):
+        yield from panel_to_panel_checks
     if _has_tag(Estimator, "transform-returns-same-time-index"):
         yield check_transform_returns_same_time_index

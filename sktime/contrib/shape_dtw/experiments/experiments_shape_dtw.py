@@ -62,11 +62,11 @@ import sktime.classification.distance_based._proximity_forest as pf
 import sktime.classification.shapelet_based._stc as st
 from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformers.series_as_features.compose import make_row_transformer
-from sktime.transformers.series_as_features.segment import RandomIntervalSegmenter
+from sktime.transformers.panel.compose import make_row_transformer
+from sktime.transformers.panel.segment import RandomIntervalSegmenter
 from sklearn.preprocessing import StandardScaler
 
-from sktime.transformers.series_as_features.reduce import Tabularizer
+from sktime.transformers.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
 
