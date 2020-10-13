@@ -3,7 +3,7 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "_BaseTransformer",
+    "BaseTransformer",
     "_SeriesToPrimitivesTransformer",
     "_SeriesToSeriesTransformer",
     "_PanelToTabularTransformer",
@@ -33,11 +33,11 @@ Series = Union[UnivariateSeries, MultivariateSeries]
 Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 
-class _BaseTransformer(BaseEstimator):
+class BaseTransformer(BaseEstimator):
     """Transformer base class"""
 
     def __init__(self):
-        super(_BaseTransformer, self).__init__()
+        super(BaseTransformer, self).__init__()
 
     def fit(self, Z, X=None):
         """
@@ -97,28 +97,28 @@ class _BaseTransformer(BaseEstimator):
     #     raise NotImplementedError("abstract method")
 
 
-class _SeriesToPrimitivesTransformer(_BaseTransformer):
+class _SeriesToPrimitivesTransformer(BaseTransformer):
     """Transformer base class for series to primitive(s) transforms"""
 
     def transform(self, Z: Series, X=None) -> Primitives:
         raise NotImplementedError("abstract method")
 
 
-class _SeriesToSeriesTransformer(_BaseTransformer):
+class _SeriesToSeriesTransformer(BaseTransformer):
     """Transformer base class for series to series transforms"""
 
     def transform(self, Z: Series, X=None) -> Series:
         raise NotImplementedError("abstract method")
 
 
-class _PanelToTabularTransformer(_BaseTransformer):
+class _PanelToTabularTransformer(BaseTransformer):
     """Transformer base class for panel to tabular transforms"""
 
     def transform(self, X: Panel, y=None) -> Tabular:
         raise NotImplementedError("abstract method")
 
 
-class _PanelToPanelTransformer(_BaseTransformer):
+class _PanelToPanelTransformer(BaseTransformer):
     """Transformer base class for panel to panel transforms"""
 
     def transform(self, X: Panel, y=None) -> Panel:

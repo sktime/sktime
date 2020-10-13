@@ -36,7 +36,7 @@ from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
 from sktime.panel.compose import FeatureUnion
-from sktime.transformers.base import _BaseTransformer
+from sktime.transformers.base import BaseTransformer
 from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
@@ -206,7 +206,7 @@ VALID_ESTIMATOR_BASE_TYPES = (
     BaseClassifier,
     BaseRegressor,
     BaseForecaster,
-    _BaseTransformer,
+    BaseTransformer,
 )
 VALID_ESTIMATOR_TYPES = (
     BaseEstimator,
@@ -218,5 +218,5 @@ VALID_ESTIMATOR_BASE_TYPE_LOOKUP = {
     "classifier": BaseClassifier,
     "regressor": BaseRegressor,
     "forecaster": BaseForecaster,
-    "transformer": _BaseTransformer,
+    "transformer": BaseTransformer,
 }

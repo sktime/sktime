@@ -9,7 +9,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests._config import VALID_TRANSFORMER_TYPES
-from sktime.transformers.base import _BaseTransformer
+from sktime.transformers.base import BaseTransformer
 from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
@@ -160,7 +160,7 @@ def check_transform_inverse_transform_equivalent(Estimator):
 
 
 def check_transformer_type(Estimator):
-    assert issubclass(Estimator, _BaseTransformer)
+    assert issubclass(Estimator, BaseTransformer)
     assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 

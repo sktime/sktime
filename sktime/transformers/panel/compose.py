@@ -10,7 +10,7 @@ from scipy import sparse
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer as _ColumnTransformer
 
-from sktime.transformers.base import _BaseTransformer
+from sktime.transformers.base import BaseTransformer
 from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
@@ -242,7 +242,7 @@ def _make_column_names(columns, prefix):
     return [f"{prefix}{column}" for column in columns]
 
 
-class _RowTransformer(_BaseTransformer):
+class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer"""
 
     _required_parameters = ["transformer"]

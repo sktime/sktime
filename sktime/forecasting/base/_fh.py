@@ -91,7 +91,7 @@ def _check_values(values):
 
     # otherwise, raise type error
     else:
-        allowed_types = (
+        valid_types = (
             "int",
             "np.array",
             "list",
@@ -99,7 +99,7 @@ def _check_values(values):
         )
         raise TypeError(
             f"`values` type not supported. `values` must be one of"
-            f" {allowed_types}, but found: {type(values)}"
+            f" {valid_types}, but found: {type(values)}"
         )
 
     # check values does not contain duplicates

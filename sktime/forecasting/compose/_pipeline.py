@@ -43,22 +43,20 @@ class TransformedTargetForecaster(
         transformers = estimators[:-1]
         forecaster = estimators[-1]
 
-        allowed_transformer_type = _SeriesToSeriesTransformer
-        for t in transformers:
-            # Transformers must be endog/exog transformers
-            if not isinstance(t, allowed_transformer_type):
+        valid_transformer_type = _SeriesToSeriesTransformer
+        for transformer in transformers:
+            if not isinstance(transformer, valid_transformer_type):
                 raise TypeError(
                     f"All intermediate steps should be "
-                    f"instances of {allowed_transformer_type}, "
-                    f"but "
-                    f"transformer: {t} is not."
+                    f"instances of {valid_transformer_type}, "
+                    f"but transformer: {transformer} is not."
                 )
 
-        allowed_forecaster_type = BaseForecaster
-        if not isinstance(forecaster, allowed_forecaster_type):
+        valid_forecaster_type = BaseForecaster
+        if not isinstance(forecaster, valid_forecaster_type):
             raise TypeError(
                 f"Last step of {self.__class__.__name__} must be of type: "
-                f"{allowed_forecaster_type}, "
+                f"{valid_forecaster_type}, "
                 f"but forecaster: {forecaster} is not."
             )
 
