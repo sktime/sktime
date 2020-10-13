@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 import math
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
-from sktime.utils.data_container import tabularize
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.series_as_features import check_X
 
 __author__ = "Vincent Nicholson"
@@ -20,6 +20,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
     num_levels : int, number of levels to perform the Haar wavelet
                  transformation.
     """
+
     def __init__(self, num_levels=3):
         self.num_levels = num_levels
         super(DWTTransformer, self).__init__()
@@ -39,7 +40,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
 
         # Check the data
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
+        X = check_X(X, enforce_univariate=False, coerce_to_pandas=True)
 
         self._check_parameters()
 
@@ -49,7 +50,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         df = pd.DataFrame()
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
-            arr = tabularize(pd.DataFrame(X[x]), return_array=True)
+            arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
 
             transformedData = self._extract_wavelet_coefficients(arr)
 
@@ -85,7 +86,7 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
                 coeffs = []
                 current = x
                 approx = None
-                for lev in range(num_levels):
+                for _ in range(num_levels):
                     approx = self._get_approx_coefficients(current)
                     wav_coeffs = self._get_wavelet_coefficients(current)
                     current = approx
@@ -108,12 +109,14 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         """
         if isinstance(self.num_levels, int):
             if self.num_levels <= -1:
-                raise ValueError("num_levels must have the value" +
-                                 "of at least 0")
+                raise ValueError("num_levels must have the value" + "of at least 0")
         else:
-            raise TypeError("num_levels must be an 'int'. Found" +
-                            "'" + type(self.num_levels).__name__ +
-                            "' instead.")
+            raise TypeError(
+                "num_levels must be an 'int'. Found"
+                + "'"
+                + type(self.num_levels).__name__
+                + "' instead."
+            )
 
     def _get_approx_coefficients(self, arr):
         """
@@ -122,8 +125,8 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         new = []
         if len(arr) == 1:
             return [arr[0]]
-        for x in range(math.floor(len(arr)/2)):
-            new.append((arr[2*x]+arr[2*x+1])/math.sqrt(2))
+        for x in range(math.floor(len(arr) / 2)):
+            new.append((arr[2 * x] + arr[2 * x + 1]) / math.sqrt(2))
         return new
 
     def _get_wavelet_coefficients(self, arr):
@@ -134,6 +137,6 @@ class DWTTransformer(BaseSeriesAsFeaturesTransformer):
         # if length is 1, just return the list back
         if len(arr) == 1:
             return [arr[0]]
-        for x in range(math.floor(len(arr)/2)):
-            new.append((arr[2*x]-arr[2*x+1])/math.sqrt(2))
+        for x in range(math.floor(len(arr) / 2)):
+            new.append((arr[2 * x] - arr[2 * x + 1]) / math.sqrt(2))
         return new
