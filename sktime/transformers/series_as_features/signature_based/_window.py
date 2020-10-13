@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 window.py
 ======================================
@@ -10,7 +11,6 @@ window types.
 
 Code based on window code written by Patrick Kidger.
 """
-# -*- coding: utf-8 -*-
 import collections as co
 
 

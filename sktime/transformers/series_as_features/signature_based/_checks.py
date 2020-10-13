@@ -1,9 +1,9 @@
+# -*- coding: utf-8 -*-
 """
 _checks.py
 ====================
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
-# -*- coding: utf-8 -*-
 import functools
 import torch
 import pandas as pd

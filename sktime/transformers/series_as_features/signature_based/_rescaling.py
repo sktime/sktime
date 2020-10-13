@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 rescaling.py
 =========================
@@ -7,7 +8,6 @@ dimensions of 3D tensors.
 
 Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
-# -*- coding: utf-8 -*-
 import math
 import torch
 from sklearn.preprocessing import (
