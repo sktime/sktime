@@ -1,8 +1,8 @@
 # Use pre-existing docker image
-#FROM jupyter/scipy-notebook:cf6258237ff9
-FROM python:3.7-slim
+FROM jupyter/scipy-notebook:cf6258237ff9
+#FROM python:3.7-slim
 
-ENV DEBIAN_FRONTEND=noninteractive
+#ENV DEBIAN_FRONTEND=noninteractive
 
 # Set up user to avoid running as root
 ARG NB_USER=jovyan
