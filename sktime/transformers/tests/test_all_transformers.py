@@ -51,8 +51,8 @@ def _construct_fit(Estimator, **kwargs):
     return estimator.fit(*args)
 
 
-def check_series_to_primitive_transform_univariate(Estimator):
-    out = _construct_fit_transform(Estimator)
+def check_series_to_primitive_transform_univariate(Estimator, **kwargs):
+    out = _construct_fit_transform(Estimator, **kwargs)
     assert isinstance(out, (int, np.integer, float, np.floating, str))
 
 
@@ -73,7 +73,7 @@ def check_series_to_primitive_transform_multivariate(Estimator):
         _check_raises_error(Estimator, n_columns=n_columns)
     else:
         out = _construct_fit_transform(Estimator, n_columns=n_columns)
-        assert isinstance(out, (pd.DataFrame, np.ndarray))
+        assert isinstance(out, (pd.Series, np.ndarray))
         assert out.shape == (n_columns,)
 
 
@@ -185,10 +185,8 @@ series_as_features_to_series_as_features_checks = [
 
 def _yield_transformer_checks(Estimator):
     yield from all_transformer_checks
-
     if hasattr(Estimator, "inverse_transform"):
         yield check_transform_inverse_transform_equivalent
-
     if issubclass(Estimator, _SeriesToPrimitivesTransformer):
         yield from series_to_primitive_checks
     if issubclass(Estimator, _SeriesToSeriesTransformer):
@@ -197,6 +195,5 @@ def _yield_transformer_checks(Estimator):
         yield from series_as_features_to_tabular_checks
     if issubclass(Estimator, _SeriesAsFeaturesToSeriesAsFeaturesTransformer):
         yield from series_as_features_to_series_as_features_checks
-
     if _has_tag(Estimator, "transform-returns-same-time-index"):
         yield check_transform_returns_same_time_index

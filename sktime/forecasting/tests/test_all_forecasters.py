@@ -91,7 +91,7 @@ def assert_correct_msg(exception, msg):
 )
 def test_bad_y_input(Forecaster, y):
     # Check that bad input arguments raise an appropriate error message.
-    with pytest.raises(TypeError, match=r"must be a pandas Series"):
+    with pytest.raises(ValueError, match=r"univariate"):
         f = _construct_instance(Forecaster)
         f.fit(y, fh=FH0)
 

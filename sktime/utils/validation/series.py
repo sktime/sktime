@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 # We currently support the following types for input data and time index types.
-VALID_DATA_TYPES = (pd.DataFrame, pd.Series)
+VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
@@ -34,13 +34,13 @@ def check_series(y, enforce_univariate=False, allow_empty=False):
         If Z is an invalid input
     """
     # Check if pandas series or numpy array
-    if not isinstance(y, VALID_DATA_TYPES):
-        raise TypeError(
-            f"Data must be a pandas Series or DataFrame, " f"but found type: {type(y)}"
-        )
-
     if enforce_univariate and not isinstance(y, pd.Series):
         raise ValueError("Data must be univariate, but found a pd.DataFrame")
+
+    if not isinstance(y, VALID_DATA_TYPES):
+        raise TypeError(
+            f"Data must be a pandas Series or DataFrame, but found type: {type(y)}"
+        )
 
     # check time index
     check_time_index(y.index, allow_empty=allow_empty)

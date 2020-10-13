@@ -67,18 +67,28 @@ def make_forecasting_problem(
 
 
 def _make_series(
-    n_timepoints=50, n_columns=1, all_positive=True, index_type=None, random_state=None
+    n_timepoints=50,
+    n_columns=1,
+    all_positive=True,
+    index_type=None,
+    return_numpy=False,
+    random_state=None,
 ):
     """Helper function to generate univariate or multivariate time series"""
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
     if all_positive:
         data -= np.min(data, axis=0) - 1
-    index = _make_index(n_timepoints, index_type)
-    if n_columns == 1:
-        return pd.Series(data.ravel(), index)
+    if return_numpy:
+        if n_columns == 1:
+            data = data.ravel()
+        return data
     else:
-        return pd.DataFrame(data, index)
+        index = _make_index(n_timepoints, index_type)
+        if n_columns == 1:
+            return pd.Series(data.ravel(), index)
+        else:
+            return pd.DataFrame(data, index)
 
 
 def _make_index(n_timepoints, index_type=None):

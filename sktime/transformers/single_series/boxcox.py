@@ -5,6 +5,7 @@
 __author__ = ["Markus Löning"]
 __all__ = ["BoxCoxTransformer"]
 
+import numpy as np
 import pandas as pd
 from scipy.special import boxcox
 from scipy.special import inv_boxcox
@@ -40,3 +41,18 @@ class BoxCoxTransformer(_SeriesToSeriesTransformer):
         z = check_series(Z, enforce_univariate=True)
         zt = inv_boxcox(z.to_numpy(), self.lambda_)
         return pd.Series(zt, index=z.index)
+
+
+class LogTransformer(_SeriesToSeriesTransformer):
+
+    _tags = {"transform-returns-same-time-index": True}
+
+    def transform(self, Z, X=None):
+        self.check_is_fitted()
+        Z = check_series(Z)
+        return np.log(Z)
+
+    def inverse_transform(self, Z, X=None):
+        self.check_is_fitted()
+        Z = check_series(Z)
+        return np.exp(Z)

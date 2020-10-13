@@ -65,8 +65,7 @@ def test_series_as_features_3d_numpy_input(Estimator):
                 error_msg = "This method requires X to be a nested pd.DataFrame"
                 assert error_msg in str(e), (
                     f"{estimator.__class__.__name__} does "
-                    f"not handle 3d numpy input data "
-                    f"correctly"
+                    f"not handle 3d numpy input data correctly"
                 )
 
 
