@@ -161,11 +161,18 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
 
 ### Code quality checks
-To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. To set up the workflow, you need to install a few extra tools:
+To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. 
 
-```bash
-pip install -r maint_tools/requirements.txt
-```
+1. To set up the workflow, you need to install a few extra tools:
+
+  ```bash
+ pip install -r maint_tools/requirements.txt
+ ```
+
+2. Install pre-commit hooks:
+  ```bash
+  pre-commit install
+  ```
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
