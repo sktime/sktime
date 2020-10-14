@@ -25,6 +25,7 @@ MIN_REQUIREMENTS = {
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.0",
+    "tslearn": "0.4.1"
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
