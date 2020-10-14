@@ -137,8 +137,8 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         os.makedirs(os.path.join(local_module, local_dirname))
     if name not in _list_downloaded_datasets(extract_path):
         url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        # Tests the validitiy of the URL, can't rely on the html status code
-        # as it always returns 200
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
         try:
             _download_and_extract(url, extract_path)
         except Exception:
