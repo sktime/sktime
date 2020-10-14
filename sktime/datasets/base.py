@@ -33,7 +33,13 @@ __all__ = [
     "load_UCR_UEA_dataset",
 ]
 
-__author__ = ["Markus Löning", "Sajay Ganesh", "@big-o", "Sebastiaan Koel"]
+__author__ = [
+    "Markus Löning",
+    "Sajay Ganesh",
+    "@big-o",
+    "Sebastiaan Koel",
+    "Emilia Rose",
+]
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -64,6 +70,8 @@ def _download_and_extract(url, extract_path=None):
     zip_file_name = os.path.join(dl_dir, file_name)
     if extract_path is None:
         extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+    else:
+        extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
     urlretrieve(url, zip_file_name)
     try:
         if not os.path.exists(extract_path):
@@ -79,7 +87,7 @@ def _download_and_extract(url, extract_path=None):
         return None
 
 
-def _list_downloaded_datasets():
+def _list_downloaded_datasets(extract_path):
     """
     Returns a list of all the currently downloaded datasets
     Modified version of
@@ -91,7 +99,10 @@ def _list_downloaded_datasets():
         List of the names of datasets downloaded
 
     """
-    data_dir = os.path.join(MODULE, DIRNAME)
+    if extract_path is None:
+        data_dir = os.path.join(MODULE, DIRNAME)
+    else:
+        data_dir = extract_path
     datasets = [
         path
         for path in os.listdir(data_dir)
@@ -114,10 +125,17 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
     """
     Helper function to load time series classification datasets.
     """
+    # Allow user to have non standard extract path
+    if extract_path is not None:
+        local_module = os.path.dirname(extract_path)
+        local_dirname = extract_path
+    else:
+        local_module = MODULE
+        local_dirname = DIRNAME
 
-    if not os.path.exists(os.path.join(MODULE, DIRNAME)):
-        os.makedirs(os.path.join(MODULE, DIRNAME))
-    if name not in _list_downloaded_datasets():
+    if not os.path.exists(os.path.join(local_module, local_dirname)):
+        os.makedirs(os.path.join(local_module, local_dirname))
+    if name not in _list_downloaded_datasets(extract_path):
         url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
         # Tests the validitiy of the URL, can't rely on the html status code
         # as it always returns 200
@@ -128,7 +146,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
 
     if split in ("train", "test"):
         fname = name + "_" + split.upper() + ".ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        abspath = os.path.join(local_module, local_dirname, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
     # if split is None, load both train and test set
@@ -137,7 +155,7 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         y = pd.Series(dtype="object")
         for split in ("train", "test"):
             fname = name + "_" + split.upper() + ".ts"
-            abspath = os.path.join(MODULE, DIRNAME, name, fname)
+            abspath = os.path.join(local_module, local_dirname, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
