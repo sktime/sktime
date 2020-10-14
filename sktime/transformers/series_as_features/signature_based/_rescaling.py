@@ -9,7 +9,6 @@ dimensions of 3D tensors.
 Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
-import torch
 from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
@@ -17,7 +16,11 @@ from sklearn.preprocessing import (
     FunctionTransformer,
 )
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-import signatory
+
+from sktime.utils.check_imports import _check_soft_dependencies
+_check_soft_dependencies('torch', 'signatory')  # noqa
+import torch  # noqa: E402
+import signatory    # noqa: E402
 
 
 class TrickScaler(BaseSeriesAsFeaturesTransformer):

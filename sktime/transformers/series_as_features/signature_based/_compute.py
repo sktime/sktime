@@ -4,14 +4,17 @@ compute.py
 =======================
 Class for signature computation over windows.
 """
-import torch
-import signatory
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._window import window_getter
 from sktime.transformers.series_as_features.signature_based._rescaling import (
     rescale_path,
     rescale_signature,
 )
+
+from sktime.utils.check_imports import _check_soft_dependencies
+_check_soft_dependencies('torch', 'signatory')  # noqa
+import torch  # noqa: E402
+import signatory    # noqa: E402
 
 
 class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
