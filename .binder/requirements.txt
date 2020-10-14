@@ -5,3 +5,4 @@ scikit-posthocs
 seaborn
 sktime
 tsfresh
+tslearn
