@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from sktime.panel.tests._config import N_COLUMNS
-from sktime.panel.tests._config import N_INSTANCES
-from sktime.panel.tests._config import N_TIMEPOINTS
+from sktime.series_as_features.tests._config import N_COLUMNS
+from sktime.series_as_features.tests._config import N_INSTANCES
+from sktime.series_as_features.tests._config import N_TIMEPOINTS
 from sktime.utils._testing import make_classification_problem
 from sktime.utils.data_container import from_3d_numpy_to_nested
 from sktime.utils.data_container import from_nested_to_2d_array

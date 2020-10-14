@@ -13,7 +13,7 @@ __all__ = [
 import numpy as np
 import pytest
 
-from sktime.panel.tests._config import ACCEPTED_OUTPUT_TYPES
+from sktime.series_as_features.tests._config import ACCEPTED_OUTPUT_TYPES
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
 from sktime.transformers.base import _PanelToPanelTransformer

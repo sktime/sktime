@@ -235,23 +235,15 @@ def _from_nested_to_series(x):
         return pd.DataFrame(data).T
 
 
-def _make_column_names(columns, prefix):
-    """Helper function to generate column names"""
-    if len(prefix) > 0:
-        prefix = prefix + "_"
-    return [f"{prefix}{column}" for column in columns]
-
-
 class _RowTransformer(BaseTransformer):
     """Base class for RowTransformer"""
 
     _required_parameters = ["transformer"]
     _tags = {"fit-in-transform": True}
 
-    def __init__(self, transformer, prefix="", check_transformer=True):
+    def __init__(self, transformer, check_transformer=True):
         self.transformer = transformer
         self.check_transformer = check_transformer
-        self.prefix = prefix
         super(_RowTransformer, self).__init__()
 
     def _check_transformer(self):

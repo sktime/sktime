@@ -5,7 +5,7 @@ import pytest
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 
-from sktime.panel.compose import FeatureUnion
+from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )

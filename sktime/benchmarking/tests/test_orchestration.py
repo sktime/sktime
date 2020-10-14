@@ -30,7 +30,7 @@ from sktime.classification.distance_based._proximity_forest import ProximityFore
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_gunpoint
 from sktime.classification.compose import TimeSeriesForestClassifier
-from sktime.panel.model_selection import SingleSplit
+from sktime.series_as_features.model_selection import SingleSplit
 from sktime.transformers.panel.reduce import Tabularizer
 
 REPOPATH = os.path.dirname(sktime.__file__)

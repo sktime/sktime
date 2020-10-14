@@ -24,7 +24,7 @@ from sktime.transformers.panel.summarize import (
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
-from sktime.panel.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
 class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):

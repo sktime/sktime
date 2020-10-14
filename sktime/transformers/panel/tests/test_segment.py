@@ -4,11 +4,9 @@ import pandas as pd
 import pytest
 
 from sktime.transformers.panel.segment import RandomIntervalSegmenter
+from sktime.transformers.panel.segment import _rand_intervals_fixed_n
+from sktime.transformers.panel.segment import _rand_intervals_rand_n
 from sktime.utils._testing.panel import _make_nested_from_array
-from sktime.transformers.panel.segment import (
-    _rand_intervals_fixed_n,
-    _rand_intervals_rand_n,
-)
 
 N_ITER = 10
 
@@ -55,8 +53,8 @@ def test_bad_input_args(bad_interval):
 )  # run repeatedly
 @pytest.mark.parametrize("n_intervals", ["sqrt", "log", 0.1, 1, 3])
 def test_rand_intervals_fixed_n(random_state, n_intervals):
-    series_len = 30
-    x = np.arange(series_len)
+    n_timepoints = 30
+    x = np.arange(n_timepoints)
 
     intervals = _rand_intervals_fixed_n(x, n_intervals=n_intervals)
     assert intervals.ndim == 2
@@ -66,7 +64,7 @@ def test_rand_intervals_fixed_n(random_state, n_intervals):
 
     starts = intervals[:, 0]
     ends = intervals[:, 1]
-    assert np.all(ends <= x.size)  # within bounds
+    assert np.all(ends <= n_timepoints)  # within bounds
     assert np.all(starts >= 0)  # within bounds
     assert np.all(ends > starts)  # only non-empty intervals
 
@@ -75,8 +73,8 @@ def test_rand_intervals_fixed_n(random_state, n_intervals):
     "random_state", list(np.random.randint(100, size=10))
 )  # run repeatedly
 def test_rand_intervals_rand_n(random_state):
-    series_len = 30
-    x = np.arange(series_len)
+    n_timepoints = 30
+    x = np.arange(n_timepoints)
 
     intervals = _rand_intervals_rand_n(x)
     assert intervals.ndim == 2
@@ -91,18 +89,16 @@ def test_rand_intervals_rand_n(random_state):
     assert np.all(ends > starts)  # only non-empty intervals
 
 
-# Check minimum length.
 @pytest.mark.parametrize("min_length", [1, 3])
 @pytest.mark.parametrize("max_length", [4, 5])
 @pytest.mark.parametrize("n_intervals", ["sqrt", "log", 0.1, 1, 3])
-def test_min_length(n_intervals, min_length, max_length):
-    series_len = 30
-    x = np.arange(series_len)
+def test_rand_intervals_fixed_n_min_max_length(n_intervals, min_length, max_length):
+    n_timepoints = 30
+    x = np.arange(n_timepoints)
 
     intervals = _rand_intervals_fixed_n(
         x, n_intervals=n_intervals, min_length=min_length, max_length=max_length
     )
-    starts = intervals[:, 0]
-    ends = intervals[:, 1]
-    assert np.all(ends - starts >= min_length)  # minimum length
-    assert np.all(ends - starts <= max_length)  # minimum length
+    lengths = intervals[:, 1] - intervals[:, 0]  # length = end - start
+    assert np.all(lengths >= min_length)
+    assert np.all(lengths <= max_length)

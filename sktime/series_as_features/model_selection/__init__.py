@@ -8,5 +8,5 @@ __all__ = [
     "PresplitFilesCV",
 ]
 
-from sktime.panel.model_selection._split import PresplitFilesCV
-from sktime.panel.model_selection._split import SingleSplit
+from sktime.series_as_features.model_selection._split import PresplitFilesCV
+from sktime.series_as_features.model_selection._split import SingleSplit

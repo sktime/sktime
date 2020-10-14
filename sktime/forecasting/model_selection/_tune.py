@@ -25,7 +25,7 @@ from sklearn.utils.metaestimators import if_delegate_has_method
 
 from sktime.exceptions import FitFailedWarning
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.validation.forecasting import check_y

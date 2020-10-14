@@ -17,7 +17,7 @@ from sktime.utils.validation.panel import check_X_y
 _check_soft_dependencies("tsfresh")
 
 
-class BaseTSFreshFeatureExtractor(_PanelToTabularTransformer):
+class _TSFreshFeatureExtractor(_PanelToTabularTransformer):
     """Base adapter class for tsfresh transformers"""
 
     def __init__(
@@ -48,7 +48,7 @@ class BaseTSFreshFeatureExtractor(_PanelToTabularTransformer):
 
         self.default_fc_parameters_ = None
 
-        super(BaseTSFreshFeatureExtractor, self).__init__()
+        super(_TSFreshFeatureExtractor, self).__init__()
 
     def fit(self, X, y=None):
         """Fit.
@@ -64,7 +64,7 @@ class BaseTSFreshFeatureExtractor(_PanelToTabularTransformer):
         -------
         self : an instance of self
         """
-        X = check_X(X, coerce_to_pandas=True)
+        check_X(X, coerce_to_pandas=True)
         self.default_fc_parameters_ = self._get_extraction_params()
         self._is_fitted = True
         return self
@@ -131,7 +131,7 @@ class BaseTSFreshFeatureExtractor(_PanelToTabularTransformer):
         return extraction_params
 
 
-class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
+class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting time series features
 
     References
@@ -160,7 +160,11 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         # tsfresh requires unique index, returns only values for
         # unique index values
         if X.index.nunique() < X.shape[0]:
-            warn("Found non-unique index, replaced with unique index.")
+            warn(
+                "tsfresh requires a unique index, but found "
+                "non-unique. To avoid this warning, please make sure the index of X "
+                "contains only unique values."
+            )
             X = X.reset_index(drop=True)
 
         Xt = from_nested_to_long(X)
@@ -184,7 +188,7 @@ class TSFreshFeatureExtractor(BaseTSFreshFeatureExtractor):
         return Xt.reindex(X.index)
 
 
-class TSFreshRelevantFeatureExtractor(BaseTSFreshFeatureExtractor):
+class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     """Transformer for extracting and selecting features.
 
     References

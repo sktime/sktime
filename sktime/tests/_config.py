@@ -35,7 +35,7 @@ from sktime.forecasting.theta import ThetaForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
-from sktime.panel.compose import FeatureUnion
+from sktime.series_as_features.compose import FeatureUnion
 from sktime.transformers.base import BaseTransformer
 from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.base import _PanelToTabularTransformer

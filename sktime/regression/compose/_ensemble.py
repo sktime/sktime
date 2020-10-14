@@ -20,7 +20,7 @@ from sklearn.ensemble._forest import _get_n_samples_bootstrap
 from sktime.utils.time_series import time_series_slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.regression.base import BaseRegressor
-from sktime.panel.base.estimators._ensemble import BaseTimeSeriesForest
+from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
 
 
 class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):

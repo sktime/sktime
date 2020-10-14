@@ -15,7 +15,7 @@ from sktime.transformers.panel.segment import RandomIntervalSegmenter
 
 from sktime.transformers.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
-from sktime.panel.compose import FeatureUnion
+from sktime.series_as_features.compose import FeatureUnion
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.utils.time_series import time_series_slope
 import sktime.classification.interval_based._tsf as ib

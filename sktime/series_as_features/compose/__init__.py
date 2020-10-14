@@ -5,4 +5,4 @@
 __author__ = ["Markus Löning"]
 __all__ = ["FeatureUnion"]
 
-from sktime.panel.compose._pipeline import FeatureUnion
+from sktime.series_as_features.compose._pipeline import FeatureUnion

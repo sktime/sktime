@@ -15,7 +15,7 @@ from pandas.testing import assert_frame_equal
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.forecasting.base._base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.regression.base import BaseRegressor
 from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import VALID_ESTIMATOR_TAGS
