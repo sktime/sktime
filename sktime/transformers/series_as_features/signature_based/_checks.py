@@ -10,7 +10,8 @@ from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
 
 from sktime.utils.check_imports import _check_soft_dependencies
-_check_soft_dependencies('torch', 'signatory')  # noqa
+
+_check_soft_dependencies("torch", "signatory")
 import torch  # noqa: E402
 
 

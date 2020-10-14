@@ -3,7 +3,8 @@ from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 from sktime.utils.check_imports import _check_soft_dependencies
-_check_soft_dependencies('torch', 'signatory')  # noqa
+
+_check_soft_dependencies("torch", "signatory")
 import torch  # noqa: E402
 
 
