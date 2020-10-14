@@ -41,8 +41,6 @@ from sktime.distances.mpdist import mpdist
 
 from sktime.utils.check_imports import _check_soft_dependencies
 
-_check_soft_dependencies("tslearn")
-
 from tslearn.metrics import cdist_dtw as dtw_distance
 from tslearn.metrics import cdist_soft_dtw as soft_dtw_distance
 
@@ -67,6 +65,8 @@ non-standard/user-defined measures
 e.g. set_distance_params(measure_type=None, param_values_to_set=None,
 param_names=None)
 """
+
+_check_soft_dependencies("tslearn")
 
 
 class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
