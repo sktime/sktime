@@ -13,10 +13,9 @@ import pandas as pd
 
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
-try:
-    from urllib import urlretrieve
-except ImportError:
-    from urllib.request import urlretrieve
+
+from urllib.request import urlretrieve
+
 
 __all__ = [
     "load_airline",
@@ -31,7 +30,7 @@ __all__ = [
     "load_lynx",
     "load_acsf1",
     "load_uschange",
-    "load_dataset_proxy",
+    "load_UCR_UEA_dataset",
 ]
 
 __author__ = ["Markus Löning", "Sajay Ganesh", "@big-o", "Sebastiaan Koel"]
@@ -40,7 +39,7 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
-def _url_to_extract(url, extract_path=None):
+def _download_and_extract(url, extract_path=None):
     """
     Helper function for downloading and unzipping datasets
     This code was modified from
@@ -74,6 +73,8 @@ def _url_to_extract(url, extract_path=None):
         return extract_path
     except zipfile.BadZipFile:
         shutil.rmtree(dl_dir)
+        if os.path.exists(extract_path):
+            shutil.rmtree(extract_path)
         raise Exception("Corrupted zip file, check URL is valid")
         return None
 
@@ -99,54 +100,31 @@ def _list_downloaded_datasets():
     return datasets
 
 
-def _list_all_datasets():
-    """
-    Gets a list of all the datasets hostedon timeseriesclassificaiton.com
-    and returns a dataframe containing them all
-
-    Returns
-    -------
-    string
-        String containing all of the dataset problem names for both
-        Multivariate and Univariate problems.
-
-    """
-    multivariate_url = (
-        "http://www.timeseriesclassification.com/Downloads/"
-        + "Archives/summaryMultivariate.csv"
-    )
-    univariate_url = (
-        "http://www.timeseriesclassification.com/Downloads/"
-        + "Archives/summaryUnivariate.csv"
-    )
-
-    multivariate_dataset_info = pd.read_csv(multivariate_url, usecols=["Problem"])
-    univariate_dataset_info = pd.read_csv(univariate_url, usecols=["problem"])
-    return univariate_dataset_info.to_string() + multivariate_dataset_info.to_string()
-
-
-def load_dataset_proxy(name, split, return_X_y):
+def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     """
     A proxy function for _load_dataset function to access it without changing
     the name and/or the privacy level of the _load_dataset function
 
     """
-    return _load_dataset(name, split, return_X_y)
+    return _load_dataset(name, split, return_X_y, extract_path)
 
 
 # time series classification data sets
-def _load_dataset(name, split, return_X_y):
+def _load_dataset(name, split, return_X_y, extract_path=None):
     """
     Helper function to load time series classification datasets.
     """
 
     if not os.path.exists(os.path.join(MODULE, DIRNAME)):
         os.makedirs(os.path.join(MODULE, DIRNAME))
-    if name in _list_all_datasets() and name not in _list_downloaded_datasets():
+    if name not in _list_downloaded_datasets():
         url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
-        _url_to_extract(url)
-    elif name not in _list_all_datasets():
-        raise ValueError("Invalid 'dataset' name")
+        # Tests the validitiy of the URL, can't rely on the html status code
+        # as it always returns 200
+        try:
+            _download_and_extract(url, extract_path)
+        except Exception:
+            raise ValueError("Invalid dataset name")
 
     if split in ("train", "test"):
         fname = name + "_" + split.upper() + ".ts"

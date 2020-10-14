@@ -10,7 +10,7 @@ __all__ = [
     "load_lynx",
     "load_shampoo_sales",
     "load_uschange",
-    "load_dataset_proxy",
+    "load_UCR_UEA_dataset",
 ]
 
 from sktime.datasets.base import load_airline
@@ -23,4 +23,4 @@ from sktime.datasets.base import load_longley
 from sktime.datasets.base import load_lynx
 from sktime.datasets.base import load_shampoo_sales
 from sktime.datasets.base import load_uschange
-from sktime.datasets.base import load_dataset_proxy
+from sktime.datasets.base import load_UCR_UEA_dataset
