@@ -5,12 +5,16 @@
 __author__ = ["Sebastiaan Koel", "Emilia Rose"]
 __all__ = []
 
-import pytest
-import pandas as pd
-import shutil
-import tempfile
 import os
-from sktime.datasets import load_uschange, load_UCR_UEA_dataset
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from sktime.datasets import load_UCR_UEA_dataset
+from sktime.datasets import load_arrow_head
+from sktime.datasets import load_uschange
+from sktime.utils._testing import _assert_array_almost_equal
 
 _CHECKS = {
     "uschange": {
@@ -66,47 +70,39 @@ def test_data_loaders(dataset):
         assert len(X) == checks["len_X"]
 
 
-def test_dataset_downloading():
-    """
-    Asserts if datasets are downloaded correctly and load correctly
+def test_load_UCR_UEA_dataset_invalid_dataset():
+    with pytest.raises(ValueError, match=r"Invalid dataset name"):
+        load_UCR_UEA_dataset("invalid-name")
 
-    Returns
-    -------
-    None.
 
-    """
-    with pytest.raises(ValueError):
-        load_UCR_UEA_dataset("Chinatown1")
-
-    test_dir = tempfile.mkdtemp()
-    chinatown = load_UCR_UEA_dataset(
-        "Chinatown", extract_path=test_dir, return_X_y=(True)
+def test_load_UCR_UEA_dataset_download(tmpdir):
+    # tmpdir is a pytest fixture
+    extract_path = tmpdir.mkdtemp()
+    name = "ArrowHead"
+    actual_X, actual_y = load_UCR_UEA_dataset(
+        name, return_X_y=True, extract_path=extract_path
     )
+    data_path = os.path.join(extract_path, name)
+    assert os.path.exists(data_path)
 
-    assert os.path.exists(os.path.join(test_dir, "Chinatown"))
-
-    subfile_names = [
-        "Chinatown.txt",
-        "Chinatown_TEST.arff",
-        "Chinatown_TEST.ts",
-        "Chinatown_TEST.txt",
-        "Chinatown_TRAIN.arff",
-        "Chinatown_TRAIN.ts",
-        "Chinatown_TRAIN.txt",
-        "README.md",
+    # check files
+    files = [
+        f"{name}.txt",
+        f"{name}_TEST.arff",
+        f"{name}_TEST.ts",
+        f"{name}_TEST.txt",
+        f"{name}_TRAIN.arff",
+        f"{name}_TRAIN.ts",
+        f"{name}_TRAIN.txt",
+        # "README.md",
     ]
 
-    for path in os.listdir(os.path.join(test_dir, "Chinatown")):
-        assert path in subfile_names
-        subfile_names.remove(path)
-    assert len(subfile_names) == 0
+    for file in os.listdir(data_path):
+        assert file in files
+        files.remove(file)
+    assert len(files) == 0
 
-    assert (
-        len(open(os.path.join(test_dir, "Chinatown", "Chinatown_TEST.txt")).readlines())
-        == 343
-    )
-
-    assert len(chinatown[0]) == 363
-    assert len(chinatown[1]) == 363
-
-    shutil.rmtree(test_dir)
+    # check data
+    expected_X, expected_y = load_arrow_head(return_X_y=True)
+    _assert_array_almost_equal(actual_X, expected_X, decimal=4)
+    np.testing.assert_array_equal(expected_y, actual_y)

@@ -4,18 +4,15 @@ Utilities for loading datasets
 """
 
 import os
+import shutil
 import tempfile
 import zipfile
-import shutil
+from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
-
-
-from urllib.request import urlretrieve
-
 
 __all__ = [
     "load_airline",
@@ -45,11 +42,13 @@ DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
+# time series classification data sets
 def _download_and_extract(url, extract_path=None):
     """
     Helper function for downloading and unzipping datasets
     This code was modified from
-    https://github.com/tslearn-team/tslearn/blob/775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
+    https://github.com/tslearn-team/tslearn/blob
+    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
     Parameters
     ----------
     url : string
@@ -68,11 +67,13 @@ def _download_and_extract(url, extract_path=None):
     file_name = os.path.basename(url)
     dl_dir = tempfile.mkdtemp()
     zip_file_name = os.path.join(dl_dir, file_name)
+    urlretrieve(url, zip_file_name)
+
     if extract_path is None:
         extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
     else:
         extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
-    urlretrieve(url, zip_file_name)
+
     try:
         if not os.path.exists(extract_path):
             os.makedirs(extract_path)
@@ -83,15 +84,17 @@ def _download_and_extract(url, extract_path=None):
         shutil.rmtree(dl_dir)
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
-        raise Exception("Corrupted zip file, check URL is valid")
-        return None
+        raise zipfile.BadZipFile(
+            "Could not unzip dataset. Please make sure the " "URL is valid."
+        )
 
 
 def _list_downloaded_datasets(extract_path):
     """
     Returns a list of all the currently downloaded datasets
     Modified version of
-    https://github.com/tslearn-team/tslearn/blob/775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
+    https://github.com/tslearn-team/tslearn/blob
+    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
 
     Returns
     -------
@@ -113,14 +116,33 @@ def _list_downloaded_datasets(extract_path):
 
 def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
     """
-    A proxy function for _load_dataset function to access it without changing
-    the name and/or the privacy level of the _load_dataset function
+    Load dataset from UCR UEA time series classification repository. Downloads and
+    extracts dataset if not already downloaded.
 
+    Parameters
+    ----------
+    name : str
+        Name of data set
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+    extract_path : str, optional (default=None)
+        Default extract path is `sktime/datasets/data/`
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
     """
     return _load_dataset(name, split, return_X_y, extract_path)
 
 
-# time series classification data sets
 def _load_dataset(name, split, return_X_y, extract_path=None):
     """
     Helper function to load time series classification datasets.
@@ -141,8 +163,11 @@ def _load_dataset(name, split, return_X_y, extract_path=None):
         # status code as it always returns 200
         try:
             _download_and_extract(url, extract_path)
-        except Exception:
-            raise ValueError("Invalid dataset name")
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                "Invalid dataset name. Please make sure the dataset is "
+                "available on http://timeseriesclassification.com/."
+            ) from e
 
     if split in ("train", "test"):
         fname = name + "_" + split.upper() + ".ts"
