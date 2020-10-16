@@ -15,11 +15,13 @@ python:
       path: .
     # install doc requirements
     - requirements: docs/requirements.txt
-    # Install pytorch and signatory for the signatures module.
-    # Note: torch must be installed via conda for appveyor and signatory must be
-    # installed after pytorch.
-    - cmd: conda install pytorch=1.5.0 cpuonly -c pytorch
-    - cmd: pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
+
+install:
+  # Install pytorch and signatory for the signatures module.
+  # Note: torch must be installed via conda for appveyor and signatory must be
+  # installed after pytorch.
+  - cmd: conda install pytorch=1.5.0 cpuonly -c pytorch
+  - cmd: pip install signatory==1.2.1.1.5.0 --no-cache-dir --force-reinstall
 
 sphinx:
   configuration: docs/source/conf.py
