@@ -6,6 +6,7 @@ numba
 numpydoc
 pmdarima
 # include pygments due to dependency compatibility issue https://github.com/jupyterlab/jupyterlab_pygments/issues/5
+pytorch==1.5.0
 pygments>=2.4.1
 seaborn
 sphinx==3.2.*
