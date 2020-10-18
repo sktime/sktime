@@ -78,7 +78,7 @@ class BaseSplitter:
     @staticmethod
     def _check_y(y):
         # allow for pd.Series
-        if isinstance(y, pd.Series):
+        if isinstance(y, pd.Series) or isinstance(y, pd.DataFrame):
             y = y.index
         return check_time_index(y)
 

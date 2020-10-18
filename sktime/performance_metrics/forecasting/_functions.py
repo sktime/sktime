@@ -75,7 +75,7 @@ def mase_loss(y_test, y_pred, y_train, sp=1):
         return np.mean(np.abs(y_test - y_pred)) / mae_naive
 
 
-def smape_loss(y_test, y_pred):
+def smape_loss(y_test, y_pred, calculater_per_column: bool=False):
     """Symmetric mean absolute percentage error
 
     Parameters
@@ -84,6 +84,8 @@ def smape_loss(y_test, y_pred):
         Ground truth (correct) target values.
     y_pred : pandas Series of shape = (fh,)
         Estimated target values.
+    calculater_per_column: bool defines if loss should be calculated per column 
+        or not. 
 
     Returns
     -------
@@ -92,8 +94,13 @@ def smape_loss(y_test, y_pred):
     """
     y_test = check_y(y_test)
     y_pred = check_y(y_pred)
-    check_equal_time_index(y_test, y_pred)
 
+    if calculater_per_column:
+        y_test = y_test.stack().reset_index(drop=True)
+        y_pred = y_pred.stack().reset_index(drop=True)
+
+    check_equal_time_index(y_test, y_pred)
     nominator = np.abs(y_test - y_pred)
+
     denominator = np.abs(y_test) + np.abs(y_pred)
     return np.mean(2.0 * nominator / denominator)

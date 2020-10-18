@@ -71,7 +71,7 @@ def check_y(y, allow_empty=False, allow_constant=True):
         If y is an invalid input
     """
     # Check if pandas series or numpy array
-    if not isinstance(y, pd.Series):
+    if not (isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)):
         raise TypeError(f"`y` must be a pandas Series, but found type: {type(y)}")
 
     if not allow_constant:

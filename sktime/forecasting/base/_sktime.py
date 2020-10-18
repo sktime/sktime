@@ -566,9 +566,10 @@ class BaseWindowForecaster(BaseSktimeForecaster):
             raise NotImplementedError()
 
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
-
+        print(" HERE WE DO SOME PREDICTION")
         # all values are out-of-sample
         if fh.is_out_of_sample(self.cutoff):
+            print("Prediction type out of sample ..... ")
             return self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
@@ -603,11 +604,15 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         y_pred = pd.Series
         """
         # assert all(fh > 0)
+        print("last here ")
+        print(X)
         y_pred = self._predict_last_window(
             fh, X=X, return_pred_int=return_pred_int, alpha=alpha
         )
         index = fh.to_absolute(self.cutoff)
-        return pd.Series(y_pred, index=index)
+        print("Now we are comming closer to the end")
+        print(pd.DataFrame(y_pred, index=index))
+        return pd.DataFrame(y_pred, index=index)
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
