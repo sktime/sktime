@@ -1,12 +1,13 @@
+# -*- coding: utf-8 -*-
 import sys
 
 import numpy as np
 import pandas as pd
 import scipy.stats
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.dictionary_based import PAA
-from sktime.utils.data_container import tabularize
+
 #    TO DO: verify this returned pandas is consistent with sktime
 #    definition. Timestamps?
 from sktime.utils.validation.series_as_features import check_X
@@ -18,7 +19,7 @@ __author__ = "Matthew Middlehurst"
 
 
 class SAX(BaseSeriesAsFeaturesTransformer):
-    """ SAX (Symbolic Aggregate approXimation) Transformer, as described in
+    """SAX (Symbolic Aggregate approXimation) Transformer, as described in
     Jessica Lin, Eamonn Keogh, Li Wei and Stefano Lonardi,
     "Experiencing SAX: a novel symbolic representation of time series"
     Data Mining and Knowledge Discovery, 15(2):107-144
@@ -57,14 +58,15 @@ class SAX(BaseSeriesAsFeaturesTransformer):
 
     """
 
-    def __init__(self,
-                 word_length=8,
-                 alphabet_size=4,
-                 window_size=12,
-                 remove_repeat_words=False,
-                 save_words=False,
-                 return_pandas_data_series=True
-                 ):
+    def __init__(
+        self,
+        word_length=8,
+        alphabet_size=4,
+        window_size=12,
+        remove_repeat_words=False,
+        save_words=False,
+        return_pandas_data_series=True,
+    ):
         self.word_length = word_length
         self.alphabet_size = alphabet_size
         self.window_size = window_size
@@ -88,15 +90,13 @@ class SAX(BaseSeriesAsFeaturesTransformer):
         dims: Pandas data frame with first dimension in column zero
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X.squeeze(1)
 
         if self.alphabet_size < 2 or self.alphabet_size > 4:
-            raise RuntimeError(
-                "Alphabet size must be an integer between 2 and 4")
+            raise RuntimeError("Alphabet size must be an integer between 2 and 4")
         if self.word_length < 1 or self.word_length > 16:
-            raise RuntimeError(
-                "Word length must be an integer between 1 and 16")
+            raise RuntimeError("Word length must be an integer between 1 and 16")
 
         breakpoints = self._generate_breakpoints()
         n_instances, series_length = X.shape
@@ -111,8 +111,13 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             words = []
 
             num_windows_per_inst = series_length - self.window_size + 1
-            split = np.array(X[i, np.arange(self.window_size)[None, :]
-                               + np.arange(num_windows_per_inst)[:, None]])
+            split = np.array(
+                X[
+                    i,
+                    np.arange(self.window_size)[None, :]
+                    + np.arange(num_windows_per_inst)[:, None],
+                ]
+            )
 
             split = scipy.stats.zscore(split, axis=1)
 
@@ -131,8 +136,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             if self.save_words:
                 self.words.append(words)
 
-            dim.append(
-                pd.Series(bag) if self.return_pandas_data_series else bag)
+            dim.append(pd.Series(bag) if self.return_pandas_data_series else bag)
 
         bags[0] = dim
 
@@ -151,9 +155,7 @@ class SAX(BaseSeriesAsFeaturesTransformer):
     def _add_to_bag(self, bag, word, last_word):
         if self.remove_repeat_words and word == last_word:
             return False
-
         bag[word] = bag.get(word, 0) + 1
-
         return True
 
     def _generate_breakpoints(self):
@@ -166,44 +168,17 @@ class SAX(BaseSeriesAsFeaturesTransformer):
             6: [-0.97, -0.43, 0, 0.43, 0.97, sys.float_info.max],
             7: [-1.07, -0.57, -0.18, 0.18, 0.57, 1.07, sys.float_info.max],
             8: [-1.15, -0.67, -0.32, 0, 0.32, 0.67, 1.15, sys.float_info.max],
-            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22,
-                sys.float_info.max],
-            10: [-1.28, -0.84, -0.52, -0.25, 0.0, 0.25, 0.52, 0.84, 1.28,
-                 sys.float_info.max]
+            9: [-1.22, -0.76, -0.43, -0.14, 0.14, 0.43, 0.76, 1.22, sys.float_info.max],
+            10: [
+                -1.28,
+                -0.84,
+                -0.52,
+                -0.25,
+                0.0,
+                0.25,
+                0.52,
+                0.84,
+                1.28,
+                sys.float_info.max,
+            ],
         }[self.alphabet_size]
-
-
-class _BitWord(object):
-    # Used to represent a word for dictionary based classifiers such as BOSS
-    # an BOP.
-    # Can currently only handle an alphabet size of <= 4 and word length of
-    # <= 16.
-    # Current literature shows little reason to go beyond this, but the
-    # class will need changes/expansions
-    # if this is needed.
-    # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
-
-    @staticmethod
-    def create_bigram_word(word, other_word, length):
-        return (word << length) | other_word
-
-    @classmethod
-    def shorten_word(cls, word, amount):
-        # shorten a word by set amount of letters
-        return cls.right_shift(word, amount * 2)
-
-    @classmethod
-    def word_list(cls, word, length):
-        # list of input integers to obtain current word
-        word_list = []
-        shift = 32 - (length * 2)
-
-        for i in range(length - 1, -1, -1):
-            word_list.append(cls.right_shift(word << shift, 32 - 2))
-            shift += 2
-
-        return word_list
-
-    @staticmethod
-    def right_shift(left, right):
-        return (left % 0x100000000) >> right

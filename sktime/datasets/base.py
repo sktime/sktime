@@ -4,10 +4,15 @@ Utilities for loading datasets
 """
 
 import os
+import shutil
+import tempfile
+import zipfile
+from urllib.request import urlretrieve
 
+import numpy as np
 import pandas as pd
 
-from ..utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
@@ -21,23 +26,152 @@ __all__ = [
     "load_longley",
     "load_lynx",
     "load_acsf1",
+    "load_uschange",
+    "load_UCR_UEA_dataset",
 ]
 
-__author__ = ["Markus Löning", "Sajay Ganesh", "@big-o"]
+__author__ = [
+    "Markus Löning",
+    "Sajay Ganesh",
+    "@big-o",
+    "Sebastiaan Koel",
+    "Emilia Rose",
+]
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
 
 
 # time series classification data sets
-def _load_dataset(name, split, return_X_y):
+def _download_and_extract(url, extract_path=None):
+    """
+    Helper function for downloading and unzipping datasets
+    This code was modified from
+    https://github.com/tslearn-team/tslearn/blob
+    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L28
+    Parameters
+    ----------
+    url : string
+        Url pointing to file to download
+    extract_path : string, optional (default: None)
+        path to extract downloaded zip to, None defaults
+        to sktime/datasets/data
+
+    Returns
+    -------
+    extract_path : string or None
+        if successful, string containing the path of the extracted file, None
+        if it wasn't succesful
+
+    """
+    file_name = os.path.basename(url)
+    dl_dir = tempfile.mkdtemp()
+    zip_file_name = os.path.join(dl_dir, file_name)
+    urlretrieve(url, zip_file_name)
+
+    if extract_path is None:
+        extract_path = os.path.join(MODULE, "data/%s/" % file_name.split(".")[0])
+    else:
+        extract_path = os.path.join(extract_path, "%s/" % file_name.split(".")[0])
+
+    try:
+        if not os.path.exists(extract_path):
+            os.makedirs(extract_path)
+        zipfile.ZipFile(zip_file_name, "r").extractall(extract_path)
+        shutil.rmtree(dl_dir)
+        return extract_path
+    except zipfile.BadZipFile:
+        shutil.rmtree(dl_dir)
+        if os.path.exists(extract_path):
+            shutil.rmtree(extract_path)
+        raise zipfile.BadZipFile(
+            "Could not unzip dataset. Please make sure the " "URL is valid."
+        )
+
+
+def _list_downloaded_datasets(extract_path):
+    """
+    Returns a list of all the currently downloaded datasets
+    Modified version of
+    https://github.com/tslearn-team/tslearn/blob
+    /775daddb476b4ab02268a6751da417b8f0711140/tslearn/datasets.py#L250
+
+    Returns
+    -------
+    datasets : List
+        List of the names of datasets downloaded
+
+    """
+    if extract_path is None:
+        data_dir = os.path.join(MODULE, DIRNAME)
+    else:
+        data_dir = extract_path
+    datasets = [
+        path
+        for path in os.listdir(data_dir)
+        if os.path.isdir(os.path.join(data_dir, path))
+    ]
+    return datasets
+
+
+def load_UCR_UEA_dataset(name, split=None, return_X_y=False, extract_path=None):
+    """
+    Load dataset from UCR UEA time series classification repository. Downloads and
+    extracts dataset if not already downloaded.
+
+    Parameters
+    ----------
+    name : str
+        Name of data set
+    split: None or str{"train", "test"}, optional (default=None)
+        Whether to load the train or test partition of the problem. By
+        default it loads both.
+    return_X_y: bool, optional (default=False)
+        If True, returns (features, target) separately instead of a single
+        dataframe with columns for
+        features and the target.
+    extract_path : str, optional (default=None)
+        Default extract path is `sktime/datasets/data/`
+
+    Returns
+    -------
+    X: pandas DataFrame with m rows and c columns
+        The time series data for the problem with m cases and c dimensions
+    y: numpy array
+        The class labels for each case in X
+    """
+    return _load_dataset(name, split, return_X_y, extract_path)
+
+
+def _load_dataset(name, split, return_X_y, extract_path=None):
     """
     Helper function to load time series classification datasets.
     """
+    # Allow user to have non standard extract path
+    if extract_path is not None:
+        local_module = os.path.dirname(extract_path)
+        local_dirname = extract_path
+    else:
+        local_module = MODULE
+        local_dirname = DIRNAME
+
+    if not os.path.exists(os.path.join(local_module, local_dirname)):
+        os.makedirs(os.path.join(local_module, local_dirname))
+    if name not in _list_downloaded_datasets(extract_path):
+        url = "http://timeseriesclassification.com/Downloads/%s.zip" % name
+        # This also tests the validitiy of the URL, can't rely on the html
+        # status code as it always returns 200
+        try:
+            _download_and_extract(url, extract_path)
+        except zipfile.BadZipFile as e:
+            raise ValueError(
+                "Invalid dataset name. Please make sure the dataset is "
+                "available on http://timeseriesclassification.com/."
+            ) from e
 
     if split in ("train", "test"):
         fname = name + "_" + split.upper() + ".ts"
-        abspath = os.path.join(MODULE, DIRNAME, name, fname)
+        abspath = os.path.join(local_module, local_dirname, name, fname)
         X, y = load_from_tsfile_to_dataframe(abspath)
 
     # if split is None, load both train and test set
@@ -46,7 +180,7 @@ def _load_dataset(name, split, return_X_y):
         y = pd.Series(dtype="object")
         for split in ("train", "test"):
             fname = name + "_" + split.upper() + ".ts"
-            abspath = os.path.join(MODULE, DIRNAME, name, fname)
+            abspath = os.path.join(local_module, local_dirname, name, fname)
             result = load_from_tsfile_to_dataframe(abspath)
             X = pd.concat([X, pd.DataFrame(result[0])])
             y = pd.concat([y, pd.Series(result[1])])
@@ -431,35 +565,28 @@ def load_shampoo_sales():
     name = "ShampooSales"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='M')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of shampoo sales"
+    return y
 
 
-def load_longley(return_X_y=False):
+def load_longley(y_name="TOTEMP"):
     """
     Load the Longley multivariate time series dataset for forecasting with
     exogenous variables.
 
     Parameters
     ----------
-    return_X_y: bool, optional (default=False)
-        If True, returns (features, target) separately instead of a single
-        dataframe with columns for
-        features and the target.
+    y_name: str, optional (default="TOTEMP")
+        Name of target variable (y)
 
     Returns
     -------
-    X: pandas.DataFrame
-        The exogenous time series data for the problem.
     y: pandas.Series
         The target series to be predicted.
+    X: pandas.DataFrame
+        The exogenous time series data for the problem.
 
     Details
     -------
@@ -474,13 +601,12 @@ def load_longley(return_X_y=False):
 
     Variable description:
 
-    TOTEMP - Total employment (y)
+    TOTEMP - Total employment
     GNPDEFL - Gross national product deflator
     GNP - Gross national product
     UNEMP - Number of unemployed
     ARMED - Size of armed forces
     POP - Population
-    YEAR - Calendar year (index)
 
     References
     ----------
@@ -494,27 +620,12 @@ def load_longley(return_X_y=False):
     path = os.path.join(MODULE, DIRNAME, name, fname)
     data = pd.read_csv(path, index_col=0)
     data = data.set_index("YEAR")
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
+    data.index = pd.PeriodIndex(data.index, freq="Y", name="Period")
+    data = data.astype(np.float)
 
     # Get target series
-    yname = "TOTEMP"
-    y = data.pop(yname)
-    y = pd.Series([y], name=yname)
-
-    # Get exogeneous series
-    X = pd.DataFrame([pd.Series([data.iloc[:, i]]) for i in range(data.shape[1])]).T
-    X.columns = data.columns
-
-    if return_X_y:
-        y = y.iloc[0]
-        return X, y
-    else:
-        X[yname] = y
-        return X
+    y = data.pop(y_name)
+    return y, data
 
 
 def load_lynx():
@@ -560,25 +671,20 @@ def load_lynx():
     name = "Lynx"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True)
-
-    # change period index to simple numeric index
-    # TODO add support for period/datetime indexing
-    # data.index = pd.PeriodIndex(data.index, freq='Y')
-    data = data.reset_index(drop=True)
-    data.index = pd.Int64Index(data.index)
-    data.name = name
-    return data
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
+    y.index = pd.PeriodIndex(y.index, freq="Y", name="Period")
+    y.name = "Number of Lynx trappings"
+    return y
 
 
 def load_airline():
     """
-    Load the airline univariate time series dataset for forecasting.
+    Load the airline univariate time series dataset [1].
 
     Returns
     -------
-    y : pandas Series
-        Airline passenger numbers dataset
+    y : pd.Series
+     Time series
 
     Details
     -------
@@ -605,12 +711,64 @@ def load_airline():
     name = "Airline"
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
-    data = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: "float64"})
+    y = pd.read_csv(path, index_col=0, squeeze=True, dtype={1: np.float})
 
-    # change period index to simple numeric index
+    # make sure time index is properly formatted
+    y.index = pd.PeriodIndex(y.index, freq="M", name="Period")
+    y.name = "Number of airline passengers"
+    return y
+
+
+def load_uschange(y_name="Consumption"):
+    """
+    Load the multivariate time series dataset for forecasting
+    Growth rates of personal consumption and personal income.
+
+    Returns
+    -------
+    y : pandas Series
+        selected column, default consumption
+    X : pandas Dataframe
+        columns with explanatory variables
+
+    Details
+    -------
+    Percentage changes in quarterly personal consumption expenditure,
+    personal disposable income, production, savings and the
+    unemployment rate for the US, 1960 to 2016.
+
+
+    Dimensionality:     multivariate
+    Columns:            ['Quarter', 'Consumption', 'Income', 'Production',
+                         'Savings', 'Unemployment']
+    Series length:      188
+    Frequency:          Quarterly
+    Number of cases:    1
+
+    Notes
+    -----
+    This data shows an increasing trend, non-constant (increasing) variance
+    and periodic, seasonal patterns.
+
+    References
+    ----------
+    ..fpp2: Data for "Forecasting: Principles and Practice" (2nd Edition)
+    """
+
+    name = "Uschange"
+    fname = name + ".csv"
+    path = os.path.join(MODULE, DIRNAME, name, fname)
+    data = pd.read_csv(path, index_col=0, squeeze=True)
+
+    # Sort by Quarter then set simple numeric index
     # TODO add support for period/datetime indexing
     # data.index = pd.PeriodIndex(data.index, freq='Y')
+    data = data.sort_values("Quarter")
     data = data.reset_index(drop=True)
     data.index = pd.Int64Index(data.index)
     data.name = name
-    return data
+    y = data[y_name]
+    if y_name != "Quarter":
+        data = data.drop("Quarter", axis=1)
+    X = data.drop(y_name, axis=1)
+    return y, X

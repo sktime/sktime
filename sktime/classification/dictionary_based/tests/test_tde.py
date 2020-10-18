@@ -1,15 +1,18 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 from numpy import testing
 
-from sktime.classification.dictionary_based._tde import \
-    TemporalDictionaryEnsemble, IndividualTDE
+from sktime.classification.dictionary_based._tde import (
+    TemporalDictionaryEnsemble,
+    IndividualTDE,
+)
 from sktime.datasets import load_gunpoint
 
 
 def test_tde_on_gunpoint():
     # load gunpoint data
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
     # train tde
@@ -23,8 +26,8 @@ def test_tde_on_gunpoint():
 
 def test_individual_tde_on_gunpoint():
     # load gunpoint data
-    X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-    X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+    X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+    X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
     # train individual tde
@@ -36,30 +39,94 @@ def test_individual_tde_on_gunpoint():
     testing.assert_array_equal(probas, individual_tde_gunpoint_probas)
 
 
-tde_gunpoint_probas = np.array([
-    [0.09110736027612891, 0.9088926397238711, ],
-    [0.3497885414098505, 0.6502114585901497, ],
-    [0.7196609076599216, 0.2803390923400786, ],
-    [0.5043145138348918, 0.4956854861651084, ],
-    [0.0830662443816496, 0.9169337556183506, ],
-    [0.5168692749720266, 0.48313072502797333, ],
-    [0.1753873580003414, 0.8246126419996588, ],
-    [0.5956873826547062, 0.4043126173452939, ],
-    [0.5596920100893247, 0.4403079899106754, ],
-    [0.15915340704356237, 0.8408465929564376, ],
-])
-individual_tde_gunpoint_probas = np.array([
-    [0.0, 1.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-    [1.0, 0.0, ],
-    [1.0, 0.0, ],
-    [0.0, 1.0, ],
-])
+tde_gunpoint_probas = np.array(
+    [
+        [
+            0.05712499747948301,
+            0.942875002520516,
+        ],
+        [
+            0.236868106385982,
+            0.7631318936140177,
+        ],
+        [
+            0.6944192392743598,
+            0.30558076072564017,
+        ],
+        [
+            0.6460051485760759,
+            0.3539948514239242,
+        ],
+        [
+            0.012911768461946917,
+            0.987088231538052,
+        ],
+        [
+            0.3794688766559799,
+            0.6205311233440205,
+        ],
+        [
+            0.09196862460427883,
+            0.9080313753957204,
+        ],
+        [
+            0.654406871937572,
+            0.3455931280624283,
+        ],
+        [
+            0.5724329374441288,
+            0.4275670625558717,
+        ],
+        [
+            0.026132720343596882,
+            0.9738672796564022,
+        ],
+    ]
+)
+individual_tde_gunpoint_probas = np.array(
+    [
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+    ]
+)
 
 
 # def print_array(array):
