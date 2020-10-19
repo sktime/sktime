@@ -31,7 +31,6 @@ from sktime.utils.validation.forecasting import check_y
 ##############################################################################
 # base classes for reduction from forecasting to regression
 
-
 class BaseReducer(BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
@@ -86,14 +85,14 @@ class BaseReducer(BaseWindowForecaster):
         print(x_windows[0])
         print(x_windows[0].shape)
         # Put into required input format for regression
-        X_train, y_train = self._format_windows(x_windows, y_windows)
+        X_train, y_train = self._format_windows(x_windows, y_windows, x_axis_concat=x_window[0].shape[1])
         print("How does it look???")
         print("How does it look???")
         print("How does it look???")
         print(X_train, y_train)
         return X_train, y_train
 
-    def _format_windows(self, x_windows, y_windows=None):
+    def _format_windows(self, x_windows, y_windows=None, x_axis_concat: int=0):
         """Helper function to combine windows from temporal cross-validation
         into nested
         pd.DataFrame for reduction to time series regression or tabular
@@ -112,7 +111,7 @@ class BaseReducer(BaseWindowForecaster):
         y : np.array
             Array of target values.
         """
-        X = self._format_x_windows(x_windows)
+        X = self._format_x_windows(x_windows, x_axis_concat)
 
         # during prediction, y=None, so only return X
         if y_windows is None:
@@ -138,6 +137,48 @@ class BaseReducer(BaseWindowForecaster):
             and np.sum(np.isnan(last_window)) == 0
             and np.sum(np.isinf(last_window)) == 0
         )
+
+
+class MultiReducer(BaseReducer):
+    """Base class for reducing multi output forecasting to time series regression"""
+
+    def __init__(self, regressor, window_length=10, step_length=1):
+        super(MultiReducer, self).__init__(regressor=regressor, window_length=window_length, step_length=step_length)
+        self.regressor = regressor
+        self.step_length = step_length
+        self.step_length_ = None
+        self._cv = None
+        self._nbr_dependent = None
+
+    def _transform(self, y_train, X_train=None):
+        """Transform data using rolling window approach"""
+        if X_train is not None:
+            raise NotImplementedError()
+        y_train = check_y(y_train)
+
+        # get integer time index
+        cv = self._cv
+
+        # Transform target series into tabular format using
+        # rolling window tabularisation
+        x_windows = []
+        y_windows = []
+        for x_index, y_index in cv.split(y_train):
+            x_window = y_train.iloc[x_index] # HERE is the issue I think 
+            y_window = y_train.iloc[y_index]
+
+            x_windows.append(x_window)
+            y_windows.append(y_window)
+        print("The X windows are note gooood....")
+        print(x_windows[0])
+        print(x_windows[0].shape)
+        # Put into required input format for regression
+        X_train, y_train = self._format_windows(x_windows, y_windows, x_axis_concat=x_window[0].shape[1])
+        print("How does it look???")
+        print("How does it look???")
+        print("How does it look???")
+        print(X_train, y_train)
+        return X_train, y_train
 
 
 class ReducedTimeSeriesRegressorMixin:
@@ -171,7 +212,7 @@ class ReducedTabularRegressorMixin:
     """Mixin class for reducing forecasting to tabular regression"""
 
     @staticmethod
-    def _format_x_windows(x_windows):
+    def _format_x_windows(x_windows, axis :int=0):
         """Helper function to combine windows from temporal cross-validation
         into nested
         pd.DataFrame used for solving forecasting via reduction to time
@@ -179,24 +220,15 @@ class ReducedTabularRegressorMixin:
 
         Parameters
         ----------
-        x_windows : list of pd.Series or np.array
+        x_windows : list of pd.Series, pd.DataFrame or np.array
+        axis : dimenstion to concatenate along
 
         Returns
         -------
         X : pd.DataFrame
             Nested time series data frame.
         """
-        print("Winfow formation not it happens ......")
-        print('Embed done')
-        print(type(x_windows))
-        print(type(x_windows[0]))
-        print(x_windows)
-        try:
-            out = np.concatenate(x_windows, axis=1).reshape(len(x_windows),-1)
-        except np.AxisError as e:
-            out = np.concatenate(x_windows, axis=0).reshape(len(x_windows),-1)
-        return  out
-        #return np.vstack(x_windows)
+        return  np.concatenate(x_windows, axis=axis).reshape(len(x_windows),-1)
 
     @staticmethod
     def _format_y_windows(y_windows):
@@ -280,6 +312,87 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         raise NotImplementedError("in-sample predictions are not implemented")
 
 
+class _RecursiveReducerMultiOutput(_DirectReducer, MultiReducer):
+    strategy = "recursiveMultiOutput"
+
+    def fit(self, y_train, fh=None, X_train=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y_train : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X_train : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        # input checks
+        if X_train is not None:
+            raise NotImplementedError()
+
+        # set values
+        self._set_y_X(y_train, X_train)
+        print(f"Are the model fitted: {self._is_fitted}")
+        print("inside newwww")
+        self._set_fh(fh)
+        # Set this and then call the super method, that should be enought I think ..... 
+        self._nbr_dependent = y_train.shape[1]
+
+        self.step_length_ = check_step_length(self.step_length)
+        self.window_length_ = check_window_length(self.window_length)
+
+        # set up cv iterator, for recursive strategy, a single estimator
+        # is fit for a one-step-ahead forecasting horizon and then called
+        # iteratively to predict multiple steps ahead
+        self._cv = SlidingWindowSplitter(
+            fh=1,
+            window_length=self.window_length_,
+            step_length=self.step_length_,
+            start_with_window=True,
+        )
+
+        # transform data into tabular form
+        X_train_tab, y_train_tab = self._transform(y_train, X_train)
+        # fit base regressor
+        regressor = clone(self.regressor)
+        regressor.fit(X_train_tab, y_train_tab)
+        self.regressor_ = regressor
+
+        self._is_fitted = True
+        return self
+
+    def _predict_last_window(
+        self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        """Predict"""
+        # compute prediction
+        # prepare recursive predictions
+        fh_max = fh.to_relative(self.cutoff)[-1]
+        y_pred = np.zeros(shape=(fh_max, self._nbr_dependent))
+        # get last window from observation horizon
+        last_window, _ = self._get_last_window()
+        if not self._is_predictable(last_window):
+            return self._predict_nan(fh)
+        # recursively predict iterating over forecasting horizon
+        for i in range(fh_max):
+            X_last = self._format_windows(
+                [last_window]
+            )  # convert data into required input format
+            y_pred[i] = self.regressor_.predict(
+                X_last
+            )  # make forecast using fitted regressor
+
+            # update last window with previous prediction
+            last_window = np.append(last_window, y_pred[i])[-self.window_length_ * self._nbr_dependent:]
+
+        fh_idx = fh.to_indexer(self.cutoff)
+
+        return y_pred[fh_idx]
+
+
 class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
@@ -304,6 +417,8 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # set values
         self._set_y_X(y_train, X_train)
+        print(fh)
+        print("FH FH FH")
         self._set_fh(fh)
 
         self.step_length_ = check_step_length(self.step_length)
@@ -421,6 +536,28 @@ class RecursiveRegressionForecaster(ReducedTabularRegressorMixin, _RecursiveRedu
     ----------
     regressor : sklearn estimator object
         Define the regression model type.
+    window_length : int, optional (default=10)
+        The length of the sliding window used to transform the series into
+        a tabular matrix
+    step_length : int, optional (default=1)
+        The number of time steps taken at each step of the sliding window
+        used to transform the series into a tabular matrix.
+    """
+
+    pass
+
+class RecursiveRegressionForecasterMultiOutput(ReducedTabularRegressorMixin, _RecursiveReducerMultiOutput):
+    """
+    Forecasting based on reduction to tabular regression with a recursive
+    reduction strategy for multiple outputs.
+    For the recursive reduction strategy, a single estimator is
+    fit for a one-step-ahead forecasting horizon and then called
+    iteratively to predict multiple steps ahead.
+
+    Parameters
+    ----------
+    regressor : sklearn estimator object
+        Define the regression model type that suports multilabel classification. 
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
@@ -549,7 +686,7 @@ def _get_forecaster_class(scitype, strategy):
     scitype)
     and reduction strategy"""
 
-    allowed_strategies = ("direct", "recursive", "dirrec")
+    allowed_strategies = ("direct", "recursive", "dirrec", 'recursiveMultiOutput')
     if strategy not in allowed_strategies:
         raise ValueError(
             f"Unknown strategy, please provide one of {allowed_strategies}."
@@ -562,6 +699,7 @@ def _get_forecaster_class(scitype, strategy):
         "regressor": {
             "direct": DirectRegressionForecaster,
             "recursive": RecursiveRegressionForecaster,
+            "recursiveMultiOutput": RecursiveRegressionForecasterMultiOutput, 
         },
         "ts_regressor": {
             "direct": DirectTimeSeriesRegressionForecaster,
