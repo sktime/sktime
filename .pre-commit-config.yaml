@@ -32,3 +32,9 @@ repos:
   hooks:
   - id: check-manifest
     stages: [manual]
+
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 0.3.2
+  hooks:
+  - id: nbqa-black
+    args: [--nbqa-mutate]
