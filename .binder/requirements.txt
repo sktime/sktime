@@ -1,7 +1,11 @@
+cython>=0.29.0
 matplotlib
-numba
+notebook
+numba<=0.50.*
+pandas>=1.0.0
 pmdarima
+scikit-learn==0.23.*
 scikit-posthocs
 seaborn
-sktime
+statsmodels>=0.12.*
 tsfresh

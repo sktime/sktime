@@ -530,6 +530,45 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "evanmiller29",
+      "name": "Evan Miller",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/8062590?v=4",
+      "profile": "https://github.com/evanmiller29",
+      "contributions": [
+        "tutorial"
+      ]
+    },
+    {
+      "login": "krumeto",
+      "name": "Krum Arnaudov",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/11272436?v=4",
+      "profile": "https://github.com/krumeto",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "martinagvilas",
+      "name": "Martina G. Vilas",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/37339384?v=4",
+      "profile": "https://github.com/martinagvilas",
+      "contributions": [
+        "review",
+        "ideas"
+      ]
+    },
+    {
+      "login": "Emiliathewolf",
+      "name": "Emilia Rose",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/22026218?v=4",
+      "profile": "https://github.com/Emiliathewolf",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ],
   "projectName": "sktime",
