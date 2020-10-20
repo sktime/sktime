@@ -4,18 +4,14 @@ compute.py
 =======================
 Class for signature computation over windows.
 """
+import numpy as np
+import iisignature
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._window import window_getter
 from sktime.transformers.series_as_features.signature_based._rescaling import (
     rescale_path,
     rescale_signature,
 )
-
-from sktime.utils.check_imports import _check_soft_dependencies
-
-_check_soft_dependencies("torch", "signatory")
-import torch  # noqa: E402
-import signatory  # noqa: E402
 
 
 class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
@@ -67,9 +63,12 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             data = rescale_path(data, self.depth)
 
         # Prepare for signature computation
-        path_obj = signatory.Path(data, self.depth)
-        transform = getattr(path_obj, self.sig_tfm)
-        length = path_obj.size(1)
+        if self.sig_tfm == 'signature':
+            transform = lambda x: iisignature.sig(x, self.depth).reshape(1, -1)
+        else:
+            s = iisignature.prepare(data.shape[-1], self.depth)
+            transform = lambda x: iisignature.logsig(x, s).reshape(1, -1)
+        length = data.shape[1]
 
         # Compute signatures in each window returning the grouped structure
         signatures = []
@@ -77,16 +76,22 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             signature_group = []
             for window in window_group:
                 # Signature computation step
-                signature = transform(window.start, window.end)
+                signature = np.concatenate(
+                    [transform(x[window.start:window.end]) for x in data],
+                axis=0)
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = rescale_signature(signature, data.size(2), self.depth)
+                    signature = rescale_signature(
+                        signature, data.shape[2], self.depth
+                    )
 
                 signature_group.append(signature)
             signatures.append(signature_group)
 
         # We are currently not considering deep models and so return all the
         # features concatenated together
-        signatures = torch.cat([x for lst in signatures for x in lst], axis=1)
+        signatures = np.concatenate(
+            [x for lst in signatures for x in lst], axis=1
+        )
 
         return signatures

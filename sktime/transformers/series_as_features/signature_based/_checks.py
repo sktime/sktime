@@ -5,14 +5,10 @@ _checks.py
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
 import functools
+import numpy as np
 import pandas as pd
 from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
-
-from sktime.utils.check_imports import _check_soft_dependencies
-
-_check_soft_dependencies("torch", "signatory")
-import torch  # noqa: E402
 
 
 def handle_sktime_signatures(check_fitted=False):
@@ -45,21 +41,19 @@ def handle_sktime_signatures(check_fitted=False):
             # Make it a tensor, swap to [N, C, L] as this is sktime format
             # signature code assumes the channels are the end dimension
             data_idx = data.index
-            if not isinstance(data, torch.Tensor):
-                tensor_data = torch.Tensor(from_nested_to_3d_numpy(data)).transpose(
-                    1, 2
-                )
+            if not isinstance(data, np.ndarray):
+                numpy_data = from_nested_to_3d_numpy(data)
             else:
-                tensor_data = data
+                numpy_data = data
             # Fit checks
             if check_fitted:
                 self.check_is_fitted()
             # Allow the function to be called on the checked and converted data
             if labels is None:
-                output = func(self, tensor_data, **kwargs)
+                output = func(self, numpy_data, **kwargs)
             else:
-                output = func(self, tensor_data, labels, **kwargs)
-            if isinstance(output, torch.Tensor):
+                output = func(self, numpy_data, labels, **kwargs)
+            if isinstance(output, np.ndarray):
                 output = pd.DataFrame(index=data_idx, data=output)
             return output
 

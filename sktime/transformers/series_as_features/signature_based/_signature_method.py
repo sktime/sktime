@@ -67,6 +67,12 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
 
         self.setup_feature_pipeline()
 
+    def _assertions(self):
+        """ Some assertions to run on initialisation. """
+        assert not all([self.sig_tfm == 'logsignature', self.rescaling ==
+                        'post']), "Cannot have post rescaling with the " \
+                                  "logsignature."
+
     def setup_feature_pipeline(self):
         """ Sets up the signature method as an sklearn pipeline. """
         scaling_step = TrickScaler(scaling=self.scaling)
@@ -99,3 +105,11 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     @handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
+
+
+if __name__ == '__main__':
+    import numpy as np
+    gm = GeneralisedSignatureMethod(depth=2, sig_tfm='logsignature',
+                                    rescaling='pre')
+    a = np.random.randn(10, 100, 4)
+    gm.fit_transform(a)
