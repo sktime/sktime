@@ -35,3 +35,4 @@ From here, you can navigate to:
 
    about
    contributors
+   related_software
