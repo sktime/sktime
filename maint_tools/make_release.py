@@ -185,18 +185,7 @@ class PushToTestPyPI(Step):
 class InstallFromTestPyPI(Step):
     def action(self, context):
         self.instruct("Check installation from TestPyPI")
-        self.print_run(f"mkdir {context['testdir']}")
-        self.print_run(f"cd {context['testdir']}")
-        self.print_cmd("conda remove -n testenv --all -y")
-        self.print_cmd("conda create -n testenv python=3.7")
-        self.print_cmd("conda activate testenv")
-
-        # use extra-index-url to install dependencies
-        self.print_cmd(
-            f"pip install --index-url https://test.pypi.org/simple/ "
-            f"--extra-index-url https://pypi.org/simple "
-            f"{context['package_name']}=={context['version']}"
-        )
+        self.do_cmd(f"sh maint_tools/check_test_pypi_install.sh {context['version']}")
 
 
 class CheckVersionNumber(Step):
@@ -210,16 +199,6 @@ class CheckVersionNumber(Step):
             f"python -c 'import {context['package_name']}; print("
             f"{context['package_name']}.__version__)'"
         )
-
-
-class DeactivateTestEnvironment(Step):
-    def action(self, context):
-        self.instruct("Deactivate and remove test environment.")
-        self.print_run("conda deactivate")
-
-        self.instruct("Go back to the project directory")
-        self.print_cmd("cd ..")
-        self.print_cmd(f"rm -r {context['testdir']}")
 
 
 class GitTagRelease(Step):
@@ -309,7 +288,6 @@ def main():
         MakeDist(),
         PushToTestPyPI(),
         InstallFromTestPyPI(),
-        DeactivateTestEnvironment(),
         PushToGitHub(),
         # check pre-release online
         # GitTagPreRelease(),
