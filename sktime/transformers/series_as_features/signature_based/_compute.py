@@ -63,7 +63,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             data = rescale_path(data, self.depth)
 
         # Prepare for signature computation
-        if self.sig_tfm == 'signature':
+        if self.sig_tfm == "signature":
             transform = lambda x: iisignature.sig(x, self.depth).reshape(1, -1)
         else:
             s = iisignature.prepare(data.shape[-1], self.depth)
@@ -77,21 +77,17 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             for window in window_group:
                 # Signature computation step
                 signature = np.concatenate(
-                    [transform(x[window.start:window.end]) for x in data],
-                axis=0)
+                    [transform(x[window.start : window.end]) for x in data], axis=0
+                )
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = rescale_signature(
-                        signature, data.shape[2], self.depth
-                    )
+                    signature = rescale_signature(signature, data.shape[2], self.depth)
 
                 signature_group.append(signature)
             signatures.append(signature_group)
 
         # We are currently not considering deep models and so return all the
         # features concatenated together
-        signatures = np.concatenate(
-            [x for lst in signatures for x in lst], axis=1
-        )
+        signatures = np.concatenate([x for lst in signatures for x in lst], axis=1)
 
         return signatures

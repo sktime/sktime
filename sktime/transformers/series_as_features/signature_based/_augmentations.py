@@ -66,9 +66,7 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
         B, L = data.shape[0], data.shape[1]
 
         # Time scaled to 0, 1
-        time_scaled = (
-            np.linspace(0, 1, L).reshape(1, L).repeat(B, 0).reshape(B, L, 1)
-        )
+        time_scaled = np.linspace(0, 1, L).reshape(1, L).repeat(B, 0).reshape(B, L, 1)
 
         return np.concatenate((time_scaled, data), 2)
 
