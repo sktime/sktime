@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import itertools
 import os
 import textwrap
@@ -8,40 +9,63 @@ from sklearn.metrics import accuracy_score as acc
 __author__ = ["Jason Pong"]
 
 
-def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
-                                y_pred, split='TEST', resample_seed=0,
-                                y_proba=None, second_line="N/A"):
+def write_results_to_uea_format(
+    path,
+    strategy_name,
+    dataset_name,
+    y_true,
+    y_pred,
+    split="TEST",
+    resample_seed=0,
+    y_proba=None,
+    second_line="N/A",
+):
     if len(y_true) != len(y_pred):
         raise IndexError(
             "The number of predicted class values is not the same as the "
-            "number of actual class values")
+            "number of actual class values"
+        )
 
     try:
         os.makedirs(
-            str(path) + "/" + str(strategy_name) + "/Predictions/" + str(
-                dataset_name) + "/")
+            str(path)
+            + "/"
+            + str(strategy_name)
+            + "/Predictions/"
+            + str(dataset_name)
+            + "/"
+        )
     except os.error:
         pass  # raises os.error if path already exists
 
-    if split == 'TRAIN' or split == 'train':
+    if split == "TRAIN" or split == "train":
         train_or_test = "train"
-    elif split == 'TEST' or split == 'test':
+    elif split == "TEST" or split == "test":
         train_or_test = "test"
     else:
-        raise ValueError(
-            "Unknown 'split' value - should be TRAIN/train or TEST/test")
+        raise ValueError("Unknown 'split' value - should be TRAIN/train or TEST/test")
 
-    file = open(str(path) + "/" + str(strategy_name) + "/Predictions/" + str(
-        dataset_name) +
-                "/" + str(train_or_test) + "Fold" + str(
-        resample_seed) + ".csv", "w")
+    file = open(
+        str(path)
+        + "/"
+        + str(strategy_name)
+        + "/Predictions/"
+        + str(dataset_name)
+        + "/"
+        + str(train_or_test)
+        + "Fold"
+        + str(resample_seed)
+        + ".csv",
+        "w",
+    )
 
     correct = acc(y_true, y_pred)
 
     # the first line of the output file is in the form of:
     # <classifierName>,<datasetName>,<train/test>
-    file.write(str(strategy_name) + "," + str(dataset_name) + "," + str(
-        train_or_test) + "\n")
+    file.write(
+        str(strategy_name) + "," + str(dataset_name) + "," + str(train_or_test) + "\n"
+    )
 
     # the second line of the output is free form and classifier-specific;
     # usually this will record info
@@ -85,11 +109,19 @@ def write_results_to_uea_format(path, strategy_name, dataset_name, y_true,
     file.close()
 
 
-def write_dataframe_to_tsfile(data, path, problem_name,
-                              timestamp=False, univariate=True,
-                              class_label=None, class_value_list=None,
-                              equal_length=False, series_length=-1,
-                              missing_values='NaN', comment=None):
+def write_dataframe_to_tsfile(
+    data,
+    path,
+    problem_name="sample_data",
+    timestamp=False,
+    univariate=True,
+    class_label=None,
+    class_value_list=None,
+    equal_length=False,
+    series_length=-1,
+    missing_values="NaN",
+    comment=None,
+):
     """
     Output a dataset in dataframe format to .ts file
     Parameters
@@ -106,20 +138,23 @@ def write_dataframe_to_tsfile(data, path, problem_name,
     path: str
         The full path to output the ts file
     problem_name: str
-        The problemName to print in the header of the ts file and also the name of the file.
+        The problemName to print in the header of the ts file
+        and also the name of the file.
     timestamp: {False, bool}, optional
         Indicate whether the data contains timestamps in the header.
     univariate: {True, bool}, optional
         Indicate whether the data is univariate or multivariate in the header.
         If univariate, only the first dimension will be written to file
     class_label: {list, None}, optional
-        Provide class label to show the possible class values for classification problems in the header.
+        Provide class label to show the possible class values
+        for classification problems in the header.
     class_value_list: {list/ndarray, []}, optional
         ndarray containing the class values for each case in classification problems
     equal_length: {False, bool}, optional
         Indicate whether each series has equal length. It only write to file if true.
     series_length: {-1, int}, optional
-        Indicate each series length if they are of equal length. It only write to file if true.
+        Indicate each series length if they are of equal length.
+        It only write to file if true.
     missing_values: {NaN, str}, optional
         Representation for missing value, default is NaN.
     comment: {None, str}, optional
@@ -128,15 +163,16 @@ def write_dataframe_to_tsfile(data, path, problem_name,
     Returns
     -------
     None
-    -------
+
     Notes
     -----
     This version currently does not support writing timestamp data.
-    _____
+
     References
     ----------
     The code for writing series data into file is adopted from
-    https://stackoverflow.com/questions/37877708/how-to-turn-a-pandas-dataframe-row-into-a-comma-separated-string
+    https://stackoverflow.com/questions/37877708/
+    how-to-turn-a-pandas-dataframe-row-into-a-comma-separated-string
     """
     if class_value_list is None:
         class_value_list = []
@@ -146,11 +182,13 @@ def write_dataframe_to_tsfile(data, path, problem_name,
     # ensure number of cases is same as the class value list
     if len(data.index) != len(class_value_list) and len(class_value_list) > 0:
         raise IndexError(
-            "The number of cases is not the same as the "
-            "number of given class values")
+            "The number of cases is not the same as the " "number of given class values"
+        )
 
     if equal_length and series_length == -1:
-        raise ValueError("Please specify the series length for equal length time series data.")
+        raise ValueError(
+            "Please specify the series length for equal length time series data."
+        )
 
     # create path if not exist
     dirt = f"{str(path)}/{str(problem_name)}/"
@@ -182,25 +220,29 @@ def write_dataframe_to_tsfile(data, path, problem_name,
         space_separated_class_label = " ".join(str(label) for label in class_label)
         file.write(f"@classLabel true {space_separated_class_label}\n")
     else:
-        file.write(f"@class_label false\n")
+        file.write("@class_label false\n")
 
     # begin writing the core data for each case
     # which are the series and the class value list if there is any
     file.write("@data\n")
     for case, value in itertools.zip_longest(data.iterrows(), class_value_list):
-        for dimension in case[1:]:                          # start from the first dimension
-            series = dimension[0].to_string(index=False,
-                                            header=False,
-                                            na_rep=missing_values)\
-                                 .split("\n")               # split the series observation into separate token
+        for dimension in case[1:]:  # start from the first dimension
+            # split the series observation into separate token
             # ignoring the header and index
-            series = ','.join(obsv for obsv in series)      # turn series into comma-separated row
+            series = (
+                dimension[0]
+                .to_string(index=False, header=False, na_rep=missing_values)
+                .split("\n")
+            )
+            # turn series into comma-separated row
+            series = ",".join(obsv for obsv in series)
             file.write(str(series))
+            # continue with another dimension for multivariate case
             if not univariate:
-                file.write(":")                             # continue with another dimension for multivariate case
+                file.write(":")
         if value is not None:
-            file.write(f":{value}")                         # write the case value if any
-        file.write("\n")                                    # open a new line
+            file.write(f":{value}")  # write the case value if any
+        file.write("\n")  # open a new line
 
     file.close()
 
@@ -225,8 +267,8 @@ if __name__ == "__main__":
         dataset_name="banana_point",
         y_true=actual,
         y_pred=preds,
-        split='TEST',
+        split="TEST",
         resample_seed=0,
         y_proba=probas,
-        second_line="buildTime=100000,num_dummy_things=2"
+        second_line="buildTime=100000,num_dummy_things=2",
     )
