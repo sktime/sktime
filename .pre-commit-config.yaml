@@ -38,3 +38,5 @@ repos:
   hooks:
   - id: nbqa-black
   - id: nbqa-isort
+  - id: nbqa-flake8
+    args: ["--extend-ignore=E402,E203"]

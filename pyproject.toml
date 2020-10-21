@@ -1,6 +1,8 @@
 [tool.nbqa.config]
+flake8 = "setup.cfg"
 isort = "setup.cfg"
 black = "pyproject.toml"
+
 
 [tool.nbqa.mutate]
 isort = 1
