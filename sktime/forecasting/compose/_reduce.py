@@ -436,6 +436,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # prepare recursive predictions
         fh_max = fh.to_relative(self.cutoff)[-1]
         y_pred = np.zeros(fh_max)
+
         # get last window from observation horizon
         last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
@@ -449,6 +450,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             y_pred[i] = self.regressor_.predict(
                 X_last
             )  # make forecast using fitted regressor
+
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self.window_length_ :]
 
