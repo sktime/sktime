@@ -460,7 +460,6 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
     #     raise NotImplementedError()
 
 
-
 ##############################################################################
 # reduction to regression
 class DirectRegressionForecaster(ReducedTabularRegressorMixin, _DirectReducer):
