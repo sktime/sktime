@@ -80,9 +80,9 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             signature_group = []
             for window in window_group:
                 # Signature computation step
-                signature = np.concatenate(
-                    [transform(x[window.start : window.end]) for x in data], axis=0
-                )
+                signature = np.stack(
+                    [transform(x[window.start:window.end]) for x in data]
+                ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
                     signature = rescale_signature(signature, data.shape[2], self.depth)

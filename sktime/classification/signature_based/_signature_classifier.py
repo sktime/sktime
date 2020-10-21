@@ -130,6 +130,7 @@ class SignatureClassifier(BaseClassifier):
         self.setup_classification_pipeline()
 
         # Fit the pre-initialised classification pipeline
+        print(self.pipeline)
         self.pipeline.fit(data, labels)
         self._is_fitted = True
         return self
@@ -207,3 +208,9 @@ def basic_signature_hyperopt(X, y, cv=5, n_iter=10, return_gs=False, random_stat
     out = gs if return_gs else gs.best_estimator_
 
     return out
+
+
+if __name__ == '__main__':
+    from sktime.series_as_features.tests \
+        .test_all_series_as_features_estimators import test_classifier_output
+    test_classifier_output(SignatureClassifier)
