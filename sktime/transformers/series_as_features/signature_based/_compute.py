@@ -64,10 +64,14 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
 
         # Prepare for signature computation
         if self.sig_tfm == "signature":
-            transform = lambda x: iisignature.sig(x, self.depth).reshape(1, -1)
+
+            def transform(x):
+                return iisignature.sig(x, self.depth).reshape(-1, 1)
         else:
             s = iisignature.prepare(data.shape[-1], self.depth)
-            transform = lambda x: iisignature.logsig(x, s).reshape(1, -1)
+
+            def transform(x):
+                return iisignature.logsig(x, s).reshape(1, -1)
         length = data.shape[1]
 
         # Compute signatures in each window returning the grouped structure
