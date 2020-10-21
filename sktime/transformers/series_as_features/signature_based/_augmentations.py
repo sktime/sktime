@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
+import numpy as np
 from sklearn.pipeline import Pipeline
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-
-from sktime.utils.check_imports import _check_soft_dependencies
-
-_check_soft_dependencies("torch", "signatory")
-import torch  # noqa: E402
 
 
 def make_augmentation_pipeline(aug_list):
@@ -70,9 +66,9 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
         B, L = data.shape[0], data.shape[1]
 
         # Time scaled to 0, 1
-        time_scaled = torch.linspace(0, 1, L).repeat(B, 1).view(B, L, 1)
+        time_scaled = np.linspace(0, 1, L).reshape(1, L).repeat(B, 0).reshape(B, L, 1)
 
-        return torch.cat((time_scaled, data), 2)
+        return np.concatenate((time_scaled, data), 2)
 
 
 class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
@@ -91,16 +87,16 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
 
         # Add in a dimension of ones
-        X_pendim = torch.cat((torch.ones(B, L, 1), X), 2)
+        X_pendim = np.concatenate((np.ones(shape=(B, L, 1)), X), 2)
 
         # Add pen down to 0
         pen_down = X_pendim[:, [-1], :]
         pen_down[:, :, 0] = 0
-        X_pendown = torch.cat((X_pendim, pen_down), 1)
+        X_pendown = np.concatenate((X_pendim, pen_down), 1)
 
         # Add home
-        home = torch.zeros(B, 1, C + 1)
-        X_penoff = torch.cat((X_pendown, home), 1)
+        home = np.zeros(shape=(B, 1, C + 1))
+        X_penoff = np.concatenate((X_pendown, home), 1)
 
         return X_penoff
 
@@ -124,14 +120,14 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X):
         # Interleave
-        X_repeat = X.repeat_interleave(2, dim=1)
+        X_repeat = X.repeat(2, axis=1)
 
         # Split out lead and lag
         lead = X_repeat[:, 1:, :]
         lag = X_repeat[:, :-1, :]
 
         # Combine
-        X_leadlag = torch.cat((lead, lag), 2)
+        X_leadlag = np.concatenate((lead, lag), 2)
 
         return X_leadlag
 
@@ -157,7 +153,7 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     def transform(self, X):
         if self.append_zero:
             X = _BasePoint().fit_transform(X)
-        return torch.cumsum(X, 1)
+        return np.cumsum(X, 1)
 
 
 class _BasePoint(BaseSeriesAsFeaturesTransformer):
@@ -171,5 +167,5 @@ class _BasePoint(BaseSeriesAsFeaturesTransformer):
         return self
 
     def transform(self, X):
-        zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
-        return torch.cat((zero_vec, X), dim=1)
+        zero_vec = np.zeros(shape=(X.shape[0], 1, X.shape[2]))
+        return np.concatenate((zero_vec, X), axis=1)

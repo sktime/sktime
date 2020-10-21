@@ -13,9 +13,6 @@ python:
     # build sktime using `python ./setup.py install --force`
     - method: setuptools
       path: .
-    # install doc requirements
-    - requirements: docs/requirements.txt
-    - requirements: docs/additional_requirements.txt
 
 sphinx:
   configuration: docs/source/conf.py

@@ -9,6 +9,8 @@ dimensions of 3D tensors.
 Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
+import numpy as np
+import iisignature
 from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
@@ -16,12 +18,6 @@ from sklearn.preprocessing import (
     FunctionTransformer,
 )
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-
-from sktime.utils.check_imports import _check_soft_dependencies
-
-_check_soft_dependencies("torch", "signatory")
-import torch  # noqa: E402
-import signatory  # noqa: E402
 
 
 class TrickScaler(BaseSeriesAsFeaturesTransformer):
@@ -80,7 +76,7 @@ class TrickScaler(BaseSeriesAsFeaturesTransformer):
 
         # 3d -> 2d -> 2d_scaled -> 3d_scaled
         X_tfm_2d = self.scaler.transform(self._trick(X))
-        X_tfm_3d = torch.Tensor(self._untrick(X_tfm_2d, X.shape))
+        X_tfm_3d = self._untrick(X_tfm_2d, X.shape)
 
         return X_tfm_3d
 
@@ -123,11 +119,11 @@ def rescale_signature(signature, channels, depth):
     torch.Tensor:
         The signature with factorial depth scaling.
     """
-    if signatory.signature_channels(channels, depth) != signature.size(-1):
+    if iisignature.siglength(channels, depth) != signature.shape[-1]:
         raise ValueError(
             "Given a sigtensor with {} channels, a path with {} channels and "
             "a depth of {}, which are not consistent.".format(
-                signature.size(-1), channels, depth
+                signature.shape[-1], channels, depth
             )
         )
 
@@ -144,4 +140,4 @@ def rescale_signature(signature, channels, depth):
 
         terms.append(signature[..., start:end] * val)
 
-    return torch.cat(terms, dim=-1)
+    return np.concatenate(terms, axis=-1)
