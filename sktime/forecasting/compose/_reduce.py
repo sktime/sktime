@@ -31,6 +31,7 @@ from sktime.utils.validation.forecasting import check_y
 ##############################################################################
 # base classes for reduction from forecasting to regression
 
+
 class BaseReducer(BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
@@ -216,7 +217,7 @@ class ReducedTabularRegressorMixin:
         X : pd.DataFrame
             Nested time series data frame.
         """
-        return  np.concatenate(x_windows, axis=x_axis_concat).reshape(len(x_windows),-1)
+        return np.concatenate(x_windows, axis=x_axis_concat).reshape(len(x_windows),-1)
 
     @staticmethod
     def _format_y_windows(y_windows):

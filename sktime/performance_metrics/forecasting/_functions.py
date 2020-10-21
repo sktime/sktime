@@ -101,6 +101,5 @@ def smape_loss(y_test, y_pred, calculater_per_column: bool=False):
 
     check_equal_time_index(y_test, y_pred)
     nominator = np.abs(y_test - y_pred)
-
     denominator = np.abs(y_test) + np.abs(y_pred)
     return np.mean(2.0 * nominator / denominator)
