@@ -480,7 +480,6 @@ class RequiredForecastingHorizonMixin:
             is_fitted = self.is_fitted
         else:
             raise AttributeError("No `is_fitted` attribute found")
-
         if fh is None:
             if is_fitted:
                 # intended workflow, no fh is passed when the forecaster is
@@ -514,7 +513,7 @@ class RequiredForecastingHorizonMixin:
 
 
 class BaseWindowForecaster(BaseSktimeForecaster):
-    """Base class for forecasters that use """
+    """Base class for forecasters thxat use """
 
     def __init__(self, window_length=None):
         super(BaseWindowForecaster, self).__init__()
@@ -566,10 +565,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
             raise NotImplementedError()
 
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
-        print(" HERE WE DO SOME PREDICTION")
         # all values are out-of-sample
         if fh.is_out_of_sample(self.cutoff):
-            print("Prediction type out of sample ..... ")
             return self._predict_fixed_cutoff(
                 fh.to_out_of_sample(self.cutoff), **kwargs
             )
@@ -604,14 +601,10 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         y_pred = pd.Series
         """
         # assert all(fh > 0)
-        print("last here ")
-        print(X)
         y_pred = self._predict_last_window(
             fh, X=X, return_pred_int=return_pred_int, alpha=alpha
         )
         index = fh.to_absolute(self.cutoff)
-        print("Now we are comming closer to the end")
-        print(pd.DataFrame(y_pred, index=index))
         return pd.DataFrame(y_pred, index=index)
 
     def _predict_in_sample(

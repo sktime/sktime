@@ -301,11 +301,6 @@ class ForecastingHorizon:
         """
         is_out_of_sample = self._is_out_of_sample(cutoff)
         out_of_sample = self.to_pandas()[is_out_of_sample]
-        print('to_out_of_sample inside here')
-        print(out_of_sample)
-        tmp = self._new(out_of_sample)
-        print(tmp)
-        print("done")
         return self._new(out_of_sample)
 
     def _is_in_sample(self, cutoff=None):

@@ -76,20 +76,14 @@ class BaseReducer(BaseWindowForecaster):
         x_windows = []
         y_windows = []
         for x_index, y_index in cv.split(y_train):
-            x_window = y_train.iloc[x_index] # HERE is the issue I think 
+            x_window = y_train.iloc[x_index]
             y_window = y_train.iloc[y_index]
 
             x_windows.append(x_window)
             y_windows.append(y_window)
-        print("The X windows are note gooood....")
-        print(x_windows[0])
-        print(x_windows[0].shape)
+
         # Put into required input format for regression
-        X_train, y_train = self._format_windows(x_windows, y_windows, x_axis_concat=x_window[0].shape[1])
-        print("How does it look???")
-        print("How does it look???")
-        print("How does it look???")
-        print(X_train, y_train)
+        X_train, y_train = self._format_windows(x_windows, y_windows)
         return X_train, y_train
 
     def _format_windows(self, x_windows, y_windows=None, x_axis_concat: int=0):
@@ -116,6 +110,7 @@ class BaseReducer(BaseWindowForecaster):
         # during prediction, y=None, so only return X
         if y_windows is None:
             return X
+
         y = self._format_y_windows(y_windows)
         return X, y
 
@@ -169,15 +164,8 @@ class MultiReducer(BaseReducer):
 
             x_windows.append(x_window)
             y_windows.append(y_window)
-        print("The X windows are note gooood....")
-        print(x_windows[0])
-        print(x_windows[0].shape)
         # Put into required input format for regression
-        X_train, y_train = self._format_windows(x_windows, y_windows, x_axis_concat=x_window[0].shape[1])
-        print("How does it look???")
-        print("How does it look???")
-        print("How does it look???")
-        print(X_train, y_train)
+        X_train, y_train = self._format_windows(x_windows, y_windows, x_axis_concat=1)
         return X_train, y_train
 
 
@@ -212,7 +200,7 @@ class ReducedTabularRegressorMixin:
     """Mixin class for reducing forecasting to tabular regression"""
 
     @staticmethod
-    def _format_x_windows(x_windows, axis :int=0):
+    def _format_x_windows(x_windows, x_axis_concat :int=0):
         """Helper function to combine windows from temporal cross-validation
         into nested
         pd.DataFrame used for solving forecasting via reduction to time
@@ -228,7 +216,7 @@ class ReducedTabularRegressorMixin:
         X : pd.DataFrame
             Nested time series data frame.
         """
-        return  np.concatenate(x_windows, axis=axis).reshape(len(x_windows),-1)
+        return  np.concatenate(x_windows, axis=x_axis_concat).reshape(len(x_windows),-1)
 
     @staticmethod
     def _format_y_windows(y_windows):
@@ -312,7 +300,7 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         raise NotImplementedError("in-sample predictions are not implemented")
 
 
-class _RecursiveReducerMultiOutput(_DirectReducer, MultiReducer):
+class _RecursiveReducerMultiOutput(OptionalForecastingHorizonMixin, MultiReducer):
     strategy = "recursiveMultiOutput"
 
     def fit(self, y_train, fh=None, X_train=None):
@@ -336,8 +324,6 @@ class _RecursiveReducerMultiOutput(_DirectReducer, MultiReducer):
 
         # set values
         self._set_y_X(y_train, X_train)
-        print(f"Are the model fitted: {self._is_fitted}")
-        print("inside newwww")
         self._set_fh(fh)
         # Set this and then call the super method, that should be enought I think ..... 
         self._nbr_dependent = y_train.shape[1]
@@ -384,12 +370,10 @@ class _RecursiveReducerMultiOutput(_DirectReducer, MultiReducer):
             y_pred[i] = self.regressor_.predict(
                 X_last
             )  # make forecast using fitted regressor
-
             # update last window with previous prediction
             last_window = np.append(last_window, y_pred[i])[-self.window_length_ * self._nbr_dependent:]
 
         fh_idx = fh.to_indexer(self.cutoff)
-
         return y_pred[fh_idx]
 
 
@@ -417,8 +401,6 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
 
         # set values
         self._set_y_X(y_train, X_train)
-        print(fh)
-        print("FH FH FH")
         self._set_fh(fh)
 
         self.step_length_ = check_step_length(self.step_length)
@@ -435,19 +417,11 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         )
 
         # transform data into tabular form
-        print('HERE')
-        print(y_train)
-        print(X_train)
         X_train_tab, y_train_tab = self._transform(y_train, X_train)
-        print('HERE')
-        print(X_train_tab)
-        print(y_train_tab)
+
         # fit base regressor
         regressor = clone(self.regressor)
-        print("LAAATEST")
-        print(X_train_tab.shape, y_train_tab.shape)
-        print(y_train_tab.ravel().shape)
-        regressor.fit(X_train_tab, y_train_tab)
+        regressor.fit(X_train_tab, y_train_tab.ravel())
         self.regressor_ = regressor
 
         self._is_fitted = True
@@ -460,44 +434,30 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         # compute prediction
         # prepare recursive predictions
         fh_max = fh.to_relative(self.cutoff)[-1]
-        y_pred = np.zeros(shape=(fh_max, 2))
-        print('INSIDE SOME LAST WINDOW')
+        y_pred = np.zeros(fh_max)
         # get last window from observation horizon
         last_window, _ = self._get_last_window()
         if not self._is_predictable(last_window):
             return self._predict_nan(fh)
-        print(last_window)
+
         # recursively predict iterating over forecasting horizon
-        print(f"max is : {fh_max}")
         for i in range(fh_max):
-            print(f"The itteration: {i}")
             X_last = self._format_windows(
                 [last_window]
             )  # convert data into required input format
-            print("The input features are:")
-            print(X_last)
             y_pred[i] = self.regressor_.predict(
                 X_last
             )  # make forecast using fitted regressor
-
             # update last window with previous prediction
-            print("UPDATE the x window with")
-            print("X_last")
-            print(X_last)
-            print("y_pred")
-            print(y_pred[i])
-            print(np.append(last_window, y_pred[i])[-self.window_length_ :])
-            print(np.append(last_window, y_pred[i]))
-            last_window = np.append(last_window, y_pred[i])[-self.window_length_ * 2 :]
+            last_window = np.append(last_window, y_pred[i])[-self.window_length_ :]
 
         fh_idx = fh.to_indexer(self.cutoff)
-        print(y_pred[fh_idx])
-        print('At the end??')
         return y_pred[fh_idx]
 
     # def _predict_in_sample(self, fh, X=None, return_pred_int=False,
     # alpha=None):
     #     raise NotImplementedError()
+
 
 
 ##############################################################################
