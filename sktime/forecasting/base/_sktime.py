@@ -480,8 +480,8 @@ class RequiredForecastingHorizonMixin:
             is_fitted = self.is_fitted
         else:
             raise AttributeError("No `is_fitted` attribute found")
-        if fh is None:
 
+        if fh is None:
             if is_fitted:
                 # intended workflow, no fh is passed when the forecaster is
                 # already fitted
@@ -566,7 +566,7 @@ class BaseWindowForecaster(BaseSktimeForecaster):
             raise NotImplementedError()
 
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
-        
+
         # all values are out-of-sample
         if fh.is_out_of_sample(self.cutoff):
             return self._predict_fixed_cutoff(
