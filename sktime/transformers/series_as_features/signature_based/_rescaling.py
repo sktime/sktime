@@ -10,7 +10,7 @@ Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import numpy as np
-import iisignature
+import esig
 from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
@@ -119,7 +119,7 @@ def rescale_signature(signature, channels, depth):
     torch.Tensor:
         The signature with factorial depth scaling.
     """
-    if iisignature.siglength(channels, depth) != signature.shape[-1]:
+    if (esig.siglength(channels, depth) - 1) != signature.shape[-1]:
         raise ValueError(
             "Given a sigtensor with {} channels, a path with {} channels and "
             "a depth of {}, which are not consistent.".format(
