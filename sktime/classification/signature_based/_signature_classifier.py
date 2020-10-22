@@ -130,7 +130,6 @@ class SignatureClassifier(BaseClassifier):
         self.setup_classification_pipeline()
 
         # Fit the pre-initialised classification pipeline
-        print(self.pipeline)
         self.pipeline.fit(data, labels)
         self._is_fitted = True
         return self
