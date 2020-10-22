@@ -1,5 +1,4 @@
-numpy
-iisignature==0.24
+esig
 jupyter
 m2r2
 matplotlib
