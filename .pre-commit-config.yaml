@@ -34,7 +34,7 @@ repos:
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.3.2
+  rev: 0.3.3
   hooks:
   - id: nbqa-black
   - id: nbqa-isort
