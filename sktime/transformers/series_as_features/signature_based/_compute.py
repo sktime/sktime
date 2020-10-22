@@ -5,7 +5,7 @@ compute.py
 Class for signature computation over windows.
 """
 import numpy as np
-import iisignature
+import esig
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.transformers.series_as_features.signature_based._window import window_getter
 from sktime.transformers.series_as_features.signature_based._rescaling import (
@@ -99,13 +99,3 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         signatures = np.concatenate([x for lst in signatures for x in lst], axis=1)
 
         return signatures
-
-if __name__ == '__main__':
-    import iisignature, esig
-    data = np.random.randn(10, 5)
-    es = esig.stream2logsig(data, depth=3)
-    iis = iisignature.logsig(data, iisignature.prepare(5, 3))
-    es - iis
-    es = esig.stream2sig(data, depth=3)
-    iis = iisignature.sig(data, 3)
-    es - iis
