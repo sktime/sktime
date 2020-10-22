@@ -1,7 +1,7 @@
-import torch
+# -*- coding: utf-8 -*-
+import numpy as np
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 
 
 def make_augmentation_pipeline(aug_list):
@@ -30,23 +30,21 @@ def make_augmentation_pipeline(aug_list):
     """
     # Assertions
     types = [tuple, list, None, str]
-    assert any([type(aug_list) == t for t in types]), (
-        "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
-    )
+    assert any(
+        [type(aug_list) == t for t in types]
+    ), "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
     aug_list = [aug_list] if isinstance(aug_list, str) else aug_list
 
     # Dictionary of augmentations
     AUGMENTATIONS = {
-        'leadlag': _LeadLag(),
-        'ir': _InvisibilityReset(),
-        'addtime': _AddTime(),
-        'cumsum': _CumulativeSum(),
-        'basepoint': _BasePoint()
+        "leadlag": _LeadLag(),
+        "ir": _InvisibilityReset(),
+        "addtime": _AddTime(),
+        "cumsum": _CumulativeSum(),
+        "basepoint": _BasePoint(),
     }
 
-    pipeline = Pipeline([
-        (tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list
-    ])
+    pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
 
     return pipeline
 
@@ -58,14 +56,19 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
     first index. The time channel will be of length L and scaled to exist in
     [0, 1].
     """
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
     def transform(self, data):
         # Batch and length dim
         B, L = data.shape[0], data.shape[1]
 
         # Time scaled to 0, 1
-        time_scaled = torch.linspace(0, 1, L).repeat(B, 1).view(B, L, 1)
+        time_scaled = np.linspace(0, 1, L).reshape(1, L).repeat(B, 0).reshape(B, L, 1)
 
-        return torch.cat((time_scaled, data), 2)
+        return np.concatenate((time_scaled, data), 2)
 
 
 class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
@@ -74,21 +77,26 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
 
     Introduced by Yang et al.: https://arxiv.org/pdf/1707.03993.pdf
     """
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         # Batch, length, channels
         B, L, C = X.shape[0], X.shape[1], X.shape[2]
 
         # Add in a dimension of ones
-        X_pendim = torch.cat((torch.ones(B, L, 1), X), 2)
+        X_pendim = np.concatenate((np.ones(shape=(B, L, 1)), X), 2)
 
         # Add pen down to 0
         pen_down = X_pendim[:, [-1], :]
         pen_down[:, :, 0] = 0
-        X_pendown = torch.cat((X_pendim, pen_down), 1)
+        X_pendown = np.concatenate((X_pendim, pen_down), 1)
 
         # Add home
-        home = torch.zeros(B, 1, C + 1)
-        X_penoff = torch.cat((X_pendown, home), 1)
+        home = np.zeros(shape=(B, 1, C + 1))
+        X_penoff = np.concatenate((X_pendown, home), 1)
 
         return X_penoff
 
@@ -105,16 +113,21 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
         - https://arxiv.org/pdf/1310.4054.pdf
         - https://arxiv.org/pdf/1307.7244.pdf
     """
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
         # Interleave
-        X_repeat = X.repeat_interleave(2, dim=1)
+        X_repeat = X.repeat(2, axis=1)
 
         # Split out lead and lag
         lead = X_repeat[:, 1:, :]
         lag = X_repeat[:, :-1, :]
 
         # Combine
-        X_leadlag = torch.cat((lead, lag), 2)
+        X_leadlag = np.concatenate((lead, lag), 2)
 
         return X_leadlag
 
@@ -129,13 +142,18 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
     append_zero: bool
         Set True to append zero to the path before taking the cumulative sum.
     """
+
     def __init__(self, append_zero=False):
         self.append_zero = append_zero
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
 
     def transform(self, X):
         if self.append_zero:
             X = _BasePoint().fit_transform(X)
-        return torch.cumsum(X, 1)
+        return np.cumsum(X, 1)
 
 
 class _BasePoint(BaseSeriesAsFeaturesTransformer):
@@ -143,6 +161,11 @@ class _BasePoint(BaseSeriesAsFeaturesTransformer):
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf
     """
+
+    def fit(self, X, y=None):
+        self._is_fitted = True
+        return self
+
     def transform(self, X):
-        zero_vec = torch.zeros(size=(X.size(0), 1, X.size(2)))
-        return torch.cat((zero_vec, X), dim=1)
+        zero_vec = np.zeros(shape=(X.shape[0], 1, X.shape[2]))
+        return np.concatenate((zero_vec, X), axis=1)

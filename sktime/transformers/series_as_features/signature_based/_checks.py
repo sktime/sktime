@@ -1,16 +1,17 @@
+# -*- coding: utf-8 -*-
 """
 _checks.py
 ====================
 Contains a reusable decorator function to handle the sklearn signature checks.
 """
 import functools
-import torch
+import numpy as np
 import pandas as pd
 from sktime.utils.validation.series_as_features import check_X, check_X_y
-from sktime.utils.data_container import nested_to_3d_numpy
+from sktime.utils.data_container import from_nested_to_3d_numpy
 
 
-def handle_sktime_signatures(check_fitted=False):
+def handle_sktime_signatures(check_fitted=False, force_numpy=False):
     """Simple function for handling the sktime checks in signature modules.
 
     This decorator assumes that the input arguments to the function are either
@@ -21,43 +22,57 @@ def handle_sktime_signatures(check_fitted=False):
 
     If this is in sktime format data, it will check the data and labels are of
     the correct form, and then
+
+    Args:
+        check_fitted (bool): Set this to True to invoke sktimes `check_fitted`
+            function. (For example when in a transform method).
+        force_numpy (bool): Set True to force the output to be numpy. This is
+            needed in prediction steps where we wish to output y as a numpy
+            array.
     """
+
     def real_decorator(func):
         """Reusable decorator to handle the sktime checks and convert the data
         to a torch Tensor.
         """
+
         @functools.wraps(func)
         def wrapper(self, data, labels=None, **kwargs):
-            # Data checks
-            if labels is None:
-                check_X(data, enforce_univariate=False)
-            else:
-                check_X_y(data, labels, enforce_univariate=False)
+            # Check if pandas so we can convert back
+            is_pandas = True if isinstance(data, pd.DataFrame) else False
+            pd_idx = data.index if is_pandas else None
+
             # Fit checks
             if check_fitted:
                 self.check_is_fitted()
-            # Keep the dataframe index as output is required to be of the
-            # same format
-            data_idx = data.index
-            # Make tensor data
-            tensor_data = sktime_to_tensor(data)
-            # Allow the function to be called on the checked and converted data
+
+            # First convert to pandas so everything is the same format
             if labels is None:
-                output = func(self, tensor_data, **kwargs)
+                data = check_X(data, enforce_univariate=False, coerce_to_pandas=True)
             else:
-                output = func(self, tensor_data, labels, **kwargs)
-            # Rebuild into a dataframe if the output is a tensor
-            if isinstance(output, torch.Tensor):
-                output = pd.DataFrame(index=data_idx, data=output)
+                data, labels = check_X_y(
+                    data, labels, enforce_univariate=False, coerce_to_pandas=True
+                )
+
+            # Now convert it to a numpy array
+            # Note sktime uses [N, C, L] whereas signature code uses shape
+            # [N, L, C] (C being channels) so we must transpose.
+            if not isinstance(data, np.ndarray):
+                data = from_nested_to_3d_numpy(data)
+            data = np.transpose(data, [0, 2, 1])
+
+            # Apply the function to the transposed array
+            if labels is None:
+                output = func(self, data, **kwargs)
+            else:
+                output = func(self, data, labels, **kwargs)
+
+            # Convert back
+            if all([is_pandas, isinstance(output, np.ndarray), not force_numpy]):
+                output = pd.DataFrame(index=pd_idx, data=output)
+
             return output
+
         return wrapper
+
     return real_decorator
-
-
-def sktime_to_tensor(data):
-    """Signature functionality requires torch tensors. This converts from
-    the sktime format.
-    """
-    if not isinstance(data, torch.Tensor):
-        data = torch.Tensor(nested_to_3d_numpy(data)).transpose(1, 2)
-    return data

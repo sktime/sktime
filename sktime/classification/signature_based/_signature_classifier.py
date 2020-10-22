@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 signature_method.py
 ============================
@@ -5,17 +6,20 @@ Implementation of a SignatureClassifier that utilises the signature method of
 feature extraction. This method was built according to the best practices
 and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
-    [arxiv](https://arxiv.org/pdf/2006.00873.pdf)
+    [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
+# -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sktime.classification.base import BaseClassifier
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
-from sktime.transformers.series_as_features.signature_based import \
-    GeneralisedSignatureMethod
-from sktime.transformers.series_as_features.signature_based._checks import \
-    handle_sktime_signatures
+from sktime.transformers.series_as_features.signature_based import (
+    GeneralisedSignatureMethod,
+)
+from sktime.transformers.series_as_features.signature_based._checks import (
+    handle_sktime_signatures,
+)
 
 
 class SignatureClassifier(BaseClassifier):
@@ -65,19 +69,21 @@ class SignatureClassifier(BaseClassifier):
     pipeline: sklearn.Pipeline, The classifier appended to the
         `signature_method` pipeline to make a classification pipeline.
     """
-    def __init__(self,
-                 classifier=None,
-                 scaling='stdsc',
-                 augmentation_list=('basepoint', 'addtime'),
-                 window_name='dyadic',
-                 window_depth=3,
-                 window_length=None,
-                 window_step=None,
-                 rescaling=None,
-                 sig_tfm='signature',
-                 depth=4,
-                 random_state=None,
-                 ):
+
+    def __init__(
+        self,
+        classifier=None,
+        scaling="stdsc",
+        augmentation_list=("basepoint", "addtime"),
+        window_name="dyadic",
+        window_depth=3,
+        window_length=None,
+        window_step=None,
+        rescaling=None,
+        sig_tfm="signature",
+        depth=4,
+        random_state=None,
+    ):
         super(SignatureClassifier, self).__init__()
         self.classifier = classifier
         self.scaling = scaling
@@ -92,32 +98,30 @@ class SignatureClassifier(BaseClassifier):
         self.random_state = random_state
         np.random.seed(random_state)
 
-        self.signature_method = GeneralisedSignatureMethod(scaling,
-                                                           augmentation_list,
-                                                           window_name,
-                                                           window_depth,
-                                                           window_length,
-                                                           window_step,
-                                                           rescaling,
-                                                           sig_tfm,
-                                                           depth,
-                                                           ).signature_method
+        self.signature_method = GeneralisedSignatureMethod(
+            scaling,
+            augmentation_list,
+            window_name,
+            window_depth,
+            window_length,
+            window_step,
+            rescaling,
+            sig_tfm,
+            depth,
+        ).signature_method
 
     def setup_classification_pipeline(self):
         """ Setup the full signature method pipeline. """
         # Use rf if no classifier is set
         if self.classifier is None:
-            classifier = RandomForestClassifier(
-                random_state=self.random_state
-            )
+            classifier = RandomForestClassifier(random_state=self.random_state)
         else:
             classifier = self.classifier
 
         # Main classification pipeline
-        self.pipeline = Pipeline([
-            ('signature_method', self.signature_method),
-            ('classifier', classifier)
-        ])
+        self.pipeline = Pipeline(
+            [("signature_method", self.signature_method), ("classifier", classifier)]
+        )
 
     # Handle the sktime fit checks and convert to a tensor
     @handle_sktime_signatures(check_fitted=False)
@@ -131,22 +135,17 @@ class SignatureClassifier(BaseClassifier):
         return self
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True)
+    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict(self, data):
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True)
+    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict_proba(self, data):
         return self.pipeline.predict_proba(data)
 
 
-def basic_signature_hyperopt(X,
-                             y,
-                             cv=5,
-                             n_iter=10,
-                             return_gs=False,
-                             random_state=None):
+def basic_signature_hyperopt(X, y, cv=5, n_iter=10, return_gs=False, random_state=None):
     """Performs the hyperparameter search that is seen in "A Generalised
     Signature Method for Time Series.
 
@@ -178,20 +177,18 @@ def basic_signature_hyperopt(X,
     np.random.seed(random_state)
     signature_grid = {
         # Signature params
-        'scaling': ['stdsc'],
-        'depth': [1, 2, 3, 4, 5, 6],
-        'window_name': ['dyadic'],
-        'augmentation_list': [['basepoint', 'addtime']],
-        'window_depth': [1, 2, 3, 4],
-        'rescaling': ['post'],
-        'random_state': [random_state],
-
+        "scaling": ["stdsc"],
+        "depth": [1, 2, 3, 4, 5, 6],
+        "window_name": ["dyadic"],
+        "augmentation_list": [["basepoint", "addtime"]],
+        "window_depth": [1, 2, 3, 4],
+        "rescaling": ["post"],
+        "random_state": [random_state],
         # Classifier and classifier params
-        'classifier': [RandomForestClassifier()],
-        'classifier__n_estimators': [50, 100, 500, 1000],
-        'classifier__max_depth': [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100],
-        'classifier__random_state': [random_state],
-
+        "classifier": [RandomForestClassifier()],
+        "classifier__n_estimators": [50, 100, 500, 1000],
+        "classifier__max_depth": [2, 4, 6, 8, 12, 16, 24, 32, 45, 60, 80, 100],
+        "classifier__random_state": [random_state],
     }
 
     # Setup cv
@@ -202,8 +199,9 @@ def basic_signature_hyperopt(X,
     estimator = SignatureClassifier()
 
     # Run a random grid search and return the gs object
-    gs = RandomizedSearchCV(estimator, signature_grid, cv=cv, n_iter=n_iter,
-                            random_state=random_state)
+    gs = RandomizedSearchCV(
+        estimator, signature_grid, cv=cv, n_iter=n_iter, random_state=random_state
+    )
     gs.fit(X, y)
 
     out = gs if return_gs else gs.best_estimator_
