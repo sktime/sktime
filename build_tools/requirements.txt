@@ -1,5 +1,5 @@
 cython>=0.29.0
-esig==0.7.1
+esig==0.8.0
 numba<=0.50.*
 pandas>=1.0.0
 pmdarima
