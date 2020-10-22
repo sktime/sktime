@@ -67,11 +67,14 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
 
             def transform(x):
                 return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
+
             # def transform(x):
             #     return iisignature.sig(x, self.depth).reshape(-1, 1)
         else:
+
             def transform(x):
                 return esig.stream2logsig(x, self.depth).reshape(1, -1)
+
             # s = iisignature.prepare(data.shape[-1], self.depth)
 
             # def transform(x):
@@ -85,7 +88,7 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
             for window in window_group:
                 # Signature computation step
                 signature = np.stack(
-                    [transform(x[window.start:window.end]) for x in data]
+                    [transform(x[window.start : window.end]) for x in data]
                 ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
