@@ -105,3 +105,9 @@ class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
     @handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
+
+
+if __name__ == '__main__':
+    from sktime.transformers.series_as_features.tests \
+        .test_all_series_as_features_transformers import test_transformed_data_has_same_index_as_input_data
+    test_transformed_data_has_same_index_as_input_data(GeneralisedSignatureMethod)

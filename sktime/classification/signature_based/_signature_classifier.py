@@ -135,12 +135,12 @@ class SignatureClassifier(BaseClassifier):
         return self
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True, return_numpy=True)
+    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict(self, data):
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True, return_numpy=True)
+    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict_proba(self, data):
         return self.pipeline.predict_proba(data)
 
