@@ -66,12 +66,16 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         if self.sig_tfm == "signature":
 
             def transform(x):
-                return iisignature.sig(x, self.depth).reshape(-1, 1)
+                return esig.stream2sig(x, self.depth)[1:].reshape(-1, 1)
+            # def transform(x):
+            #     return iisignature.sig(x, self.depth).reshape(-1, 1)
         else:
-            s = iisignature.prepare(data.shape[-1], self.depth)
-
             def transform(x):
-                return iisignature.logsig(x, s).reshape(1, -1)
+                return esig.stream2logsig(x, self.depth).reshape(1, -1)
+            # s = iisignature.prepare(data.shape[-1], self.depth)
+
+            # def transform(x):
+            #     return iisignature.logsig(x, s).reshape(1, -1)
         length = data.shape[1]
 
         # Compute signatures in each window returning the grouped structure
@@ -95,3 +99,13 @@ class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
         signatures = np.concatenate([x for lst in signatures for x in lst], axis=1)
 
         return signatures
+
+if __name__ == '__main__':
+    import iisignature, esig
+    data = np.random.randn(10, 5)
+    es = esig.stream2logsig(data, depth=3)
+    iis = iisignature.logsig(data, iisignature.prepare(5, 3))
+    es - iis
+    es = esig.stream2sig(data, depth=3)
+    iis = iisignature.sig(data, 3)
+    es - iis
