@@ -1,4 +1,4 @@
---prefer-binary=esig
+--prefer-binary
 esig<=0.8.0
 jupyter
 m2r2
