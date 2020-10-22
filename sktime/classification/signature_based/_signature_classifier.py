@@ -136,12 +136,12 @@ class SignatureClassifier(BaseClassifier):
         return self
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True)
+    @handle_sktime_signatures(check_fitted=True, return_numpy=True)
     def predict(self, data):
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True)
+    @handle_sktime_signatures(check_fitted=True, return_numpy=True)
     def predict_proba(self, data):
         return self.pipeline.predict_proba(data)
 
@@ -208,9 +208,3 @@ def basic_signature_hyperopt(X, y, cv=5, n_iter=10, return_gs=False, random_stat
     out = gs if return_gs else gs.best_estimator_
 
     return out
-
-
-if __name__ == '__main__':
-    from sktime.series_as_features.tests \
-        .test_all_series_as_features_estimators import test_classifier_output
-    test_classifier_output(SignatureClassifier)

@@ -11,7 +11,7 @@ from sktime.utils.validation.series_as_features import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
 
 
-def handle_sktime_signatures(check_fitted=False):
+def handle_sktime_signatures(check_fitted=False, return_numpy=True):
     """Simple function for handling the sktime checks in signature modules.
 
     This decorator assumes that the input arguments to the function are either
@@ -61,7 +61,7 @@ def handle_sktime_signatures(check_fitted=False):
                 output = func(self, data, labels, **kwargs)
 
             # Convert back
-            if all([is_pandas, isinstance(output, np.ndarray)]):
+            if all([is_pandas, isinstance(output, np.ndarray), not return_numpy]):
                 output = pd.DataFrame(index=pd_idx, data=output)
 
             return output

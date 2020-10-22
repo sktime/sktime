@@ -1,3 +1,4 @@
+numpy
 iisignature==0.24
 jupyter
 m2r2
