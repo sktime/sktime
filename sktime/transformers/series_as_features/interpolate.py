@@ -33,11 +33,9 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
            original array as y and numpy.linspace(0, 1, len(cell)) as x.
            Then user defined number of points is sampled in
            numpy.linspace(0, 1, length) and returned into cell as numpy array.
-
         Parameters
         ----------
         cell : array-like
-
         Returns
         -------
         numpy.array : with user defined size
@@ -47,11 +45,9 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
 
     def _resize_col(self, coll):
         """Resizes column cell-wise.
-
         Parameters
         ----------
         coll : pandas.Series : a column with array-like objects in each cell
-
         Returns
         -------
         pandas.Series : a column with numpy.array in each cell with user
@@ -61,12 +57,10 @@ class TSInterpolator(BaseSeriesAsFeaturesTransformer):
 
     def transform(self, X, y=None):
         """Takes series in each cell, train linear interpolation and samples n.
-
         Parameters
         ----------
         X : nested pandas DataFrame of shape [n_samples, n_features]
             Nested dataframe with time-series in cells.
-
         Returns
         -------
         pandas DataFrame : Transformed pandas DataFrame with same number
