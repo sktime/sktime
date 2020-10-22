@@ -1,4 +1,5 @@
 esig==0.8.0
+--only-binary=esig
 jupyter
 m2r2
 matplotlib
