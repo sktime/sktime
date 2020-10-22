@@ -1,7 +1,5 @@
 cython>=0.29.0
 esig
-numpy
-iisignature==0.24
 numba<=0.50.*
 pandas>=1.0.0
 pmdarima
