@@ -232,8 +232,8 @@ class MUSE(BaseClassifier):
                             all_words[j][word] = value
 
         self.clf = make_pipeline(
-            DictVectorizer(sparse=False),
-            StandardScaler(with_mean=True, copy=False),
+            DictVectorizer(sparse=True, sort=False),
+            # StandardScaler(with_mean=True, copy=False),
             LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",

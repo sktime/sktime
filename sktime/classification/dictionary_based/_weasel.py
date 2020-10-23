@@ -21,9 +21,6 @@ from sktime.transformers.series_as_features.dictionary_based import SFA
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
-# from sklearn.feature_selection import chi2
-# from numba.typed import Dict
-
 
 class WEASEL(BaseClassifier):
     """Word ExtrAction for time SEries cLassification (WEASEL)
@@ -122,13 +119,13 @@ class WEASEL(BaseClassifier):
         self.anova = anova
 
         self.norm_options = [False]
-        self.word_lengths = [6]
+        self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
-        self.min_window = 4
+        self.min_window = 6
         self.max_window = 100
 
         self.window_inc = window_inc
@@ -195,11 +192,12 @@ class WEASEL(BaseClassifier):
             self.SFA_transformers.append(transformer)
             bag = sfa_words[0]
 
-            # chi-squared test to keep only relevant features
             relevant_features = {}
             apply_chi_squared = self.chi2_threshold > 0
+
+            # chi-squared test to keep only relevant features
             if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
+                vectorizer = DictVectorizer(sparse=False, dtype=np.int32, sort=False)
                 bag_vec = vectorizer.fit_transform(bag)
 
                 if len(vectorizer.feature_names_) > 1000:
@@ -236,20 +234,19 @@ class WEASEL(BaseClassifier):
                         all_words[j][word] = value
 
         self.clf = make_pipeline(
-            DictVectorizer(sparse=False, sort=False),
-            StandardScaler(copy=False),
+            DictVectorizer(sparse=True, sort=False),
+            # StandardScaler(copy=False),
             LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
                 dual=True,
                 # class_weight="balanced",
                 penalty="l2",
-                tol=0.1,
                 random_state=self.random_state,
             ),
         )
 
-        # print("Size of dict", relevant_features_count)  # TODO uncomment
+        print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
@@ -274,27 +271,27 @@ class WEASEL(BaseClassifier):
 
         bag_all_words = [dict() for _ in range(len(X))]
         for i, window_size in enumerate(self.window_sizes):
+            if len(self.SFA_transformers) > i:
+                # SFA transform
+                sfa_words = self.SFA_transformers[i].transform(X)
+                bag = sfa_words[0]
 
-            # SFA transform
-            sfa_words = self.SFA_transformers[i].transform(X)
-            bag = sfa_words[0]
+                # merging bag-of-patterns of different window_sizes
+                # to single bag-of-patterns with prefix indicating
+                # the used window-length
+                for j in range(len(bag)):
+                    for (key, value) in bag[j].items():
+                        # append the prefices to the words to distinguish
+                        # between window-sizes
+                        if isinstance(key, tuple):
+                            word = (
+                                ((key[0] << self.highest_bit) | key[1]) << 3
+                            ) | window_size
+                        else:
+                            # word = ((key << self.highest_bit) << 3) | window_size
+                            word = WEASEL.shift_left(key, self.highest_bit, window_size)
 
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    if isinstance(key, tuple):
-                        word = (
-                            ((key[0] << self.highest_bit) | key[1]) << 3
-                        ) | window_size
-                    else:
-                        # word = ((key << self.highest_bit) << 3) | window_size
-                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
-
-                    bag_all_words[j][word] = value
+                        bag_all_words[j][word] = value
 
         return bag_all_words
 
