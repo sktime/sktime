@@ -1,6 +1,5 @@
---prefer-binary
 cython>=0.29.0
-esig==0.8.0
+esig==0.8.1
 numba<=0.50.*
 pandas>=1.0.0
 pmdarima
