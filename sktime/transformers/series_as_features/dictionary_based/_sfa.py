@@ -599,7 +599,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         r_window_length = 1 / window_size
         mean = series_sum * r_window_length
         buf = square_sum * r_window_length - mean * mean
-        stds[0] = math.sqrt(buf) if buf > 0 else 0
+        stds[0] = math.sqrt(buf) if buf > 1e-8 else 1
 
         for w in range(1, end):
             series_sum += series[w + window_size - 1] - series[w - 1]
@@ -609,7 +609,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 - series[w - 1] * series[w - 1]
             )
             buf = square_sum * r_window_length - mean * mean
-            stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
+            stds[w] = math.sqrt(buf) if buf > 1e-8 else 1
 
         return stds
 
