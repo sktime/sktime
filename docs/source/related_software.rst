@@ -74,8 +74,6 @@ Libraries
      - A Python library for detecting patterns and anomalies in massive datasets using the Matrix Profile
    * - `mcfly <https://mcfly.readthedocs.io/en/latest/>`_
      - Deep learning for time series classification with automated hyperparameter selection
-   * - `Microsoft forecasting <https://github.com/microsoft/forecasting>`_
-     - Collection of forecasting models and best practices, interfaces existing libraries in Python and R
    * - `Nitime <https://github.com/nipy/nitime>`_
      - Time series analysis for neuroscience data
    * - `NoLiTSA <https://github.com/manu-mannattil/nolitsa>`_
@@ -120,8 +118,6 @@ Libraries
      - Calculates matrix profile for time series subsequence all-pairs-similarity-search
    * - `tbats <https://pypi.org/project/tbats/>`_
      - Package provides BATS and TBATS time series forecasting methods
-   * - `TensorFlow-Time-Series-Examples <https://github.com/hzy46/TensorFlow-Time-Series-Examples>`_
-     - Time Series Prediction with tf.contrib.timeseries
    * - `tensorflow_probability.sts <https://github.com/tensorflow/probability/tree/master/tensorflow_probability/python/sts>`_
      - Bayesian Structural Time Series model in Tensorflow Probability
    * - `timechop <https://github.com/dssg/timechop>`_
@@ -156,6 +152,8 @@ Specific model implementations
      - A collection of common deep learning architectures for time series classification
    * - `M4 competition <https://github.com/M4Competition>`_
      - Collection of statistical and machine learning forecasting methods
+   * - `Microsoft forecasting <https://github.com/microsoft/forecasting>`_
+     - Collection of forecasting models and best practices, interfaces existing libraries in Python and R
    * - `LSTM-Neural-Network-for-Time-Series-Prediction <https://github.com/jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction>`_
      - LSTM for forecasting model
    * - `LSTM_tsc <https://github.com/RobRomijnders/LSTM_tsc>`_
@@ -164,6 +162,8 @@ Specific model implementations
      - Shapelet classifier based on a multi layer neural network
    * - `ROCKET <https://github.com/angus924/rocket>`_
      - Time series classification using random convolutional kernels
+   * - `TensorFlow-Time-Series-Examples <https://github.com/hzy46/TensorFlow-Time-Series-Examples>`_
+     - Time Series Prediction with tf.contrib.timeseries
    * - `UCR_Time_Series_Classification_Deep_Learning_Baseline <https://github.com/cauchyturing/UCR_Time_Series_Classification_Deep_Learning_Baseline>`_
      - Fully convolutional neural networks for state-of-the-art time series classification
    * - `WTTE-RNN <https://github.com/ragulpr/wtte-rnn/>`_
