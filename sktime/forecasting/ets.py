@@ -40,7 +40,7 @@ class AutoETS(_StatsModelsAdapter):
         The number of periods in a complete seasonal cycle for seasonal
         (Holt-Winters) models. For example, 4 for quarterly data with an
         annual cycle or 7 for daily data with a weekly cycle. Required if
-        `seasonal` is not None.
+        `seasonal` is not None. Default is `1`.
     initialization_method : str, optional
         Method for initialization of the state space model. One of:
 
@@ -153,7 +153,7 @@ class AutoETS(_StatsModelsAdapter):
         trend=None,
         damped=False,
         seasonal=None,
-        sp=None,
+        sp=1,
         initialization_method="estimated",
         initial_level=None,
         initial_trend=None,
@@ -218,7 +218,10 @@ class AutoETS(_StatsModelsAdapter):
                 trend_range = ["add", "mul", None]
             else:
                 trend_range = ["add", None]
-            seasonal_range = ["add", "mul", None]
+            if self.sp <= 1 or self.sp is None:
+                seasonal_range = [None]
+            else:
+                seasonal_range = ["add", "mul", None]
             damped_range = [True, False]
 
             # Check information criterion input
