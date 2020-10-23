@@ -13,7 +13,8 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+
+# from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -222,15 +223,7 @@ class WEASEL(BaseClassifier):
                     if (not apply_chi_squared) or (key in relevant_features):
                         # append the prefixes to the words to
                         # distinguish between window-sizes
-                        if isinstance(key, tuple):
-                            word = (
-                                ((key[0] << self.highest_bit) | key[1]) << 3
-                            ) | window_size
-                        else:
-                            # word = ((key << self.highest_bit) << 3) \
-                            #        | window_size
-                            word = WEASEL.shift_left(key, self.highest_bit, window_size)
-
+                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
                         all_words[j][word] = value
 
         self.clf = make_pipeline(
@@ -246,7 +239,7 @@ class WEASEL(BaseClassifier):
             ),
         )
 
-        print("Size of dict", relevant_features_count)  # TODO uncomment
+        # print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
@@ -283,14 +276,7 @@ class WEASEL(BaseClassifier):
                     for (key, value) in bag[j].items():
                         # append the prefices to the words to distinguish
                         # between window-sizes
-                        if isinstance(key, tuple):
-                            word = (
-                                ((key[0] << self.highest_bit) | key[1]) << 3
-                            ) | window_size
-                        else:
-                            # word = ((key << self.highest_bit) << 3) | window_size
-                            word = WEASEL.shift_left(key, self.highest_bit, window_size)
-
+                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
                         bag_all_words[j][word] = value
 
         return bag_all_words

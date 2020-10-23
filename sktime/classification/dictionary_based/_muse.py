@@ -14,7 +14,8 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+
+# from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
@@ -287,7 +288,6 @@ class MUSE(BaseClassifier):
                         word = MUSE.shift_left(
                             key, highest, ind, self.highest_dim_bit, window_size
                         )
-
                         bag_all_words[j][word] = value
 
         return bag_all_words
