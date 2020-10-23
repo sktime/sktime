@@ -89,8 +89,8 @@ class MUSE(BaseClassifier):
         self,
         anova=True,
         bigrams=True,
-        window_inc=4,
-        chi2_threshold=2,
+        window_inc=2,
+        chi2_threshold=1,
         use_first_order_differences=True,
         random_state=None,
     ):
