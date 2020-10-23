@@ -437,9 +437,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         mft_data = np.empty((length,), dtype=reals.dtype)
         mft_data[0::2] = reals[: np.uint32(length / 2)]
         mft_data[1::2] = imags[: np.uint32(length / 2)]
-        transformed[0] = (
-            mft_data * self.inverse_sqrt_win_size / (stds[0] if stds[0] > 1e-8 else 1)
-        )
+        transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
 
         # other runs using mft
         # moved to external method to use njit
@@ -479,10 +477,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
-            normalising_factor = inverse_sqrt_win_size / (
-                stds[i] if stds[i] > 1e-8 else 1
-            )
-
+            normalising_factor = inverse_sqrt_win_size / stds[i]
             transformed[i] = mft_data * normalising_factor
 
     # TODO merge with transform???
@@ -598,8 +593,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         r_window_length = 1 / window_size
         mean = series_sum * r_window_length
-        buf = square_sum * r_window_length - mean * mean
-        stds[0] = math.sqrt(buf) if buf > 1e-8 else 1
+        buf = math.sqrt(square_sum * r_window_length - mean * mean)
+        stds[0] = buf if buf > 1e-8 else 1
 
         for w in range(1, end):
             series_sum += series[w + window_size - 1] - series[w - 1]
@@ -608,8 +603,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                 series[w + window_size - 1] * series[w + window_size - 1]
                 - series[w - 1] * series[w - 1]
             )
-            buf = square_sum * r_window_length - mean * mean
-            stds[w] = math.sqrt(buf) if buf > 1e-8 else 1
+            buf = math.sqrt(square_sum * r_window_length - mean * mean)
+            stds[w] = buf if buf > 1e-8 else 1
 
         return stds
 

@@ -198,7 +198,7 @@ class WEASEL(BaseClassifier):
 
             # chi-squared test to keep only relevant features
             if apply_chi_squared:
-                vectorizer = DictVectorizer(sparse=False, dtype=np.int32, sort=False)
+                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                 bag_vec = vectorizer.fit_transform(bag)
 
                 if len(vectorizer.feature_names_) > 1000:
@@ -239,7 +239,7 @@ class WEASEL(BaseClassifier):
             ),
         )
 
-        # print("Size of dict", relevant_features_count)  # TODO uncomment
+        print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self

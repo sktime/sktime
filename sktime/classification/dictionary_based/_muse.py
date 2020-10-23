@@ -203,7 +203,7 @@ class MUSE(BaseClassifier):
                 relevant_features = {}
                 apply_chi_squared = self.chi2_threshold > 0
                 if apply_chi_squared:
-                    vectorizer = DictVectorizer(sparse=True)
+                    vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                     bag_vec = vectorizer.fit_transform(bag)
 
                     if len(vectorizer.feature_names_) > 1000:
