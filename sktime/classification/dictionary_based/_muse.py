@@ -110,8 +110,8 @@ class MUSE(BaseClassifier):
         self.binning_strategies = ["equi-width", "equi-depth"]
         self.random_state = random_state
 
-        self.min_window = 4
-        self.max_window = 350
+        self.min_window = 6
+        self.max_window = 100
 
         self.window_inc = window_inc
         self.highest_bit = -1
