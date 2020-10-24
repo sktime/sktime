@@ -58,7 +58,7 @@ def all_estimators(estimator_type=None):
         return True
 
     all_classes = []
-    modules_to_ignore = {"tests", "setup", "contrib"}
+    modules_to_ignore = ("tests", "setup", "contrib")
     root = str(Path(__file__).parent.parent)  # sktime package
 
     # Ignore deprecation warnings triggered at import time and from walking

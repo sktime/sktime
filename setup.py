@@ -25,12 +25,12 @@ MIN_REQUIREMENTS = {
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.0",
+    "numba": "0.50.*",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
         "cython>=0.29.0",
         "matplotlib>=3.3.2",
-        "numba<=0.50.*",
         "pmdarima>=1.7.1",
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",

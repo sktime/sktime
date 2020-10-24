@@ -1,5 +1,5 @@
 # author: Markus Löning
-#
+
 # adapted from
 # - https://iscinumpy.gitlab.io/post/azure-devops-python-wheels/
 # - https://iscinumpy.gitlab.io/post/azure-devops-releases/
@@ -12,13 +12,12 @@ trigger:
   branches:
     include:
       - master
-      - dev
   tags:
     include:
       - '*'
 pr:
   # Cancel if new commits are pushed to the same PR
-  autoCancel: true
+  autoCancel: 'true'
 
 stages:
   - stage: 'Linting'
@@ -50,22 +49,34 @@ stages:
           - template: build_tools/azure/publish.yml
         strategy:
           matrix:
-            64x2010:  # 64 bit 2010
-              PLATFORM: manylinux2010_x86_64
-              IMAGE: quay.io/pypa/manylinux2010_x86_64
-              PYTHON_ARCHITECTURE: x64
-            64x:  # 64 bit
+            64x: # 64 bit
               PLATFORM: manylinux1_x86_64
               IMAGE: quay.io/pypa/manylinux1_x86_64
               PYTHON_ARCHITECTURE: x64
-            #            86x:  # 32 bit
-            #              PLATFORM: manylinux1_i686
-            #              IMAGE: quay.io/pypa/manylinux1_i686
-            #              PYTHON_ARCHITECTURE: x86
-            64x2014:  # 64 bit
+            64x2010: # 64 bit 2010
+              PLATFORM: manylinux2010_x86_64
+              IMAGE: quay.io/pypa/manylinux2010_x86_64
+              PYTHON_ARCHITECTURE: x64
+            64x2014: # 64 bit
               PLATFORM: manylinux2014_x86_64
               IMAGE: quay.io/pypa/manylinux2014_x86_64
               PYTHON_ARCHITECTURE: x86
+      - job: 'check_soft_dependencies'
+        pool:
+          - vmImage: 'ubuntu-latest'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.6'
+          - script: pip install -r build_tools/hard_dependencies.txt
+            displayName: 'Install hard dependencies'
+          - script: pip install -e .
+            displayName: 'Build sktime'
+          - task: PythonScript@0
+            displayName: 'Check soft dependencies'
+            inputs:
+              scriptSource: 'filePath'
+              scriptPath: build_tools/azure/check_soft_dependencies.py
 
   - stage: 'Deploy'
     dependsOn: 'Build'
