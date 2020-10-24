@@ -67,10 +67,10 @@ class MUSE(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = 2 (enabled by default)
+     p_threshold:      int, default = 0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
-        This is the threshold to use for chi-squared test on bag-of-words
-        (higher means more strict). Negative values indicate that the test
+        This is the p-value threshold to use for chi-squared test on bag-of-words
+        (lower means more strict). 1 indicates that the test
         should not be performed.
 
     use_first_order_differences:    boolean, default = True
@@ -91,7 +91,7 @@ class MUSE(BaseClassifier):
         anova=True,
         bigrams=True,
         window_inc=2,
-        chi2_threshold=1,
+        p_threshold=0.05,
         use_first_order_differences=True,
         random_state=None,
     ):
@@ -100,11 +100,11 @@ class MUSE(BaseClassifier):
         self.alphabet_size = 4
 
         # feature selection is applied based on the chi-squared test.
-        self.chi2_threshold = chi2_threshold
+        self.p_threshold = p_threshold
         self.anova = anova
         self.use_first_order_differences = use_first_order_differences
 
-        self.norm_options = [True, False]
+        self.norm_options = [False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
@@ -201,21 +201,16 @@ class MUSE(BaseClassifier):
 
                 # chi-squared test to keep only relevant features
                 relevant_features = {}
-                apply_chi_squared = self.chi2_threshold > 0
+                apply_chi_squared = self.p_threshold < 1
                 if apply_chi_squared:
                     vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
                     bag_vec = vectorizer.fit_transform(bag)
 
-                    if len(vectorizer.feature_names_) > 1000:
-                        chi2_statistics, p = chi2(bag_vec, y)
-                        relevant_features_idx = np.where(
-                            chi2_statistics >= self.chi2_threshold
-                        )[0]
-                        relevant_features = set(
-                            np.array(vectorizer.feature_names_)[relevant_features_idx]
-                        )
-                    else:
-                        apply_chi_squared = False
+                    chi2_statistics, p = chi2(bag_vec, y)
+                    relevant_features_idx = np.where(p <= self.p_threshold)[0]
+                    relevant_features = set(
+                        np.array(vectorizer.feature_names_)[relevant_features_idx]
+                    )
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
