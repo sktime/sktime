@@ -27,9 +27,10 @@ for _, modname, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime.")
     try:
         import_module(modname)
     except ModuleNotFoundError as e:
-        if any(
-            soft_dependency in str(e)
-            for soft_dependency in SOFT_DEPENDENCIES.get(modname, [])
-        ):
+        soft_dependencies = SOFT_DEPENDENCIES.get(modname, [])
+        if any(soft_dependency in str(e) for soft_dependency in soft_dependencies):
             continue
-        raise e
+        raise RuntimeError(
+            f"{modname} should not require any soft dependencies, "
+            f"but tried importing them: {soft_dependencies}"
+        ) from e
