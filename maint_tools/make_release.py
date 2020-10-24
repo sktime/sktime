@@ -32,7 +32,6 @@ class URLs:
     )
     DOCS_ONLINE = "https://www.sktime.org"
     PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
-    GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
 
 def read(*parts):
@@ -175,17 +174,19 @@ class MakeDist(Step):
         self.do_cmd("make dist")
 
 
-class PushToTestPyPI(Step):
+class UploadToTestPyPI(Step):
     def action(self, context):
         self.instruct("Upload to TestPyPI")
-        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ " "dist/*"
+        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
         self.do_cmd(cmd)
 
 
 class InstallFromTestPyPI(Step):
     def action(self, context):
         self.instruct("Check installation from TestPyPI")
-        self.do_cmd(f"sh maint_tools/check_test_pypi_install.sh {context['version']}")
+        self.do_cmd(
+            f"sh maint_tools/check_install_from_test_pypi.sh {context['version']}"
+        )
 
 
 class CheckVersionNumber(Step):
@@ -241,17 +242,6 @@ class CheckPyPIFiles(Step):
         open_website(URLs.PYPI)
 
 
-class OpenGitHubPR(Step):
-    def action(self, context):
-        self.instruct("Open PR from dev to master on GitHub")
-        open_website(URLs.GITHUB_NEW_PR)
-
-
-class MergeGitHubPR(Step):
-    def action(self, context):
-        self.instruct("Review and merge PR from dev into master on GitHub")
-
-
 class PushTagToGitHub(Step):
     def action(self, context):
         self.do_cmd("git push -u --tags origin master")
@@ -260,24 +250,7 @@ class PushTagToGitHub(Step):
 def main():
     colorama.init()
     steps = [
-        # ConfirmGitStatus(branch="dev"),
-        # # run checks locally
-        # MakeClean(),
-        # RunLinting(),
-        # RunTests(),
-        # UpdateChangelog(),
-        # MakeDocs(),
-        # CheckLocalDocs(),
-        # BumpVersion(),
-        # CheckVersionNumber(),
-        # # run CI checks online
-        # PushToGitHub(),
-        # OpenGitHubPR(),
-        # CheckCIStatus(),
-        # MergeGitHubPR(),
-        # CheckCIStatus(),
-        # CheckOnlineDocs(),
-        # check TestPyPI locally
+        # prepare and run final checks
         ConfirmGitStatus(branch="master"),
         MakeClean(),
         BumpVersion(),
@@ -286,13 +259,13 @@ def main():
         MakeDocs(),
         CheckLocalDocs(),
         MakeDist(),
-        PushToTestPyPI(),
+        UploadToTestPyPI(),
         InstallFromTestPyPI(),
         PushToGitHub(),
+        CheckCIStatus(),
         # check pre-release online
         # GitTagPreRelease(),
         # PushTagToGitHub(),
-        CheckCIStatus(),
         # make release
         GitTagRelease(),
         PushTagToGitHub(),
