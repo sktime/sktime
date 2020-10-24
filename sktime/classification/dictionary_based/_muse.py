@@ -298,10 +298,8 @@ class MUSE(BaseClassifier):
 
     def compute_window_inc(self, series_length):
         win_inc = self.window_inc
-        if series_length < 50:
-            win_inc = 2  # less than 50 is ok time-wise
-        elif series_length < 100:
-            win_inc = min(self.window_inc, 4)  # less than 50 is ok time-wise
+        if series_length < 100:
+            win_inc = 1  # less than 100 is ok time-wise
         return win_inc
 
     @staticmethod

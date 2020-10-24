@@ -119,7 +119,7 @@ class WEASEL(BaseClassifier):
 
         self.anova = anova
 
-        self.norm_options = [True, False]
+        self.norm_options = [False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
@@ -277,10 +277,8 @@ class WEASEL(BaseClassifier):
 
     def compute_window_inc(self):
         win_inc = self.window_inc
-        if self.series_length < 50:
-            win_inc = 1  # less than 50 is ok runtime-wise
-        elif self.series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 100 is ok runtime-wise
+        if self.series_length < 100:
+            win_inc = 1  # less than 100 is ok runtime-wise
         return win_inc
 
     @staticmethod
