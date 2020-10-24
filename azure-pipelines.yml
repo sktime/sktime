@@ -63,7 +63,7 @@ stages:
               PYTHON_ARCHITECTURE: x86
       - job: 'check_soft_dependencies'
         pool:
-          - vmImage: 'ubuntu-latest'
+          vmImage: 'ubuntu-latest'
         steps:
           - task: UsePythonVersion@0
             inputs:
