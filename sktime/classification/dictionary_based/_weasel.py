@@ -138,7 +138,6 @@ class WEASEL(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.best_word_length = -1
 
         super(WEASEL, self).__init__()
 

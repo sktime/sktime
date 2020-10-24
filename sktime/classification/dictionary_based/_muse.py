@@ -24,8 +24,6 @@ from sktime.utils.data_container import from_nested_to_3d_numpy
 from sktime.utils.validation.series_as_features import check_X
 from sktime.utils.validation.series_as_features import check_X_y
 
-# from numba.typed import Dict
-
 
 class MUSE(BaseClassifier):
     """WEASEL+MUSE (MUltivariate Symbolic Extension)
@@ -124,7 +122,6 @@ class MUSE(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.best_word_length = -1
 
         super(MUSE, self).__init__()
 
@@ -197,7 +194,7 @@ class MUSE(BaseClassifier):
                 sfa_words = transformer.fit_transform(X_dim, y)
 
                 self.SFA_transformers[ind].append(transformer)
-                bag = sfa_words[0]  # .iloc[:, 0]
+                bag = sfa_words[0]
 
                 # chi-squared test to keep only relevant features
                 relevant_features = {}
@@ -270,7 +267,7 @@ class MUSE(BaseClassifier):
 
                 # SFA transform
                 sfa_words = self.SFA_transformers[ind][i].transform(X_dim)
-                bag = sfa_words[0]  # .iloc[:, 0]
+                bag = sfa_words[0]
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
