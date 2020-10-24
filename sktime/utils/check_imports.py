@@ -25,7 +25,7 @@ def _check_soft_dependencies(*packages):
             msg = (
                 f"{e}. '{package}' is a soft dependency and not included in the "
                 f"sktime installation. Please run: `pip install {package}`. "
-                f"Alternatively, to install all soft dependencies, run: `pip install "
+                f"To install all soft dependencies, run: `pip install "
                 f"sktime[all_extras]`"
             )
             raise ModuleNotFoundError(msg) from e
