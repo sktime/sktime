@@ -17,7 +17,7 @@ trigger:
       - '*'
 pr:
   # Cancel if new commits are pushed to the same PR
-  autoCancel: 'true'
+  autoCancel: true
 
 stages:
   - stage: 'Linting'
@@ -29,7 +29,7 @@ stages:
           - task: UsePythonVersion@0
             displayName: 'Use Python version'
             inputs:
-              versionSpec: 3.x
+              versionSpec: 3.7
           - script: pip install flake8
             displayName: 'Installing flake8'
           - task: Bash@3
@@ -41,6 +41,22 @@ stages:
     dependsOn: 'Linting'
     condition: succeeded('Linting')
     jobs:
+      - job: 'check_soft_dependencies'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: 3.7
+          - script: pip install -r build_tools/hard_dependencies.txt
+            displayName: 'Install hard dependencies'
+          - script: pip install -e .
+            displayName: 'Build sktime'
+          - task: PythonScript@0
+            displayName: 'Check soft dependencies'
+            inputs:
+              scriptSource: 'filePath'
+              scriptPath: build_tools/azure/check_soft_dependencies.py
       - job: 'manylinux'
         pool:
           vmImage: 'ubuntu-latest'
@@ -61,22 +77,7 @@ stages:
               PLATFORM: manylinux2014_x86_64
               IMAGE: quay.io/pypa/manylinux2014_x86_64
               PYTHON_ARCHITECTURE: x86
-      - job: 'check_soft_dependencies'
-        pool:
-          vmImage: 'ubuntu-latest'
-        steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.6'
-          - script: pip install -r build_tools/hard_dependencies.txt
-            displayName: 'Install hard dependencies'
-          - script: pip install -e .
-            displayName: 'Build sktime'
-          - task: PythonScript@0
-            displayName: 'Check soft dependencies'
-            inputs:
-              scriptSource: 'filePath'
-              scriptPath: build_tools/azure/check_soft_dependencies.py
+
 
   - stage: 'Deploy'
     dependsOn: 'Build'
