@@ -72,6 +72,9 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
 
+        skip_grams:          boolean, default = False
+            whether to create skip-grams of SFA words
+
         remove_repeat_words: boolean, default = False
             whether to use numerosity reduction (default False)
 
@@ -100,6 +103,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         binning_method="equi-depth",
         anova=False,
         bigrams=False,
+        skip_grams=False,
         remove_repeat_words=False,
         levels=1,
         lower_bounding=True,
@@ -138,6 +142,8 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         self.anova = anova
 
         self.bigrams = bigrams
+        self.skip_grams = skip_grams
+
         # weighting for levels going up to 7 levels
         # No real reason to go past 3
         self.level_weights = [1, 2, 4, 16, 32, 64, 128]
@@ -234,14 +240,30 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                     repeat_words = 0
 
                 if self.bigrams:
-                    if window - self.window_size >= 0 and window > 0:
+                    if window - self.window_size >= 0:
                         bigram = self.create_bigram_word(
-                            words[window - self.window_size], word_raw, self.word_length
+                            words[window - self.window_size],
+                            word_raw,
+                            self.word_length,
                         )
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
                         bag[bigram] += 1
+
+                if self.skip_grams:
+                    # creates bigrams, skipping every (s-1)-th word in-between
+                    for s in range(2, 4):
+                        if window - s * self.window_size >= 0:
+                            skip_gram = self.create_bigram_word(
+                                words[window - s * self.window_size],
+                                word_raw,
+                                self.word_length,
+                            )
+
+                            if self.levels > 1:
+                                skip_gram = (skip_gram, 0)
+                            bag[skip_gram] += 1
 
             if self.save_words:
                 self.words.append(words)
@@ -621,6 +643,11 @@ class SFA(BaseSeriesAsFeaturesTransformer):
     @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
+
+    # @staticmethod
+    # @njit("int64(int64,int64,int64,int64)", fastmath=True, cache=True)
+    # def create_skipgram_word(word, other_word, skips, length):
+    #     return (((word << (2 * length)) | other_word) << 3) | skips
 
     @classmethod
     def shorten_word(cls, word, amount):
