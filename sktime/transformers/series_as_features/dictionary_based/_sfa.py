@@ -252,7 +252,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
                         bag[bigram] += 1
 
                 if self.skip_grams:
-                    # creates bigrams, skipping every (s-1)-th word in-between
+                    # creates skip-grams, skipping every (s-1)-th word in-between
                     for s in range(2, 4):
                         if window - s * self.window_size >= 0:
                             skip_gram = self.create_bigram_word(
