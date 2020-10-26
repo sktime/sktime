@@ -10,13 +10,13 @@ import pandas as pd
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.datetime import _get_unit
 from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import SUPPORTED_INDEX_TYPES
+from sktime.utils.validation.series import VALID_INDEX_TYPES
 from functools import lru_cache
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
-assert set(RELATIVE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
-assert set(ABSOLUTE_TYPES).issubset(SUPPORTED_INDEX_TYPES)
+assert set(RELATIVE_TYPES).issubset(VALID_INDEX_TYPES)
+assert set(ABSOLUTE_TYPES).issubset(VALID_INDEX_TYPES)
 
 DELEGATED_METHODS = (
     "__sub__",
@@ -78,7 +78,7 @@ def _check_values(values):
     # isinstance() does not work here, because index types inherit from each
     # other,
     # hence we check for type equality here
-    if type(values) in SUPPORTED_INDEX_TYPES:
+    if type(values) in VALID_INDEX_TYPES:
         pass
 
     # convert single integer to pandas index, no further checks needed
@@ -91,15 +91,15 @@ def _check_values(values):
 
     # otherwise, raise type error
     else:
-        allowed_types = (
+        valid_types = (
             "int",
             "np.array",
             "list",
-            *[f"pd.{index_type.__name__}" for index_type in SUPPORTED_INDEX_TYPES],
+            *[f"pd.{index_type.__name__}" for index_type in VALID_INDEX_TYPES],
         )
         raise TypeError(
             f"`values` type not supported. `values` must be one of"
-            f" {allowed_types}, but found: {type(values)}"
+            f" {valid_types}, but found: {type(values)}"
         )
 
     # check values does not contain duplicates
@@ -187,7 +187,7 @@ class ForecastingHorizon:
         Parameters
         ----------
         **kwargs : dict of kwargs
-            kwargs passed to `to_numpy()` on wrapped pandas index.
+            kwargs passed to `to_numpy()` of wrapped pandas index.
 
         Returns
         -------
@@ -307,7 +307,7 @@ class ForecastingHorizon:
         """Get index location of in-sample values"""
         return self.to_relative(cutoff).to_pandas() <= 0
 
-    def is_in_sample(self, cutoff=None):
+    def is_all_in_sample(self, cutoff=None):
         """Whether or not the forecasting horizon is purely in-sample for given
         cutoff.
 
@@ -322,14 +322,14 @@ class ForecastingHorizon:
         ret : bool
             True if the forecasting horizon is purely in-sample for given cutoff.
         """
-        return sum(self._is_in_sample(cutoff)) == len(self.to_pandas())
+        return sum(self._is_in_sample(cutoff)) == len(self)
 
     def _is_out_of_sample(self, cutoff=None):
         """Get index location of out-of-sample values"""
         # return ~self._in_sample_idx(cutoff)
         return self.to_relative(cutoff).to_pandas() > 0
 
-    def is_out_of_sample(self, cutoff=None):
+    def is_all_out_of_sample(self, cutoff=None):
         """Whether or not the forecasting horizon is purely out-of-sample for
         given cutoff.
 
@@ -345,7 +345,7 @@ class ForecastingHorizon:
             True if the forecasting horizon is purely out-of-sample for given
             cutoff.
         """
-        return sum(self._is_out_of_sample(cutoff)) == len(self.to_pandas())
+        return sum(self._is_out_of_sample(cutoff)) == len(self)
 
     def to_indexer(self, cutoff=None, from_cutoff=True):
         """Return zero-based indexer values for easy indexing into arrays.

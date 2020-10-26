@@ -19,12 +19,12 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseWindowForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_step_length
-from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_y
 
 
@@ -32,7 +32,7 @@ from sktime.utils.validation.forecasting import check_y
 # base classes for reduction from forecasting to regression
 
 
-class BaseReducer(BaseWindowForecaster):
+class BaseReducer(_BaseWindowForecaster):
     """Base class for reducing forecasting to time series regression"""
 
     _required_parameters = ["regressor"]
@@ -44,23 +44,23 @@ class BaseReducer(BaseWindowForecaster):
         self.step_length_ = None
         self._cv = None
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Update fitted parameters
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
         -------
         self : an instance of self
         """
-        if X_new is not None or update_params:
+        if X is not None or update_params:
             raise NotImplementedError()
         self.check_is_fitted()
-        self._update_y_X(y_new, X_new)
+        self._update_y_X(y, X)
         return self
 
     def _transform(self, y_train, X_train=None):
@@ -188,26 +188,26 @@ class ReducedTabularRegressorMixin:
         return np.vstack(y_windows)
 
 
-class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
+class _DirectReducer(_RequiredForecastingHorizonMixin, BaseReducer):
     strategy = "direct"
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y_train, X_train)
-        if X_train is not None:
+        self._set_y_X(y, X)
+        if X is not None:
             raise NotImplementedError()
         self._set_fh(fh)
         if len(self.fh.to_in_sample(self.cutoff)) > 0:
@@ -226,14 +226,14 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         )
 
         # transform data using rolling window split
-        X_train, Y_train = self._transform(y_train, X_train)
+        X, Y_train = self._transform(y, X)
 
         # iterate over forecasting horizon
         self.regressors_ = []
         for i in range(len(self.fh)):
-            y_train = Y_train[:, i]
+            y = Y_train[:, i]
             regressor = clone(self.regressor)
-            regressor.fit(X_train, y_train)
+            regressor.fit(X, y)
             self.regressors_.append(regressor)
 
         self._is_fitted = True
@@ -265,30 +265,30 @@ class _DirectReducer(RequiredForecastingHorizonMixin, BaseReducer):
         raise NotImplementedError("in-sample predictions are not implemented")
 
 
-class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
+class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
     strategy = "recursive"
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
         # input checks
-        if X_train is not None:
+        if X is not None:
             raise NotImplementedError()
 
         # set values
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
 
         self.step_length_ = check_step_length(self.step_length)
@@ -305,7 +305,7 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
         )
 
         # transform data into tabular form
-        X_train_tab, y_train_tab = self._transform(y_train, X_train)
+        X_train_tab, y_train_tab = self._transform(y, X)
 
         # fit base regressor
         regressor = clone(self.regressor)
