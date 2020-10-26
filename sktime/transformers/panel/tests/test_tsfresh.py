@@ -4,7 +4,7 @@ __author__ = ["Ayushmann Seth", "Markus Löning"]
 import numpy as np
 import pytest
 from sklearn.model_selection import train_test_split
-from sktime.transformers.panel.summarize import TSFreshFeatureExtractor
+from sktime.transformers.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils._testing.panel import make_classification_problem
 

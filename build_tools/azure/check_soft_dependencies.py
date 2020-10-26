@@ -12,13 +12,22 @@ from importlib import import_module
 
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.transformers.series_as_features.tsfresh": ["tsfresh"],
+    "sktime.transformers.panel.tsfresh": ["tsfresh"],
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.all": ["pmdarima"],
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
 }
-MODULES_TO_IGNORE = ("tests", "contrib")
+MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
+
+
+def _is_test(module):
+    module_parts = module.split(".")
+    return any(part in ("tests", "test") for part in module_parts)
+
+
+def _is_ignored(module):
+    return any(module_to_ignore in module for module_to_ignore in MODULES_TO_IGNORE)
 
 
 def _extract_dependency_from_error_msg(msg):
@@ -35,9 +44,8 @@ def _extract_dependency_from_error_msg(msg):
 
 for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
 
-    # Split the full module into its parts and skip if desired
-    mod_parts = module.split(".")
-    if any(part in MODULES_TO_IGNORE for part in mod_parts):
+    # Skip tests and some modules which we ignore here
+    if _is_test(module) or _is_ignored(module):
         continue
 
     # We try importing all modules and catch exceptions due to missing dependencies
@@ -49,7 +57,7 @@ for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
         # Check if appropriate exception with useful error message is raised as
         # defined in the `_check_soft_dependencies` function
         expected_error_msg = (
-            "is a soft dependency and not included in the sktime " "installation"
+            "is a soft dependency and not included in the sktime installation"
         )
         if expected_error_msg not in error_msg:
             raise RuntimeError(
