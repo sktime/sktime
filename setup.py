@@ -59,11 +59,11 @@ def find_version(*file_paths):
 
 WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
-DESCRIPTION = "A unified Python toolbox for machine learning " "with time series"
+DESCRIPTION = "A unified Python toolbox for machine learning with time series"
 with codecs.open("README.rst", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "F. Király"
-MAINTAINER_EMAIL = "fkiraly@turing.ac.uk"
+MAINTAINER_EMAIL = "f.kiraly@ucl.ac.uk"
 URL = "https://github.com/alan-turing-institute/sktime"
 LICENSE = "BSD-3-Clause"
 DOWNLOAD_URL = "https://pypi.org/project/sktime/#files"
