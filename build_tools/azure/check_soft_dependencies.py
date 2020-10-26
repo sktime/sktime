@@ -78,5 +78,6 @@ for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
         dependency = _extract_dependency_from_error_msg(error_msg)
         raise ModuleNotFoundError(
             f"The module: {module} should not require any soft dependencies, "
-            f"but tried importing: '{dependency}'."
+            f"but tried importing: '{dependency}'. Make sure soft dependencies are "
+            f"properly isolated."
         ) from e
