@@ -15,7 +15,8 @@ from sklearn.preprocessing import StandardScaler
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based import TimeSeriesForest, \
+    CanonicalIntervalForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.compose import (
@@ -134,5 +135,6 @@ ESTIMATOR_TEST_PARAMS = {
         "return_pandas_data_series": True},
     TemporalDictionaryEnsemble: {"n_parameter_samples": 50,
                                  "max_ensemble_size": 10,
-                                 "randomly_selected_params": 40}
+                                 "randomly_selected_params": 40},
+    CanonicalIntervalForest: {"n_estimators": 50}
 }

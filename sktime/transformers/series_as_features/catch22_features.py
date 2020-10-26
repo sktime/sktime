@@ -104,8 +104,8 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
         else:
             raise ValueError("Feature name or ID required")
 
-        X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        if isinstance(X, pd.DataFrame):
+            X = tabularize(X, return_array=True)
 
         n_instances = X.shape[0]
 

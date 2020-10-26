@@ -53,7 +53,7 @@ Simple (or first-degree) transformations:
 | Shapelet transform | transformers.ShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (contracted) | transformers.ContractedShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (random sampled) | transformers.RandomEnumerationShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
-| Canonical Time-series Characteristics  | transformers.series_as_features.catch22.Catch22 | @MatthewMiddlehurst  | [ Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher, B. D., & Jones, N. S. (2019). catch22: CAnonical Time-series CHaracteristics. Data Mining and Knowledge Discovery, 33(6), 1821-1852.](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
+| Canonical Time-series Characteristics  | transformers.series_as_features.catch22.Catch22 | @MatthewMiddlehurst  | [ Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
 
 #### Multivariate nested data frame to univariate nested data frame (n-mts-to-n-1-ts)
 
@@ -105,8 +105,9 @@ Paired (or second-degree) transformations:
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
 | BOSS Ensemble | classifiers.dictionary_based.boss.BossEnsemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
-| BOSS Atom | classifiers.dictionary_based.boss.BossIndividual | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
-| Temporal Dictionary Ensemble | classifiers.dictionary_based.tde.TemporalDictionaryEnsemble | @MatthewMiddlehurst |  |
+| BOSS Atom | classifiers.dictionary_based.boss.BossIndividual | @MatthewMiddlehurst | |
+| cBOSS | classifiers.dictionary_based.cboss.ContractableBOSS | @MatthewMiddlehurst | [Middlehurst et al (2019) - Scalable dictionary classifiers for time series classification](https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2) |
+| Temporal Dictionary Ensemble (TDE)| classifiers.dictionary_based.tde.TemporalDictionaryEnsemble | @MatthewMiddlehurst | [Middlehurst et al (2020) - The Temporal Dictionary Ensemble (TDE) Classifier for Time Series Classification]() |
 | TDE Atom | classifiers.dictionary_based.tde.IndividualTDE | @MatthewMiddlehurst |  |
 | Elastic Ensemble | classifiers.distance_based.elastic_ensemble.ElasticEnsemble | @jasonlines | [Lines, Bagnall (2015) - Time Series Classification with Ensembles of Elastic Distance Measures](https://link.springer.com/article/10.1007/s10618-014-0361-2) |
 | Proximity Forest | classifiers.distance_based.boss.ProximityForest | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
@@ -119,7 +120,9 @@ Paired (or second-degree) transformations:
 | Mr-SEQL | classifiers.shapelet_based.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
 | ShapeDTW | classifiers.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
 | WEASEL | classifiers.dictionary_based.weasel.WEASEL | @patrickZIB | [Fast and Accurate Time Series Classification with WEASEL](https://dl.acm.org/doi/abs/10.1145/3132847.3132980) |
-| catch22 Forest Classifier  | classifiers.hybrid.catch22_forest_classifier.Catch22ForestClassifier | @MatthewMiddlehurst  | [ Lubba, C. H., Sethi, S. S., Knaute, P., Schultz, S. R., Fulcher, B. D., & Jones, N. S. (2019). catch22: CAnonical Time-series CHaracteristics. Data Mining and Knowledge Discovery, 33(6), 1821-1852.](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
+| catch22 Forest Classifier | classifiers.hybrid.catch22_forest_classifier.Catch22ForestClassifier | @MatthewMiddlehurst  | [Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
+| Canonical Interval Forest (CIF) | classifiers.interval_based.cif.CanonicalIntervalForest | @MatthewMiddlehurst  | [Middlehurst et al (2020) - The Canonical Interval Forest (CIF) Classifier for Time Series Classification](https://arxiv.org/abs/2008.09172) |
+
 
 ### Multivariate time series classifiers
 

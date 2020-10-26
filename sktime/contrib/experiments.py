@@ -54,7 +54,6 @@ from statsmodels.tsa.stattools import acf
 import sktime.classification.compose._ensemble as ensemble
 import sktime.classification.dictionary_based._boss as db
 import sktime.classification.dictionary_based._tde as tde
-import sktime.classification.hybrid._catch22_forest_classifier as hb
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
@@ -258,17 +257,16 @@ def set_classifier(cls, resampleId):
         return pf.ProximityStump(random_state = resampleId)
     elif cls.lower() == 'rise':
         return fb.RandomIntervalSpectralForest(random_state = resampleId)
-    elif  cls.lower() == 'tsf':
+    elif cls.lower() == 'tsf':
         return ib.TimeSeriesForest(random_state = resampleId)
+    elif cls.lower() == 'cif':
+        return CanonicalIntervalForest(random_state=resampleId)
     elif cls.lower() == 'boss':
-        return db.BOSSEnsemble(random_state=resampleId)
+        return boss.BOSSEnsemble(random_state=resampleId)
     elif cls.lower() == 'cboss':
-        return db.BOSSEnsemble(random_state=resampleId,
-                               randomised_ensemble=True, max_ensemble_size=50)
+        return cboss.ContractableBOSS(random_state=resampleId)
     elif cls.lower() == 'tde':
-        return tde.TemporalDictionaryEnsemble(random_state=resampleId)
-    elif cls.lower() == 'catch22':
-        return hb.Catch22ForestClassifier(random_state=resampleId)
+        return tde.TemporalDictionaryEnsemble(random_state=resampleId, max_ensemble_size=50)
     elif cls.lower() == 'st':
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == 'dtwcv':
@@ -290,9 +288,14 @@ def set_classifier(cls, resampleId):
         ]
         base_estimator = Pipeline(steps)
         return ensemble.TimeSeriesForestClassifier(estimator=base_estimator, n_estimators=100)
+    elif cls.lower() == 'rocket':
+        rocket_pipeline = make_pipeline(
+            Rocket(random_state=resampleId),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+        )
+        return rocket_pipeline
     else:
         raise Exception('UNKNOWN CLASSIFIER')
-
 
 def acf_coefs(x, maxlag=100):
     x = np.asarray(x).ravel()
@@ -410,7 +413,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
         start = int(round(time.time() * 1000))
         classifier.fit(trainX,trainY)
         build_time = int(round(time.time() * 1000))-start
-        start =  int(round(time.time() * 1000))
+        start = int(round(time.time() * 1000))
         probs = classifier.predict_proba(testX)
         preds = classifier.classes_[np.argmax(probs, axis=1)]
         test_time = int(round(time.time() * 1000))-start
@@ -449,7 +452,7 @@ def run_experiment(problem_path, results_path, cls_name, dataset, classifier=Non
         second.replace('\n',' ')
         second.replace('\r',' ')
         temp=np.array_repr(classifier.classes_).replace('\n', '')
-        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_))
+        third = str(train_acc)+","+str(train_time)+",-1,-1,-1,"+str(len(classifier.classes_))+",10F_CV,"+str(train_time)+","+str(build_time+train_time)
         write_results_to_uea_format(second_line=second, third_line=third, output_path=results_path, classifier_name=cls_name, resample_seed= resampleID,
                                     predicted_class_vals=train_preds, actual_probas=train_probs, dataset_name=dataset, actual_class_vals=trainY, split='TRAIN')
 
@@ -580,7 +583,7 @@ if __name__ == "__main__":
         classifier =  sys.argv[3]
         dataset = sys.argv[4]
         resample = int(sys.argv[5])-1
-        tf=(str(sys.argv[6]) == 'True')
+        tf=(str(sys.argv[6]).lower() == 'true')
         run_experiment(problem_path=data_dir, results_path=results_dir, cls_name=classifier, dataset=dataset,
                        resampleID=resample,train_file=tf)
     else : #Local run
@@ -590,11 +593,13 @@ if __name__ == "__main__":
 #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
         data_dir = "Z:/ArchiveData/Univariate_ts/"
         results_dir = "E:/Temp/"
+#         data_dir = "Z:/ArchiveData/Multivariate_ts/"
+#         results_dir = "E:/Temp/"
 #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "Chinatown"
+        dataset = "GunPoint"
         trainX, trainY = load_ts(data_dir + dataset + '/' + dataset + '_TRAIN.ts')
         testX, testY = load_ts(data_dir + dataset + '/' + dataset + '_TEST.ts')
-        classifier = "catch22"
+        classifier = "CIF"
         resample = 0
 #         for i in range(0, len(univariate_datasets)):
 #             dataset = univariate_datasets[i]
