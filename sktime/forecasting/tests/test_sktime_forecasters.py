@@ -21,10 +21,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base._sktime import BaseWindowForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
-from sktime.forecasting.base._sktime import RequiredForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _RequiredForecastingHorizonMixin
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
@@ -33,15 +33,15 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 # get all forecasters
 FORECASTERS = [
     forecaster
-    for (name, forecaster) in all_estimators(estimator_type="forecaster")
-    if issubclass(forecaster, BaseSktimeForecaster)
+    for (name, forecaster) in all_estimators(estimator_types="forecaster")
+    if issubclass(forecaster, _SktimeForecaster)
 ]
 FH0 = 1
 
 WINDOW_FORECASTERS = [
     forecaster
-    for (name, forecaster) in all_estimators(estimator_type="forecaster")
-    if issubclass(forecaster, BaseWindowForecaster)
+    for (name, forecaster) in all_estimators(estimator_types="forecaster")
+    if issubclass(forecaster, _BaseWindowForecaster)
 ]
 
 # testing data
@@ -58,7 +58,7 @@ def test_oh_setting(Forecaster):
     assert f.cutoff is None
 
     # check that _y and cutoff is updated during fit
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     assert isinstance(f._y, pd.Series)
     assert len(f._y) > 0
     assert f.cutoff == y_train.index[-1]
@@ -76,10 +76,10 @@ def test_oh_setting(Forecaster):
 
 # divide Forecasters into groups
 FORECASTERS_REQUIRED = [
-    f for f in FORECASTERS if issubclass(f, RequiredForecastingHorizonMixin)
+    f for f in FORECASTERS if issubclass(f, _RequiredForecastingHorizonMixin)
 ]
 FORECASTERS_OPTIONAL = [
-    f for f in FORECASTERS if issubclass(f, OptionalForecastingHorizonMixin)
+    f for f in FORECASTERS if issubclass(f, _OptionalForecastingHorizonMixin)
 ]
 
 
@@ -95,7 +95,7 @@ def test_no_fh_in_fit_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_fh_in_fit_req(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     f.predict()
     np.testing.assert_array_equal(f.fh, FH0)
@@ -104,7 +104,7 @@ def test_fh_in_fit_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_same_fh_in_fit_and_predict_req(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
@@ -113,7 +113,7 @@ def test_same_fh_in_fit_and_predict_req(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_REQUIRED)
 def test_different_fh_in_fit_and_predict_req(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     # updating fh during predict raises error as fitted model depends on fh
     # seen in fit
@@ -134,7 +134,7 @@ def test_no_fh_opt(Forecaster):
 @pytest.mark.parametrize("Forecaster", FORECASTERS_OPTIONAL)
 def test_fh_in_fit_opt(Forecaster):
     f = _construct_instance(Forecaster)
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     np.testing.assert_array_equal(f.fh, FH0)
     f.predict()
     np.testing.assert_array_equal(f.fh, FH0)
@@ -152,7 +152,7 @@ def test_fh_in_predict_opt(Forecaster):
 def test_same_fh_in_fit_and_predict_opt(Forecaster):
     f = _construct_instance(Forecaster)
     # passing the same fh to both fit and predict works
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
     f.predict(FH0)
     np.testing.assert_array_equal(f.fh, FH0)
 
@@ -161,7 +161,7 @@ def test_same_fh_in_fit_and_predict_opt(Forecaster):
 def test_last_window(Forecaster):
     f = _construct_instance(Forecaster)
     # passing the same fh to both fit and predict works
-    f.fit(y_train, FH0)
+    f.fit(y_train, fh=FH0)
 
     actual, _ = f._get_last_window()
     expected = y_train.iloc[-f.window_length_ :]

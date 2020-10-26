@@ -24,28 +24,16 @@ from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils.testing import set_random_state
 
 from sktime.base import BaseEstimator
-from sktime.classification.base import BaseClassifier
-from sktime.classification.base import is_classifier
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import is_forecaster
-from sktime.regression.base import BaseRegressor
-from sktime.regression.base import is_regressor
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    is_non_fittable_series_as_features_transformer,
-)
-from sktime.transformers.series_as_features.base import (
-    is_series_as_features_transformer,
-)
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
-from sktime.transformers.single_series.base import is_single_series_transformer
+from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES, VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
 from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
 from sktime.utils._testing import _assert_array_almost_equal
 from sktime.utils._testing import _assert_array_equal
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _get_args
+from sktime.utils._testing import _has_tag
 from sktime.utils._testing import _make_args
 
 
@@ -70,6 +58,7 @@ def yield_estimator_checks(exclude=None):
     checks = [
         check_inheritance,
         check_required_params,
+        check_estimator_tags,
         check_has_common_interface,
         check_constructor,
         check_get_params,
@@ -99,7 +88,7 @@ def check_required_params(Estimator):
 
         assert isinstance(required_params, list), (
             f"For estimator: {Estimator}, `_required_parameters` must be a "
-            f"list, but found type: {type(required_params)}"
+            f"tuple, but found type: {type(required_params)}"
         )
 
         assert all([isinstance(param, str) for param in required_params]), (
@@ -122,46 +111,51 @@ def check_required_params(Estimator):
             )
 
 
-def check_inheritance(Estimator):
-    # Check that estimator inherits from one and only one task-specific
-    # estimator
+def check_estimator_tags(Estimator):
+    assert hasattr(Estimator, "_all_tags")
+    all_tags = Estimator._all_tags()
+    assert isinstance(all_tags, dict)
+    assert all(
+        [
+            isinstance(key, str) and isinstance(value, bool)
+            for key, value in all_tags.items()
+        ]
+    )
 
-    # Class checks
-    base_classes = [
-        BaseClassifier,
-        BaseRegressor,
-        BaseForecaster,
-        BaseSeriesAsFeaturesTransformer,
-        BaseSingleSeriesTransformer,
-    ]
+    if hasattr(Estimator, "_tags"):
+        tags = Estimator._tags
+        assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
+        assert len(tags) > 0, "_tags is empty"
+        assert all(
+            [tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()]
+        ), "Some tags in _tags are invalid"
+
+    # Avoid ambiguous class attributes
+    ambiguous_attrs = ("tags", "tags_")
+    for attr in ambiguous_attrs:
+        assert not hasattr(Estimator, attr), (
+            f"Please avoid using the {attr} attribute to disambiguate it from "
+            f"estimator tags."
+        )
+
+
+def check_inheritance(Estimator):
+    # Check that estimator inherits from BaseEstimator
     assert issubclass(Estimator, BaseEstimator), (
         f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
     )
-    assert (
-        sum([issubclass(Estimator, base_class) for base_class in base_classes]) == 1
-    ), (
-        f"Estimator: {Estimator} is a "
-        f"sub-class of more than one "
-        f"task-specific base estimators."
-    )
 
-    # Instance type checks
-    is_type_checks = [
-        is_classifier,
-        is_regressor,
-        is_forecaster,
-        is_series_as_features_transformer,
-        is_single_series_transformer,
-    ]
-    estimator = _construct_instance(Estimator)
-    assert isinstance(estimator, BaseEstimator), (
-        f"Estimator: {estimator.__class__.__name__} "
-        f"does not an instance of BaseEstimator."
+    # Usually estimators inherit only from one BaseEstimator type, but in some cases
+    # they may be predictor and transformer at the same time (e.g. pipelines)
+    n_base_types = sum(
+        [issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
     )
-    assert sum([is_type_check(estimator) for is_type_check in is_type_checks]) == 1, (
-        f"Estimator: {estimator.__class__.__name__} is an instance of more "
-        f"than one task-specific base estimators."
-    )
+    assert 2 >= n_base_types >= 1
+
+    # If the estimator inherits from more than one base estimator type, we check if
+    # one of them is a transformer base type
+    if n_base_types > 1:
+        assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
 def check_has_common_interface(Estimator):
@@ -186,6 +180,10 @@ def check_has_common_interface(Estimator):
             f"attribute: {attr}"
         )
     assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
+    if hasattr(estimator, "inverse_transform"):
+        assert hasattr(estimator, "transform")
+    if hasattr(estimator, "predict_proba"):
+        assert hasattr(estimator, "predict")
 
 
 def check_get_params(Estimator):
@@ -248,13 +246,13 @@ def check_constructor(Estimator):
 
     # Filter out required parameters with no default value and parameters
     # set for running tests
-    required_params = getattr(estimator, "_required_parameters", [])
-    test_config_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
+    required_params = getattr(estimator, "_required_parameters", tuple())
+    test_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
 
     init_params = [
         param
         for param in init_params
-        if param.name not in required_params and param.name not in test_config_params
+        if param.name not in required_params and param.name not in test_params
     ]
 
     for param in init_params:
@@ -409,13 +407,10 @@ def check_methods_do_not_change_state(Estimator):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if (
-                is_non_fittable_series_as_features_transformer(estimator)
-                and method == "transform"
-            ):
-                # these transformers fit during transform, as they apply
-                # some function or wrapped transformer to each series,
-                # so transform will actually change the state of the estimator
+            if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
+                # Some transformers fit during transform, as they apply
+                # some transformation to each series passed to transform,
+                # so transform will actually change the state of these estimator.
                 continue
 
             assert (
