@@ -168,6 +168,17 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
     :no-members:
     :no-inherited-members:
 
+Base
+----
+
+.. currentmodule:: sktime.forecasting.base
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ForecastingHorizon
+
 Naive
 -----
 
