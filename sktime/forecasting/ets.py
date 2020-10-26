@@ -2,7 +2,7 @@
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
-from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
+from sktime.forecasting.base._adapters import _StatsModelsAdapter
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 from itertools import product
 from joblib import delayed, Parallel
@@ -208,7 +208,7 @@ class AutoETS(_StatsModelsAdapter):
 
         super(AutoETS, self).__init__()
 
-    def _fit_forecaster(self, y, X_train=None):
+    def _fit_forecaster(self, y, X=None):
 
         # Select model automatically
         if self.auto:

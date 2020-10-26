@@ -25,7 +25,7 @@ from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.performance_metrics.forecasting import make_forecasting_scorer
 from sktime.performance_metrics.forecasting import sMAPE
-from sktime.transformers.single_series.detrend import Detrender
+from sktime.transformers.series.detrend import Detrender
 
 
 def compute_expected_gscv_scores(forecaster, cv, param_grid, y, scoring):

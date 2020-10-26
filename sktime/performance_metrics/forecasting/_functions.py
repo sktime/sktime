@@ -4,8 +4,8 @@
 
 import numpy as np
 
-from sktime.utils.validation.forecasting import check_equal_time_index
-from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.validation.series import check_time_index
 from sktime.utils.validation.forecasting import check_y
 
 __author__ = ["Markus Löning"]
