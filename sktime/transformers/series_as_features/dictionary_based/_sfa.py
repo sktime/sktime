@@ -13,13 +13,14 @@ from sklearn.feature_selection import f_classif
 from sklearn.tree import DecisionTreeClassifier
 from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
 from sktime.utils.validation.series_as_features import check_X
+from sklearn.preprocessing import KBinsDiscretizer
 
 # from numba import typeof
 # from numba.core import types
 # from numba.typed import Dict
 
 # The binning methods to use: equi-depth, equi-width or information gain
-binning_methods = {"equi-depth", "equi-width", "information-gain"}
+binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 
 
 class SFA(BaseSeriesAsFeaturesTransformer):
@@ -307,8 +308,25 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
         if self.binning_method == "information-gain":
             return self._igb(dft, y)
+        elif self.binning_method == "kmeans":
+            return self._KBinsDiscretizer(dft)
         else:
             return self._mcb(dft)
+
+    def _KBinsDiscretizer(self, dft):
+        encoder = KBinsDiscretizer(
+            n_bins=self.alphabet_size, encode="ordinal", strategy=self.binning_method
+        )
+        encoder.fit(dft)
+        breaks = encoder.bin_edges_
+        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+
+        for letter in range(self.word_length):
+            for bp in range(1, len(breaks[letter]) - 1):
+                breakpoints[letter][bp - 1] = breaks[letter][bp]
+
+        breakpoints[:, self.alphabet_size - 1] = sys.float_info.max
+        return breakpoints
 
     def _mcb(self, dft):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)

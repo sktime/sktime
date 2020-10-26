@@ -232,7 +232,7 @@ class WEASEL(BaseClassifier):
             ),
         )
 
-        # print("Size of dict", relevant_features_count)  # TODO uncomment
+        print("Size of dict", relevant_features_count)  # TODO uncomment
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
