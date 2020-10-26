@@ -33,28 +33,42 @@ def _extract_dependency_from_error_msg(msg):
         raise ValueError("No dependency found in error msg.")
 
 
-for _, modname, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
+for _, module, _ in pkgutil.walk_packages(path=["./sktime/"], prefix="sktime."):
 
     # Split the full module into its parts and skip if desired
-    mod_parts = modname.split(".")
+    mod_parts = module.split(".")
     if any(part in MODULES_TO_IGNORE for part in mod_parts):
         continue
 
     # We try importing all modules and catch exceptions due to missing dependencies
     try:
-        import_module(modname)
+        import_module(module)
     except ModuleNotFoundError as e:
         error_msg = str(e)
 
+        # Check if appropriate exception with useful error message is raised as
+        # defined in the `_check_soft_dependencies` function
+        expected_error_msg = (
+            "is a soft dependency and not included in the sktime " "installation"
+        )
+        if expected_error_msg not in error_msg:
+            raise RuntimeError(
+                f"The module: {module} seems to require a soft "
+                f"dependency, but does not raise an appropriate error "
+                f"message when the soft dependency is missing. Please "
+                f"use our `_check_soft_dependencies` function to "
+                f"raise a more appropriate error message."
+            ) from e
+
         # If the error is raised in a module which does depend on a soft dependency,
         # we ignore and skip it
-        soft_dependencies = SOFT_DEPENDENCIES.get(modname, [])
-        if any(soft_dependency in error_msg for soft_dependency in soft_dependencies):
+        dependencies = SOFT_DEPENDENCIES.get(module, [])
+        if any(dependency in error_msg for dependency in dependencies):
             continue
 
         # Otherwise we raise an error
         dependency = _extract_dependency_from_error_msg(error_msg)
         raise ModuleNotFoundError(
-            f"The module: {modname} should not require any soft dependencies, "
-            f"but tried importing: '{dependency}'"
+            f"The module: {module} should not require any soft dependencies, "
+            f"but tried importing: '{dependency}'."
         ) from e
