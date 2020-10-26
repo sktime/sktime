@@ -14,8 +14,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 from sktime.classification.base import BaseClassifier
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
