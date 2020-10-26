@@ -135,22 +135,12 @@ class ConfirmGitStatus(Step):
         self.do_cmd("git pull")
 
 
-class RunTests(Step):
-    def action(self, context):
-        self.do_cmd("make test")
-
-
-class RunLinting(Step):
-    def action(self, context):
-        self.do_cmd("make lint")
-
-
 class UpdateChangelog(Step):
     def action(self, context):
         self.instruct(f"Update CHANGELOG for version: {context['version']}")
 
 
-class BumpVersion(Step):
+class UpdateVersion(Step):
     def action(self, context):
         self.instruct("Update __init__.py with new version")
 
@@ -192,9 +182,7 @@ class InstallFromTestPyPI(Step):
 class CheckVersionNumber(Step):
     def action(self, context):
         self.instruct(
-            f"Ensure that the following command gives version: "
-            f""
-            f"{context['version']}"
+            f"Ensure that the following command gives version: {context['version']}"
         )
         self.do_cmd(
             f"python -c 'import {context['package_name']}; print("
@@ -253,7 +241,7 @@ def main():
         # prepare and run final checks
         ConfirmGitStatus(branch="master"),
         MakeClean(),
-        BumpVersion(),
+        UpdateVersion(),
         CheckVersionNumber(),
         UpdateChangelog(),
         MakeDocs(),
