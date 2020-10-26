@@ -9,7 +9,7 @@ import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformers.single_series.detrend import Deseasonalizer
+from sktime.transformers.series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_sp
@@ -101,16 +101,16 @@ class ThetaForecaster(ExponentialSmoothing):
         self.se_ = None
         super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
@@ -122,15 +122,15 @@ class ThetaForecaster(ExponentialSmoothing):
 
         if self.deseasonalise:
             self.deseasonaliser_ = Deseasonalizer(sp=self.sp, model="multiplicative")
-            y_train = self.deseasonaliser_.fit_transform(y_train)
+            y = self.deseasonaliser_.fit_transform(y)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
-        super(ThetaForecaster, self).fit(y_train, fh=fh)
+        super(ThetaForecaster, self).fit(y, fh=fh)
         self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
-        self.trend_ = self._compute_trend(y_train)
+        self.trend_ = self._compute_trend(y)
         self._is_fitted = True
         return self
 
@@ -153,7 +153,7 @@ class ThetaForecaster(ExponentialSmoothing):
             Returns series of predicted values.
         """
         y_pred = super(ThetaForecaster, self)._predict(
-            fh, X=X, return_pred_int=False, alpha=alpha
+            fh, X, return_pred_int=False, alpha=alpha
         )
 
         # Add drift.
@@ -212,13 +212,11 @@ class ThetaForecaster(ExponentialSmoothing):
 
         return errors
 
-    def update(self, y_new, X_new=None, update_params=True):
-        super(ThetaForecaster, self).update(
-            y_new, X_new=X_new, update_params=update_params
-        )
+    def update(self, y, X=None, update_params=True):
+        super(ThetaForecaster, self).update(y, X, update_params=update_params)
         if update_params:
             if self.deseasonalise:
-                y_new = self.deseasonaliser_.transform(y_new)
+                y = self.deseasonaliser_.transform(y)
             self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
-            self.trend_ = self._compute_trend(y_new)
+            self.trend_ = self._compute_trend(y)
         return self

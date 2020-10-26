@@ -10,13 +10,13 @@ from warnings import warn
 import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseWindowForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _BaseWindowForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_window_length
+from sktime.utils.validation import check_window_length
 
 
-class NaiveForecaster(OptionalForecastingHorizonMixin, BaseWindowForecaster):
+class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
     """
     NaiveForecaster is a forecaster that makes forecasts using simple
     strategies.
@@ -55,22 +55,22 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseWindowForecaster):
         self.sp = sp
         self.window_length = window_length
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """  # X_train is ignored
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
 
         if self.strategy == "last":
@@ -104,7 +104,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseWindowForecaster):
 
             #  if not given, set default window length for the mean strategy
             if self.window_length is None:
-                self.window_length_ = len(y_train)
+                self.window_length_ = len(y)
 
         elif self.strategy == "drift":
             if self.sp != 1:
@@ -113,7 +113,7 @@ class NaiveForecaster(OptionalForecastingHorizonMixin, BaseWindowForecaster):
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length)
             if self.window_length is None:
-                self.window_length_ = len(y_train)
+                self.window_length_ = len(y)
             if self.window_length == 1:
                 raise ValueError(
                     f"For the `drift` strategy, "

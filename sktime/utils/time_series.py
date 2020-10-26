@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 __all__ = [
-    "compute_relative_to_n_timepoints",
+    "_get_n_from_n_timepoints",
     "time_series_slope",
     "fit_trend",
 ]
@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.utils import check_array
 
 
-def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
+def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     """
     Get number of intervals from number of time points for various allowed
     input arguments.
@@ -89,33 +89,6 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     return n_intervals_
 
 
-def time_series_slope(y):
-    """
-    Compute slope of time series (y) using ordinary least squares.
-
-    Parameters
-    ----------
-    y : array_like
-        Time-series.
-    axis : int
-        Axis along which the time-series slope is computed.
-
-    Returns
-    -------
-    slope : float
-        Slope of time-series.
-    """
-    y = np.asarray(y).ravel()
-    len_series = len(y)
-
-    if len_series < 2:
-        return 0
-    else:
-        x = np.arange(len_series)  # time index
-        x_mean = (len_series - 1) / 2  # faster than x.mean()
-        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
-
-
 def fit_trend(x, order=0):
     """Fit linear regression with polynomial terms of given order
 
@@ -156,3 +129,35 @@ def fit_trend(x, order=0):
         coefs = coefs.T
 
     return coefs
+
+
+def time_series_slope(y, axis=0):
+    """Find the slope for each series of y
+    Parameters
+    ----------
+    y: np.ndarray
+        Time series
+    axis : int, optional (default=0)
+        Axis along which to compute slope
+
+    Returns
+    ----------
+    slope : np.ndarray
+        Time series slope
+    """
+    # Make sure y is always at least 2-dimensional
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+
+    # Generate time index with correct shape for broadcasting
+    shape = np.ones(y.ndim, dtype=np.int)
+    shape[axis] *= -1
+    x = np.arange(y.shape[axis]).reshape(shape) + 1
+
+    # Precompute mean
+    x_mean = x.mean()
+
+    # Compute slope along given axis
+    return (np.mean(y * x, axis=axis) - x_mean * np.mean(y, axis=axis)) / (
+        (x * x).mean() - x_mean ** 2
+    )

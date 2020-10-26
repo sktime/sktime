@@ -4,7 +4,7 @@ __author__ = ["Markus Löning"]
 import numpy as np
 import pandas as pd
 
-from sktime.utils.validation.forecasting import check_time_index
+from sktime.utils.validation.series import check_time_index
 
 
 def _coerce_duration_to_int(duration, unit=None):
