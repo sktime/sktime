@@ -22,6 +22,8 @@ from sklearn.preprocessing import KBinsDiscretizer
 # The binning methods to use: equi-depth, equi-width or information gain
 binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
 
+# TODO remove imag-part from dc-component component
+
 
 class SFA(BaseSeriesAsFeaturesTransformer):
     """SFA (Symbolic Fourier Approximation) Transformer, as described in
@@ -315,7 +317,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
 
     def _KBinsDiscretizer(self, dft):
         encoder = KBinsDiscretizer(
-            n_bins=self.alphabet_size, encode="ordinal", strategy=self.binning_method
+            n_bins=self.alphabet_size, strategy=self.binning_method
         )
         encoder.fit(dft)
         breaks = encoder.bin_edges_
