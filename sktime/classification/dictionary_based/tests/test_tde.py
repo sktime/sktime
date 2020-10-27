@@ -6,7 +6,7 @@ from sktime.classification.dictionary_based._tde import (
     TemporalDictionaryEnsemble,
     IndividualTDE,
 )
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 def test_tde_on_gunpoint():
@@ -15,7 +15,7 @@ def test_tde_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train tde
+    # train TDE
     tde = TemporalDictionaryEnsemble(n_parameter_samples=50,
                                      max_ensemble_size=10,
                                      randomly_selected_params=40,
@@ -33,7 +33,7 @@ def test_individual_tde_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train individual tde
+    # train IndividualTDE
     indiv_tde = IndividualTDE(random_state=0)
     indiv_tde.fit(X_train.iloc[indices], y_train[indices])
 
@@ -42,17 +42,34 @@ def test_individual_tde_on_gunpoint():
     testing.assert_array_equal(probas, individual_tde_gunpoint_probas)
 
 
+def test_tde_on_power_demand():
+    # load power demand data
+    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(100)
+
+    # train TDE
+    tde = TemporalDictionaryEnsemble(n_parameter_samples=50,
+                                     max_ensemble_size=10,
+                                     randomly_selected_params=40,
+                                     random_state=0)
+    tde.fit(X_train, y_train)
+
+    score = tde.score(X_test.iloc[indices], y_test[indices])
+    assert score >= 0.92
+
+
 tde_gunpoint_probas = np.array([
     [0.0, 1.0, ],
-    [0.40846447072622427, 0.5915355292737757, ],
-    [0.812237317955234, 0.1877626820447659, ],
-    [0.45538070569836775, 0.5446192943016323, ],
-    [0.15169582640993057, 0.8483041735900693, ],
-    [0.3897957188935588, 0.6102042811064412, ],
-    [0.13459094907633662, 0.8654090509236633, ],
-    [0.5775584009383246, 0.4224415990616753, ],
-    [0.5775584009383246, 0.4224415990616753, ],
-    [0.2425960316684586, 0.7574039683315413, ],
+    [0.24370468029004622, 0.756295319709954, ],
+    [0.4271588661832565, 0.5728411338167437, ],
+    [0.3417270929466052, 0.658272907053395, ],
+    [0.0, 1.0, ],
+    [0.25629531970995384, 0.7437046802900463, ],
+    [0.0, 1.0, ],
+    [0.5980224126565591, 0.40197758734344113, ],
+    [0.6708635464733027, 0.3291364535266975, ],
+    [0.0, 1.0, ],
 ])
 individual_tde_gunpoint_probas = np.array([
     [0.0, 1.0, ],

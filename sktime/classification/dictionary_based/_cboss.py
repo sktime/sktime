@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ ContractableBOSS classifier
 dictionary based cBOSS classifier based on SFA transform. Improves the
 ensemble structure of the original BOSS algorithm.
@@ -10,13 +11,12 @@ import math
 import time
 
 import numpy as np
-import pandas as pd
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import IndividualBOSS
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
@@ -45,7 +45,7 @@ class ContractableBOSS(BaseClassifier):
     series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These l
-    coefficents are then discretised into alpha possible values, to form a
+    coefficients are then discretised into alpha possible values, to form a
     word length l. A histogram of words for each
     series is formed and stored. fit involves finding n histograms.
 
@@ -82,14 +82,15 @@ class ContractableBOSS(BaseClassifier):
 
     """
 
-    def __init__(self,
-                 n_parameter_samples=250,
-                 max_ensemble_size=50,
-                 max_win_len_prop=1,
-                 time_limit=0.0,
-                 min_window=10,
-                 random_state=None
-                 ):
+    def __init__(
+        self,
+        n_parameter_samples=250,
+        max_ensemble_size=50,
+        max_win_len_prop=1,
+        time_limit=0.0,
+        min_window=10,
+        random_state=None
+    ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
@@ -127,13 +128,11 @@ class ContractableBOSS(BaseClassifier):
         -------
         self : object
         """
-
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        y = y.values if isinstance(y, pd.Series) else y
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         start_time = time.time()
         self.time_limit = self.time_limit * 60
-        self.n_instances, self.series_length = X.shape[0], len(X.iloc[0, 0])
+        self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -143,7 +142,6 @@ class ContractableBOSS(BaseClassifier):
         self.weights = []
 
         # Window length parameter space dependent on series length
-
         max_window_searches = self.series_length / 4
         max_window = int(self.series_length * self.max_win_len_prop)
         win_inc = int((max_window - self.min_window) / max_window_searches)
@@ -154,7 +152,7 @@ class ContractableBOSS(BaseClassifier):
         num_classifiers = 0
         train_time = 0
         subsample_size = int(self.n_instances * 0.7)
-        lowest_acc = 0
+        lowest_acc = 1
         lowest_acc_idx = 0
 
         rng = check_random_state(self.random_state)
@@ -162,26 +160,32 @@ class ContractableBOSS(BaseClassifier):
         if self.time_limit > 0:
             self.n_parameter_samples = 0
 
-        while (train_time < self.time_limit or num_classifiers <
-               self.n_parameter_samples) and len(possible_parameters) > 0:
+        while (
+            train_time < self.time_limit
+            or num_classifiers < self.n_parameter_samples
+        ) and len(possible_parameters) > 0:
             parameters = possible_parameters.pop(
-                rng.randint(0, len(possible_parameters)))
+                rng.randint(0, len(possible_parameters))
+            )
 
-            subsample = rng.choice(self.n_instances, size=subsample_size,
-                                   replace=False)
-            X_subsample = X.iloc[subsample, :]
+            subsample = rng.choice(
+                self.n_instances, size=subsample_size, replace=False
+            )
+            X_subsample = X[subsample]  # .iloc[subsample, :]
             y_subsample = y[subsample]
 
-            boss = IndividualBOSS(*parameters,
-                                  alphabet_size=self.alphabet_size,
-                                  save_words=False,
-                                  random_state=self.random_state)
+            boss = IndividualBOSS(
+                *parameters,
+                alphabet_size=self.alphabet_size,
+                save_words=False,
+                random_state=self.random_state
+            )
             boss.fit(X_subsample, y_subsample)
             boss._clean()
 
-            boss.accuracy = self._individual_train_acc(boss, y_subsample,
-                                                       subsample_size,
-                                                       lowest_acc)
+            boss.accuracy = self._individual_train_acc(
+                boss, y_subsample, subsample_size, lowest_acc
+            )
             weight = math.pow(boss.accuracy, 4)
 
             if num_classifiers < self.max_ensemble_size:
@@ -190,6 +194,7 @@ class ContractableBOSS(BaseClassifier):
                     lowest_acc_idx = num_classifiers
                 self.weights.append(weight)
                 self.classifiers.append(boss)
+
             elif boss.accuracy > lowest_acc:
                 self.weights[lowest_acc_idx] = weight
                 self.classifiers[lowest_acc_idx] = boss
@@ -206,13 +211,16 @@ class ContractableBOSS(BaseClassifier):
 
     def predict(self, X):
         rng = check_random_state(self.random_state)
-        return np.array([self.classes_[int(rng.choice(
-            np.flatnonzero(prob == prob.max())))] for prob
-                in self.predict_proba(X)])
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in self.predict_proba(X)
+            ]
+        )
 
     def predict_proba(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -239,13 +247,14 @@ class ContractableBOSS(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = (np.ones(self.n_classes) * self.weight_sum)
+        divisor = np.ones(self.n_classes) * self.weight_sum
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[self.class_dictionary.get(clf._train_predict(i), -1)] += \
-                    self.weights[n]
+                sums[
+                    self.class_dictionary.get(clf._train_predict(i), -1)
+                ] += self.weights[n]
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -254,11 +263,12 @@ class ContractableBOSS(BaseClassifier):
         return results
 
     def _unique_parameters(self, max_window, win_inc):
-        possible_parameters = [[win_size, word_len, normalise] for n, normalise
-                               in enumerate(self.norm_options)
-                               for win_size in
-                               range(self.min_window, max_window + 1, win_inc)
-                               for g, word_len in enumerate(self.word_lengths)]
+        possible_parameters = [
+            [win_size, word_len, normalise]
+            for n, normalise in enumerate(self.norm_options)
+            for win_size in range(self.min_window, max_window + 1, win_inc)
+            for g, word_len in enumerate(self.word_lengths)
+        ]
 
         return possible_parameters
 

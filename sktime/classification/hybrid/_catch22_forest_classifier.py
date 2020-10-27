@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
 """ catch22 Forest Classifier
 A forest classifier based on catch22 features
 """
 
 __author__ = ["Carl Lubba", "Matthew Middlehurst"]
 __all__ = ["Catch22ForestClassifier"]
+
+import sys
 
 import numpy as np
 from sklearn.ensemble import BaggingClassifier
@@ -65,11 +68,13 @@ class Catch22ForestClassifier(BaseClassifier):
      bagging_classifier      : trained forest classifier
 
      """
-    def __init__(self,
-                 n_estimators=100,
-                 bootstrap=True,
-                 n_jobs=None,
-                 random_state=None):
+    def __init__(
+        self,
+        n_estimators=100,
+        bootstrap=True,
+        n_jobs=None,
+        random_state=None
+    ):
         self.n_estimators = n_estimators
         self.bootstrap = bootstrap
         self.n_jobs = n_jobs
@@ -94,14 +99,23 @@ class Catch22ForestClassifier(BaseClassifier):
             -------
             self : object
         """
+        if sys.platform == 'win32':
+            # todo update when catch22 is fixed for windows/alternative is made
+            raise OSError("Catch22 does not support Windows OS currently.")
+
         # Correct formating of x
         if len(X.iloc[0]) == 1:  # UNI
-            X = [np.array(X.iloc[i].iloc[0]).tolist()
-                 for i in range(0, len(X))]
+            X = [
+                np.array(X.iloc[i].iloc[0]).tolist()
+                for i in range(0, len(X))
+            ]
         else:  # MULTI
-            X = [[np.array(X.iloc[i].iloc[j]).tolist()
-                  for j in range(0, len(X.iloc[i]))]
-                 for i in range(0, len(X))]
+            X = [
+                [
+                    np.array(X.iloc[i].iloc[j]).tolist()
+                    for j in range(0, len(X.iloc[i]))
+                ] for i in range(0, len(X))
+            ]
 
         random_state = check_random_state(self.random_state)
 
@@ -143,8 +157,10 @@ class Catch22ForestClassifier(BaseClassifier):
         if not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=np.intp)
 
-        clf = tree.DecisionTreeClassifier(class_weight="balanced",
-                                          random_state=random_state)
+        clf = tree.DecisionTreeClassifier(
+            class_weight="balanced",
+            random_state=random_state
+        )
 
         self.bagging_classifier_ = BaggingClassifier(
             base_estimator=clf,
@@ -173,38 +189,53 @@ class Catch22ForestClassifier(BaseClassifier):
         return self
 
     def predict(self, X, check_input=True):
-        return self.classes_[np.argmax(
-            self.predict_proba(X, check_input=check_input), axis=1)]
+        return self.classes_[
+            np.argmax(self.predict_proba(X, check_input=check_input), axis=1)
+        ]
 
     def predict_proba(self, X, check_input=True):
         self.check_is_fitted()
 
         # Correct formating of x
         if len(X.iloc[0]) == 1:  # UNI
-            X = [np.array(X.iloc[i].iloc[0]).tolist()
-                 for i in range(0, len(X))]
+            X = [
+                np.array(X.iloc[i].iloc[0]).tolist()
+                for i in range(0, len(X))
+            ]
         else:  # MULTI
-            X = [[np.array(X.iloc[i].iloc[j]).tolist()
-                  for j in range(0, len(X.iloc[i]))]
-                 for i in range(0, len(X))]
+            X = [
+                [
+                    np.array(X.iloc[i].iloc[j]).tolist()
+                    for j in range(0, len(X.iloc[i]))
+                ] for i in range(0, len(X))
+            ]
 
         if check_input:
             X = check_array(X, dtype=np.float64, allow_nd=True, order="C")
 
         if X.ndim < 2 or X.ndim > 3:
-            raise ValueError("illegal input dimensions X.ndim ({})".format(
-                X.ndim))
+            raise ValueError(
+                "illegal input dimensions X.ndim ({})".format(X.ndim)
+            )
 
         if self.n_dims_ > 1 and X.ndim != 3:
             raise ValueError("illegal input dimensions X.ndim != 3")
 
         if X.shape[-1] != self.n_timestep_:
-            raise ValueError("illegal input shape ({} != {})".format(
-                X.shape[-1], self.n_timestep_))
+            raise ValueError(
+                "illegal input shape ({} != {})".format(
+                    X.shape[-1],
+                    self.n_timestep_
+                )
+            )
 
         if X.ndim > 2 and X.shape[1] != self.n_dims_:
-            raise ValueError("illegal input shape ({} != {}".format(
-                X.shape[1], self.n_dims))
+            raise ValueError(
+                "illegal input shape ({} != {}".format(
+                    X.shape[1],
+                    self.n_dims
+                )
+            )
 
         if X.dtype != np.float64 or not X.flags.contiguous:
             X = np.ascontiguousarray(X, dtype=np.float64)

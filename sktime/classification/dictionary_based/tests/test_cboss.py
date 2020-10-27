@@ -2,7 +2,7 @@ import numpy as np
 from numpy import testing
 
 from sktime.classification.dictionary_based import ContractableBOSS
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 def test_cboss_on_gunpoint():
@@ -11,7 +11,7 @@ def test_cboss_on_gunpoint():
     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train boss
+    # train cBOSS
     cboss = ContractableBOSS(n_parameter_samples=50, max_ensemble_size=10,
                              random_state=0)
     cboss.fit(X_train.iloc[indices], y_train[indices])
@@ -21,17 +21,32 @@ def test_cboss_on_gunpoint():
     testing.assert_array_equal(probas, cboss_gunpoint_probas)
 
 
+def test_cboss_on_power_demand():
+    # load power demand data
+    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(100)
+
+    # train cBOSS
+    cboss = ContractableBOSS(n_parameter_samples=50, max_ensemble_size=10,
+                             random_state=0)
+    cboss.fit(X_train, y_train)
+
+    score = cboss.score(X_test.iloc[indices], y_test[indices])
+    assert score >= 0.88
+
+
 cboss_gunpoint_probas = np.array([
-    [0.0, 0.9999999999999998, ],
-    [0.2, 0.7999999999999999, ],
-    [0.5298890992696782, 0.4701109007303219, ],
-    [0.4103327021909657, 0.5896672978090345, ],
-    [0.0, 0.9999999999999998, ],
-    [0.07011090073032188, 0.9298890992696779, ],
-    [0.12988909926967812, 0.8701109007303217, ],
-    [0.21033270219096561, 0.7896672978090343, ],
-    [0.2, 0.7999999999999999, ],
-    [0.12988909926967812, 0.8701109007303217, ],
+    [0.07456846950517836, 0.9254315304948215, ],
+    [0.28728423475258924, 0.7127157652474108, ],
+    [0.5000000000000001, 0.5000000000000001, ],
+    [0.2982738780207134, 0.7017261219792866, ],
+    [0.0, 0.9999999999999999, ],
+    [0.07456846950517836, 0.9254315304948215, ],
+    [0.1491369390103567, 0.8508630609896433, ],
+    [0.22370540851553505, 0.7762945914844649, ],
+    [0.1491369390103567, 0.8508630609896433, ],
+    [0.21271576524741084, 0.7872842347525892, ],
 ])
 
 

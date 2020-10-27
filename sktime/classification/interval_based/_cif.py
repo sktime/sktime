@@ -1,24 +1,27 @@
+# -*- coding: utf-8 -*-
 """ Canonical Interval Forest Classifier (CIF).
 """
-import math
-from sklearn import clone
-from sklearn.utils import check_random_state
-from sklearn.utils.multiclass import class_distribution
-
-from sktime.transformers.series_as_features.catch22_features import Catch22
 
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["CanonicalIntervalForest"]
 
-import random
+import sys
 
 import numpy as np
+import math
 from sklearn.ensemble.forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn import clone
+from sklearn.utils import check_random_state
+from sklearn.utils.multiclass import class_distribution
 
-from sktime.utils.data_container import tabularize
-from sktime.utils.validation.series_as_features import check_X_y, check_X
+from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
+
+_check_soft_dependencies("catch22")
+from sktime.transformers.panel.catch22_features import Catch22  # noqa: E402
 
 
 class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
@@ -80,13 +83,14 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
     """
 
-    def __init__(self,
-                 random_state=None,
-                 min_interval=3,
-                 max_interval=None,
-                 n_estimators=500,
-                 att_subsample_size=8
-                 ):
+    def __init__(
+        self,
+        random_state=None,
+        min_interval=3,
+        max_interval=None,
+        n_estimators=500,
+        att_subsample_size=8
+    ):
         self.n_estimators = n_estimators
         self.min_interval = min_interval
         self.max_interval = max_interval
@@ -106,7 +110,8 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         super(CanonicalIntervalForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators)
+            n_estimators=n_estimators,
+        )
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
@@ -124,9 +129,11 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
+        if sys.platform == 'win32':
+            # todo update when catch22 is fixed for windows/alternative is made
+            raise OSError("CIF does not support Windows OS currently.")
 
-        X, y = check_X_y(X, y, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 
@@ -141,8 +148,10 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
-        self.intervals = np.zeros((self.n_estimators, self.att_subsample_size
-                                   * self.n_intervals, 2), dtype=int)
+        self.intervals = np.zeros(
+            (self.n_estimators, self.att_subsample_size * self.n_intervals, 2),
+            dtype=int
+        )
 
         if self.max_interval is None:
             max_interval_length = self.series_length / 2
@@ -155,10 +164,12 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(shape=(
-                self.att_subsample_size * self.n_intervals, self.n_instances))
+                self.att_subsample_size * self.n_intervals, self.n_instances)
+            )
 
-            self.atts.append(rng.choice(25, self.att_subsample_size,
-                                        replace=False))
+            self.atts.append(
+                rng.choice(25, self.att_subsample_size, replace=False)
+            )
 
             # Find the random intervals for classifier i and concatentate
             # features
@@ -166,45 +177,36 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 if rng.random() < 0.5:
                     self.intervals[i][j][0] = \
                         rng.randint(0, self.series_length - self.min_interval)
-                    len_range = min(self.series_length -
-                                    self.intervals[i][j][0],
-                                    max_interval_length)
-                    length = rng.randint(0, len_range - self.min_interval) + \
-                        self.min_interval
+                    len_range = min(
+                        self.series_length -
+                        self.intervals[i][j][0],
+                        max_interval_length
+                    )
+                    length = rng.randint(
+                        0, len_range - self.min_interval
+                    ) + self.min_interval
                     self.intervals[i][j][1] = self.intervals[i][j][0] + length
                 else:
                     self.intervals[i][j][1] = \
-                        rng.randint(0, self.series_length -
-                                    self.min_interval) + self.min_interval
-                    len_range = min(self.intervals[i][j][1],
-                                    max_interval_length)
-                    length = rng.randint(0, len_range - self.min_interval) \
-                        + self.min_interval \
+                        rng.randint(
+                            0,
+                            self.series_length - self.min_interval
+                        ) + self.min_interval
+                    len_range = min(
+                        self.intervals[i][j][1],
+                        max_interval_length
+                    )
+                    length = rng.randint(
+                        0,
+                        len_range - self.min_interval
+                    ) + self.min_interval \
                         if len_range - self.min_interval > 0 \
                         else self.min_interval
                     self.intervals[i][j][0] = self.intervals[i][j][1] - length
 
                 for a in range(0, self.att_subsample_size):
-                    if self.atts[i][a] == 22:
-                        # mean
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            np.mean(X[:, self.intervals[i][j][0]:
-                                    self.intervals[i][j][1]], axis=1)
-                    elif self.atts[i][a] == 23:
-                        # std_dev
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            np.std(X[:, self.intervals[i][j][0]:
-                                     self.intervals[i][j][1]], axis=1)
-                    elif self.atts[i][a] == 24:
-                        # slope
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            self._lsq_fit(X[:, self.intervals[i][j][0]:
-                                            self.intervals[i][j][1]])
-                    else:
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            c22._transform_single_feature(
-                                X[:, self.intervals[i][j][0]:
-                                  self.intervals[i][j][1]], feature=a)
+                    transformed_x[self.att_subsample_size * j + a] = \
+                        self.__cif_feature(X, i, j, a, c22)
 
             tree = clone(self.base_estimator)
             tree.set_params(**{"random_state": self.random_state})
@@ -232,9 +234,11 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_test_instances]
         """
         proba = self.predict_proba(X)
-        return [self.classes_[int(np.random.choice(
-            np.flatnonzero(prob == prob.max())))]
-                for prob in proba]
+        return [
+            self.classes_[
+                int(np.random.choice(np.flatnonzero(prob == prob.max())))
+            ] for prob in proba
+        ]
 
     def predict_proba(self, X):
         """
@@ -261,44 +265,29 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         probabilities
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         n_test_instances, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
-                " ERROR number of attributes in the train does not match "
-                "that in the test data")
+                "ERROR number of attributes in the train does not match "
+                "that in the test data"
+            )
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
         c22 = Catch22()
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.n_intervals,
-                       n_test_instances), dtype=np.float32)
+                shape=(
+                    self.att_subsample_size * self.n_intervals, n_test_instances
+                ),
+                dtype=np.float32
+            )
             for j in range(0, self.n_intervals):
                 for a in range(0, self.att_subsample_size):
-                    if self.atts[i][a] == 22:
-                        # mean
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            np.mean(X[:, self.intervals[i][j][0]:
-                                    self.intervals[i][j][1]], axis=1)
-                    elif self.atts[i][a] == 23:
-                        # std_dev
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            np.std(X[:, self.intervals[i][j][0]:
-                                     self.intervals[i][j][1]], axis=1)
-                    elif self.atts[i][a] == 24:
-                        # slope
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            self._lsq_fit(X[:, self.intervals[i][j][0]:
-                                            self.intervals[i][j][1]])
-                    else:
-                        transformed_x[self.att_subsample_size * j + a] = \
-                            c22._transform_single_feature(
-                                X[:, self.intervals[i][j][0]:
-                                  self.intervals[i][j][1]], feature=a)
+                    transformed_x[self.att_subsample_size * j + a] = \
+                        self.__cif_feature(X, i, j, a, c22)
 
             transformed_x = transformed_x.T
             np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -307,18 +296,26 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         output = sums / (np.ones(self.n_classes) * self.n_estimators)
         return output
 
-    def _lsq_fit(self, Y):
-        """ Find the slope for each series (row) of Y
-        Parameters
-        ----------
-        Y: array of shape = [n_samps, interval_size]
-
-        Returns
-        ----------
-        slope: array of shape = [n_samps]
-
-        """
-        x = np.arange(Y.shape[1]) + 1
-        slope = (np.mean(x * Y, axis=1) - np.mean(x) * np.mean(Y, axis=1)) / (
-                (x * x).mean() - x.mean() ** 2)
-        return slope
+    def __cif_feature(self, X, i, j, a, c22):
+        if self.atts[i][a] == 22:
+            # mean
+            return np.mean(
+                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                axis=1
+            )
+        elif self.atts[i][a] == 23:
+            # std_dev
+            return np.std(
+                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                axis=1
+            )
+        elif self.atts[i][a] == 24:
+            # slope
+            return time_series_slope(
+                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]]
+            )
+        else:
+            return c22._transform_single_feature(
+                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                feature=a
+            )

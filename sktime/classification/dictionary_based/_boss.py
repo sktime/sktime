@@ -16,8 +16,7 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.panel.dictionary_based import SFA
-from sktime.utils.validation.panel import check_X
-from sktime.utils.validation.panel import check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 
 
 # from numba import njit
@@ -50,7 +49,7 @@ class BOSSEnsemble(BaseClassifier):
     series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
     first l/2 complex coefficients. These l
-    coefficents are then discretised into alpha possible values, to form a
+    coefficients are then discretised into alpha possible values, to form a
     word length l. A histogram of words for each
     series is formed and stored. fit involves finding n histograms.
 
@@ -227,7 +226,7 @@ class BOSSEnsemble(BaseClassifier):
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
-        for n, clf in enumerate(self.classifiers):
+        for clf in self.classifiers:
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += 1

@@ -1,10 +1,16 @@
+# -*- coding: utf-8 -*-
+import sys
+
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.datasets import load_gunpoint, load_basic_motions
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="Not supported for Windows currently.")
 def test_cif_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
@@ -20,6 +26,8 @@ def test_cif_on_gunpoint():
     testing.assert_array_equal(probas, cif_gunpoint_probas)
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="Not supported for Windows currently.")
 def test_cif_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split='train', return_X_y=True)

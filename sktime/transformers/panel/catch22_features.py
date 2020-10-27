@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ catch22 features
 A transformer for the catch22 features
 """
@@ -5,16 +6,20 @@ A transformer for the catch22 features
 __author__ = "Matthew Middlehurst"
 __all__ = ["Catch22"]
 
+import sys
+
 import numpy as np
 import pandas as pd
-import catch22
-from sktime.transformers.series_as_features.base import \
-    BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _PanelToTabularTransformer
+from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.data_container import tabularize
-from sktime.utils.validation.series_as_features import check_X
+from sktime.utils.validation.panel import check_X
+
+_check_soft_dependencies("catch22")
+import catch22  # noqa: E402
 
 
-class Catch22(BaseSeriesAsFeaturesTransformer):
+class Catch22(_PanelToTabularTransformer):
     """ Canonical Time-series Characteristics (catch22)
 
     @article{lubba2019catch22,
@@ -49,6 +54,7 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
     /tsml/transformers/Catch22.java
 
     """
+
     def __init__(self):
         super(Catch22, self).__init__()
 
@@ -57,17 +63,15 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
 
             Parameters
             ----------
-            X : nested pandas DataFrame of shape [n_instances, 1]
-                Nested dataframe with univariate time-series in cells.
-            y : array-like, shape = [n_instances] The class labels.
+            X : pandas DataFrame, input time series
+            y : array_like, target values (optional, ignored)
 
             Returns
             -------
             Pandas dataframe containing 22 features for each input series
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
 
         n_instances = X.shape[0]
 
@@ -84,8 +88,7 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
 
             Parameters
             ----------
-            X : nested pandas DataFrame of shape [n_instances, 1]
-                Nested dataframe with univariate time-series in cells.
+            X : pandas DataFrame, input time series
             feature : int, catch22 feature id or String, catch22 feature
                       name.
 
@@ -93,6 +96,10 @@ class Catch22(BaseSeriesAsFeaturesTransformer):
             -------
             Numpy array containing a catch22 feature for each input series
         """
+        if sys.platform == 'win32':
+            # todo update when catch22 is fixed for windows/alternative is made
+            raise OSError("Catch22 does not support Windows OS currently.")
+
         if isinstance(feature, int):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")

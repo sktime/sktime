@@ -1,10 +1,16 @@
+# -*- coding: utf-8 -*-
+import sys
+
 import numpy as np
+import pytest
 from numpy import testing
 
 from sktime.datasets import load_gunpoint, load_basic_motions
-from sktime.transformers.series_as_features.catch22_features import Catch22
+from sktime.transformers.panel.catch22_features import Catch22
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="Not supported for Windows currently.")
 def test_catch22_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
@@ -19,6 +25,8 @@ def test_catch22_on_gunpoint():
     testing.assert_array_equal(data, catch22_gunpoint_data)
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="Not supported for Windows currently.")
 def test_catch22_single_feature_on_gunpoint():
     # load gunpoint data
     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
@@ -33,6 +41,8 @@ def test_catch22_single_feature_on_gunpoint():
     testing.assert_array_equal(data, catch22_single_feature_gunpoint_data)
 
 
+@pytest.mark.skipif(sys.platform == 'win32',
+                    reason="Not supported for Windows currently.")
 def test_catch22_on_basic_motions():
     # load basic motions data
     X_train, y_train = load_basic_motions(split='train', return_X_y=True)
