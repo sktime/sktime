@@ -47,7 +47,7 @@ fi
 make_conda() {
     # Deactivate the travis-provided virtual environment and setup a
     # conda-based environment instead
-    # If Travvis has language=generic (e.g. for macOS), deactivate does not exist. `|| :` will pass.
+    # If Travis has language=generic (e.g. for macOS), deactivate does not exist. `|| :` will pass.
     deactivate || :
 
     # Install miniconda
