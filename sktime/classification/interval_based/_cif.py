@@ -28,10 +28,10 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     """Canonical Interval Forest Classifier.
 
     @article{middlehurst2020canonical,
-      title={The Canonical Interval Forest (CIF) Classifier for Time Series
+      title={The Canonical Interval Forest {(CIF)} Classifier for Time Series
       Classification},
       author={Middlehurst, Matthew and Large, James and Bagnall, Anthony},
-      journal={arXiv preprint arXiv:2008.09172},
+      journal={IEEE International Conference on Big Data},
       year={2020}
     }
 
@@ -85,12 +85,17 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
     def __init__(
         self,
-        random_state=None,
         min_interval=3,
         max_interval=None,
         n_estimators=500,
-        att_subsample_size=8
+        att_subsample_size=8,
+        random_state=None,
     ):
+        super(CanonicalIntervalForest, self).__init__(
+            base_estimator=DecisionTreeClassifier(criterion="entropy"),
+            n_estimators=n_estimators,
+        )
+
         self.n_estimators = n_estimators
         self.min_interval = min_interval
         self.max_interval = max_interval
@@ -107,11 +112,6 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.atts = []
         self.intervals = []
         self.classes_ = []
-
-        super(CanonicalIntervalForest, self).__init__(
-            base_estimator=DecisionTreeClassifier(criterion="entropy"),
-            n_estimators=n_estimators,
-        )
 
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
@@ -137,7 +137,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         rng = check_random_state(self.random_state)
 
-        self.n_instances, self.series_length = X.shape
+        self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.classifiers = []
@@ -163,8 +163,11 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         c22 = Catch22()
 
         for i in range(0, self.n_estimators):
-            transformed_x = np.empty(shape=(
-                self.att_subsample_size * self.n_intervals, self.n_instances)
+            transformed_x = np.empty(
+                shape=(
+                    self.att_subsample_size * self.n_intervals, self.n_instances
+                ),
+                dtype=np.float32
             )
 
             self.atts.append(
@@ -233,12 +236,13 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         output : array of shape = [n_test_instances]
         """
-        proba = self.predict_proba(X)
-        return [
-            self.classes_[
-                int(np.random.choice(np.flatnonzero(prob == prob.max())))
-            ] for prob in proba
-        ]
+        rng = check_random_state(self.random_state)
+        return np.array(
+            [
+                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
+                for prob in self.predict_proba(X)
+            ]
+        )
 
     def predict_proba(self, X):
         """
@@ -267,13 +271,13 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
-        n_test_instances, series_length = X.shape
+        n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
             raise TypeError(
                 "ERROR number of attributes in the train does not match "
                 "that in the test data"
             )
-        sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
+        sums = np.zeros((n_test_instances, self.n_classes), dtype=np.float64)
 
         c22 = Catch22()
 
@@ -300,22 +304,23 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
                 axis=1
             )
         elif self.atts[i][a] == 23:
             # std_dev
             return np.std(
-                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
                 axis=1
             )
         elif self.atts[i][a] == 24:
             # slope
             return time_series_slope(
-                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]]
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                axis=1
             )
         else:
             return c22._transform_single_feature(
-                X[:, self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
                 feature=a
             )

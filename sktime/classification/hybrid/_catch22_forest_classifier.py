@@ -3,18 +3,19 @@
 A forest classifier based on catch22 features
 """
 
-__author__ = ["Carl Lubba", "Matthew Middlehurst"]
+__author__ = ["Matthew Middlehurst"]
 __all__ = ["Catch22ForestClassifier"]
 
 import sys
 
 import numpy as np
-from sklearn.ensemble import BaggingClassifier
-from sklearn import tree, preprocessing
-from sklearn.utils import check_random_state
-from sklearn.utils import check_array
+from sklearn.ensemble import RandomForestClassifier
 from catch22 import catch22_all
+from sklearn.utils.multiclass import class_distribution
+
 from sktime.classification.base import BaseClassifier
+from sktime.utils.data_container import tabularize
+from sktime.utils.validation.panel import check_X
 
 
 class Catch22ForestClassifier(BaseClassifier):
@@ -71,22 +72,20 @@ class Catch22ForestClassifier(BaseClassifier):
     def __init__(
         self,
         n_estimators=100,
-        bootstrap=True,
         n_jobs=None,
         random_state=None
     ):
         self.n_estimators = n_estimators
-        self.bootstrap = bootstrap
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.bagging_classifier_ = None
+        self.classifier = None
         self.n_timestep_ = 0
         self.n_dims_ = 0
         self.classes_ = []
         super(Catch22ForestClassifier, self).__init__()
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y):
         """Fit a random catch22 feature forest classifier
 
             Parameters
@@ -103,155 +102,61 @@ class Catch22ForestClassifier(BaseClassifier):
             # todo update when catch22 is fixed for windows/alternative is made
             raise OSError("Catch22 does not support Windows OS currently.")
 
-        # Correct formating of x
-        if len(X.iloc[0]) == 1:  # UNI
-            X = [
-                np.array(X.iloc[i].iloc[0]).tolist()
-                for i in range(0, len(X))
-            ]
-        else:  # MULTI
-            X = [
-                [
-                    np.array(X.iloc[i].iloc[j]).tolist()
-                    for j in range(0, len(X.iloc[i]))
-                ] for i in range(0, len(X))
-            ]
+        X = check_X(X, enforce_univariate=False)
+        X = tabularize(X, return_array=True)
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        n_instances = X.shape[0]
 
-        random_state = check_random_state(self.random_state)
+        c22_list = []
+        for i in range(n_instances):
+            series = X[i, :]
+            c22_dict = catch22_all(series)
+            c22_list.append(c22_dict['values'])
 
-        self.classes_ = np.unique(y)
-        le = preprocessing.LabelEncoder()
-        y = le.fit_transform(y)
-
-        if check_input:
-            X = check_array(X, dtype=np.float64, allow_nd=True, order="C")
-            y = check_array(y, ensure_2d=False)
-
-        if X.ndim < 2 or X.ndim > 3:
-            raise ValueError("illegal input dimension")
-
-        n_samples = X.shape[0]
-        self.n_timestep_ = X.shape[-1]
-        if X.ndim > 2:
-            n_dims = X.shape[1]
-        else:
-            n_dims = 1
-
-        self.n_dims_ = n_dims
-
-        if y.ndim == 1:
-            self.classes_, y = np.unique(y, return_inverse=True)
-        else:
-            _, y = np.nonzero(y)
-            if len(y) != n_samples:
-                raise ValueError("Single label per sample expected.")
-            self.classes_ = np.unique(y)
-
-        if len(y) != n_samples:
-            raise ValueError("Number of labels={} does not match "
-                             "number of samples={}".format(len(y), n_samples))
-
-        if X.dtype != np.float64 or not X.flags.contiguous:
-            X = np.ascontiguousarray(X, dtype=np.float64)
-
-        if not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=np.intp)
-
-        clf = tree.DecisionTreeClassifier(
-            class_weight="balanced",
-            random_state=random_state
-        )
-
-        self.bagging_classifier_ = BaggingClassifier(
-            base_estimator=clf,
-            bootstrap=self.bootstrap,
+        self.classifier = RandomForestClassifier(
             n_jobs=self.n_jobs,
             n_estimators=self.n_estimators,
             random_state=self.random_state,
         )
-        X = X.reshape(n_samples, n_dims * self.n_timestep_)
 
-        # compute catch22 features
-        num_insts = X.shape[0]
-        X_catch22 = []
-        for i in range(num_insts):
-            series = X[i, :]
-            c22_dict = catch22_all(series)
-            X_catch22.append(c22_dict['values'])
+        X_c22 = np.array(c22_list)
+        np.nan_to_num(X_c22, False, 0, 0, 0)
 
-        # replace the rare nans
-        X_catch22 = np.array(X_catch22)
-        X_catch22[np.logical_or(np.isnan(X_catch22), np.isinf(X_catch22))] = 0
-
-        self.bagging_classifier_.fit(X_catch22, y, sample_weight=sample_weight)
+        self.classifier.fit(X_c22, y)
 
         self._is_fitted = True
         return self
 
-    def predict(self, X, check_input=True):
-        return self.classes_[
-            np.argmax(self.predict_proba(X, check_input=check_input), axis=1)
-        ]
-
-    def predict_proba(self, X, check_input=True):
+    def predict(self, X):
         self.check_is_fitted()
+        X = check_X(X, enforce_univariate=False)
+        X = tabularize(X, return_array=True)
+        n_instances = X.shape[0]
 
-        # Correct formating of x
-        if len(X.iloc[0]) == 1:  # UNI
-            X = [
-                np.array(X.iloc[i].iloc[0]).tolist()
-                for i in range(0, len(X))
-            ]
-        else:  # MULTI
-            X = [
-                [
-                    np.array(X.iloc[i].iloc[j]).tolist()
-                    for j in range(0, len(X.iloc[i]))
-                ] for i in range(0, len(X))
-            ]
-
-        if check_input:
-            X = check_array(X, dtype=np.float64, allow_nd=True, order="C")
-
-        if X.ndim < 2 or X.ndim > 3:
-            raise ValueError(
-                "illegal input dimensions X.ndim ({})".format(X.ndim)
-            )
-
-        if self.n_dims_ > 1 and X.ndim != 3:
-            raise ValueError("illegal input dimensions X.ndim != 3")
-
-        if X.shape[-1] != self.n_timestep_:
-            raise ValueError(
-                "illegal input shape ({} != {})".format(
-                    X.shape[-1],
-                    self.n_timestep_
-                )
-            )
-
-        if X.ndim > 2 and X.shape[1] != self.n_dims_:
-            raise ValueError(
-                "illegal input shape ({} != {}".format(
-                    X.shape[1],
-                    self.n_dims
-                )
-            )
-
-        if X.dtype != np.float64 or not X.flags.contiguous:
-            X = np.ascontiguousarray(X, dtype=np.float64)
-
-        X = X.reshape(X.shape[0], self.n_dims_ * self.n_timestep_)
-
-        # compute catch22 features
-        num_insts = X.shape[0]
-        X_catch22 = []
-        for i in range(num_insts):
+        c22_list = []
+        for i in range(n_instances):
             series = X[i, :]
             c22_dict = catch22_all(series)
-            X_catch22.append(c22_dict['values'])
+            c22_list.append(c22_dict['values'])
 
-        # replace the rare nans
-        X_catch22 = np.array(X_catch22)
-        X_catch22[np.logical_or(np.isnan(X_catch22), np.isinf(X_catch22))] = 0
+        X_c22 = np.array(c22_list)
+        np.nan_to_num(X_c22, False, 0, 0, 0)
 
-        return self.bagging_classifier_.predict_proba(X_catch22)
+        return self.classifier.predict(X_c22)
+
+    def predict_proba(self, X):
+        self.check_is_fitted()
+        X = check_X(X, enforce_univariate=False)
+        X = tabularize(X, return_array=True)
+        n_instances = X.shape[0]
+
+        c22_list = []
+        for i in range(n_instances):
+            series = X[i, :]
+            c22_dict = catch22_all(series)
+            c22_list.append(c22_dict['values'])
+
+        X_c22 = np.array(c22_list)
+        np.nan_to_num(X_c22, False, 0, 0, 0)
+
+        return self.classifier.predict_proba(X_c22)

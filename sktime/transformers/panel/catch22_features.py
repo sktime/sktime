@@ -70,8 +70,13 @@ class Catch22(_PanelToTabularTransformer):
             -------
             Pandas dataframe containing 22 features for each input series
         """
+        if sys.platform == 'win32':
+            # todo update when catch22 is fixed for windows/alternative is made
+            raise OSError("Catch22 does not support Windows OS currently.")
+
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
+        X = check_X(X, enforce_univariate=False)
+        X = tabularize(X, return_array=True)
 
         n_instances = X.shape[0]
 
