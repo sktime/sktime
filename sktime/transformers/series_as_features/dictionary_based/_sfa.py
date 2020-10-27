@@ -63,7 +63,7 @@ class SFA(BaseSeriesAsFeaturesTransformer):
         norm:                boolean, default = False
             mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain"},
+        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
                              default="equi-depth"
             the binning method used to derive the breakpoints.
 
