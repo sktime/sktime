@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["Markus Löning", "@big-o"]
 
-from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
-from statsmodels.tsa.holtwinters import \
-    ExponentialSmoothing as _ExponentialSmoothing
+from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
+
+from sktime.forecasting.base._adapters import _StatsModelsAdapter
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
@@ -54,23 +55,29 @@ class ExponentialSmoothing(_StatsModelsAdapter):
     """
 
     _fitted_param_names = (
-        "initial_level", "initial_slope", "initial_seasons", "smoothing_level",
-        "smoothing_slope", "smoothing_seasonal", "damping_slope")
+        "initial_level",
+        "initial_slope",
+        "initial_seasons",
+        "smoothing_level",
+        "smoothing_slope",
+        "smoothing_seasonal",
+        "damping_slope",
+    )
 
     def __init__(
-            self,
-            trend=None,
-            damped=False,
-            seasonal=None,
-            sp=None,
-            smoothing_level=None,
-            smoothing_slope=None,
-            smoothing_seasonal=None,
-            damping_slope=None,
-            optimized=True,
-            use_boxcox=False,
-            remove_bias=False,
-            use_basinhopping=False,
+        self,
+        trend=None,
+        damped=False,
+        seasonal=None,
+        sp=None,
+        smoothing_level=None,
+        smoothing_slope=None,
+        smoothing_seasonal=None,
+        damping_slope=None,
+        optimized=True,
+        use_boxcox=False,
+        remove_bias=False,
+        use_basinhopping=False,
     ):
         # Model params
         self.trend = trend
@@ -90,7 +97,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
         super(ExponentialSmoothing, self).__init__()
 
-    def _fit_forecaster(self, y, X_train=None):
+    def _fit_forecaster(self, y, X=None):
         self._forecaster = _ExponentialSmoothing(
             y,
             trend=self.trend,

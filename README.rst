@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |azure|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_
+|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
 
 .. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
 .. _travis: https://travis-ci.com/alan-turing-institute/sktime
@@ -22,6 +22,15 @@
 
 .. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
 .. _azure: https://dev.azure.com/mloning/sktime/_build
+
+.. |codecov| image:: https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?logo=Codecov
+.. _codecov: https://codecov.io/gh/alan-turing-institute/sktime
+
+.. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
+.. _readthedocs: https://www.sktime.org/en/latest/?badge=latest
+
+.. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
+.. _twitter: https://twitter.com/sktime_toolbox
 
 
 sktime
@@ -57,7 +66,7 @@ Development Version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
-`advanced installation instructions <https://alan-turing-institute.github.io/sktime/installation.html>`__.
+`advanced installation instructions <https://www.sktime.org/en/latest/installation.html>`__.
 
 ------------------------------------------------------------
 
@@ -115,9 +124,9 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
+* Watch our online tutorial on Machine Learning with Time Series at the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
 * Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
-* Read our detailed `API reference <https://alan-turing-institute.github.io/sktime/>`__.
-* Check out our previous `tutorials and sprints <https://github.com/sktime/sktime-workshops>`__.
+* Read our detailed `API reference <https://www.sktime.org>`__.
 
 ------------------------------------------------------------
 
@@ -193,9 +202,9 @@ For more details, read this `issue <https://github.com/alan-turing-institute/skt
 
 How to contribute
 -----------------
-* First check out our `guide on how to contribute <https://sktime.org/contributing.html>`__.
+* First check out our `guide on how to contribute <https://www.sktime.org/en/latest/contributing.html>`__.
 * `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://sktime.org/governance.html>`__ document. 
+* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://www.sktime.org/en/latest/governance.html>`__ document.
 
 For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
 
@@ -218,5 +227,3 @@ Bibtex entry:
         title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
         date = {2019},
     }
-
-

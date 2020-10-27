@@ -11,7 +11,7 @@ BUILDDIR      = _build
 PROJECTDIR    = "../sktime/"
 
 # exclude unit tests from API reference
-EXCLUDEPATHS = "../*tests* ../*test* ../*contrib* ../*setup*"
+EXCLUDEPATHS = "../*tests* ../*test* ../*contrib* ../*setup* ../*all*"
 
 # Put it first so that "make" without argument is like "make help".
 help:

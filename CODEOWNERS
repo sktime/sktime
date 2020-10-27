@@ -1,3 +1,7 @@
 # The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
 # Each line is a file pattern followed by one or more owners.
-
+sktime/classification/dictionary_based/ @patrickzib
+sktime/classification/dictionary_based/tests @patrickzib
+sktime/transformers/series_as_features/dictionary_based/ @patrickzib
+sktime/forecasting/ets.py @HYang1996
+sktime/forecasting/tests/test_ets.py @HYang1996

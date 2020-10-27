@@ -1,0 +1,20 @@
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+version: 2
+
+# We need to build sktime before building the docs because otherwise Sphinx
+#  cannot read the docstrings from Cython and C extension files
+python:
+  version: 3.7
+  install:
+    # install build requirements
+    - requirements: build_tools/requirements.txt
+    # build sktime using `python ./setup.py install --force`
+    - method: setuptools
+      path: .
+    # install doc requirements
+    - requirements: docs/requirements.txt
+
+sphinx:
+  configuration: docs/source/conf.py

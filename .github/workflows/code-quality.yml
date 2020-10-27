@@ -1,0 +1,35 @@
+# GitHub Action to run all pre-commit checks specified in the
+#  .pre-commit-config.yaml
+
+name: code-quality
+
+on:
+  pull_request:
+  push:
+    branches: [ master ]
+
+# run against all files
+#jobs:
+#  pre-commit:
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-python@v2
+#      - uses: pre-commit/action@v2.0.0
+
+# run against only changed files
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
+        with:
+          output: ' '
+      - name: "List changed files"
+        run: echo '${{ steps.file_changes.outputs.files}}'
+      - uses: pre-commit/action@v2.0.0
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files}}
