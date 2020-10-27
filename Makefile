@@ -38,7 +38,6 @@ clean: ## Clean build dist and egg directories left after install
 	rm -rf ./junit
 	rm -rf ./$(PACKAGE).egg-info
 	rm -rf ./cover
-	rm -rf $(VENV_DIR)
 	rm -f MANIFEST
 	rm -f ./$(PACKAGE)/*.so
 	find . -type f -iname '*.pyc' -delete
