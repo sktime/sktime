@@ -15,9 +15,9 @@ from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
 from sktime.transformers.base import _SeriesToSeriesTransformer
-from sktime.utils.data_container import from_2d_array_to_nested
-from sktime.utils.data_container import from_3d_numpy_to_2d_array
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_2d_array_to_nested
+from sktime.utils.data_processing import from_3d_numpy_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 __author__ = ["Markus Löning", "Sajay Ganesh"]

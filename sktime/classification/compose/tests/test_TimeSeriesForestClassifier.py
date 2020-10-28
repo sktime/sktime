@@ -16,7 +16,7 @@ from sktime.transformers.panel.summarize import (
     RandomIntervalFeatureExtractor,
 )
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 
 X, y = make_classification_problem()
 n_classes = len(np.unique(y))
@@ -103,7 +103,7 @@ def test_TimeSeriesForest_predictions(n_estimators, n_intervals):
     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 
-    features = [np.mean, np.std, time_series_slope]
+    features = [np.mean, np.std, _slope]
     steps = [
         (
             "transform",

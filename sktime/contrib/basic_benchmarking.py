@@ -17,7 +17,7 @@ from sktime.transformers.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sktime.series_as_features.compose import FeatureUnion
 from sktime.classification.compose import TimeSeriesForestClassifier
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.dictionary_based._boss as db
@@ -179,7 +179,7 @@ def tsf_benchmarking():
                             "slope",
                             make_row_transformer(
                                 FunctionTransformer(
-                                    func=time_series_slope, validate=False
+                                    func=_slope, validate=False
                                 )
                             ),
                         ),

@@ -31,7 +31,7 @@ from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.transformers.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils import comparison
 from sktime.utils import dataset_properties
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 

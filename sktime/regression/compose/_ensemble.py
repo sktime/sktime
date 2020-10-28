@@ -17,7 +17,7 @@ from sktime.transformers.panel.summarize import (
 )
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
@@ -236,7 +236,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # Set base estimator
         if self.estimator is None:
             # Set default time series forest
-            features = [np.mean, np.std, time_series_slope]
+            features = [np.mean, np.std, _slope]
             steps = [
                 (
                     "transform",

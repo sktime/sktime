@@ -1,4 +1,4 @@
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
+from sktime.utils.data_loading import load_from_tsfile_to_dataframe as load_ts
 
 def test_loading():
    #test multivariate

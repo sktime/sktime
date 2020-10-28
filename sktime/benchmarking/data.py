@@ -6,7 +6,7 @@ import os
 import pandas as pd
 from sktime.benchmarking.base import BaseDataset
 from sktime.benchmarking.base import HDDBaseDataset
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.data_loading import load_from_tsfile_to_dataframe
 
 
 class UEADataset(HDDBaseDataset):

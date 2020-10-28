@@ -6,10 +6,10 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.utils.data_container import _concat_nested_arrays
-from sktime.utils.data_container import _get_column_names
-from sktime.utils.data_container import _get_time_index
-from sktime.utils.time_series import _get_n_from_n_timepoints
+from sktime.utils.data_processing import _concat_nested_arrays
+from sktime.utils.data_processing import _get_column_names
+from sktime.utils.data_processing import _get_time_index
+from sktime.utils.slope_and_trend import _get_n_from_n_timepoints
 from sktime.utils.validation import check_window_length
 from sktime.utils.validation.panel import check_X
 

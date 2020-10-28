@@ -9,9 +9,9 @@ import pandas as pd
 from sklearn.utils.validation import check_array
 
 from sktime.transformers.base import _PanelToTabularTransformer
-from sktime.utils.data_container import from_2d_array_to_nested
-from sktime.utils.data_container import from_3d_numpy_to_2d_array
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_2d_array_to_nested
+from sktime.utils.data_processing import from_3d_numpy_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 

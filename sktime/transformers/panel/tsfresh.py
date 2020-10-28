@@ -9,7 +9,7 @@ from warnings import warn
 
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
-from sktime.utils.data_container import from_nested_to_long
+from sktime.utils.data_processing import from_nested_to_long
 from sktime.utils.validation import check_n_jobs
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y

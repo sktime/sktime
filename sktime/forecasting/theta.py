@@ -11,7 +11,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.transformers.series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
-from sktime.utils.time_series import fit_trend
+from sktime.utils.slope_and_trend import _trend
 from sktime.utils.validation.forecasting import check_sp
 
 
@@ -172,7 +172,7 @@ class ThetaForecaster(ExponentialSmoothing):
     @staticmethod
     def _compute_trend(y):
         # Trend calculated through least squares regression.
-        coefs = fit_trend(y.values.reshape(1, -1), order=1)
+        coefs = _trend(y.values.reshape(1, -1), order=1)
         return coefs[0, 0] / 2
 
     def _compute_drift(self):

@@ -6,10 +6,10 @@ from sktime.series_as_features.tests._config import N_COLUMNS
 from sktime.series_as_features.tests._config import N_INSTANCES
 from sktime.series_as_features.tests._config import N_TIMEPOINTS
 from sktime.utils._testing import make_classification_problem
-from sktime.utils.data_container import from_3d_numpy_to_nested
-from sktime.utils.data_container import from_nested_to_2d_array
-from sktime.utils.data_container import from_nested_to_3d_numpy
-from sktime.utils.data_container import is_nested_dataframe
+from sktime.utils.data_processing import from_3d_numpy_to_nested
+from sktime.utils.data_processing import from_nested_to_2d_array
+from sktime.utils.data_processing import from_nested_to_3d_numpy
+from sktime.utils.data_processing import is_nested_dataframe
 
 
 @pytest.mark.parametrize("n_instances", N_INSTANCES)

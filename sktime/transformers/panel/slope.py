@@ -4,7 +4,7 @@ import pandas as pd
 import math
 import statistics
 from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 

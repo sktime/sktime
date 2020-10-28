@@ -19,7 +19,7 @@ from sktime.utils._testing import _assert_array_almost_equal
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _has_tag
 from sktime.utils._testing import _make_args
-from sktime.utils.data_container import is_nested_dataframe
+from sktime.utils.data_processing import is_nested_dataframe
 
 ALL_TRANSFORMERS = all_estimators(estimator_types="transformer", return_names=False)
 

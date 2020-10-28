@@ -15,7 +15,7 @@ from sktime.transformers.panel.summarize import (
 )
 from sktime.utils._testing import make_classification_problem
 from sktime.utils._testing.panel import _make_nested_from_array
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 
 
 # Test output format and dimensions.
@@ -130,7 +130,7 @@ def test_different_pipelines():
                     (
                         "slope",
                         SeriesToPrimitivesRowTransformer(
-                            FunctionTransformer(func=time_series_slope, validate=False),
+                            FunctionTransformer(func=_slope, validate=False),
                             check_transformer=False,
                         ),
                     ),
@@ -142,7 +142,7 @@ def test_different_pipelines():
     a = pipe.fit_transform(X_train)
     tran = RandomIntervalFeatureExtractor(
         n_intervals=1,
-        features=[np.mean, np.std, time_series_slope],
+        features=[np.mean, np.std, _slope],
         random_state=random_state,
     )
     b = tran.fit_transform(X_train)

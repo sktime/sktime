@@ -11,7 +11,7 @@ from scipy.special import boxcox
 from scipy.special import inv_boxcox
 
 from sktime.transformers.base import _SeriesToSeriesTransformer
-from sktime.utils.boxcox import boxcox_normmax
+from transformers.series.boxcox import boxcox_normmax
 from sktime.utils.validation.series import check_series
 
 

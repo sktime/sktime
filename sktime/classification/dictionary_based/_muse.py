@@ -20,7 +20,7 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformers.panel.dictionary_based import SFA
-from sktime.utils.data_container import from_nested_to_3d_numpy
+from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 

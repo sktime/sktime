@@ -29,7 +29,7 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
-from sktime.utils.data_container import is_nested_dataframe
+from sktime.utils.data_processing import is_nested_dataframe
 
 
 def _get_err_msg(estimator):

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
+
 __all__ = [
     "_get_n_from_n_timepoints",
-    "time_series_slope",
-    "fit_trend",
+    "_slope",
+    "_trend",
 ]
 __author__ = ["Markus Löning"]
 
@@ -89,7 +90,7 @@ def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     return n_intervals_
 
 
-def fit_trend(x, order=0):
+def _trend(x, order=0):
     """Fit linear regression with polynomial terms of given order
 
         x : array_like, shape=[n_samples, n_obs]
@@ -131,7 +132,7 @@ def fit_trend(x, order=0):
     return coefs
 
 
-def time_series_slope(y, axis=0):
+def _slope(y, axis=0):
     """Find the slope for each series of y
     Parameters
     ----------
