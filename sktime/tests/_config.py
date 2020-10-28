@@ -17,8 +17,10 @@ from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import (TimeSeriesForest,
-                                                  CanonicalIntervalForest)
+from sktime.classification.interval_based import (
+    TimeSeriesForest,
+    CanonicalIntervalForest
+)
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
@@ -172,9 +174,11 @@ ESTIMATOR_TEST_PARAMS = {
     TSInterpolator: {"length": 10},
     RandomIntervalSpectralForest: {"n_estimators": 3, "acf_lag": 10, "min_interval": 5},
     SFA: {"return_pandas_data_series": True},
-    TemporalDictionaryEnsemble: {"n_parameter_samples": 50,
-                                 "max_ensemble_size": 10,
-                                 "randomly_selected_params": 40},
+    TemporalDictionaryEnsemble: {
+        "n_parameter_samples": 50,
+        "max_ensemble_size": 10,
+        "randomly_selected_params": 40,
+    },
     CanonicalIntervalForest: {"n_estimators": 50},
     TimeSeriesForest: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},

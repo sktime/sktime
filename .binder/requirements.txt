@@ -1,3 +1,4 @@
+catch22
 cython>=0.29.0
 matplotlib
 notebook
@@ -9,4 +10,3 @@ scikit-posthocs
 seaborn
 statsmodels>=0.12.*
 tsfresh
-catch22

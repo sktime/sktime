@@ -37,7 +37,11 @@ import sklearn.preprocessing
 import sklearn.utils
 from sklearn.linear_model import RidgeClassifierCV
 
-from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS, TemporalDictionaryEnsemble
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble
+)
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformers.panel.rocket import Rocket
 
@@ -312,7 +316,7 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == "rocket":
         rocket_pipeline = make_pipeline(
             Rocket(random_state=resampleId),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True)
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
         )
         return rocket_pipeline
     else:

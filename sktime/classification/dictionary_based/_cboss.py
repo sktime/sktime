@@ -20,7 +20,7 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class ContractableBOSS(BaseClassifier):
-    """ Contractable Bag of SFA Symbols (cBOSS)
+    """Contractable Bag of SFA Symbols (cBOSS)
 
     @inproceedings{middlehurst2019scalable,
           title={Scalable dictionary classifiers for time series
@@ -161,16 +161,13 @@ class ContractableBOSS(BaseClassifier):
             self.n_parameter_samples = 0
 
         while (
-            train_time < self.time_limit
-            or num_classifiers < self.n_parameter_samples
+            train_time < self.time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
             parameters = possible_parameters.pop(
                 rng.randint(0, len(possible_parameters))
             )
 
-            subsample = rng.choice(
-                self.n_instances, size=subsample_size, replace=False
-            )
+            subsample = rng.choice(self.n_instances, size=subsample_size, replace=False)
             X_subsample = X[subsample]  # .iloc[subsample, :]
             y_subsample = y[subsample]
 

@@ -19,7 +19,7 @@ from sktime.utils.validation.panel import check_X
 
 
 class Catch22ForestClassifier(BaseClassifier):
-    """ Canonical Time-series Characteristics (catch22)
+    """Canonical Time-series Characteristics (catch22)
 
      @article{lubba2019catch22,
           title={catch22: CAnonical Time-series CHaracteristics},
@@ -69,12 +69,7 @@ class Catch22ForestClassifier(BaseClassifier):
      bagging_classifier      : trained forest classifier
 
      """
-    def __init__(
-        self,
-        n_estimators=100,
-        n_jobs=None,
-        random_state=None
-    ):
+    def __init__(self, n_estimators=100, n_jobs=None, random_state=None):
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -88,17 +83,17 @@ class Catch22ForestClassifier(BaseClassifier):
     def fit(self, X, y):
         """Fit a random catch22 feature forest classifier
 
-            Parameters
-            ----------
-            X : nested pandas DataFrame of shape [n_instances, 1]
-                Nested dataframe with univariate time-series in cells.
-            y : array-like, shape = [n_instances] The class labels.
+        Parameters
+        ----------
+        X : nested pandas DataFrame of shape [n_instances, 1]
+            Nested dataframe with univariate time-series in cells.
+        y : array-like, shape = [n_instances] The class labels.
 
-            Returns
-            -------
-            self : object
+        Returns
+        -------
+        self : object
         """
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             # todo update when catch22 is fixed for windows/alternative is made
             raise OSError("Catch22 does not support Windows OS currently.")
 
@@ -111,7 +106,7 @@ class Catch22ForestClassifier(BaseClassifier):
         for i in range(n_instances):
             series = X[i, :]
             c22_dict = catch22_all(series)
-            c22_list.append(c22_dict['values'])
+            c22_list.append(c22_dict["values"])
 
         self.classifier = RandomForestClassifier(
             n_jobs=self.n_jobs,
@@ -137,7 +132,7 @@ class Catch22ForestClassifier(BaseClassifier):
         for i in range(n_instances):
             series = X[i, :]
             c22_dict = catch22_all(series)
-            c22_list.append(c22_dict['values'])
+            c22_list.append(c22_dict["values"])
 
         X_c22 = np.array(c22_list)
         np.nan_to_num(X_c22, False, 0, 0, 0)
@@ -154,7 +149,7 @@ class Catch22ForestClassifier(BaseClassifier):
         for i in range(n_instances):
             series = X[i, :]
             c22_dict = catch22_all(series)
-            c22_list.append(c22_dict['values'])
+            c22_list.append(c22_dict["values"])
 
         X_c22 = np.array(c22_list)
         np.nan_to_num(X_c22, False, 0, 0, 0)

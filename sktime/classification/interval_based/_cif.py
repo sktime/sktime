@@ -129,7 +129,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             # todo update when catch22 is fixed for windows/alternative is made
             raise OSError("CIF does not support Windows OS currently.")
 
@@ -150,7 +150,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             self.min_interval = self.series_length
         self.intervals = np.zeros(
             (self.n_estimators, self.att_subsample_size * self.n_intervals, 2),
-            dtype=int
+            dtype=int,
         )
 
         if self.max_interval is None:
@@ -164,52 +164,46 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(
-                    self.att_subsample_size * self.n_intervals, self.n_instances
-                ),
-                dtype=np.float32
+                shape=(self.att_subsample_size * self.n_intervals, self.n_instances),
+                dtype=np.float32,
             )
 
-            self.atts.append(
-                rng.choice(25, self.att_subsample_size, replace=False)
-            )
+            self.atts.append(rng.choice(25, self.att_subsample_size, replace=False))
 
             # Find the random intervals for classifier i and concatentate
             # features
             for j in range(0, self.n_intervals):
                 if rng.random() < 0.5:
-                    self.intervals[i][j][0] = \
-                        rng.randint(0, self.series_length - self.min_interval)
+                    self.intervals[i][j][0] = rng.randint(
+                        0, self.series_length - self.min_interval
+                    )
                     len_range = min(
-                        self.series_length -
-                        self.intervals[i][j][0],
+                        self.series_length - self.intervals[i][j][0],
                         max_interval_length
                     )
-                    length = rng.randint(
-                        0, len_range - self.min_interval
-                    ) + self.min_interval
+                    length = (
+                            rng.randint(0, len_range - self.min_interval)
+                            + self.min_interval
+                    )
                     self.intervals[i][j][1] = self.intervals[i][j][0] + length
                 else:
-                    self.intervals[i][j][1] = \
-                        rng.randint(
-                            0,
-                            self.series_length - self.min_interval
-                        ) + self.min_interval
-                    len_range = min(
-                        self.intervals[i][j][1],
-                        max_interval_length
+                    self.intervals[i][j][1] = (
+                            rng.randint(0, self.series_length - self.min_interval)
+                            + self.min_interval
                     )
-                    length = rng.randint(
-                        0,
-                        len_range - self.min_interval
-                    ) + self.min_interval \
-                        if len_range - self.min_interval > 0 \
+                    len_range = min(self.intervals[i][j][1], max_interval_length)
+                    length = (
+                        rng.randint(0, len_range - self.min_interval)
+                        + self.min_interval
+                        if len_range - self.min_interval > 0
                         else self.min_interval
+                    )
                     self.intervals[i][j][0] = self.intervals[i][j][1] - length
 
                 for a in range(0, self.att_subsample_size):
-                    transformed_x[self.att_subsample_size * j + a] = \
-                        self.__cif_feature(X, i, j, a, c22)
+                    transformed_x[self.att_subsample_size * j + a] = self.__cif_feature(
+                        X, i, j, a, c22
+                    )
 
             tree = clone(self.base_estimator)
             tree.set_params(**{"random_state": self.random_state})
@@ -283,15 +277,14 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(
-                    self.att_subsample_size * self.n_intervals, n_test_instances
-                ),
-                dtype=np.float32
+                shape=(self.att_subsample_size * self.n_intervals, n_test_instances),
+                dtype=np.float32,
             )
             for j in range(0, self.n_intervals):
                 for a in range(0, self.att_subsample_size):
-                    transformed_x[self.att_subsample_size * j + a] = \
-                        self.__cif_feature(X, i, j, a, c22)
+                    transformed_x[self.att_subsample_size * j + a] = self.__cif_feature(
+                        X, i, j, a, c22
+                    )
 
             transformed_x = transformed_x.T
             np.nan_to_num(transformed_x, False, 0, 0, 0)
@@ -304,23 +297,19 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                axis=1
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
             )
         elif self.atts[i][a] == 23:
             # std_dev
             return np.std(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                axis=1
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
             )
         elif self.atts[i][a] == 24:
             # slope
             return time_series_slope(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                axis=1
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
             )
         else:
             return c22._transform_single_feature(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]],
-                feature=a
+                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], feature=a
             )

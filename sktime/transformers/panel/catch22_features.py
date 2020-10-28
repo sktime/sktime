@@ -20,7 +20,7 @@ import catch22  # noqa: E402
 
 
 class Catch22(_PanelToTabularTransformer):
-    """ Canonical Time-series Characteristics (catch22)
+    """Canonical Time-series Characteristics (catch22)
 
     @article{lubba2019catch22,
         title={catch22: CAnonical Time-series CHaracteristics},
@@ -61,16 +61,16 @@ class Catch22(_PanelToTabularTransformer):
     def transform(self, X, y=None):
         """transforms data into the catch22 features
 
-            Parameters
-            ----------
-            X : pandas DataFrame, input time series
-            y : array_like, target values (optional, ignored)
+        Parameters
+        ----------
+        X : pandas DataFrame, input time series
+        y : array_like, target values (optional, ignored)
 
-            Returns
-            -------
-            Pandas dataframe containing 22 features for each input series
+        Returns
+        -------
+        Pandas dataframe containing 22 features for each input series
         """
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             # todo update when catch22 is fixed for windows/alternative is made
             raise OSError("Catch22 does not support Windows OS currently.")
 
@@ -84,24 +84,24 @@ class Catch22(_PanelToTabularTransformer):
         for i in range(n_instances):
             series = X[i, :]
             c22_dict = catch22.catch22_all(series)
-            c22_list.append(c22_dict['values'])
+            c22_list.append(c22_dict["values"])
 
         return pd.DataFrame(c22_list)
 
     def _transform_single_feature(self, X, feature):
         """transforms data into the catch22 features
 
-            Parameters
-            ----------
-            X : pandas DataFrame, input time series
-            feature : int, catch22 feature id or String, catch22 feature
-                      name.
+        Parameters
+        ----------
+        X : pandas DataFrame, input time series
+        feature : int, catch22 feature id or String, catch22 feature
+                  name.
 
-            Returns
-            -------
-            Numpy array containing a catch22 feature for each input series
+        Returns
+        -------
+        Numpy array containing a catch22 feature for each input series
         """
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             # todo update when catch22 is fixed for windows/alternative is made
             raise OSError("Catch22 does not support Windows OS currently.")
 
@@ -130,42 +130,52 @@ class Catch22(_PanelToTabularTransformer):
         return np.array(c22_list)
 
 
-feature_names = ["DN_HistogramMode_5", "DN_HistogramMode_10",
-                 "CO_f1ecac", "CO_FirstMin_ac",
-                 "CO_HistogramAMI_even_2_5", "CO_trev_1_num",
-                 "MD_hrv_classic_pnn40",
-                 "SB_BinaryStats_mean_longstretch1",
-                 "SB_TransitionMatrix_3ac_sumdiagcov",
-                 "PD_PeriodicityWang_th0_01",
-                 "CO_Embed2_Dist_tau_d_expfit_meandiff",
-                 "IN_AutoMutualInfoStats_40_gaussian_fmmi",
-                 "FC_LocalSimple_mean1_tauresrat",
-                 "DN_OutlierInclude_p_001_mdrmd",
-                 "DN_OutlierInclude_n_001_mdrmd",
-                 "SP_Summaries_welch_rect_area_5_1",
-                 "SB_BinaryStats_diff_longstretch0",
-                 "SB_MotifThree_quantile_hh",
-                 "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
-                 "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
-                 "SP_Summaries_welch_rect_centroid",
-                 "FC_LocalSimple_mean3_stderr"]
+feature_names = [
+    "DN_HistogramMode_5",
+    "DN_HistogramMode_10",
+    "CO_f1ecac",
+    "CO_FirstMin_ac",
+    "CO_HistogramAMI_even_2_5",
+    "CO_trev_1_num",
+    "MD_hrv_classic_pnn40",
+    "SB_BinaryStats_mean_longstretch1",
+    "SB_TransitionMatrix_3ac_sumdiagcov",
+    "PD_PeriodicityWang_th0_01",
+    "CO_Embed2_Dist_tau_d_expfit_meandiff",
+    "IN_AutoMutualInfoStats_40_gaussian_fmmi",
+    "FC_LocalSimple_mean1_tauresrat",
+    "DN_OutlierInclude_p_001_mdrmd",
+    "DN_OutlierInclude_n_001_mdrmd",
+    "SP_Summaries_welch_rect_area_5_1",
+    "SB_BinaryStats_diff_longstretch0",
+    "SB_MotifThree_quantile_hh",
+    "SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1",
+    "SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1",
+    "SP_Summaries_welch_rect_centroid",
+    "FC_LocalSimple_mean3_stderr",
+]
 
-features = [catch22.DN_HistogramMode_5, catch22.DN_HistogramMode_10,
-            catch22.CO_f1ecac, catch22.CO_FirstMin_ac,
-            catch22.CO_HistogramAMI_even_2_5, catch22.CO_trev_1_num,
-            catch22.MD_hrv_classic_pnn40,
-            catch22.SB_BinaryStats_mean_longstretch1,
-            catch22.SB_TransitionMatrix_3ac_sumdiagcov,
-            catch22.PD_PeriodicityWang_th0_01,
-            catch22.CO_Embed2_Dist_tau_d_expfit_meandiff,
-            catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi,
-            catch22.FC_LocalSimple_mean1_tauresrat,
-            catch22.DN_OutlierInclude_p_001_mdrmd,
-            catch22.DN_OutlierInclude_n_001_mdrmd,
-            catch22.SP_Summaries_welch_rect_area_5_1,
-            catch22.SB_BinaryStats_diff_longstretch0,
-            catch22.SB_MotifThree_quantile_hh,
-            catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
-            catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
-            catch22.SP_Summaries_welch_rect_centroid,
-            catch22.FC_LocalSimple_mean3_stderr]
+features = [
+    catch22.DN_HistogramMode_5,
+    catch22.DN_HistogramMode_10,
+    catch22.CO_f1ecac,
+    catch22.CO_FirstMin_ac,
+    catch22.CO_HistogramAMI_even_2_5,
+    catch22.CO_trev_1_num,
+    catch22.MD_hrv_classic_pnn40,
+    catch22.SB_BinaryStats_mean_longstretch1,
+    catch22.SB_TransitionMatrix_3ac_sumdiagcov,
+    catch22.PD_PeriodicityWang_th0_01,
+    catch22.CO_Embed2_Dist_tau_d_expfit_meandiff,
+    catch22.IN_AutoMutualInfoStats_40_gaussian_fmmi,
+    catch22.FC_LocalSimple_mean1_tauresrat,
+    catch22.DN_OutlierInclude_p_001_mdrmd,
+    catch22.DN_OutlierInclude_n_001_mdrmd,
+    catch22.SP_Summaries_welch_rect_area_5_1,
+    catch22.SB_BinaryStats_diff_longstretch0,
+    catch22.SB_MotifThree_quantile_hh,
+    catch22.SC_FluctAnal_2_dfa_50_1_2_logi_prop_r1,
+    catch22.SC_FluctAnal_2_rsrangefit_50_1_logi_prop_r1,
+    catch22.SP_Summaries_welch_rect_centroid,
+    catch22.FC_LocalSimple_mean3_stderr,
+]
