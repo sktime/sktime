@@ -2,7 +2,7 @@
 """
 functions to man
 
-TO DO: resolve access to protected
+TO DO: resolve access to protected, rename, maybe move
 """
 __author__ = ["Markus Löning"]
 

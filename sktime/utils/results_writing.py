@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """ function to write results to file.
 
-
+TO DO: remove
 """
 
 __author__ = [""]

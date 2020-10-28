@@ -13,7 +13,8 @@ __all__ = ["from_3d_numpy_to_2d_array",
            "from_nested_to_3d_numpy",
            "from_3d_numpy_to_nested",
            "from_long_to_nested",
-           "generate_example_long_table"
+           "generate_example_long_table",
+           "is_nested_dataframe"
            ]
 __author__ = ["Jason Lines", "Tony Bagnall"]
 
