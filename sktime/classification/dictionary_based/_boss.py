@@ -261,7 +261,7 @@ class BOSSEnsemble(BaseClassifier):
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
-            for n, clf in enumerate(self.classifiers):
+            for clf in self.classifiers:
                 sums[self.class_dictionary.get(clf._train_predict(i), -1)] += 1
 
             dists = sums / divisor
