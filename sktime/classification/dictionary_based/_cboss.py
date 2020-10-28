@@ -89,7 +89,7 @@ class ContractableBOSS(BaseClassifier):
         max_win_len_prop=1,
         time_limit=0.0,
         min_window=10,
-        random_state=None
+        random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size

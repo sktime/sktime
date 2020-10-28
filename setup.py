@@ -35,7 +35,7 @@ EXTRAS_REQUIRE = {
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
-        "catch22",
+        "catch22>=0.1.0",
     ],
 }
 

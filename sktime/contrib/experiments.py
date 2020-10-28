@@ -35,6 +35,11 @@ import os
 
 import sklearn.preprocessing
 import sklearn.utils
+from sklearn.linear_model import RidgeClassifierCV
+
+from sktime.classification.dictionary_based import BOSSEnsemble, ContractableBOSS, TemporalDictionaryEnsemble
+from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.transformers.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -53,8 +58,6 @@ from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
 import sktime.classification.compose._ensemble as ensemble
-import sktime.classification.dictionary_based._boss as db
-import sktime.classification.dictionary_based._tde as tde
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
@@ -66,7 +69,7 @@ from sktime.transformers.panel.compose import make_row_transformer
 from sktime.transformers.panel.segment import RandomIntervalSegmenter
 
 from sktime.transformers.panel.reduce import Tabularizer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
@@ -251,23 +254,23 @@ def set_classifier(cls, resampleId):
 
     """
     if cls.lower() == "pf":
-        return pf.ProximityForest(random_state = resampleId)
+        return pf.ProximityForest(random_state=resampleId)
     elif cls.lower() == "pt":
-        return pf.ProximityTree(random_state = resampleId)
+        return pf.ProximityTree(random_state=resampleId)
     elif cls.lower() == "ps":
-        return pf.ProximityStump(random_state = resampleId)
+        return pf.ProximityStump(random_state=resampleId)
     elif cls.lower() == "rise":
-        return fb.RandomIntervalSpectralForest(random_state = resampleId)
+        return fb.RandomIntervalSpectralForest(random_state=resampleId)
     elif cls.lower() == "tsf":
-        return ib.TimeSeriesForest(random_state = resampleId)
+        return ib.TimeSeriesForest(random_state=resampleId)
     elif cls.lower() == "cif":
         return CanonicalIntervalForest(random_state=resampleId)
     elif cls.lower() == "boss":
-        return boss.BOSSEnsemble(random_state=resampleId)
+        return BOSSEnsemble(random_state=resampleId)
     elif cls.lower() == "cboss":
-        return cboss.ContractableBOSS(random_state=resampleId)
+        return ContractableBOSS(random_state=resampleId)
     elif cls.lower() == "tde":
-        return tde.TemporalDictionaryEnsemble(random_state=resampleId, max_ensemble_size=50)
+        return TemporalDictionaryEnsemble(random_state=resampleId)
     elif cls.lower() == "st":
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == "dtwcv":

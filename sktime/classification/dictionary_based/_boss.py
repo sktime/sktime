@@ -89,7 +89,7 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
-        random_state=None
+        random_state=None,
     ):
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
