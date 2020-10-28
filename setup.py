@@ -25,12 +25,12 @@ MIN_REQUIREMENTS = {
     "pandas": "1.0.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.0",
+    "numba": "0.50.*",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
         "cython>=0.29.0",
         "matplotlib>=3.3.2",
-        "numba<=0.50.*",
         "pmdarima>=1.7.1",
         "scikit_posthocs>= 0.6.5",
         "seaborn>=0.11.0",
@@ -60,11 +60,11 @@ def find_version(*file_paths):
 
 WEBSITE = "https://www.sktime.org"
 DISTNAME = "sktime"
-DESCRIPTION = "A unified Python toolbox for machine learning " "with time series"
+DESCRIPTION = "A unified Python toolbox for machine learning with time series"
 with codecs.open("README.rst", encoding="utf-8-sig") as f:
     LONG_DESCRIPTION = f.read()
 MAINTAINER = "F. Király"
-MAINTAINER_EMAIL = "fkiraly@turing.ac.uk"
+MAINTAINER_EMAIL = "f.kiraly@ucl.ac.uk"
 URL = "https://github.com/alan-turing-institute/sktime"
 LICENSE = "BSD-3-Clause"
 DOWNLOAD_URL = "https://pypi.org/project/sktime/#files"

@@ -54,8 +54,8 @@ from sktime.transformers.panel.reduce import Tabularizer
 from sktime.transformers.panel.shapelets import ContractedShapeletTransform
 from sktime.transformers.panel.shapelets import ShapeletTransform
 from sktime.transformers.panel.summarize import FittedParamExtractor
-from sktime.transformers.panel.summarize import TSFreshFeatureExtractor
-from sktime.transformers.panel.summarize import (
+from sktime.transformers.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.transformers.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
 from sktime.transformers.series.adapt import TabularToSeriesAdaptor
