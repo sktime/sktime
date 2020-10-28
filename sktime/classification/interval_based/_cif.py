@@ -113,6 +113,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.intervals = []
         self.classes_ = []
 
+        # We need to add is-fitted state when inheriting from scikit-learn
+        self._is_fitted = False
+
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
         intervals and catch22/tsf summary features

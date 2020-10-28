@@ -14,7 +14,7 @@ from catch22 import catch22_all
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 
@@ -99,7 +99,7 @@ class Catch22ForestClassifier(BaseClassifier):
             raise OSError("Catch22 does not support Windows OS currently.")
 
         X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        X = from_nested_to_2d_array(X, return_numpy=True)
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         n_instances = X.shape[0]
 
@@ -126,7 +126,7 @@ class Catch22ForestClassifier(BaseClassifier):
     def predict(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        X = X = from_nested_to_2d_array(X, return_numpy=True)
         n_instances = X.shape[0]
 
         c22_list = []
@@ -143,7 +143,7 @@ class Catch22ForestClassifier(BaseClassifier):
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        X = X = from_nested_to_2d_array(X, return_numpy=True)
         n_instances = X.shape[0]
 
         c22_list = []

@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
-from sktime.utils.data_container import tabularize
+from sktime.utils.data_container import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
 _check_soft_dependencies("catch22")
@@ -76,7 +76,7 @@ class Catch22(_PanelToTabularTransformer):
 
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False)
-        X = tabularize(X, return_array=True)
+        X = from_nested_to_2d_array(X, return_numpy=True)
 
         n_instances = X.shape[0]
 
@@ -117,7 +117,7 @@ class Catch22(_PanelToTabularTransformer):
             raise ValueError("Feature name or ID required")
 
         if isinstance(X, pd.DataFrame):
-            X = tabularize(X, return_array=True)
+            X = from_nested_to_2d_array(X, return_numpy=True)
 
         n_instances = X.shape[0]
 
