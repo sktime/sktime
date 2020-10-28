@@ -104,8 +104,8 @@ Paired (or second-degree) transformations:
 
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
-| BOSS Ensemble | classifiers.dictionary_based.boss.BossEnsemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
-| BOSS Atom | classifiers.dictionary_based.boss.BossIndividual | @MatthewMiddlehurst | |
+| BOSS Ensemble | classifiers.dictionary_based.boss.BOSSEnsemble | @MatthewMiddlehurst | [Schäfer (2014) - The BOSS is concerned with time series classification in the presence of noise](https://link.springer.com/article/10.1007/s10618-014-0377-7) |
+| BOSS Atom | classifiers.dictionary_based.boss.IndividualBOSS | @MatthewMiddlehurst | |
 | cBOSS | classifiers.dictionary_based.cboss.ContractableBOSS | @MatthewMiddlehurst | [Middlehurst et al (2019) - Scalable dictionary classifiers for time series classification](https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2) |
 | Temporal Dictionary Ensemble (TDE)| classifiers.dictionary_based.tde.TemporalDictionaryEnsemble | @MatthewMiddlehurst | [Middlehurst et al (2020) - The Temporal Dictionary Ensemble (TDE) Classifier for Time Series Classification]() |
 | TDE Atom | classifiers.dictionary_based.tde.IndividualTDE | @MatthewMiddlehurst |  |
