@@ -179,17 +179,17 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                     )
                     len_range = min(
                         self.series_length - self.intervals[i][j][0],
-                        max_interval_length
+                        max_interval_length,
                     )
                     length = (
-                            rng.randint(0, len_range - self.min_interval)
-                            + self.min_interval
+                        rng.randint(0, len_range - self.min_interval)
+                        + self.min_interval
                     )
                     self.intervals[i][j][1] = self.intervals[i][j][0] + length
                 else:
                     self.intervals[i][j][1] = (
-                            rng.randint(0, self.series_length - self.min_interval)
-                            + self.min_interval
+                        rng.randint(0, self.series_length - self.min_interval)
+                        + self.min_interval
                     )
                     len_range = min(self.intervals[i][j][1], max_interval_length)
                     length = (
@@ -297,19 +297,19 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
+                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
             )
         elif self.atts[i][a] == 23:
             # std_dev
             return np.std(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
+                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
             )
         elif self.atts[i][a] == 24:
             # slope
             return time_series_slope(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], axis=1
+                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
             )
         else:
             return c22._transform_single_feature(
-                X[:, 0, self.intervals[i][j][0]:self.intervals[i][j][1]], feature=a
+                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], feature=a
             )

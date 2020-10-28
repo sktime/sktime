@@ -20,7 +20,7 @@ def test_tde_on_gunpoint():
         n_parameter_samples=50,
         max_ensemble_size=10,
         randomly_selected_params=40,
-        random_state=0
+        random_state=0,
     )
     tde.fit(X_train.iloc[indices], y_train[indices])
 
@@ -55,7 +55,7 @@ def test_tde_on_power_demand():
         n_parameter_samples=50,
         max_ensemble_size=10,
         randomly_selected_params=40,
-        random_state=0
+        random_state=0,
     )
     tde.fit(X_train, y_train)
 

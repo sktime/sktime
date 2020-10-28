@@ -175,17 +175,16 @@ catch22_forest_classifier_basic_motions_probas = np.array(
 )
 
 
-def print_array(array):
-    print('[')
-    for sub_array in array:
-        print('[', end='')
-        for value in sub_array:
-            print(value.astype(str), end='')
-            print(', ', end='')
-        print('],')
-    print(']')
-
-
+# def print_array(array):
+#     print('[')
+#     for sub_array in array:
+#         print('[', end='')
+#         for value in sub_array:
+#             print(value.astype(str), end='')
+#             print(', ', end='')
+#         print('],')
+#     print(']')
+#
 # if __name__ == "__main__":
 #     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)

@@ -40,7 +40,7 @@ from sklearn.linear_model import RidgeClassifierCV
 from sktime.classification.dictionary_based import (
     BOSSEnsemble,
     ContractableBOSS,
-    TemporalDictionaryEnsemble
+    TemporalDictionaryEnsemble,
 )
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformers.panel.rocket import Rocket

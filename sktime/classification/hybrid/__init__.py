@@ -4,5 +4,5 @@ __all__ = [
 ]
 
 from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier
+    Catch22ForestClassifier,
 )

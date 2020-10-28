@@ -30,8 +30,9 @@ def test_cboss_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train cBOSS
-    cboss = ContractableBOSS(n_parameter_samples=50, max_ensemble_size=10,
-                             random_state=0)
+    cboss = ContractableBOSS(
+        n_parameter_samples=50, max_ensemble_size=10, random_state=0
+    )
     cboss.fit(X_train, y_train)
 
     score = cboss.score(X_test.iloc[indices], y_test[indices])

@@ -19,7 +19,7 @@ from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import (
     TimeSeriesForest,
-    CanonicalIntervalForest
+    CanonicalIntervalForest,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
