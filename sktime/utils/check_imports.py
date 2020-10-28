@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""
+TO DO
+put this single function in a grouped file
+
+"""
+__author__ = ["Jason Lines"]
+
 from importlib import import_module
 
 

@@ -1,24 +1,12 @@
-# find the index of the best value in the array
-def arg_bests(array, comparator):
-    indices = [0]
-    best = array[0]
-    for index in range(1, len(array)):
-        value = array[index]
-        comparison_result = comparator(value, best)
-        if comparison_result >= 0:
-            if comparison_result > 0:
-                indices = []
-                best = value
-            indices.append(index)
-    return indices
+# -*- coding: utf-8 -*-
+"""
+Utility comparison functions
 
-
-# pick values from array at given indices
-def pick_from_indices(array, indices):
-    picked = []
-    for index in indices:
-        picked.append(array[index])
-    return picked
+"""
+__all__ = ["best", "bests", "mins", "maxs", "best", "arg_min",
+           "arg_best", "arg_bests", "arg_mins", "arg_max", "arg_maxs",
+           "pick_from_indices", "chain", "more_than", "less_than"]
+__author__ = ["Jason Lines"]
 
 
 # find best values in array
@@ -59,6 +47,21 @@ def best(array, comparator, rand):
 # find index of best value in array, randomly breaking ties
 def arg_best(array, comparator, rand):
     return rand.choice(arg_bests(array, comparator))
+
+
+# find the index of the best value in the array
+def arg_bests(array, comparator):
+    indices = [0]
+    best = array[0]
+    for index in range(1, len(array)):
+        value = array[index]
+        comparison_result = comparator(value, best)
+        if comparison_result >= 0:
+            if comparison_result > 0:
+                indices = []
+                best = value
+            indices.append(index)
+    return indices
 
 
 # find index of min value in array, randomly breaking ties
@@ -107,3 +110,11 @@ def less_than(a, b):
         return -1
     else:
         return 0
+
+
+# pick values from array at given indices
+def pick_from_indices(array, indices):
+    picked = []
+    for index in indices:
+        picked.append(array[index])
+    return picked

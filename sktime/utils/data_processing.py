@@ -1,4 +1,22 @@
 # -*- coding: utf-8 -*-
+"""
+Functions to process data from standard numpy formats into
+
+TO DO
+1. Sort out the maintenance import
+2. resolve naming: change "nested" to sktime_format?
+"""
+__all__ = ["from_3d_numpy_to_2d_array",
+           "from_nested_to_2d_array",
+           "from_2d_array_to_nested",
+           "from_nested_to_long",
+           "from_nested_to_3d_numpy",
+           "from_3d_numpy_to_nested",
+           "from_long_to_nested",
+           "generate_example_long_table"
+           ]
+__author__ = ["Jason Lines", "Tony Bagnall"]
+
 
 import numpy as np
 import pandas as pd
@@ -291,6 +309,13 @@ def _get_column_names(X):
         return [f"col{i}" for i in range(X.shape[1])]
 
 
+# assumes data is in a long table format with the following structure:
+#      | case_id | dim_id | reading_id | value
+# ------------------------------------------------
+#   0  |   int   |  int   |    int     | double
+#   1  |   int   |  int   |    int     | double
+#   2  |   int   |  int   |    int     | double
+#   3  |   int   |  int   |    int     | double
 def from_nested_to_long(X):
     """Convert nested dataframe to long dataframe
 
@@ -370,3 +395,77 @@ def is_nested_dataframe(X):
     return isinstance(X, pd.DataFrame) and isinstance(
         X.iloc[0, 0], (np.ndarray, pd.Series)
     )
+
+
+def from_long_to_nested(long_dataframe):
+    # get distinct dimension ids
+    unique_dim_ids = long_dataframe.iloc[:, 1].unique()
+    num_dims = len(unique_dim_ids)
+
+    data_by_dim = []
+    indices = []
+
+    # get number of distinct cases (note: a case may have 1 or many dimensions)
+    unique_case_ids = long_dataframe.iloc[:, 0].unique()
+    # assume series are indexed from 0 to m-1 (can map to non-linear indices
+    # later if needed)
+
+    # init a list of size m for each d - to store the series data for m
+    # cases over d dimensions
+    # also, data may not be in order in long format so store index data for
+    # aligning output later
+    # (i.e. two stores required: one for reading id/timestamp and one for
+    # value)
+    for d in range(0, num_dims):
+        data_by_dim.append([])
+        indices.append([])
+        for _c in range(0, len(unique_case_ids)):
+            data_by_dim[d].append([])
+            indices[d].append([])
+
+    # go through every row in the dataframe
+    for i in range(0, len(long_dataframe)):
+        # extract the relevant data, catch cases where the dim id is not an
+        # int as it must be the class
+
+        row = long_dataframe.iloc[i]
+        case_id = int(row[0])
+        dim_id = int(row[1])
+        reading_id = int(row[2])
+        value = row[3]
+        data_by_dim[dim_id][case_id].append(value)
+        indices[dim_id][case_id].append(reading_id)
+
+    x_data = {}
+    for d in range(0, num_dims):
+        key = "dim_" + str(d)
+        dim_list = []
+        for i in range(0, len(unique_case_ids)):
+            temp = pd.Series(data_by_dim[d][i], indices[d][i])
+            dim_list.append(temp)
+        x_data[key] = pd.Series(dim_list)
+
+    return pd.DataFrame(x_data)
+
+
+def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
+    rows_per_case = series_len * num_dims
+    total_rows = num_cases * series_len * num_dims
+
+    case_ids = np.empty(total_rows, dtype=np.int)
+    idxs = np.empty(total_rows, dtype=np.int)
+    dims = np.empty(total_rows, dtype=np.int)
+    vals = np.random.rand(total_rows)
+
+    for i in range(total_rows):
+        case_ids[i] = int(i / rows_per_case)
+        rem = i % rows_per_case
+        dims[i] = int(rem / series_len)
+        idxs[i] = rem % series_len
+
+    df = pd.DataFrame()
+    df["case_id"] = pd.Series(case_ids)
+    df["dim_id"] = pd.Series(dims)
+    df["reading_id"] = pd.Series(idxs)
+    df["value"] = pd.Series(vals)
+    return df

@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+functions to man
+
+TO DO: resolve access to protected
+"""
 __author__ = ["Markus Löning"]
 
 import numpy as np

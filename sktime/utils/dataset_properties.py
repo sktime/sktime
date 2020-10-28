@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Functions to find summary stats for a data set
+TO DO
+1. Sort out where to put this
+"""
+__author__ = ["Jason Lines"]
+
 import numpy as np
 
 
