@@ -62,7 +62,7 @@ The package is available via PyPI using:
 The package is actively being developed and some features may
 not be stable yet.
 
-Development Version
+Development version
 ~~~~~~~~~~~~~~~~~~~
 
 To install the development version, please see our
@@ -124,13 +124,13 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
-* Watch our online tutorial on Machine Learning with Time Series at the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
+* Watch our online tutorial on Machine Learning with Time Series from the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
 * Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
 * Read our detailed `API reference <https://www.sktime.org>`__.
 
 ------------------------------------------------------------
 
-API Overview
+API overview
 ------------
 
 sktime is a unified toolbox for machine learning with time series. Time
@@ -185,7 +185,7 @@ In addition, sktime includes an experimental high-level API that unifies multipl
 
 ------------------------------------------------------------
 
-Development Roadmap
+Development roadmap
 -------------------
 sktime is under active development. We're looking for new contributors, all
 contributions are welcome!
