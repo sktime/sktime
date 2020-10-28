@@ -273,35 +273,22 @@ class WEASEL(BaseClassifier):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
-        def _parallel_transform(SFA_transformer):
-            bag_all_words = [dict() for _ in range(len(X))]
-            sfa_words = SFA_transformer.transform(X)
-            bag = sfa_words[0]
+        bag_all_words = [dict() for _ in range(len(X))]
+        for i, window_size in enumerate(self.window_sizes):
+            if len(self.SFA_transformers) > i:
+                # SFA transform
+                sfa_words = self.SFA_transformers[i].transform(X)
+                bag = sfa_words[0]
 
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # append the prefices to the words to distinguish
-                    # between window-sizes
-                    word = WEASEL.shift_left(
-                        key, self.highest_bit, SFA_transformer.window_size
-                    )
-                    bag_all_words[j][word] = value
-
-            return bag_all_words
-
-        res = Parallel(n_jobs=self.n_jobs)(
-            delayed(_parallel_transform)(transformer)
-            for transformer in self.SFA_transformers
-        )
-
-        bag_all_words = [dict() for _ in range(X.shape[0])]
-        for all_sfa_words in res:
-            for idx, bag in enumerate(all_sfa_words):
-                for (word, count) in bag.items():
-                    bag_all_words[idx][word] = count
+                # merging bag-of-patterns of different window_sizes
+                # to single bag-of-patterns with prefix indicating
+                # the used window-length
+                for j in range(len(bag)):
+                    for (key, value) in bag[j].items():
+                        # append the prefices to the words to distinguish
+                        # between window-sizes
+                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
+                        bag_all_words[j][word] = value
 
         return bag_all_words
 
