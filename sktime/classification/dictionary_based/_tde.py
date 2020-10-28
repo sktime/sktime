@@ -24,7 +24,16 @@ from sktime.utils.validation.panel import check_X_y
 class TemporalDictionaryEnsemble(BaseClassifier):
     """Temporal Dictionary Ensemble (TDE)
 
-    todo: add bibtex when published
+    @inproceedings{middlehurst2020temporal,
+      title={The Temporal Dictionary Ensemble {(TDE)} Classifier
+             for Time Series Classification},
+      author={Middlehurst, Matthew and Large, James and
+              Cawley, Gavin and Bagnall, Anthony},
+      booktitle={The European Conference on Machine Learning and
+                 Principles and Practice of Knowledge Discovery in
+                 Databases},
+      year={2020}
+    }
 
     Overview: Input n series length m
     TDE searches k parameter values selected using a Gaussian processes
