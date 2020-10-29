@@ -50,12 +50,9 @@ class ShapeletTransformClassifier(BaseClassifier):
         self.time_contract_in_mins = time_contract_in_mins
         self.n_estimators = n_estimators
         self.random_state = random_state
-
-        #        self.shapelet_transform=ContractedShapeletTransform(
-        #        time_limit_in_mins=self.time_contract_in_mins, verbose=shouty)
-        #        self.classifier=RandomForestClassifier(
-        #        n_estimators=self.n_estimators,criterion="entropy")
-        #        self.st_X=None;
+        self._classifier = None
+        self._num_classes = 0
+        self.classes_ = 0
         super(ShapeletTransformClassifier, self).__init__()
 
     def fit(self, X, y):
@@ -64,10 +61,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
         series_length] or shape = [n_instances,n_columns]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
-            classification as yet.
+            The training input samples. Currently, STC cannot handle multivariate
         y : array-like, shape =  [n_instances]    The class labels.
 
         Returns
@@ -80,8 +74,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         if isinstance(y, pd.Series):
             y = y.to_numpy()
 
-        # generate pipeline in fit so that random state can be propogated properly.
-        self.classifier_ = Pipeline(
+        # generate pipeline in fit so that random state can be propagated properly.
+        self._classifier = Pipeline(
             [
                 (
                     "st",
@@ -100,10 +94,10 @@ class ShapeletTransformClassifier(BaseClassifier):
             ]
         )
 
-        self.n_classes_ = np.unique(y).shape[0]
+        self._num_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
-        self.classifier_.fit(X, y)
+        self._classifier.fit(X, y)
 
         self._is_fitted = True
         return self
@@ -124,7 +118,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()
 
-        return self.classifier_.predict(X)
+        return self._classifier.predict(X)
 
     def predict_proba(self, X):
         """
@@ -141,4 +135,4 @@ class ShapeletTransformClassifier(BaseClassifier):
         X = check_X(X, enforce_univariate=True)
         self.check_is_fitted()
 
-        return self.classifier_.predict_proba(X)
+        return self._classifier.predict_proba(X)

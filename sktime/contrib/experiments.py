@@ -1,40 +1,14 @@
 # -*- coding: utf-8 -*-
 """ experiments.py: method to run experiments as an alternative to orchestration.
 
-Note ProximityForest and ElasticEnsemble use cython implementations of the distance measures. You need a c++ compiler for this.
-These are notes mainly for me.
-On  windows:
-The easiest way to install visual studio. Then, from an anaconda prompt, change to the sktime dir, then
-python setup.py install
-python setup.py build_ext -i
-(may not be necessary with pipinstall).
-
-on the cluster
-copy source over then as above,
-enter interactive mode, got to sktime root
-IF not done before,
-
-1) >interactive
-2) change dir to sktime
-3) module add python/anaconda/2019.3/3.7
-4) conda init bash
-5) conda create -n sktime
-6) conda activate sktime
-7) conda install pip
-8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-9) export PYTHONPATH=$(pwd)
-10) python <FULLPATH>setup.py install
-11) python <FULLPATH>setup.py build_ext -i
-
-then run sktime.sh script
-
-NOTE: do
 """
 
 import os
 
 import sklearn.preprocessing
 import sklearn.utils
+
+from sktime.contrib.classifier_lists import set_classifier
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -49,17 +23,7 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 from statsmodels.tsa.stattools import acf
-from sktime.classification.shapelet_based import MrSEQLClassifier
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
-from sktime.classification.dictionary_based import BOSSEnsemble
-from sktime.classification.distance_based import *
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.classification.distance_based import ElasticEnsemble
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.classification.interval_based import TimeSeriesForest
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-
 
 
 __author__ = "Anthony Bagnall"
@@ -232,75 +196,6 @@ multivariate_datasets = [
     "StandWalkJump",
     "UWaveGestureLibrary",
 ]
-
-
-def set_classifier(cls, resampleId):
-    """
-    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
-    you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
-    This may well get superceded, it is just how e have always done it
-    :param cls: String indicating which classifier you want
-    :return: A classifier.
-
-    """
-    if cls.lower() == "pf":
-        return ProximityForest(random_state=resampleId)
-    elif cls.lower() == "pt":
-        return ProximityTree(random_state=resampleId)
-    elif cls.lower() == "ps":
-        return ProximityStump(random_state=resampleId)
-    elif cls.lower() == "rise":
-        return RandomIntervalSpectralForest(random_state=resampleId)
-    elif cls.lower() == "tsf":
-        return TimeSeriesForest(random_state=resampleId)
-    elif cls.lower() == "boss":
-        return BOSSEnsemble(random_state=resampleId)
-    elif cls.lower() == "cboss":
-        return BOSSEnsemble(
-            random_state=resampleId, randomised_ensemble=True, max_ensemble_size=50
-        )
-    elif cls.lower() == "tde":
-        return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif cls.lower() == "st":
-        return ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == "dtwcv":
-        return KNeighborsTimeSeriesClassifier(metric="dtwcv")
-    elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
-        return ElasticEnsemble()
-    # elif cls.lower() == "tsfcomposite":
-    #     # It defaults to TS
-    #     return TimeSeriesForestClassifier()
-    # elif cls.lower() == "risecomposite":
-    #     steps = [
-    #         ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-    #         (
-    #             "transform",
-    #             FeatureUnion(
-    #                 [
-    #                     (
-    #                         "acf",
-    #                         make_row_transformer(
-    #                             FunctionTransformer(func=acf_coefs, validate=False)
-    #                         ),
-    #                     ),
-    #                     (
-    #                         "ps",
-    #                         make_row_transformer(
-    #                             FunctionTransformer(func=powerspectrum, validate=False)
-    #                         ),
-    #                     ),
-    #                 ]
-    #             ),
-    #         ),
-    #         ("tabularise", Tabularizer()),
-    #         ("clf", DecisionTreeClassifier()),
-    #     ]
-    #     base_estimator = Pipeline(steps)
-    #     return ensemble.TimeSeriesForestClassifier(
-    #         estimator=base_estimator, n_estimators=100
-    #     )
-    else:
-        raise Exception("UNKNOWN CLASSIFIER")
 
 
 def acf_coefs(x, maxlag=100):
