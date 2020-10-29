@@ -16,10 +16,9 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
-from sktime.utils.data_container import tabularize
+from sktime.transformers.panel.dictionary_based import SFA
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 # TO DO: Make more efficient
@@ -151,8 +150,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.weights = []
         self.prev_parameters_x = []
         self.prev_parameters_y = []
-
-        X = tabularize(X, return_array=True)
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4

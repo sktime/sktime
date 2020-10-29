@@ -64,12 +64,12 @@ def _check_equal_index(X):
     return indexes
 
 
-@deprecated("Please use `from_nested_to_2d_numpy` instead.")
+@deprecated("Please use `from_nested_to_2d_array` instead.")
 def tabularize(X, return_array=False):
     return from_nested_to_2d_array(X, return_array)
 
 
-@deprecated("Please use `from_2d_numpy_to_nested` instead.")
+@deprecated("Please use `from_2d_array_to_nested` instead.")
 def detabularize(X, return_array=False):
     return from_2d_array_to_nested(X, return_array)
 
@@ -162,7 +162,9 @@ def from_nested_to_2d_array(X, return_numpy=False):
     return Xt
 
 
-def from_2d_array_to_nested(X, index=None, time_index=None, cells_as_numpy=False):
+def from_2d_array_to_nested(
+    X, index=None, columns=None, time_index=None, cells_as_numpy=False
+):
     """Convert tabular pandas DataFrame with only primitives in cells into
     nested pandas DataFrame with a single column.
 
@@ -205,10 +207,10 @@ def from_2d_array_to_nested(X, index=None, time_index=None, cells_as_numpy=False
     Xt = pd.DataFrame(
         pd.Series([container(X[i, :], **kwargs) for i in range(n_instances)])
     )
-
     if index is not None:
         Xt.index = index
-
+    if columns is not None:
+        Xt.columns = columns
     return Xt
 
 
@@ -250,7 +252,7 @@ def _get_time_index(X):
 
     Parameters
     ----------
-    X : pandas DataFrame
+    X : pd.DataFrame
 
     Returns
     -------
