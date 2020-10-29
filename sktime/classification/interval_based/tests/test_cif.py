@@ -10,7 +10,7 @@ from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 @pytest.mark.skipif(
-    sys.platform == "win32", reason="Not supported for Windows currently."
+    sys.platform.startswith("linux"), reason="Not supported for Linux currently."
 )
 def test_cif_on_gunpoint():
     # load gunpoint data
@@ -28,7 +28,7 @@ def test_cif_on_gunpoint():
 
 
 @pytest.mark.skipif(
-    sys.platform == "win32", reason="Not supported for Windows currently."
+    sys.platform.startswith("linux"), reason="Not supported for Linux currently."
 )
 def test_cif_on_power_demand():
     # load power demand data
@@ -51,40 +51,40 @@ cif_gunpoint_probas = np.array(
             0.88,
         ],
         [
-            0.4,
-            0.6,
+            0.5,
+            0.5,
         ],
         [
-            0.67,
-            0.33,
+            0.57,
+            0.43,
         ],
         [
-            0.48,
-            0.52,
+            0.41,
+            0.59,
         ],
         [
-            0.04,
-            0.96,
+            0.06,
+            0.94,
         ],
         [
-            0.55,
-            0.45,
+            0.59,
+            0.41,
         ],
         [
             0.25,
             0.75,
         ],
         [
-            0.54,
-            0.46,
+            0.62,
+            0.38,
         ],
         [
-            0.58,
-            0.42,
+            0.57,
+            0.43,
         ],
         [
-            0.1,
-            0.9,
+            0.11,
+            0.89,
         ],
     ]
 )
@@ -93,10 +93,10 @@ cif_gunpoint_probas = np.array(
 # def print_array(array):
 #     print('[')
 #     for sub_array in array:
-#         print('[', end='')
+#         print('[')
 #         for value in sub_array:
 #             print(value.astype(str), end='')
-#             print(', ', end='')
+#             print(', ')
 #         print('],')
 #     print(']')
 #

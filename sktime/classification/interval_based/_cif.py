@@ -132,9 +132,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        if sys.platform == "win32":
+        if sys.platform.startswith("linux"):
             # todo update when catch22 is fixed for windows/alternative is made
-            raise OSError("CIF does not support Windows OS currently.")
+            raise OSError("CIF does not support Linux currently.")
 
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
