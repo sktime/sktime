@@ -274,21 +274,22 @@ class WEASEL(BaseClassifier):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag_all_words = [dict() for _ in range(len(X))]
-        for i, window_size in enumerate(self.window_sizes):
-            if len(self.SFA_transformers) > i:
-                # SFA transform
-                sfa_words = self.SFA_transformers[i].transform(X)
-                bag = sfa_words[0]
+        for transformer in self.SFA_transformers:
+            # SFA transform
+            sfa_words = transformer.transform(X)
+            bag = sfa_words[0]
 
-                # merging bag-of-patterns of different window_sizes
-                # to single bag-of-patterns with prefix indicating
-                # the used window-length
-                for j in range(len(bag)):
-                    for (key, value) in bag[j].items():
-                        # append the prefices to the words to distinguish
-                        # between window-sizes
-                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
-                        bag_all_words[j][word] = value
+            # merging bag-of-patterns of different window_sizes
+            # to single bag-of-patterns with prefix indicating
+            # the used window-length
+            for j in range(len(bag)):
+                for (key, value) in bag[j].items():
+                    # append the prefices to the words to distinguish
+                    # between window-sizes
+                    word = WEASEL.shift_left(
+                        key, self.highest_bit, transformer.window_size
+                    )
+                    bag_all_words[j][word] = value
 
         return bag_all_words
 
