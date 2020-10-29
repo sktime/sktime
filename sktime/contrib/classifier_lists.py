@@ -9,19 +9,21 @@ __all__=[""]
 
 from sktime.classification.dictionary_based import BOSSEnsemble, TemporalDictionaryEnsemble, MUSE, \
     WEASEL
-from sktime.classification.distance_based import ProximityForest, KNeighborsTimeSeriesClassifier, \
-    ElasticEnsemble
+from sktime.classification.distance_based import ProximityForest, ElasticEnsemble, \
+    KNeighborsTimeSeriesClassifier
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
-from sktime.classification.shapelet_based import ShapeletTransformClassifier, MrSEQLClassifier
+from sktime.classification.shapelet_based import ShapeletTransformClassifier, MrSEQLClassifier, RocketClassifier
 
-all_classifiers=[
-    "BOSSEnsemble", "TemporalDictionaryEnsemble", "MUSE", "WEASEL", #dictionary based
-    "ProximityForest", "ElasticEnsemble", "ShapeDTW", "KNeighborsTimeSeriesClassifier",
+all_classifiers = [
+    "BOSSEnsemble", "TemporalDictionaryEnsemble", "MUSE", "WEASEL",
+    "ProximityForest", "ElasticEnsemble", "KNeighborsTimeSeriesClassifier",
+#"ShapeDTW",
     "RandomIntervalSpectralForest",
     "TimeSeriesForest",
-    "ShapeletTransformClassifier", "MrSEQLClassifier"
+    "ShapeletTransformClassifier", "MrSEQLClassifier", "RocketClassifier"
 ]
+
 
 def set_classifier(cls, resampleId):
     """
@@ -32,17 +34,7 @@ def set_classifier(cls, resampleId):
     :return: A classifier.
 
     """
-    if cls.lower() == "pf":
-        return ProximityForest(random_state=resampleId)
-    elif cls.lower() == "pt":
-        return ProximityTree(random_state=resampleId)
-    elif cls.lower() == "ps":
-        return ProximityStump(random_state=resampleId)
-    elif cls.lower() == "rise":
-        return RandomIntervalSpectralForest(random_state=resampleId)
-    elif cls.lower() == "tsf":
-        return TimeSeriesForest(random_state=resampleId)
-    elif cls.lower() == "boss":
+    if cls.lower() == "boss":
         return BOSSEnsemble(random_state=resampleId)
     elif cls.lower() == "cboss":
         return BOSSEnsemble(
@@ -50,43 +42,26 @@ def set_classifier(cls, resampleId):
         )
     elif cls.lower() == "tde":
         return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif cls.lower() == "st":
-        return ShapeletTransformClassifier(time_contract_in_mins=1500)
+    elif cls.lower() == "muse":
+        return MUSE(random_state=resampleId)
+    elif cls.lower() == "weasel":
+        return WEASEL(random_state=resampleId)
+    elif cls.lower() == "pf":
+        return ProximityForest(random_state=resampleId)
     elif cls.lower() == "dtwcv":
         return KNeighborsTimeSeriesClassifier(metric="dtwcv")
     elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
         return ElasticEnsemble()
-    # elif cls.lower() == "tsfcomposite":
-    #     # It defaults to TS
-    #     return TimeSeriesForestClassifier()
-    # elif cls.lower() == "risecomposite":
-    #     steps = [
-    #         ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-    #         (
-    #             "transform",
-    #             FeatureUnion(
-    #                 [
-    #                     (
-    #                         "acf",
-    #                         make_row_transformer(
-    #                             FunctionTransformer(func=acf_coefs, validate=False)
-    #                         ),
-    #                     ),
-    #                     (
-    #                         "ps",
-    #                         make_row_transformer(
-    #                             FunctionTransformer(func=powerspectrum, validate=False)
-    #                         ),
-    #                     ),
-    #                 ]
-    #             ),
-    #         ),
-    #         ("tabularise", Tabularizer()),
-    #         ("clf", DecisionTreeClassifier()),
-    #     ]
-    #     base_estimator = Pipeline(steps)
-    #     return ensemble.TimeSeriesForestClassifier(
-    #         estimator=base_estimator, n_estimators=100
-    #     )
+#    elif cls.lower() == "shapedtw":
+#        return ShapeDTW(random_state=resampleId)
+
+    elif cls.lower() == "rise":
+        return RandomIntervalSpectralForest(random_state=resampleId)
+    elif cls.lower() == "tsf":
+        return TimeSeriesForest(random_state=resampleId)
+    elif cls.lower() == "tde":
+        return TemporalDictionaryEnsemble(random_state=resampleId)
+    elif cls.lower() == "st":
+        return ShapeletTransformClassifier(time_contract_in_mins=1500)
     else:
         raise Exception("UNKNOWN CLASSIFIER")

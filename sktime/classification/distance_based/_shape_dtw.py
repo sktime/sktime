@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+
+TO DO: sort out docs and random state
+
+"""
+
 # Utilities
 import numpy as np
 import pandas as pd
