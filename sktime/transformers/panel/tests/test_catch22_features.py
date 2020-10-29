@@ -315,7 +315,7 @@ catch22_single_feature_gunpoint_data = np.array(
         0.0005655047147386403,
         0.00019436502754734738,
         -2.7381187024883296e-05,
-        0.00031279571104342053
+        0.00031279571104342053,
     ]
 )
 catch22_basic_motions_data = np.array(
