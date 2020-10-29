@@ -736,8 +736,8 @@ if __name__ == "__main__":
         #        results_dir = "/scratch/results"
         #         data_dir = "/bench/datasets/Univariate2018/"
         #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "E:/Temp/"
+        data_dir = "../datasets/data/"
+        results_dir = "C:/Temp/"
         #        results_dir = "Z:/Results/sktime Bakeoff/"
         dataset = "GunPoint"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
