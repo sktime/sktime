@@ -6,8 +6,6 @@ A transformer for the catch22 features
 __author__ = "Matthew Middlehurst"
 __all__ = ["Catch22"]
 
-import sys
-
 import numpy as np
 import pandas as pd
 from sktime.transformers.base import _PanelToTabularTransformer
@@ -70,10 +68,6 @@ class Catch22(_PanelToTabularTransformer):
         -------
         Pandas dataframe containing 22 features for each input series
         """
-        if sys.platform.startswith("linux"):
-            # todo update when catch22 is fixed for windows/alternative is made
-            raise OSError("Catch22 does not support Linux currently.")
-
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
         n_instances = X.shape[0]
@@ -100,10 +94,6 @@ class Catch22(_PanelToTabularTransformer):
         -------
         Numpy array containing a catch22 feature for each input series
         """
-        if sys.platform.startswith("linux"):
-            # todo update when catch22 is fixed for windows/alternative is made
-            raise OSError("Catch22 does not support Linux currently.")
-
         if isinstance(feature, int):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")

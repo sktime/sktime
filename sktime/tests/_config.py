@@ -17,10 +17,7 @@ from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import (
-    TimeSeriesForest,
-    CanonicalIntervalForest,
-)
+from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
@@ -179,7 +176,6 @@ ESTIMATOR_TEST_PARAMS = {
         "max_ensemble_size": 10,
         "randomly_selected_params": 40,
     },
-    CanonicalIntervalForest: {"n_estimators": 50},
     TimeSeriesForest: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},

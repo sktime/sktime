@@ -42,7 +42,7 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
-from sktime.classification.interval_based import CanonicalIntervalForest
+from sktime.contrib.interval_based._cif import CanonicalIntervalForest
 from sktime.transformers.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!

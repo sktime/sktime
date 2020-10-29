@@ -6,8 +6,6 @@ A forest classifier based on catch22 features
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["Catch22ForestClassifier"]
 
-import sys
-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from catch22 import catch22_all
@@ -93,10 +91,6 @@ class Catch22ForestClassifier(BaseClassifier):
         -------
         self : object
         """
-        if sys.platform.startswith("linux"):
-            # todo update when catch22 is fixed for windows/alternative is made
-            raise OSError("Catch22 does not support Linux currently.")
-
         X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
         n_instances = X.shape[0]
         X = np.reshape(X, (n_instances, -1))

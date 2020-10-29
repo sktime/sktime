@@ -5,8 +5,6 @@
 __author__ = ["Matthew Middlehurst"]
 __all__ = ["CanonicalIntervalForest"]
 
-import sys
-
 import numpy as np
 import math
 from sklearn.ensemble.forest import ForestClassifier
@@ -21,7 +19,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 _check_soft_dependencies("catch22")
-from sktime.transformers.panel.catch22_features import Catch22  # noqa: E402
+from sktime.contrib.transformers.catch22_features import Catch22  # noqa: E402
 
 
 class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
@@ -132,10 +130,6 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        if sys.platform.startswith("linux"):
-            # todo update when catch22 is fixed for windows/alternative is made
-            raise OSError("CIF does not support Linux currently.")
-
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
