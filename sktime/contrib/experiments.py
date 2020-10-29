@@ -198,19 +198,6 @@ multivariate_datasets = [
 ]
 
 
-def acf_coefs(x, maxlag=100):
-    x = np.asarray(x).ravel()
-    nlags = np.minimum(len(x) - 1, maxlag)
-    return acf(x, nlags=nlags).ravel()
-
-
-def powerspectrum(x, **kwargs):
-    x = np.asarray(x).ravel()
-    fft = np.fft.fft(x)
-    ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[: ps.shape[0] // 2].ravel()
-
-
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
     all_labels = np.concatenate((y_train, y_test), axis=None)
     all_data = pd.concat([X_train, X_test])
