@@ -75,10 +75,9 @@ class Catch22(_PanelToTabularTransformer):
             raise OSError("Catch22 does not support Windows OS currently.")
 
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=False)
-        X = from_nested_to_2d_array(X, return_numpy=True)
-
+        X = check_X(X, enforce_univariate=False, coerce_to_numpy=True)
         n_instances = X.shape[0]
+        X = np.reshape(X, (n_instances, -1))
 
         c22_list = []
         for i in range(n_instances):
@@ -120,6 +119,7 @@ class Catch22(_PanelToTabularTransformer):
             X = from_nested_to_2d_array(X, return_numpy=True)
 
         n_instances = X.shape[0]
+        X = np.reshape(X, (n_instances, -1))
 
         c22_list = []
         for i in range(n_instances):
