@@ -1,20 +1,29 @@
+# -*- coding: utf-8 -*-
 from sklearn.model_selection import GridSearchCV
 from sktime.base import BaseEstimator
 
-from sktime.classification.distance_based._time_series_neighbors import KNeighborsTimeSeriesClassifier
+from sktime.classification.distance_based._time_series_neighbors import (
+    KNeighborsTimeSeriesClassifier,
+)
 from sktime.datasets import load_italy_power_demand
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.dictionary_based import SAX
+from sktime.transformers.panel.dictionary_based import SAX
 
 
 class BagOfPatterns(BaseEstimator):
     __author__ = "Matthew Middlehurst"
-    """ Bag of Patterns classifier 
+    """ Bag of Patterns classifier
     """
+
     def bop_pipeline(X, y):
         steps = [
-            ('transform', SAX(remove_repeat_words=True)),
-            ('clf', KNeighborsTimeSeriesClassifier(n_neighbors=1, metric=euclidean_distance))
+            ("transform", SAX(remove_repeat_words=True)),
+            (
+                "clf",
+                KNeighborsTimeSeriesClassifier(
+                    n_neighbors=1, metric=euclidean_distance
+                ),
+            ),
         ]
         pipeline = Pipeline(steps)
 
@@ -26,17 +35,13 @@ class BagOfPatterns(BaseEstimator):
         window_sizes = [win_size for win_size in range(10, series_length + 1, win_inc)]
 
         cv_params = {
-            'transform__word_length': [8, 10, 12, 14, 16],
-            'transform__alphabet_size': [2, 3, 4],
-            'transform__window_size': window_sizes
+            "transform__word_length": [8, 10, 12, 14, 16],
+            "transform__alphabet_size": [2, 3, 4],
+            "transform__window_size": window_sizes,
         }
-        model = GridSearchCV(pipeline,
-                             cv_params,
-                             cv=5
-                             )
+        model = GridSearchCV(pipeline, cv_params, cv=5)
         model.fit(X, y)
         return model
-
 
 
 def euclidean_distance(first, second, best_dist=sys.float_info.max):
@@ -52,15 +57,16 @@ def euclidean_distance(first, second, best_dist=sys.float_info.max):
             if dist > best_dist:
                 return sys.float_info.max
     else:
-        dist = np.sum([(first[n] - second[n]) * (first[n] - second[n]) for n in range(len(first))])
+        dist = np.sum(
+            [(first[n] - second[n]) * (first[n] - second[n]) for n in range(len(first))]
+        )
 
     return dist
 
 
-
 if __name__ == "__main__":
-    X_train, y_train = load_italy_power_demand(split='TRAIN', return_X_y=True)
-    X_test, y_test = load_italy_power_demand(split='TEST', return_X_y=True)
+    X_train, y_train = load_italy_power_demand(split="TRAIN", return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split="TEST", return_X_y=True)
 
     model = bop_pipeline(X_train, y_train)
     model.predict(X_test)
