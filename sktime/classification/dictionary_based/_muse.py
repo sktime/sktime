@@ -8,24 +8,21 @@ __author__ = "Patrick Schäfer"
 __all__ = ["MUSE"]
 
 import math
-
 import numpy as np
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
+
+# from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
+from sktime.transformers.panel.dictionary_based import SFA
 from sktime.utils.data_container import from_nested_to_3d_numpy
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
-
-
-# from numba.typed import Dict
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
@@ -68,10 +65,10 @@ class MUSE(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = 2 (enabled by default)
+     p_threshold:      int, default = 0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
-        This is the threshold to use for chi-squared test on bag-of-words
-        (higher means more strict). Negative values indicate that the test
+        This is the p-value threshold to use for chi-squared test on bag-of-words
+        (lower means more strict). 1 indicates that the test
         should not be performed.
 
     use_first_order_differences:    boolean, default = True
@@ -91,8 +88,8 @@ class MUSE(BaseClassifier):
         self,
         anova=True,
         bigrams=True,
-        window_inc=4,
-        chi2_threshold=2,
+        window_inc=2,
+        p_threshold=0.05,
         use_first_order_differences=True,
         random_state=None,
     ):
@@ -101,19 +98,19 @@ class MUSE(BaseClassifier):
         self.alphabet_size = 4
 
         # feature selection is applied based on the chi-squared test.
-        self.chi2_threshold = chi2_threshold
+        self.p_threshold = p_threshold
         self.anova = anova
         self.use_first_order_differences = use_first_order_differences
 
-        self.norm_options = [True, False]
+        self.norm_options = [False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategies = ["equi-width", "equi-depth"]
         self.random_state = random_state
 
-        self.min_window = 4
-        self.max_window = 350
+        self.min_window = 6
+        self.max_window = 100
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -125,7 +122,6 @@ class MUSE(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.best_word_length = -1
 
         super(MUSE, self).__init__()
 
@@ -198,17 +194,20 @@ class MUSE(BaseClassifier):
                 sfa_words = transformer.fit_transform(X_dim, y)
 
                 self.SFA_transformers[ind].append(transformer)
-                bag = sfa_words[0]  # .iloc[:, 0]
+                bag = sfa_words[0]
 
                 # chi-squared test to keep only relevant features
                 relevant_features = {}
-                apply_chi_squared = self.chi2_threshold > 0
+                apply_chi_squared = self.p_threshold < 1
                 if apply_chi_squared:
-                    bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
+                    vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
+                    bag_vec = vectorizer.fit_transform(bag)
+
                     chi2_statistics, p = chi2(bag_vec, y)
-                    relevant_features = np.where(
-                        chi2_statistics >= self.chi2_threshold
-                    )[0]
+                    relevant_features_idx = np.where(p <= self.p_threshold)[0]
+                    relevant_features = set(
+                        np.array(vectorizer.feature_names_)[relevant_features_idx]
+                    )
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
@@ -223,12 +222,11 @@ class MUSE(BaseClassifier):
                             word = MUSE.shift_left(
                                 key, highest, ind, self.highest_dim_bit, window_size
                             )
-
                             all_words[j][word] = value
 
         self.clf = make_pipeline(
-            DictVectorizer(sparse=False),
-            StandardScaler(with_mean=True, copy=False),
+            DictVectorizer(sparse=True, sort=False),
+            # StandardScaler(with_mean=True, copy=False),
             LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
@@ -269,7 +267,7 @@ class MUSE(BaseClassifier):
 
                 # SFA transform
                 sfa_words = self.SFA_transformers[ind][i].transform(X_dim)
-                bag = sfa_words[0]  # .iloc[:, 0]
+                bag = sfa_words[0]
 
                 # merging bag-of-patterns of different window_sizes
                 # to single bag-of-patterns with prefix indicating
@@ -282,7 +280,6 @@ class MUSE(BaseClassifier):
                         word = MUSE.shift_left(
                             key, highest, ind, self.highest_dim_bit, window_size
                         )
-
                         bag_all_words[j][word] = value
 
         return bag_all_words
@@ -298,10 +295,8 @@ class MUSE(BaseClassifier):
 
     def compute_window_inc(self, series_length):
         win_inc = self.window_inc
-        if series_length < 50:
-            win_inc = 2  # less than 50 is ok time-wise
-        elif series_length < 100:
-            win_inc = min(self.window_inc, 4)  # less than 50 is ok time-wise
+        if series_length < 100:
+            win_inc = 1  # less than 100 is ok time-wise
         return win_inc
 
     @staticmethod
