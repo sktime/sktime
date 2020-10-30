@@ -27,9 +27,9 @@ if not ON_READTHEDOCS:
     sys.path.insert(0, os.path.abspath("../.."))
 
 # -- Project information -----------------------------------------------------
-PROJECT = "sktime"
-COPYRIGHT = "2019 - 2020 (BSD-3-Clause License)"
-AUTHOR = "sktime developers"
+project = "sktime"
+copyright = "2019 - 2020 (BSD-3-Clause License)"
+author = "sktime developers"
 
 # The full version, including alpha/beta/rc tags
 CURRENT_VERSION = f"v{sktime.__version__}"
@@ -189,7 +189,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "sktime", "sktime Documentation", [AUTHOR], 1)]
+man_pages = [(master_doc, "sktime", "sktime Documentation", [author], 1)]
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -201,7 +201,7 @@ texinfo_documents = [
         master_doc,
         "sktime",
         "sktime Documentation",
-        AUTHOR,
+        author,
         "sktime",
         "One line description of project.",
         "Miscellaneous",

@@ -11,13 +11,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
+from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.utils.datetime import _get_duration
 
 
-class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """
     Forecast time series data with a polynomial trend.
     Default settings train a linear regression model with a 1st degree
@@ -47,25 +47,25 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
         self.regressor_ = None
         super(PolynomialTrendForecaster, self).__init__()
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series with which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecast horizon with the steps ahead to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
         Returns
         -------
         self : returns an instance of self.
         """
-        if X_train is not None:
+        if X is not None:
             raise NotImplementedError("Exogeneous variables are not " "yet supported")
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
 
         # for default regressor, set fit_intercept=False as we generate a
@@ -83,10 +83,10 @@ class PolynomialTrendForecaster(OptionalForecastingHorizonMixin, BaseSktimeForec
 
         # transform data
         n_timepoints = _get_duration(self._y.index, coerce_to_int=True) + 1
-        X_train = np.arange(n_timepoints).reshape(-1, 1)
+        X = np.arange(n_timepoints).reshape(-1, 1)
 
         # fit regressor
-        self.regressor_.fit(X_train, y_train)
+        self.regressor_.fit(X, y)
         self._is_fitted = True
         return self
 
