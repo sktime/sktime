@@ -31,7 +31,7 @@ cd /io/ # Change directory
 
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install requirements
-  "${PYTHON}/pip" install -r "$REQUIREMENTS"
+  "${PYTHON}/pip" install --upgrade pip -r "$REQUIREMENTS"
 
   # Build wheel
   "${PYTHON}/python" setup.py bdist_wheel
