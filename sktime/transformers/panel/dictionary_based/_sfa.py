@@ -11,16 +11,18 @@ import pandas as pd
 from numba import njit
 from sklearn.feature_selection import f_classif
 from sklearn.tree import DecisionTreeClassifier
-
 from sktime.transformers.base import _PanelToPanelTransformer
 from sktime.utils.validation.panel import check_X
+from sklearn.preprocessing import KBinsDiscretizer
 
 # from numba import typeof
 # from numba.core import types
 # from numba.typed import Dict
 
 # The binning methods to use: equi-depth, equi-width or information gain
-binning_methods = {"equi-depth", "equi-width", "information-gain"}
+binning_methods = {"equi-depth", "equi-width", "information-gain", "kmeans"}
+
+# TODO remove imag-part from dc-component component
 
 
 class SFA(_PanelToPanelTransformer):
@@ -61,7 +63,7 @@ class SFA(_PanelToPanelTransformer):
         norm:                boolean, default = False
             mean normalise words by dropping first fourier coefficient
 
-        binning_method:      {"equi-depth", "equi-width", "information-gain"},
+        binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans"},
                              default="equi-depth"
             the binning method used to derive the breakpoints.
 
@@ -72,6 +74,9 @@ class SFA(_PanelToPanelTransformer):
 
         bigrams:             boolean, default = False
             whether to create bigrams of SFA words
+
+        skip_grams:          boolean, default = False
+            whether to create skip-grams of SFA words
 
         remove_repeat_words: boolean, default = False
             whether to use numerosity reduction (default False)
@@ -103,6 +108,7 @@ class SFA(_PanelToPanelTransformer):
         binning_method="equi-depth",
         anova=False,
         bigrams=False,
+        skip_grams=False,
         remove_repeat_words=False,
         levels=1,
         lower_bounding=True,
@@ -141,6 +147,8 @@ class SFA(_PanelToPanelTransformer):
         self.anova = anova
 
         self.bigrams = bigrams
+        self.skip_grams = skip_grams
+
         # weighting for levels going up to 7 levels
         # No real reason to go past 3
         self.level_weights = [1, 2, 4, 16, 32, 64, 128]
@@ -214,7 +222,7 @@ class SFA(_PanelToPanelTransformer):
 
             last_word = -1
             repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.uint32)  # TODO uint64?
+            words = np.zeros(dfts.shape[0], dtype=np.int64)
 
             for window in range(dfts.shape[0]):
                 word_raw = SFA._create_word(
@@ -237,14 +245,30 @@ class SFA(_PanelToPanelTransformer):
                     repeat_words = 0
 
                 if self.bigrams:
-                    if window - self.window_size >= 0 and window > 0:
+                    if window - self.window_size >= 0:
                         bigram = self.create_bigram_word(
-                            words[window - self.window_size], word_raw, self.word_length
+                            words[window - self.window_size],
+                            word_raw,
+                            self.word_length,
                         )
 
                         if self.levels > 1:
                             bigram = (bigram, 0)
                         bag[bigram] += 1
+
+                if self.skip_grams:
+                    # creates skip-grams, skipping every (s-1)-th word in-between
+                    for s in range(2, 4):
+                        if window - s * self.window_size >= 0:
+                            skip_gram = self.create_bigram_word(
+                                words[window - s * self.window_size],
+                                word_raw,
+                                self.word_length,
+                            )
+
+                            if self.levels > 1:
+                                skip_gram = (skip_gram, 0)
+                            bag[skip_gram] += 1
 
             if self.save_words:
                 self.words.append(words)
@@ -288,8 +312,25 @@ class SFA(_PanelToPanelTransformer):
 
         if self.binning_method == "information-gain":
             return self._igb(dft, y)
+        elif self.binning_method == "kmeans":
+            return self._KBinsDiscretizer(dft)
         else:
             return self._mcb(dft)
+
+    def _KBinsDiscretizer(self, dft):
+        encoder = KBinsDiscretizer(
+            n_bins=self.alphabet_size, strategy=self.binning_method
+        )
+        encoder.fit(dft)
+        breaks = encoder.bin_edges_
+        breakpoints = np.zeros((self.word_length, self.alphabet_size))
+
+        for letter in range(self.word_length):
+            for bp in range(1, len(breaks[letter]) - 1):
+                breakpoints[letter][bp - 1] = breaks[letter][bp]
+
+        breakpoints[:, self.alphabet_size - 1] = sys.float_info.max
+        return breakpoints
 
     def _mcb(self, dft):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)
@@ -328,7 +369,10 @@ class SFA(_PanelToPanelTransformer):
     def _igb(self, dft, y):
         breakpoints = np.zeros((self.word_length, self.alphabet_size))
         clf = DecisionTreeClassifier(
-            criterion="entropy", max_leaf_nodes=self.alphabet_size, random_state=1
+            criterion="entropy",
+            max_depth=np.log2(self.alphabet_size),
+            max_leaf_nodes=self.alphabet_size,
+            random_state=1,
         )
 
         for i in range(self.word_length):
@@ -437,9 +481,7 @@ class SFA(_PanelToPanelTransformer):
         mft_data = np.empty((length,), dtype=reals.dtype)
         mft_data[0::2] = reals[: np.uint32(length / 2)]
         mft_data[1::2] = imags[: np.uint32(length / 2)]
-        transformed[0] = (
-            mft_data * self.inverse_sqrt_win_size / (stds[0] if stds[0] > 1e-8 else 1)
-        )
+        transformed[0] = mft_data * self.inverse_sqrt_win_size / stds[0]
 
         # other runs using mft
         # moved to external method to use njit
@@ -479,10 +521,7 @@ class SFA(_PanelToPanelTransformer):
                 mft_data[n] = real * phis[n] - imag * phis[n + 1]
                 mft_data[n + 1] = real * phis[n + 1] + phis[n] * imag
 
-            normalising_factor = inverse_sqrt_win_size / (
-                stds[i] if stds[i] > 1e-8 else 1
-            )
-
+            normalising_factor = inverse_sqrt_win_size / stds[i]
             transformed[i] = mft_data * normalising_factor
 
     # TODO merge with transform???
@@ -575,7 +614,7 @@ class SFA(_PanelToPanelTransformer):
         cache=True
     )
     def _create_word(dft, word_length, alphabet_size, breakpoints):
-        word = 0
+        word = np.int64(0)
         for i in range(word_length):
             for bp in range(alphabet_size):
                 if dft[i] <= breakpoints[i][bp]:
@@ -585,7 +624,7 @@ class SFA(_PanelToPanelTransformer):
         return word
 
     @staticmethod
-    @njit("float64[:](float64[:],int32,int32,float64[:])", fastmath=True, cache=True)
+    @njit("float64[:](float64[:],int64,int64,float64[:])", fastmath=True, cache=True)
     def _calc_incremental_mean_std(series, end, window_size, stds=None):
         # means = np.zeros(end)
 
@@ -598,8 +637,8 @@ class SFA(_PanelToPanelTransformer):
 
         r_window_length = 1 / window_size
         mean = series_sum * r_window_length
-        buf = square_sum * r_window_length - mean * mean
-        stds[0] = math.sqrt(buf) if buf > 0 else 0
+        buf = math.sqrt(square_sum * r_window_length - mean * mean)
+        stds[0] = buf if buf > 1e-8 else 1
 
         for w in range(1, end):
             series_sum += series[w + window_size - 1] - series[w - 1]
@@ -608,8 +647,8 @@ class SFA(_PanelToPanelTransformer):
                 series[w + window_size - 1] * series[w + window_size - 1]
                 - series[w - 1] * series[w - 1]
             )
-            buf = square_sum * r_window_length - mean * mean
-            stds[w] = math.sqrt(buf) if buf > 1e-8 else 0
+            buf = math.sqrt(square_sum * r_window_length - mean * mean)
+            stds[w] = buf if buf > 1e-8 else 1
 
         return stds
 
@@ -623,9 +662,14 @@ class SFA(_PanelToPanelTransformer):
     # TODO a shift of 2 is only correct for alphabet size 4, log2(4)=2
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
     def create_bigram_word(word, other_word, length):
         return (word << (2 * length)) | other_word
+
+    # @staticmethod
+    # @njit("int64(int64,int64,int64,int64)", fastmath=True, cache=True)
+    # def create_skipgram_word(word, other_word, skips, length):
+    #     return (((word << (2 * length)) | other_word) << 3) | skips
 
     @classmethod
     def shorten_word(cls, word, amount):
