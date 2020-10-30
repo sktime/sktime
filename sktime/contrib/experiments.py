@@ -7,6 +7,15 @@ import os
 
 import sklearn.preprocessing
 import sklearn.utils
+from sklearn.linear_model import RidgeClassifierCV
+
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+)
+from sktime.contrib.interval_based._cif import CanonicalIntervalForest
+from sktime.transformers.panel.rocket import Rocket
 
 from sktime.contrib.classifier_lists import set_classifier
 

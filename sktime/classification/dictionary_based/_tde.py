@@ -21,13 +21,19 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-# TO DO: Make more efficient
-
-
 class TemporalDictionaryEnsemble(BaseClassifier):
     """Temporal Dictionary Ensemble (TDE)
 
-    todo: add bibtex when published
+    @inproceedings{middlehurst2020temporal,
+      title={The Temporal Dictionary Ensemble {(TDE)} Classifier
+             for Time Series Classification},
+      author={Middlehurst, Matthew and Large, James and
+              Cawley, Gavin and Bagnall, Anthony},
+      booktitle={The European Conference on Machine Learning and
+                 Principles and Practice of Knowledge Discovery in
+                 Databases},
+      year={2020}
+    }
 
     Overview: Input n series length m
     TDE searches k parameter values selected using a Gaussian processes
@@ -49,9 +55,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     each series is formed and stored, using a spatial pyramid of h levels.
     fit involves finding n histograms.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.
+    predict uses 1 nearest neighbour with a the histogram intersection
+    distance function.
 
-    For the Java version, see
+    For the original Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/dictionary_based/TDE.java
 
@@ -87,7 +94,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def __init__(
         self,
         n_parameter_samples=250,
-        max_ensemble_size=100,
+        max_ensemble_size=50,
         time_limit=0.0,
         max_win_len_prop=1,
         min_window=10,

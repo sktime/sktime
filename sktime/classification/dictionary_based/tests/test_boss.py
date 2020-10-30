@@ -2,7 +2,7 @@
 import numpy as np
 from numpy import testing
 
-from sktime.classification.dictionary_based import BOSSEnsemble, BOSSIndividual
+from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
@@ -12,7 +12,7 @@ def test_boss_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train boss
+    # train BOSS
     boss = BOSSEnsemble(random_state=0)
     boss.fit(X_train.iloc[indices], y_train[indices])
 
@@ -27,8 +27,8 @@ def test_individual_boss_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train boss
-    indiv_boss = BOSSIndividual(random_state=0)
+    # train IndividualBOSS
+    indiv_boss = IndividualBOSS(random_state=0)
     indiv_boss.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -47,7 +47,7 @@ def test_boss_on_power_demand():
     boss.fit(X_train, y_train)
 
     score = boss.score(X_test.iloc[indices], y_test[indices])
-    assert score >= 0.80
+    assert score >= 0.88
 
 
 boss_gunpoint_probas = np.array(
@@ -94,7 +94,6 @@ boss_gunpoint_probas = np.array(
         ],
     ]
 )
-
 individual_boss_gunpoint_probas = np.array(
     [
         [
@@ -144,21 +143,21 @@ individual_boss_gunpoint_probas = np.array(
 # def print_array(array):
 #     print('[')
 #     for sub_array in array:
-#         print('[', end='')
+#         print('[')
 #         for value in sub_array:
 #             print(value.astype(str), end='')
-#             print(', ', end='')
+#             print(', ')
 #         print('],')
 #     print(']')
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-#     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
 #     boss = BOSSEnsemble(random_state=0)
-#     indiv_boss = BOSSIndividual(random_state=0)
+#     indiv_boss = IndividualBOSS(random_state=0)
 #
 #     boss.fit(X_train.iloc[indices], y_train[indices])
 #     probas = boss.predict_proba(X_test.iloc[indices])
