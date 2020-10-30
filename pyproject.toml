@@ -9,4 +9,4 @@ isort = 1
 black = 1
 
 [tool.nbqa.addopts]
-isort = ["--treat-comment-as-code", "# %%", "-p", "sktime"]
+isort = ["-p", "sktime"]
