@@ -329,7 +329,6 @@ class IndividualBOSS(BaseClassifier):
         super(IndividualBOSS, self).__init__()
 
     def fit(self, X, y):
-
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
