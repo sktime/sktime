@@ -6,7 +6,7 @@ __all__ = [
     "ShapeletTransformClassifier",
     "MrSEQLClassifier",
     "BOSSEnsemble",
-    "BOSSIndividual",
+    "IndividualBOSS",
     "KNeighborsTimeSeriesClassifier",
     "TemporalDictionaryEnsemble",
     "ProximityStump",
@@ -30,8 +30,7 @@ import pandas as pd
 
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
-from sktime.classification.dictionary_based import BOSSEnsemble
-from sktime.classification.dictionary_based import BOSSIndividual
+from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.distance_based import ElasticEnsemble
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
