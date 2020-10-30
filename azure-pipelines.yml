@@ -65,10 +65,6 @@ stages:
           - template: build_tools/azure/publish.yml
         strategy:
           matrix:
-            64x: # 64 bit
-              PLATFORM: manylinux1_x86_64
-              IMAGE: quay.io/pypa/manylinux1_x86_64
-              PYTHON_ARCHITECTURE: x64
             64x2010: # 64 bit 2010
               PLATFORM: manylinux2010_x86_64
               IMAGE: quay.io/pypa/manylinux2010_x86_64
