@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 __author__ = ["@big-o"]
 
 import numpy as np
 import pytest
+
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.tests import TEST_OOS_FHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.utils.validation.forecasting import check_fh
 
@@ -28,7 +30,7 @@ def test_pred_errors_against_y_test(fh):
     y_train, y_test = temporal_train_test_split(y)
 
     f = ThetaForecaster()
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
 
     y_pred = f.predict(return_pred_int=False)
 

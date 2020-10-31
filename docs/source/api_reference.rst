@@ -43,9 +43,11 @@ Dictionary-based
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    BOSSIndividual
+    IndividualBOSS
     BOSSEnsemble
+    ContractableBOSS
     WEASEL
+    MUSE
     TemporalDictionaryEnsemble
     IndividualTDE
 
@@ -85,6 +87,7 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForest
+    CanonicalIntervalForest
 
 Shapelet-based
 --------------
@@ -166,6 +169,17 @@ The :mod:`sktime.forecasting` module contains algorithms and composition tools f
 .. automodule:: sktime.forecasting
     :no-members:
     :no-inherited-members:
+
+Base
+----
+
+.. currentmodule:: sktime.forecasting.base
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    ForecastingHorizon
 
 Naive
 -----
@@ -286,7 +300,7 @@ Series-as-features transformers
 Dictionary-based
 ~~~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.dictionary_based
+.. currentmodule:: sktime.transformers.panel.dictionary_based
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -299,7 +313,7 @@ Dictionary-based
 Summarize
 ~~~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.summarize
+.. currentmodule:: sktime.transformers.panel.summarize
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -316,7 +330,7 @@ Summarize
 Compose
 ~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.compose
+.. currentmodule:: sktime.transformers.panel.compose
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -329,7 +343,7 @@ Compose
 Matrix profile
 ~~~~~~~~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.matrix_profile
+.. currentmodule:: sktime.transformers.panel.matrix_profile
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -340,7 +354,7 @@ Matrix profile
 PCA
 ~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.pca
+.. currentmodule:: sktime.transformers.panel.pca
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -351,7 +365,7 @@ PCA
 Reduce
 ~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.reduce
+.. currentmodule:: sktime.transformers.panel.reduce
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -362,7 +376,7 @@ Reduce
 Rocket
 ~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.rocket
+.. currentmodule:: sktime.transformers.panel.rocket
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -373,7 +387,7 @@ Rocket
 Segment
 ~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.segment
+.. currentmodule:: sktime.transformers.panel.segment
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -385,7 +399,7 @@ Segment
 Shapelet
 ~~~~~~~~
 
-.. currentmodule:: sktime.transformers.series_as_features.shapelets
+.. currentmodule:: sktime.transformers.panel.shapelets
 
 .. autosummary::
     :toctree: modules/auto_generated/

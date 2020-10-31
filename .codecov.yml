@@ -14,4 +14,4 @@ comment: false
 
 # enable codecov to report to GitHub status checks
 github_checks:
-  annotations: true
+  annotations: false
