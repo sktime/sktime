@@ -8,7 +8,6 @@ __all__ = [
     "Deseasonalizer",
     "ConditionalDeseasonalizer",
     "ConditionalDeseasonalizer",
-    "autocorrelation_seasonality_test",
 ]
 
 import numpy as np
