@@ -6,7 +6,7 @@ from sktime.classification.dictionary_based._tde import (
     TemporalDictionaryEnsemble,
     IndividualTDE,
 )
-from sktime.datasets import load_gunpoint
+from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
 def test_tde_on_gunpoint():
@@ -15,8 +15,13 @@ def test_tde_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train tde
-    tde = TemporalDictionaryEnsemble(random_state=0)
+    # train TDE
+    tde = TemporalDictionaryEnsemble(
+        n_parameter_samples=50,
+        max_ensemble_size=10,
+        randomly_selected_params=40,
+        random_state=0,
+    )
     tde.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -30,7 +35,7 @@ def test_individual_tde_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train individual tde
+    # train IndividualTDE
     indiv_tde = IndividualTDE(random_state=0)
     indiv_tde.fit(X_train.iloc[indices], y_train[indices])
 
@@ -39,47 +44,66 @@ def test_individual_tde_on_gunpoint():
     testing.assert_array_equal(probas, individual_tde_gunpoint_probas)
 
 
+def test_tde_on_power_demand():
+    # load power demand data
+    X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
+    X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
+    indices = np.random.RandomState(0).permutation(100)
+
+    # train TDE
+    tde = TemporalDictionaryEnsemble(
+        n_parameter_samples=50,
+        max_ensemble_size=10,
+        randomly_selected_params=40,
+        random_state=0,
+    )
+    tde.fit(X_train, y_train)
+
+    score = tde.score(X_test.iloc[indices], y_test[indices])
+    assert score >= 0.92
+
+
 tde_gunpoint_probas = np.array(
     [
         [
-            0.08713241783457479,
-            0.9128675821654253,
+            0.0,
+            1.0000000000000002,
         ],
         [
-            0.2376248808557207,
-            0.7623751191442796,
+            0.3291364535266975,
+            0.6708635464733027,
         ],
         [
-            0.7457478730539769,
-            0.2542521269460233,
+            0.5854317732366514,
+            0.4145682267633488,
         ],
         [
-            0.625078546969323,
-            0.3749214530306776,
+            0.25629531970995384,
+            0.7437046802900463,
         ],
         [
-            0.00915028065096904,
-            0.9908497193490308,
+            0.0,
+            1.0000000000000002,
         ],
         [
-            0.43692590108377183,
-            0.5630740989162286,
+            0.4271588661832565,
+            0.5728411338167437,
         ],
         [
-            0.12405831891834646,
-            0.8759416810816537,
+            0.0854317732366513,
+            0.9145682267633489,
         ],
         [
-            0.6518798319624394,
-            0.34812016803756146,
+            0.5125906394199078,
+            0.48740936058009243,
         ],
         [
-            0.6410138736894136,
-            0.3589861263105872,
+            0.5125906394199078,
+            0.48740936058009243,
         ],
         [
-            0.030515056306703855,
-            0.9694849436932959,
+            0.0,
+            1.0000000000000002,
         ],
     ]
 )
@@ -132,20 +156,25 @@ individual_tde_gunpoint_probas = np.array(
 # def print_array(array):
 #     print('[')
 #     for sub_array in array:
-#         print('[', end='')
+#         print('[')
 #         for value in sub_array:
 #             print(value.astype(str), end='')
-#             print(', ', end='')
+#             print(', ')
 #         print('],')
 #     print(']')
 #
 #
 # if __name__ == "__main__":
-#     X_train, y_train = load_gunpoint(split='train', return_X_y=True)
-#     X_test, y_test = load_gunpoint(split='test', return_X_y=True)
+#     X_train, y_train = load_gunpoint(split="train", return_X_y=True)
+#     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     tde = TemporalDictionaryEnsemble(random_state=0)
+#     tde = TemporalDictionaryEnsemble(
+#         n_parameter_samples=50,
+#         max_ensemble_size=10,
+#         randomly_selected_params=40,
+#         random_state=0
+#     )
 #     indiv_tde = IndividualTDE(random_state=0)
 #
 #     tde.fit(X_train.iloc[indices], y_train[indices])

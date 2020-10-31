@@ -43,8 +43,9 @@ Dictionary-based
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    BOSSIndividual
+    IndividualBOSS
     BOSSEnsemble
+    ContractableBOSS
     WEASEL
     MUSE
     TemporalDictionaryEnsemble
@@ -86,6 +87,7 @@ Interval-based
     :template: class.rst
 
     TimeSeriesForest
+    CanonicalIntervalForest
 
 Shapelet-based
 --------------
