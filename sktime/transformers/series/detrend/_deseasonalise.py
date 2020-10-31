@@ -16,7 +16,6 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils.datetime import _get_duration
 from sktime.utils.datetime import _get_unit
-from transformers.series.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series
 
