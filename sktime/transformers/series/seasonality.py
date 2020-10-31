@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = ["autocorrelation_seasonality_test"]
 
 from warnings import warn
 
@@ -13,6 +13,7 @@ from sktime.utils.validation.forecasting import check_y
 from statsmodels.tsa.stattools import acf
 
 
+#
 def autocorrelation_seasonality_test(y, sp):
     """Seasonality test used in M4 competition
 
