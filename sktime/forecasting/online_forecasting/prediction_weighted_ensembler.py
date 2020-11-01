@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from sklearn.base import BaseEstimator
 from scipy.optimize import nnls, bisect
 import numpy as np
@@ -15,13 +16,14 @@ class PredictionWeightedEnsembler(BaseEstimator):
     loss_func : function
         loss function which follows sklearn.metrics API, for updating weights
     """
+
     def __init__(self, n_estimators=10, loss_func=None):
         self.n_estimators = n_estimators
-        self.weights = np.ones(n_estimators)/n_estimators
+        self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
 
     def predict(self, estimator_predictions):
-        """ Performs prediction by taking a weighted average of the estimator
+        """Performs prediction by taking a weighted average of the estimator
             predictions w.r.t the weights vector
 
         Parameters
@@ -51,7 +53,7 @@ class PredictionWeightedEnsembler(BaseEstimator):
         self.weights /= np.sum(self.weights)
 
     def update(self, estimator_predictions, actual_values):
-        """ Resets the weights over the estimators by passing previous observations
+        """Resets the weights over the estimators by passing previous observations
             to the weighting algorithm
 
         Parameters
@@ -64,7 +66,7 @@ class PredictionWeightedEnsembler(BaseEstimator):
         raise NotImplementedError()
 
     def _uniform_weights(self, n_estimators):
-        """ Resets weights for n estimator to uniform weights
+        """Resets weights for n estimator to uniform weights
 
         Parameters
         ----------
@@ -72,7 +74,7 @@ class PredictionWeightedEnsembler(BaseEstimator):
             number of estimators
         """
         self.n = n_estimators
-        self.weights = np.ones(n_estimators)/n_estimators
+        self.weights = np.ones(n_estimators) / n_estimators
 
 
 class HedgeExpertEnsemble(PredictionWeightedEnsembler):
@@ -117,12 +119,11 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
     """
 
     def __init__(self, n_estimators=10, a=1, loss_func=None):
-        super().__init__(n_estimators=n_estimators, T=None,
-                         a=a, loss_func=loss_func)
+        super().__init__(n_estimators=n_estimators, T=None, a=a, loss_func=loss_func)
         self.R = np.zeros(n_estimators)
 
     def update(self, estimator_predictions, actual_values, low_c=0.01):
-        """ Resets the weights over the estimators by passing previous observations
+        """Resets the weights over the estimators by passing previous observations
             and updating based on Normal Hedge.
 
         Parameters
@@ -132,19 +133,22 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         actual_values : np.array(), shape=(time_axis)
             array with actual values for predicted quantity
         """
-        assert estimator_predictions.shape[1] == len(actual_values), \
-            "Time Dimension Matches"
+        assert estimator_predictions.shape[1] == len(
+            actual_values
+        ), "Time Dimension Matches"
         time_length = estimator_predictions.shape[1]
 
         for i in range(time_length):
-            loss_vector = np.array([
-                          self.loss_func([prediction], [actual_values[i]])
-                          for prediction in estimator_predictions[:, i]
-                          ])
+            loss_vector = np.array(
+                [
+                    self.loss_func([prediction], [actual_values[i]])
+                    for prediction in estimator_predictions[:, i]
+                ]
+            )
 
             average_loss = np.dot(self.weights, loss_vector)
 
-            instant_regret = (average_loss - loss_vector)
+            instant_regret = average_loss - loss_vector
             self.R += instant_regret
             self._update_weights(low_c=low_c)
 
@@ -166,7 +170,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         R_plus /= normalizing_R
 
         low_c = low_c
-        high_c = (max(R_plus)**2)/2
+        high_c = (max(R_plus) ** 2) / 2
 
         def pot(c):
             """Internal Potential Function
@@ -180,7 +184,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             -------
             potential: float
             """
-            return np.mean(np.exp((R_plus**2)/(2*c)))-np.e
+            return np.mean(np.exp((R_plus ** 2) / (2 * c))) - np.e
 
         c_t = bisect(pot, low_c, high_c)
 
@@ -199,14 +203,14 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             prob : float
                 probability
             """
-            return (r/c_t)*np.exp((r**2)/(2*c_t))
+            return (r / c_t) * np.exp((r ** 2) / (2 * c_t))
 
         self.weights = np.array([prob(r, c_t) for r in R_plus])
         self.weights /= np.sum(self.weights)
 
 
 class NNLSEnsemble(PredictionWeightedEnsembler):
-    """ Ensemble class that performs a non-negative least squares to fit to the
+    """Ensemble class that performs a non-negative least squares to fit to the
     estimators. Keeps track of all observations seen so far and fits to it.
 
     Parameters
@@ -224,9 +228,12 @@ class NNLSEnsemble(PredictionWeightedEnsembler):
 
     def update(self, estimator_predictions, actual_values):
         self.total_estimator_predictions = np.concatenate(
-            (self.total_estimator_predictions, estimator_predictions), axis=1)
+            (self.total_estimator_predictions, estimator_predictions), axis=1
+        )
         self.total_actual_values = np.concatenate(
-            (self.total_actual_values, actual_values))
-        weights, loss = nnls(self.total_estimator_predictions.T,
-                             self.total_actual_values)
+            (self.total_actual_values, actual_values)
+        )
+        weights, loss = nnls(
+            self.total_estimator_predictions.T, self.total_actual_values
+        )
         self.weights = weights

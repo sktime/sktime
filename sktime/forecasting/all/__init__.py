@@ -31,6 +31,9 @@ __all__ = [
     "pd",
     "np",
     "plot_series",
+    "NormalHedgeEnsemble",
+    "NNLSEnsemble",
+    "OnlineEnsembleForecaster",
 ]
 
 import numpy as np
@@ -62,3 +65,10 @@ from sktime.performance_metrics.forecasting import smape_loss
 from sktime.transformers.single_series.detrend import Deseasonalizer
 from sktime.transformers.single_series.detrend import Detrender
 from sktime.utils.plotting import plot_series
+from sktime.forecasting.online_forecasting.prediction_weighted_ensembler import (
+    NormalHedgeEnsemble,
+    NNLSEnsemble,
+)
+from sktime.forecasting.online_forecasting.online_ensemble import (
+    OnlineEnsembleForecaster,
+)

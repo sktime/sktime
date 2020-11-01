@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
@@ -22,16 +23,12 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     _required_parameters = ["forecasters"]
 
-    def __init__(self, forecasters,
-                 ensemble_algorithm=None,
-                 n_jobs=None):
+    def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
 
         self.n_jobs = n_jobs
         self.ensemble_algorithm = ensemble_algorithm
-        self.weights = np.ones(len(forecasters))/len(forecasters)
 
-        super(EnsembleForecaster, self).__init__(forecasters=forecasters,
-                                                 n_jobs=n_jobs)
+        super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
     def fit(self, y_train, fh=None, X_train=None):
         """Fit to training data.
@@ -52,6 +49,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self._set_y_X(y_train, X_train)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
+        self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
         self._is_fitted = True
         return self
@@ -68,8 +66,9 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             Exogenous variables are ignored
         """
         fh = np.arange(len(y_new)) + 1
-        estimator_predictions = np.column_stack(self._predict_forecasters(
-                                             fh=fh, X=X_new))
+        estimator_predictions = np.column_stack(
+            self._predict_forecasters(fh=fh, X=X_new)
+        )
         y_new = np.array(y_new)
 
         self.ensemble_algorithm.update(estimator_predictions.T, y_new)
@@ -98,9 +97,15 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         return self
 
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
-                       return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
+    def update_predict(
+        self,
+        y_test,
+        cv=None,
+        X_test=None,
+        update_params=False,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
         """Make and update predictions iteratively over the test set.
 
         Parameters
@@ -125,21 +130,22 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         if cv is not None:
             cv = check_cv(cv)
         else:
-            cv = SlidingWindowSplitter(start_with_window=True,
-                                       window_length=1,
-                                       fh=1)
+            cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 
-        return self._predict_moving_cutoff(y_test, X=X_test,
-                                           update_params=update_params,
-                                           return_pred_int=return_pred_int,
-                                           alpha=alpha,
-                                           cv=cv)
+        return self._predict_moving_cutoff(
+            y_test,
+            X=X_test,
+            update_params=update_params,
+            return_pred_int=return_pred_int,
+            alpha=alpha,
+            cv=cv,
+        )
 
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
         if self.ensemble_algorithm is not None:
             self.weights = self.ensemble_algorithm.weights
-        return (pd.concat(
-            self._predict_forecasters(fh=fh, X=X), axis=1)
-                * self.weights).sum(axis=1)
+        return (
+            pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1) * self.weights
+        ).sum(axis=1)
