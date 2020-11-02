@@ -13,6 +13,7 @@ from sktime.transformers.series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_sp
+from sktime.utils.validation.forecasting import check_y
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -46,7 +47,7 @@ class ThetaForecaster(ExponentialSmoothing):
         set then
         this will be used, otherwise it will be estimated from the data.
 
-    deseasonalise : bool, optional (default=True)
+    deseasonalize : bool, optional (default=True)
         If True, data is seasonally adjusted.
 
     sp : int, optional (default=1)
@@ -89,12 +90,12 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
 
-    def __init__(self, smoothing_level=None, deseasonalise=True, sp=1):
+    def __init__(self, smoothing_level=None, deseasonalize=True, sp=1):
 
         self.sp = sp
-        self.deseasonalise = deseasonalise
+        self.deseasonalize = deseasonalize
 
-        self.deseasonaliser_ = None
+        self.deseasonalizer_ = None
         self.trend_ = None
         self.smoothing_level_ = None
         self.drift_ = None
@@ -116,13 +117,14 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
+        y = check_y(y)
         sp = check_sp(self.sp)
-        if sp > 1 and not self.deseasonalise:
+        if sp > 1 and not self.deseasonalize:
             warn("`sp` is ignored when `deseasonalise`=False")
 
-        if self.deseasonalise:
-            self.deseasonaliser_ = Deseasonalizer(sp=self.sp, model="multiplicative")
-            y = self.deseasonaliser_.fit_transform(y)
+        if self.deseasonalize:
+            self.deseasonalizer_ = Deseasonalizer(sp=self.sp, model="multiplicative")
+            y = self.deseasonalizer_.fit_transform(y)
 
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
@@ -160,8 +162,8 @@ class ThetaForecaster(ExponentialSmoothing):
         drift = self._compute_drift()
         y_pred += drift
 
-        if self.deseasonalise:
-            y_pred = self.deseasonaliser_.inverse_transform(y_pred)
+        if self.deseasonalize:
+            y_pred = self.deseasonalizer_.inverse_transform(y_pred)
 
         if return_pred_int:
             pred_int = self.compute_pred_int(y_pred=y_pred, alpha=alpha)
@@ -215,8 +217,8 @@ class ThetaForecaster(ExponentialSmoothing):
     def update(self, y, X=None, update_params=True):
         super(ThetaForecaster, self).update(y, X, update_params=update_params)
         if update_params:
-            if self.deseasonalise:
-                y = self.deseasonaliser_.transform(y)
+            if self.deseasonalize:
+                y = self.deseasonalizer_.transform(y)
             self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self

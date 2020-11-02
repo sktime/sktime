@@ -23,12 +23,12 @@ def _check_is_univariate(y):
         )
 
 
-def check_series(y, enforce_univariate=False, allow_empty=False):
+def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=True):
     """Validate input data.
 
     Parameters
     ----------
-    y : pd.Series, pd.DataFrame
+    Z : pd.Series, pd.DataFrame
         Univariate or multivariate time series
     enforce_univariate : bool, optional (default=False)
         If True, multivariate Z will raise an error.
@@ -45,16 +45,24 @@ def check_series(y, enforce_univariate=False, allow_empty=False):
         If Z is an invalid input
     """
     # Check if pandas series or numpy array
-    if not isinstance(y, VALID_DATA_TYPES):
-        raise TypeError(
-            f"Data must be a one of {VALID_DATA_TYPES}, but found type: {type(y)}"
+    if not allow_numpy:
+        valid_data_types = tuple(
+            filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES)
         )
+    else:
+        valid_data_types = VALID_DATA_TYPES
+
+    if not isinstance(Z, valid_data_types):
+        raise TypeError(
+            f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
+        )
+
     if enforce_univariate:
-        _check_is_univariate(y)
+        _check_is_univariate(Z)
 
     # check time index
-    check_time_index(y.index, allow_empty=allow_empty)
-    return y
+    check_time_index(Z.index, allow_empty=allow_empty)
+    return Z
 
 
 def check_time_index(index, allow_empty=False):
