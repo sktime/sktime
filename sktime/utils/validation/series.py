@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = ["check_series"]
+__all__ = ["check_series", "check_time_index", "check_equal_time_index"]
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,17 @@ import pandas as pd
 # We currently support the following types for input data and time index types.
 VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+
+
+def _check_is_univariate(y):
+    """Check if series is univariate"""
+    if isinstance(y, pd.DataFrame):
+        raise ValueError("Data must be univariate, but found a pd.DataFrame")
+    if isinstance(y, np.ndarray) and y.ndim > 1:
+        raise ValueError(
+            "Data must be univariate, but found np.array with more than "
+            "one dimension"
+        )
 
 
 def check_series(y, enforce_univariate=False, allow_empty=False):
@@ -34,13 +45,12 @@ def check_series(y, enforce_univariate=False, allow_empty=False):
         If Z is an invalid input
     """
     # Check if pandas series or numpy array
-    if enforce_univariate and not isinstance(y, pd.Series):
-        raise ValueError("Data must be univariate, but found a pd.DataFrame")
-
     if not isinstance(y, VALID_DATA_TYPES):
         raise TypeError(
-            f"Data must be a pandas Series or DataFrame, but found type: {type(y)}"
+            f"Data must be a one of {VALID_DATA_TYPES}, but found type: {type(y)}"
         )
+    if enforce_univariate:
+        _check_is_univariate(y)
 
     # check time index
     check_time_index(y.index, allow_empty=allow_empty)
