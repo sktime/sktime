@@ -665,10 +665,8 @@ class BaseWindowForecaster(BaseSktimeForecaster):
         # get the start and end points of the last window
         cutoff = self.cutoff
         start = _shift(cutoff, by=-self.window_length_ + 1)
-
         # get the last window of the endogenous variable
         y = self._y.loc[start:cutoff].to_numpy()
-
         # if exogenous variables are given, also get the last window of
         # those
         if self._X is not None:

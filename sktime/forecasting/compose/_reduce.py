@@ -26,6 +26,7 @@ from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.validation.forecasting import check_step_length
 from sktime.utils.validation.forecasting import check_window_length
 from sktime.utils.validation.forecasting import check_y
+from sktime.utils.create_lag_matrix import create_lag_matrix
 
 
 ##############################################################################
@@ -65,29 +66,46 @@ class BaseReducer(BaseWindowForecaster):
 
     def _transform(self, y_train, X_train=None):
         """Transform data using rolling window approach"""
-        y_train = check_y(y_train)
+        # y_train = check_y(y_train)
+        # print(type(y_train))
+        # print(type(X_train))
 
         # get integer time index
-        cv = self._cv
+        # cv = self._cv
 
         # Transform target series into tabular format using
         # rolling window tabularisation
 
-        x_windows = []
-        y_windows = []
-        for x_index, y_index in cv.split(y_train):
-            x_window = y_train.iloc[x_index]
-            y_window = y_train.iloc[y_index]
+        # x_windows = []
+        # y_windows = []
+        # for x_index, y_index in cv.split(y_train):
+        #     x_window = y_train.iloc[x_index]
+        #     y_window = y_train.iloc[y_index]
 
-            if X_train is not None:
-                endo_window = X_train.iloc[x_index, :].transpose().values.flatten()
-                x_window = np.hstack((x_window, endo_window))
+        #     if X_train is not None:
+        #         endo_window = X_train.iloc[x_index, :].transpose().values.flatten()
+        #         x_window = np.hstack((x_window, endo_window))
 
-            x_windows.append(x_window)
-            y_windows.append(y_window)
+        #     x_windows.append(x_window)
+        #     y_windows.append(y_window)
 
-        # Put into required input format for regression
-        X_train, y_train = self._format_windows(x_windows, y_windows)
+        # # Put into required input format for regression
+        # X_train, y_train = self._format_windows(x_windows, y_windows)
+        # return X_train, y_train
+        # print(f'y_train is {y_train}')
+        y_train = check_y(y_train)
+
+        if X_train is not None:
+            if y_train.name is None:
+                y_train.name = "y"
+
+            X_train = X_train.merge(
+                y_train.to_frame(), left_index=True, right_index=True
+            )
+            # X.train.
+            y_train, X_train = create_lag_matrix(X_train, self.window_length)
+            # print(f'y_train is {y_train}')
+            # print(f'X_train is {X_train}')
         return X_train, y_train
 
     def _format_windows(self, x_windows, y_windows=None):
@@ -344,7 +362,6 @@ class _RecursiveReducer(OptionalForecastingHorizonMixin, BaseReducer):
             else:
                 # convert data into required input format
                 X_last = self._format_windows([last_window])
-
             y_pred[i] = self.regressor_.predict(
                 X_last
             )  # make forecast using fitted regressor

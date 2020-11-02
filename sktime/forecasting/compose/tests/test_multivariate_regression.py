@@ -39,15 +39,18 @@ def test_multivariate_recursive():
 
     y_train, y_test = temporal_train_test_split(y)
     X_train = X.iloc[y_train.index, :]
-
     fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
     window_length = 2
 
     regressor = LinearRegression(fit_intercept=False)
     forecaster = ReducedRegressionForecaster(regressor, window_length=window_length)
+    # y_train = y_train.to_numpy()
+    # X_train = X_train.to_numpy()
     forecaster.fit(y_train, fh=fh, X_train=X_train)
     coefs = forecaster.regressor_.coef_
     intercept = forecaster.regressor_.intercept_
+    # print(coefs)
+    # print(intercept)
 
     y_pred = forecaster.predict(fh=fh)
 
@@ -56,6 +59,9 @@ def test_multivariate_recursive():
     assert_array_almost_equal(y_pred.iloc[0], y_test.iloc[0])
 
     assert len(coefs) == (len(X.columns) + 1) * window_length
+
+
+test_multivariate_recursive()
 
 
 def test_multivariate_direct():
