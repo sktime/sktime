@@ -35,6 +35,15 @@ import os
 
 import sklearn.preprocessing
 import sklearn.utils
+from sklearn.linear_model import RidgeClassifierCV
+
+from sktime.classification.dictionary_based import (
+    BOSSEnsemble,
+    ContractableBOSS,
+    TemporalDictionaryEnsemble,
+)
+from sktime.contrib.interval_based._cif import CanonicalIntervalForest
+from sktime.transformers.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -53,8 +62,6 @@ from sklearn.tree import DecisionTreeClassifier
 from statsmodels.tsa.stattools import acf
 
 import sktime.classification.compose._ensemble as ensemble
-import sktime.classification.dictionary_based._boss as db
-import sktime.classification.dictionary_based._tde as tde
 import sktime.classification.frequency_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
@@ -66,7 +73,7 @@ from sktime.transformers.panel.compose import make_row_transformer
 from sktime.transformers.panel.segment import RandomIntervalSegmenter
 
 from sktime.transformers.panel.reduce import Tabularizer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
@@ -260,14 +267,14 @@ def set_classifier(cls, resampleId):
         return fb.RandomIntervalSpectralForest(random_state=resampleId)
     elif cls.lower() == "tsf":
         return ib.TimeSeriesForest(random_state=resampleId)
+    elif cls.lower() == "cif":
+        return CanonicalIntervalForest(random_state=resampleId)
     elif cls.lower() == "boss":
-        return db.BOSSEnsemble(random_state=resampleId)
+        return BOSSEnsemble(random_state=resampleId)
     elif cls.lower() == "cboss":
-        return db.BOSSEnsemble(
-            random_state=resampleId, randomised_ensemble=True, max_ensemble_size=50
-        )
+        return ContractableBOSS(random_state=resampleId)
     elif cls.lower() == "tde":
-        return tde.TemporalDictionaryEnsemble(random_state=resampleId)
+        return TemporalDictionaryEnsemble(random_state=resampleId)
     elif cls.lower() == "st":
         return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == "dtwcv":
@@ -306,6 +313,12 @@ def set_classifier(cls, resampleId):
         return ensemble.TimeSeriesForestClassifier(
             estimator=base_estimator, n_estimators=100
         )
+    elif cls.lower() == "rocket":
+        rocket_pipeline = make_pipeline(
+            Rocket(random_state=resampleId),
+            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
+        )
+        return rocket_pipeline
     else:
         raise Exception("UNKNOWN CLASSIFIER")
 
