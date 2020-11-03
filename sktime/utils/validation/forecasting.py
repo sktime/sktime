@@ -92,8 +92,9 @@ def check_y(y, allow_empty=False, allow_constant=True):
     ValueError, TypeError
         If y is an invalid input
     """
-    # Check if pandas series or numpy array
-    y = check_series(y, enforce_univariate=True, allow_empty=allow_empty)
+    y = check_series(
+        y, enforce_univariate=True, allow_empty=allow_empty, allow_numpy=False
+    )
 
     if not allow_constant:
         if np.all(y == y.iloc[0]):
