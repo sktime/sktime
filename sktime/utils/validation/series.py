@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = ["check_series"]
+__all__ = ["check_series", "check_time_index", "check_equal_time_index"]
 
 import numpy as np
 import pandas as pd
@@ -12,12 +12,23 @@ VALID_DATA_TYPES = (pd.DataFrame, pd.Series, np.ndarray)
 VALID_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
 
 
-def check_series(y, enforce_univariate=False, allow_empty=False):
+def _check_is_univariate(y):
+    """Check if series is univariate"""
+    if isinstance(y, pd.DataFrame):
+        raise ValueError("Data must be univariate, but found a pd.DataFrame")
+    if isinstance(y, np.ndarray) and y.ndim > 1:
+        raise ValueError(
+            "Data must be univariate, but found np.array with more than "
+            "one dimension"
+        )
+
+
+def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=True):
     """Validate input data.
 
     Parameters
     ----------
-    y : pd.Series, pd.DataFrame
+    Z : pd.Series, pd.DataFrame
         Univariate or multivariate time series
     enforce_univariate : bool, optional (default=False)
         If True, multivariate Z will raise an error.
@@ -34,17 +45,24 @@ def check_series(y, enforce_univariate=False, allow_empty=False):
         If Z is an invalid input
     """
     # Check if pandas series or numpy array
-    if enforce_univariate and not isinstance(y, pd.Series):
-        raise ValueError("Data must be univariate, but found a pd.DataFrame")
+    if not allow_numpy:
+        valid_data_types = tuple(
+            filter(lambda x: x is not np.ndarray, VALID_DATA_TYPES)
+        )
+    else:
+        valid_data_types = VALID_DATA_TYPES
 
-    if not isinstance(y, VALID_DATA_TYPES):
+    if not isinstance(Z, valid_data_types):
         raise TypeError(
-            f"Data must be a pandas Series or DataFrame, but found type: {type(y)}"
+            f"Data must be a one of {valid_data_types}, but found type: {type(Z)}"
         )
 
+    if enforce_univariate:
+        _check_is_univariate(Z)
+
     # check time index
-    check_time_index(y.index, allow_empty=allow_empty)
-    return y
+    check_time_index(Z.index, allow_empty=allow_empty)
+    return Z
 
 
 def check_time_index(index, allow_empty=False):

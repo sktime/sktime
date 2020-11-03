@@ -106,6 +106,8 @@ Libraries
      - time series annotation: change point detection, segmentation
    * - `scikit-multiflow <https://scikit-multiflow.github.io>`_
      - Extension of scikit-learn to supervised learning of streaming data (dynamic online learning), including regression/classification and change detection
+   * - `scikit-survival <https://github.com/sebp/scikit-survival>`_
+     - Survival analysis built on top of scikit-learn
    * - `seasonal <https://github.com/welch/seasonal>`_
      - Toolkit to estimate trends and seasonality in time series
    * - `seqlearn <https://github.com/larsmans/seqlearn>`_
