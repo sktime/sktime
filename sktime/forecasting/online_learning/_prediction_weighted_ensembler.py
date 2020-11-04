@@ -3,10 +3,8 @@ import numpy as np
 from scipy.optimize import bisect
 from scipy.optimize import nnls
 
-from sktime.base import BaseEstimator
 
-
-class _PredictionWeightedEnsembler(BaseEstimator):
+class _PredictionWeightedEnsembler:
     """Wrapper class to handle ensemble algorithms that use multiple forecasters
     for prediction. We implement default methods for setting uniform weights,
     updating and prediction.
@@ -25,13 +23,13 @@ class _PredictionWeightedEnsembler(BaseEstimator):
         self.loss_func = loss_func
         super(_PredictionWeightedEnsembler, self).__init__()
 
-    def predict(self, estimator_predictions):
+    def predict(self, y_pred):
         """Performs prediction by taking a weighted average of the estimator
             predictions w.r.t the weights vector
 
         Parameters
         ----------
-        estimator_predictions : np.array(), shape=(time_axis,estimator_axis)
+        y_pred : np.array(), shape=(time_axis,estimator_axis)
             array with predictions from the estimators
 
         Returns
@@ -39,7 +37,7 @@ class _PredictionWeightedEnsembler(BaseEstimator):
         predictions : np.array(), shape=(time_axis)
             array with our predictions
         """
-        prediction = np.dot(self.weights, estimator_predictions)
+        prediction = np.dot(self.weights, y_pred)
 
         return prediction
 
@@ -55,15 +53,15 @@ class _PredictionWeightedEnsembler(BaseEstimator):
         self.weights = self.weights * new_array
         self.weights /= np.sum(self.weights)
 
-    def update(self, estimator_predictions, actual_values):
+    def update(self, y_pred, y_true):
         """Resets the weights over the estimators by passing previous observations
             to the weighting algorithm
 
         Parameters
         ----------
-        estimator_predictions : np.array(), shape=(time_axis,estimator_axis)
+        y_pred : np.array(), shape=(time_axis,estimator_axis)
             array with predictions from the estimators
-        actual_values : np.array(), shape=(time_axis)
+        y_true : np.array(), shape=(time_axis)
             array with actual values for predicted quantity
         """
         raise NotImplementedError()
