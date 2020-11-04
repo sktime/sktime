@@ -32,3 +32,13 @@ repos:
   hooks:
   - id: check-manifest
     stages: [manual]
+
+- repo: https://github.com/nbQA-dev/nbQA
+  rev: 0.3.6
+  hooks:
+  - id: nbqa-black
+    args: ["--nbqa-mutate"]
+  - id: nbqa-isort
+    args: ["--nbqa-mutate", "--nbqa-config=setup.cfg", "-p=sktime"]
+  - id: nbqa-flake8
+    args: ["--nbqa-config=setup.cfg", "--extend-ignore=E402,E203"]
