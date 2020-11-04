@@ -1,20 +1,16 @@
 # -*- coding: utf-8 -*-
 __all__ = [
-    "compute_relative_to_n_timepoints",
+    "_get_n_from_n_timepoints",
     "time_series_slope",
     "fit_trend",
-    "remove_trend",
-    "add_trend",
 ]
 __author__ = ["Markus Löning"]
 
 import numpy as np
 from sklearn.utils import check_array
 
-from sktime.utils.validation.forecasting import check_time_index
 
-
-def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
+def _get_n_from_n_timepoints(n_timepoints, n="sqrt"):
     """
     Get number of intervals from number of time points for various allowed
     input arguments.
@@ -93,33 +89,6 @@ def compute_relative_to_n_timepoints(n_timepoints, n="sqrt"):
     return n_intervals_
 
 
-def time_series_slope(y):
-    """
-    Compute slope of time series (y) using ordinary least squares.
-
-    Parameters
-    ----------
-    y : array_like
-        Time-series.
-    axis : int
-        Axis along which the time-series slope is computed.
-
-    Returns
-    -------
-    slope : float
-        Slope of time-series.
-    """
-    y = np.asarray(y).ravel()
-    len_series = len(y)
-
-    if len_series < 2:
-        return 0
-    else:
-        x = np.arange(len_series)  # time index
-        x_mean = (len_series - 1) / 2  # faster than x.mean()
-        return (np.mean(x * y) - x_mean * np.mean(y)) / (np.mean(x ** 2) - x_mean ** 2)
-
-
 def fit_trend(x, order=0):
     """Fit linear regression with polynomial terms of given order
 
@@ -162,115 +131,33 @@ def fit_trend(x, order=0):
     return coefs
 
 
-def remove_trend(x, coefs, time_index=None):
-    """Remove trend from an array with a trend of given order along axis 0 or 1
-
+def time_series_slope(y, axis=0):
+    """Find the slope for each series of y
     Parameters
     ----------
-    x : array_like, shape=[n_samples, n_obs]
-        Time series data, each sample is de-trended separately
-    coefs : ndarray, shape=[n_samples, order + 1]
-        Fitted coefficients for each sample, single column means order zero,
-        two columns mean order 1
-        (linear), three columns mean order 2 (quadratic), etc
-    time_index : array-like, shape=[n_obs], optional (default=None)
-        Time series index for which to add the trend components
+    y: np.ndarray
+        Time series
+    axis : int, optional (default=0)
+        Axis along which to compute slope
 
     Returns
-    -------
-    xt : ndarray
-        The de-trended series is the residual of the linear regression of the
-        data on the trend of given order.
-
-    See Also
-    --------
-    fit_trend
-    add_trend
-
-    References
     ----------
-    Adapted from statsmodels (0.9.0), see
-    https://www.statsmodels.org/dev/_modules/statsmodels/tsa/tsatools.html
-    #detrend
+    slope : np.ndarray
+        Time series slope
     """
-    x = check_array(x)
+    # Make sure y is always at least 2-dimensional
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
 
-    # infer order from shape of given coefficients
-    order = coefs.shape[1] - 1
+    # Generate time index with correct shape for broadcasting
+    shape = np.ones(y.ndim, dtype=np.int)
+    shape[axis] *= -1
+    x = np.arange(y.shape[axis]).reshape(shape) + 1
 
-    # special case, remove mean
-    if order == 0:
-        xt = x - coefs
-        return xt
+    # Precompute mean
+    x_mean = x.mean()
 
-    else:
-        if time_index is None:
-            # if no time index is given, create range index
-            n_obs = x.shape[1]
-            time_index = np.arange(n_obs)
-        else:
-            # validate given time index
-            time_index = check_time_index(time_index)
-            if not len(time_index) == x.shape[1]:
-                raise ValueError(
-                    "Length of passed index does not match length of passed x"
-                )
-
-        poly_terms = np.vander(time_index, N=order + 1)
-        xt = x - np.dot(poly_terms, coefs.T).T
-
-    return xt
-
-
-def add_trend(x, coefs, time_index=None):
-    """Add trend to array for given fitted coefficients along axis 0 or 1,
-    inverse function to `remove_trend()`
-
-    Parameters
-    ----------
-    x : array_like, shape=[n_samples, n_obs]
-        Time series data, each sample is treated separately
-    coefs : array-like, shape=[n_samples, order + 1]
-        fitted coefficients of polynomial order for each sample, one column
-        means order zero, two columns mean order 1
-        (linear), three columns mean order 2 (quadratic), etc
-    time_index : array-like, shape=[n_obs], optional (default=None)
-        Time series index for which to add the trend components
-
-    Returns
-    -------
-    xt : ndarray
-        The series with added trend.
-
-    See Also
-    -------
-    fit_trend
-    remove_trend
-    """
-    x = check_array(x)
-
-    #  infer order from shape of given coefficients
-    order = coefs.shape[1] - 1
-
-    # special case, add mean
-    if order == 0:
-        xt = x + coefs
-
-    else:
-        if time_index is None:
-            n_obs = x.shape[1]
-            time_index = np.arange(n_obs)
-
-        else:
-            # validate given time index
-            time_index = check_time_index(time_index)
-
-            if not len(time_index) == x.shape[1]:
-                raise ValueError(
-                    "Length of passed index does not match length of passed x"
-                )
-
-        poly_terms = np.vander(time_index, N=order + 1)
-        xt = x + np.dot(poly_terms, coefs.T).T
-
-    return xt
+    # Compute slope along given axis
+    return (np.mean(y * x, axis=axis) - x_mean * np.mean(y, axis=axis)) / (
+        (x * x).mean() - x_mean ** 2
+    )

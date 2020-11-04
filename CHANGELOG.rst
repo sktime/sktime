@@ -3,8 +3,35 @@ Changelog
 
 All notable changes to this project will be documented in this file. We keep track of changes in this file since v0.4.0. The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_ and we adhere to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_. The source code for all `releases <https://github.com/alan-turing-institute/sktime/releases>`_ is available on GitHub.
 
-[0.4.3] - 2020-xx-xx
+[0.5.0] - 2020-xx-xx
 --------------------
+
+
+[0.4.3] - 2020-10-20
+--------------------
+
+Added
+~~~~~
+* Support for 3d numpy array (#405) @mloning
+* Support for downloading dataset from UCR UEA time series classification data set repository (#430) @Emiliathewolf
+* Univariate time series regression example to TSFresh notebook (#428) @evanmiller29
+* Parallelized TimeSeriesForest using joblib. (#408) @kkoziara
+* Unit test for multi-processing (#414) @kkoziara
+* Add date-time support for forecasting framework (#392) @mloning
+
+Changed
+~~~~~~~
+* Performance improvements of dictionary classifiers (#398) @patrickzib
+
+Fixed
+~~~~~
+* Fix links in Readthedocs and Binder launch button (#416)
+@mloning
+* Fixed small bug in performance metrics (#422) @krumeto
+* Resolved warnings in notebook examples (#418) @alwinw
+* Resolves #325 ModuleNotFoundError for soft dependencies (#410) @alwinw
+
+All contributors: @Emiliathewolf, @alwinw, @evanmiller29, @kkoziara, @krumeto, @mloning and @patrickzib
 
 
 [0.4.2] - 2020-10-01

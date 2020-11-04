@@ -4,7 +4,7 @@ __author__ = ["Markus Löning", "@big-o"]
 
 from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
 
-from sktime.forecasting.base._statsmodels import _StatsModelsAdapter
+from sktime.forecasting.base._adapters import _StatsModelsAdapter
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
@@ -97,7 +97,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
         super(ExponentialSmoothing, self).__init__()
 
-    def _fit_forecaster(self, y, X_train=None):
+    def _fit_forecaster(self, y, X=None):
         self._forecaster = _ExponentialSmoothing(
             y,
             trend=self.trend,

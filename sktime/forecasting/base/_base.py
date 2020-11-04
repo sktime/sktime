@@ -1,13 +1,9 @@
 #!/usr/bin/env python3 -u
-# coding: utf-8
+# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "@big-o"]
-__all__ = [
-    "BaseForecaster",
-    "DEFAULT_ALPHA",
-    "is_forecaster"
-]
+__all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
 
@@ -26,18 +22,18 @@ class BaseForecaster(BaseEstimator):
 
     def __init__(self):
         self._is_fitted = False
-        super(BaseEstimator, self).__init__()
+        super(BaseForecaster, self).__init__()
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
@@ -45,8 +41,7 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def predict(self, fh=None, X=None, return_pred_int=False,
-                alpha=DEFAULT_ALPHA):
+    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make forecasts
 
         Parameters
@@ -91,13 +86,13 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Update fitted parameters
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
@@ -106,16 +101,22 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict(self, y_test, cv=None, X_test=None, update_params=False,
-                       return_pred_int=False,
-                       alpha=DEFAULT_ALPHA):
+    def update_predict(
+        self,
+        y,
+        cv=None,
+        X=None,
+        update_params=False,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
         """Make and update predictions iteratively over the test set.
 
         Parameters
         ----------
-        y_test : pd.Series
+        y : pd.Series
         cv : cross-validation generator, optional (default=None)
-        X_test : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
         update_params : bool, optional (default=False)
         return_pred_int : bool, optional (default=False)
         alpha : int or list of ints, optional (default=None)
@@ -129,9 +130,15 @@ class BaseForecaster(BaseEstimator):
         """
         raise NotImplementedError("abstract method")
 
-    def update_predict_single(self, y_new, fh=None, X=None,
-                              update_params=False, return_pred_int=False,
-                              alpha=DEFAULT_ALPHA):
+    def update_predict_single(
+        self,
+        y_new,
+        fh=None,
+        X=None,
+        update_params=False,
+        return_pred_int=False,
+        alpha=DEFAULT_ALPHA,
+    ):
         # when nowcasting, X may be longer than y, X must be cut to same
         # length as y so that same time points are
         # passed to update, the remaining time points of X are passed to
@@ -139,16 +146,15 @@ class BaseForecaster(BaseEstimator):
         if X is not None or return_pred_int:
             raise NotImplementedError()
 
-        self.update(y_new, X_new=X, update_params=update_params)
-        return self.predict(fh=fh, X=X, return_pred_int=return_pred_int,
-                            alpha=alpha)
+        self.update(y_new, X, update_params=update_params)
+        return self.predict(fh, X, return_pred_int=return_pred_int, alpha=alpha)
 
-    def score(self, y_test, fh=None, X=None):
+    def score(self, y, X=None, fh=None):
         """Compute the sMAPE loss for the given forecasting horizon.
 
         Parameters
         ----------
-        y_test : pd.Series
+        y : pd.Series
             Target time series to which to compare the forecasts.
         fh : int, list or array-like, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
@@ -158,7 +164,7 @@ class BaseForecaster(BaseEstimator):
         Returns
         -------
         score : float
-            sMAPE loss of self.predict(fh=fh, X=X) with respect to y_test.
+            sMAPE loss of self.predict(fh, X) with respect to y_test.
 
         See Also
         --------
@@ -167,7 +173,8 @@ class BaseForecaster(BaseEstimator):
         # no input checks needed here, they will be performed
         # in predict and loss function
         from sktime.performance_metrics.forecasting import smape_loss
-        return smape_loss(y_test, self.predict(fh=fh, X=X))
+
+        return smape_loss(y, self.predict(fh, X))
 
     def get_fitted_params(self):
         """Get fitted parameters
@@ -177,19 +184,3 @@ class BaseForecaster(BaseEstimator):
         fitted_params : dict
         """
         raise NotImplementedError("abstract method")
-
-
-def is_forecaster(estimator):
-    """Return True if the given estimator is a forecaster.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if estimator is a forecaster and False otherwise.
-    """
-    return isinstance(estimator, BaseForecaster)

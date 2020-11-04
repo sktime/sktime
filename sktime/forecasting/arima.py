@@ -8,11 +8,14 @@ __all__ = ["AutoARIMA"]
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import BaseSktimeForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _SktimeForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.utils.check_imports import _check_soft_dependencies
+
+_check_soft_dependencies("pmdarima")
 
 
-class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
+class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Automatically discover the optimal order for an ARIMA model.
 
     The auto-ARIMA process seeks to identify the most optimal parameters
@@ -342,24 +345,24 @@ class AutoARIMA(OptionalForecastingHorizonMixin, BaseSktimeForecaster):
             **kwargs
         )
 
-    def fit(self, y_train, fh=None, X_train=None, **fit_args):
+    def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
-        self._forecaster.fit(y_train, exogenous=X_train, **fit_args)
+        self._forecaster.fit(y, X, **fit_params)
         self._is_fitted = True
         return self
 

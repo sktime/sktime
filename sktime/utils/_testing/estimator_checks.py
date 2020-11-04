@@ -17,41 +17,24 @@ import joblib
 import numpy as np
 import pytest
 from sklearn import clone
-from sklearn.utils.testing import set_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
-from sktime.base import BaseEstimator
-from sktime.classification.base import BaseClassifier
-from sktime.classification.base import is_classifier
-from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._base import BaseForecaster
-from sktime.forecasting.base._base import is_forecaster
-from sktime.regression.base import BaseRegressor
-from sktime.regression.base import is_regressor
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.base import (
-    is_non_fittable_series_as_features_transformer,
-)
-from sktime.transformers.series_as_features.base import (
-    is_series_as_features_transformer,
-)
-from sktime.transformers.single_series.base import BaseSingleSeriesTransformer
-from sktime.transformers.single_series.base import is_single_series_transformer
-from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _make_args
-from sktime.utils._testing import _assert_almost_equal
-from sktime.utils._testing.inspect import _get_args
+from sklearn.utils.testing import set_random_state
 
-NON_STATE_CHANGING_METHODS = [
-    "predict",
-    "predict_proba",
-    "decision_function",
-    "transform",
-    "inverse_transform",
-]
+from sktime.base import BaseEstimator
+from sktime.exceptions import NotFittedError
+from sktime.tests._config import NON_STATE_CHANGING_METHODS
+from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES, VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_TAGS
+from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
+from sktime.utils._testing import _assert_array_almost_equal
+from sktime.utils._testing import _assert_array_equal
+from sktime.utils._testing import _construct_instance
+from sktime.utils._testing import _get_args
+from sktime.utils._testing import _has_tag
+from sktime.utils._testing import _make_args
 
 
 def check_estimator(Estimator, exclude=None):
@@ -66,18 +49,16 @@ def check_estimator(Estimator, exclude=None):
     AssertionError
         If Estimator does not comply
     """
-    for check in yield_estimator_checks():
-
-        # check if associated test is not included in the exclusion list
-        if check.__name__ not in exclude:
-            check(Estimator)
+    for check in yield_estimator_checks(exclude=exclude):
+        check(Estimator)
 
 
-def yield_estimator_checks():
+def yield_estimator_checks(exclude=None):
     """Iterator to yield estimator checks"""
     checks = [
         check_inheritance,
         check_required_params,
+        check_estimator_tags,
         check_has_common_interface,
         check_constructor,
         check_get_params,
@@ -91,8 +72,13 @@ def yield_estimator_checks():
         check_fit_does_not_overwrite_hyper_params,
         check_methods_do_not_change_state,
         check_persistence_via_pickle,
+        check_multiprocessing_idempotent,
     ]
-    yield from checks
+    for check in checks:
+        # check if associated test is not included in the exclusion list
+        if check.__name__ in exclude:
+            continue
+        yield check
 
 
 def check_required_params(Estimator):
@@ -102,7 +88,7 @@ def check_required_params(Estimator):
 
         assert isinstance(required_params, list), (
             f"For estimator: {Estimator}, `_required_parameters` must be a "
-            f"list, but found type: {type(required_params)}"
+            f"tuple, but found type: {type(required_params)}"
         )
 
         assert all([isinstance(param, str) for param in required_params]), (
@@ -125,46 +111,51 @@ def check_required_params(Estimator):
             )
 
 
-def check_inheritance(Estimator):
-    # Check that estimator inherits from one and only one task-specific
-    # estimator
+def check_estimator_tags(Estimator):
+    assert hasattr(Estimator, "_all_tags")
+    all_tags = Estimator._all_tags()
+    assert isinstance(all_tags, dict)
+    assert all(
+        [
+            isinstance(key, str) and isinstance(value, bool)
+            for key, value in all_tags.items()
+        ]
+    )
 
-    # Class checks
-    base_classes = [
-        BaseClassifier,
-        BaseRegressor,
-        BaseForecaster,
-        BaseSeriesAsFeaturesTransformer,
-        BaseSingleSeriesTransformer,
-    ]
+    if hasattr(Estimator, "_tags"):
+        tags = Estimator._tags
+        assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
+        assert len(tags) > 0, "_tags is empty"
+        assert all(
+            [tag in VALID_ESTIMATOR_TAGS for tag in tags.keys()]
+        ), "Some tags in _tags are invalid"
+
+    # Avoid ambiguous class attributes
+    ambiguous_attrs = ("tags", "tags_")
+    for attr in ambiguous_attrs:
+        assert not hasattr(Estimator, attr), (
+            f"Please avoid using the {attr} attribute to disambiguate it from "
+            f"estimator tags."
+        )
+
+
+def check_inheritance(Estimator):
+    # Check that estimator inherits from BaseEstimator
     assert issubclass(Estimator, BaseEstimator), (
         f"Estimator: {Estimator} " f"is not a sub-class of " f"BaseEstimator."
     )
-    assert (
-        sum([issubclass(Estimator, base_class) for base_class in base_classes]) == 1
-    ), (
-        f"Estimator: {Estimator} is a "
-        f"sub-class of more than one "
-        f"task-specific base estimators."
-    )
 
-    # Instance type checks
-    is_type_checks = [
-        is_classifier,
-        is_regressor,
-        is_forecaster,
-        is_series_as_features_transformer,
-        is_single_series_transformer,
-    ]
-    estimator = _construct_instance(Estimator)
-    assert isinstance(estimator, BaseEstimator), (
-        f"Estimator: {estimator.__class__.__name__} "
-        f"does not an instance of BaseEstimator."
+    # Usually estimators inherit only from one BaseEstimator type, but in some cases
+    # they may be predictor and transformer at the same time (e.g. pipelines)
+    n_base_types = sum(
+        [issubclass(Estimator, cls) for cls in VALID_ESTIMATOR_BASE_TYPES]
     )
-    assert sum([is_type_check(estimator) for is_type_check in is_type_checks]) == 1, (
-        f"Estimator: {estimator.__class__.__name__} is an instance of more "
-        f"than one task-specific base estimators."
-    )
+    assert 2 >= n_base_types >= 1
+
+    # If the estimator inherits from more than one base estimator type, we check if
+    # one of them is a transformer base type
+    if n_base_types > 1:
+        assert issubclass(Estimator, VALID_TRANSFORMER_TYPES)
 
 
 def check_has_common_interface(Estimator):
@@ -189,6 +180,10 @@ def check_has_common_interface(Estimator):
             f"attribute: {attr}"
         )
     assert hasattr(estimator, "predict") or hasattr(estimator, "transform")
+    if hasattr(estimator, "inverse_transform"):
+        assert hasattr(estimator, "transform")
+    if hasattr(estimator, "predict_proba"):
+        assert hasattr(estimator, "predict")
 
 
 def check_get_params(Estimator):
@@ -251,13 +246,13 @@ def check_constructor(Estimator):
 
     # Filter out required parameters with no default value and parameters
     # set for running tests
-    required_params = getattr(estimator, "_required_parameters", [])
-    test_config_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
+    required_params = getattr(estimator, "_required_parameters", tuple())
+    test_params = ESTIMATOR_TEST_PARAMS.get(Estimator, {}).keys()
 
     init_params = [
         param
         for param in init_params
-        if param.name not in required_params and param.name not in test_config_params
+        if param.name not in required_params and param.name not in test_params
     ]
 
     for param in init_params:
@@ -294,32 +289,32 @@ def check_constructor(Estimator):
 
 def check_fit_updates_state(Estimator):
     # Check that fit updates the is-fitted states
-    is_fitted_states = ["_is_fitted", "is_fitted"]
+    attrs = ["_is_fitted", "is_fitted"]
 
     estimator = _construct_instance(Estimator)
     # Check it's not fitted before calling fit
-    for state in is_fitted_states:
-        assert not getattr(estimator, state), (
-            f"Estimator: {estimator} does not initiate state: {state} to " f"False"
-        )
+    for attr in attrs:
+        assert not getattr(
+            estimator, attr
+        ), f"Estimator: {estimator} does not initiate attribute: {attr} to False"
 
     fit_args = _make_args(estimator, "fit")
     estimator.fit(*fit_args)
 
     # Check states are updated after calling fit
-    for state in is_fitted_states:
-        assert getattr(estimator, state), (
-            f"Estimator: {estimator} does not update state: {state} " f"during fit"
-        )
+    for attr in attrs:
+        assert getattr(
+            estimator, attr
+        ), f"Estimator: {estimator} does not update attribute: {attr} during fit"
 
 
 def check_fit_returns_self(Estimator):
     # Check that fit returns self
     estimator = _construct_instance(Estimator)
     fit_args = _make_args(estimator, "fit")
-    assert estimator.fit(*fit_args) is estimator, (
-        f"Estimator: {estimator} does not return self when calling " f"fit"
-    )
+    assert (
+        estimator.fit(*fit_args) is estimator
+    ), f"Estimator: {estimator} does not return self when calling fit"
 
 
 def check_raises_not_fitted_error(Estimator):
@@ -331,7 +326,7 @@ def check_raises_not_fitted_error(Estimator):
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             args = _make_args(estimator, method)
-            with pytest.raises(NotFittedError):
+            with pytest.raises(NotFittedError, match=r"has not been fitted"):
                 getattr(estimator, method)(*args)
 
 
@@ -358,10 +353,10 @@ def check_fit_idempotent(Estimator):
     for method in NON_STATE_CHANGING_METHODS:
         if hasattr(estimator, method):
             new_result = getattr(estimator, method)(*args[method])
-            _assert_almost_equal(
+            _assert_array_almost_equal(
                 results[method],
                 new_result,
-                err_msg=f"Idempotency check failed for method {method}",
+                # err_msg=f"Idempotency check failed for method {method}",
             )
 
 
@@ -412,13 +407,10 @@ def check_methods_do_not_change_state(Estimator):
             args = _make_args(estimator, method)
             getattr(estimator, method)(*args)
 
-            if (
-                is_non_fittable_series_as_features_transformer(estimator)
-                and method == "transform"
-            ):
-                # these transformers fit during transform, as they apply
-                # some function or wrapped transformer to each series,
-                # so transform will actually change the state of the estimator
+            if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
+                # Some transformers fit during transform, as they apply
+                # some transformation to each series passed to transform,
+                # so transform will actually change the state of these estimator.
                 continue
 
             assert (
@@ -443,11 +435,56 @@ def check_persistence_via_pickle(Estimator):
 
     # Pickle and unpickle
     pickled_estimator = pickle.dumps(estimator)
-    # if estimator.__module__.startswith('sktime.'):
-    #     assert b"version" in pickled_estimator
     unpickled_estimator = pickle.loads(pickled_estimator)
 
     # Compare against results after pickling
     for method in results:
         unpickled_result = getattr(unpickled_estimator, method)(*args[method])
-        _assert_almost_equal(results[method], unpickled_result)
+        _assert_array_almost_equal(
+            results[method],
+            unpickled_result,
+            decimal=6,
+            err_msg="Results are not the same after pickling",
+        )
+
+
+def check_multiprocessing_idempotent(Estimator):
+    # Check that running an estimator on a single process is no different to running
+    # it on multiple processes. We also check that we can set n_jobs=-1 to make use
+    # of all CPUs. The test is not really necessary though, as we rely on joblib for
+    # parallelization and can trust that it works as expected.
+    estimator = _construct_instance(Estimator)
+    params = estimator.get_params()
+
+    if "n_jobs" in params:
+        results = dict()
+        args = dict()
+
+        # run on a single process
+        estimator = _construct_instance(Estimator)
+        estimator.set_params(n_jobs=1)
+        set_random_state(estimator)
+        args["fit"] = _make_args(estimator, "fit")
+        estimator.fit(*args["fit"])
+
+        # compute and store results
+        for method in NON_STATE_CHANGING_METHODS:
+            if hasattr(estimator, method):
+                args[method] = _make_args(estimator, method)
+                results[method] = getattr(estimator, method)(*args[method])
+
+        # run on multiple processes, reusing the same input arguments
+        estimator = _construct_instance(Estimator)
+        estimator.set_params(n_jobs=-1)
+        set_random_state(estimator)
+        estimator.fit(*args["fit"])
+
+        # compute and compare results
+        for method in results:
+            if hasattr(estimator, method):
+                result = getattr(estimator, method)(*args[method])
+                _assert_array_equal(
+                    results[method],
+                    result,
+                    err_msg="Results are not equal for n_jobs=1 and " "n_jobs=-1",
+                )

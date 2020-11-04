@@ -30,9 +30,8 @@ class URLs:
     DOCS_LOCAL = "file://" + os.path.realpath(
         os.path.join(ROOT_DIR, "docs/_build/html/index.html")
     )
-    DOCS_ONLINE = "https://alan-turing-institute.github.io/sktime/"
+    DOCS_ONLINE = "https://www.sktime.org"
     PYPI = f"https://pypi.org/simple/{PACKAGE_NAME}/"
-    GITHUB_NEW_PR = "https://github.com/alan-turing-institute/sktime/compare"
 
 
 def read(*parts):
@@ -136,22 +135,12 @@ class ConfirmGitStatus(Step):
         self.do_cmd("git pull")
 
 
-class RunTests(Step):
-    def action(self, context):
-        self.do_cmd("make test")
-
-
-class RunLinting(Step):
-    def action(self, context):
-        self.do_cmd("make lint")
-
-
 class UpdateChangelog(Step):
     def action(self, context):
         self.instruct(f"Update CHANGELOG for version: {context['version']}")
 
 
-class BumpVersion(Step):
+class UpdateVersion(Step):
     def action(self, context):
         self.instruct("Update __init__.py with new version")
 
@@ -175,51 +164,30 @@ class MakeDist(Step):
         self.do_cmd("make dist")
 
 
-class PushToTestPyPI(Step):
+class UploadToTestPyPI(Step):
     def action(self, context):
         self.instruct("Upload to TestPyPI")
-        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ " "dist/*"
+        cmd = "twine upload --repository-url https://test.pypi.org/legacy/ dist/*"
         self.do_cmd(cmd)
 
 
 class InstallFromTestPyPI(Step):
     def action(self, context):
         self.instruct("Check installation from TestPyPI")
-        self.print_run(f"mkdir {context['testdir']}")
-        self.print_run(f"cd {context['testdir']}")
-        self.print_cmd("conda remove -n testenv --all -y")
-        self.print_cmd("conda create -n testenv python=3.7")
-        self.print_cmd("conda activate testenv")
-
-        # use extra-index-url to install dependencies
-        self.print_cmd(
-            f"pip install --index-url https://test.pypi.org/simple/ "
-            f"--extra-index-url https://pypi.org/simple "
-            f"{context['package_name']}=={context['version']}"
+        self.do_cmd(
+            f"sh maint_tools/check_install_from_test_pypi.sh {context['version']}"
         )
 
 
 class CheckVersionNumber(Step):
     def action(self, context):
         self.instruct(
-            f"Ensure that the following command gives version: "
-            f""
-            f"{context['version']}"
+            f"Ensure that the following command gives version: {context['version']}"
         )
         self.do_cmd(
             f"python -c 'import {context['package_name']}; print("
             f"{context['package_name']}.__version__)'"
         )
-
-
-class DeactivateTestEnvironment(Step):
-    def action(self, context):
-        self.instruct("Deactivate and remove test environment.")
-        self.print_run("conda deactivate")
-
-        self.instruct("Go back to the project directory")
-        self.print_cmd("cd ..")
-        self.print_cmd(f"rm -r {context['testdir']}")
 
 
 class GitTagRelease(Step):
@@ -262,17 +230,6 @@ class CheckPyPIFiles(Step):
         open_website(URLs.PYPI)
 
 
-class OpenGitHubPR(Step):
-    def action(self, context):
-        self.instruct("Open PR from dev to master on GitHub")
-        open_website(URLs.GITHUB_NEW_PR)
-
-
-class MergeGitHubPR(Step):
-    def action(self, context):
-        self.instruct("Review and merge PR from dev into master on GitHub")
-
-
 class PushTagToGitHub(Step):
     def action(self, context):
         self.do_cmd("git push -u --tags origin master")
@@ -281,40 +238,22 @@ class PushTagToGitHub(Step):
 def main():
     colorama.init()
     steps = [
-        # ConfirmGitStatus(branch="dev"),
-        # # run checks locally
-        # MakeClean(),
-        # RunLinting(),
-        # RunTests(),
-        # UpdateChangelog(),
-        # MakeDocs(),
-        # CheckLocalDocs(),
-        # BumpVersion(),
-        # CheckVersionNumber(),
-        # # run CI checks online
-        # PushToGitHub(),
-        # OpenGitHubPR(),
-        # CheckCIStatus(),
-        # MergeGitHubPR(),
-        # CheckCIStatus(),
-        # CheckOnlineDocs(),
-        # check TestPyPI locally
+        # prepare and run final checks
         ConfirmGitStatus(branch="master"),
         MakeClean(),
-        BumpVersion(),
+        UpdateVersion(),
         CheckVersionNumber(),
         UpdateChangelog(),
         MakeDocs(),
         CheckLocalDocs(),
         MakeDist(),
-        PushToTestPyPI(),
+        UploadToTestPyPI(),
         InstallFromTestPyPI(),
-        DeactivateTestEnvironment(),
         PushToGitHub(),
+        CheckCIStatus(),
         # check pre-release online
         # GitTagPreRelease(),
         # PushTagToGitHub(),
-        CheckCIStatus(),
         # make release
         GitTagRelease(),
         PushTagToGitHub(),
