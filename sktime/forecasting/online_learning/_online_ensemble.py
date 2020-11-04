@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pandas as pd
+
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.compose._ensemble import EnsembleForecaster
 from sktime.forecasting.model_selection import SlidingWindowSplitter
@@ -30,56 +31,54 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
 
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
         self.weights = np.ones(len(forecasters)) / len(forecasters)
-        self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
+        self._fit_forecasters(forecasters, y, X, fh)
         self._is_fitted = True
         return self
 
-    def _fit_ensemble(self, y_new, X_new=None):
+    def _fit_ensemble(self, y, X=None):
         """Fits the ensemble by allowing forecasters to predict and
            compares to the actual parameters.
 
         Parameters
         ----------
-        y_new : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
-        X_new : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         """
-        fh = np.arange(len(y_new)) + 1
-        estimator_predictions = np.column_stack(
-            self._predict_forecasters(fh=fh, X=X_new)
-        )
-        y_new = np.array(y_new)
+        fh = np.arange(len(y)) + 1
+        estimator_predictions = np.column_stack(self._predict_forecasters(fh, X))
+        y = np.array(y)
 
-        self.ensemble_algorithm.update(estimator_predictions.T, y_new)
+        self.ensemble_algorithm.update(estimator_predictions.T, y)
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Update fitted paramters and performs a new ensemble fit.
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
@@ -87,13 +86,13 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         self : an instance of self
         """
         self.check_is_fitted()
-        self._update_y_X(y_new, X_new)
+        self._update_y_X(y, X)
 
-        if len(y_new) >= 1 and self.ensemble_algorithm is not None:
-            self._fit_ensemble(y_new, X_new=X_new)
+        if len(y) >= 1 and self.ensemble_algorithm is not None:
+            self._fit_ensemble(y, X)
 
         for forecaster in self.forecasters_:
-            forecaster.update(y_new, X_new=X_new, update_params=update_params)
+            forecaster.update(y, X, update_params=update_params)
 
         return self
 
@@ -141,11 +140,11 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             cv=cv,
         )
 
-    def predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
         if self.ensemble_algorithm is not None:
             self.weights = self.ensemble_algorithm.weights
-        return (
-            pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1) * self.weights
-        ).sum(axis=1)
+        return (pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights).sum(
+            axis=1
+        )

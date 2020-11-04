@@ -7,11 +7,11 @@ __author__ = ["William Zheng"]
 import numpy as np
 from sktime.datasets import load_airline
 from sktime.forecasting.model_selection import temporal_train_test_split
-from sktime.forecasting.online_learning.prediction_weighted_ensembler import (
+from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
     NormalHedgeEnsemble,
     NNLSEnsemble,
 )
-from sktime.forecasting.online_learning.online_ensemble import (
+from sktime.forecasting.online_learning._online_ensemble import (
     OnlineEnsembleForecaster,
 )
 

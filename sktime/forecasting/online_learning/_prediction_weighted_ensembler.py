@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
-from sklearn.base import BaseEstimator
-from scipy.optimize import nnls, bisect
 import numpy as np
+from scipy.optimize import bisect
+from scipy.optimize import nnls
+
+from sktime.base import BaseEstimator
 
 
-class PredictionWeightedEnsembler(BaseEstimator):
+class _PredictionWeightedEnsembler(BaseEstimator):
     """Wrapper class to handle ensemble algorithms that use multiple forecasters
     for prediction. We implement default methods for setting uniform weights,
     updating and prediction.
@@ -21,6 +23,7 @@ class PredictionWeightedEnsembler(BaseEstimator):
         self.n_estimators = n_estimators
         self.weights = np.ones(n_estimators) / n_estimators
         self.loss_func = loss_func
+        super(_PredictionWeightedEnsembler, self).__init__()
 
     def predict(self, estimator_predictions):
         """Performs prediction by taking a weighted average of the estimator
@@ -77,7 +80,7 @@ class PredictionWeightedEnsembler(BaseEstimator):
         self.weights = np.ones(n_estimators) / n_estimators
 
 
-class HedgeExpertEnsemble(PredictionWeightedEnsembler):
+class HedgeExpertEnsemble(_PredictionWeightedEnsembler):
     """Wrapper class to set parameters for hedge-style ensemble algorithms with
     a forecasting horizon and normalizing constant.
 
@@ -122,27 +125,25 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         super().__init__(n_estimators=n_estimators, T=None, a=a, loss_func=loss_func)
         self.R = np.zeros(n_estimators)
 
-    def update(self, estimator_predictions, actual_values, low_c=0.01):
+    def update(self, y_pred, y_true, low_c=0.01):
         """Resets the weights over the estimators by passing previous observations
             and updating based on Normal Hedge.
 
         Parameters
         ----------
-        estimator_predictions : np.array(), shape=(time_axis,estimator_axis)
+        y_pred : np.array(), shape=(time_axis,estimator_axis)
             array with predictions from the estimators
-        actual_values : np.array(), shape=(time_axis)
+        y_true : np.array(), shape=(time_axis)
             array with actual values for predicted quantity
         """
-        assert estimator_predictions.shape[1] == len(
-            actual_values
-        ), "Time Dimension Matches"
-        time_length = estimator_predictions.shape[1]
+        assert y_pred.shape[1] == len(y_true), "Time Dimension Matches"
+        time_length = y_pred.shape[1]
 
         for i in range(time_length):
             loss_vector = np.array(
                 [
-                    self.loss_func([prediction], [actual_values[i]])
-                    for prediction in estimator_predictions[:, i]
+                    self.loss_func([prediction], [y_true[i]])
+                    for prediction in y_pred[:, i]
                 ]
             )
 
@@ -172,7 +173,7 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
         low_c = low_c
         high_c = (max(R_plus) ** 2) / 2
 
-        def pot(c):
+        def _pot(c):
             """Internal Potential Function
 
             Parameters
@@ -186,9 +187,9 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             """
             return np.mean(np.exp((R_plus ** 2) / (2 * c))) - np.e
 
-        c_t = bisect(pot, low_c, high_c)
+        c_t = bisect(_pot, low_c, high_c)
 
-        def prob(r, c_t):
+        def _prob(r, c_t):
             """Internal Probability Function
 
             Parameters
@@ -205,11 +206,11 @@ class NormalHedgeEnsemble(HedgeExpertEnsemble):
             """
             return (r / c_t) * np.exp((r ** 2) / (2 * c_t))
 
-        self.weights = np.array([prob(r, c_t) for r in R_plus])
+        self.weights = np.array([_prob(r, c_t) for r in R_plus])
         self.weights /= np.sum(self.weights)
 
 
-class NNLSEnsemble(PredictionWeightedEnsembler):
+class NNLSEnsemble(_PredictionWeightedEnsembler):
     """Ensemble class that performs a non-negative least squares to fit to the
     estimators. Keeps track of all observations seen so far and fits to it.
 
@@ -223,17 +224,11 @@ class NNLSEnsemble(PredictionWeightedEnsembler):
 
     def __init__(self, n_estimators=10, loss_func=None):
         super().__init__(n_estimators=n_estimators, loss_func=loss_func)
-        self.total_estimator_predictions = np.empty((n_estimators, 0))
-        self.total_actual_values = np.empty((0))
+        self.total_y_pred = np.empty((n_estimators, 0))
+        self.total_y_true = np.empty(0)
 
-    def update(self, estimator_predictions, actual_values):
-        self.total_estimator_predictions = np.concatenate(
-            (self.total_estimator_predictions, estimator_predictions), axis=1
-        )
-        self.total_actual_values = np.concatenate(
-            (self.total_actual_values, actual_values)
-        )
-        weights, loss = nnls(
-            self.total_estimator_predictions.T, self.total_actual_values
-        )
+    def update(self, y_pred, y_true):
+        self.total_y_pred = np.concatenate((self.total_y_pred, y_pred), axis=1)
+        self.total_y_true = np.concatenate((self.total_y_true, y_true))
+        weights, loss = nnls(self.total_y_pred.T, self.total_y_true)
         self.weights = weights
