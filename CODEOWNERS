@@ -10,4 +10,4 @@ sktime/transformers/series_as_features/dictionary_based/ @patrickzib
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 
-sktime/forecasting/online_learning @magittan
+sktime/forecasting/online_learning/ @magittan
