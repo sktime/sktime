@@ -34,5 +34,6 @@ From here, you can navigate to:
    :maxdepth: 1
 
    about
+   roadmap
    contributors
    related_software
