@@ -14,7 +14,7 @@ repos:
     additional_dependencies: [flake8-bugbear, flake8-print]
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.2.0
+  rev: v3.3.0
   hooks:
   - id: check-added-large-files
   - id: check-case-conflict
@@ -34,7 +34,7 @@ repos:
     stages: [manual]
 
 - repo: https://github.com/nbQA-dev/nbQA
-  rev: 0.3.6
+  rev: 0.4.0
   hooks:
   - id: nbqa-black
     args: ["--nbqa-mutate"]
