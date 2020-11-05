@@ -60,25 +60,69 @@ def dummy_results():
                             cv_fold=0,
                             train_or_test="test")
     return results
-
-def test_rank():
+def evaluator_setup(score_function):
     evaluator = Evaluator(dummy_results())
-    metric = PairwiseMetric(func=accuracy_score, name="accuracy")
+    metric = PairwiseMetric(func=score_function, name="score_function")
     metrics_by_strategy = evaluator.evaluate(metric=metric)
 
-    expected_ranks = pd.DataFrame({'strategy':['alg1','alg2','alg3'],'accuracy_mean_rank':[1.0,3.0,2.0]})
+    return evaluator, metrics_by_strategy
+
+def test_rank():
+
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    expected_ranks = pd.DataFrame({'strategy':['alg1','alg2','alg3'],'score_function_mean_rank':[1.0,3.0,2.0]})
     generated_ranks = evaluator.rank()
     assert expected_ranks.equals(generated_ranks)
 
 def test_accuracy_score():
-    evaluator = Evaluator(dummy_results())
-    metric = PairwiseMetric(func=accuracy_score, name="accuracy")
-    metrics_by_strategy = evaluator.evaluate(metric=metric)
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+
 
     expected_accuracy = pd.DataFrame({'strategy':['alg1','alg2','alg3'],
-                                    'accuracy_mean':[1.00,0.00,0.75],
-                                    'accuracy_stderr':[0.00,0.00,0.25]
+                                    'score_function_mean':[1.00,0.00,0.75],
+                                    'score_function_stderr':[0.00,0.00,0.25]
                                     })
     
     assert metrics_by_strategy.equals(expected_accuracy)
-print(test_accuracy_score())
+
+def test_sign_test():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    results = evaluator.sign_test()[1].values
+    expected = np.full((3,3),0.5)
+    assert np.array_equal(expected, results)
+
+def test_ranksum_test():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    expected = np.array([[ 0., 1., 1.54919334, 0.12133525, 1.54919334, 0.12133525],
+                        [-1.54919334, 0.12133525,  0., 1., -1.54919334,  0.12133525],
+                        [-1.54919334, 0.12133525, 1.54919334, 0.12133525,  0., 1. ]])
+    expected = np.round(expected,3)
+    results = np.round(evaluator.ranksum_test()[1].values,3)
+    assert  np.array_equal(results, expected)
+
+
+def test_t_test_bonfer():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    expected = np.array([[False,  True,  True],
+                [True, False, True],
+                [True, True, False]])
+    result = evaluator.t_test_with_bonferroni_correction().values
+    assert np.array_equal(expected, result)
+
+
+def test_nemenyi():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    expected = np.array([[1., 0.082085,   0.53526143],
+                        [0.082085,   1.,         0.53526143],
+                        [0.53526143, 0.53526143, 1.]]
+                        )
+    expected = np.round(expected,3)
+    result = np.round(evaluator.nemenyi().values,3)
+
+    return np.array_equal(expected, result)
+
+def test_plot_crit_diff_diagram():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    evaluator.plot_boxplots()
+
+#TODO t_test, wicoxon test, boxplots, critical diff diagram
