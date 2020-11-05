@@ -35,6 +35,7 @@ class MUSE(BaseClassifier):
       journal={3rd ECML/PKDD Workshop on AALTD},
       year={2018}
     }
+    https://arxiv.org/abs/1711.11343
 
     # Overview: Input n series length m
     # WEASEL+MUSE is a multivariate  dictionary classifier that builds a
