@@ -336,7 +336,7 @@ class Evaluator:
 
         wilcoxon_df = pd.DataFrame()
         values = np.array([])
-        prod = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
+        prod = itertools.combinations(metrics_per_estimator_dataset.keys(), 2)
         for p in prod:
             estim_1 = p[0]
             estim_2 = p[1]
@@ -352,19 +352,8 @@ class Evaluator:
             }
 
             wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
-            values = np.append(values, w)
-            values = np.append(values, p_val)
 
-        index = wilcoxon_df["estimator_1"].unique()
-        values_names = ["statistic", "p_val"]
-        col_idx = pd.MultiIndex.from_product([index, values_names])
-        values_reshaped = values.reshape(len(index), len(values_names) * len(index))
-
-        values_df_multiindex = pd.DataFrame(
-            values_reshaped, index=index, columns=col_idx
-        )
-
-        return wilcoxon_df, values_df_multiindex
+        return wilcoxon_df
 
     def friedman_test(self, metric_name=None):
         """

@@ -130,9 +130,8 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
 
         # check window length
         if self.window_length_ > len(self._y):
-            param = (
-                "sp" if self.strategy == "last" and self.sp != 1 else "window_length_"
-            )
+            param = "sp" if self.strategy == "last" and self.sp != 1 \
+                else "window_length_"
             raise ValueError(
                 f"The {param}: {self.window_length_} is larger than "
                 f"the training series."

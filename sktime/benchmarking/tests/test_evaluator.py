@@ -121,8 +121,15 @@ def test_nemenyi():
 
     return np.array_equal(expected, result)
 
-def test_plot_crit_diff_diagram():
+def test_plots():
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
     evaluator.plot_boxplots()
+    evaluator.t_test()
 
-#TODO t_test, wicoxon test, boxplots, critical diff diagram
+def test_wilcoxon():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    results = evaluator.wilcoxon_test().iloc[:,2:].values
+    expected = np.array([[0.5,0],
+                        [0.5,0],
+                        [0.5,0]])
+    assert np.array_equal(results,expected)
