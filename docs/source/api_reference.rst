@@ -263,6 +263,19 @@ Composition
     ReducedTimeSeriesRegressionForecaster
     StackingForecaster
 
+Online Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.online_forecasting
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    OnlineEnsembleForecaster
+    NormalHedgeEnsemble
+    NNLSEnsemble
+
 Model selection
 ---------------
 

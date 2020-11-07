@@ -202,7 +202,7 @@ Paired (or second-degree) transformations:
 ### Ensembling
 | Name | Class | Maintainer | References |
 | ------ | ------- | ------ | ------- |
-|  |  |  |  |
+| Online Hedge Ensemble Forecasting | sktime.forecasting.online_ensemble.OnlineEnsembleForecaster | @magittan | [A Parameter-free Hedging Algorithm](https://cseweb.ucsd.edu/~yfreund/papers/nhedge.pdf) |
 
 
 
