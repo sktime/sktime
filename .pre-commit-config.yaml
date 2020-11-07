@@ -38,7 +38,10 @@ repos:
   hooks:
   - id: nbqa-black
     args: ["--nbqa-mutate"]
+    additional_dependencies: [black==20.8b1]
   - id: nbqa-isort
     args: ["--nbqa-mutate", "--nbqa-config=setup.cfg", "-p=sktime"]
+    additional_dependencies: [isort==5.6.4]
   - id: nbqa-flake8
     args: ["--nbqa-config=setup.cfg", "--extend-ignore=E402,E203"]
+    additional_dependencies: [flake8==3.8.3]
