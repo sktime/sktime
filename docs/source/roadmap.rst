@@ -1,91 +1,33 @@
 .. _roadmap:
 
-Software management plan
-========================
+Development roadmap
+-------------------
 
-Contributors: @mloning, @fkiraly, @TonyBagnall
+Welcome to sktime's development roadmap.
 
-Contets
--------
+Release cycle
+^^^^^^^^^^^^^
 
+sktime is under active development. Given the early stage of development, we
+currently do not follow a regular release cycle.
 
-
-Introduction
-------------
-
-* Welcome to our software management plan and roadmap
-
-Mission statement
-^^^^^^^^^^^^^^^^^
-
-..
-
-   sktime enables understandable and composable machine learning with time series. It provides scikit-learn compatible algorithms and model composition tools, supported by a clear taxonomy of learning tasks, with instructive documentation and a friendly community.
-
-
-Key themes:
-
-
-* making the time series analysis ecosystem more understandable, usable and interoperable
-* compatibility with other time series libraries and foundational libraries (e.g. scikit-learn)
-* providing state-of-the-art time series analysis capabilities
-* building a more connected time series analysis community by connecting methodology experts with domain experts who work with time series data
-
-Project output
-^^^^^^^^^^^^^^
-
-* unified software framework toolbox for doing machine learning with time series
-* documentation, tutorials and other educational materials
-* research publications on algorithm development, comparative benchmarking, and ML software design
-* workshops, sprints and talks for contributors and domain experts who work with time series
-
-Governance
-^^^^^^^^^^
-
-* link to governance document, including Code of Conduct
-
-License
-^^^^^^^
-
-* permissive BSD-3-clause
-
-How to cite sktime
-^^^^^^^^^^^^^^^^^^
-
-* zenodo
-* paper
-
-Dependencies
-^^^^^^^^^^^^
-
-close integration with
-
-* Python ecosystem for scientific computing, including Numpy, pandas, scikit-learn and numba among others
-* Python ecosystem for time series analysis
-
-Development operations
-^^^^^^^^^^^^^^^^^^^^^^
-
-* adopted open-source best practices for research software
-* well tested, common unit testing framework
-* online continuous integration services
-* online code reviews on GitHub
-* automatic code quality checks
-* automatic release pipeline to compile, package and upload compiled files to PyPI
-* distribution of pre-compiled files for different operation systems for user friendly installation
-
-----
-
-Project roadmap
----------------
-
-Overview
-^^^^^^^^
-
-* release cycle: bigger release every 3 months, more frequent smaller patches
+and
+we are aiming
+at
+making a
+new release
+at
+cycle:
+bigger release every 3
+months,
+more
+frequent smaller patches
 * @mloning is lead developer and responsible for making releases
 * we list general directions that core contributors are interested to see developed in sktime,
 * the fact that an item is listed here is in no way a promise that it will happen, as resources are limited, rather, it is an indication that help is welcomed on this topic:
+
+Project overview
+^^^^^^^^^^^^^^^^
 
 .. list-table::
    :header-rows: 1
@@ -93,36 +35,36 @@ Overview
    * - Project
      - Coordinators
      - Status
-   * - `Documentation <#Documentation>`_
-     - @lynnssi, @mloning, @fkiraly
-     -
+   * - `Time series classification <#Time-series-Classification>`_
+     - @TonyBagnall
+     - Stable
    * - `Development operations <#Development-operations>`_
      - @mloning
-     -
-   * - `Community building <#Community-building>`_
-     - @TonyBagnall, @mloning, @fkiraly
-     -
-   * - `Framework <#Framework>`_
-     - @TonyBagnall, @mloning, @fkiraly
-     -
-   * - `Time series classification <#Time-series-Classification>`_
-     - @TonyBagnall, @mloning
-     -
-   * - `Time series regression <#Time-series-regression>`_
-     - @TonyBagnall, @mloning
-     -
-   * - `Time series clustering <#Time-series-clustering>`_
-     - @TonyBagnall, @fkiraly, @mloning
-     -
+     - Stable
    * - `Forecasting <#Forecasting>`_
-     - @mloning, @fkiraly
-     -
+     - @fkiraly, @mloning
+     - Maturing
+   * - `Documentation <#Documentation>`_
+     - @fkiraly, @mloning
+     - Maturing
+   * - `Community building <#Community-building>`_
+     - @fkiraly, @mloning, @TonyBagnall
+     - Maturing
+   * - `Framework <#Framework>`_
+     - @fkiraly, @mloning, @TonyBagnall
+     - Maturing
+   * - `Time series regression <#Time-series-regression>`_
+     - @TonyBagnall
+     - Maturing
    * - `Time series annotation <#Time-series-annotation>`_
-     - @mloning, @fkiraly
-     -
+     - @fkiraly, @mloning
+     - Design
    * - `Time-to-event modelling <#Time-to-event-modelling>`_
      - @fkiraly, @mloning
-     -
+     - Planned
+   * - `Time series clustering <#Time-series-clustering>`_
+     - @TonyBagnall
+     - Planned
 
 
 Documentation
@@ -323,11 +265,3 @@ Time-to-event modelling
 * probabilistic supervised learning
 * survival modelling
 * point processes
-
-Ackwnoledgements
-----------------
-
-
-* Open Life Science programme https://openlifesci.org
-* Software Sustainability Institute https://www.software.ac.uk/resources/guides/software-management-plans
-* Elixir https://elixir-europe.org/events/webinar-software-management-plans
