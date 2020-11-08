@@ -5,26 +5,11 @@ Development roadmap
 
 Welcome to sktime's development roadmap.
 
-Release cycle
-^^^^^^^^^^^^^
+Contents
+^^^^^^^^
 
-sktime is under active development. Given the early stage of development, we
-currently do not follow a regular release cycle.
+.. contents:: :local:
 
-and
-we are aiming
-at
-making a
-new release
-at
-cycle:
-bigger release every 3
-months,
-more
-frequent smaller patches
-* @mloning is lead developer and responsible for making releases
-* we list general directions that core contributors are interested to see developed in sktime,
-* the fact that an item is listed here is in no way a promise that it will happen, as resources are limited, rather, it is an indication that help is welcomed on this topic:
 
 Project overview
 ^^^^^^^^^^^^^^^^
@@ -35,37 +20,39 @@ Project overview
    * - Project
      - Coordinators
      - Status
-   * - `Time series classification <#Time-series-Classification>`_
+   * - :ref:`time-series-classification`
      - @TonyBagnall
      - Stable
-   * - `Development operations <#Development-operations>`_
+   * - :ref:`dev-ops`
      - @mloning
      - Stable
-   * - `Forecasting <#Forecasting>`_
+   * - :ref:`forecasting`
      - @fkiraly, @mloning
      - Maturing
-   * - `Documentation <#Documentation>`_
+   * - :ref:`docs`
      - @fkiraly, @mloning
      - Maturing
-   * - `Community building <#Community-building>`_
+   * - :ref:`community`
      - @fkiraly, @mloning, @TonyBagnall
      - Maturing
-   * - `Framework <#Framework>`_
+   * - :ref:`framework`
      - @fkiraly, @mloning, @TonyBagnall
      - Maturing
-   * - `Time series regression <#Time-series-regression>`_
+   * - :ref:`time-series-regression`
      - @TonyBagnall
      - Maturing
-   * - `Time series annotation <#Time-series-annotation>`_
+   * - :ref:`time-series-annotation`
      - @fkiraly, @mloning
      - Design
-   * - `Time-to-event modelling <#Time-to-event-modelling>`_
+   * - :ref:`time-to-event-modelling`
      - @fkiraly, @mloning
      - Planned
-   * - `Time series clustering <#Time-series-clustering>`_
+   * - :ref:`time-series-clustering`
      - @TonyBagnall
      - Planned
 
+
+.. _docs:
 
 Documentation
 ^^^^^^^^^^^^^
@@ -74,51 +61,32 @@ Documentation
    :header-rows: 1
 
    * - Project
-     - Links
      - Description
-   * - Website
-     -
-     - Improve website
    * - User guide
-     - #377
      - Develop user guide, taxonomies for tasks and models, write scientific references
    * - Developer guide
-     -
      - Improve guide for contributing to sktime and extending existing functionality
-   * - Reviewer guide
-     -
-     - Add a reviewer guide to our contributing guide (see e.g. this `blog post <https://rgommers.github.io/2019/06/the-cost-of-an-open-source-contribution/>`_\ )
-   * - Glossary
-     - #363
-     - Add glossary of common terms
    * - Docstrings
-     -
      - Improve docstrings
-   * - Blog posts
-     -
-     - Write blog posts
+   * - Glossary
+     - Add glossary of common terms
+   * - Educational material
+     - Develop educational material (blog posts, videos, etc)
+   * - Reviewer guide
+     - Write a reviewer guide (see e.g. this `blog post <https://rgommers.github.io/2019/06/the-cost-of-an-open-source-contribution/>`_\ )
 
+.. _dev-ops:
 
 Development operations
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. list-table::
-   :header-rows: 1
+* Further improve continuous integration and development operations
+* Make unit testing framework public so that other packages can check for consistency with sktime's API specification by importing and running basic unit tests
 
-   * - Project
-     - Links
-     - Description
-   * - Continuous Integration
-     - #196
-     - Improve continuous integration and development operations
-   * - Unit testing framework
-     -
-     -
-
+.. _community:
 
 Community building
 ^^^^^^^^^^^^^^^^^^
-
 
 * connect methodology experts with domain experts who work with time series data
 * cater development more specifically to domain experts who work with time series data
@@ -128,45 +96,42 @@ Community building
 * Enhance governance structures for package affiliation, industry involvement, and to ensure inclusive, diverse and sustainable community
 * Develop collaboration with existing package developers to work towards a more unified ecosystem
 
-Framework development
-^^^^^^^^^^^^^^^^^^^^^
 
+.. _framework:
 
-* design and implement standardized interface for different time series learning tasks
-* implement tools for reduction approaches, making algorithms for one task applicable to solve another task
-* implement re-usable tools for building composite models such as pipelines
-* implement tools for model evaluation and comparative benchmarking, including common baseline models
-* establish standard data representation for time series, establish common frameworks and APIs for different learning tasks and modelling approaches as standards, integrate existing packages into common framework (data container)
-* integrate awkward-array
+Framework
+^^^^^^^^^
+
+sktime develops a unified framework toolbox for machine learning with time series. This requires to design and implement:
+
+* Standardized interface for different time series learning tasks;
+* Reduction approaches between learning tasks, allowing algorithms for one task to be applied to another task;
+* Tools for model composition (pipelines, tuning, etc.);
+* Tools for model evaluation and comparative benchmarking;
+* Standardized data representation for time series;
+
+.. _time-series-classification:
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
-* develop and implement state-of-the-art time series algorithms
 
 .. list-table::
    :header-rows: 1
 
    * - Project
-     - Links
      - Description
    * - Multivariate data
-     -
      - Extend algorithms to handle multivariate data
    * - Parallelization
-     - #381
      - Parallelize algorithms using joblib or numba
    * - Unequal length data
-     - #230
      - Extend algorithms to handle unequal length data
    * - New algorithms
-     - #259
      - Add new algorithms
    * - Data simulators
-     - #353
      - Add data simulators for unit testing and algorithm explanation/interpretability
 
+.. _time-series-regression:
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -181,6 +146,7 @@ Time series regression
      - #212
      - Refactor time series classifiers into time series regressor
 
+.. _time-series-clustering:
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -201,10 +167,10 @@ Time series clustering
      -
      - Add new time series distances
 
+.. _forecasting:
 
 Forecasting
 ^^^^^^^^^^^
-
 
 * "classical" forecasting of a single series with potential exogenous variables
 * vector forecasting
@@ -239,9 +205,10 @@ Forecasting
      - Design supervised forecasting API based on pysf
 
 
+.. _time-series-annotation:
+
 Time series annotation
 ^^^^^^^^^^^^^^^^^^^^^^
-
 
 * anomaly detection
 * segmentation
@@ -256,6 +223,7 @@ Time series annotation
      - #260
      - Design time series annotation API
 
+.. _time-to-event-modelling:
 
 Time-to-event modelling
 ^^^^^^^^^^^^^^^^^^^^^^^
