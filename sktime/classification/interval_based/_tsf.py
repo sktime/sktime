@@ -87,11 +87,13 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     @article
     {deng13forest,
      author = {H.Deng and G.Runger and E.Tuv and M.Vladimir},
-              title = {A time series forest for classification and feature
-              extraction},
-    journal = {Information Sciences},
-    volume = {239},
-    year = {2013}
+     title = {A time series forest for classification and feature
+     extraction},
+     journal = {Information Sciences},
+     volume = {239},
+     year = {2013}
+    }
+    https://arxiv.org/abs/1302.2277
 
     Overview: Input n series length m
     for each tree

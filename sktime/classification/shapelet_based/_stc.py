@@ -33,6 +33,7 @@ class ShapeletTransformClassifier(BaseClassifier):
       pages={851--881},
       year={2014}
     }
+    https://link.springer.com/article/10.1007/s10618-013-0322-1
     but with some of the refinements presented in
     @article{bostrom17binary,
       author={A. Bostrom and A. Bagnall},
@@ -44,6 +45,7 @@ class ShapeletTransformClassifier(BaseClassifier):
       year={2017},
       pages={24--46}
     }
+    https://link.springer.com/chapter/10.1007/978-3-319-22729-0_20
     """
 
     def __init__(self, time_contract_in_mins=300, n_estimators=500, random_state=None):

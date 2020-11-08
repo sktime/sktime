@@ -22,16 +22,18 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """Random Interval Spectral Forest (RISE).
 
     Random Interval Spectral Forest: stripped down implementation of RISE
+
     from Lines 2018::
         @article{lines17hive-cote,
-            author = {J. Lines, S. Taylor and A. Bagnall},
-            title = {Time Series Classification with HIVE-COTE: The Hierarchical
-                     Vote Collective of Transformation-Based Ensembles},
-            journal = {ACM Transactions on Knowledge and Data Engineering},
-            volume = {12},
-            number= {5},
-            year = {2018}
-        }
+     author = {J. Lines, S. Taylor and A. Bagnall},
+     title = {Time Series Classification with HIVE-COTE: The
+      Hierarchical Vote Collective of Transformation-Based Ensembles},
+     journal = {ACM Transactions on Knowledge and Data Engineering},
+     volume = {12},
+     number= {5},
+     year = {2018}
+    }
+    https://dl.acm.org/doi/10.1145/3182382
 
     Overview:
 

@@ -30,6 +30,20 @@ from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesFo
 class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     """Time-Series Forest Classifier.
 
+    @article{DENG2013142,
+        title = {A time series forest for classification and feature extraction},
+        journal = {Information Sciences},
+        volume = {239},
+        pages = {142 - 153},
+        year = {2013},
+        issn = {0020-0255},
+        doi = {https://doi.org/10.1016/j.ins.2013.02.030},
+        url = {http://www.sciencedirect.com/science/article/pii/S0020025513001473},
+        author = {Houtao Deng and George Runger and Eugene Tuv and Martyanov Vladimir},
+        keywords = {Decision tree, Ensemble, Entrance gain, Interpretability,
+                    Large margin, Time series classification}
+    }
+
     A time series forest is a meta estimator and an adaptation of the random
     forest for time-series/panel data that fits a number of decision tree
     classifiers on various sub-samples of a transformed dataset and uses
