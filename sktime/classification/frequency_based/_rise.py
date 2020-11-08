@@ -25,7 +25,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     from Lines 2018::
         @article{lines17hive-cote,
             author = {J. Lines, S. Taylor and A. Bagnall},
-            title = {Time Series Classification with HIVE-COTE: The Hierarchical 
+            title = {Time Series Classification with HIVE-COTE: The Hierarchical
                      Vote Collective of Transformation-Based Ensembles},
             journal = {ACM Transactions on Knowledge and Data Engineering},
             volume = {12},
@@ -43,7 +43,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             take the ACF and PS over this interval, and concatenate features
             build tree on new features
         ensemble the trees through averaging probabilities.
-    
+
     Need to have a minimum interval for each tree
     This is from the python github.
 
@@ -68,7 +68,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     n_classes : int
         The number of classes, extracted from the data.
     classifiers : array of shape = [n_estimators] of DecisionTree classifiers
-    intervals : array of shape = [n_estimators][2] 
+    intervals : array of shape = [n_estimators][2]
         Stores indexes of start and end points for all classifiers.
     """
 
