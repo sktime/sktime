@@ -486,7 +486,7 @@ def load_acsf1(split=None, return_X_y=False):
 
 def load_basic_motions(split=None, return_X_y=False):
     """
-    Loads the ArrowHead time series classification problem and returns X and y.
+    Loads the  BasicMotions time series classification problem and returns X and y.
 
     Parameters
     ----------
@@ -508,25 +508,18 @@ def load_basic_motions(split=None, return_X_y=False):
     Details
     -------
     Dimensionality:     univariate
-    Series length:      251
-    Train cases:        36
-    Test cases:         175
-    Number of classes:  3
+    Series length:      100
+    Train cases:        40
+    Test cases:         40
+    Number of classes:  4
 
-    The arrowhead data consists of outlines of the images of arrowheads. The
-    shapes of the
-    projectile points are converted into a time series using the angle-based
-    method. The
-    classification of projectile points is an important topic in
-    anthropology. The classes
-    are based on shape distinctions such as the presence and location of a
-    notch in the
-    arrow. The problem in the repository is a length normalised version of
-    that used in
-    Ye09shapelets. The three classes are called "Avonlea", "Clovis" and "Mix"."
+    The data was generated as part of a student project where four students performed 
+    four activities whilst wearing a smart watch. The watch collects 3D accelerometer 
+    and a 3D gyroscope It consists of four classes, which are walking, resting,
+    running and badminton. Participants were required to record motion a total of 
+    five times, and the data is sampled once every tenth of a second, for a ten second period.
 
-    Dataset details: http://timeseriesclassification.com/description.php
-    ?Dataset=ArrowHead
+    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset=BasicMotions
     """
 
     name = "BasicMotions"
