@@ -2,7 +2,7 @@ Contributors
 ============
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-60-orange.svg)](#contributors)
+[![All Contributors](https://img.shields.io/badge/all_contributors-61-orange.svg)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
@@ -89,6 +89,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     <td align="center"><a href="https://github.com/simone-pignotti"><img src="https://avatars1.githubusercontent.com/u/44410066?v=4?s=100" width="100px;" alt=""/><br /><sub><b>simone-pignotti</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=simone-pignotti" title="Code">💻</a> <a href="https://github.com/alan-turing-institute/sktime/issues?q=author%3Asimone-pignotti" title="Bug reports">🐛</a></td>
     <td align="center"><a href="https://github.com/sophijka"><img src="https://avatars2.githubusercontent.com/u/47450591?v=4?s=100" width="100px;" alt=""/><br /><sub><b>sophijka</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=sophijka" title="Documentation">📖</a> <a href="#maintenance-sophijka" title="Maintenance">🚧</a></td>
     <td align="center"><a href="https://github.com/sri1419"><img src="https://avatars2.githubusercontent.com/u/65078278?v=4?s=100" width="100px;" alt=""/><br /><sub><b>sri1419</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=sri1419" title="Code">💻</a></td>
+    <td align="center"><a href="https://github.com/svollmer"><img src="https://avatars3.githubusercontent.com/u/10702380?v=4?s=100" width="100px;" alt=""/><br /><sub><b>svollmer</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=svollmer" title="Documentation">📖</a></td>
     <td align="center"><a href="https://github.com/vedazeren"><img src="https://avatars3.githubusercontent.com/u/63582874?v=4?s=100" width="100px;" alt=""/><br /><sub><b>vedazeren</b></sub></a><br /><a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Code">💻</a> <a href="https://github.com/alan-turing-institute/sktime/commits?author=vedazeren" title="Tests">⚠️</a></td>
   </tr>
 </table>

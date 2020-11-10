@@ -665,6 +665,15 @@
         "code",
         "tutorial"
       ]
+    },
+    {
+      "login": "svollmer",
+      "name": "svollmer",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/10702380?v=4",
+      "profile": "https://github.com/svollmer",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",
