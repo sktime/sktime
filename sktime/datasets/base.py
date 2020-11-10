@@ -476,8 +476,8 @@ def load_acsf1(split=None, return_X_y=False):
     lamp (CFL), laptops (via chargers), microwave ovens, printers, and
     televisions (LCD or LED)."
 
-    Dataset details: http://www.timeseriesclassification.com/description.php
-    ?Dataset=ACSF1
+    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
+    =ACSF1
     """
 
     name = "ACSF1"
@@ -513,13 +513,15 @@ def load_basic_motions(split=None, return_X_y=False):
     Test cases:         40
     Number of classes:  4
 
-    The data was generated as part of a student project where four students performed 
-    four activities whilst wearing a smart watch. The watch collects 3D accelerometer 
+    The data was generated as part of a student project where four students performed
+    four activities whilst wearing a smart watch. The watch collects 3D accelerometer
     and a 3D gyroscope It consists of four classes, which are walking, resting,
-    running and badminton. Participants were required to record motion a total of 
-    five times, and the data is sampled once every tenth of a second, for a ten second period.
+    running and badminton. Participants were required to record motion a total of
+    five times, and the data is sampled once every tenth of a second, for a ten second
+    period.
 
-    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset=BasicMotions
+    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
+    =BasicMotions
     """
 
     name = "BasicMotions"
