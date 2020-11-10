@@ -976,6 +976,19 @@ class ProximityTree(BaseClassifier):
     Proximity Tree class to model a decision tree which uses distance
     measures to partition data.
 
+    @article{lucas19proximity,
+        title={Proximity Forest: an effective and scalable distance-based
+        classifier for time series},
+        author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
+        Zaidi and B. Goethals and F. Petitjean and G. Webb},
+        journal={Data Mining and Knowledge Discovery},
+        volume={33},
+        number={3},
+        pages={607--635},
+        year={2019}
+    }
+    https://arxiv.org/abs/1808.10594
+
     Attributes:
         label_encoder: label encoder to change string labels to numeric indices
         classes_: unique list of classes
@@ -1173,7 +1186,7 @@ class ProximityForest(BaseClassifier):
       pages={607--635},
       year={2019}
       }
-
+      https://arxiv.org/abs/1808.10594
 
         Attributes:
             label_encoder: label encoder to change string labels to numeric indices

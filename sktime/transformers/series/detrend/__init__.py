@@ -5,6 +5,6 @@
 __author__ = ["Markus Löning"]
 __all__ = ["Detrender", "Deseasonalizer", "ConditionalDeseasonalizer"]
 
-from sktime.transformers.series.detrend._deseasonalise import ConditionalDeseasonalizer
-from sktime.transformers.series.detrend._deseasonalise import Deseasonalizer
+from sktime.transformers.series.detrend._deseasonalize import ConditionalDeseasonalizer
+from sktime.transformers.series.detrend._deseasonalize import Deseasonalizer
 from sktime.transformers.series.detrend._detrend import Detrender

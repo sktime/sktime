@@ -10,7 +10,7 @@ __all__ = [
     "test_score",
     "test_predict_time_index",
     "test_update_predict_predicted_indices",
-    "test_bad_y_input",
+    "test_y_multivariate_raises_error",
     "test_fitted_params",
     "test_predict_time_index_in_sample_full",
     "test_predict_pred_interval",
@@ -34,6 +34,7 @@ from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
+from sktime.utils._testing import _make_series
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import assert_correct_pred_time_index
 from sktime.utils._testing.forecasting import get_expected_index_for_update_predict
@@ -81,17 +82,19 @@ def test_raises_not_fitted_error(Forecaster):
         pass
 
 
-def assert_correct_msg(exception, msg):
-    assert exception.value.args[0] == msg
+@pytest.mark.parametrize("Forecaster", FORECASTERS)
+def test_y_multivariate_raises_error(Forecaster):
+    # Check that multivariate y raises an appropriate error message.
+    y = _make_series(n_columns=2)
+    with pytest.raises(ValueError, match=r"univariate"):
+        f = _construct_instance(Forecaster)
+        f.fit(y, fh=FH0)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-@pytest.mark.parametrize(
-    "y", [np.random.random(size=3), [1, 3, 0.5], (1, 3, 0.5)]  # array  # list  # tuple
-)
-def test_bad_y_input(Forecaster, y):
-    # Check that bad input arguments raise an appropriate error message.
-    with pytest.raises(ValueError, match=r"univariate"):
+@pytest.mark.parametrize("y", [np.empty(20), list(), tuple()])
+def test_y_invalid_type_raises_error(Forecaster, y):
+    with pytest.raises(TypeError, match=r"type"):
         f = _construct_instance(Forecaster)
         f.fit(y, fh=FH0)
 
