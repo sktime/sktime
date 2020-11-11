@@ -81,17 +81,21 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     ----------
     n_estimators : int, optional (default=200)
         The number of trees in the forest.
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
     min_interval : int, optional (default=16)
         The minimum width of an interval.
     acf_lag : int, optional (default=100)
         The maximum number of autocorrelation terms to use.
     acf_min_values : int, optional (default=4)
         Never use fewer than this number of terms to find a correlation.
+    n_jobs : int or None, optional (default=None)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
