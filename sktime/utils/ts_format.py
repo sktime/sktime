@@ -11,6 +11,8 @@ def csv_to_ts_df(csv_df, group_by):
     """
     Loads and then puts csv data into a dataframe
 
+    TODO: Implement version working with timestamps
+
     Parameters
     ----------
     path_to_csv: str
@@ -79,7 +81,8 @@ def write_df_to_data(ts_labels, df, out_path, dimensions):
                     lines[i] += ":" + curr_str_vals
             i += 1
     for i in range(0, len(lines)):
-        lines[i] += ":" + class_label[i]
+        if class_label != []:
+            lines[i] += ":" + class_label[i]
         file_data += "\n" + lines[i]
     if ".ts" not in out_path:
         out_path += ".ts"
@@ -184,31 +187,3 @@ def csv_to_ts_format(
         "classLabel": class_label,
     }
     write_df_to_data(ts_label, df, out_path, dimensions)
-
-
-def arff_to_ts_format(path_to_csv, out_path):
-    """
-    Loads data from a arff and writes out the ts format of that data. This
-    includes setting correct headers
-
-    Parameters
-    ----------
-    path_to_csv: str
-        The full pathname for the .csv file to read
-    out_path: str
-        The full pathname for the .ts file to be written to
-    """
-
-
-def txt_to_ts_format(path_to_csv, out_path):
-    """
-    Loads data from a txt and writes out the ts format of that data. This
-    includes setting correct headers
-
-    Parameters
-    ----------
-    path_to_csv: str
-        The full pathname for the .csv file to read
-    out_path: str
-        The full pathname for the .ts file to be written to
-    """
