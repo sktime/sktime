@@ -11,7 +11,7 @@ __all__ = [
     "TEST_INS_FHS",
     "TEST_OOS_FHS",
     "TEST_WINDOW_LENGTHS",
-    "SUPPORTED_INDEX_FH_COMBINATIONS",
+    "VALID_INDEX_FH_COMBINATIONS",
     "INDEX_TYPE_LOOKUP",
 ]
 
@@ -20,7 +20,7 @@ import pandas as pd
 
 from sktime.utils._testing.forecasting import _make_series
 
-# default parameter testing grid
+# We here define the parameter values for unit testing.
 TEST_WINDOW_LENGTHS = [1, 5]
 TEST_STEP_LENGTHS = [1, 5]
 TEST_OOS_FHS = [1, np.array([2, 5])]  # out-of-sample
@@ -31,18 +31,15 @@ TEST_INS_FHS = [
     np.array([-3, 2]),  # mixed in-sample and out-of-sample
 ]
 TEST_FHS = TEST_OOS_FHS + TEST_INS_FHS
-TEST_SPS = [3, 7, 12]
+TEST_SPS = [3, 12]
 TEST_ALPHAS = [0.05, 0.1]
 TEST_YS = [
-    # zero-based index
     _make_series(all_positive=True),
-    # non-zero-based index, raises warnings in statsmodels
-    # generate_time_series(positive=True, non_zero_index=True),
 ]
 
-# supported combinations of index and forecasting horizon types
-# | index type | fh type | is_relative |
-SUPPORTED_INDEX_FH_COMBINATIONS = [
+# We currently support the following combinations of index and forecasting horizon types
+VALID_INDEX_FH_COMBINATIONS = [
+    # index type, fh type, is_relative
     ("int", "int", True),
     ("int", "int", False),
     ("range", "int", True),

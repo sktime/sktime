@@ -28,3 +28,14 @@ def check_n_jobs(n_jobs):
         return os.cpu_count()
     else:
         return n_jobs
+
+
+def check_window_length(window_length, name="`window_length`"):
+    """Validate window length"""
+    if window_length is not None:
+        if not is_int(window_length) or window_length < 1:
+            raise ValueError(
+                f"{name} must be a positive integer >= 1 or None, "
+                f"but found: {window_length}"
+            )
+    return window_length

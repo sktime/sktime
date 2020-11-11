@@ -4,20 +4,20 @@ __all__ = ["Evaluator"]
 
 import itertools
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.stats import ranksums, ttest_ind
+from scipy.stats import ranksums
+from scipy.stats import ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
 from sktime.utils.check_imports import _check_soft_dependencies
 
-plt.style.use("seaborn-ticks")
-
-
 _check_soft_dependencies("matplotlib", "scikit_posthocs")
+import matplotlib.pyplot as plt  # noqa: E402
+
+plt.style.use("seaborn-ticks")
 
 
 class Evaluator:

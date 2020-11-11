@@ -1,8 +1,8 @@
 STUFF = "Hi"
 
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
+from sktime.transformers.panel.dictionary_based import SFA
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
