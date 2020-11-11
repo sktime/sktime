@@ -2,12 +2,13 @@
 """ Random Interval Spectral Forest (RISE).
 Implementation of Deng's Time Series Forest, with minor changes
 """
-__author__ = ["Tony Bagnall"]
+__author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
 
 import math
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -16,6 +17,33 @@ from sklearn.utils.validation import check_random_state
 from sktime.classification.base import BaseClassifier
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
+
+
+def _parallel_build_trees(X, y, lag, interval, acf_min_values,
+                          base_estimator, random_state):
+    """
+    Private function used to fit a single tree in parallel."""
+    n_instances = X.shape[0]
+    temp_lag = lag
+    if temp_lag > interval[1] - interval[0] - acf_min_values:
+        temp_lag = interval[1] - interval[0] - acf_min_values
+    if temp_lag < 0:
+        temp_lag = 1
+    temp_lag = int(temp_lag)
+
+    acf_x = np.empty(shape=(n_instances, temp_lag))
+    ps_len = (interval[1] - interval[0]) / 2
+    ps_x = np.empty(shape=(n_instances, int(ps_len)))
+    for j in range(0, n_instances):
+        acf_x[j] = acf(X[j, interval[0] : interval[1]], temp_lag)
+        ps_x[j] = ps(X[j, interval[0] : interval[1]])
+    transformed_x = np.concatenate((acf_x, ps_x), axis=1)
+
+    tree = clone(base_estimator)
+    tree.set_params(**{"random_state": random_state})
+    tree.fit(transformed_x, y)
+
+    return temp_lag, tree
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
@@ -80,20 +108,22 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     def __init__(
         self,
         n_estimators=200,
-        random_state=None,
         min_interval=16,
         acf_lag=100,
         acf_min_values=4,
+        n_jobs=None,
+        random_state=None,
     ):
         super(RandomIntervalSpectralForest, self).__init__(
             base_estimator=DecisionTreeClassifier(random_state=random_state),
             n_estimators=n_estimators,
         )
         self.n_estimators = n_estimators
-        self.random_state = random_state
         self.min_interval = min_interval
         self.acf_lag = acf_lag
         self.acf_min_values = acf_min_values
+        self.n_jobs = n_jobs
+        self.random_state = random_state
 
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
@@ -140,32 +170,17 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         if self.acf_lag < 0:
             self.acf_lag_ = 1
         self.lags = np.zeros(self.n_estimators, dtype=int)
-        for i in range(0, self.n_estimators):
-            temp_lag = self.acf_lag_
-            if (
-                temp_lag
-                > self.intervals[i][1] - self.intervals[i][0] - self.acf_min_values
-            ):
-                temp_lag = (
-                    self.intervals[i][1] - self.intervals[i][0] - self.acf_min_values
-                )
-            if temp_lag < 0:
-                temp_lag = 1
-            self.lags[i] = int(temp_lag)
-            acf_x = np.empty(shape=(n_instances, self.lags[i]))
-            ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
-            ps_x = np.empty(shape=(n_instances, int(ps_len)))
-            for j in range(0, n_instances):
-                acf_x[j] = acf(
-                    X[j, self.intervals[i][0] : self.intervals[i][1]], temp_lag
-                )
-                ps_x[j] = ps(X[j, self.intervals[i][0] : self.intervals[i][1]])
-            transformed_x = np.concatenate((acf_x, ps_x), axis=1)
-            #            transformed_x=acf_x
-            tree = clone(self.base_estimator)
-            # set random state, but not the same, so that estimators vary
-            tree.set_params(**{"random_state": rng.randint(np.iinfo(np.int32).max)})
-            tree.fit(transformed_x, y)
+
+        # Fit trees in parallel
+        worker_rets = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_build_trees)(
+                X, y, self.acf_lag_, self.intervals[i], self.acf_min_values,
+                self.base_estimator, rng.randint(np.iinfo(np.int32).max))
+            for i in range(0, self.n_estimators))
+
+        # Update results after parallelization
+        for i, (lag, tree) in enumerate(worker_rets):
+            self.lags[i] = lag
             self.estimators_.append(tree)
 
         self._is_fitted = True
