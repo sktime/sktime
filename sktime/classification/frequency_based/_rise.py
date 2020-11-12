@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """ Random Interval Spectral Forest (RISE).
-Implementation of Deng's Time Series Forest, with minor changes
+Implementation of Deng's Time Series Forest, with minor changes.
 """
 __author__ = ["Tony Bagnall", "Yi-Xuan Xu"]
 __all__ = ["RandomIntervalSpectralForest", "acf", "matrix_acf", "ps"]
@@ -9,6 +9,7 @@ import math
 
 import numpy as np
 from joblib import Parallel, delayed
+
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -88,7 +89,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     acf_min_values : int, optional (default=4)
         Never use fewer than this number of terms to find a correlation.
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for `fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
@@ -133,17 +134,19 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using random
-        intervals and spectral features
+        """
+        Build a forest of trees from the training set (X, y) using random
+        intervals and spectral features.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
         series_length] or shape = [n_instances,n_columns]
-            The training input samples.  If a Pandas data frame is passed it
-            must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
-            classification as yet.
-        y : array-like, shape =  [n_instances]    The class labels.
+            The training input samples. If a Pandas data frame is passed it
+            must have a single column (i.e., univariate classification).
+            RISE has no bespoke method for multivariate classification as yet.
+        y : array-like, shape = [n_instances]
+            The class labels.
 
         Returns
         -------
@@ -192,16 +195,19 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     def predict(self, X):
         """
-        Find predictions for all cases in X. Built on top of predict_proba
+        Find predictions for all cases in X. Built on top of `predict_proba`.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
-        or a data frame.
-        If a Pandas data frame is passed,
+            The input samples. If a Pandas data frame is passed it must have a
+            single column (i.e., univariate classification). RISE has no
+            bespoke method for multivariate classification as yet.
 
         Returns
         -------
-        output : array of shape = [n_instances]
+        y : array of shape = [n_instances]
+            The predicted classes.
         """
         proba = self.predict_proba(X)
         return np.asarray([self.classes_[np.argmax(prob)] for prob in proba])
@@ -209,20 +215,26 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     def predict_proba(self, X):
         """
         Find probability estimates for each class for all cases in X.
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances, n_columns]
-            The training input samples.  If a Pandas data frame is passed,
+            The input samples. If a Pandas data frame is passed it must have a
+            single column (i.e., univariate classification). RISE has no
+            bespoke method for multivariate classification as yet.
 
         Local variables
-        ----------
-        n_samps     : int, number of cases to classify
-        n_columns    : int, number of attributes in X, must match _num_atts
-        determined in fit
+        ---------------
+        n_instances : int
+            Number of cases to classify.
+        n_columns : int
+            Number of attributes in X, must match `series_length` determined
+            in `fit`.
 
         Returns
         -------
-        output : array of shape = [n_instances, n_classes] of probabilities
+        output : array of shape = [n_instances, n_classes]
+            The class probabilities of all cases.
         """
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
@@ -231,8 +243,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         n_instances, n_columns = X.shape
         if n_columns != self.series_length:
             raise TypeError(
-                " ERROR number of attributes in the train does not match "
-                "that in the test data"
+                "ERROR number of attributes in the train does not match "
+                "that in the test data."
             )
         sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
@@ -253,17 +265,18 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
 
 def acf(x, max_lag):
-    """autocorrelation function transform, currently calculated using
-    standard stats method.
-    We could use inverse of power spectrum, especially given we already have
-    found it, worth testing for speed and correctness
-    HOWEVER, for long series, it may not give much benefit, as we do not use
-    that many ACF terms
+    """
+    Autocorrelation function transform, currently calculated using standard
+    stats method. We could use inverse of power spectrum, especially given we
+    already have found it, worth testing for speed and correctness. HOWEVER,
+    for long series, it may not give much benefit, as we do not use that many
+    ACF terms.
 
     Parameters
     ----------
     x : array-like shape = [interval_width]
-    max_lag: int, number of ACF terms to find
+    max_lag: int
+        The number of ACF terms to find.
 
     Return
     ----------
@@ -301,17 +314,18 @@ def acf(x, max_lag):
 
 
 def matrix_acf(x, num_cases, max_lag):
-    """autocorrelation function transform, currently calculated using
-    standard stats method.
-    We could use inverse of power spectrum, especially given we already have
-    found it, worth testing for speed and correctness
-    HOWEVER, for long series, it may not give much benefit, as we do not use
-    that many ACF terms
+    """
+    Autocorrelation function transform, currently calculated using standard
+    stats method. We could use inverse of power spectrum, especially given we
+    already have found it, worth testing for speed and correctness. HOWEVER,
+    for long series, it may not give much benefit, as we do not use that many
+    ACF terms
 
-     Parameters
+    Parameters
     ----------
     x : array-like shape = [num_cases, interval_width]
-    max_lag: int, number of ACF terms to find
+    max_lag: int
+        The number of ACF terms to find.
 
     Return
     ----------
@@ -334,9 +348,11 @@ def matrix_acf(x, num_cases, max_lag):
 
 
 def ps(x):
-    """power spectrum transform, currently calculated using np function.
+    """
+    Power spectrum transform, currently calculated using np function.
     It would be worth looking at ff implementation, see difference in speed
-    to java
+    to java.
+
     Parameters
     ----------
     x : array-like shape = [interval_width]
