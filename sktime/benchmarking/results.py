@@ -19,7 +19,32 @@ class RAMResults(BaseResults):
 
     def save_predictions(self, strategy_name, dataset_name, y_true, y_pred,
                          y_proba, index, cv_fold,
-                         train_or_test):
+                         train_or_test,
+                         fit_estimator_start_time=None,
+                         fit_estimator_end_time=None):
+        """
+        Saves the predictions of trained estimators.
+
+        Parameters
+        ----------
+        strategy_name : string
+            Name of fitted strategy
+        dataset_name: string
+            Name of dataset on which the strategy is fitted
+        y_true : numpy array
+            array with true labels
+        y_pred : numpy array
+            array of predicted labels
+        y_proba : numpy array
+            array of probabilities associated with the predicted values
+        index : numpy array
+            dataset indeces of the y_true data points
+        fit_estimator_start_time : pandas timestamp (default=None)
+            timestamp when fitting the estimator began
+        fit_estimator_end_time : pandas timestamp (default=None)
+            timestamp when fitting the estimator ended
+
+        """
         key = self._generate_key(strategy_name, dataset_name, cv_fold,
                                  train_or_test)
         index = np.asarray(index)
@@ -27,7 +52,10 @@ class RAMResults(BaseResults):
         y_pred = np.asarray(y_pred)
         y_proba = np.asarray(y_proba)
         self.results[key] = _PredictionsWrapper(strategy_name, dataset_name,
-                                                index, y_true, y_pred, y_proba)
+                                                index, y_true, y_pred,  
+                                                fit_estimator_start_time, 
+                                                fit_estimator_end_time,
+                                                y_proba)
         self._append_key(strategy_name, dataset_name)
 
     def load_predictions(self, cv_fold, train_or_test):
@@ -67,13 +95,42 @@ class HDDResults(HDDBaseResults):
 
     def save_predictions(self, strategy_name, dataset_name, y_true, y_pred,
                          y_proba, index, cv_fold,
-                         train_or_test):
-        """Save predictions"""
+                         train_or_test, 
+                         fit_estimator_start_time = None,
+                         fit_estimator_end_time = None):
+        """
+        Saves the predictions of trained estimators.
+
+        Parameters
+        ----------
+        strategy_name : string
+            Name of fitted strategy
+        dataset_name: string
+            Name of dataset on which the strategy is fitted
+        y_true : numpy array
+            array with true labels
+        y_pred : numpy array
+            array of predicted labels
+        y_proba : numpy array
+            array of probabilities associated with the predicted values
+        index : numpy array
+            dataset indeces of the y_true data points
+        fit_estimator_start_time : pandas timestamp (default=None)
+            timestamp when fitting the estimator began
+        fit_estimator_end_time : pandas timestamp (default=None)
+            timestamp when fitting the estimator ended
+
+        """       
         # TODO y_proba is currently ignored
         key = self._generate_key(strategy_name, dataset_name, cv_fold,
                                  train_or_test) + ".csv"
+        # TODO find a more clever way to save the timestamps
         results = pd.DataFrame(
-            {"index": index, "y_true": y_true, "y_pred": y_pred})
+            {"index": index, 
+            "y_true": y_true, 
+            "y_pred": y_pred, 
+            "fit_estimator_start_time": fit_estimator_start_time,
+            "fit_estimator_end_time": fit_estimator_end_time})
         results.to_csv(key, index=False, header=True)
         self._append_key(strategy_name, dataset_name)
 
@@ -87,8 +144,15 @@ class HDDResults(HDDBaseResults):
             index = results.loc[:, "index"].values
             y_true = results.loc[:, "y_true"].values
             y_pred = results.loc[:, "y_pred"].values
-            yield _PredictionsWrapper(strategy_name, dataset_name, index,
-                                      y_true, y_pred)
+            fit_estimator_start_time = results.loc[0, "fit_estimator_start_time"]
+            fit_estimator_end_time = results.loc[0, "fit_estimator_start_time"]
+            yield _PredictionsWrapper(strategy_name, 
+                                        dataset_name, 
+                                        index,
+                                        y_true, 
+                                        y_pred, 
+                                        fit_estimator_start_time, 
+                                        fit_estimator_end_time)
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
         """Save fitted strategy"""

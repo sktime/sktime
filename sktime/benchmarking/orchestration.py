@@ -4,7 +4,7 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 from sklearn.base import clone
 from sktime.benchmarking.tasks import TSCTask
 from sktime.benchmarking.tasks import TSRTask
-
+import pandas as pd
 
 class Orchestrator:
     """
@@ -145,7 +145,9 @@ class Orchestrator:
             # fit strategy
             self._print_progress(dataset.name, strategy.name, cv_fold, "train",
                                  "fit", verbose)
+            fit_estimator_start_time = pd.Timestamp.now()
             strategy.fit(task, train)
+            fit_estimator_end_time = pd.Timestamp.now()
 
             # save fitted strategy if save fitted strategies is set to True
             # and overwrite is set to True or the
@@ -172,6 +174,8 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
+                                              fit_estimator_start_time = fit_estimator_start_time,
+                                              fit_estimator_end_time = fit_estimator_end_time,
                                               train_or_test="train")
 
             # predict on test set if overwrite predictions is set to True or
@@ -188,6 +192,8 @@ class Orchestrator:
                                               y_pred=y_pred,
                                               y_proba=y_proba,
                                               cv_fold=cv_fold,
+                                              fit_estimator_start_time = fit_estimator_start_time,
+                                              fit_estimator_end_time = fit_estimator_end_time,
                                               train_or_test="test")
 
         # save results as master file
