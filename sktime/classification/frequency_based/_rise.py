@@ -348,7 +348,7 @@ def matrix_acf(x, num_cases, max_lag):
     stats method. We could use inverse of power spectrum, especially given we
     already have found it, worth testing for speed and correctness. HOWEVER,
     for long series, it may not give much benefit, as we do not use that many
-    ACF terms
+    ACF terms.
 
     Parameters
     ----------
