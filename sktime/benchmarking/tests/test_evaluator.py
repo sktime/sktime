@@ -16,7 +16,9 @@ def dummy_results():
                             y_pred=np.array([1,1,1,1]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
     results.save_predictions(strategy_name='alg1',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -24,7 +26,9 @@ def dummy_results():
                             y_pred=np.array([0,0,0,0]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
 
     results.save_predictions(strategy_name='alg2',
                             dataset_name='dataset1',
@@ -33,7 +37,9 @@ def dummy_results():
                             y_pred=np.array([0,0,0,0]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
     results.save_predictions(strategy_name='alg2',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -41,7 +47,9 @@ def dummy_results():
                             y_pred=np.array([1,1,1,1]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
 
     results.save_predictions(strategy_name='alg3',
                             dataset_name='dataset1',
@@ -50,7 +58,9 @@ def dummy_results():
                             y_pred=np.array([1,1,0,1]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
     results.save_predictions(strategy_name='alg3',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -58,7 +68,9 @@ def dummy_results():
                             y_pred=np.array([0,0,1,0]),
                             y_proba=None,
                             cv_fold=0,
-                            train_or_test="test")
+                            train_or_test="test",
+                            fit_estimator_start_time=pd.Timestamp.now(),
+                            fit_estimator_end_time=pd.Timestamp.now())
     return results
 def evaluator_setup(score_function):
     evaluator = Evaluator(dummy_results())
@@ -133,3 +145,7 @@ def test_wilcoxon():
                         [0.5,0],
                         [0.5,0]])
     assert np.array_equal(results,expected)
+
+def test_run_times():
+    evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
+    evaluator.fit_runtime()
