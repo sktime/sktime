@@ -73,7 +73,7 @@ def plot_series(*series, labels=None):
         else:
             plot_func = sns.lineplot
 
-        plot_func(x, y, ax=ax, marker="o", label=label, color=color)
+        plot_func(x=x, y=y, ax=ax, marker="o", label=label, color=color)
 
     # set combined index as xticklabels, suppress matplotlib warning
     with warnings.catch_warnings():

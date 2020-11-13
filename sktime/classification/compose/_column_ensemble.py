@@ -14,11 +14,11 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.preprocessing import LabelEncoder
 
-from sktime.base import BaseHeterogenousMetaEstimator
+from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 
 
-class BaseColumnEnsembleClassifier(BaseClassifier, BaseHeterogenousMetaEstimator):
+class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
     def __init__(self, estimators, verbose=False):
         self.verbose = verbose
         self.estimators = estimators

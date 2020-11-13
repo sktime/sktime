@@ -30,7 +30,7 @@ def test_pred_errors_against_y_test(fh):
     y_train, y_test = temporal_train_test_split(y)
 
     f = ThetaForecaster()
-    f.fit(y_train, fh)
+    f.fit(y_train, fh=fh)
 
     y_pred = f.predict(return_pred_int=False)
 

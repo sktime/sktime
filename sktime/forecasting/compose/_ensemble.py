@@ -8,12 +8,12 @@ __all__ = ["EnsembleForecaster"]
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._meta import BaseHeterogenousEnsembleForecaster
-from sktime.forecasting.base._sktime import OptionalForecastingHorizonMixin
+from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
+from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 
 class EnsembleForecaster(
-    OptionalForecastingHorizonMixin, BaseHeterogenousEnsembleForecaster
+    _OptionalForecastingHorizonMixin, _HeterogenousEnsembleForecaster
 ):
     """Ensemble of forecasters
 
@@ -31,35 +31,35 @@ class EnsembleForecaster(
     def __init__(self, forecasters, n_jobs=None):
         super(EnsembleForecaster, self).__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-    def fit(self, y_train, fh=None, X_train=None):
+    def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
         Parameters
         ----------
-        y_train : pd.Series
+        y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
             The forecasters horizon with the steps ahead to to predict.
-        X_train : pd.DataFrame, optional (default=None)
+        X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         Returns
         -------
         self : returns an instance of self.
         """
-        self._set_y_X(y_train, X_train)
+        self._set_y_X(y, X)
         self._set_fh(fh)
         names, forecasters = self._check_forecasters()
-        self._fit_forecasters(forecasters, y_train, fh=fh, X_train=X_train)
+        self._fit_forecasters(forecasters, y, X, fh)
         self._is_fitted = True
         return self
 
-    def update(self, y_new, X_new=None, update_params=False):
+    def update(self, y, X=None, update_params=False):
         """Update fitted parameters
 
         Parameters
         ----------
-        y_new : pd.Series
-        X_new : pd.DataFrame
+        y : pd.Series
+        X : pd.DataFrame
         update_params : bool, optional (default=False)
 
         Returns
@@ -67,12 +67,12 @@ class EnsembleForecaster(
         self : an instance of self
         """
         self.check_is_fitted()
-        self._update_y_X(y_new, X_new)
+        self._update_y_X(y, X)
         for forecaster in self.forecasters_:
-            forecaster.update(y_new, X_new=X_new, update_params=update_params)
+            forecaster.update(y, X, update_params=update_params)
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         if return_pred_int:
             raise NotImplementedError()
-        return pd.concat(self._predict_forecasters(fh=fh, X=X), axis=1).mean(axis=1)
+        return pd.concat(self._predict_forecasters(fh, X), axis=1).mean(axis=1)
