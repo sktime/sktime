@@ -20,8 +20,9 @@ from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
-def _parallel_build_trees(X, y, lag, interval, acf_min_values,
-                          base_estimator, random_state):
+def _parallel_build_trees(
+    X, y, lag, interval, acf_min_values, base_estimator, random_state
+):
     """
     Private function used to fit a single tree in parallel."""
     n_instances = X.shape[0]
@@ -181,8 +182,14 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         # Fit trees in parallel
         worker_rets = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_build_trees)(
-                X, y, self.acf_lag_, self.intervals[i], self.acf_min_values,
-                self.base_estimator, rng.randint(np.iinfo(np.int32).max))
+                X,
+                y,
+                self.acf_lag_,
+                self.intervals[i],
+                self.acf_min_values,
+                self.base_estimator,
+                rng.randint(np.iinfo(np.int32).max),
+            )
             for i in range(0, self.n_estimators))
 
         # Update results after parallelization
