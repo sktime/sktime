@@ -11,11 +11,12 @@ import numpy as np
 from joblib import Parallel, delayed
 
 from sklearn.base import clone
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sktime.classification.base import BaseClassifier
+from sklearn.ensemble._forest import ForestClassifier
+from sklearn.ensemble._base import _partition_estimators
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
-from sktime.classification.base import BaseClassifier
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -46,6 +47,25 @@ def _parallel_build_trees(
     tree.fit(transformed_x, y)
 
     return temp_lag, tree
+
+
+def _parallel_predict_proba(
+    X, lag, interval, predict_proba
+):
+    """
+    Private function used to predict class probabilities in parallel."""
+    n_instances = X.shape[0]
+    acf_x = np.empty(shape=(n_instances, lag))
+    ps_len = (interval[1] - interval[0]) / 2
+    ps_x = np.empty(shape=(n_instances, int(ps_len)))
+    for j in range(0, n_instances):
+        acf_x[j] = acf(X[j, interval[0] : interval[1]], lag)
+        ps_x[j] = ps(X[j, interval[0] : interval[1]])
+    transformed_x = np.concatenate((acf_x, ps_x), axis=1)
+
+    proba = predict_proba(transformed_x)
+
+    return proba
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
@@ -90,7 +110,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     acf_min_values : int, optional (default=4)
         Never use fewer than this number of terms to find a correlation.
     n_jobs : int or None, optional (default=None)
-        The number of jobs to run in parallel for `fit`.
+        The number of jobs to run in parallel for both `fit` and `predict`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
     random_state : int, RandomState instance or None, optional (default=None)
@@ -179,7 +199,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.acf_lag_ = 1
         self.lags = np.zeros(self.n_estimators, dtype=int)
 
-        # Fit trees in parallel
+        # Parallel loop
         worker_rets = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_build_trees)(
                 X,
@@ -190,9 +210,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                 self.base_estimator,
                 rng.randint(np.iinfo(np.int32).max),
             )
-            for i in range(0, self.n_estimators))
+            for i in range(0, self.n_estimators)
+        )
 
-        # Update results after parallelization
+        # Collect lags and newly grown trees
         for i, (lag, tree) in enumerate(worker_rets):
             self.lags[i] = lag
             self.estimators_.append(tree)
@@ -243,6 +264,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         output : array of shape = [n_instances, n_classes]
             The class probabilities of all cases.
         """
+        # Check data
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -253,22 +275,22 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
                 "ERROR number of attributes in the train does not match "
                 "that in the test data."
             )
-        sums = np.zeros((X.shape[0], self.n_classes), dtype=np.float64)
 
-        for i in range(0, self.n_estimators):
-            acf_x = np.empty(shape=(n_instances, self.lags[i]))
-            ps_len = (self.intervals[i][1] - self.intervals[i][0]) / 2
-            ps_x = np.empty(shape=(n_instances, int(ps_len)))
-            for j in range(0, n_instances):
-                acf_x[j] = acf(
-                    X[j, self.intervals[i][0] : self.intervals[i][1]], self.lags[i]
-                )
-                ps_x[j] = ps(X[j, self.intervals[i][0] : self.intervals[i][1]])
-            transformed_x = np.concatenate((acf_x, ps_x), axis=1)
-            sums += self.estimators_[i].predict_proba(transformed_x)
+        # Assign chunk of trees to jobs
+        n_jobs, _, _ = _partition_estimators(self.n_estimators, self.n_jobs)
 
-        output = sums / (np.ones(self.n_classes) * self.n_estimators)
-        return output
+        # Parallel loop
+        all_proba = Parallel(n_jobs=n_jobs)(
+            delayed(_parallel_predict_proba)(
+                X,
+                self.lags[i],
+                self.intervals[i],
+                e.predict_proba,
+            )
+            for i, e in enumerate(self.estimators_)
+        )
+
+        return np.sum(all_proba, axis=0) / len(self.estimators_)
 
 
 def acf(x, max_lag):
