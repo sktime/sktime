@@ -7,6 +7,9 @@ from sktime.forecasting.base._sktime import (
     _SktimeForecaster,
 )
 from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.check_imports import _check_soft_dependencies
+
+_check_soft_dependencies("hcrystalball")
 
 
 def _ensure_datetime_index(index):
