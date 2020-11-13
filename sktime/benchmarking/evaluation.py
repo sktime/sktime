@@ -445,18 +445,27 @@ class Evaluator:
                 dataset_name = result.dataset_name
                 fit_estimator_start_time = result.fit_estimator_start_time
                 fit_estimator_end_time = result.fit_estimator_end_time
+                predict_estimator_start_time = result.predict_estimator_start_time
+                predict_estimator_end_time = result.predict_estimator_end_time
                 unwrapped = pd.DataFrame({
                     'strategy_name':[strategy_name],
                     'dataset_name':[dataset_name],
                     'fit_estimator_start_time':[fit_estimator_start_time],
                     'fit_estimator_end_time': [fit_estimator_end_time],
+                    'predict_estimator_start_time':[predict_estimator_start_time],
+                    'predict_estimator_end_time': [predict_estimator_end_time],
                     'cv_fold': [cv_fold]
                 })
                 run_times = run_times.append(unwrapped, ignore_index=True)
         
         #calculate run time difference
-        run_times['run_time_difference'] = (run_times['fit_estimator_end_time'] - run_times['fit_estimator_start_time'])/np.timedelta64(1,unit)
-        return pd.pivot_table(run_times, index='strategy_name',columns='dataset_name', values='run_time_difference', aggfunc=np.average)
+        run_times['fit_runtime'] = (run_times['fit_estimator_end_time'] - run_times['fit_estimator_start_time'])/np.timedelta64(1,unit)
+        run_times['predict_runtime'] = (run_times['predict_estimator_end_time'] - run_times['predict_estimator_start_time'])/np.timedelta64(1,unit)
+
+        return pd.pivot_table(run_times, 
+                                index=['strategy_name','dataset_name'],
+                                values=['fit_runtime', 'predict_runtime'], 
+                                aggfunc={'fit_runtime':np.average, 'predict_runtime': np.average})
         #         # compute metric
         #         mean, stderr = metric.compute(y_true, y_pred)
 

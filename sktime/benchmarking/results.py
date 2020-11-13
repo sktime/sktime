@@ -21,7 +21,9 @@ class RAMResults(BaseResults):
                          y_proba, index, cv_fold,
                          train_or_test,
                          fit_estimator_start_time=None,
-                         fit_estimator_end_time=None):
+                         fit_estimator_end_time=None,
+                         predict_estimator_start_time=None,
+                         predict_estimator_end_time=None):
         """
         Saves the predictions of trained estimators.
 
@@ -43,6 +45,10 @@ class RAMResults(BaseResults):
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)
             timestamp when fitting the estimator ended
+        predict_estimator_begin_time : pandas timestamp (default=None)
+            timestamp when the estimator began making predictions
+        predict_estimator_end_time : pandas timestamp (default=None)
+            timestamp when the estimator finished making predictions
 
         """
         key = self._generate_key(strategy_name, dataset_name, cv_fold,
@@ -55,6 +61,8 @@ class RAMResults(BaseResults):
                                                 index, y_true, y_pred,  
                                                 fit_estimator_start_time, 
                                                 fit_estimator_end_time,
+                                                predict_estimator_start_time, 
+                                                predict_estimator_end_time,
                                                 y_proba)
         self._append_key(strategy_name, dataset_name)
 
@@ -97,7 +105,9 @@ class HDDResults(HDDBaseResults):
                          y_proba, index, cv_fold,
                          train_or_test, 
                          fit_estimator_start_time = None,
-                         fit_estimator_end_time = None):
+                         fit_estimator_end_time = None,
+                         predict_estimator_start_time = None,
+                         predict_estimator_end_time = None):
         """
         Saves the predictions of trained estimators.
 
@@ -119,7 +129,10 @@ class HDDResults(HDDBaseResults):
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)
             timestamp when fitting the estimator ended
-
+        predict_estimator_start_time : pandas timestamp (default=None)
+            timestamp when the estimator began making predictions
+        predict_estimator_end_time : pandas timestamp (default=None)
+            timestamp when the estimator finished making predictions
         """       
         # TODO y_proba is currently ignored
         key = self._generate_key(strategy_name, dataset_name, cv_fold,
@@ -130,7 +143,10 @@ class HDDResults(HDDBaseResults):
             "y_true": y_true, 
             "y_pred": y_pred, 
             "fit_estimator_start_time": fit_estimator_start_time,
-            "fit_estimator_end_time": fit_estimator_end_time})
+            "fit_estimator_end_time": fit_estimator_end_time,
+            "predict_estimator_start_time": predict_estimator_start_time,
+            "predict_estimator_end_time": predict_estimator_end_time            
+            })
         results.to_csv(key, index=False, header=True)
         self._append_key(strategy_name, dataset_name)
 
@@ -145,14 +161,18 @@ class HDDResults(HDDBaseResults):
             y_true = results.loc[:, "y_true"].values
             y_pred = results.loc[:, "y_pred"].values
             fit_estimator_start_time = results.loc[0, "fit_estimator_start_time"]
-            fit_estimator_end_time = results.loc[0, "fit_estimator_start_time"]
+            fit_estimator_end_time = results.loc[0, "fit_estimator_end_time"]
+            predict_estimator_start_time = results.loc[0, "predict_estimator_start_time"]
+            predict_estimator_end_time = results.loc[0, "predict_estimator_end_time"]
             yield _PredictionsWrapper(strategy_name, 
                                         dataset_name, 
                                         index,
                                         y_true, 
                                         y_pred, 
                                         fit_estimator_start_time, 
-                                        fit_estimator_end_time)
+                                        fit_estimator_end_time,
+                                        predict_estimator_start_time,
+                                        predict_estimator_end_time)
 
     def save_fitted_strategy(self, strategy, dataset_name, cv_fold):
         """Save fitted strategy"""

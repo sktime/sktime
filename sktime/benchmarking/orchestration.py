@@ -164,7 +164,10 @@ class Orchestrator:
             if predict_on_train and (
                     overwrite_predictions or not train_pred_exist):
                 y_true = train.loc[:, task.target]
+                predict_estimator_start_time = pd.Timestamp.now()
                 y_pred = strategy.predict(train)
+                predict_estimator_end_time = pd.Timestamp.now()
+
                 y_proba = self._predict_proba_one(strategy, task, train,
                                                   y_true, y_pred)
                 self.results.save_predictions(strategy_name=strategy.name,
@@ -176,13 +179,18 @@ class Orchestrator:
                                               cv_fold=cv_fold,
                                               fit_estimator_start_time = fit_estimator_start_time,
                                               fit_estimator_end_time = fit_estimator_end_time,
+                                              predict_estimator_start_time = predict_estimator_start_time,
+                                              predict_estimator_end_time = predict_estimator_end_time,
                                               train_or_test="train")
 
             # predict on test set if overwrite predictions is set to True or
             # predictions do not already exist
             if overwrite_predictions or not test_pred_exist:
                 y_true = test.loc[:, task.target]
+                predict_estimator_start_time = pd.Timestamp.now()
                 y_pred = strategy.predict(test)
+                predict_estimator_end_time = pd.Timestamp.now()
+
                 y_proba = self._predict_proba_one(strategy, task, test, y_true,
                                                   y_pred)
                 self.results.save_predictions(dataset_name=dataset.name,
@@ -194,6 +202,8 @@ class Orchestrator:
                                               cv_fold=cv_fold,
                                               fit_estimator_start_time = fit_estimator_start_time,
                                               fit_estimator_end_time = fit_estimator_end_time,
+                                              predict_estimator_start_time = predict_estimator_start_time,
+                                              predict_estimator_end_time = predict_estimator_end_time,
                                               train_or_test="test")
 
         # save results as master file

@@ -163,7 +163,8 @@ class _PredictionsWrapper:
     loading results"""
 
     def __init__(self, strategy_name, dataset_name, index, y_true, y_pred,
-                 fit_estimator_start_time, fit_estimator_end_time, y_proba=None):
+                 fit_estimator_start_time, fit_estimator_end_time, 
+                 predict_estimator_start_time, predict_estimator_end_time, y_proba=None):
         # check input format
         if not all(
                 isinstance(array, np.ndarray) for array in [y_true, y_pred]):
@@ -184,7 +185,8 @@ class _PredictionsWrapper:
         self.y_proba = y_proba
         self.fit_estimator_start_time = fit_estimator_start_time
         self.fit_estimator_end_time = fit_estimator_end_time
-
+        self.predict_estimator_start_time = predict_estimator_start_time
+        self.predict_estimator_end_time = predict_estimator_end_time
 
 class BaseMetric(ABC):
 
