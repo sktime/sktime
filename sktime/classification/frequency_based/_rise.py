@@ -27,7 +27,7 @@ def _transform(X, interval, lag):
     """
     Compute the ACF and PS for given intervals of input data X.
     """
-    n_instances = X.shape[0]
+    n_instances, _ = X.shape
     acf_x = np.empty(shape=(n_instances, lag))
     ps_len = (interval[1] - interval[0]) / 2
     ps_x = np.empty(shape=(n_instances, int(ps_len)))
