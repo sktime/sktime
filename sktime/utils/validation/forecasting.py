@@ -128,12 +128,12 @@ def check_step_length(step_length):
     Parameters
     ----------
     step_length : step length for data set.
-    
+
     Returns
     ----------
     step_length : int
         if step_length in not none and is int and greater than or equal to 1.
-        
+
     Raises
     ----------
     ValueError
@@ -233,22 +233,22 @@ def check_alpha(alpha):
 
 
 def check_cutoffs(cutoffs):
-    """ Validates the cutoff
-    
+    """Validates the cutoff
+
     Parameters
     ----------
     cutoffs : np.ndarray or pd.Index
-    
+
     Returns
     ----------
     cutoffs (Sorted array)
-    
+
     Raises
     ----------
     ValueError
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
-    
+
     """
     if not isinstance(cutoffs, (np.ndarray, pd.Index)):
         raise ValueError(
@@ -263,25 +263,25 @@ def check_cutoffs(cutoffs):
 
 
 def check_scoring(scoring):
-    """ 
+    """
     Validates the performace scoring
-    
+
     Parameters
     ----------
     scoring : object of class MetricFunctionWrapper from sktime.permormance_metrics.
-    
+
     Returns
     ----------
     scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
     sMAPE(mean percentage error)
         if the object is None.
-    
+
     Raises
     ----------
     TypeError
         if object is not callable from current scope.
-        if object is not an instance of class MetricFunctionWrapper of sktime.permormance_metrics.
-    
+        if object is not an instance of class MetricFunctionWrapper of
+        sktime.permormance_metrics.
     """
     from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
