@@ -17,8 +17,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
     results.save_predictions(strategy_name='alg1',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -27,8 +27,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
 
     results.save_predictions(strategy_name='alg2',
                             dataset_name='dataset1',
@@ -38,8 +38,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
     results.save_predictions(strategy_name='alg2',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -48,8 +48,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
 
     results.save_predictions(strategy_name='alg3',
                             dataset_name='dataset1',
@@ -59,8 +59,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
     results.save_predictions(strategy_name='alg3',
                             dataset_name='dataset2',
                             index=np.array([1,2,3,4]),
@@ -69,8 +69,8 @@ def dummy_results():
                             y_proba=None,
                             cv_fold=0,
                             train_or_test="test",
-                            fit_estimator_start_time=pd.Timestamp.now(),
-                            fit_estimator_end_time=pd.Timestamp.now())
+                            fit_estimator_start_time=pd.to_datetime(1605268800,unit='ms'),
+                            fit_estimator_end_time=pd.to_datetime(1605268801,unit='ms'))
     return results
 def evaluator_setup(score_function):
     evaluator = Evaluator(dummy_results())
@@ -148,4 +148,10 @@ def test_wilcoxon():
 
 def test_run_times():
     evaluator, metrics_by_strategy = evaluator_setup(score_function=accuracy_score)
-    evaluator.fit_runtime()
+    result = evaluator.fit_runtime()
+    expected = np.array([[0.001, 0.001],
+                        [0.001, 0.001],
+                        [0.001, 0.001]])
+    
+    assert np.array_equal(expected, result)
+
