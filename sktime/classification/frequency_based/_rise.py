@@ -49,9 +49,7 @@ def _parallel_build_trees(
     return temp_lag, tree
 
 
-def _parallel_predict_proba(
-    X, lag, interval, predict_proba
-):
+def _parallel_predict_proba(X, lag, interval, predict_proba):
     """
     Private function used to predict class probabilities in parallel."""
     n_instances = X.shape[0]
