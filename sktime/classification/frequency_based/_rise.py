@@ -212,8 +212,8 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.lags = np.zeros(self.n_estimators, dtype=int)
 
         trees = [
-            self._make_estimator(append=False,
-                                 random_state=rng.randint(np.iinfo(np.int32).max))
+            self._make_estimator(
+                append=False, random_state=rng.randint(np.iinfo(np.int32).max))
             for i in range(self.n_estimators)
         ]
 
