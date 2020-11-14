@@ -162,7 +162,7 @@ class HCrystalBallForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster
         X = _adapt_predict_data(
             X,
             # convert to the DatetimeIndex
-            fh=pd.PeriodIndex(self.fh.to_absolute(self.cutoff)).to_timestamp(),
+            pd.PeriodIndex(self.fh.to_absolute(self.cutoff)).to_timestamp(),
         )
 
         preds = self.model.predict(X=X)

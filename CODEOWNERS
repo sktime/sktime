@@ -11,3 +11,6 @@ sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 
 sktime/forecasting/online_learning/ @magittan
+
+sktime/forecasting/hcrystalball.py @MichalChromcak
+sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
