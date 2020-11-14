@@ -10,13 +10,14 @@ import pytest
 
 # from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.hcrystalball import _adapt_fit_data
+from sktime.forecasting.hcrystalball import _adapt_predict_data
 
-# from sktime.forecasting.hcrystalball import _adapt_predict_data
 # from sktime.forecasting.hcrystalball import _convert_predictions
 # from sktime.forecasting.hcrystalball import _ensure_datetime_index
 
 # n_timepoints = 30
 n_train = 20
+start_date = "2020-01-01"
 # s = pd.Series(np.arange(n_timepoints))
 # y_train = s.iloc[:n_train]
 # y_test = s.iloc[n_train:]
@@ -27,7 +28,7 @@ def y_train(request):
     if "dt" in request.param:
         return pd.Series(
             np.arange(n_train),
-            index=pd.date_range(start="2020-01-01", periods=n_train, freq="D"),
+            index=pd.date_range(start=start_date, periods=n_train, freq="D"),
         )
     elif "int" in request.param:
         return pd.Series(np.arange(n_train))
@@ -35,7 +36,7 @@ def y_train(request):
 
 @pytest.fixture
 def X_train(request):
-    dt_ind = pd.date_range(start="2020-01-01", periods=n_train, freq="D")
+    dt_ind = pd.date_range(start=start_date, periods=n_train, freq="D")
 
     if "None" in request.param:
         return None
@@ -49,6 +50,8 @@ def X_train(request):
         return pd.DataFrame(index=np.arange(n_train))
     elif "int_exog" in request.param:
         return pd.DataFrame({"ex": np.arange(n_train)})
+    elif "int_short" in request.param:
+        return pd.DataFrame({"ex": np.arange(n_train)}).iloc[:-1]
 
 
 @pytest.mark.parametrize(
@@ -77,3 +80,31 @@ def test_adapt_fit_data_no_X_train(y_train, X_train, exp_error):
         assert isinstance(X_train_real.index, pd.DatetimeIndex)
         assert isinstance(y_train_real, pd.Series)
         assert isinstance(y_train_real.index, pd.DatetimeIndex)
+
+
+@pytest.mark.parametrize(
+    "X_train, exp_error",
+    [
+        ("None", None),
+        ("dt_only", None),
+        ("dt_exog", None),
+        ("dt_short", None),
+        ("int_exog", None),
+        ("int_only", None),
+        ("int_short", ValueError),
+    ],
+    indirect=["X_train"],
+)
+def test_adapt_predict_data(X_train, exp_error):
+    index = pd.date_range(start=start_date, periods=n_train, freq="D")
+
+    if exp_error is not None:
+        with pytest.raises(exp_error):
+            _adapt_predict_data(X_train, index=index)
+
+    else:
+        X_transformed = _adapt_predict_data(X_train, index=index)
+
+        assert isinstance(X_transformed, pd.DataFrame)
+        assert isinstance(X_transformed.index, pd.DatetimeIndex)
+        assert len(X_transformed) == len(index)
