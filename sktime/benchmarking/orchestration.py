@@ -276,16 +276,22 @@ class Orchestrator:
     def _print_progress(self, dataset_name, strategy_name, cv_fold,
                         train_or_test, fit_or_predict, verbose):
         """Helper function to print progress"""
-
+        
+        # check if verbose exists or not
         if verbose:
             fit_or_predict = fit_or_predict.capitalize()
+            
+            # check if train and predict are set
+            # then prediction is done on training set
             if train_or_test == "train" and fit_or_predict == "predict":
                 on_train = " (training set)"
             else:
                 on_train = ""
 
             n_splits = self.cv.get_n_splits() - 1  # zero indexing
-
+            
+            # print the progress as name of strategy, number of folds
+            # name of dataset
             print(
                 f"strategy: {self._strategy_counter}/{self.n_strategies} - "
                 f"{strategy_name} "
