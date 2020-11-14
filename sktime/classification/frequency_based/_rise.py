@@ -39,9 +39,7 @@ def _transform(X, interval, lag):
     return transformed_x
 
 
-def _parallel_build_trees(
-    X, y, base_estimator, interval, lag, acf_min_values, random_state
-):
+def _parallel_build_trees(X, y, tree, interval, lag, acf_min_values):
     """
     Private function used to fit a single tree in parallel.
     """
@@ -53,8 +51,6 @@ def _parallel_build_trees(
     temp_lag = int(temp_lag)
     transformed_x = _transform(X, interval, temp_lag)
 
-    tree = clone(base_estimator)
-    tree.set_params(**{"random_state": random_state})
     tree.fit(transformed_x, y)
 
     return temp_lag, tree
@@ -154,6 +150,22 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
+    def _make_estimator(self, append=True, random_state=None):
+        """
+        Make and configure a copy of the `base_estimator` attribute.
+        Warning: This method should be used to properly instantiate new
+        sub-estimators.
+        """
+        estimator = clone(self.base_estimator)
+
+        if random_state is not None:
+            estimator.set_params(**{"random_state": random_state})
+
+        if append:
+            self.estimators_.append(estimator)
+
+        return estimator
+
     def fit(self, X, y):
         """
         Build a forest of trees from the training set (X, y) using random
@@ -199,18 +211,23 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.acf_lag_ = 1
         self.lags = np.zeros(self.n_estimators, dtype=int)
 
+        trees = [
+            self._make_estimator(append=False,
+                                 random_state=rng.randint(np.iinfo(np.int32).max))
+            for i in range(self.n_estimators)
+        ]
+
         # Parallel loop
         worker_rets = Parallel(n_jobs=self.n_jobs)(
             delayed(_parallel_build_trees)(
                 X,
                 y,
-                self.base_estimator,
+                t,
                 self.intervals[i],
                 self.acf_lag_,
                 self.acf_min_values,
-                rng.randint(np.iinfo(np.int32).max),
             )
-            for i in range(self.n_estimators)
+            for i, t in enumerate(trees)
         )
 
         # Collect lags and newly grown trees
