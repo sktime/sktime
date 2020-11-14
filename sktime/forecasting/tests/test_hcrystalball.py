@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-# #!/usr/bin/env python3 -u
-# # -*- coding: utf-8 -*-
-# # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+# copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 # __author__ = ["Michal Chromcak"]
 
 import numpy as np
@@ -13,15 +11,8 @@ from sktime.forecasting.hcrystalball import _adapt_fit_data
 from sktime.forecasting.hcrystalball import _adapt_predict_data
 from sktime.forecasting.hcrystalball import _safe_merge
 
-# from sktime.forecasting.hcrystalball import _convert_predictions
-# from sktime.forecasting.hcrystalball import _ensure_datetime_index
-
-# n_timepoints = 30
 n_train = 20
 start_date = "2020-01-01"
-# s = pd.Series(np.arange(n_timepoints))
-# y_train = s.iloc[:n_train]
-# y_test = s.iloc[n_train:]
 
 
 @pytest.fixture
