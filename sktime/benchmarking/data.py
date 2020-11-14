@@ -4,17 +4,22 @@ __author__ = ["Viktor Kazakov", "Markus Löning"]
 import os
 
 import pandas as pd
-from sktime.benchmarking.base import BaseDataset
 from sktime.benchmarking.base import HDDBaseDataset
+from sktime.benchmarking.base import BaseDataset
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 
 
 class UEADataset(HDDBaseDataset):
-
+    """
+    represent UEA Time Series Classification Dataset in [UEA/UCR format]
+    """
+    
     def __init__(self, path, name, suffix_train="_TRAIN",
                  suffix_test="_TEST", fmt=".ts", target_name="target"):
         super(UEADataset, self).__init__(path, name)
-
+        # create all the neccesary attributes for UAEDataset object
+        # store a dataset
+        
         self._target_name = target_name
         self._suffix_train = suffix_train
         self._suffix_test = suffix_test
@@ -59,6 +64,7 @@ class UEADataset(HDDBaseDataset):
 
 
 class RAMDataset(BaseDataset):
+    """ represent RAMDataset Time Series Classification Dataset """
 
     def __init__(self, dataset, name):
         """
@@ -71,6 +77,7 @@ class RAMDataset(BaseDataset):
         super(RAMDataset, self).__init__(name=name)
 
     def load(self):
+        """Load dataset"""
         return self._dataset
 
 
