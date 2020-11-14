@@ -11,6 +11,7 @@ import pytest
 # from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.hcrystalball import _adapt_fit_data
 from sktime.forecasting.hcrystalball import _adapt_predict_data
+from sktime.forecasting.hcrystalball import _safe_merge
 
 # from sktime.forecasting.hcrystalball import _convert_predictions
 # from sktime.forecasting.hcrystalball import _ensure_datetime_index
@@ -108,3 +109,34 @@ def test_adapt_predict_data(X_train, exp_error):
         assert isinstance(X_transformed, pd.DataFrame)
         assert isinstance(X_transformed.index, pd.DatetimeIndex)
         assert len(X_transformed) == len(index)
+
+
+@pytest.mark.parametrize(
+    "X_train, exp_error",
+    [
+        ("None", None),
+        ("dt_only", None),
+        ("dt_exog", None),
+        ("dt_short", None),
+        ("int_exog", None),
+        ("int_only", None),
+        ("int_short", ValueError),
+    ],
+    indirect=["X_train"],
+)
+def test_safe_merge(X_train, exp_error):
+    dummy_df = pd.DataFrame(
+        index=pd.date_range(start=start_date, periods=n_train, freq="D")
+    )
+    X_train = X_train if X_train is not None else pd.DataFrame()
+
+    if exp_error is not None:
+        with pytest.raises(exp_error):
+            _safe_merge(real_df=X_train, dummy_df=dummy_df)
+
+    else:
+        merged_df = _safe_merge(real_df=X_train, dummy_df=dummy_df)
+
+        assert len(merged_df) == len(dummy_df)
+        assert isinstance(merged_df, pd.DataFrame)
+        assert isinstance(merged_df.index, pd.DatetimeIndex)
