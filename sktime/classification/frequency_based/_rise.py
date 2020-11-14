@@ -203,6 +203,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             self.intervals[i][1] = rng.randint(
                 self.intervals[i][0] + self.min_interval, self.series_length
             )
+
         # Check lag against global properties
         self.acf_lag_ = self.acf_lag
         if self.acf_lag > self.series_length - self.acf_min_values:
