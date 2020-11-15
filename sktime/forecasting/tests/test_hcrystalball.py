@@ -54,13 +54,13 @@ def X_train(request):
         ("dt", "dt_exog", None),
         ("dt", "dt_short", None),
         ("dt", "int_exog", None),
-        ("int", "None", ValueError),
-        ("int", "int_only", ValueError),
-        ("int", "dt_short", ValueError),
+        ("int", "None", NotImplementedError),
+        ("int", "int_only", NotImplementedError),
+        ("int", "dt_short", NotImplementedError),
     ],
     indirect=["y_train", "X_train"],
 )
-def test_adapt_fit_data_no_X_train(y_train, X_train, exp_error):
+def test_adapt_fit_data(y_train, X_train, exp_error):
     if exp_error is not None:
         with pytest.raises(exp_error):
             _adapt_fit_data(y_train, X_train)
@@ -83,7 +83,7 @@ def test_adapt_fit_data_no_X_train(y_train, X_train, exp_error):
         ("dt_short", None),
         ("int_exog", None),
         ("int_only", None),
-        ("int_short", ValueError),
+        ("int_short", NotImplementedError),
     ],
     indirect=["X_train"],
 )
