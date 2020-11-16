@@ -64,6 +64,17 @@ def _predict_proba_for_estimator(X, estimator, interval, lag):
     return estimator.predict_proba(transformed_x)
 
 
+def _make_estimator(base_estimator, random_state=None):
+    """
+    Make and configure a copy of the `base_estimator` attribute.
+    Warning: This method should be used to properly instantiate new
+    sub-estimators.
+    """
+    estimator = clone(base_estimator)
+    estimator.set_params(**{"random_state": random_state})
+    return estimator
+
+
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """Random Interval Spectral Forest (RISE).
 
@@ -150,22 +161,6 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
-    def _make_estimator(self, append=True, random_state=None):
-        """
-        Make and configure a copy of the `base_estimator` attribute.
-        Warning: This method should be used to properly instantiate new
-        sub-estimators.
-        """
-        estimator = clone(self.base_estimator)
-
-        if random_state is not None:
-            estimator.set_params(**{"random_state": random_state})
-
-        if append:
-            self.estimators_.append(estimator)
-
-        return estimator
-
     def fit(self, X, y):
         """
         Build a forest of trees from the training set (X, y) using random
@@ -213,10 +208,10 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         self.lags = np.zeros(self.n_estimators, dtype=int)
 
         trees = [
-            self._make_estimator(
-                append=False, random_state=rng.randint(np.iinfo(np.int32).max)
+            _make_estimator(
+                self.base_estimator, random_state=rng.randint(np.iinfo(np.int32).max)
             )
-            for i in range(self.n_estimators)
+            for _ in range(self.n_estimators)
         ]
 
         # Parallel loop
@@ -224,12 +219,12 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
             delayed(_parallel_build_trees)(
                 X,
                 y,
-                t,
+                tree,
                 self.intervals[i],
                 self.acf_lag_,
                 self.acf_min_values,
             )
-            for i, t in enumerate(trees)
+            for i, tree in enumerate(trees)
         )
 
         # Collect lags and newly grown trees
