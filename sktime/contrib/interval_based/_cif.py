@@ -54,6 +54,11 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/interval_based/CIF.java
 
+    !!!
+    The catch22 package is currently unstable, results will differ between operating
+    systems. MacOS is presumed to be the correct version, with only minor differences
+    for Windows.
+    !!!
 
     Parameters
     ----------
