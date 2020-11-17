@@ -3,12 +3,23 @@
 Development roadmap
 -------------------
 
-Welcome to sktime's development roadmap.
+Welcome to sktime's software development plan.
 
 Contents
 ^^^^^^^^
 
 .. contents:: :local:
+
+
+Goals
+^^^^^
+
+The main goals of sktime are as follows:
+
+1. Develop a unified Python framework for ML with time series
+2. Advance research on algorithm development, real-world applications, and ML software design
+3. Build a more connected community (unified ecosystem, governance, workshops)
+4. Create and deliver educational material (documentation, tutorials, user guide)
 
 
 Project overview
@@ -88,11 +99,11 @@ Development operations
 Community building
 ^^^^^^^^^^^^^^^^^^
 
-* connect methodology experts with domain experts who work with time series data
-* cater development more specifically to domain experts who work with time series data
-* organize outreach events to grow developer community (e.g. sprints, workshops)
-* mentorship programmes to onboard new contributors
-* domain-specific user trainings (e.g. medical data training)
+* Connect methodology experts with domain experts who work with time series data
+* Cater development more specifically to domain experts who work with time series data
+* Organize outreach events to grow developer community (e.g. sprints, workshops)
+* Mentorship programmes to onboard new contributors
+* Domain-specific user trainings (e.g. medical data training)
 * Enhance governance structures for package affiliation, industry involvement, and to ensure inclusive, diverse and sustainable community
 * Develop collaboration with existing package developers to work towards a more unified ecosystem
 
@@ -140,10 +151,8 @@ Time series regression
    :header-rows: 1
 
    * - Project
-     - Links
      - Description
    * - Refactor time series classifiers
-     - #212
      - Refactor time series classifiers into time series regressor
 
 .. _time-series-clustering:
@@ -155,16 +164,12 @@ Time series clustering
    :header-rows: 1
 
    * - Project
-     - Links
      - Description
    * - 2nd degree transformer framework
-     - #52, #105
      - Design and implement 2nd degree transformer framework
    * - New algorithms
-     -
      - Add new clustering algorithms based on scikit-learn's implementation and sktime's time series distances
    * - New distances
-     -
      - Add new time series distances
 
 .. _forecasting:
@@ -172,37 +177,31 @@ Time series clustering
 Forecasting
 ^^^^^^^^^^^
 
-* "classical" forecasting of a single series with potential exogenous variables
-* vector forecasting
-* panel forecasting
+The term forecasting is often used for different learning tasks. We currently support classical forecasting of a single series with potential exogenous variables.
+
+Other common tasks are:
+
+* Vector forecasting
+* Supervised forecasting
+* Panel forecasting
 
 .. list-table::
    :header-rows: 1
 
    * - Project
-     - Links
      - Description
    * - Multivariate data
-     -
      - Extend algorithms to handle multivariate/exogenous data, add new composition tools for multivariate time series data
    * - New algorithms
-     - #220
      - Add new algorithms
    * - Prediction intervals
-     -
      - Extend algorithms to compute prediction intervals
    * - Fitted parameter interface
-     -
      - Extend algorithms to support fitted parameter interface
    * - Interface algorithms
-     -
      - Interface algorithms from existing packages
    * - Data simulators
-     - #353
      - Add data simulators for unit testing and algorithm explanation/interpretability
-   * - API design of supervised forecasting
-     - #66
-     - Design supervised forecasting API based on pysf
 
 
 .. _time-series-annotation:
@@ -210,26 +209,17 @@ Forecasting
 Time series annotation
 ^^^^^^^^^^^^^^^^^^^^^^
 
-* anomaly detection
-* segmentation
+Common time series annotation tasks are:
 
-.. list-table::
-   :header-rows: 1
-
-   * - Project
-     - Links
-     - Description
-   * - API design
-     - #260
-     - Design time series annotation API
+* Anomaly detection
+* Segmentation
 
 .. _time-to-event-modelling:
 
 Time-to-event modelling
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-
-* interface to probability distribution APIs
-* probabilistic supervised learning
-* survival modelling
-* point processes
+* Interface to probability distribution APIs
+* Probabilistic supervised learning
+* Survival modelling
+* Point processes modelling
