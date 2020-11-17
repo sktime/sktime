@@ -1002,6 +1002,7 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     -------
     DataFrame
     """
+    
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
