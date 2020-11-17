@@ -857,12 +857,12 @@ def load_from_arff_to_dataframe(
 def load_from_ucr_tsv_to_dataframe(
     full_file_path_and_name, return_separate_X_and_y=True
 ):
-    """Loads data from a .csv file into a Pandas DataFrame.
+    """Loads data from a .tsv file into a Pandas DataFrame.
 
     Parameters
     ----------
     full_file_path_and_name: str
-        The full pathname of the .csv file to read.
+        The full pathname of the .tsv file to read.
     return_separate_X_and_y: bool
         true then X and Y values should be returned as separate Data Frames (
         X) and a numpy array (y), false otherwise.
@@ -987,7 +987,7 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
 
 # left here for now, better elsewhere later perhaps
 def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
-    """Generates example from long table formatted data.
+    """Generates example from long table format file.
 
     Parameters
     ----------
