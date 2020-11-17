@@ -37,6 +37,8 @@ class BOSSEnsemble(BaseClassifier):
             number= {6},
             year = {2015}
     }
+    https://link.springer.com/article/10.1007/s10618-014-0377-7
+
     Overview: Input n series length m
     BOSS performs a gird search over a set of parameter values, evaluating
     each with a LOOCV. It then retains

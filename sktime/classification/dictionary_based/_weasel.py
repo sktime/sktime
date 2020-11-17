@@ -38,6 +38,8 @@ class WEASEL(BaseClassifier):
       pages={637--646},
       year={2017}
     }
+    https://dl.acm.org/doi/10.1145/3132847.3132980
+
     # Overview: Input n series length m
     # WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
     # for different window lengths and learns a logistic regression classifier

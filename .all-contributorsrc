@@ -589,6 +589,109 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "magittan",
+      "name": "William Zheng",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/14024202?v=4",
+      "profile": "https://github.com/magittan",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "AaronX121",
+      "name": "Yi-Xuan Xu",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/22359569?v=4",
+      "profile": "https://github.com/AaronX121",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "huayicodes",
+      "name": "Huayi Wei",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/22870735?v=4",
+      "profile": "https://www.linkedin.com/in/huayiwei/",
+      "contributions": [
+        "tutorial"
+      ]
+    },
+    {
+      "login": "Multivin12",
+      "name": "Multivin12",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/36476633?v=4",
+      "profile": "https://github.com/Multivin12",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "davidbp",
+      "name": "David Buchaca Prats",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/4223580?v=4",
+      "profile": "https://github.com/davidbp",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "SebasKoel",
+      "name": "Sebastiaan Koel",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/66252156?v=4",
+      "profile": "https://github.com/SebasKoel",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "MarcoGorelli",
+      "name": "Marco Gorelli",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/33491632?v=4",
+      "profile": "https://github.com/MarcoGorelli",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "DmitriyValetov",
+      "name": "Dmitriy Valetov",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/27976850?v=4",
+      "profile": "https://github.com/DmitriyValetov",
+      "contributions": [
+        "code",
+        "tutorial"
+      ]
+    },
+    {
+      "login": "vollmersj",
+      "name": "vollmersj",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/12613127?v=4",
+      "profile": "https://github.com/vollmersj",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "bmurdata",
+      "name": "Brian Murphy",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/32182553?v=4",
+      "profile": "https://bmurphyportfolio.netlify.com/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "raishubham1",
+      "name": "raishubham1",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/29356417?v=4",
+      "profile": "https://github.com/raishubham1",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",

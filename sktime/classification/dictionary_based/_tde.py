@@ -34,6 +34,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                  Databases},
       year={2020}
     }
+    https://ueaeprints.uea.ac.uk/id/eprint/75490/
 
     Overview: Input n series length m
     TDE searches k parameter values selected using a Gaussian processes
