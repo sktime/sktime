@@ -740,13 +740,45 @@ def load_from_arff_to_dataframe(
     return_separate_X_and_y=True,
     replace_missing_vals_with="NaN",
 ):
+    """Loads data from a .ts file into a Pandas DataFrame.
+
+    Parameters
+    ----------
+    full_file_path_and_name: str
+        The full pathname of the .ts file to read.
+    has_class_labels: bool
+        true then line contains separated strings and class value contains
+        list of separated strings, check for 'return_separate_X_and_y'
+        false otherwise.
+    return_separate_X_and_y: bool
+        true then X and Y values should be returned as separate Data Frames (
+        X) and a numpy array (y), false otherwise.
+        This is only relevant for data.
+    replace_missing_vals_with: str
+       The value that missing values in the text file should be replaced
+       with prior to parsing.
+
+    Returns
+    -------
+    DataFrame, ndarray
+        If return_separate_X_and_y then a tuple containing a DataFrame and a
+        numpy array containing the relevant time-series and corresponding
+        class values.
+    DataFrame
+        If not return_separate_X_and_y then a single DataFrame containing
+        all time-series and (if relevant) a column "class_vals" the
+        associated class values.
+    """
+    
     instance_list = []
     class_val_list = []
 
     data_started = False
     is_multi_variate = False
     is_first_case = True
-
+    
+    # Parse the file
+    # print(full_file_path_and_name)
     with open(full_file_path_and_name, "r") as f:
         for line in f:
 
@@ -825,6 +857,29 @@ def load_from_arff_to_dataframe(
 def load_from_ucr_tsv_to_dataframe(
     full_file_path_and_name, return_separate_X_and_y=True
 ):
+    """Loads data from a .csv file into a Pandas DataFrame.
+
+    Parameters
+    ----------
+    full_file_path_and_name: str
+        The full pathname of the .csv file to read.
+    return_separate_X_and_y: bool
+        true then X and Y values should be returned as separate Data Frames (
+        X) and a numpy array (y), false otherwise.
+        This is only relevant for data.
+
+    Returns
+    -------
+    DataFrame, ndarray
+        If return_separate_X_and_y then a tuple containing a DataFrame and a
+        numpy array containing the relevant time-series and corresponding
+        class values.
+    DataFrame
+        If not return_separate_X_and_y then a single DataFrame containing
+        all time-series and (if relevant) a column "class_vals" the
+        associated class values.
+    """
+    
     df = pd.read_csv(full_file_path_and_name, sep="\t", header=None)
     y = df.pop(0).values
     df.columns -= 1
@@ -932,6 +987,21 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
 
 # left here for now, better elsewhere later perhaps
 def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
+    """Generates example from long table formatted data.
+
+    Parameters
+    ----------
+    num_cases: int
+        Number of cases.
+    series_len: int
+        Length of the series.
+    num_dims: int
+        Number of dimensions.
+
+    Returns
+    -------
+    DataFrame
+    """
     rows_per_case = series_len * num_dims
     total_rows = num_cases * series_len * num_dims
 
