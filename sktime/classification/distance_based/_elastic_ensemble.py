@@ -47,6 +47,8 @@ class ElasticEnsemble(BaseClassifier):
       pages={565--592},
       year={2015}
     }
+    https://link.springer.com/article/10.1007/s10618-014-0361-2
+
     Overview: Input n series length m
     EE contains 11
     An ensemble of elastic nearest neighbor classifiers

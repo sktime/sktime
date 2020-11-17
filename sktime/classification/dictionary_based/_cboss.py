@@ -33,6 +33,8 @@ class ContractableBOSS(BaseClassifier):
           year={2019},
           organization={Springer}
     }
+    https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
+
     Overview: Input n series length m
     cBOSS randomly samples n_parameter_samples parameter sets, evaluating
     each with a LOOCV. It then retains max_ensemble_size classifiers with the

@@ -263,6 +263,19 @@ Composition
     ReducedTimeSeriesRegressionForecaster
     StackingForecaster
 
+Online Forecasting
+------------------
+
+.. currentmodule:: sktime.forecasting.online_forecasting
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    OnlineEnsembleForecaster
+    NormalHedgeEnsemble
+    NNLSEnsemble
+
 Model selection
 ---------------
 
@@ -408,13 +421,13 @@ Shapelet
     ShapeletTransform
     ContractedShapeletTransform
 
-Single-series transformers
---------------------------
+Series transformers
+-------------------
 
 Detrend
 ~~~~~~~
 
-.. currentmodule:: sktime.transformers.single_series.detrend
+.. currentmodule:: sktime.transformers.series.detrend
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -427,7 +440,7 @@ Detrend
 Adapt
 ~~~~~
 
-.. currentmodule:: sktime.transformers.single_series.adapt
+.. currentmodule:: sktime.transformers.series.adapt
 
 .. autosummary::
     :toctree: modules/auto_generated/
@@ -438,13 +451,38 @@ Adapt
 Box-cox
 ~~~~~~~
 
-.. currentmodule:: sktime.transformers.single_series.boxcox
+.. currentmodule:: sktime.transformers.series.boxcox
 
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
 
     BoxCoxTransformer
+
+.. _datasets_ref:
+
+sktime.datasets: Datasets
+=========================
+
+.. currentmodule:: sktime.datasets.base
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: function.rst
+
+    load_airline
+    load_arrow_head
+    load_gunpoint
+    load_osuleaf
+    load_italy_power_demand
+    load_basic_motions
+    load_japanese_vowels
+    load_shampoo_sales
+    load_longley
+    load_lynx
+    load_acsf1
+    load_uschange
+    load_UCR_UEA_dataset
 
 .. _utils_ref:
 
