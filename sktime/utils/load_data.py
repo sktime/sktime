@@ -740,6 +740,7 @@ def load_from_arff_to_dataframe(
     return_separate_X_and_y=True,
     replace_missing_vals_with="NaN",
 ):
+    """Loads data from a .ts file into a Pandas DataFrame."""
     instance_list = []
     class_val_list = []
 
