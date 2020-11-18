@@ -104,6 +104,8 @@ Libraries
      - Contains time series preprocessing, transformation as well as classification techniques
    * - `ruptures <https://github.com/deepcharles/ruptures>`_
      - time series annotation: change point detection, segmentation
+   * - `scikit-fda <https://github.com/GAA-UAM/scikit-fda>`_
+     - A Python library to perform Functional Data Analysis, compatible with scikit-learn, including representation, preprocessing, exploratory analysis and machine learning methods
    * - `scikit-multiflow <https://scikit-multiflow.github.io>`_
      - Extension of scikit-learn to supervised learning of streaming data (dynamic online learning), including regression/classification and change detection
    * - `scikit-survival <https://github.com/sebp/scikit-survival>`_
