@@ -38,12 +38,14 @@ Libraries
      - Feature selection pipeline for `hctsa <https://github.com/benfulcher/hctsa>`_ and the so-called catch22 feature set
    * - `crystalball <https://github.com/heidelbergcement/hcrystalball>`_
      - A python library for forecasting with scikit-learn like API
-   * - `deltapy <https://github.com/firmai/deltapy>`_
-     - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
    * - `darts <https://github.com/unit8co/darts>`_
      - Python collection of time series forecasting tools, from preprocessing to models (uni-/multivariate, prophet, neural networks) and backtesting utilities
    * - `deeptime <https://github.com/deeptime-ml/deeptime>`_
      - Library for unsupervised learning with time series including dimensionality reduction, clustering, and Markov model estimation
+   * - `deltapy <https://github.com/firmai/deltapy>`_
+     - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
+   * - `dtaidistance <https://github.com/wannesm/dtaidistance>`_
+     - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
      - Scipy-based dynamic time warping
    * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
