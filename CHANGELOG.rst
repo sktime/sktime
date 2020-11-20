@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file. We keep tra
 [0.5.0] - 2020-xx-xx
 --------------------
 
+Added
+~~~~~
+* Added mape_loss function @tch
+* Started unit tests for mape_loss and smape_loss functions @tch
+* Removed dependence on pycharm kernel from some of example notebooks @tch
+
 
 [0.4.3] - 2020-10-20
 --------------------
