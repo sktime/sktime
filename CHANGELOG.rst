@@ -8,9 +8,9 @@ All notable changes to this project will be documented in this file. We keep tra
 
 Added
 ~~~~~
-* Added mape_loss function @tch
-* Started unit tests for mape_loss and smape_loss functions @tch
-* Removed dependence on pycharm kernel from some of example notebooks @tch
+* Added mape_loss function (#499) @tch
+* Started unit tests for mape_loss and smape_loss functions (#499) @tch
+* Removed dependencies on pycharm kernel from some of example notebooks @tch
 
 
 [0.4.3] - 2020-10-20

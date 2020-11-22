@@ -13,7 +13,7 @@ from sktime.performance_metrics.tests._config import TEST_YS, TEST_YS_ZERO
 
 
 @pytest.mark.parametrize("test_y", TEST_YS_ZERO)
-def test_all_losses_near_zero(test_y):
+def test_mape_loss_near_zero(test_y):
     # mape should be large when predicitons are close to zero
     y_test = test_y
     y_pred = y_test + 0.001
