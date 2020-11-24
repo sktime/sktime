@@ -25,6 +25,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    contributing
+   roadmap
    mentoring
    code_of_conduct
    governance

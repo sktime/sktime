@@ -38,12 +38,14 @@ Libraries
      - Feature selection pipeline for `hctsa <https://github.com/benfulcher/hctsa>`_ and the so-called catch22 feature set
    * - `crystalball <https://github.com/heidelbergcement/hcrystalball>`_
      - A python library for forecasting with scikit-learn like API
-   * - `deltapy <https://github.com/firmai/deltapy>`_
-     - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
    * - `darts <https://github.com/unit8co/darts>`_
      - Python collection of time series forecasting tools, from preprocessing to models (uni-/multivariate, prophet, neural networks) and backtesting utilities
    * - `deeptime <https://github.com/deeptime-ml/deeptime>`_
      - Library for unsupervised learning with time series including dimensionality reduction, clustering, and Markov model estimation
+   * - `deltapy <https://github.com/firmai/deltapy>`_
+     - Collection of data augmentation tools, including feature extraction from time series, wraps existing toolkits like tsfresh
+   * - `dtaidistance <https://github.com/wannesm/dtaidistance>`_
+     - Time series distances
    * - `dtw <https://github.com/pierre-rouanet/dtw>`_
      - Scipy-based dynamic time warping
    * - `GENDIS <https://github.com/IBCNServices/GENDIS>`_
@@ -104,8 +106,12 @@ Libraries
      - Contains time series preprocessing, transformation as well as classification techniques
    * - `ruptures <https://github.com/deepcharles/ruptures>`_
      - time series annotation: change point detection, segmentation
+   * - `scikit-fda <https://github.com/GAA-UAM/scikit-fda>`_
+     - A Python library to perform Functional Data Analysis, compatible with scikit-learn, including representation, preprocessing, exploratory analysis and machine learning methods
    * - `scikit-multiflow <https://scikit-multiflow.github.io>`_
      - Extension of scikit-learn to supervised learning of streaming data (dynamic online learning), including regression/classification and change detection
+   * - `scikit-survival <https://github.com/sebp/scikit-survival>`_
+     - Survival analysis built on top of scikit-learn
    * - `seasonal <https://github.com/welch/seasonal>`_
      - Toolkit to estimate trends and seasonality in time series
    * - `seqlearn <https://github.com/larsmans/seqlearn>`_
