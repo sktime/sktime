@@ -335,7 +335,6 @@ class Evaluator:
         )
 
         wilcoxon_df = pd.DataFrame()
-        values = np.array([])
         prod = itertools.combinations(metrics_per_estimator_dataset.keys(), 2)
         for p in prod:
             estim_1 = p[0]
@@ -406,7 +405,7 @@ class Evaluator:
         nemenyi = posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
 
-    def fit_runtime(self, unit='s', train_or_test="test", cv_fold="all"):
+    def fit_runtime(self, unit="s", train_or_test="test", cv_fold="all"):
         """
         Calculates the average time for fitting the strategy
 
@@ -414,7 +413,7 @@ class Evaluator:
         ----------
         unit : string (must be either 's' for seconds, 'm' for minutes or 'h' for hours)
             the unit in which the run time will be calculated
-        
+
         Returns
         -------
         run_times: Pandas DataFrame
@@ -435,7 +434,15 @@ class Evaluator:
             )
 
         # load all predictions
-        run_times = pd.DataFrame(columns=['strategy_name','dataset_name','fit_estimator_start_time','fit_estimator_end_time','cv_fold'])
+        run_times = pd.DataFrame(
+            columns=[
+                "strategy_name",
+                "dataset_name",
+                "fit_estimator_start_time",
+                "fit_estimator_end_time",
+                "cv_fold",
+            ]
+        )
         for cv_fold in cv_folds:
             for result in self.results.load_predictions(
                 cv_fold=cv_fold, train_or_test=train_or_test
@@ -447,25 +454,34 @@ class Evaluator:
                 fit_estimator_end_time = result.fit_estimator_end_time
                 predict_estimator_start_time = result.predict_estimator_start_time
                 predict_estimator_end_time = result.predict_estimator_end_time
-                unwrapped = pd.DataFrame({
-                    'strategy_name':[strategy_name],
-                    'dataset_name':[dataset_name],
-                    'fit_estimator_start_time':[fit_estimator_start_time],
-                    'fit_estimator_end_time': [fit_estimator_end_time],
-                    'predict_estimator_start_time':[predict_estimator_start_time],
-                    'predict_estimator_end_time': [predict_estimator_end_time],
-                    'cv_fold': [cv_fold]
-                })
+                unwrapped = pd.DataFrame(
+                    {
+                        "strategy_name": [strategy_name],
+                        "dataset_name": [dataset_name],
+                        "fit_estimator_start_time": [fit_estimator_start_time],
+                        "fit_estimator_end_time": [fit_estimator_end_time],
+                        "predict_estimator_start_time": [predict_estimator_start_time],
+                        "predict_estimator_end_time": [predict_estimator_end_time],
+                        "cv_fold": [cv_fold],
+                    }
+                )
                 run_times = run_times.append(unwrapped, ignore_index=True)
-        
-        #calculate run time difference
-        run_times['fit_runtime'] = (run_times['fit_estimator_end_time'] - run_times['fit_estimator_start_time'])/np.timedelta64(1,unit)
-        run_times['predict_runtime'] = (run_times['predict_estimator_end_time'] - run_times['predict_estimator_start_time'])/np.timedelta64(1,unit)
 
-        return pd.pivot_table(run_times, 
-                                index=['strategy_name','dataset_name'],
-                                values=['fit_runtime', 'predict_runtime'], 
-                                aggfunc={'fit_runtime':np.average, 'predict_runtime': np.average})
+        # calculate run time difference
+        run_times["fit_runtime"] = (
+            run_times["fit_estimator_end_time"] - run_times["fit_estimator_start_time"]
+        ) / np.timedelta64(1, unit)
+        run_times["predict_runtime"] = (
+            run_times["predict_estimator_end_time"]
+            - run_times["predict_estimator_start_time"]
+        ) / np.timedelta64(1, unit)
+
+        return pd.pivot_table(
+            run_times,
+            index=["strategy_name", "dataset_name"],
+            values=["fit_runtime", "predict_runtime"],
+            aggfunc={"fit_runtime": np.average, "predict_runtime": np.average},
+        )
         #         # compute metric
         #         mean, stderr = metric.compute(y_true, y_pred)
 
