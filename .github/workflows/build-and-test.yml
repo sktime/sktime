@@ -34,20 +34,20 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
+    - name: set-up-python
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Display Python version
+    - name: display-python-version
       run: python -c "import sys; print(sys.version)"
-    - name: Install OS packages
+    - name: install-extra-os-packages
       run: brew install libomp
-    - name: Install dependencies
+    - name: install-dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r build_tools/requirements.txt
         pip install coverage codecov pytest-cov
-    - name: Build wheel
+    - name: build-wheel
       run: |
         export CC=/usr/bin/clang
         export CXX=/usr/bin/clang++
@@ -58,9 +58,9 @@ jobs:
         export DYLD_LIBRARY_PATH=/usr/local/opt/libomp/lib
         export PATH="/usr/local/opt/ccache/libexec:$PATH"
         python setup.py sdist bdist_wheel
-    - name: Install from wheel
+    - name: install-from-wheel
       run: pip install --pre --no-index --no-deps --find-links dist/ sktime
-    - name: Run tests
+    - name: run-tests
       run: |
         mkdir -p testdir/
         cp .coveragerc testdir/
@@ -68,11 +68,11 @@ jobs:
         cd testdir/
         pytest --showlocals --durations=10 --pyargs -cov-report=xml --cov=sktime sktime
         cd ..
-    - name: Publish code coverage
-      uses: codecov/codecov-action@v1
-      with:
-        directory: testdir
-    - name: Upload to PyPI
+    - name: publish-code-cov
+      run: |
+        cp testdir/.coverage .
+        bash <(curl -s https://codecov.io/bash) -s testdir || echo "Codecov upload failed"
+    - name: deploy-to-pypi
       if: startsWith(github.ref, 'refs/tags/v')
       env:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
