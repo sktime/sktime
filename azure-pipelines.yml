@@ -20,9 +20,9 @@ pr:
   autoCancel: true
 
 stages:
-  - stage: 'Linting'
+  - stage: 'code-quality'
     jobs:
-      - job: 'Linting'
+      - job: 'linting'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -37,11 +37,11 @@ stages:
             inputs:
               filePath: maint_tools/linting.sh
 
-  - stage: 'Build'
-    dependsOn: 'Linting'
-    condition: succeeded('Linting')
+  - stage: 'build'
+    dependsOn: 'code-quality'
+    condition: succeeded('code-quality')
     jobs:
-      - job: 'check_soft_dependencies'
+      - job: 'check-soft-dependencies'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -75,11 +75,11 @@ stages:
               PYTHON_ARCHITECTURE: x86
 
 
-  - stage: 'Deploy'
-    dependsOn: 'Build'
-    condition: and(succeeded('Build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  - stage: 'deploy'
+    dependsOn: 'build'
+    condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
     jobs:
-      - job: 'deploy_to_pypi'
+      - job: 'upload-to-pypi'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
