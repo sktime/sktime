@@ -9,8 +9,23 @@ on:
       - master
 
 jobs:
-  build:
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - id: file_changes
+        uses: trilom/file-changes-action@v1.2.4
+        with:
+          output: ' '
+      - name: "List changed files"
+        run: echo '${{ steps.file_changes.outputs.files}}'
+      - uses: pre-commit/action@v2.0.0
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files}}
 
+  build:
+    needs: code-quality
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -25,6 +40,8 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: display-python-version
       run: python -c "import sys; print(sys.version)"
+    - name: install-extra-os-packages
+      run: brew install libomp
     - name: install-dependencies
       run: |
         python -m pip install --upgrade pip
@@ -32,7 +49,6 @@ jobs:
         pip install coverage codecov pytest-cov
     - name: build-wheel
       run: |
-        # enable OpenMP support for Apple-clang
         export CC=/usr/bin/clang
         export CXX=/usr/bin/clang++
         export CPPFLAGS="$CPPFLAGS -Xpreprocessor -fopenmp"
