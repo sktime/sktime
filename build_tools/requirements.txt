@@ -9,3 +9,4 @@ scikit-learn==0.23.*
 scikit-posthocs
 statsmodels>=0.12.*
 tsfresh
+wheel
