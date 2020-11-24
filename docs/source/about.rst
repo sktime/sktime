@@ -127,4 +127,4 @@ initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 Infrastructure support
 ----------------------
 
-We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-gb/services/devops/>`_, `Travis Cl <https://travis-ci.org/>`_, and `AppVeyor <https://www.appveyor.com>`_, `ReadtheDocs <https://readthedocs.org>`_ for the free computing time on their Continuous Integration servers.
+We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-gb/services/devops/>`_, `GitHub Actions <https://docs.github.com/en/free-pro-team@latest/actions>`_, and `AppVeyor <https://www.appveyor.com>`_, `ReadtheDocs <https://readthedocs.org>`_ for the free computing time on their Continuous Integration servers.
