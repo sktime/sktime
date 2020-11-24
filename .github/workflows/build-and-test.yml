@@ -31,7 +31,6 @@ jobs:
       matrix:
         os: [macos-latest]
         python-version: [3.6, 3.7, 3.8]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python
@@ -46,7 +45,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r build_tools/requirements.txt
-        pip install coverage codecov pytest-cov
+        pip install pytest-cov
     - name: Build wheel
       run: |
         export CC=/usr/bin/clang
@@ -66,14 +65,12 @@ jobs:
         cp .coveragerc testdir/
         cp setup.cfg testdir/
         cd testdir/
-        pytest --showlocals --durations=10 --pyargs -cov-report=xml --cov=sktime sktime
+        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime/benchmarking/
         ls -l
-        cd ..
     - name: Publish code coverage
       uses: codecov/codecov-action@v1
       with:
         directory: ./testdir/
-        verbose: true
     - name: Upload to PyPI
       if: startsWith(github.ref, 'refs/tags/v')
       env:
