@@ -65,7 +65,7 @@ jobs:
         cp .coveragerc testdir/
         cp setup.cfg testdir/
         cd testdir/
-        pytest --showlocals --durations=10 --pyargs --cov-report=xml --cov=sktime sktime/benchmarking/
+        pytest --cov-report=xml --cov=sktime sktime/benchmarking
         ls -l
     - name: Publish code coverage
       uses: codecov/codecov-action@v1
