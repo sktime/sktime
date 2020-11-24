@@ -4,9 +4,12 @@
 name: code-quality
 
 on:
-  pull_request:
   push:
-    branches: [ master ]
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 # run against all files
 #jobs:
