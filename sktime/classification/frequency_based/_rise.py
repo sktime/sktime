@@ -161,6 +161,13 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
         # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
 
+    @property
+    def feature_importances_(self):
+        raise NotImplementedError(
+            "The impurity-based feature importances of "
+            "RandomIntervalSpectralForest is currently not supported."
+        )
+
     def fit(self, X, y):
         """
         Build a forest of trees from the training set (X, y) using random
@@ -340,10 +347,10 @@ def acf(x, max_lag):
         y[lag - 1] = y[lag - 1] / (length - lag)
         v1 = ss1 / (length - lag) - s1 * s1
         v2 = ss2 / (length - lag) - s2 * s2
-        if v1 <= 0.000000001 and v2 <= 0.000000001:  # Both zero variance,
+        if v1 <= 1e-9 and v2 <= 1e-9:  # Both zero variance,
             # so must be 100% correlated
             y[lag - 1] = 1
-        elif v1 <= 0.000000001 or v2 <= 0.000000001:  # One zero variance
+        elif v1 <= 1e-9 or v2 <= 1e-9:  # One zero variance
             # the other not
             y[lag - 1] = 0
         else:
