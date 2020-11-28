@@ -27,7 +27,7 @@ class AutoCorrelationFunctionTransformer(_SeriesToSeriesTransformer):
         self.missing = missing
         super(AutoCorrelationFunctionTransformer, self).__init__()
         
-        def transform(self, Z, X=None):
+     def transform(self, Z, X=None):
         
         self.check_is_fitted()
         x = check_series(Z)
