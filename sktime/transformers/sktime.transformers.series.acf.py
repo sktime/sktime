@@ -32,7 +32,9 @@ class AutoCorrelationFunctionTransformer(_SeriesToSeriesTransformer):
         
         self.check_is_fitted()
         x = check_series(Z)
-        zt = acf(x, self.unbiased, self.nlags, self.qstat, self.fft, self.alpha, self.missing)
+        zt = acf(
+            x, self.unbiased, self.nlags, self.qstat, self.fft, self.alpha, self.missing
+        )
         return zt
     
     
