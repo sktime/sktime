@@ -49,8 +49,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     distance function.
 
     For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/TDE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/TDE.java
 
 
     Parameters
