@@ -1170,42 +1170,56 @@ class ProximityTree(BaseClassifier):
 
 class ProximityForest(BaseClassifier):
     """
-        Proximity Forest class to model a decision tree forest which uses
-        distance measures to
-        partition data.
+    Proximity Forest class to model a decision tree forest which uses
+    distance measures to partition data, see [1].
 
-    @article{lucas19proximity,
 
-      title={Proximity Forest: an effective and scalable distance-based
-      classifier for time series},
-      author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
-      Zaidi and B. Goethals and F. Petitjean and G. Webb},
-      journal={Data Mining and Knowledge Discovery},
-      volume={33},
-      number={3},
-      pages={607--635},
-      year={2019}
-      }
+    Parameters
+    __________
+    random_state: random, default = None
+        seed for reproducibility
+    n_estimators : int, default=100
+        The number of trees in the forest.
+    distance_measure: default = None
+    get_distance_measure: default=None,
+        distance measure getters
+    get_exemplars: default=get_one_exemplar_per_class_proximity,
+    get_gain: default=gini_gain,
+            function to score the quality of a split
+    verbosity: default=0,
+            logging verbosity
+    max_depth: default=np.math.inf,
+    is_leaf: default=pure,
+    n_jobs: default=int, 1,
+        number of jobs to run in parallel *across threads"
+    n_stump_evaluations: int, default=5,
+    find_stump: default=None,
+        function to find the best split of data
+    setup_distance_measure_getter=setup_all_distance_measure_getter,
+    setup_distance_measure_getter: function to setup the distance
+
+    Attributes
+    __________
+
+    label_encoder: label encoder to change string labels to numeric indices
+    classes_: unique list of classes
+    get_exemplars: function to extract exemplars from a dataframe and
+           class value list
+    max_depth: max tree depth
+    X: train data
+    y: train data labels
+    trees: list of trees in the forest
+
+    Notes
+    _____
+    ..[1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
+      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
       https://arxiv.org/abs/1808.10594
+    Java wrapper of authors original
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/ProximityForestWrapper.java
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/proximity/ProximityForest.java
 
-        Attributes:
-            label_encoder: label encoder to change string labels to numeric indices
-            classes_: unique list of classes
-            random_state: the random state
-            get_exemplars: function to extract exemplars from a dataframe and
-            class value list
-            setup_distance_measure_getter: function to setup the distance
-            measure getters from dataframe and class value list
-            get_distance_measure: distance measure getters
-            distance_measure: distance measures
-            get_gain: function to score the quality of a split
-            verbosity: logging verbosity
-            n_jobs: number of jobs to run in parallel *across threads"
-            find_stump: function to find the best split of data
-            max_depth: max tree depth
-            X: train data
-            y: train data labels
-            trees: list of trees in the forest
     """
 
     def __init__(

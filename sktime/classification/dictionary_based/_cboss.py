@@ -21,19 +21,7 @@ from sktime.utils.validation.panel import check_X_y
 
 class ContractableBOSS(BaseClassifier):
     """Contractable Bag of SFA Symbols (cBOSS)
-
-    @inproceedings{middlehurst2019scalable,
-          title={Scalable dictionary classifiers for time series
-          classification},
-          author={Middlehurst, Matthew and Vickers, William and Bagnall,
-          Anthony},
-          booktitle={International Conference on Intelligent Data Engineering
-          and Automated Learning},
-          pages={11--19},
-          year={2019},
-          organization={Springer}
-    }
-    https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
+    implementation of BOSS from [1] with refinements described in [2]
 
     Overview: Input n series length m
     cBOSS randomly samples n_parameter_samples parameter sets, evaluating
@@ -53,9 +41,6 @@ class ContractableBOSS(BaseClassifier):
 
     predict uses 1 nearest neighbour with a bespoke distance function.
 
-    For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/cBOSS.java
 
 
     Parameters
@@ -81,6 +66,23 @@ class ContractableBOSS(BaseClassifier):
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
     weights                 : weight of each classifier in the ensemble
+
+    See Also
+    --------
+    BOSSEnsemble
+
+    Notes
+    __________
+    ..[1] Patrick Schäfer, "The BOSS is concerned with time series classification
+            in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+            https://link.springer.com/article/10.1007/s10618-014-0377-7
+    ..[2] Matthew Middlehurst, William Vickers and Anthony Bagnall "Scalable Dictionary
+            Classifiers for Time Series Classification", in proc 20th International
+            Conference on Intelligent Data Engineering and Automated Learning,LNCS, volume 11871
+            https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
+    For the Java version, see
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/cBOSS.java
+
 
     """
 

@@ -80,21 +80,9 @@ def _predict_proba_for_estimator(X, estimator, intervals):
 
 
 class TimeSeriesForest(ForestClassifier, BaseClassifier):
-    """Time-Series Forest Classifier.
+    """Time series forest classifier.
 
-    TimeSeriesForest: Implementation of Deng's Time Series Forest,
-    with minor changes
-    @article
-    {deng13forest,
-     author = {H.Deng and G.Runger and E.Tuv and M.Vladimir},
-     title = {A time series forest for classification and feature
-     extraction},
-     journal = {Information Sciences},
-     volume = {239},
-     year = {2013}
-    }
-    https://arxiv.org/abs/1302.2277
-
+   A time series forest is an ensemble of decision trees built on random intervals.
     Overview: Input n series length m
     for each tree
         sample sqrt(m) intervals
@@ -104,12 +92,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     ensemble the trees with averaged probability estimates
 
     This implementation deviates from the original in minor ways. It samples
-    intervals with replacement and
-    does not use the splitting criteria tiny refinement described in
-    deng13forest. This is an intentionally
-    stripped down, non configurable version for use as a hive-cote
-    component. For a configurable tree based
-    ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    intervals with replacement and does not use the splitting criteria tiny
+    refinement described in [1]. This is an intentionally stripped down, non configurable version for use as a hive-cote
+    component. For a configurable tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
     TO DO: handle missing values, unequal length series and multivariate
     problems
@@ -136,6 +121,15 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     indexes of all start and end points for all classifiers
     dim_to_use     : int, the column of the panda passed to use (can be
     passed a multidimensional problem, but will only use one)
+
+    References
+    ----------
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for classification and feature
+     extraction",Information Sciences, 239, 2013
+    Java implementation
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/interval_based/TSF.java
+    Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+
 
     """
 
