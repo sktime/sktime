@@ -130,8 +130,6 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/interval_based/TSF.java
     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
 
-    Examples
-    ----------
 
     """
 

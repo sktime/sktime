@@ -26,16 +26,9 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
-    """WEASEL+MUSE (MUltivariate Symbolic Extension)
-
-    MUSE: implementation of MUSE from Schäfer:
-    @article{schafer2018multivariate,
-      title={Multivariate time series classification with WEASEL+MUSE},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
-      journal={3rd ECML/PKDD Workshop on AALTD},
-      year={2018}
-    }
-    https://arxiv.org/abs/1711.11343
+    """
+    WEASEL+MUSE (MUltivariate Symbolic Extension)
+    MUSE: implementation of multivariate version of WEASEL, referred to as just MUSE from [1]
 
     # Overview: Input n series length m
     # WEASEL+MUSE is a multivariate  dictionary classifier that builds a
@@ -82,6 +75,17 @@ class MUSE(BaseClassifier):
     Attributes
     ----------
 
+    See Also
+    ________
+    WEASEL
+
+    Notes
+    -----
+    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification with WEASEL+MUSE",
+        in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
+    https://arxiv.org/abs/1711.11343
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/multivariate/WEASEL_MUSE.java
 
     """
 
