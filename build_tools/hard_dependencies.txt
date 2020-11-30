@@ -1,0 +1,6 @@
+cython>=0.29.0
+numba==0.50.*
+pandas>=1.0.0
+scikit-learn==0.23.*
+statsmodels>=0.12.*
+wheel

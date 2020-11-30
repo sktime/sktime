@@ -3,43 +3,33 @@
 dictionary based classifier based on SFA transform, BOSS and linear regression.
 """
 
-__author__ = "Patrick Schäfer"
+__author__ = ["Patrick Schäfer", "Arik Ermshaus"]
 __all__ = ["WEASEL"]
 
 import math
-
 import numpy as np
 from numba import njit
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
-from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
+from joblib import Parallel, delayed
 
+from sktime.classification.base import BaseClassifier
+from sktime.transformers.panel.dictionary_based import SFA
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 # from sklearn.feature_selection import chi2
-
 # from numba.typed import Dict
 
 
 class WEASEL(BaseClassifier):
-    """Word ExtrAction for time SEries cLassification (WEASEL)
+    """
+    Word ExtrAction for time SEries cLassification (WEASEL) from [1].
 
-    WEASEL: implementation of WEASEL from Schäfer:
-    @inproceedings{schafer2017fast,
-      title={Fast and Accurate Time Series Classification with WEASEL},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
-      booktitle={Proceedings of the 2017 ACM on Conference on Information and
-                 Knowledge Management},
-      pages={637--646},
-      year={2017}
-    }
     # Overview: Input n series length m
     # WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
     # for different window lengths and learns a logistic regression classifier
@@ -91,10 +81,10 @@ class WEASEL(BaseClassifier):
         WEASEL create a BoP model for each window sizes. This is the
         increment used to determine the next window size.
 
-    chi2_threshold:      int, default = -1 (disabled by default)
+    p_threshold:      int, default = 0.05 (disabled by default)
         Feature selection is applied based on the chi-squared test.
-        This is the threshold to use for chi-squared test on bag-of-words
-        (higher means more strict). Negative values indicate that the test
+        This is the p-value threshold to use for chi-squared test on bag-of-words
+        (lower means more strict). 1 indicates that the test
         should not be performed.
 
     random_state:        int or None,
@@ -103,6 +93,19 @@ class WEASEL(BaseClassifier):
     Attributes
     ----------
 
+    Notes
+    -----
+
+    ..[1]  Patrick Schäfer and Ulf Leser,      :
+    @inproceedings{schafer2017fast,
+      title={Fast and Accurate Time Series Classification with WEASEL},
+      author={Sch{\"a}fer, Patrick and Leser, Ulf},
+      booktitle={Proceedings of the 2017 ACM on Conference on Information and
+                 Knowledge Management},
+      pages={637--646},
+      year={2017}
+    }
+    https://dl.acm.org/doi/10.1145/3132847.3132980
 
     """
 
@@ -111,28 +114,29 @@ class WEASEL(BaseClassifier):
         anova=True,
         bigrams=True,
         binning_strategy="information-gain",
-        window_inc=4,
-        chi2_threshold=-1,  # disabled by default
+        window_inc=2,
+        p_threshold=0.05,
+        n_jobs=1,
         random_state=None,
     ):
 
-        # currently other values than 4 are not supported.
+        # currently greater values than 4 are not supported.
         self.alphabet_size = 4
 
         # feature selection is applied based on the chi-squared test.
-        self.chi2_threshold = chi2_threshold
+        self.p_threshold = p_threshold
 
         self.anova = anova
 
-        self.norm_options = [True, False]
+        self.norm_options = [False]
         self.word_lengths = [4, 6]
 
         self.bigrams = bigrams
         self.binning_strategy = binning_strategy
         self.random_state = random_state
 
-        self.min_window = 4
-        self.max_window = 350
+        self.min_window = 6
+        self.max_window = 100
 
         self.window_inc = window_inc
         self.highest_bit = -1
@@ -143,7 +147,7 @@ class WEASEL(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
-        self.best_word_length = -1
+        self.n_jobs = n_jobs
 
         super(WEASEL, self).__init__()
 
@@ -171,12 +175,15 @@ class WEASEL(BaseClassifier):
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
 
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
-        rng = check_random_state(self.random_state)
 
-        all_words = [dict() for x in range(len(X))]
+        def _parallel_fit(
+            window_size,
+        ):
+            rng = check_random_state(window_size)
+            all_words = [dict() for x in range(len(X))]
+            relevant_features_count = 0
 
-        for window_size in self.window_sizes:
-
+            # for window_size in self.window_sizes:
             transformer = SFA(
                 word_length=rng.choice(self.word_lengths),
                 alphabet_size=self.alphabet_size,
@@ -193,40 +200,54 @@ class WEASEL(BaseClassifier):
 
             sfa_words = transformer.fit_transform(X, y)
 
-            self.SFA_transformers.append(transformer)
-            bag = sfa_words[0]  # .iloc[:, 0]
+            # self.SFA_transformers.append(transformer)
+            bag = sfa_words[0]
+            apply_chi_squared = self.p_threshold < 1
 
             # chi-squared test to keep only relevant features
-            relevant_features = {}
-            apply_chi_squared = self.chi2_threshold > 0
             if apply_chi_squared:
-                bag_vec = DictVectorizer(sparse=False).fit_transform(bag)
+                vectorizer = DictVectorizer(sparse=True, dtype=np.int32, sort=False)
+                bag_vec = vectorizer.fit_transform(bag)
+
                 chi2_statistics, p = chi2(bag_vec, y)
-                relevant_features = np.where(chi2_statistics >= self.chi2_threshold)[0]
+                relevant_features_idx = np.where(p <= self.p_threshold)[0]
+                relevant_features = set(
+                    np.array(vectorizer.feature_names_)[relevant_features_idx]
+                )
+                relevant_features_count += len(relevant_features_idx)
 
-            # merging bag-of-patterns of different window_sizes
-            # to single bag-of-patterns with prefix indicating
-            # the used window-length
-            for j in range(len(bag)):
-                for (key, value) in bag[j].items():
-                    # chi-squared test
-                    if (not apply_chi_squared) or (key in relevant_features):
-                        # append the prefices to the words to
-                        # distinguish between window-sizes
-                        if isinstance(key, tuple):
-                            word = (
-                                ((key[0] << self.highest_bit) | key[1]) << 3
-                            ) | window_size
-                        else:
-                            # word = ((key << self.highest_bit) << 3) \
-                            #        | window_size
+                # merging bag-of-patterns of different window_sizes
+                # to single bag-of-patterns with prefix indicating
+                # the used window-length
+                for j in range(len(bag)):
+                    for (key, value) in bag[j].items():
+                        # chi-squared test
+                        if (not apply_chi_squared) or (key in relevant_features):
+                            # append the prefixes to the words to
+                            # distinguish between window-sizes
                             word = WEASEL.shift_left(key, self.highest_bit, window_size)
+                            all_words[j][word] = value
 
-                        all_words[j][word] = value
+                return all_words, transformer, relevant_features_count
+
+        parallel_res = Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_fit)(window_size) for window_size in self.window_sizes
+        )  # , verbose=self.verbose
+
+        relevant_features_count = 0
+        all_words = [dict() for x in range(len(X))]
+
+        for sfa_words, transformer, rel_features_count in parallel_res:
+            self.SFA_transformers.append(transformer)
+            relevant_features_count += rel_features_count
+
+            for idx, bag in enumerate(sfa_words):
+                for word, count in bag.items():
+                    all_words[idx][word] = count
 
         self.clf = make_pipeline(
-            DictVectorizer(sparse=False),
-            StandardScaler(with_mean=True, copy=False),
+            DictVectorizer(sparse=True, sort=False),
+            # StandardScaler(copy=False),
             LogisticRegression(
                 max_iter=5000,
                 solver="liblinear",
@@ -237,6 +258,7 @@ class WEASEL(BaseClassifier):
             ),
         )
 
+        # print("Size of dict", relevant_features_count)
         self.clf.fit(all_words, y)
         self._is_fitted = True
         return self
@@ -251,6 +273,7 @@ class WEASEL(BaseClassifier):
     def predict_proba(self, X):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+
         bag = self._transform_words(X)
         return self.clf.predict_proba(bag)
 
@@ -259,11 +282,10 @@ class WEASEL(BaseClassifier):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
         bag_all_words = [dict() for _ in range(len(X))]
-        for i, window_size in enumerate(self.window_sizes):
-
+        for transformer in self.SFA_transformers:
             # SFA transform
-            sfa_words = self.SFA_transformers[i].transform(X)
-            bag = sfa_words[0]  # .iloc[:, 0]
+            sfa_words = transformer.transform(X)
+            bag = sfa_words[0]
 
             # merging bag-of-patterns of different window_sizes
             # to single bag-of-patterns with prefix indicating
@@ -272,27 +294,20 @@ class WEASEL(BaseClassifier):
                 for (key, value) in bag[j].items():
                     # append the prefices to the words to distinguish
                     # between window-sizes
-                    if isinstance(key, tuple):
-                        word = (
-                            ((key[0] << self.highest_bit) | key[1]) << 3
-                        ) | window_size
-                    else:
-                        # word = ((key << self.highest_bit) << 3) | window_size
-                        word = WEASEL.shift_left(key, self.highest_bit, window_size)
-
+                    word = WEASEL.shift_left(
+                        key, self.highest_bit, transformer.window_size
+                    )
                     bag_all_words[j][word] = value
 
         return bag_all_words
 
     def compute_window_inc(self):
         win_inc = self.window_inc
-        if self.series_length < 50:
-            win_inc = 1  # less than 50 is ok time-wise
-        elif self.series_length < 100:
-            win_inc = min(self.window_inc, 2)  # less than 50 is ok time-wise
+        if self.series_length < 100:
+            win_inc = 1  # less than 100 is ok runtime-wise
         return win_inc
 
     @staticmethod
-    @njit(fastmath=True, cache=True)
+    @njit("int64(int64,int64,int64)", fastmath=True, cache=True)
     def shift_left(key, highest_bit, window_size):
-        return ((key << highest_bit) << 3) | window_size
+        return (key << highest_bit) | window_size

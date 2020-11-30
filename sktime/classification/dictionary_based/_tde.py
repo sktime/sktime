@@ -16,18 +16,14 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.series_as_features.dictionary_based import SFA
-from sktime.utils.validation.series_as_features import check_X
-from sktime.utils.validation.series_as_features import check_X_y
-
-
-# TO DO: Make more efficient
+from sktime.transformers.panel.dictionary_based import SFA
+from sktime.utils.validation.panel import check_X
+from sktime.utils.validation.panel import check_X_y
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
-    """Temporal Dictionary Ensemble (TDE)
-
-    todo: add bibtex when published
+    """
+    Temporal Dictionary Ensemble (TDE) as described in [1].
 
     Overview: Input n series length m
     TDE searches k parameter values selected using a Gaussian processes
@@ -49,11 +45,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     each series is formed and stored, using a spatial pyramid of h levels.
     fit involves finding n histograms.
 
-    predict uses 1 nearest neighbour with a bespoke distance function.
+    predict uses 1 nearest neighbour with a the histogram intersection
+    distance function.
 
-    For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/TDE.java
+    For the original Java version, see
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/TDE.java
 
 
     Parameters
@@ -82,12 +78,22 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     prev_parameters_x       : parameter value of previous classifiers for GP
     prev_parameters_y       : accuracy of previous classifiers for GP
 
+    Notes
+    -----
+    ..[1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
+        "The Temporal Dictionary Ensemble {(TDE)} Classifier for Time Series Classification",
+            in proceedings of the European Conference on Machine Learning and
+            Principles and Practice of Knowledge Discovery in Databases, 2020
+    https://ueaeprints.uea.ac.uk/id/eprint/75490/
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/TDE.java
+
     """
 
     def __init__(
         self,
         n_parameter_samples=250,
-        max_ensemble_size=100,
+        max_ensemble_size=50,
         time_limit=0.0,
         max_win_len_prop=1,
         min_window=10,

@@ -5,15 +5,11 @@ __all__ = [
     "check_y_X",
     "check_fh",
     "check_cv",
-    "check_window_length",
     "check_step_length",
-    "check_time_index",
-    "check_equal_time_index",
     "check_alpha",
     "check_cutoffs",
     "check_scoring",
     "check_sp",
-    "SUPPORTED_INDEX_TYPES",
 ]
 __author__ = ["Markus Löning", "@big-o"]
 
@@ -21,8 +17,8 @@ import numpy as np
 import pandas as pd
 
 from sktime.utils.validation import is_int
-
-SUPPORTED_INDEX_TYPES = (pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex)
+from sktime.utils.validation.series import check_equal_time_index
+from sktime.utils.validation.series import check_series
 
 
 def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
@@ -51,8 +47,34 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
     return y, X
 
 
+def check_X(X, allow_empty=False, enforce_univariate=False):
+    """Validate input data.
+
+    Parameters
+    ----------
+    X : pd.Series, pd.DataFrame, np.ndarray
+    allow_empty : bool, optional (default=False)
+        If True, empty `y` raises an error.
+
+    Returns
+    -------
+    y : pd.Series, pd.DataFrame
+        Validated input data.
+
+    Raises
+    ------
+    ValueError, TypeError
+        If y is an invalid input
+    """
+    # Check if pandas series or numpy array
+    return check_series(
+        X, enforce_univariate=enforce_univariate, allow_empty=allow_empty
+    )
+
+
 def check_y(y, allow_empty=False, allow_constant=True):
     """Validate input data.
+
     Parameters
     ----------
     y : pd.Series
@@ -70,16 +92,14 @@ def check_y(y, allow_empty=False, allow_constant=True):
     ValueError, TypeError
         If y is an invalid input
     """
-    # Check if pandas series or numpy array
-    if not isinstance(y, pd.Series):
-        raise TypeError(f"`y` must be a pandas Series, but found type: {type(y)}")
+    y = check_series(
+        y, enforce_univariate=True, allow_empty=allow_empty, allow_numpy=False
+    )
 
     if not allow_constant:
         if np.all(y == y.iloc[0]):
             raise ValueError("All values of `y` are the same.")
 
-    # check time index
-    check_time_index(y.index, allow_empty=allow_empty)
     return y
 
 
@@ -103,82 +123,22 @@ def check_cv(cv):
     return cv
 
 
-def check_time_index(index, allow_empty=False):
-    """Check time index.
-
+def check_step_length(step_length):
+    """Validate window length.
     Parameters
     ----------
-    index : pd.Index or np.array
-        Time index
-    allow_empty : bool, optional (default=False)
-        If True, empty `index` raises an error.
+    step_length : step length for data set.
 
     Returns
-    -------
-    time_index : pd.Index
-        Validated time index
-    """
-    if isinstance(index, np.ndarray):
-        index = pd.Index(index)
-
-    # period or datetime index are not support yet
-    if not type(index) in SUPPORTED_INDEX_TYPES:
-        raise NotImplementedError(
-            f"{type(index)} is not supported, use "
-            f"one of {SUPPORTED_INDEX_TYPES} instead."
-        )
-
-    # check time index is ordered in time
-    if not index.is_monotonic:
-        raise ValueError(
-            f"The (time) index must be sorted (monotonically increasing), "
-            f"but found: {index}"
-        )
-
-    # check that series is not empty
-    if not allow_empty and len(index) < 1:
-        raise ValueError(
-            f"`index` must contain at least some values, but found "
-            f"empty index: {index}."
-        )
-
-    return index
-
-
-def check_X(X):
-    """Validate input data.
-
-    Parameters
     ----------
-    X : pandas.DataFrame
-
-    Returns
-    -------
-    X : pandas.DataFrame
+    step_length : int
+        if step_length in not none and is int and greater than or equal to 1.
 
     Raises
-    ------
+    ----------
     ValueError
-        If y is an invalid input
+        if step_length is negative or not an integer or is None.
     """
-    if not isinstance(X, pd.DataFrame):
-        raise ValueError(f"`X` must a pd.DataFrame, but found: {type(X)}")
-    return X
-
-
-def check_window_length(window_length):
-    """Validate window length"""
-    if window_length is not None:
-        if not is_int(window_length) or window_length < 1:
-            raise ValueError(
-                f"`window_length_` must be a positive integer >= 1 or None, "
-                f"but found: {window_length}"
-            )
-    return window_length
-
-
-def check_step_length(step_length):
-    """Validate window length"""
     if step_length is not None:
         if not is_int(step_length) or step_length < 1:
             raise ValueError(
@@ -241,31 +201,6 @@ def check_fh(fh, enforce_relative=False):
     return fh
 
 
-def check_equal_time_index(*ys):
-    """Check that time series have the same (time) indices.
-
-    Parameters
-    ----------
-    ys : pd.Series or pd.DataFrame
-        One or more time series
-
-    Raises
-    ------
-    ValueError
-        If (time) indices are not the same
-    """
-
-    # only validate indices if data is passed as pd.Series
-    first_index = ys[0].index
-    check_time_index(first_index)
-
-    for y in ys[1:]:
-        check_time_index(y.index)
-
-        if not first_index.equals(y.index):
-            raise ValueError("Some (time) indices are not the same.")
-
-
 def check_alpha(alpha):
     """Check that a confidence level alpha (or list of alphas) is valid.
     All alpha values must lie in the open interval (0, 1).
@@ -298,6 +233,23 @@ def check_alpha(alpha):
 
 
 def check_cutoffs(cutoffs):
+    """Validates the cutoff
+
+    Parameters
+    ----------
+    cutoffs : np.ndarray or pd.Index
+
+    Returns
+    ----------
+    cutoffs (Sorted array)
+
+    Raises
+    ----------
+    ValueError
+        If cutoffs is not a instance of np.array or pd.Index
+        If cutoffs array is empty.
+
+    """
     if not isinstance(cutoffs, (np.ndarray, pd.Index)):
         raise ValueError(
             f"`cutoffs` must be a np.array or pd.Index, " f"but found: {type(cutoffs)}"
@@ -311,6 +263,26 @@ def check_cutoffs(cutoffs):
 
 
 def check_scoring(scoring):
+    """
+    Validates the performace scoring
+
+    Parameters
+    ----------
+    scoring : object of class MetricFunctionWrapper from sktime.permormance_metrics.
+
+    Returns
+    ----------
+    scoring : object of class MetricFunctionWrapper of sktime.permormance_metrics.
+    sMAPE(mean percentage error)
+        if the object is None.
+
+    Raises
+    ----------
+    TypeError
+        if object is not callable from current scope.
+        if object is not an instance of class MetricFunctionWrapper of
+        sktime.permormance_metrics.
+    """
     from sktime.performance_metrics.forecasting._classes import MetricFunctionWrapper
     from sktime.performance_metrics.forecasting import sMAPE
 

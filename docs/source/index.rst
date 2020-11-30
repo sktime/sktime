@@ -25,6 +25,7 @@ From here, you can navigate to:
    :maxdepth: 1
 
    contributing
+   roadmap
    mentoring
    code_of_conduct
    governance
@@ -35,3 +36,4 @@ From here, you can navigate to:
 
    about
    contributors
+   related_software

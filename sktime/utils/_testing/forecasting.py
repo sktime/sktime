@@ -45,35 +45,53 @@ def get_expected_index_for_update_predict(y, fh, step_length):
     return np.unique(pred_index)
 
 
-def _make_series(n_timepoints=75, all_positive=True, non_zero_index=False):
-    """Helper function to generate single time series"""
-    series = np.random.normal(size=n_timepoints)
-    if all_positive:
-        series -= np.min(series) - 1
-    index = np.arange(n_timepoints)
-    if non_zero_index:
-        index += 30
-    return pd.Series(series, index=pd.Int64Index(index))
-
-
 def _generate_polynomial_series(n, order, coefs=None):
     """Helper function to generate polynomial series of given order and
     coefficients"""
     if coefs is None:
         coefs = np.ones((order + 1, 1))
-
     x = np.vander(np.arange(n), N=order + 1).dot(coefs)
     return x.ravel()
 
 
-def make_forecasting_problem(n_timepoints=50, index_type="int", random_state=None):
+def make_forecasting_problem(
+    n_timepoints=50, n_columns=1, all_positive=True, index_type=None, random_state=None
+):
+    return _make_series(
+        n_timepoints=n_timepoints,
+        n_columns=n_columns,
+        all_positive=all_positive,
+        index_type=index_type,
+        random_state=random_state,
+    )
+
+
+def _make_series(
+    n_timepoints=50,
+    n_columns=1,
+    all_positive=True,
+    index_type=None,
+    return_numpy=False,
+    random_state=None,
+):
+    """Helper function to generate univariate or multivariate time series"""
     rng = check_random_state(random_state)
-    values = rng.random(size=n_timepoints)
-    index = _make_index(len(values), index_type)
-    return pd.Series(values, index)
+    data = rng.normal(size=(n_timepoints, n_columns))
+    if all_positive:
+        data -= np.min(data, axis=0) - 1
+    if return_numpy:
+        if n_columns == 1:
+            data = data.ravel()
+        return data
+    else:
+        index = _make_index(n_timepoints, index_type)
+        if n_columns == 1:
+            return pd.Series(data.ravel(), index)
+        else:
+            return pd.DataFrame(data, index)
 
 
-def _make_index(n_timepoints, index_type="int"):
+def _make_index(n_timepoints, index_type=None):
     """Helper function to make indices for unit testing"""
 
     if index_type == "period":
@@ -82,7 +100,7 @@ def _make_index(n_timepoints, index_type="int"):
         return pd.period_range(start=start, periods=n_timepoints, freq=freq)
 
     elif index_type == "datetime":
-        start = "2000-01"
+        start = "2000-01-01"
         freq = "D"
         return pd.date_range(start=start, periods=n_timepoints, freq=freq)
 
