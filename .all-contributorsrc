@@ -694,7 +694,16 @@
       "contributions": [
         "doc"
       ]
-    }
+    },
+    {
+      "login": "jambo6",
+      "name": "James Morrill",
+      "avatar_url": "https://https://avatars.githubusercontent.com/jambo6",
+      "profile": "https://github.com/jambo6",
+      "contributions": [
+        "code",
+      ]
+    },
   ],
   "projectName": "sktime",
   "projectOwner": "alan-turing-institute",
