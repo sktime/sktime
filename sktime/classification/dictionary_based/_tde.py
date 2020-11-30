@@ -82,12 +82,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     Notes
     -----
     ..[1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
-        "The Temporal Dictionary Ensemble {(TDE)} Classifier for Time Series Classification",
+        "The Temporal Dictionary Ensemble {(TDE)} Classifier for Time Series
+        Classification",
             in proceedings of the European Conference on Machine Learning and
             Principles and Practice of Knowledge Discovery in Databases, 2020
     https://ueaeprints.uea.ac.uk/id/eprint/75490/
     Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/TDE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/TDE.java
 
     """
 

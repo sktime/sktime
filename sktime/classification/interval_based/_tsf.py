@@ -93,8 +93,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
-    refinement described in [1]. This is an intentionally stripped down, non configurable version for use as a hive-cote
-    component. For a configurable tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    refinement described in [1]. This is an intentionally stripped down, non
+    configurable version for use as a hive-cote component. For a configurable
+    tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
     TO DO: handle missing values, unequal length series and multivariate
     problems
