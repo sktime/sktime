@@ -124,10 +124,11 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     References
     ----------
-    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for classification and feature
-     extraction",Information Sciences, 239, 2013
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+    classification and feature extraction",Information Sciences, 239, 2013
     Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/interval_based/TSF.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/classifiers/interval_based/TSF.java
     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
 
 

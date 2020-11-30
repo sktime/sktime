@@ -43,7 +43,8 @@ class ShapeletTransformClassifier(BaseClassifier):
       Systems, 32, 2017
     https://link.springer.com/chapter/10.1007/978-3-319-22729-0_20
     Java Version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
 
 
     """

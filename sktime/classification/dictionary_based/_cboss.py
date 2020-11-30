@@ -81,7 +81,8 @@ class ContractableBOSS(BaseClassifier):
             Conference on Intelligent Data Engineering and Automated Learning,LNCS, volume 11871
             https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
     For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/cBOSS.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/
+    dictionary_based/cBOSS.java
 
 
     """

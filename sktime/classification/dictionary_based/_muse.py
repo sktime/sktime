@@ -84,7 +84,8 @@ class MUSE(BaseClassifier):
         in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
     https://arxiv.org/abs/1711.11343
     Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/multivariate/WEASEL_MUSE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/
+    multivariate/WEASEL_MUSE.java
 
     """
 
