@@ -19,7 +19,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation.panel import check_X, check_X_y
 
-#TO DO, update comments
+
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier
         Basic implementation along the lines of [1,2]
