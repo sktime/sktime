@@ -44,13 +44,10 @@ def test_multivariate_recursive():
 
     regressor = LinearRegression(fit_intercept=False)
     forecaster = ReducedRegressionForecaster(regressor, window_length=window_length)
-    # y_train = y_train.to_numpy()
-    # X_train = X_train.to_numpy()
+
     forecaster.fit(y_train, fh=fh, X_train=X_train)
     coefs = forecaster.regressor_.coef_
     intercept = forecaster.regressor_.intercept_
-    # print(coefs)
-    # print(intercept)
 
     y_pred = forecaster.predict(fh=fh)
 
@@ -61,7 +58,7 @@ def test_multivariate_recursive():
     assert len(coefs) == (len(X.columns) + 1) * window_length
 
 
-test_multivariate_recursive()
+# test_multivariate_recursive()
 
 
 def test_multivariate_direct():
@@ -73,7 +70,6 @@ def test_multivariate_direct():
     window_length = 2
 
     regressor = LinearRegression(fit_intercept=False)
-
     forecaster = ReducedRegressionForecaster(
         regressor, strategy="direct", window_length=window_length
     )
@@ -88,3 +84,6 @@ def test_multivariate_direct():
     assert len(regressors) == len(y_test)
     assert_array_almost_equal(regressors[0].coef_, W)
     assert_array_almost_equal(y_test, y_pred)
+
+
+test_multivariate_direct()
