@@ -17,10 +17,10 @@ from sklearn.preprocessing import (
     MaxAbsScaler,
     FunctionTransformer,
 )
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesToSeriesTransformer
 
 
-class TrickScaler(BaseSeriesAsFeaturesTransformer):
+class TrickScaler(_SeriesToSeriesTransformer):
     """Tricks an sklearn scaler so that it uses the correct dimensions.
 
     This class was created out of a desire to use sklearn scaling functionality

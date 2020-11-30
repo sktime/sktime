@@ -7,7 +7,7 @@ Contains a reusable decorator function to handle the sklearn signature checks.
 import functools
 import numpy as np
 import pandas as pd
-from sktime.utils.validation.series_as_features import check_X, check_X_y
+from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
 
 

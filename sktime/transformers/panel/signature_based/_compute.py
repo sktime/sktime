@@ -6,15 +6,15 @@ Class for signature computation over windows.
 """
 import numpy as np
 import esig
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.signature_based._window import window_getter
-from sktime.transformers.series_as_features.signature_based._rescaling import (
+from sktime.transformers.base import _SeriesToPrimitivesTransformer
+from sktime.transformers.panel.signature_based._window import window_getter
+from sktime.transformers.panel.signature_based._rescaling import (
     rescale_path,
     rescale_signature,
 )
 
 
-class _WindowSignatureTransform(BaseSeriesAsFeaturesTransformer):
+class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
     """Performs the signature transform over given windows.
 
     Given data of shape [N, L, C] and specification of a window method from the

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
+from sktime.transformers.base import _SeriesToSeriesTransformer
 
 
 def make_augmentation_pipeline(aug_list):
@@ -49,7 +49,7 @@ def make_augmentation_pipeline(aug_list):
     return pipeline
 
 
-class _AddTime(BaseSeriesAsFeaturesTransformer):
+class _AddTime(_SeriesToSeriesTransformer):
     """Add time component to each path.
 
     For a path of shape [B, L, C] this adds a time channel to be placed at the
@@ -71,7 +71,7 @@ class _AddTime(BaseSeriesAsFeaturesTransformer):
         return np.concatenate((time_scaled, data), 2)
 
 
-class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
+class _InvisibilityReset(_SeriesToSeriesTransformer):
     """Adds an 'invisibility-reset' dimension to the path. This adds
     sensitivity to translation.
 
@@ -101,7 +101,7 @@ class _InvisibilityReset(BaseSeriesAsFeaturesTransformer):
         return X_penoff
 
 
-class _LeadLag(BaseSeriesAsFeaturesTransformer):
+class _LeadLag(_SeriesToSeriesTransformer):
     """Applies the lead-lag transformation to each path.
 
     We take the lead of an input stream, and augment it with the lag of the
@@ -132,7 +132,7 @@ class _LeadLag(BaseSeriesAsFeaturesTransformer):
         return X_leadlag
 
 
-class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
+class _CumulativeSum(_SeriesToSeriesTransformer):
     """Cumulatively sums the values in the stream.
 
     Introduced in: https://arxiv.org/pdf/1603.03788.pdf
@@ -156,7 +156,7 @@ class _CumulativeSum(BaseSeriesAsFeaturesTransformer):
         return np.cumsum(X, 1)
 
 
-class _BasePoint(BaseSeriesAsFeaturesTransformer):
+class _BasePoint(_SeriesToSeriesTransformer):
     """Appends a zero starting vector to every path.
 
     Introduced in: https://arxiv.org/pdf/2001.00706.pdf

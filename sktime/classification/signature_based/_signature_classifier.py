@@ -14,10 +14,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sktime.classification.base import BaseClassifier
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
-from sktime.transformers.series_as_features.signature_based import (
+from sktime.transformers.panel.signature_based._signature_method import (
     GeneralisedSignatureMethod,
 )
-from sktime.transformers.series_as_features.signature_based._checks import (
+from sktime.transformers.panel.signature_based._checks import (
     handle_sktime_signatures,
 )
 

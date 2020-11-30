@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 from sklearn.pipeline import Pipeline
-from sktime.transformers.series_as_features.base import BaseSeriesAsFeaturesTransformer
-from sktime.transformers.series_as_features.signature_based._compute import (
+from sktime.transformers.base import _SeriesToPrimitivesTransformer
+from sktime.transformers.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
-from sktime.transformers.series_as_features.signature_based._augmentations import (
+from sktime.transformers.panel.signature_based._augmentations import (
     make_augmentation_pipeline,
 )
-from sktime.transformers.series_as_features.signature_based._rescaling import (
+from sktime.transformers.panel.signature_based._rescaling import (
     TrickScaler,
 )
-from sktime.transformers.series_as_features.signature_based._checks import (
+from sktime.transformers.panel.signature_based._checks import (
     handle_sktime_signatures,
 )
 
 
-class GeneralisedSignatureMethod(BaseSeriesAsFeaturesTransformer):
+class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
     """The generalised signature method of feature extraction.
 
 
