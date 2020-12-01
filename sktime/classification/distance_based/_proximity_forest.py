@@ -1173,9 +1173,8 @@ class ProximityForest(BaseClassifier):
     Proximity Forest class to model a decision tree forest which uses
     distance measures to partition data, see [1].
 
-
     Parameters
-    __________
+    ----------
     random_state: random, default = None
         seed for reproducibility
     n_estimators : int, default=100
@@ -1199,7 +1198,7 @@ class ProximityForest(BaseClassifier):
     setup_distance_measure_getter: function to setup the distance
 
     Attributes
-    __________
+    ----------
 
     label_encoder: label encoder to change string labels to numeric indices
     classes_: unique list of classes
@@ -1211,14 +1210,16 @@ class ProximityForest(BaseClassifier):
     trees: list of trees in the forest
 
     Notes
-    _____
+    -----
     ..[1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
-      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635, 2019
-      https://arxiv.org/abs/1808.10594
+      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635,
+      2019 https://arxiv.org/abs/1808.10594
     Java wrapper of authors original
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/ProximityForestWrapper.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/distance_based/ProximityForestWrapper.java
     Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/proximity/ProximityForest.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/distance_based/proximity/ProximityForest.java
 
     """
 
