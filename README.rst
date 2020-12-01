@@ -1,9 +1,9 @@
 .. -*- mode: rst -*-
 
-|travis|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
+|github|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
 
-.. |travis| image:: https://img.shields.io/travis/com/alan-turing-institute/sktime/master?logo=travis
-.. _travis: https://travis-ci.com/alan-turing-institute/sktime
+.. |github| image:: https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github
+.. _github: https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
 .. _appveyor: https://ci.appveyor.com/project/mloning/sktime

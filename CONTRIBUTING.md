@@ -161,7 +161,7 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
 
 ### Code quality checks
-To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow. 
+To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow.
 
 1. To set up the workflow, you need to install a few extra tools:
 
@@ -176,7 +176,9 @@ To check if your code meets our code quality standards, you can automatically ru
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
-You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml).
+You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg). 
+
+If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line. 
 
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
@@ -261,10 +263,9 @@ This section gives an overview of the infrastructure and continuous integration 
 
 | Platform                                                                  | Operation                                                                       | Configuration                                                                                                                                                                  |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [Travis](https://travis-ci.com/github/alan-turing-institute/sktime)       | Build/test/distribute on MacOS                                                  | [.travis.yml](https://github.com/alan-turing-institute/sktime/blob/master/.travis.yml)                                                                                         |
 | [Appveyor](https://ci.appveyor.com/project/mloning/sktime)                | Build/test/distribute on Windows                                                | [.appveyor.yml](https://github.com/alan-turing-institute/sktime/blob/master/.appveyor.yml)                                                                                       |
 | [Azure Pipelines](https://dev.azure.com/mloning/sktime)                   | Build/test/distribute on Linux ([manylinux](https://github.com/pypa/manylinux)) | [azure-pipelines.yml](https://github.com/alan-turing-institute/sktime/blob/master/azure-pipelines.yml)                                                                         |
-| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Code quality checks                                                             | [.github/workflows/code-quality.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml)                                           |
+| [GitHub Actions](https://docs.github.com/en/free-pro-team@latest/actions) | Build/test/distribute on MacOS; Code quality checks                                                           | [.github/workflows/](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/)                                           |
 | [Read the Docs](https://readthedocs.org)                                  | Build/deploy documentation                                                      | [.readthedocs.yml](https://github.com/alan-turing-institute/sktime/blob/master/.github/workflows/code-quality.yml)                                                             |
 | [Codecov](https://codecov.io)                                              | Test coverage                                                                   | [.codecov.yml](https://github.com/alan-turing-institute/sktime/blob/master/.codecov.yml), [.coveragerc](https://github.com/alan-turing-institute/sktime/blob/master/.coveragerc) |
 
