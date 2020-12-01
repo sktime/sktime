@@ -225,11 +225,7 @@ class AutoETS(_StatsModelsAdapter):
             damped_range = [True, False]
 
             # Check information criterion input
-            if (
-                self.information_criterion != "aic"
-                and self.information_criterion != "bic"
-                and self.information_criterion != "aicc"
-            ):
+            if (self.information_criterion not in ["aic", "bic", "aicc"]):
                 raise ValueError(
                     "information criterion must " "either be aic, bic or aicc"
                 )

@@ -694,6 +694,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "aiwalter",
+      "name": "Martin Walter",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/29627036?v=4",
+      "profile": "https://github.com/aiwalter",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",

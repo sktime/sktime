@@ -10,3 +10,4 @@ scikit-posthocs
 seaborn
 statsmodels>=0.12.*
 tsfresh
+fbprophet

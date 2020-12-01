@@ -10,3 +10,4 @@ scikit-posthocs
 statsmodels>=0.12.*
 tsfresh
 wheel
+fbprophet

@@ -6,6 +6,8 @@ __author__ = ["Markus Löning", "@big-o"]
 __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
+import inspect
+
 
 DEFAULT_ALPHA = 0.05
 
@@ -184,3 +186,18 @@ class BaseForecaster(BaseEstimator):
         fitted_params : dict
         """
         raise NotImplementedError("abstract method")
+
+    def _get_model_params(self):
+        """Get model parameters (of __init__ function)
+
+        Returns
+        -------
+        model_params : dict
+        """
+        self.check_is_fitted()
+        model_params = {}
+        sig = inspect.signature(self.__init__)
+        for key in sig.parameters:
+            if key not in ["self", "kwargs"]:
+                model_params[key] = getattr(self, key)
+        return model_params

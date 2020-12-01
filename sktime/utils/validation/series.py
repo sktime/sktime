@@ -23,7 +23,10 @@ def _check_is_univariate(y):
         )
 
 
-def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=True):
+def check_series(
+    Z, enforce_univariate=False, allow_empty=False,
+    allow_numpy=True, index_type=None
+):
     """Validate input data.
 
     Parameters
@@ -33,6 +36,8 @@ def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=Tru
     enforce_univariate : bool, optional (default=False)
         If True, multivariate Z will raise an error.
     allow_empty : bool
+    index_type : type, optional (default=None)
+        type of time index
 
     Returns
     -------
@@ -61,11 +66,11 @@ def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=Tru
         _check_is_univariate(Z)
 
     # check time index
-    check_time_index(Z.index, allow_empty=allow_empty)
+    check_time_index(Z.index, allow_empty=allow_empty, index_type=index_type)
     return Z
 
 
-def check_time_index(index, allow_empty=False):
+def check_time_index(index, allow_empty=False, index_type=None):
     """Check time index.
 
     Parameters
@@ -74,6 +79,8 @@ def check_time_index(index, allow_empty=False):
         Time index
     allow_empty : bool, optional (default=False)
         If True, empty `index` raises an error.
+    index_type : type, optional (default=None)
+        type of time index
 
     Returns
     -------
@@ -83,13 +90,20 @@ def check_time_index(index, allow_empty=False):
     if isinstance(index, np.ndarray):
         index = pd.Index(index)
 
-    # We here check for type equality because isinstance does not work reliably
-    # because index types inherit from each other.
-    if not type(index) in VALID_INDEX_TYPES:
-        raise NotImplementedError(
-            f"{type(index)} is not supported, use "
-            f"one of {VALID_INDEX_TYPES} instead."
-        )
+    if index_type:
+        if type(index) is not index_type:
+            raise ValueError(
+                f"{type(index)} is not supported, use "
+                f"type {index_type} instead."
+            )
+    else:
+        # We here check for type equality because isinstance does not
+        # work reliably because index types inherit from each other.
+        if not type(index) in VALID_INDEX_TYPES:
+            raise NotImplementedError(
+                f"{type(index)} is not supported, use "
+                f"one of {VALID_INDEX_TYPES} instead."
+            )
 
     # Check time index is ordered in time
     if not index.is_monotonic:
