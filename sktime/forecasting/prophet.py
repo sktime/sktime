@@ -7,7 +7,6 @@ __all__ = ["Prophet"]
 
 import pandas as pd
 import numpy as np
-# from collections import OrderedDict
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
