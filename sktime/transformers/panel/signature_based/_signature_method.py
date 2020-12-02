@@ -13,6 +13,10 @@ from sktime.transformers.panel.signature_based._rescaling import (
 from sktime.transformers.panel.signature_based._checks import (
     handle_sktime_signatures,
 )
+from sktime.utils.check_imports import _check_soft_dependencies
+
+_check_soft_dependencies("esig")
+import esig  # noqa: E402
 
 
 class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
