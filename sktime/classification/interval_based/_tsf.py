@@ -93,8 +93,9 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     This implementation deviates from the original in minor ways. It samples
     intervals with replacement and does not use the splitting criteria tiny
-    refinement described in [1]. This is an intentionally stripped down, non configurable version for use as a hive-cote
-    component. For a configurable tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+    refinement described in [1]. This is an intentionally stripped down, non
+    configurable version for use as a hive-cote component. For a configurable
+    tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
     TO DO: handle missing values, unequal length series and multivariate
     problems
@@ -124,10 +125,11 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     References
     ----------
-    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for classification and feature
-     extraction",Information Sciences, 239, 2013
+    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+    classification and feature extraction",Information Sciences, 239, 2013
     Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/interval_based/TSF.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/classifiers/interval_based/TSF.java
     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
 
 

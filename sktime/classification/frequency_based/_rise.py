@@ -124,12 +124,13 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
 
     Notes
     _____
-    ..[1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification with HIVE-COTE: The
-      Hierarchical Vote Collective of Transformation-Based Ensembles",
+    ..[1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification
+    with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based Ensembles",
       ACM Transactions on Knowledge and Data Engineering, 12(5): 2018
     https://dl.acm.org/doi/10.1145/3182382
     Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/frequency_based/RISE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/frequency_based/RISE.java
 
 
 
