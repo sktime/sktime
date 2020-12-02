@@ -18,7 +18,7 @@ SOFT_DEPENDENCIES = {
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
     "sktime.classification.signature_based": ["esig"],
-    "sktime.transformers.panel.signature_based.all": ["esig"],
+    "sktime.transformers.panel.signature_based": ["esig"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
