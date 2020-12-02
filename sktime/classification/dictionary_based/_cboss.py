@@ -73,15 +73,18 @@ class ContractableBOSS(BaseClassifier):
 
     Notes
     __________
-    ..[1] Patrick Schäfer, "The BOSS is concerned with time series classification
-            in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+    ..[1] Patrick Schäfer, "The BOSS is concerned with time series
+    classification in the presence of noise",
+    Data Mining and Knowledge Discovery, 29(6): 2015
             https://link.springer.com/article/10.1007/s10618-014-0377-7
-    ..[2] Matthew Middlehurst, William Vickers and Anthony Bagnall "Scalable Dictionary
-            Classifiers for Time Series Classification", in proc 20th International
-            Conference on Intelligent Data Engineering and Automated Learning,LNCS, volume 11871
+    ..[2] Matthew Middlehurst, William Vickers and Anthony Bagnall
+    "Scalable Dictionary Classifiers for Time Series Classification",
+    in proc 20th International Conference on Intelligent Data Engineering
+    and Automated Learning,LNCS, volume 11871
             https://link.springer.com/chapter/10.1007/978-3-030-33607-3_2
     For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/cBOSS.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/
+    main/java/tsml/classifiers/dictionary_based/cBOSS.java
 
 
     """
