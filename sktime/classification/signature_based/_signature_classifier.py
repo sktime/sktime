@@ -20,6 +20,9 @@ from sktime.transformers.panel.signature_based._signature_method import (
 from sktime.transformers.panel.signature_based._checks import (
     handle_sktime_signatures,
 )
+from sktime.utils.check_imports import _check_soft_dependencies
+
+_check_soft_dependencies("esig")
 
 
 class SignatureClassifier(BaseClassifier):
