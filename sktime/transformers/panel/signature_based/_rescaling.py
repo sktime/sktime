@@ -19,7 +19,7 @@ from sklearn.preprocessing import (
 from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
 
-_check_soft_dependencies("esig")    # noqa: E402
+_check_soft_dependencies("esig")  # noqa: E402
 import esig
 
 
