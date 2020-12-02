@@ -30,7 +30,7 @@ MIN_REQUIREMENTS = {
 EXTRAS_REQUIRE = {
     "all_extras": [
         "cython>=0.29.0",
-        "esig>=0.8.2",
+        "esig<=0.8.2",
         "matplotlib>=3.3.2",
         "pmdarima>=1.8.0",
         "scikit_posthocs>= 0.6.5",
