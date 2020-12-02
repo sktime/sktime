@@ -13,8 +13,8 @@ from sktime.transformers.panel.signature_based._rescaling import (
 )
 from sktime.utils.check_imports import _check_soft_dependencies
 
-_check_soft_dependencies("esig")  # noqa: E402
-import esig
+_check_soft_dependencies("esig")
+import esig  # noqa: E402
 
 
 class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
