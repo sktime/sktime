@@ -19,7 +19,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.transformers.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation.panel import check_X, check_X_y
 
-#TO DO, update comments
+
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier
         Basic implementation along the lines of [1,2]
@@ -35,15 +35,18 @@ class ShapeletTransformClassifier(BaseClassifier):
     Notes
     _____
 
-    ..[1] Jon Hills wt al., "Classification of time series by shapelet transformation",
+    ..[1] Jon Hills wt al., "Classification of time series by
+    shapelet transformation",
         Data Mining and Knowledge Discovery, 28(4), 851--881, 2014
     https://link.springer.com/article/10.1007/s10618-013-0322-1
-    ..[2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform for Multiclass Time Series
-      Classification", Transactions on Large-Scale Data and Knowledge Centered
+    ..[2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform
+    for Multiclass Time Series Classification",
+    Transactions on Large-Scale Data and Knowledge Centered
       Systems, 32, 2017
     https://link.springer.com/chapter/10.1007/978-3-319-22729-0_20
     Java Version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
 
 
     """

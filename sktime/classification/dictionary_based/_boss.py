@@ -74,7 +74,8 @@ class BOSSEnsemble(BaseClassifier):
             in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
             https://link.springer.com/article/10.1007/s10618-014-0377-7
     For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/dictionary_based/BOSS.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/dictionary_based/BOSS.java
     """
 
     def __init__(

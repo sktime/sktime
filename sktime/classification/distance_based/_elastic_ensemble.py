@@ -67,11 +67,13 @@ class ElasticEnsemble(BaseClassifier):
 
     Notes
     _____
-    ..[1] Jason Lines and Anthony Bagnall, "Time Series Classification with Ensembles of Elastic Distance
+    ..[1] Jason Lines and Anthony Bagnall, "Time Series Classification with Ensembles
+    of Elastic Distance
       Measures", Data Mining and Knowledge Discovery, 29(3), 2015
     https://link.springer.com/article/10.1007/s10618-014-0361-2
     For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/ElasticEnsemble.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/distance_based/ElasticEnsemble.java
 
 
     """
