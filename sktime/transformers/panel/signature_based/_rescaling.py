@@ -10,7 +10,6 @@ Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import numpy as np
-import esig
 from sklearn.preprocessing import (
     StandardScaler,
     MinMaxScaler,
@@ -18,6 +17,10 @@ from sklearn.preprocessing import (
     FunctionTransformer,
 )
 from sktime.transformers.base import _SeriesToSeriesTransformer
+from sktime.utils.check_imports import _check_soft_dependencies
+
+_check_soft_dependencies("esig")
+import esig
 
 
 class TrickScaler(_SeriesToSeriesTransformer):
