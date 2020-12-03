@@ -18,7 +18,7 @@ _Pair = co.namedtuple("Pair", ("start", "end"))
 
 
 def _window_getter(
-        window_name, window_depth=None, window_length=None, window_step=None
+    window_name, window_depth=None, window_length=None, window_step=None
 ):
     """Gets the window method correspondent to the given string and initialises
     with specified parameters.
