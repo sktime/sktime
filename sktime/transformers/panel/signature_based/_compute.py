@@ -6,10 +6,10 @@ Class for signature computation over windows.
 """
 import numpy as np
 from sktime.transformers.base import _SeriesToPrimitivesTransformer
-from sktime.transformers.panel.signature_based._window import window_getter
+from sktime.transformers.panel.signature_based._window import _window_getter
 from sktime.transformers.panel.signature_based._rescaling import (
-    rescale_path,
-    rescale_signature,
+    _rescale_path,
+    _rescale_signature,
 )
 from sktime.utils.check_imports import _check_soft_dependencies
 
@@ -49,7 +49,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
         self.depth = sig_depth
         self.rescaling = rescaling
 
-        self.window = window_getter(
+        self.window = _window_getter(
             self.window_name, self.window_depth, self.window_length, self.window_step
         )
 
@@ -63,7 +63,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
 
         # Path rescaling
         if self.rescaling == "pre":
-            data = rescale_path(data, self.depth)
+            data = _rescale_path(data, self.depth)
 
         # Prepare for signature computation
         if self.sig_tfm == "signature":
@@ -95,7 +95,7 @@ class _WindowSignatureTransform(_SeriesToPrimitivesTransformer):
                 ).reshape(data.shape[0], -1)
                 # Rescale if specified
                 if self.rescaling == "post":
-                    signature = rescale_signature(signature, data.shape[2], self.depth)
+                    signature = _rescale_signature(signature, data.shape[2], self.depth)
 
                 signature_group.append(signature)
             signatures.append(signature_group)

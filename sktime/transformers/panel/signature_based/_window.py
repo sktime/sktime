@@ -17,7 +17,7 @@ import collections as co
 _Pair = co.namedtuple("Pair", ("start", "end"))
 
 
-def window_getter(window_name, window_depth=None, window_length=None, window_step=None):
+def _window_getter(window_name, window_depth=None, window_length=None, window_step=None):
     """Gets the window method correspondent to the given string and initialises
     with specified parameters.
 
