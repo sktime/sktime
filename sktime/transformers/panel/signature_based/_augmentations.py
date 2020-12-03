@@ -4,7 +4,7 @@ from sklearn.pipeline import Pipeline
 from sktime.transformers.base import _SeriesToSeriesTransformer
 
 
-def make_augmentation_pipeline(aug_list):
+def _make_augmentation_pipeline(aug_list):
     """Buids an sklearn pipeline of augmentations from a list of strings.
 
     Parameters
@@ -21,7 +21,7 @@ def make_augmentation_pipeline(aug_list):
 
     Examples
     --------
-    >>> make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
+    >>> _make_augmentation_pipeline(['leadlag', 'ir', 'addtime'])
     Pipeline([
         ('leadlag', LeadLag()),
         ('ir', InvisibilityReset()),

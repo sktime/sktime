@@ -23,7 +23,7 @@ _check_soft_dependencies("esig")
 import esig  # noqa: E402
 
 
-class TrickScaler(_SeriesToSeriesTransformer):
+class _TrickScaler(_SeriesToSeriesTransformer):
     """Tricks an sklearn scaler so that it uses the correct dimensions.
 
     This class was created out of a desire to use sklearn scaling functionality
@@ -84,7 +84,7 @@ class TrickScaler(_SeriesToSeriesTransformer):
         return X_tfm_3d
 
 
-def rescale_path(path, depth):
+def _rescale_path(path, depth):
     """Rescales the input path by depth! ** (1 / depth), so that the last
     signature term should be roughly O(1).
 
@@ -104,7 +104,7 @@ def rescale_path(path, depth):
     return coeff * path
 
 
-def rescale_signature(signature, channels, depth):
+def _rescale_signature(signature, channels, depth):
     """Rescales the output signature by multiplying the depth-d term by d!,
     with the aim that every term become ~O(1).
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from sklearn.pipeline import Pipeline
-from sktime.transformers.base import _SeriesToPrimitivesTransformer
+from sktime.transformers.base import _PanelToTabularTransformer
 from sktime.transformers.panel.signature_based._compute import (
     _WindowSignatureTransform,
 )
 from sktime.transformers.panel.signature_based._augmentations import (
-    make_augmentation_pipeline,
+    _make_augmentation_pipeline,
 )
 from sktime.transformers.panel.signature_based._rescaling import (
-    TrickScaler,
+    _TrickScaler,
 )
 from sktime.transformers.panel.signature_based._checks import (
     _handle_sktime_signatures,
@@ -18,7 +18,7 @@ from sktime.utils.check_imports import _check_soft_dependencies
 _check_soft_dependencies("esig")
 
 
-class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
+class GeneralisedSignatureMethod(_PanelToTabularTransformer):
     """The generalised signature method of feature extraction.
 
 
@@ -78,8 +78,8 @@ class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
 
     def setup_feature_pipeline(self):
         """ Sets up the signature method as an sklearn pipeline. """
-        scaling_step = TrickScaler(scaling=self.scaling)
-        augmentation_step = make_augmentation_pipeline(self.augmentation_list)
+        scaling_step = _TrickScaler(scaling=self.scaling)
+        augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
             window_depth=self.window_depth,
@@ -108,3 +108,8 @@ class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
     @_handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
+
+
+if __name__ == '__main__':
+    from sktime.transformers.tests.test_all_transformers import check_transformer
+    check_transformer(GeneralisedSignatureMethod)
