@@ -108,8 +108,3 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
     @_handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
-
-
-if __name__ == '__main__':
-    from sktime.transformers.tests.test_all_transformers import check_transformer
-    check_transformer(GeneralisedSignatureMethod)
