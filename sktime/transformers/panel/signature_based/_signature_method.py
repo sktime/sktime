@@ -11,7 +11,7 @@ from sktime.transformers.panel.signature_based._rescaling import (
     TrickScaler,
 )
 from sktime.transformers.panel.signature_based._checks import (
-    handle_sktime_signatures,
+    _handle_sktime_signatures,
 )
 from sktime.utils.check_imports import _check_soft_dependencies
 
@@ -99,12 +99,12 @@ class GeneralisedSignatureMethod(_SeriesToPrimitivesTransformer):
             ]
         )
 
-    @handle_sktime_signatures(check_fitted=False)
+    @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels=None):
         self.signature_method.fit(data, labels)
         self._is_fitted = True
         return self
 
-    @handle_sktime_signatures(check_fitted=True)
+    @_handle_sktime_signatures(check_fitted=True)
     def transform(self, data, labels=None):
         return self.signature_method.transform(data)
