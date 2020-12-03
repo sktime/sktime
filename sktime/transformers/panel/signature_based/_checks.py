@@ -11,7 +11,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.utils.data_container import from_nested_to_3d_numpy
 
 
-def handle_sktime_signatures(check_fitted=False, force_numpy=False):
+def _handle_sktime_signatures(check_fitted=False, force_numpy=False):
     """Simple function for handling the sktime checks in signature modules.
 
     This decorator assumes that the input arguments to the function are either

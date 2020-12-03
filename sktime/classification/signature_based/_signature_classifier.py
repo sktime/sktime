@@ -11,18 +11,17 @@ and methodologies described in the paper:
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
+
 from sktime.classification.base import BaseClassifier
-from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
+from sktime.transformers.panel.signature_based._checks import (
+    _handle_sktime_signatures,
+)
 from sktime.transformers.panel.signature_based._signature_method import (
     GeneralisedSignatureMethod,
 )
-from sktime.transformers.panel.signature_based._checks import (
-    handle_sktime_signatures,
-)
-from sktime.utils.check_imports import _check_soft_dependencies
-
-_check_soft_dependencies("esig")
 
 
 class SignatureClassifier(BaseClassifier):
@@ -36,10 +35,10 @@ class SignatureClassifier(BaseClassifier):
     Generalised Signature Method for Time-Series":
         [https://arxiv.org/pdf/2006.00873.pdf]
     Note that the final classifier used on the UEA datasets involved tuning
-    the hyperparameters:
+    the hyper-parameters:
         - `depth` over [1, 2, 3, 4, 5, 6]
         - `window_depth` over [2, 3, 4]
-        - RandomForestClassifier hyper-paramters.
+        - RandomForestClassifier hyper-parameters.
     as these were found to be the most dataset dependent hyper-parameters.
     Thus, we recommend always tuning *at least* these parameters to any given
     dataset.
@@ -127,7 +126,7 @@ class SignatureClassifier(BaseClassifier):
         )
 
     # Handle the sktime fit checks and convert to a tensor
-    @handle_sktime_signatures(check_fitted=False)
+    @_handle_sktime_signatures(check_fitted=False)
     def fit(self, data, labels):
         # Join the classifier onto the signature method pipeline
         self.setup_classification_pipeline()
@@ -138,12 +137,12 @@ class SignatureClassifier(BaseClassifier):
         return self
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
+    @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict(self, data):
         return self.pipeline.predict(data)
 
     # Handle the sktime predict checks and convert to tensor format
-    @handle_sktime_signatures(check_fitted=True, force_numpy=True)
+    @_handle_sktime_signatures(check_fitted=True, force_numpy=True)
     def predict_proba(self, data):
         return self.pipeline.predict_proba(data)
 
