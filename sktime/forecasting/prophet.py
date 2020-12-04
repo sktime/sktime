@@ -238,7 +238,7 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         """
         if type(fh._values) == pd.DatetimeIndex:
             df = pd.DataFrame()
-            df["ds"] = fh._values
+            df["ds"] = fh.to_pandas()
         else:
             # Try to create pd.DatetimeIndex
             try:
