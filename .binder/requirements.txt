@@ -1,5 +1,6 @@
 catch22
 cython>=0.29.0
+fbprophet
 matplotlib
 notebook
 numba==0.50.*
@@ -10,4 +11,3 @@ scikit-posthocs
 seaborn
 statsmodels>=0.12.*
 tsfresh
-fbprophet
