@@ -50,7 +50,7 @@ class MatrixProfileTransformer(_SeriesToSeriesTransformer):
         return Xt
 
 
-df = pd.read_csv("/home/utsav/Downloads/timeseries.csv")
-matrixProfileTransformer = MatrixProfileTransformer(3)
-matrixProfileTransformer.transform(df)
+# df = pd.read_csv("/home/utsav/Downloads/timeseries.csv")
+# matrixProfileTransformer = MatrixProfileTransformer(3)
+# matrixProfileTransformer.transform(df)
 # print(df)
