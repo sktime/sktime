@@ -13,8 +13,8 @@ from importlib import import_module
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.transformers.panel.tsfresh": ["tsfresh"],
-    "sktime.forecasting.arima": ["pmdarima"],
-    "sktime.forecasting.all": ["pmdarima"],
+    "sktime.forecasting.arima": ["pmdarima", "fbprophet"],
+    "sktime.forecasting.all": ["pmdarima", "fbprophet"],
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
 }
