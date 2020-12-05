@@ -62,10 +62,10 @@ install:
   - cmd: conda config --set always_yes true
   - cmd: conda update --quiet conda
   - cmd: conda create --name testenv python=%PYTHON_VERSION%
-  - cmd: conda install libpython m2w64-toolchain -c msys2
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
+  - cmd: conda install libpython m2w64-toolchain -c msys2
   - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment
