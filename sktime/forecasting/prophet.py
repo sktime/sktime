@@ -225,9 +225,9 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         Exception
             Error when merging data
         """
-        if type(fh._values) == pd.DatetimeIndex:
+        if isinstance(fh.to_pandas(), pd.DatetimeIndex):
             df = pd.DataFrame()
-            df["ds"] = fh._values
+            df["ds"] = fh.to_pandas()
         else:
             # Try to create pd.DatetimeIndex
             df = self._coerce_to_datetime_index(fh=fh)
