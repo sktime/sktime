@@ -48,7 +48,7 @@ stages:
           - task: UsePythonVersion@0
             inputs:
               versionSpec: 3.7
-          - script: conda install libpython m2w64-toolchain -c msys2
+          - script: conda install --yes m2w64-gcc libpython
             displayName: 'Install C++ compiler'
           - script: pip install -r build_tools/hard_dependencies.txt
             displayName: 'Install hard dependencies'
