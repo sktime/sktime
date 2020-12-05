@@ -27,24 +27,16 @@ Authors
 For an overview of current and past contributors, please see our
 :ref:`contributors page <contributors>`.
 
+
 Citing sktime
 -------------
 
 If you use sktime in a scientific publication, we would appreciate
 citations to the following paper:
 
-`Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines, Franz Király (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__
+* [paper] `Markus Löning, Anthony Bagnall, Sajaysurya Ganesh, Viktor Kazakov, Jason Lines, Franz Király (2019): “sktime: A Unified Interface for Machine Learning with Time Series” <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`_
+* [software] `Markus Löning, Tony Bagnall, Sajaysurya Ganesh, George Oastler, Jason Lines, ViktorKaz, …, Aadesh Deshmukh (2020). alan-turing-institute/sktime. Zenodo. http://doi.org/10.5281/zenodo.3749000 <http://doi.org/10.5281/zenodo.3749000>`_
 
-Bibtex entry:
-
-.. code-block:: latex
-
-    @inproceedings{sktime,
-        author = {L{\"{o}}ning, Markus and Bagnall, Anthony and Ganesh, Sajaysurya and Kazakov, Viktor and Lines, Jason and Kir{\'{a}}ly, Franz J},
-        booktitle = {Workshop on Systems for ML at NeurIPS 2019},
-        title = {{sktime: A Unified Interface for Machine Learning with Time Series}},
-        date = {2019},
-    }
 
 Artwork
 -------
@@ -135,7 +127,4 @@ initial funding of the `The Alan Turing Institute <https://turing.ac.uk>`_.
 Infrastructure support
 ----------------------
 
-We would also like to thank `Microsoft Azure <https://azure.microsoft
-.com/en-gb/services/devops/>`_, `Travis Cl <https://travis-ci.org/>`_,
-and `AppVeyor <https://www.appveyor.com>`_ for the free computing time on their
-Continuous Integration servers.
+We would also like to thank `Microsoft Azure <https://azure.microsoft.com/en-gb/services/devops/>`_, `GitHub Actions <https://docs.github.com/en/free-pro-team@latest/actions>`_, and `AppVeyor <https://www.appveyor.com>`_, `ReadtheDocs <https://readthedocs.org>`_ for the free computing time on their Continuous Integration servers.
