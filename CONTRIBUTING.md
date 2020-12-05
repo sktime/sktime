@@ -230,12 +230,18 @@ Dependencies
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
+> A soft dependency is a dependency that is only required to import certain modules, but not necessary to use most functionality. A soft dependency is not installed automatically when the package is installed. Instead, users need to install it manually if they want to use a module that requires a soft dependency. 
+
 If you add a new dependency or change the version of an existing one, you need to update the following files:
 
  - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation and minimum version requirements,
  - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
  - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for building the documentation,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+
+If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/master/sktime/utils/check_imports.py).
+
+We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it. 
 
 
 Coding style
@@ -291,3 +297,4 @@ make release
 ```
 
 This calls [maint_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/maint_tools/make_release.py) and will guide you through the release process.
+
