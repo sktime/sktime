@@ -6,7 +6,6 @@ __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
 
 import pandas as pd
-import numpy as np
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
@@ -24,16 +23,16 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     ----------
     freq: String of DatetimeIndex frequency. See here for possible values:
         https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-    add_seasonality: Dictionary with arguments for the Prophet.add_seasonality() function.
-        Dictionary can have the following keys/values:
+    add_seasonality: Dict with args for Prophet.add_seasonality().
+        Dict can have the following keys/values:
             name: string name of the seasonality component.
             period: float number of days in one period.
             fourier_order: int number of Fourier components to use.
             prior_scale: optional float prior scale for this component.
             mode: optional 'additive' or 'multiplicative'
             condition_name: string name of the seasonality condition.
-    add_country_holidays: Dictionary with arguments for the Prophet.add_country_holidays() function.
-        Dictionary can have the following keys/values:
+    add_country_holidays: Dict with args for Prophet.add_country_holidays().
+        Dict can have the following keys/values:
             country_name: Name of the country, like 'UnitedStates' or 'US'
     growth: String 'linear' or 'logistic' to specify a linear or logistic
         trend.
@@ -96,15 +95,15 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         add_seasonality=None,
         add_country_holidays=None,
         # Args of fbprophet
-        growth='linear',
+        growth="linear",
         changepoints=None,
         n_changepoints=25,
         changepoint_range=0.8,
-        yearly_seasonality='auto',
-        weekly_seasonality='auto',
-        daily_seasonality='auto',
+        yearly_seasonality="auto",
+        weekly_seasonality="auto",
+        daily_seasonality="auto",
         holidays=None,
-        seasonality_mode='additive',
+        seasonality_mode="additive",
         seasonality_prior_scale=10.0,
         holidays_prior_scale=10.0,
         changepoint_prior_scale=0.05,
@@ -120,29 +119,19 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         self.growth = growth
         self.changepoints = changepoints
-        if self.changepoints is not None:
-            self.changepoints = pd.Series(pd.to_datetime(self.changepoints), name='ds')
-            self.n_changepoints = len(self.changepoints)
-            self.specified_changepoints = True
-        else:
-            self.n_changepoints = n_changepoints
-            self.specified_changepoints = False
-
+        self.n_changepoints = n_changepoints
         self.changepoint_range = changepoint_range
         self.yearly_seasonality = yearly_seasonality
         self.weekly_seasonality = weekly_seasonality
         self.daily_seasonality = daily_seasonality
         self.holidays = holidays
-
         self.seasonality_mode = seasonality_mode
         self.seasonality_prior_scale = float(seasonality_prior_scale)
         self.changepoint_prior_scale = float(changepoint_prior_scale)
         self.holidays_prior_scale = float(holidays_prior_scale)
-
         self.mcmc_samples = mcmc_samples
         self.interval_width = interval_width
         self.uncertainty_samples = uncertainty_samples
-
         self.stan_backend = stan_backend
 
         super(Prophet, self).__init__()
@@ -167,7 +156,6 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             interval_width=interval_width,
             uncertainty_samples=uncertainty_samples,
             stan_backend=stan_backend,
-            **kwargs
         )
 
     def fit(self, y, X=None, fh=None, **fit_params):
@@ -184,7 +172,8 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        y, X = check_y_X(y, X, index_type=pd.DatetimeIndex)
+        self._check_changepoints()
+        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
         self._set_y_X(y, X)
         self._set_fh(fh)
 
@@ -241,40 +230,19 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             df["ds"] = fh._values
         else:
             # Try to create pd.DatetimeIndex
-            try:
-                periods = fh.to_pandas().max()
-                periods = fh.to_pandas().max()
-                df = self._forecaster.make_future_dataframe(
-                    periods=periods + 1, freq=self.freq, include_history=False)
-                df = df.iloc[fh.to_pandas()]
-            except Exception:
-                raise TypeError("Type of fh values must be int, np.array, list or pd.DatetimeIndex")
+            df = self._coerce_to_datetime_index(fh=fh)
 
         # Merge X with df (of created future DatetimeIndex values)
-        merge_error = "Either length of fh and X must be " \
-            "same or X must have future DatetimeIndex values."
-        if X is not None:
-            X = check_X(X)
-            try:
-                if len(X) == len(fh.to_pandas()):
-                    X = X.set_index(df.index)
-                    df = pd.concat([df, X], axis=1)
-                else:
-                    df.index = df["ds"]
-                    df = df.merge(X, left_index=True, right_on=X.index)
-            except Exception:
-                raise TypeError(merge_error)
-        if df.empty:
-            raise TypeError(merge_error)
+        df = _merge_X(fh=fh, X=X, df=df)
 
         # Prediction
         out = self._forecaster.predict(df)
         out.index = out["ds"]
         pred = out["yhat"]
         pred = pred.rename(None)
-        pred_int = out[["yhat_upper", "yhat_lower"]].rename(columns={
-            "yhat_upper": "upper",
-            "yhat_lower": "lower"})
+        pred_int = out[["yhat_upper", "yhat_lower"]].rename(
+            columns={"yhat_upper": "upper", "yhat_lower": "lower"}
+        )
         if return_pred_int:
             return pred, pred_int
         else:
@@ -315,7 +283,7 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             raise ValueError("y must contain past and new train data.")
         if fh is None:
             fh = self.fh
-        model_params = self._get_model_params()
+        model_params = self.get_params()
         fitted_params = self._get_fitted_params()
         model = Prophet(**model_params)
         model.fit(y=y, X=X, fh=fh, init=fitted_params)
@@ -334,8 +302,93 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         """
         self.check_is_fitted()
         fitted_params = {}
-        for name in ['k', 'm', 'sigma_obs']:
+        for name in ["k", "m", "sigma_obs"]:
             fitted_params[name] = self._forecaster.params[name][0][0]
-        for name in ['delta', 'beta']:
+        for name in ["delta", "beta"]:
             fitted_params[name] = self._forecaster.params[name][0]
         return fitted_params
+
+    def _check_changepoints(self):
+        """Checking arguments for changepoints and assign related arguments
+
+        Returns
+        -------
+        self
+        """
+        if self.changepoints is not None:
+            self.changepoints = pd.Series(pd.to_datetime(self.changepoints), name="ds")
+            self.n_changepoints = len(self.changepoints)
+            self.specified_changepoints = True
+        else:
+            self.specified_changepoints = False
+        return self
+
+    def _coerce_to_datetime_index(self, fh):
+        """Create DatetimeIndex
+
+        Parameters
+        ----------
+        fh : sktime.ForecastingHorizon
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame with pd.DatetimeIndex as column "ds"
+
+        Raises
+        ------
+        TypeError
+            Error when fh values have wrong type
+        """
+        try:
+            periods = fh.to_pandas().max()
+            df = self._forecaster.make_future_dataframe(
+                periods=periods + 1, freq=self.freq, include_history=False
+            )
+            df = df.iloc[fh.to_pandas()]
+        except Exception:
+            raise TypeError(
+                "Type of fh values must be int, np.array, list or pd.DatetimeIndex"
+            )
+        return df
+
+
+def _merge_X(fh, X, df):
+    """Merge X and df on the DatetimeIndex
+
+    Parameters
+    ----------
+    fh : sktime.ForecastingHorizon
+    X : pd.DataFrame
+        Exog data
+    df : pd.DataFrame
+        Contains a DatetimeIndex column "ds"
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with containing X and df (with a DatetimeIndex column "ds")
+
+    Raises
+    ------
+    TypeError
+        Error if merging was not possible
+    """
+    merge_error = (
+        "Either length of fh and X must be "
+        "same or X must have future DatetimeIndex values."
+    )
+    if X is not None:
+        X = check_X(X)
+        try:
+            if len(X) == len(fh.to_pandas()):
+                X = X.set_index(df.index)
+                df = pd.concat([df, X], axis=1)
+            else:
+                df.index = df["ds"]
+                df = df.merge(X, left_index=True, right_on=X.index)
+        except Exception:
+            raise TypeError(merge_error)
+    if df.empty:
+        raise TypeError(merge_error)
+    return df

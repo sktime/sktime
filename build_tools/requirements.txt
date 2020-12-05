@@ -1,5 +1,6 @@
 catch22
 cython>=0.29.0
+fbprophet
 numba==0.50.*
 pandas>=1.0.0
 pmdarima
@@ -10,4 +11,3 @@ scikit-posthocs
 statsmodels>=0.12.*
 tsfresh
 wheel
-fbprophet

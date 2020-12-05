@@ -21,7 +21,9 @@ from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
 
 
-def check_y_X(y, X=None, allow_empty=False, allow_constant=True, index_type=None):
+def check_y_X(
+    y, X=None, allow_empty=False, allow_constant=True, enforce_index_type=None
+):
     """Validate input data.
 
     Parameters
@@ -32,7 +34,7 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True, index_type=None
         If True, empty `y` does not raise an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
-    index_type : type, optional (default=None)
+    enforce_index_type : type, optional (default=None)
         type of time index
 
     Raises
@@ -40,7 +42,12 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True, index_type=None
     ValueError
         If y or X are invalid inputs
     """
-    y = check_y(y, allow_empty=allow_empty, allow_constant=allow_constant, index_type=index_type)
+    y = check_y(
+        y,
+        allow_empty=allow_empty,
+        allow_constant=allow_constant,
+        enforce_index_type=enforce_index_type,
+    )
 
     if X is not None:
         X = check_X(X)
@@ -49,7 +56,7 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True, index_type=None
     return y, X
 
 
-def check_X(X, allow_empty=False, enforce_univariate=False, index_type=None):
+def check_X(X, allow_empty=False, enforce_univariate=False, enforce_index_type=None):
     """Validate input data.
 
     Parameters
@@ -57,7 +64,7 @@ def check_X(X, allow_empty=False, enforce_univariate=False, index_type=None):
     X : pd.Series, pd.DataFrame, np.ndarray
     allow_empty : bool, optional (default=False)
         If True, empty `y` raises an error.
-    index_type : type, optional (default=None)
+    enforce_index_type : type, optional (default=None)
         type of time index
 
     Returns
@@ -72,12 +79,14 @@ def check_X(X, allow_empty=False, enforce_univariate=False, index_type=None):
     """
     # Check if pandas series or numpy array
     return check_series(
-        X, enforce_univariate=enforce_univariate,
-        allow_empty=allow_empty, index_type=index_type
+        X,
+        enforce_univariate=enforce_univariate,
+        allow_empty=allow_empty,
+        enforce_index_type=enforce_index_type,
     )
 
 
-def check_y(y, allow_empty=False, allow_constant=True, index_type=None):
+def check_y(y, allow_empty=False, allow_constant=True, enforce_index_type=None):
     """Validate input data.
 
     Parameters
@@ -87,7 +96,7 @@ def check_y(y, allow_empty=False, allow_constant=True, index_type=None):
         If True, empty `y` raises an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
-    index_type : type, optional (default=None)
+    enforce_index_type : type, optional (default=None)
         type of time index
 
     Returns
@@ -100,8 +109,11 @@ def check_y(y, allow_empty=False, allow_constant=True, index_type=None):
         If y is an invalid input
     """
     y = check_series(
-        y, enforce_univariate=True, allow_empty=allow_empty,
-        allow_numpy=False, index_type=index_type
+        y,
+        enforce_univariate=True,
+        allow_empty=allow_empty,
+        allow_numpy=False,
+        enforce_index_type=enforce_index_type,
     )
 
     if not allow_constant:
