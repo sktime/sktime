@@ -116,24 +116,44 @@ class BATS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        if X is not None:
+            raise NotImplementedError("BATS/TBATS don't support exog or endog data.")
+
         y = check_y(y)
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self._forecaster.fit(y)
+
+        self._forecaster = self._forecaster.fit(y)
         self._is_fitted = True
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        # todo: fh
-        fh = self.fh.to_absolute_int(start=self._y.index[0], cutoff=self.cutoff)
-        out = self._forecaster.forecast(
-            steps=len(fh.values), confidence_level=1 - alpha
-        )[1]
+        index_absolute = None
+        if not fh.is_relative:
+            index_absolute = fh._values
+            fh = fh.to_relative(cutoff=self.cutoff)
+        steps = fh.to_pandas().max()
+        out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
+
+        # pred
         pred = pd.Series(out["mean"])
+        index_relative = pd.RangeIndex(
+            start=pred.index.start + 1, stop=pred.index.stop + 1
+        )
+        pred.index = index_relative
+        pred = pred[fh.to_pandas()]
+        # pred_int
+        pred_int = pd.DataFrame([out["upper_bound"], out["lower_bound"]]).T.rename(
+            columns={0: "upper", 1: "lower"}
+        )
+        pred_int.index = index_relative
+        pred_int = pred_int[pred_int.index.isin(fh.to_pandas())]
+
+        if index_absolute is not None:
+            pred.index = index_absolute
+            pred_int.index = index_absolute
+
         if return_pred_int:
-            pred_int = pd.DataFrame([out["upper_bound"], out["lower_bound"]]).T.rename(
-                columns={0: "upper", 1: "lower"}
-            )
             return pred, pred_int
         else:
             return pred

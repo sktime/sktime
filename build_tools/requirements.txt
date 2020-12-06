@@ -8,5 +8,6 @@ pytest-cov
 scikit-learn==0.23.*
 scikit-posthocs
 statsmodels>=0.12.*
+tbats
 tsfresh
 wheel
