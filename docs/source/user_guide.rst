@@ -20,9 +20,6 @@ meant to provide a technical manual.
     .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
 
 
-Contents
---------
-
 .. toctree::
    :maxdepth: 1
 
