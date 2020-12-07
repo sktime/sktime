@@ -1,3 +1,20 @@
 # The file lists sktime's algorithm maintainers as specified in GOVERNANCE.md.
 # Each line is a file pattern followed by one or more owners.
 
+* @mloning
+
+sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
+sktime/classification/frequency_based/ @MJFlynn @TonyBagnall
+sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
+sktime/classification/dictionary_based/tests @patrickzib
+
+sktime/transformers/panel/dictionary_based/ @patrickzib
+sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
+
+sktime/forecasting/ets.py @HYang1996
+sktime/forecasting/tests/test_ets.py @HYang1996
+
+sktime/forecasting/online_learning/ @magittan

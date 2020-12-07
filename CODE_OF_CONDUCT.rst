@@ -203,7 +203,7 @@ The provisional Code of Conduct committee is:
 
 -  Dr Franz Király: f.kiraly@ucl.ac.uk
 -  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
--  Markus Löning: markus.loning.@gmail.com
+-  Markus Löning: markus.loning@gmail.com
 
 As the community grows, we will seek to build a larger committee
 including members outside of the core development team.
@@ -308,8 +308,8 @@ In the event of any conflict of interest such that Dr Franz Király is
 not able to evaluate or enforce the reported violation, Dr Tony Bagnall
 will take Dr Franz Király's place.
 
-5. Acknowledgements
--------------------
+5 Acknowledgements
+------------------
 
 This code is adapted from the `The Turing
 Way <https://github.com/alan-turing-institute/the-turing-way>`__ project
