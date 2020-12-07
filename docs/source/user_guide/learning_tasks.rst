@@ -1,7 +1,7 @@
-.. _forecasting:
+.. _learning_tasks:
 
-Forecasting
-===========
+Overview of Learning Tasks
+==========================
 
 .. note::
 
@@ -9,3 +9,13 @@ Forecasting
     structure and are looking for contributions to develop the user guide
     further. For more details, please go to issue `#361 <https://github
     .com/alan-turing-institute/sktime/issues/361>`_ on GitHub.
+
+
+* :ref:`classification`
+* :ref:`regression`
+* :ref:`forecasting`
+* Clustering
+* Time series annotation
+* Panel forecasting
+* Supervised forecasting
+* Reduction
