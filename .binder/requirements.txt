@@ -1,7 +1,6 @@
---no-binary=esig
 catch22
 cython>=0.29.0
-esig<=0.8.2
+esig<=0.8.2 --prefer-binary
 matplotlib
 notebook
 numba==0.50.*
