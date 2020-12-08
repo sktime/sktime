@@ -1,6 +1,7 @@
+--no-binary=esig
 catch22
 cython>=0.29.0
-esig<=0.8.2 --no-binary
+esig<=0.8.2
 numba==0.50.*
 pandas>=1.0.0
 pmdarima
