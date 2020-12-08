@@ -1,5 +1,4 @@
---no-binary=esig
-esig<=0.8.2
+esig<=0.8.2 --prefer-binary
 jupyter
 m2r2
 matplotlib
