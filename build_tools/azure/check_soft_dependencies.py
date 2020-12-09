@@ -14,6 +14,7 @@ SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.transformers.panel.tsfresh": ["tsfresh"],
     "sktime.forecasting.arima": ["pmdarima"],
+    "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.all": ["pmdarima", "tbats"],
     "sktime.classification.all": ["tsfresh"],
