@@ -12,6 +12,72 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
+from sktime.utils.validation.forecasting import check_y
+
+
+class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+    """Base class for interfacing tbats forecasting algorithms"""
+
+    def fit(self, y, X=None, fh=None):
+        """Fit to training data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to which to fit the forecaster.
+        fh : int, list or np.array, optional (default=None)
+            The forecasters horizon with the steps ahead to to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables (ignored)
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        if X is not None:
+            raise NotImplementedError("BATS/TBATS don't support exog or endog data.")
+
+        y = check_y(y)
+        self._set_y_X(y, X)
+        self._set_fh(fh)
+
+        self._forecaster = self._forecaster.fit(y)
+        self._is_fitted = True
+        return self
+
+    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+        if not fh.is_relative:
+            fh = fh.to_relative(cutoff=self.cutoff)
+
+        if not fh.is_all_in_sample(cutoff=self.cutoff):
+            steps = fh.to_pandas().max()
+            out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
+            y_out = out["mean"]
+            # pred_int
+            fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
+            upper = pd.Series(
+                out["upper_bound"][fh_out.to_indexer(self.cutoff)],
+                index=fh_out.to_absolute(self.cutoff),
+            )
+            lower = pd.Series(
+                out["lower_bound"][fh_out.to_indexer(self.cutoff)],
+                index=fh_out.to_absolute(self.cutoff),
+            )
+            pred_int = pd.DataFrame({"upper": upper, "lower": lower})
+
+        else:
+            y_out = np.array([])
+        # y_pred
+        y_pred = pd.Series(
+            np.concatenate([self._forecaster.y_hat, y_out])[fh.to_indexer(self.cutoff)],
+            index=fh.to_absolute(self.cutoff),
+        )
+
+        if return_pred_int:
+            return y_pred, pred_int
+        else:
+            return y_pred
+
 
 class _StatsModelsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing statsmodels forecasting algorithms"""

@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Martin Walter"]
-__all__ = ["BATS"]
+__all__ = ["TBATS"]
 
 from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.forecasting.base._adapters import _TbatsAdapter
@@ -11,11 +11,12 @@ from sktime.forecasting.base._adapters import _TbatsAdapter
 _check_soft_dependencies("tbats")
 
 
-class BATS(_TbatsAdapter):
-    """BATS estimator used to fit and select best performing model.
-    BATS (Exponential smoothing state space model with Box-Cox
-    transformation, ARMA errors, Trend and Seasonal components.)
+class TBATS(_TbatsAdapter):
+    """TBATS estimator used to fit and select best performing model.
+    TBATS (Exponential smoothing state space model with Box-Cox
+    transformation, ARMA errors, Trigonometric Trend and Seasonal components.)
     Model has been described in De Livera, Hyndman & Snyder (2011).
+    All of the useful methods have been implemented in parent Estimator class.
 
     Parameters
     ----------
@@ -77,12 +78,12 @@ class BATS(_TbatsAdapter):
         self.multiprocessing_start_method = multiprocessing_start_method
         self.context = context
 
-        super(BATS, self).__init__()
+        super(TBATS, self).__init__()
 
         # import inside method to avoid hard dependency
-        from tbats import BATS as _BATS
+        from tbats import TBATS as _TBATS
 
-        self._forecaster = _BATS(
+        self._forecaster = _TBATS(
             use_box_cox=use_box_cox,
             box_cox_bounds=box_cox_bounds,
             use_trend=use_trend,
