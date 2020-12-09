@@ -136,18 +136,20 @@ class BATS(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
 
         # pred
-        pred = pd.Series(out["mean"])
-        index_relative = pd.RangeIndex(
-            start=pred.index.start + 1, stop=pred.index.stop + 1
+        pred = pd.Series(
+            out["mean"][fh.to_indexer(self.cutoff)], index=fh.to_absolute(self.cutoff)
         )
-        pred.index = index_relative
-        pred = pred[fh.to_pandas()]
+
         # pred_int
-        pred_int = pd.DataFrame([out["upper_bound"], out["lower_bound"]]).T.rename(
-            columns={0: "upper", 1: "lower"}
+        upper = pd.Series(
+            out["upper_bound"][fh.to_indexer(self.cutoff)],
+            index=fh.to_absolute(self.cutoff),
         )
-        pred_int.index = index_relative
-        pred_int = pred_int[pred_int.index.isin(fh.to_pandas())]
+        lower = pd.Series(
+            out["lower_bound"][fh.to_indexer(self.cutoff)],
+            index=fh.to_absolute(self.cutoff),
+        )
+        pred_int = pd.DataFrame({"upper": upper, "lower": lower})
 
         if index_absolute is not None:
             pred.index = index_absolute
