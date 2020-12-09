@@ -11,12 +11,15 @@ import pandas as pd
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.utils.check_imports import _check_soft_dependencies
 
 from sktime.utils.validation.forecasting import check_y
 
 
 class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing tbats forecasting algorithms"""
+
+    _check_soft_dependencies("tbats")
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
