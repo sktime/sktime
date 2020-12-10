@@ -52,45 +52,11 @@ class BATS(_TbatsAdapter):
         For advanced users only. Provide this to override default behaviors
     """
 
-    def __init__(
-        self,
-        use_box_cox=None,
-        box_cox_bounds=(0, 1),
-        use_trend=None,
-        use_damped_trend=None,
-        seasonal_periods=None,
-        use_arma_errors=True,
-        show_warnings=True,
-        n_jobs=None,
-        multiprocessing_start_method="spawn",
-        context=None,
-    ):
-
-        self.use_box_cox = use_box_cox
-        self.box_cox_bounds = box_cox_bounds
-        self.use_trend = use_trend
-        self.use_damped_trend = use_damped_trend
-        self.seasonal_periods = seasonal_periods
-        self.use_arma_errors = use_arma_errors
-        self.show_warnings = show_warnings
-        self.n_jobs = n_jobs
-        self.multiprocessing_start_method = multiprocessing_start_method
-        self.context = context
-
-        super(BATS, self).__init__()
+    def __init__(self, **kwargs):
+        super(BATS, self).__init__(**kwargs)
 
         # import inside method to avoid hard dependency
         from tbats import BATS as _BATS
 
-        self._forecaster = _BATS(
-            use_box_cox=use_box_cox,
-            box_cox_bounds=box_cox_bounds,
-            use_trend=use_trend,
-            use_damped_trend=use_damped_trend,
-            seasonal_periods=seasonal_periods,
-            use_arma_errors=use_arma_errors,
-            show_warnings=show_warnings,
-            n_jobs=n_jobs,
-            multiprocessing_start_method=multiprocessing_start_method,
-            context=context,
-        )
+        self.ModelClass = _BATS
+        self._instantiate_model()

@@ -12,11 +12,56 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X
 
 
 class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing tbats forecasting algorithms"""
+
+    def __init__(
+        self,
+        use_box_cox=None,
+        box_cox_bounds=(0, 1),
+        use_trend=None,
+        use_damped_trend=None,
+        seasonal_periods=None,
+        use_arma_errors=True,
+        show_warnings=True,
+        n_jobs=None,
+        multiprocessing_start_method="spawn",
+        context=None,
+    ):
+
+        self.use_box_cox = use_box_cox
+        self.box_cox_bounds = box_cox_bounds
+        self.use_trend = use_trend
+        self.use_damped_trend = use_damped_trend
+        self.seasonal_periods = seasonal_periods
+        self.use_arma_errors = use_arma_errors
+        self.show_warnings = show_warnings
+        self.n_jobs = n_jobs
+        self.multiprocessing_start_method = multiprocessing_start_method
+        self.context = context
+        # custom args due to inheritance
+        self._forecaster = None
+        self.ModelClass = None
+
+        super(_TbatsAdapter, self).__init__()
+
+    def _instantiate_model(self):
+        self._forecaster = self.ModelClass(
+            use_box_cox=self.use_box_cox,
+            box_cox_bounds=self.box_cox_bounds,
+            use_trend=self.use_trend,
+            use_damped_trend=self.use_damped_trend,
+            seasonal_periods=self.seasonal_periods,
+            use_arma_errors=self.use_arma_errors,
+            show_warnings=self.show_warnings,
+            n_jobs=self.n_jobs,
+            multiprocessing_start_method=self.multiprocessing_start_method,
+            context=self.context,
+        )
+        return self
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -34,10 +79,8 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        if X is not None:
-            raise NotImplementedError("BATS/TBATS don't support exog or endog data.")
-
-        y = check_y(y)
+        self._instantiate_model()
+        y, X = check_y_X(y, X, warn_X=True)
         self._set_y_X(y, X)
         self._set_fh(fh)
 
@@ -46,8 +89,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        if not fh.is_relative:
-            fh = fh.to_relative(cutoff=self.cutoff)
+        fh = fh.to_relative(cutoff=self.cutoff)
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             steps = fh.to_pandas().max()
