@@ -9,6 +9,8 @@ from sktime.utils.validation.series import check_series
 
 
 class AutoCorrelationFunctionTransformer(_SeriesToSeriesTransformer):
+    _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+
     def __init__(
         self,
         unbiased=False,
@@ -30,7 +32,7 @@ class AutoCorrelationFunctionTransformer(_SeriesToSeriesTransformer):
     def transform(self, Z, X=None):
 
         self.check_is_fitted()
-        x = check_series(Z)
+        x = check_series(Z, enforce_univariate=True)
         zt = acf(
             x, self.unbiased, self.nlags, self.qstat, self.fft, self.alpha, self.missing
         )
