@@ -63,7 +63,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 out["lower_bound"][fh_out.to_indexer(self.cutoff)],
                 index=fh_out.to_absolute(self.cutoff),
             )
-            pred_int = pd.DataFrame({"upper": upper, "lower": lower})
+            pred_int = pd.DataFrame({"lower": lower, "upper": upper})
 
         else:
             y_out = np.array([])
