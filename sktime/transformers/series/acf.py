@@ -10,6 +10,7 @@ from sktime.utils.validation.series import check_series
 
 class AutoCorrelationFunctionTransformer(_SeriesToSeriesTransformer):
     _tags = {"transform-returns-same-time-index": True, "univariate-only": True}
+
     def __init__(
         self,
         unbiased=False,
