@@ -93,7 +93,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             steps = fh.to_pandas().max()
-            out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
+            out = self._forecaster.forecast(steps=steps, confidence_level=alpha)[1]
             y_out = out["mean"]
             # pred_int
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
