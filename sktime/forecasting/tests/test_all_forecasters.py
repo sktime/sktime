@@ -29,15 +29,14 @@ from sktime.forecasting.tests._config import TEST_FHS
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.forecasting.tests._config import TEST_YS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
 from sktime.utils._testing import _construct_instance
 from sktime.utils._testing import _make_series
+from sktime.utils._testing.forecasting import _get_expected_index_for_update_predict
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import assert_correct_pred_time_index
-from sktime.utils._testing.forecasting import get_expected_index_for_update_predict
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
 
@@ -200,11 +199,11 @@ def test_update_predict_single(Forecaster, fh):
     assert_correct_pred_time_index(y_pred.index, y_test.index[-1], fh)
 
 
-def check_update_predict_y_pred(y_pred, y_test, fh, step_length):
+def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
     if isinstance(y_pred, pd.DataFrame):
         assert y_pred.shape[1] > 1
-    expected_index = get_expected_index_for_update_predict(y_test, fh, step_length)
+    expected_index = _get_expected_index_for_update_predict(y_test, fh, step_length)
     np.testing.assert_array_equal(y_pred.index, expected_index)
 
 
@@ -212,16 +211,14 @@ def check_update_predict_y_pred(y_pred, y_test, fh, step_length):
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
-@pytest.mark.parametrize("y", TEST_YS)
-def test_update_predict_predicted_indices(
-    Forecaster, fh, window_length, step_length, y
-):
+def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_length):
+    y = make_forecasting_problem(all_positive=True, index_type="int")
     y_train, y_test = temporal_train_test_split(y)
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=fh)
     try:
         y_pred = f.update_predict(y_test, cv=cv)
-        check_update_predict_y_pred(y_pred, y_test, fh, step_length)
+        _check_update_predict_y_pred(y_pred, y_test, fh, step_length)
     except NotImplementedError:
         pass
