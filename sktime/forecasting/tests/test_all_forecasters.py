@@ -203,8 +203,9 @@ def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
     assert isinstance(y_pred, (pd.Series, pd.DataFrame))
     if isinstance(y_pred, pd.DataFrame):
         assert y_pred.shape[1] > 1
-    expected_index = _get_expected_index_for_update_predict(y_test, fh, step_length)
-    np.testing.assert_array_equal(y_pred.index, expected_index)
+    expected = _get_expected_index_for_update_predict(y_test, fh, step_length)
+    actual = y_pred.index
+    np.testing.assert_array_equal(actual, expected)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -212,7 +213,7 @@ def _check_update_predict_y_pred(y_pred, y_test, fh, step_length):
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS)
 @pytest.mark.parametrize("step_length", TEST_STEP_LENGTHS)
 def test_update_predict_predicted_indices(Forecaster, fh, window_length, step_length):
-    y = make_forecasting_problem(all_positive=True, index_type="int")
+    y = make_forecasting_problem(all_positive=True, index_type="datetime")
     y_train, y_test = temporal_train_test_split(y)
     cv = SlidingWindowSplitter(fh, window_length=window_length, step_length=step_length)
     f = _construct_instance(Forecaster)
