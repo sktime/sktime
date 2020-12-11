@@ -17,54 +17,6 @@ from sktime.utils.validation.forecasting import check_X, check_y_X
 class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     """Base class for interfacing fbprophet and neuralprophet"""
 
-    def __init__(
-        self,
-        # Args due to wrapping
-        freq,
-        add_seasonality=None,
-        add_country_holidays=None,
-        # Args of fbprophet
-        growth="linear",
-        changepoints=None,
-        n_changepoints=25,
-        changepoint_range=0.8,
-        yearly_seasonality="auto",
-        weekly_seasonality="auto",
-        daily_seasonality="auto",
-        holidays=None,
-        seasonality_mode="additive",
-        seasonality_prior_scale=10.0,
-        holidays_prior_scale=10.0,
-        changepoint_prior_scale=0.05,
-        mcmc_samples=0,
-        interval_width=1 - DEFAULT_ALPHA,
-        uncertainty_samples=1000,
-        stan_backend=None,
-        **kwargs
-    ):
-        self.freq = freq
-        self.add_seasonality = add_seasonality
-        self.add_country_holidays = add_country_holidays
-
-        self.growth = growth
-        self.changepoints = changepoints
-        self.n_changepoints = n_changepoints
-        self.changepoint_range = changepoint_range
-        self.yearly_seasonality = yearly_seasonality
-        self.weekly_seasonality = weekly_seasonality
-        self.daily_seasonality = daily_seasonality
-        self.holidays = holidays
-        self.seasonality_mode = seasonality_mode
-        self.seasonality_prior_scale = float(seasonality_prior_scale)
-        self.changepoint_prior_scale = float(changepoint_prior_scale)
-        self.holidays_prior_scale = float(holidays_prior_scale)
-        self.mcmc_samples = mcmc_samples
-        self.interval_width = interval_width
-        self.uncertainty_samples = uncertainty_samples
-        self.stan_backend = stan_backend
-
-        super(_ProphetAdapter, self).__init__()
-
     def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
         Parameters
@@ -137,6 +89,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             raise NotImplementedError(
                 "alpha must be given in Prophet() as interval_width (1-alpha)"
             )
+
         fh = fh.to_relative(cutoff=self.cutoff)
 
         if isinstance(fh.to_pandas(), pd.DatetimeIndex):
@@ -219,6 +172,8 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         TypeError
             Error when fh values have wrong type
         """
+        if self.freq is None:
+            self.freq = self._y.index.freq
         try:
             periods = fh.to_pandas().max()
             df = self._forecaster.make_future_dataframe(
