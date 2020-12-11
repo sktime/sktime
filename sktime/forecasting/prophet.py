@@ -5,19 +5,15 @@
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
 
-import pandas as pd
 
-from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _SktimeForecaster
-from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base._adapters import _ProphetAdapter
 from sktime.utils.check_imports import _check_soft_dependencies
-from sktime.utils.validation.forecasting import check_X, check_y_X
 
 
 _check_soft_dependencies("fbprophet")
 
 
-class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
+class Prophet(_ProphetAdapter):
     """Prophet forecaster by wrapping fbprophet.
     Parameters
     ----------
@@ -88,307 +84,31 @@ class Prophet(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
     """
 
-    def __init__(
-        self,
-        # Args due to wrapping
-        freq,
-        add_seasonality=None,
-        add_country_holidays=None,
-        # Args of fbprophet
-        growth="linear",
-        changepoints=None,
-        n_changepoints=25,
-        changepoint_range=0.8,
-        yearly_seasonality="auto",
-        weekly_seasonality="auto",
-        daily_seasonality="auto",
-        holidays=None,
-        seasonality_mode="additive",
-        seasonality_prior_scale=10.0,
-        holidays_prior_scale=10.0,
-        changepoint_prior_scale=0.05,
-        mcmc_samples=0,
-        interval_width=1 - DEFAULT_ALPHA,
-        uncertainty_samples=1000,
-        stan_backend=None,
-        **kwargs
-    ):
-        self.freq = freq
-        self.add_seasonality = add_seasonality
-        self.add_country_holidays = add_country_holidays
-
-        self.growth = growth
-        self.changepoints = changepoints
-        self.n_changepoints = n_changepoints
-        self.changepoint_range = changepoint_range
-        self.yearly_seasonality = yearly_seasonality
-        self.weekly_seasonality = weekly_seasonality
-        self.daily_seasonality = daily_seasonality
-        self.holidays = holidays
-        self.seasonality_mode = seasonality_mode
-        self.seasonality_prior_scale = float(seasonality_prior_scale)
-        self.changepoint_prior_scale = float(changepoint_prior_scale)
-        self.holidays_prior_scale = float(holidays_prior_scale)
-        self.mcmc_samples = mcmc_samples
-        self.interval_width = interval_width
-        self.uncertainty_samples = uncertainty_samples
-        self.stan_backend = stan_backend
-
-        super(Prophet, self).__init__()
+    def __init__(self, **kwargs):
+        super(Prophet, self).__init__(**kwargs)
 
         # import inside method to avoid hard dependency
         from fbprophet.forecaster import Prophet as _Prophet
 
-        self._forecaster = _Prophet(
-            growth=growth,
-            changepoints=changepoints,
-            n_changepoints=n_changepoints,
-            changepoint_range=changepoint_range,
-            yearly_seasonality=yearly_seasonality,
-            weekly_seasonality=weekly_seasonality,
-            daily_seasonality=daily_seasonality,
-            holidays=holidays,
-            seasonality_mode=seasonality_mode,
-            seasonality_prior_scale=seasonality_prior_scale,
-            holidays_prior_scale=holidays_prior_scale,
-            changepoint_prior_scale=changepoint_prior_scale,
-            mcmc_samples=mcmc_samples,
-            interval_width=interval_width,
-            uncertainty_samples=uncertainty_samples,
-            stan_backend=stan_backend,
+        self._ModelClass = _Prophet
+
+    def _instantiate_model(self):
+        self._forecaster = self._ModelClass(
+            growth=self.growth,
+            changepoints=self.changepoints,
+            n_changepoints=self.n_changepoints,
+            changepoint_range=self.changepoint_range,
+            yearly_seasonality=self.yearly_seasonality,
+            weekly_seasonality=self.weekly_seasonality,
+            daily_seasonality=self.daily_seasonality,
+            holidays=self.holidays,
+            seasonality_mode=self.seasonality_mode,
+            seasonality_prior_scale=self.seasonality_prior_scale,
+            holidays_prior_scale=self.holidays_prior_scale,
+            changepoint_prior_scale=self.changepoint_prior_scale,
+            mcmc_samples=self.mcmc_samples,
+            interval_width=self.interval_width,
+            uncertainty_samples=self.uncertainty_samples,
+            stan_backend=self.stan_backend,
         )
-
-    def fit(self, y, X=None, fh=None, **fit_params):
-        """Fit to training data.
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self._check_changepoints()
-        y, X = check_y_X(y, X, enforce_index_type=pd.DatetimeIndex)
-        self._set_y_X(y, X)
-        self._set_fh(fh)
-
-        # We have to bring the data into the required format for fbprophet:
-        df = pd.DataFrame(y.rename("y"))
-        df["ds"] = y.index
-
-        # Add seasonality
-        if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
-
-        # Add country holidays
-        if self.add_country_holidays:
-            self._forecaster.add_country_holidays(**self.add_country_holidays)
-
-        # Add regressor (multivariate)
-        if X is not None:
-            df = df.merge(X, left_index=True, right_on=X.index)
-            for col in X.columns:
-                self._forecaster.add_regressor(col)
-
-        self._forecaster.fit(df=df, **fit_params)
-        self._is_fitted = True
         return self
-
-    def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
-        """Predict
-
-        Parameters
-        ----------
-        fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
-            Default is
-            one-step ahead forecast, i.e. np.array([1]).
-        X : pd.DataFrame, optional
-            Exogenous data, by default None
-        return_pred_int : bool, optional
-            Returns a pd.DataFrame with confidence intervalls, by default False
-        alpha : float, optional
-            Alpha level for confidence intervalls, by default DEFAULT_ALPHA
-
-        Returns
-        -------
-        y_pred : pandas.Series
-            Returns series of predicted values.
-
-        Raises
-        ------
-        Exception
-            Error when merging data
-        """
-        if isinstance(fh.to_pandas(), pd.DatetimeIndex):
-            df = pd.DataFrame()
-            df["ds"] = fh.to_pandas()
-        else:
-            # Try to create pd.DatetimeIndex
-            df = self._coerce_to_datetime_index(fh=fh)
-
-        # Merge X with df (of created future DatetimeIndex values)
-        df = _merge_X(fh=fh, X=X, df=df)
-
-        # Prediction
-        out = self._forecaster.predict(df)
-        out.index = out["ds"]
-        pred = out["yhat"]
-        pred = pred.rename(None)
-        pred_int = out[["yhat_upper", "yhat_lower"]].rename(
-            columns={"yhat_upper": "upper", "yhat_lower": "lower"}
-        )
-        if return_pred_int:
-            return pred, pred_int
-        else:
-            return pred
-
-    def update(self, y, X=None, fh=None):
-        """Warm-starting with an existing model.
-
-        Prophet models can only be fit once, and a new model must
-        be re-fit when new data become available. In most settings,
-        model fitting is fast enough that there isn’t any issue with
-        re-fitting from scratch. However, it is possible to speed things
-        up a little by warm-starting the fit from the model parameters
-        of the earlier model. We retrieve parameters from a trained model
-        in the format used to initialize a new Stan model.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables.
-        fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
-
-        Returns
-        ----------
-        model : sktime.Prophet
-            A fitted sktime.Prophet model
-
-        Raises
-        ----------
-        ValueError
-            Error when data does not contain old training data,
-            because fbprophet requires it.
-        """
-        if len(self._forecaster.history) >= len(y):
-            raise ValueError("y must contain past and new train data.")
-        if fh is None:
-            fh = self.fh
-        model_params = self.get_params()
-        fitted_params = self._get_fitted_params()
-        model = Prophet(**model_params)
-        model.fit(y=y, X=X, fh=fh, init=fitted_params)
-        return model
-
-    def _get_fitted_params(self):
-        """Get fitted parameters
-
-        Returns
-        -------
-        fitted_params : dict
-
-        References
-        ----------
-        https://facebook.github.io/prophet/docs/additional_topics.html
-        """
-        self.check_is_fitted()
-        fitted_params = {}
-        for name in ["k", "m", "sigma_obs"]:
-            fitted_params[name] = self._forecaster.params[name][0][0]
-        for name in ["delta", "beta"]:
-            fitted_params[name] = self._forecaster.params[name][0]
-        return fitted_params
-
-    def _check_changepoints(self):
-        """Checking arguments for changepoints and assign related arguments
-
-        Returns
-        -------
-        self
-        """
-        if self.changepoints is not None:
-            self.changepoints = pd.Series(pd.to_datetime(self.changepoints), name="ds")
-            self.n_changepoints = len(self.changepoints)
-            self.specified_changepoints = True
-        else:
-            self.specified_changepoints = False
-        return self
-
-    def _coerce_to_datetime_index(self, fh):
-        """Create DatetimeIndex
-
-        Parameters
-        ----------
-        fh : sktime.ForecastingHorizon
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame with pd.DatetimeIndex as column "ds"
-
-        Raises
-        ------
-        TypeError
-            Error when fh values have wrong type
-        """
-        try:
-            periods = fh.to_pandas().max()
-            df = self._forecaster.make_future_dataframe(
-                periods=periods + 1, freq=self.freq, include_history=False
-            )
-            df = df.iloc[fh.to_pandas()]
-        except Exception:
-            raise TypeError(
-                "Type of fh values must be int, np.array, list or pd.DatetimeIndex"
-            )
-        return df
-
-
-def _merge_X(fh, X, df):
-    """Merge X and df on the DatetimeIndex
-
-    Parameters
-    ----------
-    fh : sktime.ForecastingHorizon
-    X : pd.DataFrame
-        Exog data
-    df : pd.DataFrame
-        Contains a DatetimeIndex column "ds"
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with containing X and df (with a DatetimeIndex column "ds")
-
-    Raises
-    ------
-    TypeError
-        Error if merging was not possible
-    """
-    merge_error = (
-        "Either length of fh and X must be "
-        "same or X must have future DatetimeIndex values."
-    )
-    if X is not None:
-        X = check_X(X)
-        try:
-            if len(X) == len(fh.to_pandas()):
-                X = X.set_index(df.index)
-                df = pd.concat([df, X], axis=1)
-            else:
-                df.index = df["ds"]
-                df = df.merge(X, left_index=True, right_on=X.index)
-        except Exception:
-            raise TypeError(merge_error)
-    if df.empty:
-        raise TypeError(merge_error)
-    return df
