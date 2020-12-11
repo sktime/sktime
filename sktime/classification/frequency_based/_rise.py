@@ -76,21 +76,9 @@ def _make_estimator(base_estimator, random_state=None):
 
 
 class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
-    """Random Interval Spectral Forest (RISE).
+    """
+    Random Interval Spectral Forest (RISE) from [1]
 
-    Random Interval Spectral Forest: stripped down implementation of RISE
-
-    from Lines 2018::
-        @article{lines17hive-cote,
-     author = {J. Lines, S. Taylor and A. Bagnall},
-     title = {Time Series Classification with HIVE-COTE: The
-      Hierarchical Vote Collective of Transformation-Based Ensembles},
-     journal = {ACM Transactions on Knowledge and Data Engineering},
-     volume = {12},
-     number= {5},
-     year = {2018}
-    }
-    https://dl.acm.org/doi/10.1145/3182382
 
     Overview:
 
@@ -133,6 +121,19 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     classifiers : array of shape = [n_estimators] of DecisionTree classifiers
     intervals : array of shape = [n_estimators][2]
         Stores indexes of start and end points for all classifiers.
+
+    Notes
+    _____
+    ..[1] Jason Lines, Sarah Taylor and Anthony Bagnall, "Time Series Classification
+    with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based Ensembles",
+      ACM Transactions on Knowledge and Data Engineering, 12(5): 2018
+    https://dl.acm.org/doi/10.1145/3182382
+    Java implementation
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/frequency_based/RISE.java
+
+
+
     """
 
     # TO DO: handle missing values, unequal length series and multivariate
