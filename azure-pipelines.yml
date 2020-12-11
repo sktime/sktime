@@ -76,6 +76,7 @@ stages:
 
 
   - stage: 'deploy'
+    timeoutInMinutes: 120
     dependsOn: 'build'
     condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
     jobs:
