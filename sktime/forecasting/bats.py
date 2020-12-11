@@ -58,5 +58,4 @@ class BATS(_TbatsAdapter):
         # import inside method to avoid hard dependency
         from tbats import BATS as _BATS
 
-        self.ModelClass = _BATS
-        self._instantiate_model()
+        self._ModelClass = _BATS

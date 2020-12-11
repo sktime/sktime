@@ -44,12 +44,12 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.context = context
         # custom args due to inheritance
         self._forecaster = None
-        self.ModelClass = None
+        self._ModelClass = None
 
         super(_TbatsAdapter, self).__init__()
 
     def _instantiate_model(self):
-        self._forecaster = self.ModelClass(
+        self._forecaster = self._ModelClass(
             use_box_cox=self.use_box_cox,
             box_cox_bounds=self.box_cox_bounds,
             use_trend=self.use_trend,
@@ -93,8 +93,9 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
             steps = fh.to_pandas().max()
-            out = self._forecaster.forecast(steps=steps, confidence_level=alpha)[1]
+            out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
             y_out = out["mean"]
+
             # pred_int
             fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
             upper = pd.Series(
@@ -109,11 +110,13 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         else:
             y_out = np.array([])
-        # y_pred
+
         y_pred = pd.Series(
-            np.concatenate([self._forecaster.y_hat, y_out])[fh.to_indexer(self.cutoff)],
-            index=fh.to_absolute(self.cutoff),
+            np.concatenate([self._forecaster.y_hat, y_out]),
+            index=[x for x in range(-len(self._forecaster.y_hat), len(y_out))],
         )
+        y_pred = y_pred[fh.to_indexer(self.cutoff)]
+        y_pred.index = fh.to_absolute(self.cutoff)
 
         if return_pred_int:
             return y_pred, pred_int

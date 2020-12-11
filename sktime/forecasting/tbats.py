@@ -59,5 +59,4 @@ class TBATS(_TbatsAdapter):
         # import inside method to avoid hard dependency
         from tbats import TBATS as _TBATS
 
-        self.ModelClass = _TBATS
-        self._instantiate_model()
+        self._ModelClass = _TBATS
