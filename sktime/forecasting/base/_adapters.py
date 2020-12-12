@@ -99,26 +99,26 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             )
             y_out = out["mean"]
             # Workaround for slicing with negative index
-            out["idx"] = [x for x in range(len(out))]
-            out = out.loc[out["idx"].isin(fh_out.to_indexer(self.cutoff).values)]
-            out.index = fh_out.to_absolute(self.cutoff)
-            out = out.drop(columns=["idx"])
+            lower = pd.Series(out["lower_bound"])
+            upper = pd.Series(out["upper_bound"])
 
-            # pred_int
-            upper = out["upper_bound"]
-            lower = out["lower_bound"]
-            pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+            pred_int = self._get_pred_int(lower=lower, upper=upper)
+            # out["idx"] = [x for x in range(len(out))]
+            # out = out.loc[out["idx"].isin(fh_out.to_indexer(self.cutoff).values)]
+            # out.index = fh_out.to_absolute(self.cutoff)
+            # out = out.drop(columns=["idx"])
+
+            # # pred_int
+            # upper = out["upper_bound"]
+            # lower = out["lower_bound"]
+            # pred_int = pd.DataFrame({"lower": lower, "upper": upper})
 
         else:
             y_out = np.array([])
 
-        y_pred = pd.DataFrame(np.concatenate([self._forecaster.y_hat, y_out]))
-        # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(self._forecaster.y_hat), len(y_out))]
-        y_pred = y_pred.loc[y_pred["idx"].isin(fh.to_indexer(self.cutoff).values)]
-        y_pred.index = fh.to_absolute(self.cutoff)
-        y_pred = y_pred.drop(columns=["idx"])
-        y_pred = y_pred.iloc[:, 0].rename(None)
+        y_in_sample = pd.Series(self._forecaster.y_hat)
+        y_out_sample = pd.Series(y_out)
+        y_pred = self._get_y_pred(y_in_sample=y_in_sample, y_out_sample=y_out_sample)
 
         if return_pred_int:
             return y_pred, pred_int

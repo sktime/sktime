@@ -74,6 +74,30 @@ class _SktimeForecaster(BaseForecaster):
             if X is not None:
                 self._X = X.combine_first(self._X)
 
+    def _get_y_pred(self, y_in_sample, y_out_sample):
+        y_pred = y_in_sample.append(y_out_sample, ignore_index=True)
+        y_pred = pd.DataFrame(y_pred, columns=["y_pred"])
+        # Workaround for slicing with negative index
+        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
+        y_pred.index = self.fh.to_absolute(self.cutoff)
+        y_pred = y_pred.drop(columns=["idx"])
+        y_pred = y_pred["y_pred"].rename(None)
+        return y_pred
+
+    def _get_pred_int(self, lower, upper):
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # Workaround for slicing with negative index
+        pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int
+
     @property
     def cutoff(self):
         """The time point at which to make forecasts
