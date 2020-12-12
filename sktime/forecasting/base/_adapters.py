@@ -92,31 +92,32 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         fh = fh.to_relative(cutoff=self.cutoff)
 
         if not fh.is_all_in_sample(cutoff=self.cutoff):
-            steps = fh.to_pandas().max()
-            out = self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
+            fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
+            steps = fh_out.to_pandas().max()
+            out = pd.DataFrame(
+                self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
+            )
+            out["idx"] = [x for x in range(len(out))]
+            out = out.loc[out["idx"].isin(fh_out.to_indexer(self.cutoff).values)]
+            out.index = fh_out.to_absolute(self.cutoff)
+            out = out.drop(columns=["idx"])
+
             y_out = out["mean"]
 
             # pred_int
-            fh_out = fh.to_out_of_sample(cutoff=self.cutoff)
-            upper = pd.Series(
-                out["upper_bound"][fh_out.to_indexer(self.cutoff)],
-                index=fh_out.to_absolute(self.cutoff),
-            )
-            lower = pd.Series(
-                out["lower_bound"][fh_out.to_indexer(self.cutoff)],
-                index=fh_out.to_absolute(self.cutoff),
-            )
+            upper = out["upper_bound"]
+            lower = out["lower_bound"]
             pred_int = pd.DataFrame({"lower": lower, "upper": upper})
 
         else:
             y_out = np.array([])
 
-        y_pred = pd.Series(
-            np.concatenate([self._forecaster.y_hat, y_out]),
-            index=[x for x in range(-len(self._forecaster.y_hat), len(y_out))],
-        )
-        y_pred = y_pred[fh.to_indexer(self.cutoff)]
+        y_pred = pd.DataFrame(np.concatenate([self._forecaster.y_hat, y_out]))
+        y_pred["idx"] = [x for x in range(-len(self._forecaster.y_hat), len(y_out))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(fh.to_indexer(self.cutoff).values)]
         y_pred.index = fh.to_absolute(self.cutoff)
+        y_pred = y_pred.drop(columns=["idx"])
+        y_pred = y_pred.iloc[:, 0].rename(None)
 
         if return_pred_int:
             return y_pred, pred_int
