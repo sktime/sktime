@@ -58,6 +58,7 @@ stages:
               scriptSource: 'filePath'
               scriptPath: build_tools/azure/check_soft_dependencies.py
       - job: 'manylinux'
+        timeoutInMinutes: 120 # how long to run the job before automatically cancelling
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -76,11 +77,11 @@ stages:
 
 
   - stage: 'deploy'
-    timeoutInMinutes: 120
     dependsOn: 'build'
     condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
     jobs:
       - job: 'upload_to_pypi'
+        timeoutInMinutes: 120 # how long to run the job before automatically cancelling
         pool:
           vmImage: 'ubuntu-latest'
         steps:
