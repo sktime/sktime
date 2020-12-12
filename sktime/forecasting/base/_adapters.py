@@ -98,7 +98,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
             )
             y_out = out["mean"]
-
+            # Workaround for slicing with negative index
             out["idx"] = [x for x in range(len(out))]
             out = out.loc[out["idx"].isin(fh_out.to_indexer(self.cutoff).values)]
             out.index = fh_out.to_absolute(self.cutoff)
@@ -113,6 +113,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             y_out = np.array([])
 
         y_pred = pd.DataFrame(np.concatenate([self._forecaster.y_hat, y_out]))
+        # Workaround for slicing with negative index
         y_pred["idx"] = [x for x in range(-len(self._forecaster.y_hat), len(y_out))]
         y_pred = y_pred.loc[y_pred["idx"].isin(fh.to_indexer(self.cutoff).values)]
         y_pred.index = fh.to_absolute(self.cutoff)
