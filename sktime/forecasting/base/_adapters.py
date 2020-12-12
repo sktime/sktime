@@ -97,12 +97,12 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             out = pd.DataFrame(
                 self._forecaster.forecast(steps=steps, confidence_level=1 - alpha)[1]
             )
+            y_out = out["mean"]
+
             out["idx"] = [x for x in range(len(out))]
             out = out.loc[out["idx"].isin(fh_out.to_indexer(self.cutoff).values)]
             out.index = fh_out.to_absolute(self.cutoff)
             out = out.drop(columns=["idx"])
-
-            y_out = out["mean"]
 
             # pred_int
             upper = out["upper_bound"]
