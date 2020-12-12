@@ -75,6 +75,21 @@ class _SktimeForecaster(BaseForecaster):
                 self._X = X.combine_first(self._X)
 
     def _get_y_pred(self, y_in_sample, y_out_sample):
+        """Combining in-sample and out-sample prediction
+        and slicing on given fh.
+
+        Parameters
+        ----------
+        y_in_sample : pd.Series
+            In-sample prediction
+        y_out_sample : pd.Series
+            Out-sample prediction
+
+        Returns
+        -------
+        pd.Series
+            y_pred, sliced by fh
+        """
         y_pred = y_in_sample.append(y_out_sample, ignore_index=True)
         y_pred = pd.DataFrame(y_pred, columns=["y_pred"])
         # Workaround for slicing with negative index
@@ -86,6 +101,21 @@ class _SktimeForecaster(BaseForecaster):
         return y_pred
 
     def _get_pred_int(self, lower, upper):
+        """Combining lower and upper bound of
+        prediction intervalls. Slicing on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
         pred_int = pd.DataFrame({"lower": lower, "upper": upper})
         # Out-sample fh
         fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
