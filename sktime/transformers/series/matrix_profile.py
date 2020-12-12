@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+__author__ = ["Markus Löning"]
 __all__ = ["MatrixProfileTransformer"]
 
 import pandas as pd
@@ -12,45 +13,30 @@ _check_soft_dependencies("stumpy")
 import stumpy  # noqa: E402
 
 
-def _stumpy_series(time_series, window_size):
-    matrix_profile = stumpy.stump(time_series, m=window_size)
-    return matrix_profile
-
-
 class MatrixProfileTransformer(_SeriesToSeriesTransformer):
-    def __init__(self, m=10):
-        self.m = m  # subsequence length
-        super(MatrixProfileTransformer, self).__init__()
 
-    def fit(self, X, y=None):
-        self._is_fitted = True
-        return self
+    _tags = {"univariate-only": True, "fit-in-transform": True}  # for unit test cases
+
+    def __init__(self, window_length=3):
+        self.window_length = window_length
+        super(MatrixProfileTransformer, self).__init__()
 
     def transform(self, X, y=None):
         """
-        Takes as input a time series dataset and returns the matrix profile
-        for each single time series of the dataset.
+        Takes as input a single time series dataset and returns the matrix profile
+        for that time series dataset.
 
         Parameters
         ----------
-        X: pandas.DataFrame
-           Time series dataset.
+        X: pandas.Series
+           Time series dataset(lets say of length=n)
 
         Returns
         -------
-        Xt: pandas.DataFrame
-            Dataframe with the same number of rows as the input.
-            The number of columns equals the number of subsequences
-            of the desired length in each time series.
+        Xt: pandas.Series
+            Matrix Profile of time series as output with length as (n-window_length+1)
         """
         self.check_is_fitted()
         X = check_series(X, enforce_univariate=True)
-        n_instances = X.shape[0]
-        Xt = pd.DataFrame([_stumpy_series(X[i], self.m) for i in range(n_instances)])
-        return Xt
-
-
-# df = pd.read_csv("/home/utsav/Downloads/timeseries.csv")
-# matrixProfileTransformer = MatrixProfileTransformer(3)
-# matrixProfileTransformer.transform(df)
-# print(df)
+        Xt = stumpy.stump(X, self.window_length)
+        return pd.Series(Xt[:, 0])
