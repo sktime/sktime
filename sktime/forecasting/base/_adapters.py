@@ -12,7 +12,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
-from sktime.utils.validation.forecasting import check_y_X
+from sktime.utils.validation.forecasting import check_y_X, check_sp
 
 
 class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
@@ -36,7 +36,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.box_cox_bounds = box_cox_bounds
         self.use_trend = use_trend
         self.use_damped_trend = use_damped_trend
-        self.sp = self._get_sp(sp)
+        self.sp = sp
         self.use_arma_errors = use_arma_errors
         self.show_warnings = show_warnings
         self.n_jobs = n_jobs
@@ -63,24 +63,6 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         )
         return self
 
-    def _get_sp(self, sp):
-        """Transform sp to list if required.
-        tbats can only deal with list for sp.
-
-        Parameters
-        ----------
-        sp : int or list
-            Seasonal period.
-
-        Returns
-        -------
-        list
-            list with sp value(s)
-        """
-        if isinstance(sp, int):
-            sp = [sp]
-        return sp
-
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
 
@@ -97,6 +79,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        self.sp = check_sp(self.sp, enforce_list=True)
         self._instantiate_model()
         y, X = check_y_X(y, X, warn_X=True)
         self._set_y_X(y, X)

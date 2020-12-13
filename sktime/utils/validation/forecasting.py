@@ -159,22 +159,31 @@ def check_step_length(step_length):
     return step_length
 
 
-def check_sp(sp):
+def check_sp(sp, enforce_list=False):
     """Validate seasonal periodicity.
 
     Parameters
     ----------
-    sp : int
+    sp : int or [int]
         Seasonal periodicity
+    emforce_list : bool, optional (default=False)
+        If true, convert sp to list of not list.
 
     Returns
     -------
-    sp : int
+    sp : int or [int]
         Validated seasonal periodicity
     """
     if sp is not None:
-        if not is_int(sp) or sp < 1:
-            raise ValueError("`sp` must be a positive integer >= 1 or None")
+        if enforce_list and is_int(sp) and sp >= 1:
+            sp = [sp]
+        elif (enforce_list and isinstance(sp, list)) or (is_int(sp) and sp >= 1):
+            pass
+        else:
+            if enforce_list:
+                raise ValueError("`sp` must be a positive integer >= 1 or list or None")
+            else:
+                raise ValueError("`sp` must be a positive integer >= 1 or None")
     return sp
 
 
