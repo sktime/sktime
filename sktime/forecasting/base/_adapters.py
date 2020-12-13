@@ -42,9 +42,8 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.n_jobs = n_jobs
         self.multiprocessing_start_method = multiprocessing_start_method
         self.context = context
-        # custom args due to inheritance
+        # custom sktime args
         self._forecaster = None
-        self._ModelClass = None
 
         super(_TbatsAdapter, self).__init__()
 

@@ -53,10 +53,6 @@ class BATS(_TbatsAdapter):
         For advanced users only. Provide this to override default behaviors
     """
 
-    def __init__(self, **kwargs):
-        super(BATS, self).__init__(**kwargs)
+    from tbats import BATS as _BATS
 
-        # import inside method to avoid hard dependency
-        from tbats import BATS as _BATS
-
-        self._ModelClass = _BATS
+    _ModelClass = _BATS

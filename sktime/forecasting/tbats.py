@@ -53,10 +53,6 @@ class TBATS(_TbatsAdapter):
         For advanced users only. Provide this to override default behaviors
     """
 
-    def __init__(self, **kwargs):
-        super(TBATS, self).__init__(**kwargs)
+    from tbats import TBATS as _TBATS
 
-        # import inside method to avoid hard dependency
-        from tbats import TBATS as _TBATS
-
-        self._ModelClass = _TBATS
+    _ModelClass = _TBATS
