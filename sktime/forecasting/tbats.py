@@ -32,10 +32,10 @@ class TBATS(_TbatsAdapter):
         Indicates whether to include a damping parameter in the trend or not.
         Applies only when trend is used.
         When None both cases shall be considered and better is selected by AIC.
-    seasonal_periods: iterable or array-like of floats, optional (default=None)
+    sp: tbats original name of this arg is "seasonal_periods".
+        Iterable or array-like of floats, optional (default=None)
         Length of each of the periods (amount of observations in each period).
         Accepts int and float values here.
-        When None or empty array, non-seasonal model shall be fitted.
     use_arma_errors: bool, optional (default=True)
         When True BATS will try to improve the model by modelling residuals with ARMA.
         Best model will be selected by AIC.

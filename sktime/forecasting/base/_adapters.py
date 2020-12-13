@@ -24,7 +24,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         box_cox_bounds=(0, 1),
         use_trend=None,
         use_damped_trend=None,
-        seasonal_periods=None,
+        sp=None,
         use_arma_errors=True,
         show_warnings=True,
         n_jobs=None,
@@ -36,7 +36,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.box_cox_bounds = box_cox_bounds
         self.use_trend = use_trend
         self.use_damped_trend = use_damped_trend
-        self.seasonal_periods = seasonal_periods
+        self.sp = self._get_sp(sp)
         self.use_arma_errors = use_arma_errors
         self.show_warnings = show_warnings
         self.n_jobs = n_jobs
@@ -54,7 +54,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             box_cox_bounds=self.box_cox_bounds,
             use_trend=self.use_trend,
             use_damped_trend=self.use_damped_trend,
-            seasonal_periods=self.seasonal_periods,
+            sp=self.sp,
             use_arma_errors=self.use_arma_errors,
             show_warnings=self.show_warnings,
             n_jobs=self.n_jobs,
@@ -62,6 +62,24 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             context=self.context,
         )
         return self
+
+    def _get_sp(sp):
+        """Transform sp to list if required.
+        tbats can only deal with list for sp.
+
+        Parameters
+        ----------
+        sp : int or list
+            Seasonal period.
+
+        Returns
+        -------
+        list
+            list with sp value(s)
+        """
+        if isinstance(sp, int):
+            sp = [sp]
+        return sp
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
