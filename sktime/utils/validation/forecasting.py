@@ -164,14 +164,14 @@ def check_sp(sp, enforce_list=False):
 
     Parameters
     ----------
-    sp : int or [int]
+    sp : int or [int/float]
         Seasonal periodicity
     emforce_list : bool, optional (default=False)
-        If true, convert sp to list of not list.
+        If true, convert sp to list if not list.
 
     Returns
     -------
-    sp : int or [int]
+    sp : int or [int/float]
         Validated seasonal periodicity
     """
     if sp is not None:
@@ -181,9 +181,9 @@ def check_sp(sp, enforce_list=False):
             pass
         else:
             if enforce_list:
-                raise ValueError("`sp` must be a positive integer >= 1 or list or None")
+                raise ValueError("`sp` must be an int >= 1, [float/int] or None")
             else:
-                raise ValueError("`sp` must be a positive integer >= 1 or None")
+                raise ValueError("`sp` must be an int >= 1 or None")
     return sp
 
 
