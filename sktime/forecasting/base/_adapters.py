@@ -54,7 +54,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             box_cox_bounds=self.box_cox_bounds,
             use_trend=self.use_trend,
             use_damped_trend=self.use_damped_trend,
-            sp=self.sp,
+            seasonal_periods=self.sp,
             use_arma_errors=self.use_arma_errors,
             show_warnings=self.show_warnings,
             n_jobs=self.n_jobs,
@@ -63,7 +63,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         )
         return self
 
-    def _get_sp(sp):
+    def _get_sp(self, sp):
         """Transform sp to list if required.
         tbats can only deal with list for sp.
 
