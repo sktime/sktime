@@ -176,9 +176,9 @@ To check if your code meets our code quality standards, you can automatically ru
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
-You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg). 
+You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
 
-If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line. 
+If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line.
 
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
@@ -230,7 +230,7 @@ Dependencies
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
-> A soft dependency is a dependency that is only required to import certain modules, but not necessary to use most functionality. A soft dependency is not installed automatically when the package is installed. Instead, users need to install it manually if they want to use a module that requires a soft dependency. 
+> A soft dependency is a dependency that is only required to import certain modules, but not necessary to use most functionality. A soft dependency is not installed automatically when the package is installed. Instead, users need to install it manually if they want to use a module that requires a soft dependency.
 
 If you add a new dependency or change the version of an existing one, you need to update the following files:
 
@@ -241,7 +241,7 @@ If you add a new dependency or change the version of an existing one, you need t
 
 If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/master/sktime/utils/check_imports.py).
 
-We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it. 
+We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it.
 
 
 Coding style
@@ -297,4 +297,3 @@ make release
 ```
 
 This calls [maint_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/maint_tools/make_release.py) and will guide you through the release process.
-

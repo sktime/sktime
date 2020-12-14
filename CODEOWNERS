@@ -17,5 +17,7 @@ sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
 sktime/forecasting/prophet.py @aiwalter
+sktime/forecasting/bats.py @aiwalter
+sktime/forecasting/tbats.py @aiwalter
 
 sktime/forecasting/online_learning/ @magittan
