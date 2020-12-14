@@ -81,6 +81,9 @@ class SFA(_PanelToPanelTransformer):
         remove_repeat_words: boolean, default = False
             whether to use numerosity reduction (default False)
 
+        levels:              int, default = 1
+            Number of spatial pyramid levels
+
         save_words:          boolean, default = False
             whether to save the words generated for each series (default False)
 
@@ -149,9 +152,9 @@ class SFA(_PanelToPanelTransformer):
         self.bigrams = bigrams
         self.skip_grams = skip_grams
 
-        # weighting for levels going up to 7 levels
+        # weighting for levels going up to 10 levels
         # No real reason to go past 3
-        self.level_weights = [1, 2, 4, 16, 32, 64, 128]
+        self.level_weights = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
         self.n_instances = 0
         self.series_length = 0
@@ -601,7 +604,7 @@ class SFA(_PanelToPanelTransformer):
             pos = window_ind + int((self.window_size / 2))
             quadrant = start + int(pos / quadrant_size)
 
-            bag[(word, quadrant)] += self.level_weights[i]
+            bag[word << 4 | quadrant] += self.level_weights[i]
 
             start += num_quadrants
 

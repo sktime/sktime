@@ -334,7 +334,7 @@ class IndividualBOSS(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa[0]  # .iloc[:, 0]
+        self.transformed_data = sfa[0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -353,7 +353,7 @@ class IndividualBOSS(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags[0]  # .iloc[:, 0]
+        test_bags = test_bags[0]
 
         for test_bag in test_bags:
             best_dist = sys.float_info.max
@@ -407,7 +407,7 @@ class IndividualBOSS(BaseClassifier):
         )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
+        new_boss.transformed_data = sfa[0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes

@@ -756,10 +756,10 @@ if __name__ == "__main__":
         #        results_dir = "/scratch/results"
         #         data_dir = "/bench/datasets/Univariate2018/"
         #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "E:/Temp/"
+        data_dir = "D:/CMP Machine Learning/Datasets/MultivariateTS/"
+        results_dir = "D:/CMP Machine Learning/tempResults/"
         #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "GunPoint"
+        dataset = "ERing"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         classifier = "TDE"

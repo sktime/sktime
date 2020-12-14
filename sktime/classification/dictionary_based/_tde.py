@@ -100,6 +100,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         max_win_len_prop=1,
         min_window=10,
         randomly_selected_params=50,
+        bigrams=None,
         random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
@@ -107,6 +108,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.randomly_selected_params = randomly_selected_params
+        self.bigrams = bigrams
         self.random_state = random_state
 
         self.classifiers = []
@@ -145,10 +147,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         self.time_limit = self.time_limit * 60
-        self.n_instances, self.series_length = X.shape[0], X.shape[-1]
+        self.n_instances, _, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -201,6 +203,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde = IndividualTDE(
                 *parameters,
                 alphabet_size=self.alphabet_size,
+                bigrams=self.bigrams,
                 random_state=self.random_state
             )
             tde.fit(X_subsample, y_subsample)
@@ -244,7 +247,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     def predict_proba(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = check_X(X, coerce_to_numpy=True)
 
         sums = np.zeros((X.shape[0], self.n_classes))
 
@@ -325,6 +328,7 @@ class IndividualTDE(BaseClassifier):
         levels=1,
         igb=False,
         alphabet_size=4,
+        bigrams=None,
         random_state=None,
     ):
         self.window_size = window_size
@@ -333,25 +337,17 @@ class IndividualTDE(BaseClassifier):
         self.levels = levels
         self.igb = igb
         self.alphabet_size = alphabet_size
+        self.bigrams = bigrams
 
         self.random_state = random_state
 
-        binning_method = "information-gain" if igb else "equi-depth"
-
-        self.transformer = SFA(
-            word_length=word_length,
-            alphabet_size=alphabet_size,
-            window_size=window_size,
-            norm=norm,
-            levels=levels,
-            binning_method=binning_method,
-            bigrams=True,
-            remove_repeat_words=True,
-            save_words=False,
-        )
+        self.transformers = []
         self.transformed_data = []
         self.accuracy = 0
 
+        self.n_dims = 0
+        self.highest_dim_bit = 0
+        self.dims = []
         self.class_vals = []
         self.num_classes = 0
         self.classes_ = []
@@ -359,10 +355,44 @@ class IndividualTDE(BaseClassifier):
         super(IndividualTDE, self).__init__()
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        sfa = self.transformer.fit_transform(X, y)
-        self.transformed_data = sfa[0]  # .iloc[:, 0]
+        _, self.n_dims, _ = X.shape
+
+        if self.n_dims > 1:
+            self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
+            accs = []
+
+            print("tde mv")
+            
+            for i in range(self.n_dims):
+                self.dims.append(i)
+                self.transformers.append(SFA(
+                    word_length=self.word_length,
+                    alphabet_size=self.alphabet_size,
+                    window_size=self.window_size,
+                    norm=self.norm,
+                    levels=self.levels,
+                    binning_method="information-gain" if self.igb else "equi-depth",
+                    bigrams=self.bigrams,
+                    remove_repeat_words=True,
+                    save_words=False,
+                ))
+                #sfa = self.transformers[0].fit(X[], y)
+        else:
+            self.transformers.append(SFA(
+                word_length=self.word_length,
+                alphabet_size=self.alphabet_size,
+                window_size=self.window_size,
+                norm=self.norm,
+                levels=self.levels,
+                binning_method="information-gain" if self.igb else "equi-depth",
+                bigrams=self.bigrams,
+                remove_repeat_words=True,
+                save_words=False,
+            ))
+            sfa = self.transformers[0].fit_transform(X, y)
+            self.transformed_data = sfa[0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -375,13 +405,18 @@ class IndividualTDE(BaseClassifier):
 
     def predict(self, X):
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = check_X(X, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 
         classes = []
-        test_bags = self.transformer.transform(X)
-        test_bags = test_bags[0]  # .iloc[:, 0]
+
+        if self.n_dims > 1:
+            print("yay")
+            #:)
+        else:
+            test_bags = self.transformers[0].transform(X)
+            test_bags = test_bags[0]
 
         for test_bag in test_bags:
             best_sim = -1

@@ -170,7 +170,7 @@ class ContractableBOSS(BaseClassifier):
             )
 
             subsample = rng.choice(self.n_instances, size=subsample_size, replace=False)
-            X_subsample = X[subsample]  # .iloc[subsample, :]
+            X_subsample = X[subsample]
             y_subsample = y[subsample]
 
             boss = IndividualBOSS(
