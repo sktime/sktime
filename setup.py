@@ -36,6 +36,7 @@ EXTRAS_REQUIRE = {
         "seaborn>=0.11.0",
         "tsfresh>=0.17.0",
         "catch22>=0.1.0",
+        "stumpy>=1.5.1",
     ],
 }
 

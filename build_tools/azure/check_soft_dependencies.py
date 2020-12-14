@@ -17,6 +17,7 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.all": ["pmdarima"],
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
+    "sktime.transformers.series.matrix_profile": ["stumpy"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")
 
