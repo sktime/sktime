@@ -10,7 +10,7 @@ import pandas as pd  # type: ignore
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils._testing.import_checks import _check_soft_dependencies
 
 _check_soft_dependencies("pmdarima")
 

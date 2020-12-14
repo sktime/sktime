@@ -24,7 +24,7 @@ from sklearn.utils import check_array
 from sklearn.utils import check_random_state
 from sklearn.utils import compute_sample_weight
 
-from sktime.transformers.panel.summarize import (
+from sktime.transformations.panel.summarize import (
     RandomIntervalFeatureExtractor,
 )
 from sktime.utils.validation.panel import check_X_y

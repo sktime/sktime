@@ -6,12 +6,12 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.transformers.series.detrend import Deseasonalizer
-from sktime.utils.confidence import zscore
-from sktime.utils.time_series import fit_trend
+from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.forecasting import check_y
 
@@ -174,7 +174,7 @@ class ThetaForecaster(ExponentialSmoothing):
     @staticmethod
     def _compute_trend(y):
         # Trend calculated through least squares regression.
-        coefs = fit_trend(y.values.reshape(1, -1), order=1)
+        coefs = _fit_trend(y.values.reshape(1, -1), order=1)
         return coefs[0, 0] / 2
 
     def _compute_drift(self):
@@ -208,7 +208,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         errors = []
         for alpha in alphas:
-            z = zscore(1 - alpha)
+            z = _zscore(1 - alpha)
             error = z * sem
             errors.append(pd.Series(error, index=self.fh.to_absolute(self.cutoff)))
 
@@ -222,3 +222,29 @@ class ThetaForecaster(ExponentialSmoothing):
             self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
+
+
+def _zscore(level: float, two_tailed: bool = True) -> float:
+    """
+    Calculate a z-score from a confidence level.
+
+    Parameters
+    ----------
+
+    level : float
+        A confidence level, in the open interval (0, 1).
+
+    two_tailed : bool (default=True)
+        If True, return the two-tailed z score.
+
+    Returns
+    -------
+
+    z : float
+        The z score.
+    """
+    alpha = 1 - level
+    if two_tailed:
+        alpha /= 2
+
+    return -norm.ppf(alpha)

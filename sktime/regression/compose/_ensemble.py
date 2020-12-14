@@ -12,12 +12,12 @@ from sklearn.ensemble._base import _partition_estimators
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
-from sktime.transformers.panel.summarize import (
+from sktime.transformations.panel.summarize import (
     RandomIntervalFeatureExtractor,
 )
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.regression.base import BaseRegressor
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
@@ -36,7 +36,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     Parameters
     ----------
     estimator : Pipeline
-        A pipeline consisting of series-to-tabular transformers
+        A pipeline consisting of series-to-tabular transformations
         and a decision tree regressor as final estimator.
     n_estimators : integer, optional (default=100)
         The number of trees in the forest.
@@ -236,7 +236,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         # Set base estimator
         if self.estimator is None:
             # Set default time series forest
-            features = [np.mean, np.std, time_series_slope]
+            features = [np.mean, np.std, _slope]
             steps = [
                 (
                     "transform",

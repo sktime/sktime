@@ -33,8 +33,8 @@ from sktime.forecasting.tests._config import TEST_YS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _make_series
+from sktime.utils._testing.estimator_checks import _construct_instance
+from sktime.utils._testing.series import _make_series
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import assert_correct_pred_time_index
 from sktime.utils._testing.forecasting import get_expected_index_for_update_predict

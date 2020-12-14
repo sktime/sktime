@@ -38,28 +38,28 @@ from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformers.base import BaseTransformer
-from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.transformers.base import _PanelToTabularTransformer
-from sktime.transformers.base import _SeriesToPrimitivesTransformer
-from sktime.transformers.base import _SeriesToSeriesTransformer
-from sktime.transformers.panel.compose import ColumnTransformer
-from sktime.transformers.panel.compose import (
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.panel.compose import ColumnTransformer
+from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
-from sktime.transformers.panel.compose import SeriesToSeriesRowTransformer
-from sktime.transformers.panel.dictionary_based import SFA
-from sktime.transformers.panel.interpolate import TSInterpolator
-from sktime.transformers.panel.reduce import Tabularizer
-from sktime.transformers.panel.shapelets import ContractedShapeletTransform
-from sktime.transformers.panel.shapelets import ShapeletTransform
-from sktime.transformers.panel.summarize import FittedParamExtractor
-from sktime.transformers.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.transformers.panel.tsfresh import (
+from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.interpolate import TSInterpolator
+from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.panel.shapelets import ContractedShapeletTransform
+from sktime.transformations.panel.shapelets import ShapeletTransform
+from sktime.transformations.panel.summarize import FittedParamExtractor
+from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.transformations.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformers.series.adapt import TabularToSeriesAdaptor
-from sktime.transformers.series.detrend import Detrender
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.detrend import Detrender
 
 # The following estimators currently do not pass all unit tests or fail some of them
 # and are excluded until fixed.
