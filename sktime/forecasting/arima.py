@@ -301,8 +301,6 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         super(AutoARIMA, self).__init__()
 
-        
-
     def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
 
