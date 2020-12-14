@@ -187,15 +187,17 @@ ESTIMATOR_TEST_PARAMS = {
         "use_box_cox": False,
         "use_trend": False,
         "use_damped_trend": False,
-        "sp": 1,
+        "sp": [],
         "use_arma_errors": False,
+        "n_jobs": 1,
     },
     TBATS: {
         "use_box_cox": False,
         "use_trend": False,
         "use_damped_trend": False,
-        "sp": 1,
+        "sp": [],
         "use_arma_errors": False,
+        "n_jobs": 1,
     },
 }
 
