@@ -53,6 +53,8 @@ class TBATS(_TbatsAdapter):
         For advanced users only. Provide this to override default behaviors
     """
 
+    # both bats and tbats inherit the same interface from the base class and only
+    # instantiate a different model class internally
     from tbats import TBATS as _TBATS
 
     _ModelClass = _TBATS

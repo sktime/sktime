@@ -13,6 +13,7 @@ from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 
 from sktime.utils.validation.forecasting import check_y_X, check_sp
+from sktime.utils.validation import check_n_jobs
 
 
 class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
@@ -48,19 +49,21 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         super(_TbatsAdapter, self).__init__()
 
     def _instantiate_model(self):
-        self._forecaster = self._ModelClass(
+        n_jobs = check_n_jobs(self.n_jobs)
+        sp = check_sp(self.sp, enforce_list=True)
+
+        return self._ModelClass(
             use_box_cox=self.use_box_cox,
             box_cox_bounds=self.box_cox_bounds,
             use_trend=self.use_trend,
             use_damped_trend=self.use_damped_trend,
-            seasonal_periods=self.sp,
+            seasonal_periods=sp,
             use_arma_errors=self.use_arma_errors,
             show_warnings=self.show_warnings,
-            n_jobs=self.n_jobs,
+            n_jobs=n_jobs,
             multiprocessing_start_method=self.multiprocessing_start_method,
             context=self.context,
         )
-        return self
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -78,13 +81,13 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        self.sp = check_sp(self.sp, enforce_list=True)
-        self._instantiate_model()
         y, X = check_y_X(y, X, warn_X=True)
         self._set_y_X(y, X)
         self._set_fh(fh)
 
+        self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
+
         self._is_fitted = True
         return self
 
