@@ -67,6 +67,8 @@ install:
   - cmd: activate testenv
   # Installing C++ compiler
   - cmd: conda install libpython m2w64-toolchain -c msys2
+  # Install pystan before installing fbprophet
+  - cmd: pip install pystan
   - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment

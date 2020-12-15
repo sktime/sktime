@@ -118,8 +118,14 @@ class _SktimeForecaster(BaseForecaster):
         pred_int = pd.DataFrame({"lower": lower, "upper": upper})
         # Out-sample fh
         fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
-        # Workaround for slicing with negative index
-        pred_int["idx"] = [x for x in range(-len(self._y), len(fh_out))]
+        # If pred_int contains in-sample prediction intervals
+        if len(pred_int) > len(self._y):
+            len_out = len(pred_int) - len(self._y)
+            # Workaround for slicing with negative index
+            pred_int["idx"] = [x for x in range(-len(self._y), len_out)]
+        # If pred_int does not contain in-sample prediction intervals
+        else:
+            pred_int["idx"] = [x for x in range(len(pred_int))]
         pred_int = pred_int.loc[
             pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
         ]
