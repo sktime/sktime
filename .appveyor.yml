@@ -65,6 +65,7 @@ install:
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
+  # Installing C++ compiler
   - cmd: conda install libpython m2w64-toolchain -c msys2
   - cmd: pip install -r %REQUIREMENTS%
 
