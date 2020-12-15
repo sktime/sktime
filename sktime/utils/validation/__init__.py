@@ -24,8 +24,14 @@ def check_n_jobs(n_jobs):
     -------
     n_jobs : int
     """
-    if n_jobs == -1:
-        return os.cpu_count()
+    # scikit-learn convention
+    # https://scikit-learn.org/stable/glossary.html#term-n-jobs
+    if n_jobs is None:
+        return 1
+    if not is_int(n_jobs):
+        raise ValueError(f"`n_jobs` must be None or an integer, but found: {n_jobs}")
+    if n_jobs < 0:
+        return os.cpu_count() - n_jobs + 1
     else:
         return n_jobs
 
