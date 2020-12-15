@@ -108,7 +108,6 @@ class Prophet(_ProphetAdapter):
         interval_width=1 - DEFAULT_ALPHA,
         uncertainty_samples=1000,
         stan_backend=None,
-        **kwargs
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
