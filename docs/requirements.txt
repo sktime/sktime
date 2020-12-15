@@ -10,4 +10,5 @@ pygments>=2.4.1
 seaborn
 sphinx==3.2.*
 sphinx_rtd_theme
+tbats
 tsfresh

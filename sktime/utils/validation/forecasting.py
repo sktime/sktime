@@ -15,13 +15,15 @@ __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
+import warnings
+
 
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
 
 
-def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
+def check_y_X(y, X=None, allow_empty=False, allow_constant=True, warn_X=False):
     """Validate input data.
 
     Parameters
@@ -32,6 +34,8 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
         If True, empty `y` does not raise an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
+    warn_X : bool, optional (default=False)
+        Raises a warning if True.
 
     Raises
     ------
@@ -41,13 +45,13 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
     y = check_y(y, allow_empty=allow_empty, allow_constant=allow_constant)
 
     if X is not None:
-        X = check_X(X)
+        X = check_X(X=X, warn_X=warn_X)
         check_equal_time_index(y, X)
 
     return y, X
 
 
-def check_X(X, allow_empty=False, enforce_univariate=False):
+def check_X(X, allow_empty=False, enforce_univariate=False, warn_X=False):
     """Validate input data.
 
     Parameters
@@ -65,7 +69,14 @@ def check_X(X, allow_empty=False, enforce_univariate=False):
     ------
     ValueError, TypeError
         If y is an invalid input
+    UserWarning
+        Warning that X is given and model can't use it
     """
+    if warn_X:
+        warnings.warn(
+            "Argument X is given but can't be used by model algorithm.", UserWarning
+        )
+
     # Check if pandas series or numpy array
     return check_series(
         X, enforce_univariate=enforce_univariate, allow_empty=allow_empty
@@ -148,22 +159,31 @@ def check_step_length(step_length):
     return step_length
 
 
-def check_sp(sp):
+def check_sp(sp, enforce_list=False):
     """Validate seasonal periodicity.
 
     Parameters
     ----------
-    sp : int
+    sp : int or [int/float]
         Seasonal periodicity
+    emforce_list : bool, optional (default=False)
+        If true, convert sp to list if not list.
 
     Returns
     -------
-    sp : int
+    sp : int or [int/float]
         Validated seasonal periodicity
     """
     if sp is not None:
-        if not is_int(sp) or sp < 1:
-            raise ValueError("`sp` must be a positive integer >= 1 or None")
+        if enforce_list and is_int(sp) and sp >= 1:
+            sp = [sp]
+        elif (enforce_list and isinstance(sp, list)) or (is_int(sp) and sp >= 1):
+            pass
+        else:
+            if enforce_list:
+                raise ValueError("`sp` must be an int >= 1, [float/int] or None")
+            else:
+                raise ValueError("`sp` must be an int >= 1 or None")
     return sp
 
 

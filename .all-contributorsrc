@@ -704,6 +704,16 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "aiwalter",
+      "name": "Martin Walter",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/29627036?v=4",
+      "profile": "https://www.linkedin.com/in/martin-walter-1a33b3114/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "projectName": "sktime",
