@@ -184,7 +184,7 @@ def test_coerce_duration_to_int(duration):
         np.testing.assert_array_equal(ret, range(3))
 
     if isinstance(duration, pd.tseries.offsets.BaseOffset):
-        ret == 3
+        assert ret == 3
 
 
 @pytest.mark.parametrize("n_timepoints", [3, 5])
