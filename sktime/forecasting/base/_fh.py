@@ -153,6 +153,16 @@ class ForecastingHorizon:
         self._values = values
         self._is_relative = is_relative
 
+    def __len__(self):
+        """Providing len as number of time points contained in fh.
+
+        Returns
+        -------
+        int
+            length of fh
+        """
+        return len(self._values)
+
     def _new(self, values=None, is_relative=None):
         """Construct new ForecastingHorizon based on current object"""
         if values is None:

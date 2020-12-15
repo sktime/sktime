@@ -103,20 +103,15 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         # Merge X with df (of created future DatetimeIndex values)
         df = _merge_X(fh=fh, X=X, df=df)
 
-        # Prediction
         out = self._forecaster.predict(df)
-        out.index = [x for x in range(-len(self._y), len(out) - len(self._y))]
 
-        # Workaraound for slicing on negative index
-        out["idx"] = out.index
-        out = out.loc[out["idx"].isin(fh.to_indexer(self.cutoff).values)]
-        out.index = fh.to_absolute(self.cutoff)
-        out = out.drop(columns=["idx"])
+        y_in_sample = out[out["ds"] <= self.cutoff]["yhat"]
+        y_out_sample = out[out["ds"] > self.cutoff]["yhat"]
+        y_pred = self._get_y_pred(y_in_sample=y_in_sample, y_out_sample=y_out_sample)
 
-        y_pred = out["yhat"].rename(None)
         if return_pred_int:
-            pred_int = out[["yhat_lower", "yhat_upper"]].rename(
-                columns={"yhat_lower": "lower", "yhat_upper": "upper"}
+            pred_int = self._get_pred_int(
+                lower=out["yhat_lower"], upper=out["yhat_upper"]
             )
             return y_pred, pred_int
         else:
@@ -178,7 +173,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         try:
             periods = fh.to_pandas().max()
             df = self._forecaster.make_future_dataframe(
-                periods=periods + 1, freq=self.freq, include_history=True
+                periods=periods, freq=self.freq, include_history=True
             )
         except Exception:
             raise TypeError(
