@@ -363,7 +363,7 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self._forecaster.fit(y, X, **fit_params)
+        self._forecaster.fit(y, X=X, **fit_params)
         self._is_fitted = True
         return self
 
@@ -401,7 +401,7 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
-            exogenous=X,
+            X=X,
             return_conf_int=return_pred_int,
             alpha=alpha,
         )
@@ -431,7 +431,7 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         result = self._forecaster.predict(
             n_periods=n_periods,
-            exogenous=X,
+            X=X,
             return_conf_int=return_pred_int,
             alpha=alpha,
         )

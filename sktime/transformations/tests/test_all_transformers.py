@@ -78,14 +78,14 @@ def check_series_to_primitive_transform_multivariate(Estimator):
 
 
 def check_series_to_series_transform_univariate(Estimator):
-    n_timepoints = 5
+    n_timepoints = 15
     out = _construct_fit_transform(Estimator, n_timepoints=n_timepoints)
     assert isinstance(out, (pd.Series, np.ndarray))
 
 
 def check_series_to_series_transform_multivariate(Estimator):
     n_columns = 3
-    n_timepoints = 5
+    n_timepoints = 15
     if _has_tag(Estimator, "univariate-only"):
         _check_raises_error(Estimator, n_timepoints=n_timepoints, n_columns=n_columns)
     else:

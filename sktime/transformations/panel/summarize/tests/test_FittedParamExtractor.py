@@ -13,7 +13,7 @@ from sktime.transformations.panel.summarize import FittedParamExtractor
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 
-@pytest.mark.parametrize("param_names", ["smoothing_level"])
+@pytest.mark.parametrize("param_names", ["initial_level"])
 def test_FittedParamExtractor(param_names):
     forecaster = ExponentialSmoothing()
     t = FittedParamExtractor(forecaster=forecaster, param_names=param_names)

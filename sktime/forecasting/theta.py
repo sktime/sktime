@@ -42,7 +42,7 @@ class ThetaForecaster(ExponentialSmoothing):
     Parameters
     ----------
 
-    smoothing_level : float, optional
+    initial_level : float, optional
         The alpha value of the simple exponential smoothing, if the value is
         set then
         this will be used, otherwise it will be estimated from the data.
@@ -61,7 +61,7 @@ class ThetaForecaster(ExponentialSmoothing):
     Attributes
     ----------
 
-    smoothing_level_ : float
+    initial_level_ : float
         The estimated alpha value of the SES fit.
 
     drift_ : float
@@ -90,17 +90,17 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
 
-    def __init__(self, smoothing_level=None, deseasonalize=True, sp=1):
+    def __init__(self, initial_level=None, deseasonalize=True, sp=1):
 
         self.sp = sp
         self.deseasonalize = deseasonalize
 
         self.deseasonalizer_ = None
         self.trend_ = None
-        self.smoothing_level_ = None
+        self.initial_level_ = None
         self.drift_ = None
         self.se_ = None
-        super(ThetaForecaster, self).__init__(smoothing_level=smoothing_level, sp=sp)
+        super(ThetaForecaster, self).__init__(initial_level=initial_level, sp=sp)
 
     def fit(self, y, X=None, fh=None):
         """Fit to training data.
@@ -129,7 +129,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super(ThetaForecaster, self).fit(y, fh=fh)
-        self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
+        self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute trend
         self.trend_ = self._compute_trend(y)
@@ -179,7 +179,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     def _compute_drift(self):
         fh = self.fh.to_relative(self.cutoff)
-        if np.isclose(self.smoothing_level_, 0.0):
+        if np.isclose(self.initial_level_, 0.0):
             # SES was constant, so revert to simple trend
             drift = self.trend_ * fh
         else:
@@ -187,8 +187,7 @@ class ThetaForecaster(ExponentialSmoothing):
             n_timepoints = len(self._y)
             drift = self.trend_ * (
                 fh
-                + (1 - (1 - self.smoothing_level_) ** n_timepoints)
-                / self.smoothing_level_
+                + (1 - (1 - self.initial_level_) ** n_timepoints) / self.initial_level_
             )
 
         return drift
@@ -203,7 +202,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
         self.sigma_ = np.sqrt(self._fitted_forecaster.sse / (n_timepoints - 1))
         sem = self.sigma_ * np.sqrt(
-            self.fh.to_relative(self.cutoff) * self.smoothing_level_ ** 2 + 1
+            self.fh.to_relative(self.cutoff) * self.initial_level_ ** 2 + 1
         )
 
         errors = []
@@ -219,7 +218,7 @@ class ThetaForecaster(ExponentialSmoothing):
         if update_params:
             if self.deseasonalize:
                 y = self.deseasonalizer_.transform(y)
-            self.smoothing_level_ = self._fitted_forecaster.params["smoothing_level"]
+            self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
 

@@ -137,7 +137,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     FittedParamExtractor: {
         "forecaster": FORECASTER,
-        "param_names": ["smoothing_level"],
+        "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
