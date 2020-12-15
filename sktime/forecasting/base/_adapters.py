@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "Martin Walter"]
-__all__ = ["_StatsModelsAdapter"]
+__all__ = ["_StatsModelsAdapter", "_ProphetAdapter", "_TbatsAdapter"]
 
 import numpy as np
 import pandas as pd
