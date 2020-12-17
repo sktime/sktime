@@ -17,7 +17,7 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
-    "sktime.forecasting.prophet": ["fbprophet"],
+    "sktime.forecasting.fbprophet": ["fbprophet"],
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
     "sktime.transformers.series.matrix_profile": ["stumpy"],

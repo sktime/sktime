@@ -65,7 +65,7 @@ install:
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
-  - cmd: conda install fbprophet  # prior fbprophet installation
+  - cmd: conda install -c conda-forge fbprophet  # prior fbprophet installation
   - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment
