@@ -107,6 +107,7 @@ SETUPTOOLS_COMMANDS = {
     "install",
     "develop",
     "release",
+    "build_ext",
     "bdist_egg",
     "bdist_rpm",
     "bdist_wininst",
