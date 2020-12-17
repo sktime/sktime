@@ -53,7 +53,7 @@ class ElasticEnsemble(BaseClassifier):
         For the original Java version, see `ElasticEnsemble <https://github.com
         /uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/
         distance_based/ElasticEnsemble.java>`__.
-    
+
     Parameters
     ----------
     distance_measures : list of strings, optional (default="all")
