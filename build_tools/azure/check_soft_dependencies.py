@@ -15,6 +15,7 @@ SOFT_DEPENDENCIES = {
     "sktime.transformers.panel.tsfresh": ["tsfresh"],
     "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
+    "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
