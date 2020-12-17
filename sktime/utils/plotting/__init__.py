@@ -5,8 +5,6 @@
 __all__ = ["plot_series"]
 __author__ = ["Markus Löning"]
 
-import warnings
-
 import numpy as np
 
 from sktime.utils.check_imports import _check_soft_dependencies
@@ -30,6 +28,8 @@ def plot_series(*series, labels=None):
     """
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
+    from matplotlib.ticker import FuncFormatter, MaxNLocator
+    from matplotlib.cbook import flatten
     import seaborn as sns
 
     n_series = len(series)
@@ -75,10 +75,19 @@ def plot_series(*series, labels=None):
 
         plot_func(x=x, y=y, ax=ax, marker="o", label=label, color=color)
 
-    # set combined index as xticklabels, suppress matplotlib warning
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore")
-        ax.set(xticklabels=index)
+    # combine data points for all series
+    xs_flat = list(flatten(xs))
+
+    # set x label of data point to the matching index
+    def format_fn(tick_val, tick_pos):
+        if int(tick_val) in xs_flat:
+            return index[int(tick_val)]
+        else:
+            return ""
+
+    # dynamically set x label ticks and spacing from index labels
+    ax.xaxis.set_major_formatter(FuncFormatter(format_fn))
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     if legend:
         ax.legend()

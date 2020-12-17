@@ -694,6 +694,26 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "ngupta23",
+      "name": "Nikhil Gupta",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/33585645?v=4",
+      "profile": "https://github.com/ngupta23",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "aiwalter",
+      "name": "Martin Walter",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/29627036?v=4",
+      "profile": "https://www.linkedin.com/in/martin-walter-1a33b3114/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
     }
   ],
   "projectName": "sktime",
