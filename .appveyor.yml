@@ -73,7 +73,7 @@ install:
   - cmd: conda list
 
   # Build wheels
-  - cmd: python setup.py build --compiler=msvc
+  - cmd: python setup.py build_ext --compiler=msvc
   - cmd: python setup.py bdist_wheel bdist_wininst
   - ps: ls dist  # list built artifacts
 
