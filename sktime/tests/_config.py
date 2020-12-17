@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -36,6 +37,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
@@ -183,6 +185,7 @@ ESTIMATOR_TEST_PARAMS = {
     TimeSeriesForest: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},
+    HCrystalBallForecaster: {"model": HoltSmoothingWrapper()},
     BATS: {
         "use_box_cox": False,
         "use_trend": False,
