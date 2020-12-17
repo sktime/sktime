@@ -37,6 +37,7 @@ EXTRAS_REQUIRE = {
         "tsfresh>=0.17.0",
         "catch22>=0.1.0",
         "hcrystalball>=0.1.9",
+        "stumpy>=1.5.1",
     ],
 }
 

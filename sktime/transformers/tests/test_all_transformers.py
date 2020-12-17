@@ -81,7 +81,6 @@ def check_series_to_series_transform_univariate(Estimator):
     n_timepoints = 5
     out = _construct_fit_transform(Estimator, n_timepoints=n_timepoints)
     assert isinstance(out, (pd.Series, np.ndarray))
-    assert out.shape == (n_timepoints,)
 
 
 def check_series_to_series_transform_multivariate(Estimator):

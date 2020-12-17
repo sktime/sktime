@@ -22,6 +22,7 @@ from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
@@ -34,6 +35,7 @@ from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
+from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.performance_metrics.forecasting import sMAPE
@@ -184,6 +186,22 @@ ESTIMATOR_TEST_PARAMS = {
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},
     HCrystalBallForecaster: {"model": HoltSmoothingWrapper()},
+    BATS: {
+        "use_box_cox": False,
+        "use_trend": False,
+        "use_damped_trend": False,
+        "sp": [],
+        "use_arma_errors": False,
+        "n_jobs": 1,
+    },
+    TBATS: {
+        "use_box_cox": False,
+        "use_trend": False,
+        "use_damped_trend": False,
+        "sp": [],
+        "use_arma_errors": False,
+        "n_jobs": 1,
+    },
 }
 
 # These methods should not change the state of the estimator, that is, they should
