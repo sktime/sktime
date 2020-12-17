@@ -37,45 +37,50 @@ from sktime.utils.validation.panel import check_X_y
 
 class ElasticEnsemble(BaseClassifier):
     """
-    The Elastic Ensemble as described in [1]
-    Overview: Input n series length m
-    EE contains 11
-    An ensemble of elastic nearest neighbor classifiers
+    The Elastic Ensemble (EE) as described in Jason Lines and Anthony Bagnall,
+    "Time Series Classification with Ensembles of Elastic Distance Measures",
+    Data Mining and Knowledge Discovery, 29(3), 2015.
+
+    https://link.springer.com/article/10.1007/s10618-014-0361-2
+
+    Overview:
+
+    - Input n series length m
+    - EE is an ensemble of elastic nearest neighbor classifiers
+
+    .. note::
+
+        For the original Java version, see `ElasticEnsemble <https://github.com
+        /uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/
+        distance_based/ElasticEnsemble.java>`__.
+
     Parameters
     ----------
-    distance_measures                   : a list of strings identifying
-    which distance measures to include optional (default='all')
-    proportion_of_param_option          :    the proportion of the parameter
-    grid space to search optional(default =1, i.e. all)
-    proportion_train_in_param_finding   : proportion of the train set to use
-    in the parameter search optional (default =1, i.e. all)
-    proportion_train_for_test           : proportion of the train set to use
-    in classifying new cases optional (default =1, i.e. all)
-    random_state                         : int  seed for random, integer,
-    optional (default to seed 0)
-    verbose                             : int, if >0 prints out debug inf,
-    optional (default=0)
+    distance_measures : list of strings, optional (default="all")
+      A list of strings identifying which distance measures to include.
+    proportion_of_param_option : float, optional (default=1)
+      The proportion of the parameter grid space to search optional.
+    proportion_train_in_param_finding : float, optional (default=1)
+      The proportion of the train set to use in the parameter search optional.
+    proportion_train_for_test : float, optional (default=1)
+      The proportion of the train set to use in classifying new cases optional.
+    n_jobs : int or None, optional (default=None)
+      The number of jobs to run in parallel for both `fit` and `predict`.
+      ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+      ``-1`` means using all processors.
+    random_state : int, default=0
+      The random seed.
+    verbose : int, default=0
+      If ``>0``, then prints out debug information.
 
     Attributes
     ----------
-    estimators_ = None                  :  list of classifiers
-    train_accs_by_classifier = None     :  train accuracies of the classifiers
-    train_preds_by_classifier = None    :  train predictions of each classifier
-    classes_ = None                     :  class values (isnt this inherited?)
-    train = None                        :   train data
-    constituent_build_times = None      : stored build time for each classifier
-
-    Notes
-    _____
-    ..[1] Jason Lines and Anthony Bagnall, "Time Series Classification with Ensembles
-    of Elastic Distance
-      Measures", Data Mining and Knowledge Discovery, 29(3), 2015
-    https://link.springer.com/article/10.1007/s10618-014-0361-2
-    For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
-    tsml/classifiers/distance_based/ElasticEnsemble.java
-
-
+    estimators_ : list
+      A list storing all classifiers
+    train_accs_by_classifier : ndarray
+      Store the train accuracies of the classifiers
+    train_preds_by_classifier : list
+      Store the train predictions of each classifier
     """
 
     def __init__(
@@ -84,6 +89,7 @@ class ElasticEnsemble(BaseClassifier):
         proportion_of_param_options=1.0,
         proportion_train_in_param_finding=1.0,
         proportion_train_for_test=1.0,
+        n_jobs=None,
         random_state=0,
         verbose=0,
     ):
@@ -102,11 +108,12 @@ class ElasticEnsemble(BaseClassifier):
         self.proportion_train_in_param_finding = proportion_train_in_param_finding
         self.proportion_of_param_options = proportion_of_param_options
         self.proportion_train_for_test = proportion_train_for_test
-        self.random_state = random_state
         self.estimators_ = None
         self.train_accs_by_classifier = None
         self.train_preds_by_classifier = None
         self.classes_ = None
+        self.n_jobs = n_jobs
+        self.random_state = random_state
         self.verbose = verbose
         self.train = None
         self.constituent_build_times = None
@@ -268,6 +275,7 @@ class ElasticEnsemble(BaseClassifier):
                     ),
                     cv=LeaveOneOut(),
                     scoring="accuracy",
+                    n_jobs=self.n_jobs,
                     verbose=self.verbose,
                 )
                 grid.fit(param_train_to_use, param_train_y)
@@ -282,9 +290,10 @@ class ElasticEnsemble(BaseClassifier):
                     param_distributions=ElasticEnsemble._get_100_param_options(
                         self.distance_measures[dm], X
                     ),
+                    n_iter=100 * self.proportion_of_param_options,
                     cv=LeaveOneOut(),
                     scoring="accuracy",
-                    n_iter=100 * self.proportion_of_param_options,
+                    n_jobs=self.n_jobs,
                     random_state=rand,
                     verbose=self.verbose,
                 )

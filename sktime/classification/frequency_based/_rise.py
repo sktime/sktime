@@ -22,17 +22,24 @@ from sklearn.ensemble._base import _partition_estimators
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
+# from ._acf import acf
+
 
 def _transform(X, interval, lag):
     """
     Compute the ACF and PS for given intervals of input data X.
     """
     n_instances, _ = X.shape
+
+    # ACF
     acf_x = np.empty(shape=(n_instances, lag))
+    for j in range(n_instances):
+        acf_x[j] = acf(X[j, interval[0] : interval[1]], lag)
+
+    # PS
     ps_len = (interval[1] - interval[0]) / 2
     ps_x = np.empty(shape=(n_instances, int(ps_len)))
     for j in range(n_instances):
-        acf_x[j] = acf(X[j, interval[0] : interval[1]], lag)
         ps_x[j] = ps(X[j, interval[0] : interval[1]])
     transformed_x = np.concatenate((acf_x, ps_x), axis=1)
 

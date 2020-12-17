@@ -41,3 +41,9 @@ def test_y_proba_on_gunpoint():
     estimator.fit(X_train, y_train)
     actual = estimator.predict_proba(X_test)
     np.testing.assert_array_equal(actual, expected)
+
+
+if __name__ == "__main__":
+    
+    import pytest
+    pytest.main([__file__])
