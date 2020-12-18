@@ -104,7 +104,7 @@ def check_time_index(index, allow_empty=False, enforce_index_type=None):
         )
 
     if enforce_index_type and type(index) is not enforce_index_type:
-        raise ValueError(
+        raise TypeError(
             f"{type(index)} is not supported, use "
             f"type {enforce_index_type} instead."
         )

@@ -60,6 +60,21 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._is_fitted = True
         return self
 
+    def update(self, y, X=None, update_params=False):
+        """Update fitted parameters
+
+        Parameters
+        ----------
+        y : pd.Series
+        X : pd.DataFrame
+        update_params : bool, optional (default=False)
+
+        Returns
+        -------
+        self : an instance of self
+        """
+        raise NotImplementedError()
+
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Predict
 
@@ -90,9 +105,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             raise NotImplementedError(
                 "alpha must be given in Prophet() as interval_width (1-alpha)"
             )
-
         fh = fh.to_relative(cutoff=self.cutoff)
-
         if isinstance(fh.to_pandas(), pd.DatetimeIndex):
             df = pd.DataFrame()
             df["ds"] = fh.to_pandas()
@@ -102,7 +115,6 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Merge X with df (of created future DatetimeIndex values)
         df = _merge_X(fh=fh, X=X, df=df)
-
         out = self._forecaster.predict(df)
 
         y_in_sample = out[out["ds"] <= self.cutoff]["yhat"]
