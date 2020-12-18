@@ -6,13 +6,11 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformers.base import _PanelToTabularTransformer
-from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
-
-_check_soft_dependencies("numba")
 from numba import njit
 from numba import prange
 from numba import vectorize
+
 
 class MiniRocket(_PanelToTabularTransformer):
     """MINIROCKET
@@ -26,22 +24,27 @@ class MiniRocket(_PanelToTabularTransformer):
 
     @article{dempster_etal_2020,
       author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
-      title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for Time Series Classification},
+      title   = {{MINIROCKET}: A Very Fast (Almost) Deterministic Transform for
+                 Time Series Classification},
       year    = {2020},
-      journal = {arXiv:???}
+      journal = {arXiv:2012.08791}
     }
 
     Parameters
     ----------
-    num_features             : int, number of random convolutional kernels (default 10,000)
+    num_features             : int, number of features (default 10,000)
     max_dilations_per_kernel : int, maximum number of dilations per kernel (default 32)
     random_state             : int, random seed (optional, default None)
     """
 
-    def __init__(self, num_features=10_000, max_dilations_per_kernel=32, random_state=None):
+    def __init__(
+        self, num_features=10_000, max_dilations_per_kernel=32, random_state=None
+    ):
         self.num_features = num_features
         self.max_dilations_per_kernel = max_dilations_per_kernel
-        self.random_state = np.int32(random_state) if isinstance(random_state, int) else None
+        self.random_state = (
+            np.int32(random_state) if isinstance(random_state, int) else None
+        )
         super(MiniRocket, self).__init__()
 
     def fit(self, X, y=None):
@@ -60,7 +63,12 @@ class MiniRocket(_PanelToTabularTransformer):
         X = X[:, 0, :].astype(np.float32)
         _, n_timepoints = X.shape
         if n_timepoints < 9:
-            raise ValueError(f"n_timepoints must be >= 9, but found {n_timepoints}; zero pad shorter series so that n_timepoints == 9")
+            raise ValueError(
+                (
+                    f"n_timepoints must be >= 9, but found {n_timepoints};"
+                    " zero pad shorter series so that n_timepoints == 9"
+                )
+            )
         self.parameters = _fit(
             X, self.num_features, self.max_dilations_per_kernel, self.random_state
         )
@@ -84,7 +92,12 @@ class MiniRocket(_PanelToTabularTransformer):
         X = X[:, 0, :].astype(np.float32)
         return pd.DataFrame(_transform(X, self.parameters))
 
-@njit("float32[:](float32[:,:],int32[:],int32[:],float32[:],optional(int32))", fastmath = True, parallel = False)
+
+@njit(
+    "float32[:](float32[:,:],int32[:],int32[:],float32[:],optional(int32))",
+    fastmath=True,
+    parallel=False,
+)
 def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
     if seed is not None:
@@ -94,28 +107,271 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
-    indices = np.array((
-        0,1,2,0,1,3,0,1,4,0,1,5,0,1,6,0,1,7,0,1,8,
-        0,2,3,0,2,4,0,2,5,0,2,6,0,2,7,0,2,8,0,3,4,
-        0,3,5,0,3,6,0,3,7,0,3,8,0,4,5,0,4,6,0,4,7,
-        0,4,8,0,5,6,0,5,7,0,5,8,0,6,7,0,6,8,0,7,8,
-        1,2,3,1,2,4,1,2,5,1,2,6,1,2,7,1,2,8,1,3,4,
-        1,3,5,1,3,6,1,3,7,1,3,8,1,4,5,1,4,6,1,4,7,
-        1,4,8,1,5,6,1,5,7,1,5,8,1,6,7,1,6,8,1,7,8,
-        2,3,4,2,3,5,2,3,6,2,3,7,2,3,8,2,4,5,2,4,6,
-        2,4,7,2,4,8,2,5,6,2,5,7,2,5,8,2,6,7,2,6,8,
-        2,7,8,3,4,5,3,4,6,3,4,7,3,4,8,3,5,6,3,5,7,
-        3,5,8,3,6,7,3,6,8,3,7,8,4,5,6,4,5,7,4,5,8,
-        4,6,7,4,6,8,4,7,8,5,6,7,5,6,8,5,7,8,6,7,8
-    ), dtype = np.int32).reshape(84, 3)
+    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)])
+    indices = np.array(
+        (
+            0,
+            1,
+            2,
+            0,
+            1,
+            3,
+            0,
+            1,
+            4,
+            0,
+            1,
+            5,
+            0,
+            1,
+            6,
+            0,
+            1,
+            7,
+            0,
+            1,
+            8,
+            0,
+            2,
+            3,
+            0,
+            2,
+            4,
+            0,
+            2,
+            5,
+            0,
+            2,
+            6,
+            0,
+            2,
+            7,
+            0,
+            2,
+            8,
+            0,
+            3,
+            4,
+            0,
+            3,
+            5,
+            0,
+            3,
+            6,
+            0,
+            3,
+            7,
+            0,
+            3,
+            8,
+            0,
+            4,
+            5,
+            0,
+            4,
+            6,
+            0,
+            4,
+            7,
+            0,
+            4,
+            8,
+            0,
+            5,
+            6,
+            0,
+            5,
+            7,
+            0,
+            5,
+            8,
+            0,
+            6,
+            7,
+            0,
+            6,
+            8,
+            0,
+            7,
+            8,
+            1,
+            2,
+            3,
+            1,
+            2,
+            4,
+            1,
+            2,
+            5,
+            1,
+            2,
+            6,
+            1,
+            2,
+            7,
+            1,
+            2,
+            8,
+            1,
+            3,
+            4,
+            1,
+            3,
+            5,
+            1,
+            3,
+            6,
+            1,
+            3,
+            7,
+            1,
+            3,
+            8,
+            1,
+            4,
+            5,
+            1,
+            4,
+            6,
+            1,
+            4,
+            7,
+            1,
+            4,
+            8,
+            1,
+            5,
+            6,
+            1,
+            5,
+            7,
+            1,
+            5,
+            8,
+            1,
+            6,
+            7,
+            1,
+            6,
+            8,
+            1,
+            7,
+            8,
+            2,
+            3,
+            4,
+            2,
+            3,
+            5,
+            2,
+            3,
+            6,
+            2,
+            3,
+            7,
+            2,
+            3,
+            8,
+            2,
+            4,
+            5,
+            2,
+            4,
+            6,
+            2,
+            4,
+            7,
+            2,
+            4,
+            8,
+            2,
+            5,
+            6,
+            2,
+            5,
+            7,
+            2,
+            5,
+            8,
+            2,
+            6,
+            7,
+            2,
+            6,
+            8,
+            2,
+            7,
+            8,
+            3,
+            4,
+            5,
+            3,
+            4,
+            6,
+            3,
+            4,
+            7,
+            3,
+            4,
+            8,
+            3,
+            5,
+            6,
+            3,
+            5,
+            7,
+            3,
+            5,
+            8,
+            3,
+            6,
+            7,
+            3,
+            6,
+            8,
+            3,
+            7,
+            8,
+            4,
+            5,
+            6,
+            4,
+            5,
+            7,
+            4,
+            5,
+            8,
+            4,
+            6,
+            7,
+            4,
+            6,
+            8,
+            4,
+            7,
+            8,
+            5,
+            6,
+            7,
+            5,
+            6,
+            8,
+            5,
+            7,
+            8,
+            6,
+            7,
+            8,
+        ),
+        dtype=np.int32,
+    ).reshape(84, 3)
 
     num_kernels = len(indices)
     num_dilations = len(dilations)
 
     num_features = num_kernels * np.sum(num_features_per_dilation)
 
-    biases = np.zeros(num_features, dtype = np.float32)
+    biases = np.zeros(num_features, dtype=np.float32)
 
     feature_index_start = 0
 
@@ -132,13 +388,13 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
             _X = X[np.random.randint(n_instances)]
 
-            A = -_X          # A = alpha * X = -X
-            G = _X + _X + _X # G = gamma * X = 3X
+            A = -_X  # A = alpha * X = -X
+            G = _X + _X + _X  # G = gamma * X = 3X
 
-            C_alpha = np.zeros(n_timepoints, dtype = np.float32)
+            C_alpha = np.zeros(n_timepoints, dtype=np.float32)
             C_alpha[:] = A
 
-            C_gamma = np.zeros((9, n_timepoints), dtype = np.float32)
+            C_gamma = np.zeros((9, n_timepoints), dtype=np.float32)
             C_gamma[9 // 2] = G
 
             start = dilation
@@ -162,24 +418,35 @@ def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
             C = C_alpha + C_gamma[index_0] + C_gamma[index_1] + C_gamma[index_2]
 
-            biases[feature_index_start:feature_index_end] = np.quantile(C, quantiles[feature_index_start:feature_index_end])
+            biases[feature_index_start:feature_index_end] = np.quantile(
+                C, quantiles[feature_index_start:feature_index_end]
+            )
 
             feature_index_start = feature_index_end
 
     return biases
+
 
 def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
 
     num_kernels = 84
 
     num_features_per_kernel = num_features // num_kernels
-    true_max_dilations_per_kernel = min(num_features_per_kernel, max_dilations_per_kernel)
+    true_max_dilations_per_kernel = min(
+        num_features_per_kernel, max_dilations_per_kernel
+    )
     multiplier = num_features_per_kernel / true_max_dilations_per_kernel
 
     max_exponent = np.log2((n_timepoints - 1) / (9 - 1))
-    dilations, num_features_per_dilation = \
-    np.unique(np.logspace(0, max_exponent, true_max_dilations_per_kernel, base = 2).astype(np.int32), return_counts = True)
-    num_features_per_dilation = (num_features_per_dilation * multiplier).astype(np.int32) # this is a vector
+    dilations, num_features_per_dilation = np.unique(
+        np.logspace(0, max_exponent, true_max_dilations_per_kernel, base=2).astype(
+            np.int32
+        ),
+        return_counts=True,
+    )
+    num_features_per_dilation = (num_features_per_dilation * multiplier).astype(
+        np.int32
+    )  # this is a vector
 
     remainder = num_features_per_kernel - np.sum(num_features_per_dilation)
     i = 0
@@ -190,16 +457,22 @@ def _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel):
 
     return dilations, num_features_per_dilation
 
-def _quantiles(n):
-    return np.array([(_ * ((np.sqrt(5) + 1) / 2)) % 1 for _ in range(1, n + 1)], dtype = np.float32)
 
-def _fit(X, num_features = 10_000, max_dilations_per_kernel = 32, seed = None):
+def _quantiles(n):
+    return np.array(
+        [(_ * ((np.sqrt(5) + 1) / 2)) % 1 for _ in range(1, n + 1)], dtype=np.float32
+    )
+
+
+def _fit(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
     _, n_timepoints = X.shape
 
     num_kernels = 84
 
-    dilations, num_features_per_dilation = _fit_dilations(n_timepoints, num_features, max_dilations_per_kernel)
+    dilations, num_features_per_dilation = _fit_dilations(
+        n_timepoints, num_features, max_dilations_per_kernel
+    )
 
     num_features_per_kernel = np.sum(num_features_per_dilation)
 
@@ -209,14 +482,20 @@ def _fit(X, num_features = 10_000, max_dilations_per_kernel = 32, seed = None):
 
     return dilations, num_features_per_dilation, biases
 
-@vectorize("float32(float32,float32)", nopython = True)
+
+@vectorize("float32(float32,float32)", nopython=True)
 def _PPV(a, b):
     if a > b:
         return 1
     else:
         return 0
 
-@njit("float32[:,:](float32[:,:],Tuple((int32[:],int32[:],float32[:])))", fastmath = True, parallel = True)
+
+@njit(
+    "float32[:,:](float32[:,:],Tuple((int32[:],int32[:],float32[:])))",
+    fastmath=True,
+    parallel=True,
+)
 def _transform(X, parameters):
 
     n_instances, n_timepoints = X.shape
@@ -225,35 +504,278 @@ def _transform(X, parameters):
 
     # equivalent to:
     # >>> from itertools import combinations
-    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)], dtype = np.int32)
-    indices = np.array((
-        0,1,2,0,1,3,0,1,4,0,1,5,0,1,6,0,1,7,0,1,8,
-        0,2,3,0,2,4,0,2,5,0,2,6,0,2,7,0,2,8,0,3,4,
-        0,3,5,0,3,6,0,3,7,0,3,8,0,4,5,0,4,6,0,4,7,
-        0,4,8,0,5,6,0,5,7,0,5,8,0,6,7,0,6,8,0,7,8,
-        1,2,3,1,2,4,1,2,5,1,2,6,1,2,7,1,2,8,1,3,4,
-        1,3,5,1,3,6,1,3,7,1,3,8,1,4,5,1,4,6,1,4,7,
-        1,4,8,1,5,6,1,5,7,1,5,8,1,6,7,1,6,8,1,7,8,
-        2,3,4,2,3,5,2,3,6,2,3,7,2,3,8,2,4,5,2,4,6,
-        2,4,7,2,4,8,2,5,6,2,5,7,2,5,8,2,6,7,2,6,8,
-        2,7,8,3,4,5,3,4,6,3,4,7,3,4,8,3,5,6,3,5,7,
-        3,5,8,3,6,7,3,6,8,3,7,8,4,5,6,4,5,7,4,5,8,
-        4,6,7,4,6,8,4,7,8,5,6,7,5,6,8,5,7,8,6,7,8
-    ), dtype = np.int32).reshape(84, 3)
+    # >>> indices = np.array([_ for _ in combinations(np.arange(9), 3)])
+    indices = np.array(
+        (
+            0,
+            1,
+            2,
+            0,
+            1,
+            3,
+            0,
+            1,
+            4,
+            0,
+            1,
+            5,
+            0,
+            1,
+            6,
+            0,
+            1,
+            7,
+            0,
+            1,
+            8,
+            0,
+            2,
+            3,
+            0,
+            2,
+            4,
+            0,
+            2,
+            5,
+            0,
+            2,
+            6,
+            0,
+            2,
+            7,
+            0,
+            2,
+            8,
+            0,
+            3,
+            4,
+            0,
+            3,
+            5,
+            0,
+            3,
+            6,
+            0,
+            3,
+            7,
+            0,
+            3,
+            8,
+            0,
+            4,
+            5,
+            0,
+            4,
+            6,
+            0,
+            4,
+            7,
+            0,
+            4,
+            8,
+            0,
+            5,
+            6,
+            0,
+            5,
+            7,
+            0,
+            5,
+            8,
+            0,
+            6,
+            7,
+            0,
+            6,
+            8,
+            0,
+            7,
+            8,
+            1,
+            2,
+            3,
+            1,
+            2,
+            4,
+            1,
+            2,
+            5,
+            1,
+            2,
+            6,
+            1,
+            2,
+            7,
+            1,
+            2,
+            8,
+            1,
+            3,
+            4,
+            1,
+            3,
+            5,
+            1,
+            3,
+            6,
+            1,
+            3,
+            7,
+            1,
+            3,
+            8,
+            1,
+            4,
+            5,
+            1,
+            4,
+            6,
+            1,
+            4,
+            7,
+            1,
+            4,
+            8,
+            1,
+            5,
+            6,
+            1,
+            5,
+            7,
+            1,
+            5,
+            8,
+            1,
+            6,
+            7,
+            1,
+            6,
+            8,
+            1,
+            7,
+            8,
+            2,
+            3,
+            4,
+            2,
+            3,
+            5,
+            2,
+            3,
+            6,
+            2,
+            3,
+            7,
+            2,
+            3,
+            8,
+            2,
+            4,
+            5,
+            2,
+            4,
+            6,
+            2,
+            4,
+            7,
+            2,
+            4,
+            8,
+            2,
+            5,
+            6,
+            2,
+            5,
+            7,
+            2,
+            5,
+            8,
+            2,
+            6,
+            7,
+            2,
+            6,
+            8,
+            2,
+            7,
+            8,
+            3,
+            4,
+            5,
+            3,
+            4,
+            6,
+            3,
+            4,
+            7,
+            3,
+            4,
+            8,
+            3,
+            5,
+            6,
+            3,
+            5,
+            7,
+            3,
+            5,
+            8,
+            3,
+            6,
+            7,
+            3,
+            6,
+            8,
+            3,
+            7,
+            8,
+            4,
+            5,
+            6,
+            4,
+            5,
+            7,
+            4,
+            5,
+            8,
+            4,
+            6,
+            7,
+            4,
+            6,
+            8,
+            4,
+            7,
+            8,
+            5,
+            6,
+            7,
+            5,
+            6,
+            8,
+            5,
+            7,
+            8,
+            6,
+            7,
+            8,
+        ),
+        dtype=np.int32,
+    ).reshape(84, 3)
 
     num_kernels = len(indices)
     num_dilations = len(dilations)
 
     num_features = num_kernels * np.sum(num_features_per_dilation)
 
-    features = np.zeros((n_instances, num_features), dtype = np.float32)
+    features = np.zeros((n_instances, num_features), dtype=np.float32)
 
     for example_index in prange(n_instances):
 
         _X = X[example_index]
 
-        A = -_X          # A = alpha * X = -X
-        G = _X + _X + _X # G = gamma * X = 3X
+        A = -_X  # A = alpha * X = -X
+        G = _X + _X + _X  # G = gamma * X = 3X
 
         feature_index_start = 0
 
@@ -266,10 +788,10 @@ def _transform(X, parameters):
 
             num_features_this_dilation = num_features_per_dilation[dilation_index]
 
-            C_alpha = np.zeros(n_timepoints, dtype = np.float32)
+            C_alpha = np.zeros(n_timepoints, dtype=np.float32)
             C_alpha[:] = A
 
-            C_gamma = np.zeros((9, n_timepoints), dtype = np.float32)
+            C_gamma = np.zeros((9, n_timepoints), dtype=np.float32)
             C_gamma[9 // 2] = G
 
             start = dilation
@@ -301,10 +823,17 @@ def _transform(X, parameters):
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
-                        features[example_index, feature_index_start + feature_count] = _PPV(C, biases[feature_index_start + feature_count]).mean()
+                        features[
+                            example_index, feature_index_start + feature_count
+                        ] = _PPV(C, biases[feature_index_start + feature_count]).mean()
                 else:
                     for feature_count in range(num_features_this_dilation):
-                        features[example_index, feature_index_start + feature_count] = _PPV(C[padding:-padding], biases[feature_index_start + feature_count]).mean()
+                        features[
+                            example_index, feature_index_start + feature_count
+                        ] = _PPV(
+                            C[padding:-padding],
+                            biases[feature_index_start + feature_count],
+                        ).mean()
 
                 feature_index_start = feature_index_end
 
