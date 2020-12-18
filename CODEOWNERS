@@ -3,13 +3,25 @@
 
 * @mloning
 
-sktime/classification/dictionary_based/ @patrickzib
+sktime/classification/hybrid/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/interval_based/ @MatthewMiddlehurst @TonyBagnall
+sktime/classification/shapelet_based/ @jasonlines @ABostrom @TonyBagnall
+sktime/classification/frequency_based/ @MJFlynn @TonyBagnall
+sktime/classification/distance_based/ @jasonlines @goaster @TonyBagnall
+sktime/classification/dictionary_based/ @patrickzib @MatthewMiddlehurst @TonyBagnall
 sktime/classification/dictionary_based/tests @patrickzib
-sktime/transformers/series_as_features/dictionary_based/ @patrickzib
+
+sktime/transformers/panel/dictionary_based/ @patrickzib
+sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
 sktime/transformers/panel/rocket.py @angus924
 sktime/transformers/panel/minirocket.py @angus924
 
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
+sktime/forecasting/bats.py @aiwalter
+sktime/forecasting/tbats.py @aiwalter
 
 sktime/forecasting/online_learning/ @magittan
+
+sktime/forecasting/hcrystalball.py @MichalChromcak
+sktime/forecasting/test/test_hcrystalball.py @MichalChromcak

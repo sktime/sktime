@@ -27,19 +27,6 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 class ShapeDTW(BaseClassifier):
 
     """
-    @article{ZHAO2018171,
-        title = {shapeDTW: Shape Dynamic Time Warping},
-        journal = {Pattern Recognition},
-        volume = {74},
-        pages = {171 - 184},
-        year = {2018},
-        issn = {0031-3203},
-        doi = {https://doi.org/10.1016/j.patcog.2017.09.020},
-        url = {http://www.sciencedirect.com/science/article/pii/S0031320317303710},
-        author = {Jiaping Zhao and Laurent Itti},
-        keywords = {Dynamic Time Warping, Sequence alignment,
-                    Time series classification}
-    }
 
     The ShapeDTW classifier works by initially extracting a set of subsequences
     describing local neighbourhoods around each data point in a time series.
@@ -113,6 +100,13 @@ class ShapeDTW(BaseClassifier):
 
     metric_params               : dictionary for metric parameters
                                   (default = None).
+
+    Notes
+    _____
+    ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
+        Pattern Recognition, 74, pp 171-184, 2018
+        http://www.sciencedirect.com/science/article/pii/S0031320317303710},
+
     """
 
     def __init__(

@@ -20,9 +20,9 @@ pr:
   autoCancel: true
 
 stages:
-  - stage: 'Linting'
+  - stage: 'code_quality'
     jobs:
-      - job: 'Linting'
+      - job: 'linting'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -37,11 +37,12 @@ stages:
             inputs:
               filePath: maint_tools/linting.sh
 
-  - stage: 'Build'
-    dependsOn: 'Linting'
-    condition: succeeded('Linting')
+  - stage: 'build'
+    dependsOn: 'code_quality'
+    condition: succeeded('code_quality')
     jobs:
       - job: 'check_soft_dependencies'
+        timeoutInMinutes: 180
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -58,6 +59,7 @@ stages:
               scriptSource: 'filePath'
               scriptPath: build_tools/azure/check_soft_dependencies.py
       - job: 'manylinux'
+        timeoutInMinutes: 180
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -75,11 +77,11 @@ stages:
               PYTHON_ARCHITECTURE: x86
 
 
-  - stage: 'Deploy'
-    dependsOn: 'Build'
-    condition: and(succeeded('Build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
+  - stage: 'deploy'
+    dependsOn: 'build'
+    condition: and(succeeded('build'), startsWith(variables['Build.SourceBranch'], 'refs/tags/v'))
     jobs:
-      - job: 'deploy_to_pypi'
+      - job: 'upload_to_pypi'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
