@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 from sktime.datasets import load_basic_motions
 from sktime.transformers.panel.minirocket_multivariate import MiniRocketMultivariate
 
+
 def test_minirocket_multivariate_on_basic_motions():
 
     # load training data

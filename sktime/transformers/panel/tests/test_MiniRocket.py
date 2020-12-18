@@ -5,6 +5,7 @@ from sklearn.metrics import accuracy_score
 from sktime.datasets import load_gunpoint
 from sktime.transformers.panel.minirocket import MiniRocket
 
+
 def test_minirocket_on_gunpoint():
 
     # load training data
