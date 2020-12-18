@@ -11,10 +11,13 @@ __all__ = [
     "test_predict_time_index",
     "test_update_predict_predicted_indices",
     "test_y_multivariate_raises_error",
-    "test_fitted_params",
+    "test_get_fitted_params",
     "test_predict_time_index_in_sample_full",
     "test_predict_pred_interval",
     "test_update_predict_single",
+    "test_invalid_y_type_raises_error",
+    "test_predict_time_index_with_X",
+    "test_invalid_X_type_raises_error",
 ]
 
 import numpy as np
@@ -51,7 +54,7 @@ y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
-def test_fitted_params(Forecaster):
+def test_get_fitted_params(Forecaster):
     f = _construct_instance(Forecaster)
     f.fit(y_train, fh=FH0)
     try:
@@ -86,25 +89,29 @@ def test_raises_not_fitted_error(Forecaster):
 def test_y_multivariate_raises_error(Forecaster):
     # Check that multivariate y raises an appropriate error message.
     y = _make_series(n_columns=2)
+    f = _construct_instance(Forecaster)
     with pytest.raises(ValueError, match=r"univariate"):
-        f = _construct_instance(Forecaster)
         f.fit(y, fh=FH0)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("y", INVALID_INPUT_TYPES)
 def test_invalid_y_type_raises_error(Forecaster, y):
+    f = _construct_instance(Forecaster)
     with pytest.raises(TypeError, match=r"type"):
-        f = _construct_instance(Forecaster)
         f.fit(y, fh=FH0)
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
 @pytest.mark.parametrize("X", INVALID_INPUT_TYPES)
 def test_invalid_X_type_raises_error(Forecaster, X):
-    with pytest.raises(TypeError, match=r"type"):
-        f = _construct_instance(Forecaster)
-        f.fit(y_train, X, fh=FH0)
+    f = _construct_instance(Forecaster)
+    try:
+        with pytest.raises(TypeError, match=r"type"):
+            f.fit(y_train, X, fh=FH0)
+    except NotImplementedError as e:
+        msg = str(e)
+        assert "exogenous" in msg
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -118,6 +125,9 @@ def test_predict_time_index(Forecaster, index_type, fh_type, is_relative, steps)
     cutoff = y_train.index[-1]
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
     f = _construct_instance(Forecaster)
+
+    # Some estimators may not support all time index types and fh types, hence we
+    # need to catch NotImplementedErrors.
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()
@@ -140,6 +150,8 @@ def test_predict_time_index_with_X(Forecaster, index_type, fh_type, is_relative,
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
     f = _construct_instance(Forecaster)
+    # Some estimators may not support all time index types and fh types, hence we
+    # need to catch NotImplementedErrors.
     try:
         f.fit(y_train, X_train, fh=fh)
         y_pred = f.predict(X=X_test)
@@ -162,6 +174,8 @@ def test_predict_time_index_in_sample_full(
     steps = -np.arange(len(y_train))  # full in-sample fh
     fh = _make_fh(cutoff, steps, fh_type, is_relative)
     f = _construct_instance(Forecaster)
+    # Some estimators may not support all time index types and fh types, hence we
+    # need to catch NotImplementedErrors.
     try:
         f.fit(y_train, fh=fh)
         y_pred = f.predict()

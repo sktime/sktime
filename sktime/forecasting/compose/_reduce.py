@@ -285,7 +285,9 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         """
         # input checks
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                "Support for exogenous variables is not yet " "implemented"
+            )
 
         # set values
         self._set_y_X(y, X)
