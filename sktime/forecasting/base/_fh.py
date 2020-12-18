@@ -4,12 +4,12 @@
 __author__ = ["Markus Löning"]
 __all__ = ["ForecastingHorizon"]
 
+from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 
 from sktime.utils.validation.series import VALID_INDEX_TYPES
-from functools import lru_cache
-
 from sktime.utils.validation.series import check_time_index
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
@@ -39,6 +39,8 @@ DELEGATED_METHODS = (
     "__rpow__",
     "__getitem__",
     "__len__",
+    "max",
+    "min",
 )
 
 
@@ -384,7 +386,6 @@ class ForecastingHorizon:
 
         if isinstance(index, pd.PeriodIndex):
             assert isinstance(cutoff, pd.Period)
-
         if isinstance(index, pd.DatetimeIndex):
             assert isinstance(cutoff, pd.Timestamp)
 
@@ -423,7 +424,7 @@ def _coerce_duration_to_int(duration, unit=None):
                 return (duration / pd.Timedelta(1, unit)).astype(np.int)
         except ValueError:
             raise ValueError(
-                "Index type not supported. Please consider using " "pd.PeriodIndex."
+                "Index type not supported. Please consider using pd.PeriodIndex."
             )
     else:
         raise TypeError("`duration` type not understood.")

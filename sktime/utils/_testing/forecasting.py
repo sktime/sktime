@@ -4,10 +4,11 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "get_expected_index_for_update_predict",
+    "_get_expected_index_for_update_predict",
     "_generate_polynomial_series",
     "make_forecasting_problem",
-    "get_expected_index_for_update_predict",
+    "_make_series",
+    "_get_expected_index_for_update_predict",
     "make_forecasting_problem",
 ]
 
@@ -17,31 +18,42 @@ import pandas as pd
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y
 
 
-def get_expected_index_for_update_predict(y, fh, step_length):
+def _get_expected_index_for_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
     fh = check_fh(fh)
-    y = check_y(y)
-    index = y.index.values
+    index = y.index
 
-    start = index[0] - 1  # initial cutoff
-    end = index[-1]  #  last point to predict
-    cutoffs = np.arange(start, end, step_length)
+    # only works with date-time index
+    assert isinstance(index, pd.DatetimeIndex)
+    assert hasattr(index, "freq") and index.freq is not None
+    assert fh.is_relative
+
+    freq = index.freq
+    start = index[0] - 1 * freq  # initial cutoff
+    end = index[-1]  # last point to predict
+
+    # generate date-time range
+    cutoffs = pd.date_range(start, end)
 
     # only predict at time points if all steps in fh can be predicted before
     # the end of y_test
-    cutoffs = cutoffs[cutoffs + max(fh) <= max(index)]
-    n_cutoffs = len(cutoffs)
+    cutoffs = cutoffs[cutoffs + max(fh) * freq <= max(index)]
 
-    # all time points predicted, including duplicates from overlapping fhs
-    fh_broadcasted = np.repeat(fh, n_cutoffs).reshape(len(fh), n_cutoffs)
-    pred_index = cutoffs + fh_broadcasted
+    # apply step length and recast to ignore inferred freq value
+    cutoffs = cutoffs[::step_length]
+    cutoffs = pd.DatetimeIndex(cutoffs, freq=None)
 
-    # return only unique time points
-    return np.unique(pred_index)
+    # generate all predicted time points, including duplicates from overlapping fh steps
+    pred_index = pd.DatetimeIndex([])
+    for step in fh:
+        values = cutoffs + step * freq
+        pred_index = pred_index.append(values)
+
+    # return unique and sorted index
+    return pred_index.unique().sort_values()
 
 
 def _generate_polynomial_series(n, order, coefs=None):

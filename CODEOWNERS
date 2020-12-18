@@ -20,3 +20,6 @@ sktime/forecasting/bats.py @aiwalter
 sktime/forecasting/tbats.py @aiwalter
 
 sktime/forecasting/online_learning/ @magittan
+
+sktime/forecasting/hcrystalball.py @MichalChromcak
+sktime/forecasting/test/test_hcrystalball.py @MichalChromcak

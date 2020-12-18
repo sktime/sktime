@@ -1,5 +1,6 @@
 catch22
 cython>=0.29.0
+hcrystalball>=0.1.9
 numba==0.50.*
 pandas>=1.0.0
 pmdarima>=1.8.0

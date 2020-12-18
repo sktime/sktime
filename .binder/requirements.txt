@@ -1,5 +1,6 @@
 catch22
 cython>=0.29.0
+hcrystalball>=0.1.9
 matplotlib
 notebook
 numba==0.50.*

@@ -1,3 +1,4 @@
+hcrystalball>=0.1.9
 jupyter
 m2r2
 matplotlib
