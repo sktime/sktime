@@ -26,18 +26,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 class BOSSEnsemble(BaseClassifier):
     """Bag of SFA Symbols (BOSS)
 
-    Bag of SFA Symbols Ensemble: implementation of BOSS from Schafer:
-    @article
-    {schafer15boss,
-     author = {Patrick Schäfer,
-            title = {The BOSS is concerned with time series classification
-            in the presence of noise},
-            journal = {Data Mining and Knowledge Discovery},
-            volume = {29},
-            number= {6},
-            year = {2015}
-    }
-    https://link.springer.com/article/10.1007/s10618-014-0377-7
+    Bag of SFA Symbols Ensemble: implementation of BOSS from [1]
 
     Overview: Input n series length m
     BOSS performs a gird search over a set of parameter values, evaluating
@@ -56,10 +45,6 @@ class BOSSEnsemble(BaseClassifier):
     series is formed and stored. fit involves finding n histograms.
 
     predict uses 1 nearest neighbour with a bespoke distance function.
-
-    For the Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/BOSS.java
 
 
     Parameters
@@ -83,6 +68,14 @@ class BOSSEnsemble(BaseClassifier):
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
 
+    Notes
+    -----
+    ..[1] Patrick Schäfer, "The BOSS is concerned with time series classification
+            in the presence of noise", Data Mining and Knowledge Discovery, 29(6): 2015
+            https://link.springer.com/article/10.1007/s10618-014-0377-7
+    For the Java version, see
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/dictionary_based/BOSS.java
     """
 
     def __init__(

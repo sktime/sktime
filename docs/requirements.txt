@@ -1,3 +1,4 @@
+hcrystalball>=0.1.9
 jupyter
 m2r2
 matplotlib
@@ -10,4 +11,5 @@ pygments>=2.4.1
 seaborn
 sphinx==3.2.*
 sphinx_rtd_theme
+tbats
 tsfresh
