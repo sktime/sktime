@@ -185,7 +185,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         Raises
         ------
-        TypeError
+        NotImplementedError
             Error when fh values have wrong type
         """
         if self.freq is None:
@@ -196,7 +196,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 periods=periods, freq=self.freq, include_history=True
             )
         except Exception:
-            raise TypeError(
+            raise NotImplementedError(
                 "Type of fh values must be int, np.array, list or pd.DatetimeIndex"
             )
         return df
