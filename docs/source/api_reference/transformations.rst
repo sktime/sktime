@@ -42,6 +42,14 @@ Summarize
     TSFreshRelevantFeatureExtractor
     TSFreshFeatureExtractor
 
+tsfresh
+~~~~~~~
+
+.. currentmodule:: sktime.transformations.panel.tsfresh
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
 
 Compose
 ~~~~~~~
@@ -179,4 +187,4 @@ Matrix Profile
     :toctree: modules/auto_generated/
     :template: class.rst
 
-    MatrixProfileTransfomer
+    MatrixProfileTransformer
