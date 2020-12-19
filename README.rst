@@ -49,7 +49,7 @@
 
     <div>
         <a href="https://www.sktime.org/en/latest/">
-            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/readme-update/docs/source/images/sktime-logo-no-text-vertical.png" width="300px" align="right" style="vertical-align:top" alt="sktime logo"/></a>
+            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/master/docs/source/images/sktime-logo-no-text-vertical.png" width="300px" align="right" style="vertical-align:top" alt="sktime logo"/></a>
     </div>
 .. _logo: https://www.sktime.org
 
