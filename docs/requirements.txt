@@ -4,6 +4,7 @@ jupyter
 m2r2
 matplotlib
 nbsphinx
+neuralprophet
 numba
 numpydoc
 pmdarima

@@ -17,6 +17,7 @@ sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
 sktime/forecasting/ets @HYang1996
 sktime/forecasting/tests/test_ets @HYang1996
 sktime/forecasting/fbprophet @aiwalter
+sktime/forecasting/neuralprophet @aiwalter
 sktime/forecasting/bats @aiwalter
 sktime/forecasting/tbats @aiwalter
 

@@ -2,6 +2,7 @@ catch22
 cython>=0.29.0
 fbprophet
 hcrystalball>=0.1.9
+neuralprophet
 numba==0.50.*
 pandas>=1.0.0
 pmdarima

@@ -101,6 +101,11 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         Exception
             Error when merging data
         """
+        # neuralprophet in current version does not provide confidence interavals,
+        # will be added and then also included here.
+        if self.__class__.__name__ == "NeuralProphet" and return_pred_int:
+            raise NotImplementedError("Confidence interavals coming soon")
+
         if alpha != DEFAULT_ALPHA:
             raise NotImplementedError(
                 "alpha must be given in Prophet() as interval_width (1-alpha)"

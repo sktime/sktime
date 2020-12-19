@@ -3,6 +3,7 @@ cython>=0.29.0
 fbprophet
 hcrystalball>=0.1.9
 matplotlib
+neuralprophet
 notebook
 numba==0.50.*
 pandas>=1.0.0
