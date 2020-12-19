@@ -95,12 +95,3 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         file: ./testdir/coverage.xml
-    - name: Upload to PyPI
-      if: startsWith(github.ref, 'refs/tags/v')
-      env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        ls -l dist/*
-        python -m pip install --upgrade twine
-        python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.whl

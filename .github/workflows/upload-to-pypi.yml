@@ -1,0 +1,30 @@
+name: upload-to-pypi
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r build_tools/requirements.txt
+    - name: Build wheel
+      run: |
+        python setup.py sdist bdist_wheel
+    - name: Upload to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        ls -l dist/*
+        python -m pip install --upgrade twine
+        python -m twine upload -r pypi --non-interactive --skip-existing --verbose dist/*.whl
