@@ -17,7 +17,7 @@ cd "$HOME"/testdir
 echo "Creating test environemnt ..."
 source $(conda info --base)/etc/profile.d/conda.sh  # set up conda
 conda create -n sktime_testenv python=3.7
-conda activate testenv
+conda activate sktime_testenv
 
 # Install from test PyPI
 echo "Install sktime from Test PyPI ..."
