@@ -1,6 +1,5 @@
 .. -*- mode: rst -*-
 
-|github|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_ |python|_ |codestyle|_
 
 .. |github| image:: https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github
 .. _github: https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test
@@ -23,7 +22,7 @@
 .. |azure| image:: https://img.shields.io/azure-devops/build/mloning/30e41314-4c72-4751-9ffb-f7e8584fc7bd/1/master?logo=azure-pipelines
 .. _azure: https://dev.azure.com/mloning/sktime/_build
 
-.. |codecov| image:: https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?logo=Codecov
+.. |codecov| image:: https://img.shields.io/codecov/c/github/alan-turing-institute/sktime?label=codecov&logo=codecov
 .. _codecov: https://codecov.io/gh/alan-turing-institute/sktime
 
 .. |readthedocs| image:: https://readthedocs.org/projects/sktime/badge/?version=latest
@@ -38,12 +37,14 @@
 .. |codestyle| image:: https://img.shields.io/badge/code%20style-black-000000.svg
 .. _codestyle: https://github.com/psf/black
 
+.. |discord| image:: https://img.shields.io/discord/723500657255907408?logo=discord
+.. _discord: https://discord.com/invite/gqSab2K
 
 .. raw:: html
 
     <div>
         <a href="https://www.sktime.org/en/latest/">
-            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/master/docs/source/images/sktime-logo-no-text.jpg"    width="300px" align="right" /></a>
+            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/master/docs/source/images/sktime-logo-no-text-vertical.png"    width="300px" align="right" /></a>
     </div>
 
 
@@ -61,6 +62,18 @@ to build, tune and validate time series models for multiple learning problems, i
 * Time series regression.
 
 For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+
+.. list-table::
+   :header-rows: 0
+
+   * - **CI**
+     - |github|_ |appveyor|_ |azure|_ |codecov|_
+   * - **Docs**
+     - |readthedocs|_ |binder|_
+   * - **Community**
+     - |gitter|_ |discord|_ |twitter|_
+   * - **Code**
+     - |pypi|_ |python|_ |codestyle|_ |zenodo|_
 
 ------------------------------------------------------------
 
