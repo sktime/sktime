@@ -572,7 +572,7 @@ def _make_fit_args(estimator, **kwargs):
     ):
         X = _make_series(**kwargs)
         return (X,)
-    elif isinstance(estimator, _PanelToTabularTransformer, _PanelToPanelTransformer):
+    elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         return make_classification_problem(**kwargs)
     else:
         raise ValueError(_get_err_msg(estimator))
