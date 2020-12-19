@@ -109,9 +109,9 @@ class Prophet(_ProphetAdapter):
         uncertainty_samples=1000,
         stan_backend=None,
     ):
-        self.freq = freq
-        self.add_seasonality = add_seasonality
-        self.add_country_holidays = add_country_holidays
+        self._freq = freq
+        self._add_seasonality = add_seasonality
+        self._add_country_holidays = add_country_holidays
 
         self.growth = growth
         self.changepoints = changepoints

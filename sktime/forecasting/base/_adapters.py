@@ -43,12 +43,12 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         df["ds"] = y.index
 
         # Add seasonality
-        if self.add_seasonality:
-            self._forecaster.add_seasonality(**self.add_seasonality)
+        if self._add_seasonality:
+            self._forecaster.add_seasonality(**self._add_seasonality)
 
         # Add country holidays
-        if self.add_country_holidays:
-            self._forecaster.add_country_holidays(**self.add_country_holidays)
+        if self._add_country_holidays:
+            self._forecaster.add_country_holidays(**self._add_country_holidays)
 
         # Add regressor (multivariate)
         if X is not None:
@@ -188,12 +188,12 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         NotImplementedError
             Error when fh values have wrong type
         """
-        if self.freq is None:
-            self.freq = self._y.index.freq
+        if self._freq is None:
+            self._freq = self._y.index.freq
         try:
             periods = fh.to_pandas().max()
             df = self._forecaster.make_future_dataframe(
-                periods=periods, freq=self.freq, include_history=True
+                periods=periods, freq=self._freq, include_history=True
             )
         except Exception:
             raise NotImplementedError(
