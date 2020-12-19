@@ -161,34 +161,34 @@ class NeuralProphet(_ProphetAdapter):
         impute_missing=True,
         log_level="WARNING",
     ):
-        self.freq = freq
-        self.add_seasonality = add_seasonality
-        self.add_country_holidays = add_country_holidays
+        self._freq = freq
+        self._add_seasonality = add_seasonality
+        self._add_country_holidays = add_country_holidays
 
-        self.growth = (growth,)
-        self.changepoints = (changepoints,)
-        self.n_changepoints = (n_changepoints,)
-        self.changepoints_range = (changepoints_range,)
-        self.trend_reg = (trend_reg,)
-        self.trend_reg_threshold = (trend_reg_threshold,)
-        self.yearly_seasonality = (yearly_seasonality,)
-        self.weekly_seasonality = (weekly_seasonality,)
-        self.daily_seasonality = (daily_seasonality,)
-        self.seasonality_mode = (seasonality_mode,)
-        self.seasonality_reg = (seasonality_reg,)
-        self.n_forecasts = (n_forecasts,)
-        self.n_lags = (n_lags,)
-        self.num_hidden_layers = (num_hidden_layers,)
-        self.d_hidden = (d_hidden,)
-        self.ar_sparsity = (ar_sparsity,)
-        self.learning_rate = (learning_rate,)
-        self.epochs = (epochs,)
-        self.batch_size = (batch_size,)
-        self.loss_func = (loss_func,)
-        self.train_speed = (train_speed,)
-        self.normalize = (normalize,)
-        self.impute_missing = (impute_missing,)
-        self.log_level = (log_level,)
+        self.growth = growth
+        self.changepoints = changepoints
+        self.n_changepoints = n_changepoints
+        self.changepoints_range = changepoints_range
+        self.trend_reg = trend_reg
+        self.trend_reg_threshold = trend_reg_threshold
+        self.yearly_seasonality = yearly_seasonality
+        self.weekly_seasonality = weekly_seasonality
+        self.daily_seasonality = daily_seasonality
+        self.seasonality_mode = seasonality_mode
+        self.seasonality_reg = seasonality_reg
+        self.n_forecasts = n_forecasts
+        self.n_lags = n_lags
+        self.num_hidden_layers = num_hidden_layers
+        self.d_hidden = d_hidden
+        self.ar_sparsity = ar_sparsity
+        self.learning_rate = learning_rate
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.loss_func = loss_func
+        self.train_speed = train_speed
+        self.normalize = normalize
+        self.impute_missing = impute_missing
+        self.log_level = log_level
 
         # import inside method to avoid hard dependency
         from neuralprophet import NeuralProphet as _NeuralProphet
