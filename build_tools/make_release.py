@@ -22,7 +22,7 @@ import webbrowser
 
 import colorama
 
-ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("maint_tools", "")
+ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("build_tools", "")
 PACKAGE_NAME = "sktime"
 
 
@@ -175,7 +175,7 @@ class InstallFromTestPyPI(Step):
     def action(self, context):
         self.instruct("Check installation from TestPyPI")
         self.do_cmd(
-            f"sh maint_tools/check_install_from_test_pypi.sh {context['version']}"
+            f"sh build_tools/check_install_from_test_pypi.sh {context['version']}"
         )
 
 

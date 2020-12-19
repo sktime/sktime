@@ -34,10 +34,6 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         If true, then include a feature in which all polynomial powers are
         zero. (i.e. a column of ones, acts as an intercept term in a linear
         model)
-
-    Attributes
-    ----------
-
     """
 
     def __init__(self, regressor=None, degree=1, with_intercept=True):
@@ -64,7 +60,9 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         self : returns an instance of self.
         """
         if X is not None:
-            raise NotImplementedError("Exogeneous variables are not " "yet supported")
+            raise NotImplementedError(
+                "Support for exogenous variables is not yet " "implemented"
+            )
         self._set_y_X(y, X)
         self._set_fh(fh)
 
@@ -90,7 +88,7 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         self._is_fitted = True
         return self
 
-    def predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
+    def _predict(self, fh=None, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         """Make forecasts for the given forecast horizon
 
         Parameters
@@ -113,8 +111,6 @@ class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecas
         """
         if return_pred_int or X is not None:
             raise NotImplementedError()
-        self.check_is_fitted()
-        self._set_fh(fh)
 
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_int(self._y.index[0], self.cutoff)

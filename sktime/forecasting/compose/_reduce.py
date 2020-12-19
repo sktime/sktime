@@ -63,11 +63,11 @@ class BaseReducer(_BaseWindowForecaster):
         self._update_y_X(y, X)
         return self
 
-    def _transform(self, y_train, X_train=None):
+    def _transform(self, y, X=None):
         """Transform data using rolling window approach"""
-        if X_train is not None:
+        if X is not None:
             raise NotImplementedError()
-        y_train = check_y(y_train)
+        y = check_y(y)
 
         # get integer time index
         cv = self._cv
@@ -76,16 +76,16 @@ class BaseReducer(_BaseWindowForecaster):
         # rolling window tabularisation
         x_windows = []
         y_windows = []
-        for x_index, y_index in cv.split(y_train):
-            x_window = y_train.iloc[x_index]
-            y_window = y_train.iloc[y_index]
+        for x_index, y_index in cv.split(y):
+            x_window = y.iloc[x_index]
+            y_window = y.iloc[y_index]
 
             x_windows.append(x_window)
             y_windows.append(y_window)
 
         # Put into required input format for regression
-        X_train, y_train = self._format_windows(x_windows, y_windows)
-        return X_train, y_train
+        X, y = self._format_windows(x_windows, y_windows)
+        return X, y
 
     def _format_windows(self, x_windows, y_windows=None):
         """Helper function to combine windows from temporal cross-validation
@@ -285,7 +285,9 @@ class _RecursiveReducer(_OptionalForecastingHorizonMixin, BaseReducer):
         """
         # input checks
         if X is not None:
-            raise NotImplementedError()
+            raise NotImplementedError(
+                "Support for exogenous variables is not yet " "implemented"
+            )
 
         # set values
         self._set_y_X(y, X)

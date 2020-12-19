@@ -4,11 +4,11 @@
 
 __author__ = ["Markus Löning"]
 __all__ = [
-    "get_expected_index_for_update_predict",
+    "_get_expected_index_for_update_predict",
     "_generate_polynomial_series",
     "make_forecasting_problem",
     "_make_series",
-    "get_expected_index_for_update_predict",
+    "_get_expected_index_for_update_predict",
     "make_forecasting_problem",
 ]
 
@@ -18,31 +18,42 @@ from sklearn.utils.validation import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.validation.forecasting import check_fh
-from sktime.utils.validation.forecasting import check_y
 
 
-def get_expected_index_for_update_predict(y, fh, step_length):
+def _get_expected_index_for_update_predict(y, fh, step_length):
     """Helper function to compute expected time index from `update_predict`"""
     # time points at which to make predictions
     fh = check_fh(fh)
-    y = check_y(y)
-    index = y.index.values
+    index = y.index
 
-    start = index[0] - 1  # initial cutoff
-    end = index[-1]  #  last point to predict
-    cutoffs = np.arange(start, end, step_length)
+    # only works with date-time index
+    assert isinstance(index, pd.DatetimeIndex)
+    assert hasattr(index, "freq") and index.freq is not None
+    assert fh.is_relative
+
+    freq = index.freq
+    start = index[0] - 1 * freq  # initial cutoff
+    end = index[-1]  # last point to predict
+
+    # generate date-time range
+    cutoffs = pd.date_range(start, end)
 
     # only predict at time points if all steps in fh can be predicted before
     # the end of y_test
-    cutoffs = cutoffs[cutoffs + max(fh) <= max(index)]
-    n_cutoffs = len(cutoffs)
+    cutoffs = cutoffs[cutoffs + max(fh) * freq <= max(index)]
 
-    # all time points predicted, including duplicates from overlapping fhs
-    fh_broadcasted = np.repeat(fh, n_cutoffs).reshape(len(fh), n_cutoffs)
-    pred_index = cutoffs + fh_broadcasted
+    # apply step length and recast to ignore inferred freq value
+    cutoffs = cutoffs[::step_length]
+    cutoffs = pd.DatetimeIndex(cutoffs, freq=None)
 
-    # return only unique time points
-    return np.unique(pred_index)
+    # generate all predicted time points, including duplicates from overlapping fh steps
+    pred_index = pd.DatetimeIndex([])
+    for step in fh:
+        values = cutoffs + step * freq
+        pred_index = pred_index.append(values)
+
+    # return unique and sorted index
+    return pred_index.unique().sort_values()
 
 
 def _generate_polynomial_series(n, order, coefs=None):
@@ -55,15 +66,33 @@ def _generate_polynomial_series(n, order, coefs=None):
 
 
 def make_forecasting_problem(
-    n_timepoints=50, n_columns=1, all_positive=True, index_type=None, random_state=None
+    n_timepoints=50,
+    all_positive=True,
+    index_type=None,
+    make_X=False,
+    n_columns=2,
+    random_state=None,
 ):
-    return _make_series(
+    y = _make_series(
+        n_timepoints=n_timepoints,
+        n_columns=1,
+        all_positive=all_positive,
+        index_type=index_type,
+        random_state=random_state,
+    )
+
+    if not make_X:
+        return y
+
+    X = _make_series(
         n_timepoints=n_timepoints,
         n_columns=n_columns,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
     )
+    X.index = y.index
+    return y, X
 
 
 def _make_series(
@@ -99,7 +128,9 @@ def _make_index(n_timepoints, index_type=None):
         freq = "M"
         return pd.period_range(start=start, periods=n_timepoints, freq=freq)
 
-    elif index_type == "datetime":
+    elif index_type == "datetime" or index_type is None:
+        # this is the default setting, note that some estimators (and basic unit
+        # tests) may not work with non-default index types
         start = "2000-01-01"
         freq = "D"
         return pd.date_range(start=start, periods=n_timepoints, freq=freq)
@@ -108,7 +139,7 @@ def _make_index(n_timepoints, index_type=None):
         start = 3  # check non-zero based indices
         return pd.RangeIndex(start=start, stop=start + n_timepoints)
 
-    elif index_type == "int" or index_type is None:
+    elif index_type == "int":
         start = 3
         return pd.Int64Index(np.arange(start, start + n_timepoints))
 
@@ -116,7 +147,7 @@ def _make_index(n_timepoints, index_type=None):
         raise ValueError(f"index_class: {index_type} is not supported")
 
 
-def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
+def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
     expected = fh.to_absolute(cutoff).to_pandas()

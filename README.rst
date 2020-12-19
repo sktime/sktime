@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-|github|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_
+|github|_ |appveyor|_ |azure|_ |codecov|_ |readthedocs|_ |pypi|_ |gitter|_ |binder|_ |zenodo|_ |twitter|_ |python|_ |codestyle|_
 
 .. |github| image:: https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github
 .. _github: https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test
@@ -31,6 +31,14 @@
 
 .. |twitter| image:: https://img.shields.io/twitter/follow/sktime_toolbox?label=%20Twitter&style=social
 .. _twitter: https://twitter.com/sktime_toolbox
+
+.. |python| image:: https://img.shields.io/badge/python-3.6+-blue?logo=python
+.. _python: https://www.python.org/
+
+.. |codestyle| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+.. _codestyle: https://github.com/psf/black
+
+
 
 
 sktime

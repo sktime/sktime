@@ -5,15 +5,21 @@
 __author__ = ["Markus Löning"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
+from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import TEST_FHS
+from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_STEP_LENGTHS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import TEST_YS
+from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
+from sktime.utils._testing.forecasting import _make_fh
+from sktime.utils._testing import _make_series
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
 
@@ -238,3 +244,31 @@ def test_sliding_window_split_start_with_fh(y, fh, window_length, step_length):
 
     # check test windows
     check_test_windows(test_windows, fh, cutoffs)
+
+
+@pytest.mark.parametrize(
+    "index_type, fh_type, is_relative", VALID_INDEX_FH_COMBINATIONS
+)
+@pytest.mark.parametrize("values", TEST_OOS_FHS)
+def test_split_by_fh(index_type, fh_type, is_relative, values):
+    y = _make_series(20, index_type=index_type)
+    cutoff = y.index[10]
+    fh = _make_fh(cutoff, values, fh_type, is_relative)
+    split = temporal_train_test_split(y, fh=fh)
+    _check_train_test_split_y(fh, split)
+
+
+def _check_train_test_split_y(fh, split):
+    assert len(split) == 2
+
+    train, test = split
+    assert isinstance(train, pd.Series)
+    assert isinstance(test, pd.Series)
+    assert set(train.index).isdisjoint(test.index)
+    for test_timepoint in test.index:
+        assert np.all(train.index < test_timepoint)
+    assert len(test) == len(fh)
+    assert len(train) > 0
+
+    cutoff = train.index[-1]
+    np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
