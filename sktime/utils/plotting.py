@@ -7,7 +7,7 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 
-from sktime.utils.validation.import_checks import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_y
 
 

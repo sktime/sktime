@@ -9,7 +9,7 @@ __all__ = ["Catch22"]
 import numpy as np
 import pandas as pd
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils.validation.import_checks import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 
