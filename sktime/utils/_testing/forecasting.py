@@ -66,15 +66,33 @@ def _generate_polynomial_series(n, order, coefs=None):
 
 
 def make_forecasting_problem(
-    n_timepoints=50, n_columns=1, all_positive=True, index_type=None, random_state=None
+    n_timepoints=50,
+    all_positive=True,
+    index_type=None,
+    make_X=False,
+    n_columns=2,
+    random_state=None,
 ):
-    return _make_series(
+    y = _make_series(
+        n_timepoints=n_timepoints,
+        n_columns=1,
+        all_positive=all_positive,
+        index_type=index_type,
+        random_state=random_state,
+    )
+
+    if not make_X:
+        return y
+
+    X = _make_series(
         n_timepoints=n_timepoints,
         n_columns=n_columns,
         all_positive=all_positive,
         index_type=index_type,
         random_state=random_state,
     )
+    X.index = y.index
+    return y, X
 
 
 def _make_series(
@@ -129,7 +147,7 @@ def _make_index(n_timepoints, index_type=None):
         raise ValueError(f"index_class: {index_type} is not supported")
 
 
-def assert_correct_pred_time_index(y_pred_index, cutoff, fh):
+def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
     assert isinstance(y_pred_index, pd.Index)
     fh = check_fh(fh)
     expected = fh.to_absolute(cutoff).to_pandas()

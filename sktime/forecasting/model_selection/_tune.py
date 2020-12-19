@@ -28,7 +28,7 @@ from sktime.exceptions import NotFittedError
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.utils.validation.forecasting import check_scoring
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X
 
 
 def _score(y_test, y_pred, scorer):
@@ -400,7 +400,7 @@ class BaseGridSearch(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        y = check_y(y)
+        y, X = check_y_X(y, X)
 
         # validate cross-validator
         cv = check_cv(self.cv)
