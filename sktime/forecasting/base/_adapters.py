@@ -192,9 +192,16 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             self._freq = self._y.index.freq
         try:
             periods = fh.to_pandas().max()
-            df = self._forecaster.make_future_dataframe(
-                periods=periods, freq=self._freq, include_history=True
-            )
+            if self.__class__.__name__ == "NeuralProphet":
+                y_df = df = pd.DataFrame(self._y.rename("y"))
+                y_df["ds"] = self._y.index
+                df = self._forecaster.make_future_dataframe(
+                    periods=periods, df=y_df, n_historic_predictions=len(self._y)
+                )
+            else:
+                df = self._forecaster.make_future_dataframe(
+                    periods=periods, freq=self._freq, include_history=True
+                )
         except Exception:
             raise NotImplementedError(
                 "Type of fh values must be int, np.array, list or pd.DatetimeIndex"
