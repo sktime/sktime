@@ -113,12 +113,12 @@ Forecasting
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
-    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
     forecaster = ThetaForecaster(sp=12)  # monthly seasonal periodicity
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
     smape_loss(y_test, y_pred)
-    >>> 0.1722386848882188
+    >>> 0.08661468139978168
 
 For more, check out the `forecasting tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples/01_forecasting
