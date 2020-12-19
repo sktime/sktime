@@ -1,6 +1,5 @@
 .. -*- mode: rst -*-
 
-
 .. |github| image:: https://img.shields.io/github/workflow/status/alan-turing-institute/sktime/build-and-test?logo=github
 .. _github: https://github.com/alan-turing-institute/sktime/actions?query=workflow%3Abuild-and-test
 
@@ -40,13 +39,18 @@
 .. |discord| image:: https://img.shields.io/discord/723500657255907408?logo=discord
 .. _discord: https://discord.com/invite/gqSab2K
 
+.. |contributors| image:: https://img.shields.io/github/contributors/alan-turing-institute/sktime?color=pink&label=all-contributors
+.. _contributors: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md
+
+.. |tutorial| image:: https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social
+.. _tutorial: https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s
+
 .. raw:: html
 
     <div>
         <a href="https://www.sktime.org/en/latest/">
             <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/readme-update/docs/source/images/sktime-logo-no-text-vertical.png"    width="300px" align="right" /></a>
     </div>
-
 
 Welcome to sktime
 =================
@@ -69,13 +73,12 @@ For deep learning, see our companion package: `sktime-dl <https://github.com/skt
    * - **CI**
      - |github|_ |appveyor|_ |azure|_ |codecov|_
    * - **Docs**
-     - |readthedocs|_ |binder|_
+     - |readthedocs|_ |binder|_ |tutorial|_
    * - **Community**
-     - |gitter|_ |discord|_ |twitter|_
+     - |contributors|_ |gitter|_ |discord|_ |twitter|_
    * - **Code**
      - |pypi|_ |python|_ |codestyle|_ |zenodo|_
 
-------------------------------------------------------------
 
 Installation
 ------------
@@ -95,7 +98,6 @@ Development version
 To install the development version, please see our
 `advanced installation instructions <https://www.sktime.org/en/latest/installation.html>`__.
 
-------------------------------------------------------------
 
 Quickstart
 ----------
@@ -141,8 +143,6 @@ For more, check out the `time series classification tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples
 /02_classification_univariate.ipynb>`__.
 
-------------------------------------------------------------
-
 Documentation
 -------------
 
@@ -151,7 +151,6 @@ Documentation
 * `User guide <https://www.sktime.org/en/latest/user_guide.html>`__
 * `API reference <https://www.sktime.org/en/latest/api_reference.html>`__
 
-------------------------------------------------------------
 
 How to contribute
 -----------------
@@ -163,7 +162,6 @@ We follow the `all-contributors specification <https://github.com/alan-turing-in
 
 If you have a question, `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__. Your help and feedback is extremely welcome!
 
-------------------------------------------------------------
 
 Development roadmap
 -------------------
@@ -175,7 +173,6 @@ Development roadmap
 
 Read our detailed roadmap `here <https://www.sktime.org/en/latest/roadmap.html>`_.
 
-------------------------------------------------------------
 
 How to cite sktime
 ------------------
