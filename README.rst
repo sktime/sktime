@@ -45,12 +45,10 @@
 .. |tutorial| image:: https://img.shields.io/youtube/views/wqQKFu41FIw?label=watch&style=social
 .. _tutorial: https://www.youtube.com/watch?v=wqQKFu41FIw&t=14s
 
-.. raw:: html
-
-    <div>
-        <a href="https://www.sktime.org/en/latest/">
-            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/readme-update/docs/source/images/sktime-logo-no-text-vertical.png"    width="300px" align="right" /></a>
-    </div>
+.. image:: https://raw.githubusercontent.com/alan-turing-institute/sktime/readme-update/docs/source/images/sktime-logo-no-text-vertical.png
+   :width: 300 px
+   :alt: sktime logo
+   :align: right
 
 Welcome to sktime
 =================
