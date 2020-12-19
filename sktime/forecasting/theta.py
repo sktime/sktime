@@ -13,7 +13,7 @@ from sktime.transformers.series.detrend import Deseasonalizer
 from sktime.utils.confidence import zscore
 from sktime.utils.time_series import fit_trend
 from sktime.utils.validation.forecasting import check_sp
-from sktime.utils.validation.forecasting import check_y
+from sktime.utils.validation.forecasting import check_y_X
 
 
 class ThetaForecaster(ExponentialSmoothing):
@@ -117,7 +117,7 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
-        y = check_y(y)
+        y, _ = check_y_X(y, X)
         sp = check_sp(self.sp)
         if sp > 1 and not self.deseasonalize:
             warn("`sp` is ignored when `deseasonalise`=False")

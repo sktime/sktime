@@ -86,6 +86,9 @@ def _make_args(estimator, method, **kwargs):
 def _make_fit_args(estimator, **kwargs):
     if isinstance(estimator, BaseForecaster):
         y = make_forecasting_problem(**kwargs)
+        # we need to handle the TransformedTargetForecaster separately
+        if isinstance(estimator, _SeriesToSeriesTransformer):
+            y = _make_series(**kwargs)
         fh = 1
         X = None
         return y, X, fh
@@ -127,13 +130,7 @@ def _make_transform_args(estimator, **kwargs):
     ):
         X = _make_series(**kwargs)
         return (X,)
-    elif isinstance(
-        estimator,
-        (
-            _PanelToTabularTransformer,
-            _PanelToPanelTransformer,
-        ),
-    ):
+    elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
         X = _make_panel_X(**kwargs)
         return (X,)
     else:

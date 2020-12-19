@@ -35,7 +35,7 @@ stages:
           - task: Bash@3
             displayName: 'Linting'
             inputs:
-              filePath: maint_tools/linting.sh
+              filePath: build_tools/linting.sh
 
   - stage: 'build'
     dependsOn: 'code_quality'

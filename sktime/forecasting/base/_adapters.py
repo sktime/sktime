@@ -305,7 +305,7 @@ class _TbatsAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
-        y, X = check_y_X(y, X, warn_X=True)
+        y, X = check_y_X(y, X)
         self._set_y_X(y, X)
         self._set_fh(fh)
 

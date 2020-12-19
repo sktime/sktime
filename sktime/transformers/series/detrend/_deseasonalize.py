@@ -68,9 +68,8 @@ class Deseasonalizer(_SeriesToSeriesTransformer):
 
         Parameters
         ----------
-        y : pd.Series
+        Z : pd.Series
         X : pd.DataFrame
-        fit_params : dict
 
         Returns
         -------
