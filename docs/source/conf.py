@@ -220,7 +220,7 @@ def setup(app):
 # -- Extension configuration -------------------------------------------------
 
 # -- Options for nbsphinx extension ---------------------------------------
-nbsphinx_execute = "always"  # always  # whether to run notebooks
+nbsphinx_execute = "never"  # always  # whether to run notebooks
 nbsphinx_allow_errors = False  # False
 nbsphinx_timeout = 600  # seconds, set to -1 to disable timeout
 

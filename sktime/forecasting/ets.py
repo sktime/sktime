@@ -231,7 +231,7 @@ class AutoETS(_StatsModelsAdapter):
                 and self.information_criterion != "aicc"
             ):
                 raise ValueError(
-                    "information criterion must " "either be aic, bic or aicc"
+                    "information criterion must either be aic, bic or aicc"
                 )
 
             # Fit model, adapted from:

@@ -254,10 +254,10 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             # else check given estimator is a pipeline with prior
             # transformations and final decision tree
             if not isinstance(self.estimator, Pipeline):
-                raise ValueError("`estimator` must be " "pipeline with transforms.")
+                raise ValueError("`estimator` must be pipeline with transforms.")
             if not isinstance(self.estimator.steps[-1][1], DecisionTreeRegressor):
                 raise ValueError(
-                    "Last step in `estimator` must be " "DecisionTreeRegressor."
+                    "Last step in `estimator` must be DecisionTreeRegressor."
                 )
             self.estimator_ = self.estimator
 

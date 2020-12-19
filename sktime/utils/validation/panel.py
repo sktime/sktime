@@ -53,7 +53,7 @@ def check_X(
     # check input type
     if coerce_to_pandas and coerce_to_numpy:
         raise ValueError(
-            "`coerce_to_pandas` and `coerce_to_numpy` cannot " "both be set to True"
+            "`coerce_to_pandas` and `coerce_to_numpy` cannot both be set to True"
         )
 
     if not isinstance(X, VALID_X_TYPES):

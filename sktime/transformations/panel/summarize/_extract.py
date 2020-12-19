@@ -243,7 +243,7 @@ class RandomIntervalFeatureExtractor(_PanelToTabularTransformer):
         # during fit.
         if X.shape[1] != self.input_shape_[1]:
             raise ValueError(
-                "Number of columns of input is different from what was seen" "in `fit`"
+                "Number of columns of input is different from what was seen " "in `fit`"
             )
         # Input validation
         # if not all([np.array_equal(fit_idx, trans_idx) for trans_idx,

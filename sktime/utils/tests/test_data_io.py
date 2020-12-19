@@ -165,9 +165,7 @@ def test_load_from_tsfile_to_dataframe():
                 "false\n@data\n"
             )
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
-            file_contents += (
-                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " "16)     \n"
-            )
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)     \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -368,7 +366,7 @@ def test_load_from_tsfile_to_dataframe():
             file_contents += "(0, 1), (1, 2):     :(0, 5), (1, 6)\n"
             file_contents += "(0, 11), (1, 12):(0, 13), (1,14)    :       \n"
             file_contents += (
-                "(0, 21), (1, 22):(0, 23), (1,24)    :   (0," "25), (1, 26)    \n"
+                "(0, 21), (1, 22):(0, 23), (1,24)    :   (0,25), (1, 26)    \n"
             )
 
             tmp_file.write(file_contents)
@@ -589,9 +587,7 @@ def test_load_from_tsfile_to_dataframe():
                 "2\n@data\n"
             )
             file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6)\n"
-            file_contents += (
-                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " "16)     \n"
-            )
+            file_contents += "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)     \n"
 
             tmp_file.write(file_contents)
             tmp_file.flush()
@@ -619,9 +615,9 @@ def test_load_from_tsfile_to_dataframe():
                 "true\n@univariate true\n@classLabel true 0 1 "
                 "2\n@data\n"
             )
-            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, " "6) : 0 \n"
+            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6) : 0 \n"
             file_contents += (
-                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " "16)   : 3  \n"
+                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16)   : 3  \n"
             )
 
             tmp_file.write(file_contents)
@@ -650,9 +646,9 @@ def test_load_from_tsfile_to_dataframe():
                 "true\n@univariate true\n@classLabel true 0 1 "
                 "2\n@data\n"
             )
-            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, " "6): 0\n"
+            file_contents += "(0, 1), (1, 2):(0, 3), (1, 4):(0, 5), (1, 6): 0\n"
             file_contents += (
-                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, " "16): 2     \n"
+                "(0, 11), (1, 12):(0, 13), (1,14):(0, 15), (1, 16): 2     \n"
             )
 
             tmp_file.write(file_contents)

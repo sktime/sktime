@@ -17,14 +17,14 @@ import joblib
 import numpy as np
 import pandas as pd
 import pytest
-from pandas._testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from sklearn import clone
-from sklearn.utils import check_random_state
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
 from sklearn.utils.testing import set_random_state
+from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
@@ -41,11 +41,11 @@ from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.transformations.base import _SeriesToPrimitivesTransformer
 from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.panel import _make_panel_X
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.panel import make_regression_problem
-from sktime.utils._testing.series import _make_series
 from sktime.utils.data_processing import is_nested_dataframe
 
 
@@ -498,7 +498,7 @@ def check_multiprocessing_idempotent(Estimator):
                 _assert_array_equal(
                     results[method],
                     result,
-                    err_msg="Results are not equal for n_jobs=1 and " "n_jobs=-1",
+                    err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
 
 

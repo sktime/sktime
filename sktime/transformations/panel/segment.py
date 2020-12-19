@@ -64,7 +64,7 @@ class IntervalSegmenter(_PanelToPanelTransformer):
         elif isinstance(self.intervals, (int, np.integer)):
             if not self.intervals <= n_timepoints // 2:
                 raise ValueError(
-                    "The number of intervals must be half the number of " "time points"
+                    "The number of intervals must be half the number of time points"
                 )
             self.intervals_ = np.array_split(self._time_index, self.intervals)
 

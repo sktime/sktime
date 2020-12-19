@@ -15,15 +15,13 @@ __author__ = ["Markus Löning", "@big-o"]
 
 import numpy as np
 import pandas as pd
-import warnings
-
 
 from sktime.utils.validation import is_int
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_series
 
 
-def check_y_X(y, X=None, allow_empty=False, allow_constant=True, warn_X=False):
+def check_y_X(y, X=None, allow_empty=False, allow_constant=True):
     """Validate input data.
 
     Parameters
@@ -34,8 +32,6 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True, warn_X=False):
         If True, empty `y` does not raise an error.
     allow_constant : bool, optional (default=True)
         If True, constant `y` does not raise an error.
-    warn_X : bool, optional (default=False)
-        Raises a warning if True.
 
     Raises
     ------
@@ -45,13 +41,13 @@ def check_y_X(y, X=None, allow_empty=False, allow_constant=True, warn_X=False):
     y = check_y(y, allow_empty=allow_empty, allow_constant=allow_constant)
 
     if X is not None:
-        X = check_X(X=X, warn_X=warn_X)
+        X = check_X(X=X)
         check_equal_time_index(y, X)
 
     return y, X
 
 
-def check_X(X, allow_empty=False, enforce_univariate=False, warn_X=False):
+def check_X(X, allow_empty=False, enforce_univariate=False):
     """Validate input data.
 
     Parameters
@@ -59,7 +55,8 @@ def check_X(X, allow_empty=False, enforce_univariate=False, warn_X=False):
     X : pd.Series, pd.DataFrame, np.ndarray
     allow_empty : bool, optional (default=False)
         If True, empty `y` raises an error.
-
+    enforce_univariate : bool, optional (default=False)
+        If True, multivariate Z will raise an error.
     Returns
     -------
     y : pd.Series, pd.DataFrame
@@ -72,14 +69,12 @@ def check_X(X, allow_empty=False, enforce_univariate=False, warn_X=False):
     UserWarning
         Warning that X is given and model can't use it
     """
-    if warn_X:
-        warnings.warn(
-            "Argument X is given but can't be used by model algorithm.", UserWarning
-        )
-
     # Check if pandas series or numpy array
     return check_series(
-        X, enforce_univariate=enforce_univariate, allow_empty=allow_empty
+        X,
+        enforce_univariate=enforce_univariate,
+        allow_empty=allow_empty,
+        allow_numpy=False,
     )
 
 
@@ -236,7 +231,7 @@ def check_alpha(alpha):
     if isinstance(alpha, list):
         if not all(isinstance(a, float) for a in alpha):
             raise ValueError(
-                "When `alpha` is passed as a list, " "it must be a list of floats"
+                "When `alpha` is passed as a list, it must be a list of floats"
             )
 
     elif isinstance(alpha, float):

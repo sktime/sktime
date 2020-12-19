@@ -42,7 +42,7 @@ def _make_index(n_timepoints, index_type=None):
         freq = "M"
         return pd.period_range(start=start, periods=n_timepoints, freq=freq)
 
-    elif index_type == "datetime":
+    elif index_type == "datetime" or index_type is None:
         start = "2000-01-01"
         freq = "D"
         return pd.date_range(start=start, periods=n_timepoints, freq=freq)
@@ -51,7 +51,7 @@ def _make_index(n_timepoints, index_type=None):
         start = 3  # check non-zero based indices
         return pd.RangeIndex(start=start, stop=start + n_timepoints)
 
-    elif index_type == "int" or index_type is None:
+    elif index_type == "int":
         start = 3
         return pd.Int64Index(np.arange(start, start + n_timepoints))
 

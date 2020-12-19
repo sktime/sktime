@@ -85,7 +85,7 @@ def _download_and_extract(url, extract_path=None):
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
         raise zipfile.BadZipFile(
-            "Could not unzip dataset. Please make sure the " "URL is valid."
+            "Could not unzip dataset. Please make sure the URL is valid."
         )
 
 

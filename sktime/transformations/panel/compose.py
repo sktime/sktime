@@ -305,7 +305,7 @@ def make_row_transformer(transformer, transformer_type=None, **kwargs):
             transformer_type = "series-to-primitives"
         else:
             raise TypeError(
-                "transformer type not understood. Please specify " "`transformer_type`."
+                "transformer type not understood. Please specify `transformer_type`."
             )
     if transformer_type == "series-to-series":
         return SeriesToSeriesRowTransformer(transformer, **kwargs)

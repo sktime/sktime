@@ -506,7 +506,7 @@ class SFA(_PanelToPanelTransformer):
 
     @staticmethod
     @njit(
-        "(float64[:],float64[:],float64[:],int32," "float64[:],float64[:,:],float64)",
+        "(float64[:],float64[:],float64[:],int32,float64[:],float64[:,:],float64)",
         fastmath=True,
         cache=True,
     )

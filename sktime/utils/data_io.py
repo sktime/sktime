@@ -147,7 +147,7 @@ def load_from_tsfile_to_dataframe(
 
                     if token_len != 2:
                         raise TsFileParseException(
-                            "univariate tag requires an associated Boolean " "value"
+                            "univariate tag requires an associated Boolean  " "value"
                         )
 
                     elif tokens[1] == "true":
@@ -178,7 +178,7 @@ def load_from_tsfile_to_dataframe(
 
                     if token_len == 1:
                         raise TsFileParseException(
-                            "classlabel tag requires an associated Boolean " "value"
+                            "classlabel tag requires an associated Boolean  " "value"
                         )
 
                     if tokens[1] == "true":
@@ -983,7 +983,7 @@ def load_from_long_to_dataframe(full_file_path_and_name, separator=","):
         or not data.iloc[:, 3].dtype == "float64"
     ):
         raise LongFormatDataParseException(
-            "one or more data columns" "contains data of an incorrect type"
+            "one or more data columns contains data of an incorrect type"
         )
 
     data = from_long_to_nested(data)
@@ -1203,7 +1203,7 @@ def write_dataframe_to_tsfile(
     # ensure number of cases is same as the class value list
     if len(data.index) != len(class_value_list) and len(class_value_list) > 0:
         raise IndexError(
-            "The number of cases is not the same as the " "number of given class values"
+            "The number of cases is not the same as the number of given " "class values"
         )
 
     if equal_length and series_length == -1:

@@ -158,7 +158,7 @@ def all_estimators(estimator_types=None, return_names=True, exclude_estimators=N
             exclude_estimators = [exclude_estimators]  # make iterable
         if not all([isinstance(estimator, str) for estimator in exclude_estimators]):
             raise ValueError(
-                "Please specify `exclude_estimators` as a list of " "strings."
+                "Please specify `exclude_estimators` as a list of strings."
             )
         all_estimators = [
             (name, estimator)
