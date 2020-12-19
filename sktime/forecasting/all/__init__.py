@@ -34,6 +34,10 @@ __all__ = [
     "NormalHedgeEnsemble",
     "NNLSEnsemble",
     "OnlineEnsembleForecaster",
+    "BATS",
+    "TBATS",
+    "Prophet",
+    "NeuralProphet",
 ]
 
 import numpy as np
@@ -58,6 +62,10 @@ from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.theta import ThetaForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
+from sktime.forecasting.bats import BATS
+from sktime.forecasting.tbats import TBATS
+from sktime.forecasting.fbprophet import Prophet
+from sktime.forecasting.neuralprophet import NeuralProphet
 from sktime.performance_metrics.forecasting import MASE
 from sktime.performance_metrics.forecasting import mase_loss
 from sktime.performance_metrics.forecasting import sMAPE
