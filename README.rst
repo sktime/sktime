@@ -39,19 +39,26 @@
 .. _codestyle: https://github.com/psf/black
 
 
+.. raw:: html
+
+    <div>
+        <a href="https://www.sktime.org/en/latest/">
+            <img src="https://raw.githubusercontent.com/alan-turing-institute/sktime/master/docs/source/images/sktime-logo-no-text.jpg"    width="300px" align="right" /></a>
+    </div>
+
+
 Welcome to sktime
 =================
 
-sktime is a unified framework for machine learning with time series in Python.
-We provide tools for multiple learning problems, including:
+  A unified framework for machine learning with time series
+
+We provide specialized time series algorithms and `scikit-learn
+<https://github.com/scikit-learn/scikit-learn>`__ compatible tools
+to build, tune and validate time series models for multiple learning problems, including:
 
 * Forecasting,
 * Time series classification,
 * Time series regression.
-
-We provide specialized time series algorithms and `scikit-learn
-<https://github.com/scikit-learn/scikit-learn>`__ compatible tools
-for building, tuning and validating time series models.
 
 For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
@@ -126,89 +133,34 @@ For more, check out the `time series classification tutorial <https://github
 Documentation
 -------------
 
-* Watch our online tutorial on Machine Learning with Time Series from the PyData Amsterdam 2020: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[repo] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
-* Check out our `example notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
-* Read our detailed `API reference <https://www.sktime.org>`__.
-
-------------------------------------------------------------
-
-API overview
-------------
-
-sktime is a unified toolbox for machine learning with time series. Time
-series give rise to multiple learning tasks (e.g.
-forecasting and time series classification). The goal of sktime is to
-provide all the necessary tools to solve these tasks, including dedicated time
-series algorithms as well as tools for building, tuning and evaluating
-composite models.
-
-Many of these tasks are related. An algorithm that can
-solve one of them can often be re-used to help solve another one, an idea
-called reduction. sktime's unified interface allows to easily adapt an
-algorithm for one task to another.
-
-For example, to use a regression algorithm to solve a forecasting task, we
-can simply write:
-
-.. code-block:: python
-
-    import numpy as np
-    from sktime.datasets import load_airline
-    from sktime.forecasting.compose import ReducedRegressionForecaster
-    from sklearn.ensemble import RandomForestRegressor
-    from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.performance_metrics.forecasting import smape_loss
-
-    y = load_airline()
-    y_train, y_test = temporal_train_test_split(y)
-    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
-    regressor = RandomForestRegressor()
-    forecaster = ReducedRegressionForecaster(regressor, window_length=12)
-    forecaster.fit(y_train)
-    y_pred = forecaster.predict(fh)
-    smape_loss(y_test, y_pred)
-    >>> 0.12726230426056875
-
-For more details, check out our `paper
-<http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
-
-Currently, sktime provides:
-
-* State-of-the-art algorithms for time series classification and regression, ported from the Java-based `tsml <https://github.com/uea-machine-learning/tsml/>`__ toolkit, as well as forecasting,
-* Transformers, including single-series transformations (e.g. detrending or deseasonalization) and series-as-features transformations (e.g. feature extractors), as well as tools to compose different transformers,
-* Pipelining,
-* Tuning,
-* Ensembling, such as a fully customisable random forest for time-series classification and regression, as well as ensembling for multivariate problems,
-
-For a list of implemented methods, see our `estimator overview <https://github.com/alan-turing-institute/sktime/blob/master/ESTIMATOR_OVERVIEW.md>`_.
-
-In addition, sktime includes an experimental high-level API that unifies multiple learning tasks, partially inspired by the APIs of `mlr <https://mlr.mlr-org.com>`__ and `openML <https://www.openml.org>`__.
-
-
-------------------------------------------------------------
-
-Development roadmap
--------------------
-sktime is under active development. We're looking for new contributors, all
-contributions are welcome!
-
-1. Multivariate/panel forecasting based on a modified `pysf <https://github.com/alan-turing-institute/pysf/>`__ API,
-2. Unsupervised learning, including time series clustering,
-3. Time series annotation, including segmentation and outlier detection,
-4. Specialised data container for efficient handling of time series/panel data in a modelling workflow and separation of time series meta-data,
-5. Probabilistic modelling framework for time series, including survival and point process models based on an adapted `skpro <https://github.com/alan-turing-institute/skpro/>`__ interface.
-
-For more details, read this `issue <https://github.com/alan-turing-institute/sktime/issues/228>`_.
+* PyData Amsterdam 2020 tutorial: `[video] <https://www.youtube.com/watch?v=Wf2naBHRo8Q>`__, `[notebooks] <https://github.com/sktime/sktime-tutorial-pydata-amsterdam-2020>`__
+* `Tutorial notebooks <https://github.com/alan-turing-institute/sktime/tree/master/examples>`__ - you can run them on Binder_ without having to install anything!
+* `User guide <https://www.sktime.org/en/latest/user_guide.html>`__
+* `API reference <https://www.sktime.org/en/latest/api_reference.html>`__
 
 ------------------------------------------------------------
 
 How to contribute
 -----------------
-* First check out our `guide on how to contribute <https://www.sktime.org/en/latest/contributing.html>`__.
-* `Chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__ if you get stuck or have questions.
-* Please also read our `Code of Conduct <https://github.com/alan-turing-institute/sktime/blob/master/CODE_OF_CONDUCT.rst>`__ and `Governance <https://www.sktime.org/en/latest/governance.html>`__ document.
 
-For former and current contributors, see our `overview <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`_.
+We follow the `all-contributors specification <https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md>`__ - and all kinds of contributions are welcome!
+
+* `Contributing guide <https://www.sktime.org/en/latest/contributing.html>`__
+* `Enhancement proposals <https://github.com/sktime/enhancement-proposals>`__ (design discussions)
+
+If you have a question, `chat <https://gitter.im/sktime/community?source=orgpage>`__ with us or `raise an issue <https://github.com/alan-turing-institute/sktime/issues/new/choose>`__. Your help and feedback is extremely welcome!
+
+------------------------------------------------------------
+
+Development roadmap
+-------------------
+
+1. Multivariate/panel forecasting,
+2. Time series clustering,
+3. Time series annotation (segmentation and anomaly detection),
+4. Probabilistic time series modelling, including survival and point processes.
+
+Read our detailed roadmap `here <https://www.sktime.org/en/latest/roadmap.html>`_.
 
 ------------------------------------------------------------
 
