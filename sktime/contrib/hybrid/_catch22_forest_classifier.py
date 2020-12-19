@@ -50,7 +50,7 @@ class Catch22ForestClassifier(BaseClassifier):
 
     For the Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/transformations/Catch22.java
+    /tsml/transformers/Catch22.java
 
 
     Parameters

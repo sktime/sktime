@@ -145,7 +145,7 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
             self._rng.shuffle(columns)
             self.column_subsets_[i] = np.array_split(columns, self.n_column_subsets)
 
-            # initialise list of transformations
+            # initialise list of transformers
             self.transformers_[i] = []
 
             for column_subset in self.column_subsets_[i]:
@@ -208,7 +208,7 @@ class RotationForestClassifier(BaseClassifier, ForestClassifier):
         all_proba = []
         for i, estimator in enumerate(self.estimators_):
 
-            # transform data using fitted transformations
+            # transform data using fitted transformers
             Xt = np.zeros(X_norm.shape)
             for j, column_subset in enumerate(self.column_subsets_[i]):
                 # get fitted transformer

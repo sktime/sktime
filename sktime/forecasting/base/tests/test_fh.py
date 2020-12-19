@@ -10,10 +10,10 @@ from pytest import raises
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
-from sktime.forecasting.base._fh import _coerce_duration_to_int
-from sktime.forecasting.base._fh import _get_duration
-from sktime.forecasting.base._fh import _get_unit
-from sktime.forecasting.base._fh import _shift
+from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _get_duration
+from sktime.utils.datetime import _get_unit
+from sktime.utils.datetime import _shift
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
 from sktime.forecasting.tests._config import TEST_FHS

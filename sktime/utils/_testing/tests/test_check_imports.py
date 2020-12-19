@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 
-from sktime.utils._testing.import_checks import _check_soft_dependencies
+from sktime.utils.validation.import_checks import _check_soft_dependencies
 
 
 def test_check_soft_dependencies_raises_error():

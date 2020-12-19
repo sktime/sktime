@@ -14,8 +14,8 @@ import numpy as np
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 from sktime.transformations.base import _SeriesToSeriesTransformer
-from sktime.forecasting.base._fh import _get_duration
-from sktime.forecasting.base._fh import _get_unit
+from sktime.utils.datetime import _get_duration
+from sktime.utils.datetime import _get_unit
 from sktime.utils.seasonality import autocorrelation_seasonality_test
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.validation.series import check_series

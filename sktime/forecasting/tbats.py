@@ -6,7 +6,7 @@ __author__ = ["Martin Walter"]
 __all__ = ["TBATS"]
 
 from sktime.forecasting.base._adapters import _TbatsAdapter
-from sktime.utils._testing.import_checks import _check_soft_dependencies
+from sktime.utils.validation.import_checks import _check_soft_dependencies
 
 _check_soft_dependencies("tbats")
 

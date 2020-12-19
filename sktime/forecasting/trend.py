@@ -14,7 +14,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.forecasting.base._fh import _get_duration
+from sktime.utils.datetime import _get_duration
 
 
 class PolynomialTrendForecaster(_OptionalForecastingHorizonMixin, _SktimeForecaster):

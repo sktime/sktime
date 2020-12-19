@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import _PanelToTabularTransformer
-from sktime.utils._testing.import_checks import _check_soft_dependencies
+from sktime.utils.validation.import_checks import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X
 
 _check_soft_dependencies("numba")

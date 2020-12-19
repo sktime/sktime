@@ -12,7 +12,7 @@ from scipy.stats import ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils._testing.import_checks import _check_soft_dependencies
+from sktime.utils.validation.import_checks import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", "scikit_posthocs")
 import matplotlib.pyplot as plt  # noqa: E402

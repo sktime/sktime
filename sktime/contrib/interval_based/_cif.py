@@ -13,7 +13,7 @@ from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.utils._testing.import_checks import _check_soft_dependencies
+from sktime.utils.validation.import_checks import _check_soft_dependencies
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier

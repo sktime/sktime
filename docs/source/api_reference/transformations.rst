@@ -39,8 +39,6 @@ Summarize
     PlateauFinder
     RandomIntervalFeatureExtractor
     FittedParamExtractor
-    TSFreshRelevantFeatureExtractor
-    TSFreshFeatureExtractor
 
 tsfresh
 ~~~~~~~
@@ -50,6 +48,10 @@ tsfresh
 .. autosummary::
     :toctree: modules/auto_generated/
     :template: class.rst
+
+    TSFreshRelevantFeatureExtractor
+    TSFreshFeatureExtractor
+
 
 Compose
 ~~~~~~~
