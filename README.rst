@@ -6,10 +6,13 @@
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/mloning/sktime/master?logo=appveyor
 .. _appveyor: https://ci.appveyor.com/project/mloning/sktime
 
-.. |pypi| image:: https://img.shields.io/pypi/v/sktime
+.. |pypi| image:: https://img.shields.io/pypi/v/sktime?color=orange
 .. _pypi: https://pypi.org/project/sktime/
 
-.. |gitter| image:: https://img.shields.io/gitter/room/alan-turing-institute/sktime?logo=gitter
+.. |discord| image:: https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen
+.. _discord: https://discord.com/invite/gqSab2K
+
+.. |gitter| image:: https://img.shields.io/static/v1?logo=gitter&label=gitter&message=chat&color=lightgreen
 .. _gitter: https://gitter.im/sktime/community
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
@@ -35,9 +38,6 @@
 
 .. |codestyle| image:: https://img.shields.io/badge/code%20style-black-000000.svg
 .. _codestyle: https://github.com/psf/black
-
-.. |discord| image:: https://img.shields.io/discord/723500657255907408?logo=discord
-.. _discord: https://discord.com/invite/gqSab2K
 
 .. |contributors| image:: https://img.shields.io/github/contributors/alan-turing-institute/sktime?color=pink&label=all-contributors
 .. _contributors: https://github.com/alan-turing-institute/sktime/blob/master/CONTRIBUTORS.md
@@ -81,7 +81,6 @@ For deep learning, see our companion package: `sktime-dl <https://github.com/skt
      - |contributors|_ |gitter|_ |discord|_ |twitter|_
    * - **Code**
      - |pypi|_ |python|_ |codestyle|_ |zenodo|_
-
 
 Installation
 ------------
