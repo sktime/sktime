@@ -34,6 +34,7 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.forecasting.neuralprophet import NeuralProphet
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
@@ -202,6 +203,7 @@ ESTIMATOR_TEST_PARAMS = {
         "use_arma_errors": False,
         "n_jobs": 1,
     },
+    NeuralProphet: {"epochs": 1},
 }
 
 # These methods should not change the state of the estimator, that is, they should
