@@ -50,7 +50,7 @@ def _score(y_test, y_pred, scorer):
 
 def _check_scores(scores, scorer):
     """Check returned scores"""
-    error_msg = "scoring must return a number, got %s (%s) " "instead. (scorer=%s)"
+    error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, "item"):

@@ -5,13 +5,13 @@ import pytest
 from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils._testing.panel import _make_nested_from_array
 
-from sktime.transformers.panel.dictionary_based._paa import PAA
-from sktime.transformers.panel.dwt import DWTTransformer
-from sktime.transformers.panel.slope import SlopeTransformer
-from sktime.transformers.panel.summarize._extract import (
+from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import (
     DerivativeSlopeTransformer,
 )
-from sktime.transformers.panel.hog1d import HOG1DTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
 
 from sktime.datasets import load_italy_power_demand
 

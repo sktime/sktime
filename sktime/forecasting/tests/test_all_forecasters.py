@@ -35,12 +35,12 @@ from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.performance_metrics.forecasting import smape_loss
 from sktime.utils import all_estimators
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _make_series
+from sktime.utils._testing.estimator_checks import _construct_instance
 from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils._testing.forecasting import _get_expected_index_for_update_predict
 from sktime.utils._testing.forecasting import _make_fh
 from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
 # get all forecasters

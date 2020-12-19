@@ -18,7 +18,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 
-from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.series import _make_series
 
 # We here define the parameter values for unit testing.
 TEST_WINDOW_LENGTHS = [1, 5]

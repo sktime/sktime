@@ -19,7 +19,7 @@ from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
 from sktime.forecasting.tests._config import TEST_YS
 from sktime.forecasting.tests._config import VALID_INDEX_FH_COMBINATIONS
 from sktime.utils._testing.forecasting import _make_fh
-from sktime.utils._testing import _make_series
+from sktime.utils._testing.series import _make_series
 from sktime.utils.validation import is_int
 from sktime.utils.validation.forecasting import check_fh
 

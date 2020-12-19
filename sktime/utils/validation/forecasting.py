@@ -231,7 +231,7 @@ def check_alpha(alpha):
     if isinstance(alpha, list):
         if not all(isinstance(a, float) for a in alpha):
             raise ValueError(
-                "When `alpha` is passed as a list, " "it must be a list of floats"
+                "When `alpha` is passed as a list, it must be a list of floats"
             )
 
     elif isinstance(alpha, float):

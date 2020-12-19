@@ -14,9 +14,9 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from sklearn.utils.validation import check_random_state
 
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils._testing.series import _make_series
 from sktime.utils.validation.forecasting import check_fh
 
 
@@ -93,58 +93,6 @@ def make_forecasting_problem(
     )
     X.index = y.index
     return y, X
-
-
-def _make_series(
-    n_timepoints=50,
-    n_columns=1,
-    all_positive=True,
-    index_type=None,
-    return_numpy=False,
-    random_state=None,
-):
-    """Helper function to generate univariate or multivariate time series"""
-    rng = check_random_state(random_state)
-    data = rng.normal(size=(n_timepoints, n_columns))
-    if all_positive:
-        data -= np.min(data, axis=0) - 1
-    if return_numpy:
-        if n_columns == 1:
-            data = data.ravel()
-        return data
-    else:
-        index = _make_index(n_timepoints, index_type)
-        if n_columns == 1:
-            return pd.Series(data.ravel(), index)
-        else:
-            return pd.DataFrame(data, index)
-
-
-def _make_index(n_timepoints, index_type=None):
-    """Helper function to make indices for unit testing"""
-
-    if index_type == "period":
-        start = "2000-01"
-        freq = "M"
-        return pd.period_range(start=start, periods=n_timepoints, freq=freq)
-
-    elif index_type == "datetime" or index_type is None:
-        # this is the default setting, note that some estimators (and basic unit
-        # tests) may not work with non-default index types
-        start = "2000-01-01"
-        freq = "D"
-        return pd.date_range(start=start, periods=n_timepoints, freq=freq)
-
-    elif index_type == "range":
-        start = 3  # check non-zero based indices
-        return pd.RangeIndex(start=start, stop=start + n_timepoints)
-
-    elif index_type == "int":
-        start = 3
-        return pd.Int64Index(np.arange(start, start + n_timepoints))
-
-    else:
-        raise ValueError(f"index_class: {index_type} is not supported")
 
 
 def _assert_correct_pred_time_index(y_pred_index, cutoff, fh):
