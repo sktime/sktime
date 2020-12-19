@@ -39,22 +39,21 @@
 .. _codestyle: https://github.com/psf/black
 
 
+Welcome to sktime
+=================
 
-
-sktime
-======
-
-sktime is a Python machine learning toolbox for time series with a unified interface for multiple learning tasks. We currently support:
+sktime is a unified framework for machine learning with time series in Python.
+We provide tools for multiple learning problems, including:
 
 * Forecasting,
 * Time series classification,
 * Time series regression.
 
-sktime provides dedicated time series algorithms and `scikit-learn
+We provide specialized time series algorithms and `scikit-learn
 <https://github.com/scikit-learn/scikit-learn>`__ compatible tools
-for building, tuning, and evaluating composite models.
+for building, tuning and validating time series models.
 
-For deep learning methods, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
 ------------------------------------------------------------
 
@@ -86,11 +85,7 @@ Forecasting
 
 .. code-block:: python
 
-    import numpy as np
-    from sktime.datasets import load_airline
-    from sktime.forecasting.theta import ThetaForecaster
-    from sktime.forecasting.model_selection import temporal_train_test_split
-    from sktime.performance_metrics.forecasting import smape_loss
+    from sktime.forecasting.all import *
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
@@ -110,18 +105,17 @@ Time Series Classification
 
 .. code-block:: python
 
-    from sktime.datasets import load_arrow_head
-    from sktime.classification.compose import TimeSeriesForestClassifier
+    from sktime.classification.all import *
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import accuracy_score
 
     X, y = load_arrow_head(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
-    classifier = TimeSeriesForestClassifier()
+    classifier = TimeSeriesForest()
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
     accuracy_score(y_test, y_pred)
-    >>> 0.7924528301886793
+    >>> 0.8679245283018868
 
 For more, check out the `time series classification tutorial <https://github
 .com/alan-turing-institute/sktime/blob/master/examples
