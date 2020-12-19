@@ -117,6 +117,11 @@ class NeuralProphet(_ProphetAdapter):
         imputation follows a linear method up to 10 missing values, more
         are filled with trend.
 
+    ## General Config
+    log_level (str): The log level of the logger objects used for printing
+        procedure status updates for debugging/monitoring. Should be one
+        of 'NOTSET', 'DEBUG', 'INFO', 'WARNING', 'ERROR' or 'CRITICAL'
+
     References
     ----------
     http://neuralprophet.com
@@ -154,6 +159,7 @@ class NeuralProphet(_ProphetAdapter):
         train_speed=None,
         normalize="auto",
         impute_missing=True,
+        log_level="WARNING",
     ):
         self.freq = freq
         self.add_seasonality = add_seasonality
@@ -182,6 +188,7 @@ class NeuralProphet(_ProphetAdapter):
         self.train_speed = (train_speed,)
         self.normalize = (normalize,)
         self.impute_missing = (impute_missing,)
+        self.log_level = (log_level,)
 
         # import inside method to avoid hard dependency
         from neuralprophet import NeuralProphet as _NeuralProphet
@@ -215,5 +222,6 @@ class NeuralProphet(_ProphetAdapter):
             train_speed=self.train_speed,
             normalize=self.normalize,
             impute_missing=self.impute_missing,
+            log_level=self.log_level,
         )
         return self
