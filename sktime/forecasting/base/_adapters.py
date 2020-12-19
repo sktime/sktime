@@ -122,8 +122,11 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         df = _merge_X(fh=fh, X=X, df=df)
         out = self._forecaster.predict(df)
 
-        y_in_sample = out[out["ds"] <= self.cutoff]["yhat"]
-        y_out_sample = out[out["ds"] > self.cutoff]["yhat"]
+        y_hat = "yhat"
+        if self.__class__.__name__ == "NeuralProphet":
+            y_hat = "yhat1"
+        y_in_sample = out[out["ds"] <= self.cutoff][y_hat]
+        y_out_sample = out[out["ds"] > self.cutoff][y_hat]
         y_pred = self._get_y_pred(y_in_sample=y_in_sample, y_out_sample=y_out_sample)
 
         if return_pred_int:
