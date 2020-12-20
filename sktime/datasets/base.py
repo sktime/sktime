@@ -12,7 +12,7 @@ from urllib.request import urlretrieve
 import numpy as np
 import pandas as pd
 
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
+from sktime.utils.data_io import load_from_tsfile_to_dataframe
 
 __all__ = [
     "load_airline",
@@ -85,7 +85,7 @@ def _download_and_extract(url, extract_path=None):
         if os.path.exists(extract_path):
             shutil.rmtree(extract_path)
         raise zipfile.BadZipFile(
-            "Could not unzip dataset. Please make sure the " "URL is valid."
+            "Could not unzip dataset. Please make sure the URL is valid."
         )
 
 

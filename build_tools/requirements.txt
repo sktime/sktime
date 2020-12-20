@@ -1,13 +1,14 @@
 catch22
 cython>=0.29.0
+hcrystalball>=0.1.9
 numba==0.50.*
 pandas>=1.0.0
-pmdarima
+pmdarima>=1.8.0
 pytest
 pytest-cov
 scikit-learn==0.23.*
 scikit-posthocs
-statsmodels>=0.12.*
+statsmodels>=0.12.1
 stumpy
 tbats
 tsfresh

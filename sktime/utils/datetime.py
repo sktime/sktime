@@ -1,5 +1,8 @@
+#!/usr/bin/env python3 -u
 # -*- coding: utf-8 -*-
+
 __author__ = ["Markus Löning"]
+__all__ = []
 
 import numpy as np
 import pandas as pd
@@ -41,7 +44,7 @@ def _coerce_duration_to_int(duration, unit=None):
                 return (duration / pd.Timedelta(1, unit)).astype(np.int)
         except ValueError:
             raise ValueError(
-                "Index type not supported. Please consider using " "pd.PeriodIndex."
+                "Index type not supported. Please consider using pd.PeriodIndex."
             )
     else:
         raise TypeError("`duration` type not understood.")
