@@ -51,6 +51,16 @@ Welcome to sktime
 
   A unified framework for machine learning with time series
 
+We provide specialized time series algorithms and `scikit-learn
+<https://github.com/scikit-learn/scikit-learn>`__ compatible tools
+to build, tune and validate time series models for multiple learning problems, including:
+
+* Forecasting,
+* Time series classification,
+* Time series regression.
+
+For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
+
 .. list-table::
    :header-rows: 0
 
@@ -63,15 +73,6 @@ Welcome to sktime
    * - **Code**
      - |pypi|_ |python|_ |codestyle|_ |zenodo|_
 
-We provide specialized time series algorithms and `scikit-learn
-<https://github.com/scikit-learn/scikit-learn>`__ compatible tools
-to build, tune and validate time series models for multiple learning problems, including:
-
-* Forecasting,
-* Time series classification,
-* Time series regression.
-
-For deep learning, see our companion package: `sktime-dl <https://github.com/sktime/sktime-dl>`_.
 
 Installation
 ------------
