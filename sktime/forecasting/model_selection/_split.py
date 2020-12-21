@@ -178,14 +178,17 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     --------
     For example for `window_length = 5`, `step_length = 1` and `fh = 3`
     here is a representation of the folds:
+    ```
     |-----------------------|
     | * * * * * x x x - - - |
     | - * * * * * x x x - - |
     | - - * * * * * x x x - |
     | - - - * * * * * x x x |
+    ```
 
-    * = training fold.
-    x = test fold.
+    `*` = training fold.
+
+    `x` = test fold.
     """
 
     def __init__(
