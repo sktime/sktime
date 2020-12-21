@@ -175,7 +175,7 @@ class _SktimeForecaster(BaseForecaster):
         # set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` in `fit` or " "`predict`"
+                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
             )
         return self._fh
 

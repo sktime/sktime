@@ -3,7 +3,7 @@
 # from numpy import testing
 #
 # from sktime.datasets import load_gunpoint, load_basic_motions
-# from sktime.contrib.transformers.catch22_features import Catch22
+# from sktime.contrib.transformations.catch22_features import Catch22
 #
 #
 # def test_catch22_on_gunpoint():

@@ -5,7 +5,7 @@ from sklearn.base import clone
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
 from sktime.forecasting.base._sktime import _SktimeForecaster
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("hcrystalball")
 
@@ -14,7 +14,7 @@ def _check_fh(fh, cutoff):
     if fh is not None:
         if not fh.is_all_out_of_sample(cutoff):
             raise NotImplementedError(
-                "in-sample prediction are currently not " "implemented"
+                "in-sample prediction are currently not implemented"
             )
 
 
