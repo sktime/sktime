@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
-from sktime.utils.data_container import from_3d_numpy_to_nested
+from sktime.utils.data_processing import from_3d_numpy_to_nested
 
 
 def _make_panel_X(

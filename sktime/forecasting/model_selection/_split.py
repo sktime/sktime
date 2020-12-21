@@ -12,13 +12,14 @@ __author__ = ["Markus Löning"]
 
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split as _train_test_split
 
+from sktime.utils.validation import check_window_length
 from sktime.utils.validation.forecasting import check_cutoffs
 from sktime.utils.validation.forecasting import check_fh
 from sktime.utils.validation.forecasting import check_step_length
+from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.validation.series import check_time_index
-from sktime.utils.validation import check_window_length
 
 DEFAULT_STEP_LENGTH = 1
 DEFAULT_WINDOW_LENGTH = 10
@@ -350,7 +351,7 @@ class SingleWindowSplitter(BaseWindowSplitter):
         return training_window, test_window
 
 
-def temporal_train_test_split(*arrays, test_size=None, train_size=None):
+def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=None):
     """Split arrays or matrices into sequential train and test subsets
     Creates train/test splits over endogenous arrays an optional exogenous
     arrays. This is a wrapper of scikit-learn's ``train_test_split`` that
@@ -358,9 +359,7 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
 
     Parameters
     ----------
-    *arrays : sequence of indexables with same length / shape[0]
-        Allowed inputs are lists, numpy arrays, scipy-sparse
-        matrices or pandas dataframes.
+    *series : sequence of pd.Series with same length / shape[0]
     test_size : float, int or None, optional (default=None)
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
@@ -372,6 +371,7 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
         proportion of the dataset to include in the train split. If
         int, represents the relative number of train samples. If None,
         the value is automatically set to the complement of the test size.
+    fh : ForecastingHorizon
 
     Returns
     -------
@@ -382,10 +382,53 @@ def temporal_train_test_split(*arrays, test_size=None, train_size=None):
     ----------
     ..[1]  adapted from https://github.com/alkaline-ml/pmdarima/
     """
-    return train_test_split(
-        *arrays,
-        shuffle=False,
-        stratify=None,
-        test_size=test_size,
-        train_size=train_size,
-    )
+    if fh is not None:
+        if test_size is not None or train_size is not None:
+            raise ValueError(
+                "If `fh` is given, `test_size` and `train_size` cannot "
+                "also be specified."
+            )
+        return _split_by_fh(y, fh, X=X)
+    else:
+        series = (y,) if X is None else (y, X)
+        return _train_test_split(
+            *series,
+            shuffle=False,
+            stratify=None,
+            test_size=test_size,
+            train_size=train_size,
+        )
+
+
+def _split_by_fh(y, fh, X=None):
+    if X is not None:
+        check_equal_time_index(y, X)
+    fh = check_fh(fh)
+    idx = fh.to_pandas()
+    index = y.index
+
+    if fh.is_relative:
+        if not fh.is_all_out_of_sample():
+            raise ValueError("`fh` must only contain out-of-sample values")
+        max_step = idx.max()
+        steps = fh.to_indexer()
+        train = index[:-max_step]
+        test = index[-max_step:]
+
+        y_test = y.loc[test[steps]]
+
+    else:
+        min_step, max_step = idx.min(), idx.max()
+        train = index[index < min_step]
+        test = index[(index <= max_step) & (min_step <= index)]
+
+        y_test = y.loc[idx]
+
+    y_train = y.loc[train]
+    if X is None:
+        return y_train, y_test
+
+    else:
+        X_train = X.loc[train]
+        X_test = X.loc[test]
+        return y_train, y_test, X_train, X_test

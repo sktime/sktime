@@ -43,7 +43,7 @@ from sktime.classification.dictionary_based import (
     TemporalDictionaryEnsemble,
 )
 from sktime.contrib.interval_based._cif import CanonicalIntervalForest
-from sktime.transformers.panel.rocket import Rocket
+from sktime.transformations.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -68,11 +68,11 @@ import sktime.classification.distance_based._elastic_ensemble as dist
 import sktime.classification.distance_based._time_series_neighbors as nn
 import sktime.classification.distance_based._proximity_forest as pf
 import sktime.classification.shapelet_based._stc as st
-from sktime.utils.load_data import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformers.panel.compose import make_row_transformer
-from sktime.transformers.panel.segment import RandomIntervalSegmenter
+from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
+from sktime.transformations.panel.compose import make_row_transformer
+from sktime.transformations.panel.segment import RandomIntervalSegmenter
 
-from sktime.transformers.panel.reduce import Tabularizer
+from sktime.transformations.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.pipeline import FeatureUnion
 

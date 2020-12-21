@@ -166,7 +166,7 @@ To check if your code meets our code quality standards, you can automatically ru
 1. To set up the workflow, you need to install a few extra tools:
 
   ```bash
- pip install -r maint_tools/requirements.txt
+ pip install -r build_tools/requirements.txt
  ```
 
 2. Install pre-commit hooks:
@@ -296,4 +296,4 @@ To make the release process easier, we have an interactive script that you can f
 make release
 ```
 
-This calls [maint_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/maint_tools/make_release.py) and will guide you through the release process.
+This calls [build_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/make_release.py) and will guide you through the release process.

@@ -4,6 +4,8 @@
 __author__ = ["Markus Löning"]
 __all__ = ["ForecastingHorizon"]
 
+from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 
@@ -11,7 +13,6 @@ from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.datetime import _get_unit
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.series import VALID_INDEX_TYPES
-from functools import lru_cache
 
 RELATIVE_TYPES = (pd.Int64Index, pd.RangeIndex)
 ABSOLUTE_TYPES = (pd.Int64Index, pd.RangeIndex, pd.DatetimeIndex, pd.PeriodIndex)
@@ -40,6 +41,8 @@ DELEGATED_METHODS = (
     "__rpow__",
     "__getitem__",
     "__len__",
+    "max",
+    "min",
 )
 
 
@@ -385,6 +388,5 @@ class ForecastingHorizon:
 
         if isinstance(index, pd.PeriodIndex):
             assert isinstance(cutoff, pd.Period)
-
         if isinstance(index, pd.DatetimeIndex):
             assert isinstance(cutoff, pd.Timestamp)

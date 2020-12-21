@@ -7,11 +7,11 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
-from sktime.transformers.panel.compose import (
+from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
-from sktime.transformers.panel.segment import RandomIntervalSegmenter
-from sktime.utils._testing import make_classification_problem
+from sktime.transformations.panel.segment import RandomIntervalSegmenter
+from sktime.utils._testing.panel import make_classification_problem
 
 # load data
 X, y = make_classification_problem()

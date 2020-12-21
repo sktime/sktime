@@ -108,7 +108,7 @@ class NaiveForecaster(_OptionalForecastingHorizonMixin, _BaseWindowForecaster):
 
         elif self.strategy == "drift":
             if self.sp != 1:
-                warn("For the `drift` strategy, " "the `sp` value will be ignored.")
+                warn("For the `drift` strategy, the `sp` value will be ignored.")
             # window length we need for forecasts is just the
             # length of seasonal periodicity
             self.window_length_ = check_window_length(self.window_length)
