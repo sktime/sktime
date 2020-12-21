@@ -173,6 +173,19 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     step_length : int
     initial_window : int
     start_with_window : bool, optional (default=True)
+
+    Examples
+    --------
+    For example for `window_length = 5`, `step_length = 1` and `fh = 3`
+    here is a representation of the folds:
+    |-----------------------|
+    | * * * * * x x x - - - |
+    | - * * * * * x x x - - |
+    | - - * * * * * x x x - |
+    | - - - * * * * * x x x |
+
+    * = training fold.
+    x = test fold.
     """
 
     def __init__(
