@@ -8,7 +8,7 @@ from sklearn.pipeline import FeatureUnion as _FeatureUnion
 from sklearn.pipeline import _fit_transform_one
 from sklearn.pipeline import _transform_one
 
-from sktime.transformers.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToPanelTransformer
 
 __all__ = ["FeatureUnion"]
 __author__ = ["Markus Löning"]
@@ -19,7 +19,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
     This estimator applies a list of transformer objects in parallel to the
     input data, then concatenates the results. This is useful to combine
     several feature extraction mechanisms into a single transformer.
-    Parameters of the transformers may be set using its name and the
+    Parameters of the transformations may be set using its name and the
     parameter
     name separated by a '__'. A transformer may be replaced entirely by
     setting the parameter with its name to another transformer,
@@ -57,7 +57,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         self._is_fitted = False
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit all transformers, transform the data and concatenate results.
+        """Fit all transformations, transform the data and concatenate results.
         Parameters
         ----------
         X : pandas DataFrame
@@ -68,8 +68,8 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         Returns
         -------
         Xt : pandas DataFrame
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            hstack of results of transformations. sum_n_components is the
+            sum of n_components (output dimension) over transformations.
         """
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
@@ -78,7 +78,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         )
 
         if not result:
-            # All transformers are None
+            # All transformations are None
             return np.zeros((X.shape[0], 0))
 
         Xs, transformers = zip(*result)
@@ -102,8 +102,8 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         Returns
         -------
         Xt : pandas DataFrame
-            hstack of results of transformers. sum_n_components is the
-            sum of n_components (output dimension) over transformers.
+            hstack of results of transformations. sum_n_components is the
+            sum of n_components (output dimension) over transformations.
         """
         self.check_is_fitted()
         Xs = Parallel(n_jobs=self.n_jobs)(
@@ -112,7 +112,7 @@ class FeatureUnion(_FeatureUnion, _PanelToPanelTransformer):
         )
 
         if not Xs:
-            # All transformers are None
+            # All transformations are None
             return np.zeros((X.shape[0], 0))
 
         else:
