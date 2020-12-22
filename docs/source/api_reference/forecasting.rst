@@ -84,6 +84,36 @@ Theta
 
     ThetaForecaster
 
+BATS/TBATS
+----------
+
+.. currentmodule:: sktime.forecasting.bats
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    BATS
+
+.. currentmodule:: sktime.forecasting.tbats
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    TBATS
+
+Prophet
+-------
+
+.. currentmodule:: sktime.forecasting.fbprophet
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    Prophet
+
 Composition
 -----------
 

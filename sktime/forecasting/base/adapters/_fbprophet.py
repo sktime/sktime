@@ -50,7 +50,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         # Add regressor (multivariate)
         if X is not None:
-            df, X = _safe_merge_X(df, X)
+            df, X = _merge_X(df, X)
             for col in X.columns:
                 self._forecaster.add_regressor(col)
 
@@ -93,16 +93,14 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._set_fh(fh)
         self._update_X(X, enforce_index_type=pd.DatetimeIndex)
 
-        fh = self.fh.to_absolute(cutoff=self.cutoff)
-        if not isinstance(fh.to_pandas(), pd.DatetimeIndex):
-            raise ValueError(
-                "absolute `fh` must be represented as a " "pd.DatetimeIndex"
-            )
-        df = pd.DataFrame({"ds": fh.to_pandas()}, index=fh.to_pandas())
+        fh = self.fh.to_absolute(cutoff=self.cutoff).to_pandas()
+        if not isinstance(fh, pd.DatetimeIndex):
+            raise ValueError("absolute `fh` must be represented as a pd.DatetimeIndex")
+        df = pd.DataFrame({"ds": fh}, index=fh)
 
         # Merge X with df (of created future DatetimeIndex values)
         if X is not None:
-            df, X = _safe_merge_X(df, X)
+            df, X = _merge_X(df, X)
 
         # don't compute confidence intervals if not asked for
         with self._return_pred_int(return_pred_int):
@@ -164,7 +162,7 @@ class _ProphetAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
                 self._forecaster.uncertainty_samples = self.uncertainty_samples
 
 
-def _safe_merge_X(df, X):
+def _merge_X(df, X):
     """Merge X and df on the DatetimeIndex
 
     Parameters

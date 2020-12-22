@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = ["Markus Löning"]
-__all__ = []
+__all__ = ["_StatsModelsAdapter"]
 
 import numpy as np
 import pandas as pd

@@ -519,7 +519,8 @@ def _construct_instance(Estimator):
             raise ValueError(
                 f"Estimator: {Estimator} requires "
                 f"non-default parameters for construction, "
-                f"but none have been found"
+                f"but none were given. Please set them in "
+                f"sktime/tests/_config.py"
             )
 
     # construct with parameter configuration for testing, otherwise construct with
