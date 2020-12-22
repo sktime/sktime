@@ -15,6 +15,7 @@ from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.model_selection import CutoffSplitter
 from sktime.forecasting.model_selection import SlidingWindowSplitter
 from sktime.utils.datetime import _shift
+from sktime.utils.validation.forecasting import check_X
 from sktime.utils.validation.forecasting import check_alpha
 from sktime.utils.validation.forecasting import check_cv
 from sktime.utils.validation.forecasting import check_fh
@@ -35,7 +36,7 @@ class _SktimeForecaster(BaseForecaster):
         self._cutoff = None  # reference point for relative fh
         super(_SktimeForecaster, self).__init__()
 
-    def _set_y_X(self, y, X=None):
+    def _set_y_X(self, y, X=None, enforce_index_type=None):
         """Set training data.
 
         Parameters
@@ -46,12 +47,20 @@ class _SktimeForecaster(BaseForecaster):
             Exogenous time series
         """
         # set initial training data
-        self._y, self._X = check_y_X(y, X, allow_empty=False)
+        self._y, self._X = check_y_X(
+            y, X, allow_empty=False, enforce_index_type=enforce_index_type
+        )
 
         # set initial cutoff to the end of the training data
         self._set_cutoff(y.index[-1])
 
-    def _update_y_X(self, y, X=None):
+    def _update_X(self, X, enforce_index_type=None):
+        if X is not None:
+            X = check_X(X, enforce_index_type=enforce_index_type)
+            if X is len(X) > 0:
+                self._X = X.combine_first(self._X)
+
+    def _update_y_X(self, y, X=None, enfore_index_type=None):
         """Update training data.
 
         Parameters
@@ -62,7 +71,7 @@ class _SktimeForecaster(BaseForecaster):
             Exogenous time series
         """
         # update only for non-empty data
-        y, X = check_y_X(y, X, allow_empty=True)
+        y, X = check_y_X(y, X, allow_empty=True, enforce_index_type=enfore_index_type)
 
         if len(y) > 0:
             self._y = y.combine_first(self._y)
@@ -101,7 +110,7 @@ class _SktimeForecaster(BaseForecaster):
 
     def _get_pred_int(self, lower, upper):
         """Combining lower and upper bound of
-        prediction intervalls. Slicing on fh.
+        prediction intervals. Slicing on fh.
 
         Parameters
         ----------

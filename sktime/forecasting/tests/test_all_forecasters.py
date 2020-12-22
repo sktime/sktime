@@ -184,21 +184,28 @@ def test_predict_time_index_in_sample_full(
         pass
 
 
-def check_pred_ints(pred_ints, y_train, y_pred, fh):
+def _check_pred_ints(pred_ints: list, y_train: pd.Series, y_pred: pd.Series, fh):
     # make iterable
     if isinstance(pred_ints, pd.DataFrame):
         pred_ints = [pred_ints]
 
     for pred_int in pred_ints:
+        # check column naming convention
         assert list(pred_int.columns) == ["lower", "upper"]
+
+        # check time index
         _assert_correct_pred_time_index(pred_int.index, y_train.index[-1], fh)
 
+        # check values
+        assert np.all(pred_int["upper"] > y_pred)
+        assert np.all(pred_int["lower"] < y_pred)
+
         # check if errors are weakly monotonically increasing
-        pred_errors = y_pred - pred_int["lower"]
-        # assert pred_errors.is_mononotic_increasing
-        assert np.all(
-            pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
-        )
+        # pred_errors = y_pred - pred_int["lower"]
+        # # assert pred_errors.is_mononotic_increasing
+        # assert np.all(
+        #     pred_errors.values[1:].round(4) >= pred_errors.values[:-1].round(4)
+        # )
 
 
 @pytest.mark.parametrize("Forecaster", FORECASTERS)
@@ -210,7 +217,7 @@ def test_predict_pred_interval(Forecaster, fh, alpha):
     f.fit(y_train, fh=fh)
     try:
         y_pred, pred_ints = f.predict(return_pred_int=True, alpha=alpha)
-        check_pred_ints(pred_ints, y_train, y_pred, fh)
+        _check_pred_ints(pred_ints, y_train, y_pred, fh)
 
     except NotImplementedError:
         pass

@@ -54,6 +54,8 @@ def check_y_X(
     )
 
     if X is not None:
+        # No need to also enforce the index type on X since we're
+        # checking for index equality here
         X = check_X(X)
         check_equal_time_index(y, X)
 

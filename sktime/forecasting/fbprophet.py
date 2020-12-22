@@ -5,11 +5,9 @@
 __author__ = ["Martin Walter"]
 __all__ = ["Prophet"]
 
-
-from sktime.forecasting.base._adapters import _ProphetAdapter
-from sktime.utils.check_imports import _check_soft_dependencies
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-
+from sktime.forecasting.base.adapters import _ProphetAdapter
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("fbprophet")
 
@@ -19,7 +17,8 @@ class Prophet(_ProphetAdapter):
     Parameters
     ----------
     freq: String of DatetimeIndex frequency. See here for possible values:
-        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
+        https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html
+        #timeseries-offset-aliases
     add_seasonality: Dict with args for Prophet.add_seasonality().
         Dict can have the following keys/values:
             name: string name of the seasonality component.
@@ -67,7 +66,7 @@ class Prophet(_ProphetAdapter):
     mcmc_samples: Integer, if greater than 0, will do full Bayesian inference
         with the specified number of MCMC samples. If 0, will do MAP
         estimation.
-    interval_width: Float, width of the uncertainty intervals provided
+    alpha: Float, width of the uncertainty intervals provided
         for the forecast. If mcmc_samples=0, this will be only the uncertainty
         in the trend using the MAP estimate of the extrapolated generative
         model. If mcmc.samples>0, this will be integrated over all model
@@ -105,13 +104,14 @@ class Prophet(_ProphetAdapter):
         holidays_prior_scale=10.0,
         changepoint_prior_scale=0.05,
         mcmc_samples=0,
-        interval_width=1 - DEFAULT_ALPHA,
+        alpha=DEFAULT_ALPHA,
         uncertainty_samples=1000,
         stan_backend=None,
+        verbose=0,
     ):
-        self._freq = freq
-        self._add_seasonality = add_seasonality
-        self._add_country_holidays = add_country_holidays
+        self.freq = freq
+        self.add_seasonality = add_seasonality
+        self.add_country_holidays = add_country_holidays
 
         self.growth = growth
         self.changepoints = changepoints
@@ -126,9 +126,10 @@ class Prophet(_ProphetAdapter):
         self.changepoint_prior_scale = float(changepoint_prior_scale)
         self.holidays_prior_scale = float(holidays_prior_scale)
         self.mcmc_samples = mcmc_samples
-        self.interval_width = interval_width
+        self.alpha = alpha
         self.uncertainty_samples = uncertainty_samples
         self.stan_backend = stan_backend
+        self.verbose = verbose
 
         # import inside method to avoid hard dependency
         from fbprophet.forecaster import Prophet as _Prophet
@@ -152,7 +153,7 @@ class Prophet(_ProphetAdapter):
             holidays_prior_scale=self.holidays_prior_scale,
             changepoint_prior_scale=self.changepoint_prior_scale,
             mcmc_samples=self.mcmc_samples,
-            interval_width=self.interval_width,
+            interval_width=1 - self.alpha,
             uncertainty_samples=self.uncertainty_samples,
             stan_backend=self.stan_backend,
         )
