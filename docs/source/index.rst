@@ -17,6 +17,7 @@ From here, you can navigate to:
 
    installation
    how_to_get_started
+   user_guide
    api_reference
    changelog
 

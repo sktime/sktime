@@ -8,11 +8,11 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.compose._ensemble import TimeSeriesForestClassifier
-from sktime.transformers.panel.compose import (
+from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
-from sktime.transformers.panel.segment import IntervalSegmenter
-from sktime.transformers.panel.summarize._extract import (
+from sktime.transformations.panel.segment import IntervalSegmenter
+from sktime.transformations.panel.summarize._extract import (
     RandomIntervalFeatureExtractor,
 )
 from sktime.utils._testing.panel import make_classification_problem

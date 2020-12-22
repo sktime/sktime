@@ -6,6 +6,7 @@ __author__ = ["Markus Löning"]
 __all__ = ["ESTIMATOR_TEST_PARAMS", "EXCLUDE_ESTIMATORS", "EXCLUDED_TESTS"]
 
 import numpy as np
+from hcrystalball.wrappers import HoltSmoothingWrapper
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
@@ -21,6 +22,7 @@ from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.bats import BATS
 from sktime.forecasting.compose import DirectRegressionForecaster
 from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import EnsembleForecaster
@@ -33,33 +35,35 @@ from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
+from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
+from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
 from sktime.series_as_features.compose import FeatureUnion
-from sktime.transformers.base import BaseTransformer
-from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.transformers.base import _PanelToTabularTransformer
-from sktime.transformers.base import _SeriesToPrimitivesTransformer
-from sktime.transformers.base import _SeriesToSeriesTransformer
-from sktime.transformers.panel.compose import ColumnTransformer
-from sktime.transformers.panel.compose import (
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.transformations.panel.compose import ColumnTransformer
+from sktime.transformations.panel.compose import (
     SeriesToPrimitivesRowTransformer,
 )
-from sktime.transformers.panel.compose import SeriesToSeriesRowTransformer
-from sktime.transformers.panel.dictionary_based import SFA
-from sktime.transformers.panel.interpolate import TSInterpolator
-from sktime.transformers.panel.reduce import Tabularizer
-from sktime.transformers.panel.shapelets import ContractedShapeletTransform
-from sktime.transformers.panel.shapelets import ShapeletTransform
-from sktime.transformers.panel.summarize import FittedParamExtractor
-from sktime.transformers.panel.tsfresh import TSFreshFeatureExtractor
-from sktime.transformers.panel.tsfresh import (
+from sktime.transformations.panel.compose import SeriesToSeriesRowTransformer
+from sktime.transformations.panel.dictionary_based import SFA
+from sktime.transformations.panel.interpolate import TSInterpolator
+from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.panel.shapelets import ContractedShapeletTransform
+from sktime.transformations.panel.shapelets import ShapeletTransform
+from sktime.transformations.panel.summarize import FittedParamExtractor
+from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
+from sktime.transformations.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformers.series.adapt import TabularToSeriesAdaptor
-from sktime.transformers.series.detrend import Detrender
+from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.series.detrend import Detrender
 
 # The following estimators currently do not pass all unit tests or fail some of them
 # and are excluded until fixed.
@@ -137,7 +141,7 @@ ESTIMATOR_TEST_PARAMS = {
     },
     FittedParamExtractor: {
         "forecaster": FORECASTER,
-        "param_names": ["smoothing_level"],
+        "param_names": ["initial_level"],
     },
     SeriesToPrimitivesRowTransformer: {
         "transformer": SERIES_TO_PRIMITIVES_TRANSFORMER,
@@ -181,6 +185,23 @@ ESTIMATOR_TEST_PARAMS = {
     TimeSeriesForest: {"n_estimators": 3},
     TimeSeriesForestClassifier: {"n_estimators": 3},
     TimeSeriesForestRegressor: {"n_estimators": 3},
+    HCrystalBallForecaster: {"model": HoltSmoothingWrapper()},
+    BATS: {
+        "use_box_cox": False,
+        "use_trend": False,
+        "use_damped_trend": False,
+        "sp": [],
+        "use_arma_errors": False,
+        "n_jobs": 1,
+    },
+    TBATS: {
+        "use_box_cox": False,
+        "use_trend": False,
+        "use_damped_trend": False,
+        "sp": [],
+        "use_arma_errors": False,
+        "n_jobs": 1,
+    },
 }
 
 # These methods should not change the state of the estimator, that is, they should

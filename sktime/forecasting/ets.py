@@ -31,7 +31,7 @@ class AutoETS(_StatsModelsAdapter):
         The error model. "add" (default) or "mul".
     trend : str or None, optional
         The trend component model. "add", "mul", or None (default).
-    damped : bool, optional
+    damped_trend : bool, optional
         Whether or not an included trend component is damped. Default is
         False.
     seasonal : str, optional
@@ -151,7 +151,7 @@ class AutoETS(_StatsModelsAdapter):
         self,
         error="add",
         trend=None,
-        damped=False,
+        damped_trend=False,
         seasonal=None,
         sp=1,
         initialization_method="estimated",
@@ -180,7 +180,7 @@ class AutoETS(_StatsModelsAdapter):
         # Model params
         self.error = error
         self.trend = trend
-        self.damped = damped
+        self.damped_trend = damped_trend
         self.seasonal = seasonal
         self.sp = sp
         self.initialization_method = initialization_method
@@ -231,7 +231,7 @@ class AutoETS(_StatsModelsAdapter):
                 and self.information_criterion != "aicc"
             ):
                 raise ValueError(
-                    "information criterion must " "either be aic, bic or aicc"
+                    "information criterion must either be aic, bic or aicc"
                 )
 
             # Fit model, adapted from:
@@ -310,7 +310,7 @@ class AutoETS(_StatsModelsAdapter):
                 y,
                 error=self.error,
                 trend=self.trend,
-                damped_trend=self.damped,
+                damped_trend=self.damped_trend,
                 seasonal=self.seasonal,
                 seasonal_periods=self.sp,
                 initialization_method=self.initialization_method,

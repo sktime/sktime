@@ -16,25 +16,14 @@ from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
 class TemporalDictionaryEnsemble(BaseClassifier):
-    """Temporal Dictionary Ensemble (TDE)
-
-    @inproceedings{middlehurst2020temporal,
-      title={The Temporal Dictionary Ensemble {(TDE)} Classifier
-             for Time Series Classification},
-      author={Middlehurst, Matthew and Large, James and
-              Cawley, Gavin and Bagnall, Anthony},
-      booktitle={The European Conference on Machine Learning and
-                 Principles and Practice of Knowledge Discovery in
-                 Databases},
-      year={2020}
-    }
-    https://ueaeprints.uea.ac.uk/id/eprint/75490/
+    """
+    Temporal Dictionary Ensemble (TDE) as described in [1].
 
     Overview: Input n series length m
     TDE searches k parameter values selected using a Gaussian processes
@@ -60,8 +49,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     distance function.
 
     For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/dictionary_based/TDE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/TDE.java
 
 
     Parameters
@@ -89,6 +78,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     weights                 : weight of each classifier in the ensemble
     prev_parameters_x       : parameter value of previous classifiers for GP
     prev_parameters_y       : accuracy of previous classifiers for GP
+
+    Notes
+    -----
+    ..[1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
+        "The Temporal Dictionary Ensemble {(TDE)} Classifier for Time Series
+        Classification",
+            in proceedings of the European Conference on Machine Learning and
+            Principles and Practice of Knowledge Discovery in Databases, 2020
+    https://ueaeprints.uea.ac.uk/id/eprint/75490/
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/dictionary_based/TDE.java
 
     """
 

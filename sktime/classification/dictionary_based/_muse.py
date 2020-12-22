@@ -19,37 +19,30 @@ from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
-from sktime.utils.data_container import from_nested_to_3d_numpy
+from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
 
 class MUSE(BaseClassifier):
-    """WEASEL+MUSE (MUltivariate Symbolic Extension)
+    """
+    WEASEL+MUSE (MUltivariate Symbolic Extension)
+    MUSE: implementation of multivariate version of WEASEL, referred to as
+    just MUSE from [1]
 
-    MUSE: implementation of MUSE from Schäfer:
-    @article{schafer2018multivariate,
-      title={Multivariate time series classification with WEASEL+MUSE},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
-      journal={3rd ECML/PKDD Workshop on AALTD},
-      year={2018}
-    }
-    https://arxiv.org/abs/1711.11343
+    Overview: Input n series length m
+     WEASEL+MUSE is a multivariate  dictionary classifier that builds a
+     bag-of-patterns using SFA for different window lengths and learns a
+     logistic regression classifier on this bag.
 
-    # Overview: Input n series length m
-    # WEASEL+MUSE is a multivariate  dictionary classifier that builds a
-    # bag-of-patterns using SFA for different window lengths and learns a
-    # logistic regression classifier on this bag.
-    #
-    # There are these primary parameters:
-    #         alphabet_size: alphabet size
-    #         chi2-threshold: used for feature selection to select best words
-    #         anova: select best l/2 fourier coefficients other than first ones
-    #         bigrams: using bigrams of SFA words
-    #         binning_strategy: the binning strategy used to disctrtize into
-    #                           SFA words.
-    #
+     There are these primary parameters:
+             alphabet_size: alphabet size
+             chi2-threshold: used for feature selection to select best words
+             anova: select best l/2 fourier coefficients other than first ones
+             bigrams: using bigrams of SFA words
+             binning_strategy: the binning strategy used to disctrtize into
+                               SFA words.
 
 
     Parameters
@@ -82,6 +75,18 @@ class MUSE(BaseClassifier):
     Attributes
     ----------
 
+    See Also
+    ________
+    WEASEL
+
+    Notes
+    -----
+    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
+    with WEASEL+MUSE",    in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
+    https://arxiv.org/abs/1711.11343
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/multivariate/WEASEL_MUSE.java
 
     """
 

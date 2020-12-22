@@ -5,12 +5,12 @@
 __author__ = ["Markus Löning"]
 __all__ = ["AutoARIMA"]
 
-import pandas as pd
+import pandas as pd  # type: ignore
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("pmdarima")
 
@@ -297,53 +297,9 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self.scoring = scoring
         self.scoring_args = scoring_args
         self.with_intercept = with_intercept
+        self.model_kwargs = kwargs
 
         super(AutoARIMA, self).__init__()
-
-        # import inside method to avoid hard dependency
-        from pmdarima.arima import AutoARIMA as _AutoARIMA
-
-        self._forecaster = _AutoARIMA(
-            start_p=start_p,
-            d=d,
-            start_q=start_q,
-            max_p=max_p,
-            max_d=max_d,
-            max_q=max_q,
-            start_P=start_P,
-            D=D,
-            start_Q=start_Q,
-            max_P=max_P,
-            max_D=max_D,
-            max_Q=max_Q,
-            max_order=max_order,
-            m=sp,
-            seasonal=seasonal,
-            stationary=stationary,
-            information_criterion=information_criterion,
-            alpha=alpha,
-            test=test,
-            seasonal_test=seasonal_test,
-            stepwise=stepwise,
-            n_jobs=n_jobs,
-            start_params=None,
-            trend=trend,
-            method=method,
-            maxiter=maxiter,
-            offset_test_args=offset_test_args,
-            seasonal_test_args=seasonal_test_args,
-            suppress_warnings=suppress_warnings,
-            error_action=error_action,
-            trace=trace,
-            random=random,
-            random_state=random_state,
-            n_fits=n_fits,
-            out_of_sample_size=out_of_sample_size,
-            scoring=scoring,
-            scoring_args=scoring_args,
-            with_intercept=with_intercept,
-            **kwargs
-        )
 
     def fit(self, y, X=None, fh=None, **fit_params):
         """Fit to training data.
@@ -360,9 +316,54 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         -------
         self : returns an instance of self.
         """
+        # import inside method to avoid hard dependency
+        from pmdarima.arima import AutoARIMA as _AutoARIMA  # type: ignore
+
+        self._forecaster = _AutoARIMA(
+            start_p=self.start_p,
+            d=self.d,
+            start_q=self.start_q,
+            max_p=self.max_p,
+            max_d=self.max_d,
+            max_q=self.max_q,
+            start_P=self.start_P,
+            D=self.D,
+            start_Q=self.start_Q,
+            max_P=self.max_P,
+            max_D=self.max_D,
+            max_Q=self.max_Q,
+            max_order=self.max_order,
+            m=self.sp,
+            seasonal=self.seasonal,
+            stationary=self.stationary,
+            information_criterion=self.information_criterion,
+            alpha=self.alpha,
+            test=self.test,
+            seasonal_test=self.seasonal_test,
+            stepwise=self.stepwise,
+            n_jobs=self.n_jobs,
+            start_params=None,
+            trend=self.trend,
+            method=self.method,
+            maxiter=self.maxiter,
+            offset_test_args=self.offset_test_args,
+            seasonal_test_args=self.seasonal_test_args,
+            suppress_warnings=self.suppress_warnings,
+            error_action=self.error_action,
+            trace=self.trace,
+            random=self.random,
+            random_state=self.random_state,
+            n_fits=self.n_fits,
+            out_of_sample_size=self.out_of_sample_size,
+            scoring=self.scoring,
+            scoring_args=self.scoring_args,
+            with_intercept=self.with_intercept,
+            **self.model_kwargs
+        )
+
         self._set_y_X(y, X)
         self._set_fh(fh)
-        self._forecaster.fit(y, X, **fit_params)
+        self._forecaster.fit(y, X=X, **fit_params)
         self._is_fitted = True
         return self
 
@@ -400,7 +401,7 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
-            exogenous=X,
+            X=X,
             return_conf_int=return_pred_int,
             alpha=alpha,
         )
@@ -430,7 +431,7 @@ class AutoARIMA(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         result = self._forecaster.predict(
             n_periods=n_periods,
-            exogenous=X,
+            X=X,
             return_conf_int=return_pred_int,
             alpha=alpha,
         )

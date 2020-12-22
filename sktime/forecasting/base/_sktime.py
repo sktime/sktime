@@ -74,6 +74,60 @@ class _SktimeForecaster(BaseForecaster):
             if X is not None:
                 self._X = X.combine_first(self._X)
 
+    def _get_y_pred(self, y_in_sample, y_out_sample):
+        """Combining in-sample and out-sample prediction
+        and slicing on given fh.
+
+        Parameters
+        ----------
+        y_in_sample : pd.Series
+            In-sample prediction
+        y_out_sample : pd.Series
+            Out-sample prediction
+
+        Returns
+        -------
+        pd.Series
+            y_pred, sliced by fh
+        """
+        y_pred = y_in_sample.append(y_out_sample, ignore_index=True)
+        y_pred = pd.DataFrame(y_pred, columns=["y_pred"])
+        # Workaround for slicing with negative index
+        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
+        y_pred.index = self.fh.to_absolute(self.cutoff)
+        y_pred = y_pred.drop(columns=["idx"])
+        y_pred = y_pred["y_pred"].rename(None)
+        return y_pred
+
+    def _get_pred_int(self, lower, upper):
+        """Combining lower and upper bound of
+        prediction intervalls. Slicing on fh.
+
+        Parameters
+        ----------
+        lower : pd.Series
+            Lower bound (can contain also in-sample bound)
+        upper : pd.Series
+            Upper bound (can contain also in-sample bound)
+
+        Returns
+        -------
+        pd.DataFrame
+            pred_int, predicion intervalls (out-sample, sliced by fh)
+        """
+        pred_int = pd.DataFrame({"lower": lower, "upper": upper})
+        # Out-sample fh
+        fh_out = self.fh.to_out_of_sample(cutoff=self.cutoff)
+        # Workaround for slicing with negative index
+        pred_int["idx"] = [x for x in range(len(pred_int))]
+        pred_int = pred_int.loc[
+            pred_int["idx"].isin(fh_out.to_indexer(self.cutoff).values)
+        ]
+        pred_int.index = fh_out.to_absolute(self.cutoff)
+        pred_int = pred_int.drop(columns=["idx"])
+        return pred_int
+
     @property
     def cutoff(self):
         """The time point at which to make forecasts
@@ -116,7 +170,7 @@ class _SktimeForecaster(BaseForecaster):
         # set
         if self._fh is None:
             raise ValueError(
-                "No `fh` has been set yet, please specify `fh` in `fit` or " "`predict`"
+                "No `fh` has been set yet, please specify `fh` " "in `fit` or `predict`"
             )
         return self._fh
 

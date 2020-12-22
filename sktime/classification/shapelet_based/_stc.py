@@ -16,36 +16,39 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.shapelets import ContractedShapeletTransform
+from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation.panel import check_X, check_X_y
 
 
 class ShapeletTransformClassifier(BaseClassifier):
     """Shapelet Transform Classifier
-        Basic implementation along the lines of
-    @article{hills14shapelet,
-      title={Classification of time series by shapelet transformation},
-      author={J. Hills  and  J. Lines and E. Baranauskas and J. Mapp and A.
-      Bagnall},
-      journal={Data Mining and Knowledge Discovery},
-      volume={28},
-      number={4},
-      pages={851--881},
-      year={2014}
-    }
+        Basic implementation along the lines of [1,2]
+
+    Parameters
+    ____________
+    TO DO
+
+    Attributes
+    ----------
+    TO DO
+
+    Notes
+    _____
+
+    ..[1] Jon Hills wt al., "Classification of time series by
+    shapelet transformation",
+        Data Mining and Knowledge Discovery, 28(4), 851--881, 2014
     https://link.springer.com/article/10.1007/s10618-013-0322-1
-    but with some of the refinements presented in
-    @article{bostrom17binary,
-      author={A. Bostrom and A. Bagnall},
-      title={Binary Shapelet Transform for Multiclass Time Series
-      Classification},
-      journal={Transactions on Large-Scale Data and Knowledge Centered
-      Systems},
-      volume={32},
-      year={2017},
-      pages={24--46}
-    }
+    ..[2] A. Bostrom and A. Bagnall, "Binary Shapelet Transform
+    for Multiclass Time Series Classification",
+    Transactions on Large-Scale Data and Knowledge Centered
+      Systems, 32, 2017
     https://link.springer.com/chapter/10.1007/978-3-319-22729-0_20
+    Java Version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+    java/tsml/classifiers/shapelet_based/ShapeletTransformClassifier.java
+
+
     """
 
     def __init__(self, time_contract_in_mins=300, n_estimators=500, random_state=None):

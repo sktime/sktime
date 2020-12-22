@@ -20,18 +20,26 @@ from scipy import stats
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import normalize
 from sklearn.utils import check_random_state
-from sktime.classification.base import BaseClassifier
 from sktime.distances.elastic_cython import dtw_distance
 from sktime.distances.elastic_cython import erp_distance
 from sktime.distances.elastic_cython import lcss_distance
 from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wdtw_distance
-from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.transformers.panel.summarize import DerivativeSlopeTransformer
-from sktime.utils import comparison
-from sktime.utils import dataset_properties
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.classification.distance_based._proximity_forest_utils import max as _max
+from sktime.classification.distance_based._proximity_forest_utils import (
+    arg_min as _arg_min,
+)
+from sktime.classification.base import BaseClassifier
+from sktime.classification.distance_based._proximity_forest_utils import (
+    positive_dataframe_indices,
+    max_instance_length,
+    negative_dataframe_indices,
+)
+from sktime.classification.distance_based._proximity_forest_utils import stdp as _stdp
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -464,10 +472,8 @@ def erp_distance_measure_getter(X):
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
-    stdp = dataset_properties.stdp(X)
-    instance_length = dataset_properties.max_instance_length(
-        X
-    )  # todo should this use the max instance
+    stdp = _stdp(X)
+    instance_length = max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
@@ -486,10 +492,8 @@ def lcss_distance_measure_getter(X):
     :param X: dataset to derive parameter ranges from
     :return: distance measure and parameter range dictionary
     """
-    stdp = dataset_properties.stdp(X)
-    instance_length = dataset_properties.max_instance_length(
-        X
-    )  # todo should this use the max instance
+    stdp = _stdp(X)
+    instance_length = max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
     n_dimensions = 1  # todo use other dimensions
@@ -746,9 +750,7 @@ def best_of_n_stumps(n):
             stump.grow()
             stumps.append(stump)
         # pick the best stump based upon gain
-        stump = comparison.max(
-            stumps, proximity.random_state, lambda stump: stump.entropy
-        )
+        stump = _max(stumps, proximity.random_state, lambda stump: stump.entropy)
         return stump
 
     return find_best_stump
@@ -890,7 +892,7 @@ class ProximityStump(BaseClassifier):
         """
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
 
-        self.X = dataset_properties.positive_dataframe_indices(X)
+        self.X = positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
         if self.label_encoder is None:
@@ -919,9 +921,7 @@ class ProximityStump(BaseClassifier):
         indices = np.empty(X.shape[0], dtype=int)
         for index in range(n_instances):
             exemplar_distances = distances[index]
-            closest_exemplar_index = comparison.arg_min(
-                exemplar_distances, self.random_state
-            )
+            closest_exemplar_index = _arg_min(exemplar_distances, self.random_state)
             indices[index] = closest_exemplar_index
         return indices
 
@@ -962,7 +962,7 @@ class ProximityStump(BaseClassifier):
         """
         X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
 
-        X = dataset_properties.negative_dataframe_indices(X)
+        X = negative_dataframe_indices(X)
         distances = self.distance_to_exemplars(X)
         ones = np.ones(distances.shape)
         distances = np.add(distances, ones)
@@ -1086,7 +1086,7 @@ class ProximityTree(BaseClassifier):
         self : object
         """
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
-        self.X = dataset_properties.positive_dataframe_indices(X)
+        self.X = positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         if self.find_stump is None:
             self.find_stump = best_of_n_stumps(self.n_stump_evaluations)
@@ -1146,7 +1146,7 @@ class ProximityTree(BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-        X = dataset_properties.negative_dataframe_indices(X)
+        X = negative_dataframe_indices(X)
         closest_exemplar_indices = self.stump.find_closest_exemplar_indices(X)
         n_classes = len(self.label_encoder.classes_)
         distribution = np.zeros((X.shape[0], n_classes))
@@ -1170,42 +1170,57 @@ class ProximityTree(BaseClassifier):
 
 class ProximityForest(BaseClassifier):
     """
-        Proximity Forest class to model a decision tree forest which uses
-        distance measures to
-        partition data.
+    Proximity Forest class to model a decision tree forest which uses
+    distance measures to partition data, see [1].
 
-    @article{lucas19proximity,
+    Parameters
+    ----------
+    random_state: random, default = None
+        seed for reproducibility
+    n_estimators : int, default=100
+        The number of trees in the forest.
+    distance_measure: default = None
+    get_distance_measure: default=None,
+        distance measure getters
+    get_exemplars: default=get_one_exemplar_per_class_proximity,
+    get_gain: default=gini_gain,
+            function to score the quality of a split
+    verbosity: default=0,
+            logging verbosity
+    max_depth: default=np.math.inf,
+    is_leaf: default=pure,
+    n_jobs: default=int, 1,
+        number of jobs to run in parallel *across threads"
+    n_stump_evaluations: int, default=5,
+    find_stump: default=None,
+        function to find the best split of data
+    setup_distance_measure_getter=setup_all_distance_measure_getter,
+    setup_distance_measure_getter: function to setup the distance
 
-      title={Proximity Forest: an effective and scalable distance-based
-      classifier for time series},
-      author={B. Lucas and A. Shifaz and C. Pelletier and L. O’Neill and N.
-      Zaidi and B. Goethals and F. Petitjean and G. Webb},
-      journal={Data Mining and Knowledge Discovery},
-      volume={33},
-      number={3},
-      pages={607--635},
-      year={2019}
-      }
-      https://arxiv.org/abs/1808.10594
+    Attributes
+    ----------
 
-        Attributes:
-            label_encoder: label encoder to change string labels to numeric indices
-            classes_: unique list of classes
-            random_state: the random state
-            get_exemplars: function to extract exemplars from a dataframe and
-            class value list
-            setup_distance_measure_getter: function to setup the distance
-            measure getters from dataframe and class value list
-            get_distance_measure: distance measure getters
-            distance_measure: distance measures
-            get_gain: function to score the quality of a split
-            verbosity: logging verbosity
-            n_jobs: number of jobs to run in parallel *across threads"
-            find_stump: function to find the best split of data
-            max_depth: max tree depth
-            X: train data
-            y: train data labels
-            trees: list of trees in the forest
+    label_encoder: label encoder to change string labels to numeric indices
+    classes_: unique list of classes
+    get_exemplars: function to extract exemplars from a dataframe and
+           class value list
+    max_depth: max tree depth
+    X: train data
+    y: train data labels
+    trees: list of trees in the forest
+
+    Notes
+    -----
+    ..[1] Ben Lucas et al., "Proximity Forest: an effective and scalable distance-based
+      classifier for time series",Data Mining and Knowledge Discovery, 33(3): 607-635,
+      2019 https://arxiv.org/abs/1808.10594
+    Java wrapper of authors original
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/distance_based/ProximityForestWrapper.java
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/distance_based/proximity/ProximityForest.java
+
     """
 
     def __init__(
@@ -1315,7 +1330,7 @@ class ProximityForest(BaseClassifier):
         self : object
         """
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_pandas=True)
-        self.X = dataset_properties.positive_dataframe_indices(X)
+        self.X = positive_dataframe_indices(X)
         self.random_state = check_random_state(self.random_state)
         # setup label encoding
         if self.label_encoder is None:
@@ -1385,7 +1400,7 @@ class ProximityForest(BaseClassifier):
         output : array of shape = [n_instances, n_classes] of probabilities
         """
         X = check_X(X, enforce_univariate=True, coerce_to_pandas=True)
-        X = dataset_properties.negative_dataframe_indices(X)
+        X = negative_dataframe_indices(X)
         if self.n_jobs > 1 or self.n_jobs < 0:
             parallel = Parallel(self.n_jobs)
             distributions = parallel(
