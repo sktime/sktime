@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
-
+from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
@@ -203,6 +203,14 @@ ESTIMATOR_TEST_PARAMS = {
         "sp": [],
         "use_arma_errors": False,
         "n_jobs": 1,
+    },
+    Prophet: {
+        "n_changepoints": 0,
+        "yearly_seasonality": False,
+        "weekly_seasonality": False,
+        "daily_seasonality": False,
+        "uncertainty_samples": 1000,
+        "verbose": False,
     },
     PartialAutoCorrelationTransformer: {"n_lags": 1},
     AutoCorrelationTransformer: {"n_lags": 1},

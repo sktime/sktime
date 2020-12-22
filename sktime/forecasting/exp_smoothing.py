@@ -4,7 +4,7 @@ __author__ = ["Markus Löning", "@big-o"]
 
 from statsmodels.tsa.holtwinters import ExponentialSmoothing as _ExponentialSmoothing
 
-from sktime.forecasting.base._adapters import _StatsModelsAdapter
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):

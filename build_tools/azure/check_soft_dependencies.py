@@ -13,11 +13,12 @@ from importlib import import_module
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
     "sktime.transformations.panel.tsfresh": ["tsfresh"],
+    "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
-    "sktime.forecasting.all": ["pmdarima", "tbats"],
+    "sktime.forecasting.fbprophet": ["fbprophet"],
     "sktime.classification.all": ["tsfresh"],
     "sktime.regression.all": ["tsfresh"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],

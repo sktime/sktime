@@ -7,6 +7,7 @@ __all__ = ["BaseForecaster"]
 
 from sktime.base import BaseEstimator
 
+
 DEFAULT_ALPHA = 0.05
 
 
