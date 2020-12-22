@@ -172,7 +172,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
     window_length : int
     step_length : int
     initial_window : int
-    start_with_window : bool, optional (default=True)
+    start_with_window : bool, optional (default=False)
 
     Examples
     --------
