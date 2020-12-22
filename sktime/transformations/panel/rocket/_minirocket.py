@@ -1,26 +1,26 @@
 # -*- coding: utf-8 -*-
 __author__ = "Angus Dempster"
-__all__ = ["MiniRocketMultivariate"]
+__all__ = ["MiniRocket"]
 
 import numpy as np
 import pandas as pd
 
-from sktime.transformers.base import _PanelToTabularTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils.validation.panel import check_X
 from numba import njit
 from numba import prange
 from numba import vectorize
 
 
-class MiniRocketMultivariate(_PanelToTabularTransformer):
-    """MINIROCKET (Multivariate)
+class MiniRocket(_PanelToTabularTransformer):
+    """MINIROCKET
 
     MINImally RandOm Convolutional KErnel Transform
 
-    **Multivariate**
+    **Univariate**
 
-    A provisional and naive extension of MINIROCKET to multivariate input.  Use
-    class MiniRocket for univariate input.
+    Unviariate input only.  Use class MiniRocketMultivariate for multivariate
+    input.
 
     @article{dempster_etal_2020,
       author  = {Dempster, Angus and Schmidt, Daniel F and Webb, Geoffrey I},
@@ -37,6 +37,8 @@ class MiniRocketMultivariate(_PanelToTabularTransformer):
     random_state             : int, random seed (optional, default None)
     """
 
+    _tags = {"univariate-only": True}
+
     def __init__(
         self, num_features=10_000, max_dilations_per_kernel=32, random_state=None
     ):
@@ -45,7 +47,7 @@ class MiniRocketMultivariate(_PanelToTabularTransformer):
         self.random_state = (
             np.int32(random_state) if isinstance(random_state, int) else None
         )
-        super(MiniRocketMultivariate, self).__init__()
+        super(MiniRocket, self).__init__()
 
     def fit(self, X, y=None):
         """Fits dilations and biases to input time series.
@@ -59,8 +61,9 @@ class MiniRocketMultivariate(_PanelToTabularTransformer):
         -------
         self
         """
-        X = check_X(X, coerce_to_numpy=True).astype(np.float32)
-        *_, n_timepoints = X.shape
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X[:, 0, :].astype(np.float32)
+        _, n_timepoints = X.shape
         if n_timepoints < 9:
             raise ValueError(
                 (
@@ -68,7 +71,7 @@ class MiniRocketMultivariate(_PanelToTabularTransformer):
                     " zero pad shorter series so that n_timepoints == 9"
                 )
             )
-        self.parameters = _fit_multi(
+        self.parameters = _fit(
             X, self.num_features, self.max_dilations_per_kernel, self.random_state
         )
         self._is_fitted = True
@@ -87,29 +90,23 @@ class MiniRocketMultivariate(_PanelToTabularTransformer):
         pandas DataFrame, transformed features
         """
         self.check_is_fitted()
-        X = check_X(X, coerce_to_numpy=True).astype(np.float32)
-        return pd.DataFrame(_transform_multi(X, self.parameters))
+        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = X[:, 0, :].astype(np.float32)
+        return pd.DataFrame(_transform(X, self.parameters))
 
 
 @njit(
-    "float32[:](float32[:,:,:],int32[:],int32[:],int32[:],int32[:],float32[:],optional(int32))",  # noqa
+    "float32[:](float32[:,:],int32[:],int32[:],float32[:],optional(int32))",
     fastmath=True,
     parallel=False,
+    cache=True,
 )
-def _fit_biases_multi(
-    X,
-    num_channels_per_combination,
-    channel_indices,
-    dilations,
-    num_features_per_dilation,
-    quantiles,
-    seed,
-):
+def _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed):
 
     if seed is not None:
         np.random.seed(seed)
 
-    n_instances, n_columns, n_timepoints = X.shape
+    n_instances, n_timepoints = X.shape
 
     # equivalent to:
     # >>> from itertools import combinations
@@ -381,9 +378,6 @@ def _fit_biases_multi(
 
     feature_index_start = 0
 
-    combination_index = 0
-    num_channels_start = 0
-
     for dilation_index in range(num_dilations):
 
         dilation = dilations[dilation_index]
@@ -395,29 +389,15 @@ def _fit_biases_multi(
 
             feature_index_end = feature_index_start + num_features_this_dilation
 
-            num_channels_this_combination = num_channels_per_combination[
-                combination_index
-            ]
-
-            num_channels_end = num_channels_start + num_channels_this_combination
-
-            channels_this_combination = channel_indices[
-                num_channels_start:num_channels_end
-            ]
-
-            _X = X[np.random.randint(n_instances)][channels_this_combination]
+            _X = X[np.random.randint(n_instances)]
 
             A = -_X  # A = alpha * X = -X
             G = _X + _X + _X  # G = gamma * X = 3X
 
-            C_alpha = np.zeros(
-                (num_channels_this_combination, n_timepoints), dtype=np.float32
-            )
+            C_alpha = np.zeros(n_timepoints, dtype=np.float32)
             C_alpha[:] = A
 
-            C_gamma = np.zeros(
-                (9, num_channels_this_combination, n_timepoints), dtype=np.float32
-            )
+            C_gamma = np.zeros((9, n_timepoints), dtype=np.float32)
             C_gamma[9 // 2] = G
 
             start = dilation
@@ -425,31 +405,27 @@ def _fit_biases_multi(
 
             for gamma_index in range(9 // 2):
 
-                C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
-                C_gamma[gamma_index, :, -end:] = G[:, :end]
+                C_alpha[-end:] = C_alpha[-end:] + A[:end]
+                C_gamma[gamma_index, -end:] = G[:end]
 
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
 
-                C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
-                C_gamma[gamma_index, :, :-start] = G[:, start:]
+                C_alpha[:-start] = C_alpha[:-start] + A[start:]
+                C_gamma[gamma_index, :-start] = G[start:]
 
                 start += dilation
 
             index_0, index_1, index_2 = indices[kernel_index]
 
             C = C_alpha + C_gamma[index_0] + C_gamma[index_1] + C_gamma[index_2]
-            C = np.sum(C, axis=0)
 
             biases[feature_index_start:feature_index_end] = np.quantile(
                 C, quantiles[feature_index_start:feature_index_end]
             )
 
             feature_index_start = feature_index_end
-
-            combination_index += 1
-            num_channels_start = num_channels_end
 
     return biases
 
@@ -491,9 +467,9 @@ def _quantiles(n):
     )
 
 
-def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
+def _fit(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
-    _, n_columns, n_timepoints = X.shape
+    _, n_timepoints = X.shape
 
     num_kernels = 84
 
@@ -505,48 +481,12 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
 
     quantiles = _quantiles(num_kernels * num_features_per_kernel)
 
-    num_dilations = len(dilations)
-    num_combinations = num_kernels * num_dilations
+    biases = _fit_biases(X, dilations, num_features_per_dilation, quantiles, seed)
 
-    max_num_channels = min(n_columns, 9)
-    max_exponent = np.log2(max_num_channels + 1)
-
-    num_channels_per_combination = (
-        2 ** np.random.uniform(0, max_exponent, num_combinations)
-    ).astype(np.int32)
-
-    channel_indices = np.zeros(num_channels_per_combination.sum(), dtype=np.int32)
-
-    num_channels_start = 0
-    for combination_index in range(num_combinations):
-        num_channels_this_combination = num_channels_per_combination[combination_index]
-        num_channels_end = num_channels_start + num_channels_this_combination
-        channel_indices[num_channels_start:num_channels_end] = np.random.choice(
-            n_columns, num_channels_this_combination, replace=False
-        )
-
-        num_channels_start = num_channels_end
-
-    biases = _fit_biases_multi(
-        X,
-        num_channels_per_combination,
-        channel_indices,
-        dilations,
-        num_features_per_dilation,
-        quantiles,
-        seed,
-    )
-
-    return (
-        num_channels_per_combination,
-        channel_indices,
-        dilations,
-        num_features_per_dilation,
-        biases,
-    )
+    return dilations, num_features_per_dilation, biases
 
 
-@vectorize("float32(float32,float32)", nopython=True)
+@vectorize("float32(float32,float32)", nopython=True, cache=True)
 def _PPV(a, b):
     if a > b:
         return 1
@@ -555,21 +495,16 @@ def _PPV(a, b):
 
 
 @njit(
-    "float32[:,:](float32[:,:,:],Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])))",  # noqa
+    "float32[:,:](float32[:,:],Tuple((int32[:],int32[:],float32[:])))",
     fastmath=True,
     parallel=True,
+    cache=True,
 )
-def _transform_multi(X, parameters):
+def _transform(X, parameters):
 
-    n_instances, n_columns, n_timepoints = X.shape
+    n_instances, n_timepoints = X.shape
 
-    (
-        num_channels_per_combination,
-        channel_indices,
-        dilations,
-        num_features_per_dilation,
-        biases,
-    ) = parameters
+    dilations, num_features_per_dilation, biases = parameters
 
     # equivalent to:
     # >>> from itertools import combinations
@@ -848,9 +783,6 @@ def _transform_multi(X, parameters):
 
         feature_index_start = 0
 
-        combination_index = 0
-        num_channels_start = 0
-
         for dilation_index in range(num_dilations):
 
             _padding0 = dilation_index % 2
@@ -860,10 +792,10 @@ def _transform_multi(X, parameters):
 
             num_features_this_dilation = num_features_per_dilation[dilation_index]
 
-            C_alpha = np.zeros((n_columns, n_timepoints), dtype=np.float32)
+            C_alpha = np.zeros(n_timepoints, dtype=np.float32)
             C_alpha[:] = A
 
-            C_gamma = np.zeros((9, n_columns, n_timepoints), dtype=np.float32)
+            C_gamma = np.zeros((9, n_timepoints), dtype=np.float32)
             C_gamma[9 // 2] = G
 
             start = dilation
@@ -871,15 +803,15 @@ def _transform_multi(X, parameters):
 
             for gamma_index in range(9 // 2):
 
-                C_alpha[:, -end:] = C_alpha[:, -end:] + A[:, :end]
-                C_gamma[gamma_index, :, -end:] = G[:, :end]
+                C_alpha[-end:] = C_alpha[-end:] + A[:end]
+                C_gamma[gamma_index, -end:] = G[:end]
 
                 end += dilation
 
             for gamma_index in range(9 // 2 + 1, 9):
 
-                C_alpha[:, :-start] = C_alpha[:, :-start] + A[:, start:]
-                C_gamma[gamma_index, :, :-start] = G[:, start:]
+                C_alpha[:-start] = C_alpha[:-start] + A[start:]
+                C_gamma[gamma_index, :-start] = G[start:]
 
                 start += dilation
 
@@ -887,27 +819,11 @@ def _transform_multi(X, parameters):
 
                 feature_index_end = feature_index_start + num_features_this_dilation
 
-                num_channels_this_combination = num_channels_per_combination[
-                    combination_index
-                ]
-
-                num_channels_end = num_channels_start + num_channels_this_combination
-
-                channels_this_combination = channel_indices[
-                    num_channels_start:num_channels_end
-                ]
-
                 _padding1 = (_padding0 + kernel_index) % 2
 
                 index_0, index_1, index_2 = indices[kernel_index]
 
-                C = (
-                    C_alpha[channels_this_combination]
-                    + C_gamma[index_0][channels_this_combination]
-                    + C_gamma[index_1][channels_this_combination]
-                    + C_gamma[index_2][channels_this_combination]
-                )
-                C = np.sum(C, axis=0)
+                C = C_alpha + C_gamma[index_0] + C_gamma[index_1] + C_gamma[index_2]
 
                 if _padding1 == 0:
                     for feature_count in range(num_features_this_dilation):
@@ -924,8 +840,5 @@ def _transform_multi(X, parameters):
                         ).mean()
 
                 feature_index_start = feature_index_end
-
-                combination_index += 1
-                num_channels_start = num_channels_end
 
     return features

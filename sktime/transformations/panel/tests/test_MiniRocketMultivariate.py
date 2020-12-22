@@ -2,17 +2,17 @@
 import numpy as np
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
-from sktime.datasets import load_gunpoint
-from sktime.transformers.panel.minirocket import MiniRocket
+from sktime.datasets import load_basic_motions
+from sktime.transformations.panel.rocket import MiniRocketMultivariate
 
 
-def test_minirocket_on_gunpoint():
+def test_minirocket_multivariate_on_basic_motions():
 
     # load training data
-    X_training, Y_training = load_gunpoint(split="train", return_X_y=True)
+    X_training, Y_training = load_basic_motions(split="train", return_X_y=True)
 
     # 'fit' MINIROCKET -> infer data dimensions, generate random kernels
-    minirocket = MiniRocket()
+    minirocket = MiniRocketMultivariate()
     minirocket.fit(X_training)
 
     # transform training data
@@ -27,7 +27,7 @@ def test_minirocket_on_gunpoint():
     classifier.fit(X_training_transform, Y_training)
 
     # load test data
-    X_test, Y_test = load_gunpoint(split="test", return_X_y=True)
+    X_test, Y_test = load_basic_motions(split="test", return_X_y=True)
 
     # transform test data
     X_test_transform = minirocket.transform(X_test)
@@ -40,5 +40,5 @@ def test_minirocket_on_gunpoint():
     predictions = classifier.predict(X_test_transform)
     accuracy = accuracy_score(predictions, Y_test)
 
-    # test predictions (on Gunpoint, should be > 99% accurate)
-    assert accuracy > 0.99
+    # test predictions (on BasicMotions, should be 100% accurate)
+    assert accuracy == 1.0

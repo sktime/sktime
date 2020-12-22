@@ -13,8 +13,7 @@ sktime/classification/dictionary_based/tests @patrickzib
 
 sktime/transformers/panel/dictionary_based/ @patrickzib
 sktime/transformers/panel/shapelets/ @jasonlines @ABostrom @TonyBagnall
-sktime/transformers/panel/rocket.py @angus924
-sktime/transformers/panel/minirocket.py @angus924
+sktime/transformations/panel/rocket @angus924
 
 sktime/forecasting/ets.py @HYang1996
 sktime/forecasting/tests/test_ets.py @HYang1996
