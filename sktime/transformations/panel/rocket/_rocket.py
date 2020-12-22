@@ -88,7 +88,8 @@ class Rocket(_PanelToTabularTransformer):
 
 @njit(
     "Tuple((float64[:],int32[:],float64[:],int32[:],int32[:],int32[:],"
-    "int32[:]))(int64,int64,int64,optional(int64))"
+    "int32[:]))(int64,int64,int64,optional(int64))",
+    cache=True,
 )
 def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
     if seed is not None:
@@ -164,7 +165,7 @@ def _generate_kernels(n_timepoints, num_kernels, n_columns, seed):
     )
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
     n_timepoints = len(X)
 
@@ -197,7 +198,7 @@ def _apply_kernel_univariate(X, weights, length, bias, dilation, padding):
     return _ppv / output_length, _max
 
 
-@njit(fastmath=True)
+@njit(fastmath=True, cache=True)
 def _apply_kernel_multivariate(
     X, weights, length, bias, dilation, padding, num_channel_indices, channel_indices
 ):
@@ -239,6 +240,7 @@ def _apply_kernel_multivariate(
     "int32[:],int32[:],int32[:],int32[:])))",
     parallel=True,
     fastmath=True,
+    cache=True,
 )
 def _apply_kernels(X, kernels):
     (
