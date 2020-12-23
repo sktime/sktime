@@ -93,8 +93,8 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         """
         Generate (name, estimator, column) tuples.
 
-        If fitted=True, use the fitted transformers, else use the
-        user specified transformers updated with converted column names
+        If fitted=True, use the fitted transformations, else use the
+        user specified transformations updated with converted column names
         and potentially appended with transformer for remainder.
 
         """
@@ -131,7 +131,7 @@ class BaseColumnEnsembleClassifier(BaseClassifier, _HeterogenousMetaEstimator):
         X : array-like or DataFrame of shape [n_samples, n_dimensions,
         n_length]
             Input data, of which specified subsets are used to fit the
-            transformers.
+            transformations.
 
         y : array-like, shape (n_samples, ...), optional
             Targets for supervised learning.
@@ -211,14 +211,14 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
 
         remainder : {'drop', 'passthrough'} or estimator, default 'drop'
-            By default, only the specified columns in `transformers` are
+            By default, only the specified columns in `transformations` are
             transformed and combined in the output, and the non-specified
             columns are dropped. (default of ``'drop'``).
             By specifying ``remainder='passthrough'``, all remaining columns
             that
-            were not specified in `transformers` will be automatically passed
+            were not specified in `transformations` will be automatically passed
             through. This subset of columns is concatenated with the output of
-            the transformers.
+            the transformations.
             By setting ``remainder`` to be an estimator, the remaining
             non-specified columns will use the ``remainder`` estimator. The
             estimator must support `fit` and `transform`.
