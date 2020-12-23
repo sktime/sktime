@@ -7,7 +7,7 @@ __all__ = ["CanonicalIntervalForest"]
 
 import numpy as np
 import math
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import clone
 from sklearn.utils import check_random_state

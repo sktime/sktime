@@ -1,34 +1,8 @@
 # -*- coding: utf-8 -*-
 """ experiments.py: method to run experiments as an alternative to orchestration.
 
-Note ProximityForest and ElasticEnsemble use cython implementations of the distance measures. You need a c++ compiler for this.
-These are notes mainly for me.
-On  windows:
-The easiest way to install visual studio. Then, from an anaconda prompt, change to the sktime dir, then
-python setup.py install
-python setup.py build_ext -i
-(may not be necessary with pipinstall).
 
-on the cluster
-copy source over then as above,
-enter interactive mode, got to sktime root
-IF not done before,
-
-1) >interactive
-2) change dir to sktime
-3) module add python/anaconda/2019.3/3.7
-4) conda init bash
-5) conda create -n sktime
-6) conda activate sktime
-7) conda install pip
-8) pip install setuptools scipy cython numpy pandas scikit-learn pytest statsmodels
-9) export PYTHONPATH=$(pwd)
-10) python <FULLPATH>setup.py install
-11) python <FULLPATH>setup.py build_ext -i
-
-then run sktime.sh script
-
-NOTE: do
+TO DO: Tidy up this file!
 """
 
 import os
@@ -756,13 +730,13 @@ if __name__ == "__main__":
         #        results_dir = "/scratch/results"
         #         data_dir = "/bench/datasets/Univariate2018/"
         #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
-        data_dir = "Z:/ArchiveData/Univariate_ts/"
-        results_dir = "E:/Temp/"
+        data_dir = "C:/Code/sktime/sktime/datasets/data/"
+        results_dir = "C:/Temp/"
         #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "GunPoint"
+        dataset = "ItalyPowerDemand"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "TDE"
+        classifier = "CIF"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
