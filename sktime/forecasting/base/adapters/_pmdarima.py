@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["Markus Löning", "Hongyi Yang"]
+__all__ = ["_PmdArimaAdapter"]
 
 import pandas as pd
 
