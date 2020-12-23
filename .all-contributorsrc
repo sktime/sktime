@@ -717,7 +717,8 @@
       "profile": "https://github.com/ngupta23",
       "contributions": [
         "code",
-        "bug"
+        "bug",
+        "doc"
       ]
     },
     {
@@ -797,6 +798,16 @@
       "contributions": [
         "ideas",
         "fundingFinding"
+      ]
+    },
+    {
+      "login": "juanitorduz",
+      "name": "Juan Orduz",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/22996444?v=4",
+      "profile": "https://juanitorduz.github.io/",
+      "contributions": [
+        "tutorial",
+        "doc"
       ]
     }
   ],

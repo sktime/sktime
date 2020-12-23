@@ -116,6 +116,8 @@ Rocket
     :template: class.rst
 
     Rocket
+    MiniRocket
+    MiniRocketMultivariate
 
 Segment
 ~~~~~~~
@@ -179,6 +181,29 @@ Box-cox
 
     BoxCoxTransformer
     LogTransformer
+
+Auto-correlation
+~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.series.acf
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    AutoCorrelationTransformer
+    PartialAutoCorrelationTransformer
+
+Cosine
+~~~~~~
+
+.. currentmodule:: sktime.transformations.series.cos
+
+.. autosummary::
+    :toctree: modules/auto_generated/
+    :template: class.rst
+
+    CosineTransformer
 
 Matrix Profile
 ~~~~~~~~~~~~~~
