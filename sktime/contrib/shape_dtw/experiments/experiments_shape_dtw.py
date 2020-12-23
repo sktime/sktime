@@ -69,6 +69,7 @@ from sklearn.preprocessing import StandardScaler
 from sktime.transformations.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
+from datasets.dataset_lists import dataset_lists
 
 __author__ = "Anthony Bagnall"
 
@@ -80,166 +81,6 @@ and automatically compared to the results generated in java
 Will have both low level version and high level orchestration version soon.
 """
 
-
-univariate_datasets = [
-    "ACSF1",
-    "Adiac",
-    "AllGestureWiimoteX",
-    "AllGestureWiimoteY",
-    "AllGestureWiimoteZ",
-    "ArrowHead",
-    "Coffee",
-    "Beef",
-    "BeetleFly",
-    "BirdChicken",
-    "BME",
-    "Car",
-    "CBF",
-    "Chinatown",
-    "ChlorineConcentration",
-    "CinCECGTorso",
-    "Coffee",
-    "Computers",
-    "CricketX",
-    "CricketY",
-    "CricketZ",
-    "Crop",
-    "DiatomSizeReduction",
-    "DistalPhalanxOutlineCorrect",
-    "DistalPhalanxOutlineAgeGroup",
-    "DistalPhalanxTW",
-    "DodgerLoopDay",
-    "DodgerLoopGame",
-    "DodgerLoopWeekend",
-    "Earthquakes",
-    "ECG200",
-    "ECG5000",
-    "ECGFiveDays",
-    "ElectricDevices",
-    "EOGHorizontalSignal",
-    "EOGVerticalSignal",
-    "EthanolLevel",
-    "FaceAll",
-    "FaceFour",
-    "FacesUCR",
-    "FiftyWords",
-    "Fish",
-    "FordA",
-    "FordB",
-    "FreezerRegularTrain",
-    "FreezerSmallTrain",
-    "Fungi",
-    "GestureMidAirD1",
-    "GestureMidAirD2",
-    "GestureMidAirD3",
-    "GesturePebbleZ1",
-    "GesturePebbleZ2",
-    "Ham",
-    "HandOutlines",
-    "Haptics",
-    "Herring",
-    "InlineSkate",
-    "InsectEPGRegularTrain",
-    "InsectEPGSmallTrain",
-    "InsectWingbeatSound",
-    "ItalyPowerDemand",
-    "LargeKitchenAppliances",
-    "Lightning2",
-    "Lightning7",
-    "Mallat",
-    "Meat",
-    "MedicalImages",
-    "MelbournePedestrian",
-    "MiddlePhalanxOutlineCorrect",
-    "MiddlePhalanxOutlineAgeGroup",
-    "MiddlePhalanxTW",
-    "MixedShapesRegularTrain",
-    "MixedShapesSmallTrain",
-    "MoteStrain",
-    "NonInvasiveFetalECGThorax1",
-    "NonInvasiveFetalECGThorax2",
-    "OliveOil",
-    "OSULeaf",
-    "PhalangesOutlinesCorrect",
-    "Phoneme",
-    "PickupGestureWiimoteZ",
-    "PigAirwayPressure",
-    "PigArtPressure",
-    "PigCVP",
-    "PLAID",
-    "Plane",
-    "PowerCons",
-    "ProximalPhalanxOutlineCorrect",
-    "ProximalPhalanxOutlineAgeGroup",
-    "ProximalPhalanxTW",
-    "RefrigerationDevices",
-    "Rock",
-    "ScreenType",
-    "SemgHandGenderCh2",
-    "SemgHandMovementCh2",
-    "SemgHandSubjectCh2",
-    "ShakeGestureWiimoteZ",
-    "ShapeletSim",
-    "ShapesAll",
-    "SmallKitchenAppliances",
-    "SmoothSubspace",
-    "SonyAIBORobotSurface1",
-    "SonyAIBORobotSurface2",
-    "StarlightCurves",
-    "Strawberry",
-    "SwedishLeaf",
-    "Symbols",
-    "SyntheticControl",
-    "ToeSegmentation1",
-    "ToeSegmentation2",
-    "Trace",
-    "TwoLeadECG",
-    "TwoPatterns",
-    "UMD",
-    "UWaveGestureLibraryAll",
-    "UWaveGestureLibraryX",
-    "UWaveGestureLibraryY",
-    "UWaveGestureLibraryZ",
-    "Wafer",
-    "Wine",
-    "WordSynonyms",
-    "Worms",
-    "WormsTwoClass",
-    "Yoga",
-]
-
-multivariate_datasets = [
-    "ArticularyWordRecognition",
-    "AtrialFibrillation",
-    "BasicMotions",
-    "CharacterTrajectories",
-    "Cricket",
-    "DuckDuckGeese",
-    "EigenWorms",
-    "Epilepsy",
-    "EthanolConcentration",
-    "ERing",
-    "FaceDetection",
-    "FingerMovements",
-    "HandMovementDirection",
-    "Handwriting",
-    "Heartbeat",
-    "InsectWingbeat",
-    "JapaneseVowels",
-    "Libras",
-    "LSST",
-    "MotorImagery",
-    "NATOPS",
-    "PenDigits",
-    "PEMS-SF",
-    "PhonemeSpectra",
-    "RacketSports",
-    "SelfRegulationSCP1",
-    "SelfRegulationSCP2",
-    "SpokenArabicDigits",
-    "StandWalkJump",
-    "UWaveGestureLibrary",
-]
 
 # Used on lines 410 and 411
 def _normalise_X(X):
@@ -736,9 +577,9 @@ def test_loading():
 
     # test multivariate
     # Test univariate
-    for i in range(0, len(univariate_datasets)):
+    for i in range(0, len(dataset_lists.univariate)):
         data_dir = "E:/tsc_ts/"
-        dataset = univariate_datasets[i]
+        dataset = dataset_lists.univariate[i]
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
         print("Loaded " + dataset + " in position " + str(i))
@@ -750,9 +591,9 @@ def test_loading():
         print(testX.shape)
         print("Test Y shape :")
         print(testY.shape)
-    for i in range(16, len(multivariate_datasets)):
+    for i in range(16, len(dataset_lists.multivariate)):
         data_dir = "E:/mtsc_ts/"
-        dataset = multivariate_datasets[i]
+        dataset = dataset_lists.multivariate[i]
         print("Loading " + dataset + " in position " + str(i) + ".......")
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
