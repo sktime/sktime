@@ -131,10 +131,10 @@ def agdtw_distance(first, second, **kwargs):
 
     def distance_along_warping_path(path):
         # ToDo: calculate the agdtw distance
-        distance = sum(path[:, 0])
+        distance = path[-1, 0]
         return distance
 
     warp_matrix = warping_matrix(first, second)
     warp_path = warping_path(warp_matrix)
 
-    return warp_path
+    return distance_along_warping_path(warp_path)
