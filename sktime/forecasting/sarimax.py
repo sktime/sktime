@@ -241,6 +241,7 @@ class SARIMAX(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self._set_fh(fh)
         self._forecaster.fit(y, X=X, **fit_params)
         self._is_fitted = True
+        return self
 
     def _predict(self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA):
         # distinguish between in-sample and out-of-sample prediction
