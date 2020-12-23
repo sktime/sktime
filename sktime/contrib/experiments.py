@@ -16,7 +16,7 @@ from sktime.classification.dictionary_based import (
     ContractableBOSS,
     TemporalDictionaryEnsemble,
 )
-from sktime.contrib.interval_based._cif import CanonicalIntervalForest
+from sktime.contrib.interval_based import CanonicalIntervalForest
 from sktime.transformations.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -27,28 +27,24 @@ import sys
 import time
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 
+
+from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
-from sklearn.preprocessing import FunctionTransformer
-from sklearn.tree import DecisionTreeClassifier
-from statsmodels.tsa.stattools import acf
+from sklearn.pipeline import make_pipeline
 
-import sktime.classification.compose._ensemble as ensemble
-import sktime.classification.frequency_based._rise as fb
-import sktime.classification.interval_based._tsf as ib
-import sktime.classification.distance_based._elastic_ensemble as dist
-import sktime.classification.distance_based._time_series_neighbors as nn
-import sktime.classification.distance_based._proximity_forest as pf
-import sktime.classification.shapelet_based._stc as st
+
+from sktime.classification.compose import TimeSeriesForestClassifier
+from sktime.classification.frequency_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.distance_based import ElasticEnsemble
+from sktime.classification.distance_based import ProximityForest
+from sktime.classification.distance_based import ProximityTree
+from sktime.classification.distance_based import ProximityStump
+from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-from sktime.transformations.panel.compose import make_row_transformer
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
-
-from sktime.transformations.panel.reduce import Tabularizer
-from sklearn.pipeline import Pipeline, make_pipeline
-from sklearn.pipeline import FeatureUnion
 
 __author__ = "Anthony Bagnall"
 
@@ -57,7 +53,6 @@ https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
 but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
 and automatically compared to the results generated in java
 
-Will have both low level version and high level orchestration version soon.
 """
 
 
@@ -232,15 +227,15 @@ def set_classifier(cls, resampleId):
 
     """
     if cls.lower() == "pf":
-        return pf.ProximityForest(random_state=resampleId)
+        return ProximityForest(random_state=resampleId)
     elif cls.lower() == "pt":
-        return pf.ProximityTree(random_state=resampleId)
+        return ProximityTree(random_state=resampleId)
     elif cls.lower() == "ps":
-        return pf.ProximityStump(random_state=resampleId)
+        return ProximityStump(random_state=resampleId)
     elif cls.lower() == "rise":
-        return fb.RandomIntervalSpectralForest(random_state=resampleId)
+        return RandomIntervalSpectralForest(random_state=resampleId)
     elif cls.lower() == "tsf":
-        return ib.TimeSeriesForest(random_state=resampleId)
+        return TimeSeriesForest(random_state=resampleId)
     elif cls.lower() == "cif":
         return CanonicalIntervalForest(random_state=resampleId)
     elif cls.lower() == "boss":
@@ -250,43 +245,14 @@ def set_classifier(cls, resampleId):
     elif cls.lower() == "tde":
         return TemporalDictionaryEnsemble(random_state=resampleId)
     elif cls.lower() == "st":
-        return st.ShapeletTransformClassifier(time_contract_in_mins=1500)
+        return ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif cls.lower() == "dtwcv":
-        return nn.KNeighborsTimeSeriesClassifier(metric="dtwcv")
+        return KNeighborsTimeSeriesClassifier(metric="dtwcv")
     elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
-        return dist.ElasticEnsemble()
+        return ElasticEnsemble()
     elif cls.lower() == "tsfcomposite":
         # It defaults to TSF
-        return ensemble.TimeSeriesForestClassifier()
-    elif cls.lower() == "risecomposite":
-        steps = [
-            ("segment", RandomIntervalSegmenter(n_intervals=1, min_length=5)),
-            (
-                "transform",
-                FeatureUnion(
-                    [
-                        (
-                            "acf",
-                            make_row_transformer(
-                                FunctionTransformer(func=acf_coefs, validate=False)
-                            ),
-                        ),
-                        (
-                            "ps",
-                            make_row_transformer(
-                                FunctionTransformer(func=powerspectrum, validate=False)
-                            ),
-                        ),
-                    ]
-                ),
-            ),
-            ("tabularise", Tabularizer()),
-            ("clf", DecisionTreeClassifier()),
-        ]
-        base_estimator = Pipeline(steps)
-        return ensemble.TimeSeriesForestClassifier(
-            estimator=base_estimator, n_estimators=100
-        )
+        return TimeSeriesForestClassifier()
     elif cls.lower() == "rocket":
         rocket_pipeline = make_pipeline(
             Rocket(random_state=resampleId),
@@ -296,18 +262,6 @@ def set_classifier(cls, resampleId):
     else:
         raise Exception("UNKNOWN CLASSIFIER")
 
-
-def acf_coefs(x, maxlag=100):
-    x = np.asarray(x).ravel()
-    nlags = np.minimum(len(x) - 1, maxlag)
-    return acf(x, nlags=nlags).ravel()
-
-
-def powerspectrum(x, **kwargs):
-    x = np.asarray(x).ravel()
-    fft = np.fft.fft(x)
-    ps = fft.real * fft.real + fft.imag * fft.imag
-    return ps[: ps.shape[0] // 2].ravel()
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
