@@ -798,6 +798,15 @@
         "ideas",
         "fundingFinding"
       ]
+    },
+    {
+      "login": "donnerluetjen",
+      "name": "Ansgar Asseburg",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/20632?v=4",
+      "profile": "https://github.com/donnerluetjen",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",

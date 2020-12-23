@@ -23,3 +23,5 @@ sktime/forecasting/online_learning/ @magittan
 
 sktime/forecasting/hcrystalball.py @MichalChromcak
 sktime/forecasting/test/test_hcrystalball.py @MichalChromcak
+
+sktime/distances/agdtw.py @donnerluetjen
