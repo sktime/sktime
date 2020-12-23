@@ -23,7 +23,13 @@ def _check_is_univariate(y):
         )
 
 
-def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=True):
+def check_series(
+    Z,
+    enforce_univariate=False,
+    allow_empty=False,
+    allow_numpy=True,
+    enforce_index_type=None,
+):
     """Validate input data.
 
     Parameters
@@ -33,6 +39,8 @@ def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=Tru
     enforce_univariate : bool, optional (default=False)
         If True, multivariate Z will raise an error.
     allow_empty : bool
+    enforce_index_type : type, optional (default=None)
+        type of time index
 
     Returns
     -------
@@ -61,11 +69,13 @@ def check_series(Z, enforce_univariate=False, allow_empty=False, allow_numpy=Tru
         _check_is_univariate(Z)
 
     # check time index
-    check_time_index(Z.index, allow_empty=allow_empty)
+    check_time_index(
+        Z.index, allow_empty=allow_empty, enforce_index_type=enforce_index_type
+    )
     return Z
 
 
-def check_time_index(index, allow_empty=False):
+def check_time_index(index, allow_empty=False, enforce_index_type=None):
     """Check time index.
 
     Parameters
@@ -74,6 +84,8 @@ def check_time_index(index, allow_empty=False):
         Time index
     allow_empty : bool, optional (default=False)
         If True, empty `index` raises an error.
+    enforce_index_type : type, optional (default=None)
+        type of time index
 
     Returns
     -------
@@ -83,12 +95,18 @@ def check_time_index(index, allow_empty=False):
     if isinstance(index, np.ndarray):
         index = pd.Index(index)
 
-    # We here check for type equality because isinstance does not work reliably
-    # because index types inherit from each other.
+    # We here check for type equality because isinstance does not
+    # work reliably because index types inherit from each other.
     if not type(index) in VALID_INDEX_TYPES:
         raise NotImplementedError(
             f"{type(index)} is not supported, use "
             f"one of {VALID_INDEX_TYPES} instead."
+        )
+
+    if enforce_index_type and type(index) is not enforce_index_type:
+        raise NotImplementedError(
+            f"{type(index)} is not supported. Please use "
+            f"type: {enforce_index_type} instead."
         )
 
     # Check time index is ordered in time

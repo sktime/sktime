@@ -21,8 +21,8 @@ from pkg_resources import parse_version
 
 MIN_PYTHON_VERSION = "3.6"
 MIN_REQUIREMENTS = {
-    "numpy": "1.18.0",
-    "pandas": "1.0.0",
+    "numpy": "1.19.0",
+    "pandas": "1.1.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.1",
     "numba": "0.50.*",
@@ -39,6 +39,7 @@ EXTRAS_REQUIRE = {
         "hcrystalball>=0.1.9",
         "stumpy>=1.5.1",
         "tbats>=1.1.0",
+        "fbprophet>=0.7.1",
     ],
 }
 
@@ -108,6 +109,7 @@ SETUPTOOLS_COMMANDS = {
     "install",
     "develop",
     "release",
+    "build_ext",
     "bdist_egg",
     "bdist_rpm",
     "bdist_wininst",
