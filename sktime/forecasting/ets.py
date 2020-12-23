@@ -2,7 +2,7 @@
 __all__ = ["AutoETS"]
 __author__ = ["Hongyi Yang"]
 
-from sktime.forecasting.base._adapters import _StatsModelsAdapter
+from sktime.forecasting.base.adapters import _StatsModelsAdapter
 from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
 from itertools import product
 from joblib import delayed, Parallel
@@ -225,11 +225,7 @@ class AutoETS(_StatsModelsAdapter):
             damped_range = [True, False]
 
             # Check information criterion input
-            if (
-                self.information_criterion != "aic"
-                and self.information_criterion != "bic"
-                and self.information_criterion != "aicc"
-            ):
+            if self.information_criterion not in ["aic", "bic", "aicc"]:
                 raise ValueError(
                     "information criterion must either be aic, bic or aicc"
                 )

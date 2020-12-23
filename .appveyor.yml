@@ -65,6 +65,7 @@ install:
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
+  - cmd: conda install -c conda-forge fbprophet  # prior fbprophet installation
   - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment
@@ -72,6 +73,10 @@ install:
   - cmd: conda list
 
   # Build wheels
+  # some packages (e.g. prophet, pystan) use different compilers during
+  # installation, so we here have to be more explicit about which compiler
+  # to use for sktime
+  - cmd: python setup.py build_ext --compiler=msvc
   - cmd: python setup.py bdist_wheel bdist_wininst
   - ps: ls dist  # list built artifacts
 

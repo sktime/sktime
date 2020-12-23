@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler
-
+from sktime.forecasting.fbprophet import Prophet
 from sktime.base import BaseEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
@@ -31,13 +31,13 @@ from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
 from sktime.forecasting.compose import StackingForecaster
 from sktime.forecasting.compose import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.model_selection import SingleWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.online_learning import OnlineEnsembleForecaster
 from sktime.forecasting.tbats import TBATS
 from sktime.forecasting.theta import ThetaForecaster
-from sktime.forecasting.hcrystalball import HCrystalBallForecaster
 from sktime.performance_metrics.forecasting import sMAPE
 from sktime.regression.base import BaseRegressor
 from sktime.regression.compose import TimeSeriesForestRegressor
@@ -62,6 +62,8 @@ from sktime.transformations.panel.tsfresh import TSFreshFeatureExtractor
 from sktime.transformations.panel.tsfresh import (
     TSFreshRelevantFeatureExtractor,
 )
+from sktime.transformations.series.acf import AutoCorrelationTransformer
+from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 
@@ -202,6 +204,16 @@ ESTIMATOR_TEST_PARAMS = {
         "use_arma_errors": False,
         "n_jobs": 1,
     },
+    Prophet: {
+        "n_changepoints": 0,
+        "yearly_seasonality": False,
+        "weekly_seasonality": False,
+        "daily_seasonality": False,
+        "uncertainty_samples": 1000,
+        "verbose": False,
+    },
+    PartialAutoCorrelationTransformer: {"n_lags": 1},
+    AutoCorrelationTransformer: {"n_lags": 1},
 }
 
 # These methods should not change the state of the estimator, that is, they should
