@@ -1,68 +1,83 @@
 __author__ = "Ansgar Asseburg"
-__email__ = "s2092795@stud.uni-frankfurt.de"
+__email__ = "devaa@donnerluetjen.de"
 
 import numpy as np
 
 
 def agdtw_distance(first, second, **kwargs):
-    # idea and algorithm was taken from:
-    # @inproceedings{XueZTWL17,
-    #   author    = {Yangtao Xue and
-    #                Li Zhang and
-    #                Zhiwei Tao and
-    #                Bangjun Wang and
-    #                Fanzhang Li},
-    #   editor    = {Derong Liu and
-    #                Shengli Xie and
-    #                Yuanqing Li and
-    #                Dongbin Zhao and
-    #                El{-}Sayed M. El{-}Alfy},
-    #   title     = {An Altered Kernel Transformation for Time Series
-    #   Classification},
-    #   booktitle = {Neural Information Processing - 24th International
-    #   Conference, {ICONIP}
-    #                2017, Guangzhou, China, November 14-18, 2017,
-    #                Proceedings, Part {V}},
-    #   series    = {Lecture Notes in Computer Science},
-    #   volume    = {10638},
-    #   pages     = {455--465},
-    #   publisher = {Springer},
-    #   year      = {2017},
-    #   url       = {https://doi.org/10.1007/978-3-319-70139-4\_46},
-    #   doi       = {10.1007/978-3-319-70139-4\_46},
-    #   timestamp = {Tue, 14 May 2019 10:00:42 +0200},
-    #   biburl    = {https://dblp.org/rec/conf/iconip/XueZTWL17.bib},
-    #   bibsource = {dblp computer science bibliography, https://dblp.org}
-    # }
+    """
+    idea and algorithm was taken from:
+
+    @inproceedings{XueZTWL17,
+      author    = {Yangtao Xue and
+                   Li Zhang and
+                   Zhiwei Tao and
+                   Bangjun Wang and
+                   Fanzhang Li},
+      editor    = {Derong Liu and
+                   Shengli Xie and
+                   Yuanqing Li and
+                   Dongbin Zhao and
+                   El{-}Sayed M. El{-}Alfy},
+      title     = {An Altered Kernel Transformation for Time Series
+      Classification},
+      booktitle = {Neural Information Processing - 24th International
+      Conference, {ICONIP}
+                   2017, Guangzhou, China, November 14-18, 2017,
+                   Proceedings, Part {V}},
+      series    = {Lecture Notes in Computer Science},
+      volume    = {10638},
+      pages     = {455--465},
+      publisher = {Springer},
+      year      = {2017},
+      url       = {https://doi.org/10.1007/978-3-319-70139-4\_46},
+      doi       = {10.1007/978-3-319-70139-4\_46},
+      timestamp = {Tue, 14 May 2019 10:00:42 +0200},
+      biburl    = {https://dblp.org/rec/conf/iconip/XueZTWL17.bib},
+      bibsource = {dblp computer science bibliography, https://dblp.org}
+    }
+    @param first: numpy array containing the first time series
+    @param second: numpy array containing the second time series
+    @return: a float containing the kernel distance
+    """
 
     def warping_matrix(series_1, series_2):
         """
         Creates the warping matrix
-        @series_1: numpy array containing the first series
-        @series_2: numpy array containing the second series
+        @param series_1: numpy array containing the first series
+        @param series_2: numpy array containing the second series
         @return: 2D numpy array containing the minimum squared distances
         """
         row_dim = len(series_1)
         col_dim = len(series_2)
         warp_matrix = np.full([row_dim, col_dim], np.inf)
         warp_matrix[0, 0] = 0
-        first_values = series_1.iloc[:, 0]
-        second_values = series_2.iloc[:, 0]
         for row in range(row_dim):
             for col in range(col_dim):
                 min_index = index_of_section_min(warp_matrix, (row, col))
                 min_dist_to_here = warp_matrix[min_index]
                 warp_matrix[row, col] = \
-                    (first_values[row] - second_values[col]) ** 2 \
+                    (series_1[row] - series_2[col]) ** 2 \
                     + min_dist_to_here
         return warp_matrix
 
-    def warping_path(matrix):
+    def euclidean_distance(x, y):
+        """
+        Calculates the euclidean distance between of two univariate time series
+        @param x: element from first series
+        @param y: element from second series
+        @return euclidean distance
+        """
+        return abs(x - y)
+
+    def warping_path(matrix, first, second):
         """
         Creates the warping path along the minimum total distance between the
         two series in the matrix
         @matrix: the warping matrix
-        @return: numpy array containing the warping path
+        @first: numpy array containing the first time series
+        @second: numpy array containing the second time series
+        @return: numpy array containing the warping path with element distances
         """
 
         matrix_dim = matrix.shape
@@ -73,7 +88,9 @@ def agdtw_distance(first, second, **kwargs):
         wm_index = (matrix_dim[0] - 1, matrix_dim[1] - 1)
         while True:
             # store the distance, index of Ys, index of Xs
-            warp_path[wp_index] = matrix[wm_index], wm_index[0], wm_index[1]
+            warp_path[wp_index] = euclidean_distance(first[wm_index[0]],
+                                                     second[wm_index[1]]), \
+                                  wm_index[0], wm_index[1]
             wp_index -= 1
 
             if wm_index == (0, 0):
@@ -82,7 +99,7 @@ def agdtw_distance(first, second, **kwargs):
             # point to min element
             wm_index = index_of_section_min(matrix, wm_index)
 
-        # remove the NANs
+        # remove the remaining NANs
         return warp_path[np.logical_not(np.isnan(warp_path).any(axis=1))]
 
     def index_of_section_min(matrix, current_index=(0, 0)):
@@ -96,7 +113,7 @@ def agdtw_distance(first, second, **kwargs):
         ... | value | value  | ...
             __________________
         ...
-        @param matrix: a numpy array
+        @param matrix: numpy array containing the warping matrix
         @param current_index: a tuple with the 2D index pointing to current
         cell
         @return: a tuple containing the index for the matrix pointing to the
@@ -126,15 +143,27 @@ def agdtw_distance(first, second, **kwargs):
         return min_row, min_col  # point to minimum element from section
 
     def variance_of_warping_path(path):
-        # ToDo: calculate the variance
-        return None
+        """
+        calculate the variance needed for finding the kernel distance
+        @param path: numpy array containing the warping path
+        @return: float containing the variance
+        """
+        mean = sum(path[:, 0]) / len(path)
+        variance = sum((mean - path[:, 0]) ** 2) / len(path)
+        return variance
 
-    def distance_along_warping_path(path):
-        # ToDo: calculate the agdtw distance
-        distance = path[-1, 0]
-        return distance
+    def kernel_distance(path):
+        """
+        calculates the kernel distance by processing each individual distance
+        along the warping path
+        @param path: numpy array containing the warping path
+        @return: float containing the kernel distance
+        """
+        normalized_distances = path[:, 0] ** 2 / variance_of_warping_path(path)
+        kernel_distances = np.exp(-normalized_distances)
+        return sum(kernel_distances)
 
     warp_matrix = warping_matrix(first, second)
-    warp_path = warping_path(warp_matrix)
+    warp_path = warping_path(warp_matrix, first, second)
 
-    return distance_along_warping_path(warp_path)
+    return kernel_distance(warp_path)
