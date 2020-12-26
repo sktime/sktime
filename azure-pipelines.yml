@@ -35,13 +35,14 @@ stages:
           - task: Bash@3
             displayName: 'Linting'
             inputs:
-              filePath: maint_tools/linting.sh
+              filePath: build_tools/linting.sh
 
   - stage: 'build'
     dependsOn: 'code_quality'
     condition: succeeded('code_quality')
     jobs:
       - job: 'check_soft_dependencies'
+        timeoutInMinutes: 180
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -58,6 +59,7 @@ stages:
               scriptSource: 'filePath'
               scriptPath: build_tools/azure/check_soft_dependencies.py
       - job: 'manylinux'
+        timeoutInMinutes: 180
         pool:
           vmImage: 'ubuntu-latest'
         steps:

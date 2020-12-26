@@ -3,21 +3,21 @@
 import numpy as np
 import pandas as pd
 from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
 # Transforms
-from sktime.transformers.panel.segment import SlidingWindowSegmenter
-from sktime.transformers.panel.dictionary_based._paa import PAA
-from sktime.transformers.panel.dwt import DWTTransformer
-from sktime.transformers.panel.slope import SlopeTransformer
-from sktime.transformers.panel.summarize._extract import (
+from sktime.transformations.panel.segment import SlidingWindowSegmenter
+from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import (
     DerivativeSlopeTransformer,
 )
-from sktime.transformers.panel.hog1d import HOG1DTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
 
 # Classifiers
 from sktime.classification.base import BaseClassifier

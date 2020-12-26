@@ -5,7 +5,7 @@
 
 PACKAGE=sktime
 DOC_DIR=./docs
-MAINT_DIR=./maint_tools
+BUILD_TOOLS=./build_tools
 
 .PHONY: help release install test lint clean dist doc docs
 
@@ -17,7 +17,7 @@ help:
 		 %s\n", $$1, $$2}'
 
 release: ## Make a release
-	python3 $(MAINT_DIR)/make_release.py
+	python3 $(BUILD_TOOLS)/make_release.py
 
 install: ## Install for the current user using the default python command
 	python3 setup.py build_ext --inplace && python setup.py install --user
@@ -28,7 +28,7 @@ test: ## Run unit tests
 tests: test
 
 lint:  ## Run linting
-	$(MAINT_DIR)/linting.sh
+	$(BUILD_TOOLS)/linting.sh
 
 clean: ## Clean build dist and egg directories left after install
 	rm -rf ./dist
