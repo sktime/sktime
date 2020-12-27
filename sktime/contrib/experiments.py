@@ -48,7 +48,8 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.dataset_lists as dataset_lists
-__author__ = "Anthony Bagnall"
+
+__author__ = ["Tony Bagnall"]
 
 """ Prototype mechanism for testing classifiers on the UCR format. This mirrors the 
 mechanism used in Java,
@@ -58,7 +59,6 @@ recommended here, they can be directly and automatically compared to the results
 generated in java
 
 """
-
 
 
 def set_classifier(cls, resampleId):
@@ -105,7 +105,6 @@ def set_classifier(cls, resampleId):
         return rocket_pipeline
     else:
         raise Exception("UNKNOWN CLASSIFIER")
-
 
 
 def stratified_resample(X_train, y_train, X_test, y_test, random_state):
