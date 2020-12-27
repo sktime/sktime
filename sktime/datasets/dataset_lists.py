@@ -7,16 +7,22 @@ Array multivariate lists the 30 UEA problems, as described in [2], plus 3 new ad
 Array univariate_equal_length lists the 112 UCR archive problems used in [3].
 Array multivariate_equal_length lists the 26 UEA archive problems used in [4].
 
-[1] H.Dau, A. Bagnall, K. Kamgar, C. Yeh, Y. Zhu, S. Gharghabi, C. Ratanamahatana and E. Keogh.
+[1] H.Dau, A. Bagnall, K. Kamgar, C. Yeh, Y. Zhu, S. Gharghabi, C. Ratanamahatana and
+E. Keogh.
 The  UCR  time  series  archive. IEEE/CAA J. Autom. Sinica, 6(6):1293–1305, 2019
-[2] A. Bagnall, H. Dau, J. Lines, M. Flynn, J. Large, A. Bostrom, P. Southam,and  E.  Keogh.
-The UEA  multivariate  time  series  classification  archive, 2018. ArXiv e-prints, arXiv:1811.00075, 2018
+[2] A. Bagnall, H. Dau, J. Lines, M. Flynn, J. Large, A. Bostrom, P. Southam,and
+E.  Keogh.
+The UEA  multivariate  time  series  classification  archive, 2018. ArXiv e-prints,
+arXiv:1811.00075, 2018
 [3] A. Bagnall, M. Flynn, J. Large, J. Lines and M. Middlehurst.
-On the Usage and Performance of the Hierarchical Vote Collective of Transformation-Based Ensembles Version 1.0
-(HIVE-COTE v1.0). Lecture Notes in Computer Science. in proc. 5th Advanced Analytics and Learning on Temporal Data
+On the Usage and Performance of the Hierarchical Vote Collective of Transformation-Based
+Ensembles Version 1.0
+(HIVE-COTE v1.0). Lecture Notes in Computer Science. in proc. 5th Advanced Analytics and
+Learning on Temporal Data
 [4] A. Pasos Ruiz, M. Flynn, J. Large, M. Middlehurst and A. Bagnall.
-    The great multivariate time series classification bake off: a review and experimental evaluation of recent
-    algorithmic advances, Data Mining and Knowledge Discovery, 2020.
+    The great multivariate time series classification bake off: a review and
+    experimental evaluation of recent algorithmic advances,
+    Data Mining and Knowledge Discovery, 2020.
 """
 
 __author__ = ["Tony Bagnall"]

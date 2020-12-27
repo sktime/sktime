@@ -49,10 +49,12 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.dataset_lists as dataset_lists
 __author__ = "Anthony Bagnall"
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the mechanism used in Java,
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the 
+mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method recommended here, they can be directly
-and automatically compared to the results generated in java
+but is not yet as engineered. However, if you generate results using the method 
+recommended here, they can be directly and automatically compared to the results 
+generated in java
 
 """
 
@@ -60,8 +62,9 @@ and automatically compared to the results generated in java
 
 def set_classifier(cls, resampleId):
     """
-    Basic way of determining the classifier to build. To differentiate settings just and another elif. So, for example, if
-    you wanted tuned TSF, you just pass TuneTSF and set up the tuning mechanism in the elif.
+    Basic way of determining the classifier to build. To differentiate settings just
+    and another elif. So, for example, if you wanted tuned TSF, you just pass TuneTSF
+    and set up the tuning mechanism in the elif.
     This may well get superceded, it is just how e have always done it
     :param cls: String indicating which classifier you want
     :return: A classifier.
