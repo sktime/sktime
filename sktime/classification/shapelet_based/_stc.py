@@ -5,6 +5,7 @@ simply performs a (configurable) shapelet transform
 then builds (by default) a random forest. This is a stripped down version
 for basic usage
 
+TO DO: Change to allow classifier configuration
 """
 
 __author__ = "Tony Bagnall"
@@ -26,7 +27,9 @@ class ShapeletTransformClassifier(BaseClassifier):
 
     Parameters
     ____________
-    TO DO
+    time_contract_in_mins: int, search time for shapelets, optional (default = 300)
+    n_estimators         :       500,
+    random_state         :  int, seed for random, optional (default = none)
 
     Attributes
     ----------
@@ -85,7 +88,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         if isinstance(y, pd.Series):
             y = y.to_numpy()
 
-        # generate pipeline in fit so that random state can be propogated properly.
+        # generate pipeline in fit so that random state can be propagated properly.
         self.classifier_ = Pipeline(
             [
                 (

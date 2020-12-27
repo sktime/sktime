@@ -338,5 +338,5 @@ multivariate_equal_length = [
     "SelfRegulationSCP1",
     "SelfRegulationSCP2",
     "StandWalkJump",
-    "UWaveGestureLibrary"
+    "UWaveGestureLibrary",
 ]

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """ experiments.py: code to run experiments as an alternative to orchestration.
 
-
+This file is configured for runs of the main method with command line arguments, or for single debugging runs. Results
+are written in a standard format
 TO DO: Tidy up this file!
 """
 
@@ -90,8 +91,7 @@ def set_classifier(cls, resampleId):
         return KNeighborsTimeSeriesClassifier(metric="dtwcv")
     elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
         return ElasticEnsemble()
-    elif cls.lower() == "tsfcomposite":
-        # It defaults to TSF
+    elif cls.lower() == "tsf":
         return TimeSeriesForestClassifier()
     elif cls.lower() == "rocket":
         rocket_pipeline = make_pipeline(

@@ -1,6 +1,4 @@
-__all__ = [
-    "CanonicalIntervalForest"
-]
+__all__ = ["CanonicalIntervalForest"]
 
 
 from sktime.contrib.interval_based._cif import \
