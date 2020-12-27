@@ -10,8 +10,30 @@ __all__ = [
     "from_2d_array_to_nested",
     "from_nested_to_3d_numpy",
     "from_nested_to_long",
+    "from_multi_index_to_3d_numpy",
+    "from_3d_numpy_to_multi_index",
+    "from_multi_index_to_nested",
+    "from_nested_to_multi_index",
+    "are_columns_nested",
     "is_nested_dataframe",
+    "nested_dataframes_equal",
 ]
+
+
+def _cell_is_series_or_array(cell):
+    return isinstance(cell, (pd.Series, np.ndarray))
+
+
+def are_columns_nested(X):
+    return X.applymap(_cell_is_series_or_array).any().values
+
+
+def _nested_cell_timepoints(cell):
+    if _cell_is_series_or_array(cell):
+        n_timepoints = cell.shape[0]
+    else:
+        n_timepoints = 0
+    return n_timepoints
 
 
 def _check_equal_index(X):
@@ -248,6 +270,14 @@ def _concat_nested_arrays(arrs, cells_as_numpy=False):
     return Xt
 
 
+def _get_index(x):
+    if hasattr(x, "index"):
+        return x.index
+    else:
+        # select last dimension for time index
+        return pd.RangeIndex(x.shape[-1])
+
+
 def _get_time_index(X):
     """Helper function to get index of time series data
 
@@ -260,13 +290,6 @@ def _get_time_index(X):
     time_index : pandas Index
         Index of time series
     """
-
-    def _get_index(x):
-        if hasattr(x, "index"):
-            return x.index
-        else:
-            # select last dimension for time index
-            return pd.RangeIndex(x.shape[-1])
 
     # assumes that all samples share the same the time index, only looks at
     # first row
@@ -518,8 +541,8 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     else:
         time_index_name = time_index
 
-    n_columns = X.shape[1]
-    nested_col_mask = [_is_nested_structure(X.iloc[0, j]) for j in range(n_columns)]
+    # n_columns = X.shape[1]
+    nested_col_mask = [*are_columns_nested(X)]
 
     if instance_index is None:
         instance_idxs = X.index.get_level_values(-1).unique()
@@ -598,8 +621,8 @@ def from_nested_to_3d_numpy(X):
     if not is_nested_dataframe(X):
         raise ValueError("Input DataFrame is not a nested DataFrame")
 
-    n_columns = X.shape[1]
-    nested_col_mask = [_is_nested_structure(X.iloc[0, j]) for j in range(n_columns)]
+    # n_columns = X.shape[1]
+    nested_col_mask = [*are_columns_nested(X)]
 
     # If all the columns are nested in structure
     if nested_col_mask.count(True) == len(nested_col_mask):
@@ -662,15 +685,9 @@ def from_3d_numpy_to_nested(X, column_names=None, cells_as_numpy=False):
             )
             raise ValueError(msg)
 
-    for column in enumerate(column_names):
-        df[column] = [
-            container(X[instance, column, :]) for instance in range(n_instances)
-        ]
+    for j, column in enumerate(column_names):
+        df[column] = [container(X[instance, j, :]) for instance in range(n_instances)]
     return df
-
-
-def _is_nested_structure(X_col):
-    return isinstance(X_col, (np.ndarray, pd.Series))
 
 
 def is_nested_dataframe(X):
@@ -706,11 +723,8 @@ def is_nested_dataframe(X):
 
     # Otherwise we'll see if any column has a nested structure in first row
     else:
-        is_nested = False
-        for i in range(X.shape[1]):
-            if _is_nested_structure(X.iloc[0, i]):
-                is_nested = True
-                break
+        is_nested = are_columns_nested(X).any()
+
         return is_dataframe and is_nested
 
 
@@ -740,59 +754,95 @@ def nested_dataframes_equal(X1, X2):
 
     else:
         n_instances, n_columns = X1.shape
-        x1_nested_col_mask = [
-            _is_nested_structure(X1.iloc[0, j]) for j in range(n_columns)
-        ]
+        x1_nested_cell_mask = X1.applymap(_cell_is_series_or_array)
+        x1_nested_col_mask = x1_nested_cell_mask.any().values
 
-        x2_nested_col_mask = [
-            _is_nested_structure(X2.iloc[0, j]) for j in range(n_columns)
-        ]
+        x2_nested_cell_mask = X2.applymap(_cell_is_series_or_array)
+        # x2_nested_col_mask = x2_nested_cell_mask.any().values
 
-        # If X1 and X2 do not have nested structure in same columns then
+        # If X1 and X2 do not have nested structure in same cells then
         # they are not equal
-        if x1_nested_col_mask != x2_nested_col_mask:
+        if not (x1_nested_cell_mask == x2_nested_cell_mask).values.all():
             is_same = False
+            return is_same
 
-        # If X1 and X2 have nested structure in same columns we need to
+        # If X1 and X2 have nested structure in same cells we need to
         # verify the values are equal in each column
         else:
-            cell_is_same = np.zeros(X1.shape, dtype=bool)
-            for j, is_nested in enumerate(x1_nested_col_mask):
+            cell_value_is_same = np.zeros_like(X1, dtype=bool)
+            cell_index_is_same = np.ones_like(X1, dtype=bool)
+            cell_is_same = np.zeros_like(X1, dtype=bool)
+
+            # Loop over columns and check if values are equal
+            for j, any_nested in enumerate(x1_nested_col_mask):
                 # Compare nested columns instance by instance
-                if is_nested:
+                if any_nested:
                     for i in range(n_instances):
-                        x1_numeric = X1.iloc[i, j].dtype.kind in "biufc"
-                        x2_numeric = X2.iloc[i, j].dtype.kind in "biufc"
+                        # Handle potential heterogenous nesting within column
+                        if x1_nested_cell_mask.iloc[i, j]:
+                            # See if index is the same
+                            x1_index = _get_index(X1.iloc[i, j])
+                            x2_index = _get_index(X2.iloc[i, j])
+                            if x1_index.shape != x2_index.shape:
+                                cell_index_is_same[i, j] = False
 
-                        # If nested column aren't both numeric they aren't same
-                        if x1_numeric != x2_numeric:
-                            cell_is_same[i, j] = False
-
-                        elif x1_numeric and x2_numeric:
-                            cell_is_same[i, j] = np.isclose(
-                                X1.iloc[i, j], X2.iloc[i, j]
-                            ).all()
+                            else:
+                                cell_index_is_same[i, j] = (x1_index == x2_index).all()
 
                         else:
-                            cell_is_same[i, j] = (X1.iloc[i, j] == X2.iloc[i, j]).all()
+                            # Consider indices the same for non-nested cells
+                            cell_index_is_same[i, j] = True
+
+                        # Now check if values are equal
+                        x1_numeric = X1.iloc[i, j].dtype.kind in "biufc"
+                        x2_numeric = X2.iloc[i, j].dtype.kind in "biufc"
+                        # Nested columns must both be numeric to be same
+                        if x1_numeric != x2_numeric:
+                            cell_value_is_same[i, j] = False
+                            is_same = False
+                            return is_same
+
+                        elif x1_numeric and x2_numeric:
+                            if X1.iloc[i, j].shape != X2.iloc[i, j].shape:
+                                cell_value_is_same[i, j] = False
+                                is_same = False
+                                return is_same
+                            else:
+                                cell_value_is_same[i, j] = np.isclose(
+                                    X1.iloc[i, j], X2.iloc[i, j]
+                                ).all()
+
+                        else:
+                            cell_value_is_same[i, j] = (
+                                X1.iloc[i, j] == X2.iloc[i, j]
+                            ).all()
 
                 # Compare all instances in primitive columns at same time
                 else:
+                    # Consider indices to be equal
+                    # for entirely non-nested columns
+                    cell_index_is_same[:, j] = True
+
+                    # Now check the values of entirely non-nested columns
                     x1_numeric = X1.iloc[:, j].dtype.kind in "biufc"
                     x2_numeric = X2.iloc[:, j].dtype.kind in "biufc"
 
                     # If nested column aren't both numeric they can't be same
                     if x1_numeric != x2_numeric:
-                        cell_is_same[:, j] = False
+                        cell_value_is_same[:, j] = False
+                        is_same = False
+                        return is_same
 
                     elif x1_numeric and x2_numeric:
-                        cell_is_same[:, j] = np.isclose(
+                        cell_value_is_same[:, j] = np.isclose(
                             X1.iloc[:, j], X2.iloc[:, j]
                         ).all()
 
                     else:
-                        cell_is_same[:, j] = (X1.loc[:, j] == X2.loc[:, j]).all()
+                        cell_value_is_same[:, j] = (X1.loc[:, j] == X2.loc[:, j]).all()
 
+            # Now see if both cell values and indices are same
+            cell_is_same = cell_index_is_same * cell_value_is_same
             is_same = cell_is_same.all()
 
     return is_same

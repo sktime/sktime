@@ -1030,6 +1030,39 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     return df
 
 
+def generate_example_multi_index_dataframe(
+    n_instances=50, n_columns=3, n_timepoints=20
+):
+    """Generates example multi-index DataFrame.
+
+    Parameters
+    ----------
+    n_instances : int
+        Number of instances.
+
+    n_columns : int
+        Number of columns (series) in multi-indexed DataFrame.
+
+    n_timepoints : int
+        Number of timepoints per instance-column pair.
+
+    Returns
+    -------
+    mi_df : pd.DataFrame
+        The multi-indexed DataFrame with
+        shape (n_instances*n_timepoints, n_column).
+    """
+
+    # Make long DataFrame
+    long_df = generate_example_long_table(
+        num_cases=n_instances, series_len=n_timepoints, num_dims=n_columns
+    )
+    # Make Multi index DataFrame
+    mi_df = long_df.set_index(["case_id", "reading_id"]).pivot(columns="dim_id")
+
+    return mi_df
+
+
 def write_results_to_uea_format(
     path,
     strategy_name,
