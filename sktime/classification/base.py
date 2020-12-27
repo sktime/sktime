@@ -2,9 +2,9 @@
 __all__ = ["BaseClassifier"]
 __author__ = ["Markus Löning"]
 
-from sktime.base import BaseEstimator
+import numpy as np
 
-from sktime.utils import comparison
+from sktime.base import BaseEstimator
 from sktime.utils.validation.panel import check_X
 
 
@@ -39,7 +39,7 @@ class BaseClassifier(BaseEstimator):
         predictions = []
         for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]
-            prediction = comparison.arg_max(distribution, self.random_state)
+            prediction = np.argmax(distribution)
             predictions.append(prediction)
         predictions = self.label_encoder.inverse_transform(predictions)
         return predictions

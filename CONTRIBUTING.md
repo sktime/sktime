@@ -161,24 +161,24 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
 
 ### Code quality checks
-To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow.
+To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow:
 
-1. To set up the workflow, you need to install a few extra tools:
+1. Install pre-commit:
 
   ```bash
- pip install -r maint_tools/requirements.txt
+ pip install pre-commit
  ```
 
-2. Install pre-commit hooks:
+2. Set up pre-commit:
   ```bash
   pre-commit install
   ```
 
 Once installed, pre-commit will automatically run our code quality checks on the files you changed whenenver you make a new commit.
 
-You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg). 
+You can find our pre-commit configuration in [.pre-commit-config.yaml](https://github.com/alan-turing-institute/sktime/blob/master/.pre-commit-config.yaml). Our flake8 configuration can be found in [setup.cfg](https://github.com/alan-turing-institute/sktime/blob/master/setup.cfg).
 
-If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line. 
+If you want to exclude some line of code from being checked, you can add a `# noqa` (no quality assurance) comment at the end of that line.
 
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
@@ -186,7 +186,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
 1.  Install the development version with all extra requirements from the root directory of sktime:
 
     ```bash
-    pip install --editable .[all_extras]
+    pip install -r build_tools/requirements.txt
     ```
 
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
@@ -230,12 +230,18 @@ Dependencies
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
+> A soft dependency is a dependency that is only required to import certain modules, but not necessary to use most functionality. A soft dependency is not installed automatically when the package is installed. Instead, users need to install it manually if they want to use a module that requires a soft dependency.
+
 If you add a new dependency or change the version of an existing one, you need to update the following files:
 
  - [sktime/setup.py](https://github.com/alan-turing-institute/sktime/blob/master/setup.py) for package installation and minimum version requirements,
  - [build_tools/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/requirements.txt) for continuous integration and distribution,
  - [docs/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/docs/requirements.txt) for building the documentation,
  - [.binder/requirements.txt](https://github.com/alan-turing-institute/sktime/blob/master/.binder/requirements.txt) for launching notebooks on Binder.
+
+If a user is missing a soft dependency, we want to raise a more user-friendly error message than just a `ModuleNotFound` exception. This is handled through our `_check_soft_dependencies` defined [here](https://github.com/alan-turing-institute/sktime/blob/master/sktime/utils/check_imports.py).
+
+We also use contiunous integration tests to check if all soft dependencies are properly isolated to specific modules. So, if you add a soft dependency, please make sure to add it [here](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/azure/check_soft_dependencies.py) together with the module that depends on it.
 
 
 Coding style
@@ -290,4 +296,4 @@ To make the release process easier, we have an interactive script that you can f
 make release
 ```
 
-This calls [maint_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/maint_tools/make_release.py) and will guide you through the release process.
+This calls [build_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/make_release.py) and will guide you through the release process.
