@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Lists of datasets available from the archive on timeseriesclassification.com
 

@@ -47,15 +47,15 @@ from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-import sktime.datasets.dataset_lists as dataset_lists
+import sktime.datasets.ucr_uea_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
 
-""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the 
+""" Prototype mechanism for testing classifiers on the UCR format. This mirrors the
 mechanism used in Java,
 https://github.com/TonyBagnall/uea-tsc/tree/master/src/main/java/experiments
-but is not yet as engineered. However, if you generate results using the method 
-recommended here, they can be directly and automatically compared to the results 
+but is not yet as engineered. However, if you generate results using the method
+recommended here, they can be directly and automatically compared to the results
 generated in java
 
 """
