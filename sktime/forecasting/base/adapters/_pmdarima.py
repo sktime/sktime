@@ -8,8 +8,8 @@ __all__ = ["_PmdArimaAdapter"]
 import pandas as pd
 
 from sktime.forecasting.base._base import DEFAULT_ALPHA
-from sktime.forecasting.base._sktime import _SktimeForecaster
 from sktime.forecasting.base._sktime import _OptionalForecastingHorizonMixin
+from sktime.forecasting.base._sktime import _SktimeForecaster
 
 
 class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
@@ -52,11 +52,11 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         kwargs = {"X": X, "return_pred_int": return_pred_int, "alpha": alpha}
 
         # all values are out-of-sample
-        if len(fh_oos) == len(fh):
+        if fh.is_all_out_of_sample(self.cutoff):
             return self._predict_fixed_cutoff(fh_oos, **kwargs)
 
         # all values are in-sample
-        elif len(fh_ins) == len(fh):
+        elif fh.is_all_in_sample(self.cutoff):
             return self._predict_in_sample(fh_ins, **kwargs)
 
         # both in-sample and out-of-sample values
@@ -69,12 +69,11 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
         if isinstance(alpha, (list, tuple)):
-            raise NotImplementedError()
+            raise NotImplementedError("multiple `alpha` values are not yet supported")
 
         # for in-sample predictions, pmdarima requires zero-based
         # integer indicies
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
-
         result = self._forecaster.predict_in_sample(
             start=start,
             end=end,
@@ -85,7 +84,6 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
 
         fh_abs = fh.to_absolute(self.cutoff)
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-
         if return_pred_int:
             # unpack and format results
             y_pred, pred_int = result
@@ -103,9 +101,6 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
     ):
         # make prediction
         n_periods = int(fh.to_relative(self.cutoff)[-1])
-        fh_abs = fh.to_absolute(self.cutoff)
-        fh_idx = fh.to_indexer(self.cutoff)
-
         result = self._forecaster.predict(
             n_periods=n_periods,
             X=X,
@@ -113,6 +108,8 @@ class _PmdArimaAdapter(_OptionalForecastingHorizonMixin, _SktimeForecaster):
             alpha=alpha,
         )
 
+        fh_abs = fh.to_absolute(self.cutoff)
+        fh_idx = fh.to_indexer(self.cutoff)
         if return_pred_int:
             y_pred, pred_int = result
             y_pred = pd.Series(y_pred[fh_idx], index=fh_abs)
