@@ -18,10 +18,10 @@ from sklearn.utils.multiclass import check_classification_targets
 from sklearn.pipeline import Pipeline
 from sklearn.ensemble._forest import _generate_unsampled_indices
 from sklearn.ensemble._forest import _get_n_samples_bootstrap
-from sktime.transformers.panel.summarize import (
+from sktime.transformations.panel.summarize import (
     RandomIntervalFeatureExtractor,
 )
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 from sktime.series_as_features.base.estimators._ensemble import BaseTimeSeriesForest
@@ -54,7 +54,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     Parameters
     ----------
     estimator : Pipeline
-        A pipeline consisting of series-to-tabular transformers
+        A pipeline consisting of series-to-tabular transformations
         and a decision tree classifier as final estimator.
     n_estimators : integer, optional (default=200)
         The number of trees in the forest.
@@ -264,7 +264,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         # Set base estimator
         if self.estimator is None:
             # Set default time series forest
-            features = [np.mean, np.std, time_series_slope]
+            features = [np.mean, np.std, _slope]
             steps = [
                 (
                     "transform",
@@ -282,10 +282,10 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
             # else check given estimator is a pipeline with prior
             # transformations and final decision tree
             if not isinstance(self.estimator, Pipeline):
-                raise ValueError("`estimator` must be " "pipeline with transforms.")
+                raise ValueError("`estimator` must be pipeline with transforms.")
             if not isinstance(self.estimator.steps[-1][1], DecisionTreeClassifier):
                 raise ValueError(
-                    "Last step in `estimator` must be " "DecisionTreeClassifier."
+                    "Last step in `estimator` must be DecisionTreeClassifier."
                 )
             self.estimator_ = self.estimator
 

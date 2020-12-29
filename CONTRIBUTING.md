@@ -161,15 +161,15 @@ Continuous integration
 We use continuous integration services on GitHub to automatically check if new pull requests do not break anything and meet code quality standards such as a common [coding style](#Coding-style).
 
 ### Code quality checks
-To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow.
+To check if your code meets our code quality standards, you can automatically run these checks before you make a new commit using the [pre-commit](https://pre-commit.com) workflow:
 
-1. To set up the workflow, you need to install a few extra tools:
+1. Install pre-commit:
 
   ```bash
- pip install -r maint_tools/requirements.txt
+ pip install pre-commit
  ```
 
-2. Install pre-commit hooks:
+2. Set up pre-commit:
   ```bash
   pre-commit install
   ```
@@ -186,7 +186,7 @@ We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check i
 1.  Install the development version with all extra requirements from the root directory of sktime:
 
     ```bash
-    pip install --editable .[all_extras]
+    pip install -r build_tools/requirements.txt
     ```
 
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
@@ -296,4 +296,4 @@ To make the release process easier, we have an interactive script that you can f
 make release
 ```
 
-This calls [maint_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/maint_tools/make_release.py) and will guide you through the release process.
+This calls [build_tools/make_release.py](https://github.com/alan-turing-institute/sktime/blob/master/build_tools/make_release.py) and will guide you through the release process.

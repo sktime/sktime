@@ -9,7 +9,7 @@ __all__ = [
 
 import pandas as pd
 
-from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.series import _make_series
 
 RANDOM_SEED = 42
 TEST_YS = [

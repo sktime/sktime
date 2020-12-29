@@ -12,7 +12,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_OOS_FHS
 from sktime.forecasting.tests._config import TEST_SPS
 from sktime.forecasting.tests._config import TEST_WINDOW_LENGTHS
-from sktime.utils._testing.forecasting import assert_correct_pred_time_index
+from sktime.utils._testing.forecasting import _assert_correct_pred_time_index
 from sktime.utils.validation.forecasting import check_fh
 
 n_timepoints = 30
@@ -53,7 +53,7 @@ def test_strategy_last_seasonal(fh, sp):
     y_pred = f.predict(fh)
 
     # check predicted index
-    assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+    _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
     # check values
     fh = check_fh(fh)  # get well formatted fh
@@ -72,7 +72,7 @@ def test_strategy_mean_seasonal(fh, sp, window_length):
         y_pred = f.predict(fh)
 
         # check predicted index
-        assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
+        _assert_correct_pred_time_index(y_pred.index, y_train.index[-1], fh)
 
         if window_length is None:
             window_length = len(y_train)
