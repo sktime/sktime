@@ -220,9 +220,18 @@ class ForecastingHorizon:
 
         else:
             self._check_cutoff(cutoff)
-            values = self.to_pandas() - cutoff
+            index = self.to_pandas()
 
-            if isinstance(self.to_pandas(), (pd.PeriodIndex, pd.DatetimeIndex)):
+            # Bug fix for DatetimeIndex delta calculation (see #534)
+            if isinstance(index, pd.DatetimeIndex):
+                index = index.to_period()
+                # Workaround to convert Timestamp to Period
+                date = pd.DatetimeIndex([cutoff], freq=cutoff.freq)
+                cutoff = date.to_period()[0]
+
+            values = index - cutoff
+
+            if isinstance(index, (pd.PeriodIndex, pd.DatetimeIndex)):
                 values = _coerce_duration_to_int(values, unit=_get_unit(cutoff))
 
             return self._new(values, is_relative=True)
