@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.utils._testing import make_classification_problem
+from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 from sktime.utils.validation.panel import check_y

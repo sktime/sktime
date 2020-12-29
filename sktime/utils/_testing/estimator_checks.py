@@ -15,26 +15,38 @@ from inspect import signature
 
 import joblib
 import numpy as np
+import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 from sklearn import clone
 from sklearn.utils.estimator_checks import (
     check_get_params_invariance as _check_get_params_invariance,
 )
 from sklearn.utils.estimator_checks import check_set_params as _check_set_params
-from sklearn.utils.testing import set_random_state
+from sklearn.utils._testing import set_random_state
+from sklearn.utils.validation import check_random_state
 
 from sktime.base import BaseEstimator
+from sktime.classification.base import BaseClassifier
 from sktime.exceptions import NotFittedError
+from sktime.forecasting.base import BaseForecaster
+from sktime.regression.base import BaseRegressor
+from sktime.tests._config import ESTIMATOR_TEST_PARAMS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
-from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES, VALID_TRANSFORMER_TYPES
+from sktime.tests._config import VALID_ESTIMATOR_BASE_TYPES
 from sktime.tests._config import VALID_ESTIMATOR_TAGS
-from sktime.utils._testing import ESTIMATOR_TEST_PARAMS
-from sktime.utils._testing import _assert_array_almost_equal
-from sktime.utils._testing import _assert_array_equal
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _get_args
-from sktime.utils._testing import _has_tag
-from sktime.utils._testing import _make_args
+from sktime.tests._config import VALID_ESTIMATOR_TYPES
+from sktime.tests._config import VALID_TRANSFORMER_TYPES
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
+from sktime.transformations.base import _SeriesToPrimitivesTransformer
+from sktime.transformations.base import _SeriesToSeriesTransformer
+from sktime.utils._testing.forecasting import _make_series
+from sktime.utils._testing.forecasting import make_forecasting_problem
+from sktime.utils._testing.panel import _make_panel_X
+from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils._testing.panel import make_regression_problem
+from sktime.utils.data_processing import is_nested_dataframe
 
 
 def check_estimator(Estimator, exclude=None):
@@ -408,7 +420,7 @@ def check_methods_do_not_change_state(Estimator):
             getattr(estimator, method)(*args)
 
             if method == "transform" and _has_tag(Estimator, "fit-in-transform"):
-                # Some transformers fit during transform, as they apply
+                # Some transformations fit during transform, as they apply
                 # some transformation to each series passed to transform,
                 # so transform will actually change the state of these estimator.
                 continue
@@ -486,5 +498,232 @@ def check_multiprocessing_idempotent(Estimator):
                 _assert_array_equal(
                     results[method],
                     result,
-                    err_msg="Results are not equal for n_jobs=1 and " "n_jobs=-1",
+                    err_msg="Results are not equal for n_jobs=1 and n_jobs=-1",
                 )
+
+
+def _get_err_msg(estimator):
+    return (
+        f"Invalid estimator type: {type(estimator)}. Valid estimator types are: "
+        f"{VALID_ESTIMATOR_TYPES}"
+    )
+
+
+def _construct_instance(Estimator):
+    """Construct Estimator instance if possible"""
+    # if non-default parameters are required, but none have been found,
+    # raise error
+    if hasattr(Estimator, "_required_parameters"):
+        required_parameters = getattr(Estimator, "required_parameters", [])
+        if len(required_parameters) > 0:
+            raise ValueError(
+                f"Estimator: {Estimator} requires "
+                f"non-default parameters for construction, "
+                f"but none were given. Please set them in "
+                f"sktime/tests/_config.py"
+            )
+
+    # construct with parameter configuration for testing, otherwise construct with
+    # default parameters (empty param dict)
+    params = ESTIMATOR_TEST_PARAMS.get(Estimator, {})
+    return Estimator(**params)
+
+
+def _make_args(estimator, method, **kwargs):
+    """Helper function to generate appropriate arguments for testing different
+    estimator types and their methods"""
+    if method == "fit":
+        return _make_fit_args(estimator, **kwargs)
+    if method == "update":
+        raise NotImplementedError()
+    elif method in ("predict", "predict_proba", "decision_function"):
+        return _make_predict_args(estimator, **kwargs)
+    elif method == "transform":
+        return _make_transform_args(estimator, **kwargs)
+    elif method == "inverse_transform":
+        return _make_inverse_transform_args(estimator, **kwargs)
+    else:
+        raise ValueError(f"Method: {method} not supported")
+
+
+def _make_fit_args(estimator, **kwargs):
+    if isinstance(estimator, BaseForecaster):
+        # we need to handle the TransformedTargetForecaster separately
+        if isinstance(estimator, _SeriesToSeriesTransformer):
+            y = _make_series(**kwargs)
+        else:
+            y = make_forecasting_problem(**kwargs)
+        fh = 1
+        X = None
+        return y, X, fh
+    elif isinstance(estimator, BaseClassifier):
+        return make_classification_problem(**kwargs)
+    elif isinstance(estimator, BaseRegressor):
+        return make_regression_problem(**kwargs)
+    elif isinstance(
+        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
+    ):
+        X = _make_series(**kwargs)
+        return (X,)
+    elif isinstance(estimator, (_PanelToTabularTransformer, _PanelToPanelTransformer)):
+        return make_classification_problem(**kwargs)
+    else:
+        raise ValueError(_get_err_msg(estimator))
+
+
+def _make_predict_args(estimator, **kwargs):
+    if isinstance(estimator, BaseForecaster):
+        fh = 1
+        return (fh,)
+    elif isinstance(estimator, (BaseClassifier, BaseRegressor)):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    else:
+        raise ValueError(_get_err_msg(estimator))
+
+
+def _make_transform_args(estimator, **kwargs):
+    if isinstance(
+        estimator, (_SeriesToPrimitivesTransformer, _SeriesToSeriesTransformer)
+    ):
+        X = _make_series(**kwargs)
+        return (X,)
+    elif isinstance(
+        estimator,
+        (
+            _PanelToTabularTransformer,
+            _PanelToPanelTransformer,
+        ),
+    ):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    else:
+        raise ValueError(_get_err_msg(estimator))
+
+
+def _make_inverse_transform_args(estimator, **kwargs):
+    if isinstance(estimator, _SeriesToPrimitivesTransformer):
+        X = _make_primitives(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _SeriesToSeriesTransformer):
+        X = _make_series(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _PanelToTabularTransformer):
+        X = _make_tabular_X(**kwargs)
+        return (X,)
+    elif isinstance(estimator, _PanelToPanelTransformer):
+        X = _make_panel_X(**kwargs)
+        return (X,)
+    else:
+        raise ValueError(_get_err_msg(estimator))
+
+
+def _make_primitives(n_columns=1, random_state=None):
+    """Generate one or more primitives. Useful for checking inverse-transform
+    of series-to-primitives transformer"""
+    rng = check_random_state(random_state)
+    if n_columns == 1:
+        return rng.rand()
+    return rng.rand(size=(n_columns,))
+
+
+def _make_tabular_X(n_instances=20, n_columns=1, return_numpy=True, random_state=None):
+    """Generate tabular X. Useful for checking inverse-transform
+    of panel-to-tabular transformer"""
+    rng = check_random_state(random_state)
+    X = rng.rand(n_instances, n_columns)
+    if return_numpy:
+        return X
+    else:
+        return pd.DataFrame(X)
+
+
+def _compare_nested_frame(func, x, y, **kwargs):
+    """Helper function to compare two nested pd.DataFrames
+
+    Parameters
+    ----------
+    func : function
+        Function from np.testing for comparing arrays.
+    x : pd.DataFrame
+    y : pd.DataFrame
+    kwargs : dict
+        Keyword argument for function
+
+    Raises
+    ------
+    AssertionError
+        If x and y are not equal
+    """
+    # We iterate over columns and rows to make cell-wise comparisons.
+    # Tabularizing the data first would simplify this, but does not
+    # work for unequal length data.
+
+    # In rare cases, x and y may be empty (e.g. TSFreshRelevantFeatureExtractor) and
+    # we cannot compare individual cells, so we simply check if everything else is
+    # equal here.
+    assert isinstance(x, pd.DataFrame)
+    if x.empty:
+        assert_frame_equal(x, y)
+
+    elif is_nested_dataframe(x):
+        # Check if both inputs have the same shape
+        if not x.shape == y.shape:
+            raise ValueError("Found inputs with different shapes")
+
+        # Iterate over columns
+        n_columns = x.shape[1]
+        for i in range(n_columns):
+            xc = x.iloc[:, i].tolist()
+            yc = y.iloc[:, i].tolist()
+
+            # Iterate over rows, checking if individual cells are equal
+            for xci, yci in zip(xc, yc):
+                func(xci, yci, **kwargs)
+
+
+def _assert_array_almost_equal(x, y, decimal=6, err_msg=""):
+    func = np.testing.assert_array_almost_equal
+    if isinstance(x, pd.DataFrame):
+        _compare_nested_frame(func, x, y, decimal=decimal, err_msg=err_msg)
+    else:
+        func(x, y, decimal=decimal, err_msg=err_msg)
+
+
+def _assert_array_equal(x, y, err_msg=""):
+    func = np.testing.assert_array_equal
+    if isinstance(x, pd.DataFrame):
+        _compare_nested_frame(func, x, y, err_msg=err_msg)
+    else:
+        func(x, y, err_msg=err_msg)
+
+
+def _get_args(function, varargs=False):
+    """Helper to get function arguments"""
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
+    args = [
+        key
+        for key, param in params.items()
+        if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)
+    ]
+    if varargs:
+        varargs = [
+            param.name
+            for param in params.values()
+            if param.kind == param.VAR_POSITIONAL
+        ]
+        if len(varargs) == 0:
+            varargs = None
+        return args, varargs
+    else:
+        return args
+
+
+def _has_tag(Estimator, tag):
+    assert tag in VALID_ESTIMATOR_TAGS
+    # Check if tag is in all tags
+    return Estimator._all_tags().get(tag, False)
