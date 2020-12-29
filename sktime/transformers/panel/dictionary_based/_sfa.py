@@ -116,6 +116,7 @@ class SFA(_PanelToPanelTransformer):
         levels=1,
         lower_bounding=True,
         save_words=False,
+        save_binning_dft=False,
         return_pandas_data_series=False,
     ):
         self.words = []
@@ -144,6 +145,8 @@ class SFA(_PanelToPanelTransformer):
 
         # TDE
         self.levels = levels
+        self.save_binning_dft = save_binning_dft
+        self.binning_dft = None
 
         #
         self.binning_method = binning_method
@@ -153,7 +156,7 @@ class SFA(_PanelToPanelTransformer):
         self.skip_grams = skip_grams
 
         # weighting for levels going up to 10 levels
-        # No real reason to go past 3
+        # No real reason to go past 3, should probably not weight with too many.
         self.level_weights = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
 
         self.n_instances = 0
@@ -200,7 +203,7 @@ class SFA(_PanelToPanelTransformer):
         self._is_fitted = True
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, supplied_dft=None):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
@@ -215,7 +218,10 @@ class SFA(_PanelToPanelTransformer):
 
         for i in range(X.shape[0]):
             # reuse 'transformed' array
-            dfts = self._mft(X[i, :], transformed, stds)
+            if supplied_dft is None:
+                dfts = self._mft(X[i, :], transformed, stds)
+            else:
+                dfts = supplied_dft[i]
 
             bag = defaultdict(int)
             # bag = Dict.empty(key_type=typeof((100,100.0)),
@@ -290,6 +296,8 @@ class SFA(_PanelToPanelTransformer):
                 for i in range(self.n_instances)
             ]
         )
+        if self.save_binning_dft:
+            self.binning_dft = dft
         dft = dft.reshape(len(X) * num_windows_per_inst, self.dft_length)
 
         if y is not None:

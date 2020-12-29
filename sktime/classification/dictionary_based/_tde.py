@@ -9,6 +9,7 @@ __all__ = ["TemporalDictionaryEnsemble", "IndividualTDE", "histogram_intersectio
 
 import math
 import time
+from collections import defaultdict
 
 import numpy as np
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -71,7 +72,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     ----------
     n_classes               : extracted from the data
     n_instances             : extracted from the data
-    n_estimators           : The final number of classifiers used (
+    n_dims                  : extracted from the data
+    n_estimators            : The final number of classifiers used (
     <=max_ensemble_size)
     series_length           : length of all series (assumed equal)
     classifiers             : array of DecisionTree classifiers
@@ -120,6 +122,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.class_dictionary = {}
         self.n_estimators = 0
         self.series_length = 0
+        self.n_dims = 0
         self.n_instances = 0
         self.prev_parameters_x = []
         self.prev_parameters_y = []
@@ -151,7 +154,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         self.time_limit = self.time_limit * 60
-        self.n_instances, _, self.series_length = X.shape
+        self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         for index, classVal in enumerate(self.classes_):
@@ -182,6 +185,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         rng = check_random_state(self.random_state)
 
+        if self.bigrams is None:
+            if self.n_dims > 1:
+                use_bigrams = False
+            else:
+                use_bigrams = True
+
         while (
             train_time < self.time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
@@ -204,7 +213,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
             tde = IndividualTDE(
                 *parameters,
                 alphabet_size=self.alphabet_size,
-                bigrams=self.bigrams,
+                bigrams=use_bigrams,
                 random_state=self.random_state
             )
             tde.fit(X_subsample, y_subsample)
@@ -329,7 +338,9 @@ class IndividualTDE(BaseClassifier):
         levels=1,
         igb=False,
         alphabet_size=4,
-        bigrams=None,
+        bigrams=True,
+        dim_threshold=0.85,
+        max_dims=20,
         random_state=None,
     ):
         self.window_size = window_size
@@ -340,13 +351,18 @@ class IndividualTDE(BaseClassifier):
         self.alphabet_size = alphabet_size
         self.bigrams = bigrams
 
+        self.dim_threshold = dim_threshold
+        self.max_dims = max_dims
+
         self.random_state = random_state
 
         self.transformers = []
         self.transformed_data = []
         self.accuracy = 0
 
+        self.n_instances = 0
         self.n_dims = 0
+        self.series_length = 0
         self.highest_dim_bit = 0
         self.dims = []
         self.class_vals = []
@@ -358,28 +374,28 @@ class IndividualTDE(BaseClassifier):
     def fit(self, X, y):
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-        _, self.n_dims, _ = X.shape
+        self.n_instances, self.n_dims, self.series_length = X.shape
+        self.class_vals = y
+        self.num_classes = np.unique(y).shape[0]
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
+        for index, classVal in enumerate(self.classes_):
+            self.class_dictionary[classVal] = index
 
         if self.n_dims > 1:
-            self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
-            accs = []
+            self.dims, self.transformers = self.select_dims(X, y)
 
-            print("tde mv")
-            
-            for i in range(self.n_dims):
-                self.dims.append(i)
-                self.transformers.append(SFA(
-                    word_length=self.word_length,
-                    alphabet_size=self.alphabet_size,
-                    window_size=self.window_size,
-                    norm=self.norm,
-                    levels=self.levels,
-                    binning_method="information-gain" if self.igb else "equi-depth",
-                    bigrams=self.bigrams,
-                    remove_repeat_words=True,
-                    save_words=False,
-                ))
-                #sfa = self.transformers[0].fit(X[], y)
+            words = [defaultdict(int) for _ in range(self.n_instances)]
+
+            for i, dim in enumerate(self.dims):
+                X_dim = X[:, dim, :].reshape(self.n_instances, 1, self.series_length)
+                dim_words = self.transformers[i].transform(X_dim, y)
+                dim_words = dim_words[0]
+
+                for i in range(self.n_instances):
+                    for word, count in dim_words[i].items():
+                        words[i][word << self.highest_dim_bit | dim] = count
+
+            self.transformed_data = words
         else:
             self.transformers.append(SFA(
                 word_length=self.word_length,
@@ -395,26 +411,31 @@ class IndividualTDE(BaseClassifier):
             sfa = self.transformers[0].fit_transform(X, y)
             self.transformed_data = sfa[0]
 
-        self.class_vals = y
-        self.num_classes = np.unique(y).shape[0]
-        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
-        for index, classVal in enumerate(self.classes_):
-            self.class_dictionary[classVal] = index
-
         self._is_fitted = True
         return self
 
     def predict(self, X):
         self.check_is_fitted()
         X = check_X(X, coerce_to_numpy=True)
+        num_cases = X.shape[0]
 
         rng = check_random_state(self.random_state)
 
         classes = []
 
         if self.n_dims > 1:
-            print("yay")
-            #:)
+            words = [defaultdict(int) for _ in range(num_cases)]
+
+            for i, dim in enumerate(self.dims):
+                X_dim = X[:, dim, :].reshape(num_cases, 1, self.series_length)
+                dim_words = self.transformers[i].transform(X_dim)
+                dim_words = dim_words[0]
+
+                for i in range(num_cases):
+                    for word, count in dim_words[i].items():
+                        words[i][word << self.highest_dim_bit | dim] = count
+
+            test_bags = words
         else:
             test_bags = self.transformers[0].transform(X)
             test_bags = test_bags[0]
@@ -443,12 +464,73 @@ class IndividualTDE(BaseClassifier):
 
         return dists
 
-    def _train_predict(self, train_num):
-        test_bag = self.transformed_data[train_num]
+    def select_dims(self, X ,y):
+        self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
+        accs = []
+        transformers = []
+
+        # select dimensions based on reduced bag size accuracy
+        for i in range(self.n_dims):
+            self.dims.append(i)
+            transformers.append(SFA(
+                word_length=self.word_length,
+                alphabet_size=self.alphabet_size,
+                window_size=self.window_size,
+                norm=self.norm,
+                levels=self.levels,
+                binning_method="information-gain" if self.igb else "equi-depth",
+                bigrams=self.bigrams,
+                remove_repeat_words=True,
+                save_words=False,
+                save_binning_dft=True,
+            ))
+
+            X_dim = X[:, i, :].reshape(self.n_instances, 1, self.series_length)
+
+            transformers[i].fit(X_dim, y)
+            sfa = transformers[i].transform(
+                X_dim,
+                y,
+                transformers[i].binning_dft,
+            )
+            transformers[i].binning_dft = None
+
+            correct = 0
+            for i in range(self.n_instances):
+                if self._train_predict(i, sfa[0]) == y[i]:
+                    correct = correct + 1
+
+            accs.append(correct)
+
+        max_acc = max(accs)
+
+        dims = []
+        fin_transformers = []
+        for i in range(self.n_dims):
+            if accs[i] >= max_acc * self.dim_threshold:
+                dims.append(i)
+                fin_transformers.append(transformers[i])
+
+        if len(dims) > self.max_dims:
+            idx = self.random_state.choice(
+                len(dims),
+                self.max_dims,
+                replace=False,
+            ).tolist()
+            dims = [dims[i] for i in idx]
+            fin_transformers = [fin_transformers[i] for i in idx]
+
+        return dims, fin_transformers
+
+    def _train_predict(self, train_num, bags=None):
+        if bags is None:
+            bags = self.transformed_data
+
+        test_bag = bags[train_num]
         best_sim = -1
         nn = None
 
-        for n, bag in enumerate(self.transformed_data):
+        for n, bag in enumerate(bags):
             if n == train_num:
                 continue
 
