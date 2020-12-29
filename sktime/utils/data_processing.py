@@ -485,9 +485,9 @@ def from_multi_index_to_nested(
     x_nested = pd.DataFrame()
 
     # Loop the dimensions (columns) of multi-index DataFrame
-    # for _label, _series in multi_ind_dataframe.iteritems():
-    for _label in multi_ind_dataframe.columns:
-        _series = multi_ind_dataframe.loc[:, _label]
+    for _label, _series in multi_ind_dataframe.iteritems():  # noqa
+        # for _label in multi_ind_dataframe.columns:
+        #    _series = multi_ind_dataframe.loc[:, _label]
         # Slice along the instance dimension to return list of series for each case
         # Note: if you omit .rename_axis the returned DataFrame
         #       prints time axis dimension at the start of each cell,
@@ -559,16 +559,15 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
 
     instances = []
     for instance_idx in instance_idxs:
-        # instance = [
-        #    _val if isinstance(_val, pd.Series) else pd.Series(_val, name=_lab)
-        #    for _lab, _val in X.loc[instance_idx, :].iteritems()
-        # ]
         instance = [
-            X.loc[instance_idx, _label]
-            if isinstance(X.loc[instance_idx, _label], pd.Series)
-            else pd.Series(X.loc[instance_idx, _label], name=_label)
-            for _label in X.columns
+            _val if isinstance(_val, pd.Series) else pd.Series(_val, name=_lab)
+            for _lab, _val in X.loc[instance_idx, :].iteritems()  # noqa
         ]
+        # instance = [
+        #     X.loc[instance_idx, _label]
+        #     if isinstance(X.loc[instance_idx, _label], pd.Series)
+        #     else pd.Series(X.loc[instance_idx, _label], name=_label)
+        #     for _label in X.columns ]
 
         instance = pd.concat(instance, axis=1)
         # For primitive (non-nested column) assume the same
@@ -770,7 +769,7 @@ def nested_dataframes_equal(X1, X2):
         # verify the values are equal in each column
         else:
             cell_value_is_same = np.zeros_like(X1, dtype=bool)
-            cell_index_is_same = np.ones_like(X1, dtype=bool)
+            cell_index_is_same = np.zeros_like(X1, dtype=bool)
             cell_is_same = np.zeros_like(X1, dtype=bool)
 
             # Loop over columns and check if values are equal

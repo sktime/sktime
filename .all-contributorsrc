@@ -809,6 +809,16 @@
         "tutorial",
         "doc"
       ]
+    },
+    {
+      "login": "RNKuhns",
+      "name": "Ryan Kuhns",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/26907244?v=4",
+      "profile": "https://github.com/rnkuhns",
+      "contributions": [
+        "code",
+        "doc"
+      ]
     }
   ],
   "projectName": "sktime",

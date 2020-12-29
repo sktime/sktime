@@ -6,6 +6,7 @@ import textwrap
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score as acc
+from sktime.utils.data_processing import _make_column_names
 
 
 class TsFileParseException(Exception):
@@ -1059,6 +1060,7 @@ def generate_example_multi_index_dataframe(
     )
     # Make Multi index DataFrame
     mi_df = long_df.set_index(["case_id", "reading_id"]).pivot(columns="dim_id")
+    mi_df.columns = _make_column_names(n_columns)
 
     return mi_df
 
