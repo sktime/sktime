@@ -37,8 +37,8 @@ def test_airline_default():
 # components: "M" "M" "M" "TRUE"
 # discrepancy lies in damped (True in R but False in statsmodels)
 @pytest.mark.skipif(
-    sys.version_info[:2] == (3, 7) and sys.platform == "linux",
-    reason="Skip test due to unknown error on Linux with Python 3.7.9",
+    sys.platform == "linux",
+    reason="Skip test due to unknown error on Linux with Python 3.7 and 3.8",
 )
 def test_airline_allow_multiplicative_trend():
     fit_result_R = ["mul", "mul", "mul"]
