@@ -1,13 +1,12 @@
 # PedestrianCountingSystem dataset
 
-The City of Melbourne, Australia has developed an automated pedestrian counting system to better understand pedestrian activity within the municipality, such as how people use different city locations at different time of the day. The data analysis can facility decision making and urban planning for the future. 
-
+The City of Melbourne, Australia has developed an automated pedestrian counting system to better understand pedestrian activity within the municipality, such as how people use different city locations at different time of the day. The data analysis can facility decision making and urban planning for the future.
 We extract data of 10 locations for the whole year 2017. We make two datasets from these data.
 
 ## MelbournePedestrian (not this file) and
 ## Chinatown
 
-Data are pedestrian count in Chinatown-Swanston St (North for 12 months of the year 2017. Classes are based on whether data are from a normal day or a weekend day.  
+Data are pedestrian count in Chinatown-Swanston St (North for 12 months of the year 2017. Classes are based on whether data are from a normal day or a weekend day.
 
 - Class 1: Weekend
 - Class 2: Weekday
