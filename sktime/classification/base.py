@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-__all__ = ["BaseClassifier", "classifier_list", ]
+__all__ = [
+    "BaseClassifier",
+    "classifier_list",
+]
 __author__ = ["Markus Löning"]
 
 import numpy as np

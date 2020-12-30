@@ -20,7 +20,7 @@ from sktime.classification.dictionary_based import (
     WEASEL,
     MUSE,
 )
-from sktime.classification.distance_based import(
+from sktime.classification.distance_based import (
     ElasticEnsemble,
     ProximityForest,
     ProximityTree,
@@ -98,7 +98,7 @@ def set_classifier(cls, resampleId=None):
     :return: A classifier.
 
     """
-    name = cls.lower();
+    name = cls.lower()
     # Distance based
     if name == "pf" or name == "proximityforest":
         return ProximityForest(random_state=resampleId)
@@ -134,8 +134,7 @@ def set_classifier(cls, resampleId=None):
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif name == "mrseql":
-        return MrSEQLClassifier(seql_mode='fs', symrep=[
-            'sax', 'sfa'])
+        return MrSEQLClassifier(seql_mode='fs', symrep=['sax', 'sfa'])
     elif name == "rocket":
         rocket_pipeline = make_pipeline(
             Rocket(random_state=resampleId),
@@ -199,10 +198,10 @@ def run_experiment(
     results_path,
     cls_name,
     dataset,
-    classifier = None,
-    resampleID = 0,
-    overwrite = False,
-    format = ".ts",
+    classifier=None,
+    resampleID=0,
+    overwrite=False,
+    format=".ts",
     train_file=False,
 ):
     """

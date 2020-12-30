@@ -54,7 +54,7 @@ def test_set_classifier_on_chinatown():
         cls.fit(train_x, train_y)
         preds = cls.predict(test_x)
         ac = accuracy_score(test_Y, preds)
-        assert(abs(ac-expected_accuracy[name]) < 0.01)
+        assert abs(ac - expected_accuracy[name]) < 0.01
 
 
 def test_run_experiment_on_chinatown():
