@@ -12,7 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.base._fh import DELEGATED_METHODS
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.datetime import _get_duration
-from sktime.utils.datetime import _get_unit
+from sktime.utils.datetime import _get_freq
 from sktime.utils.datetime import _shift
 from sktime.forecasting.model_selection import temporal_train_test_split
 from sktime.forecasting.tests._config import INDEX_TYPE_LOOKUP
@@ -174,7 +174,7 @@ DURATIONS = [
 
 @pytest.mark.parametrize("duration", DURATIONS)
 def test_coerce_duration_to_int(duration):
-    ret = _coerce_duration_to_int(duration, unit=_get_unit(duration))
+    ret = _coerce_duration_to_int(duration, freq=_get_freq(duration))
 
     # check output type is always integer
     assert type(ret) in (pd.Int64Index, np.integer, int)
