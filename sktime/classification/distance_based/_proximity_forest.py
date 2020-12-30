@@ -839,7 +839,10 @@ class ProximityStump(BaseClassifier):
         """
         distances = []
         for exemplar in exemplars:
-            distances.append(distance_measure(instance, exemplar))
+            if exemplar.name == instance.name:
+                distances.append(0)
+            else:
+                distances.append(distance_measure(instance, exemplar))
         return np.array(distances) 
 
     def distance_to_exemplars(self, X):
