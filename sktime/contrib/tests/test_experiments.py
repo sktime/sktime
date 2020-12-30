@@ -11,7 +11,7 @@ from sktime.contrib.experiments import set_classifier
 from sklearn.metrics import accuracy_score
 
 # Map of classifier onto expected accuracy. This will need adjusting for any new
-expected_accuracy={
+expected_accuracy = {
     "ProximityForest": 0.0,
     "KNeighborsTimeSeriesClassifier": 0.0,
     "ElasticEnsemble": 0.0,
@@ -26,7 +26,7 @@ expected_accuracy={
     "CanonicalIntervalForest": 0.9766763848396501,
     "ShapeletTransformClassifier": 0.0,
     "ROCKET": 0.0,
-    "MrSEQLClassifier": 0.0,
+    "MrSEQLClassifier": 0.9737609329446064,
 }
 
 

@@ -134,7 +134,7 @@ def set_classifier(cls, resampleId=None):
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(time_contract_in_mins=1500)
     elif name == "mrseql":
-        return MrSEQLClassifier(seql_mode='fs', symrep=['sax', 'sfa'])
+        return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     elif name == "rocket":
         rocket_pipeline = make_pipeline(
             Rocket(random_state=resampleId),
@@ -582,7 +582,7 @@ if __name__ == "__main__":
         dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "mrseql"
+        classifier = "MrSEQL"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
