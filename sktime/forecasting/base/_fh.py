@@ -262,11 +262,11 @@ class ForecastingHorizon:
             return self._new(values, is_relative=True)
 
     @lru_cache(typed=True)
-    def to_absolute(self, cutoff=None):
+    def to_absolute(self, cutoff):
         """Return absolute values
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, pd.Timestamp, int
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one and vice versa.
 
