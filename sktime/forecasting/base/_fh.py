@@ -224,7 +224,10 @@ class ForecastingHorizon:
 
             # Bug fix for DatetimeIndex delta calculation (see #534)
             if isinstance(index, pd.DatetimeIndex):
-                index = index.to_period()
+                try:
+                    index = index.to_period()
+                except Exception:
+                    index = index.to_period(freq=cutoff.freq)
                 # Workaround to convert Timestamp to Period
                 date = pd.DatetimeIndex([cutoff], freq=cutoff.freq)
                 cutoff = date.to_period()[0]
