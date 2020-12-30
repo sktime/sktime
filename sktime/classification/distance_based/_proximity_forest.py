@@ -835,21 +835,12 @@ class ProximityStump(BaseClassifier):
         :param instance: the instance to compare to each exemplar
         :param distance_measure: the distance measure to provide similarity
         values
-        :return: list of distances to each exemplar
+        :return: 1d numpy array of distances to each exemplar
         """
-        n_exemplars = len(exemplars)
-        distances = np.empty(n_exemplars)
-        min_distance = np.math.inf
-        for exemplar_index in range(n_exemplars):
-            exemplar = exemplars[exemplar_index]
-            if exemplar.name == instance.name:
-                distance = 0
-            else:
-                distance = distance_measure(instance, exemplar)  # , min_distance)
-            if distance < min_distance:
-                min_distance = distance
-            distances[exemplar_index] = distance
-        return distances
+        distances = []
+        for exemplar in exemplars:
+            distances.append(distance_measure(instance, exemplar))
+        return np.array(distances) 
 
     def distance_to_exemplars(self, X):
         """
