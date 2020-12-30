@@ -155,12 +155,34 @@ class ForecastingHorizon:
         self._values = values
         self._is_relative = is_relative
 
-    def _new(self, values=None, is_relative=None):
-        """Construct new ForecastingHorizon based on current object"""
+    def _new(self, values=None, cutoff=None, is_relative=None):
+        """Construct new ForecastingHorizon based on current object
+
+        Parameters
+        ----------
+        values : pd.Index, np.array, list or int
+            Values of forecasting horizon
+        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+            Cutoff value is required to convert a relative forecasting
+            horizon to an absolute one and vice versa.
+        is_relative : bool, optional (default=True)
+        - If True, values are relative to end of training series.
+        - If False, values are absolute.
+
+        Returns
+        -------
+        ForecastingHorizon
+            New ForecastingHorizon based on current object
+        """
         if values is None:
             values = self._values
         if is_relative is None:
             is_relative = self.is_relative
+        if (
+            isinstance(values, pd.DatetimeIndex or pd.PeriodIndex)
+            and cutoff is not None
+        ):
+            values.freq = cutoff.freq
         return type(self)(values, is_relative)
 
     @property
@@ -242,11 +264,11 @@ class ForecastingHorizon:
             return self._new(relative, is_relative=True)
 
     @lru_cache(typed=True)
-    def to_absolute(self, cutoff=None):
+    def to_absolute(self, cutoff):
         """Return absolute values
         Parameters
         ----------
-        cutoff : pd.Period, pd.Timestamp, int, optional (default=None)
+        cutoff : pd.Period, pd.Timestamp, int
             Cutoff value is required to convert a relative forecasting
             horizon to an absolute one and vice versa.
 
@@ -256,7 +278,7 @@ class ForecastingHorizon:
             Absolute representation of forecasting horizon
         """
         if not self.is_relative:
-            return self._new()
+            return self._new(cutoff=cutoff)
 
         else:
             relative = self.to_pandas()
