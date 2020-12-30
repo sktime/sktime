@@ -17,8 +17,22 @@ from sktime.classification.dictionary_based import (
     BOSSEnsemble,
     ContractableBOSS,
     TemporalDictionaryEnsemble,
+    WEASEL,
+    MUSE,
 )
+from sktime.classification.distance_based import(
+    ElasticEnsemble,
+    ProximityForest,
+    ProximityTree,
+    ProximityStump,
+    KNeighborsTimeSeriesClassifier,
+    ShapeDTW,
+)
+from sktime.classification.interval_based import TimeSeriesForest
 from sktime.contrib.interval_based import CanonicalIntervalForest
+from sktime.classification.shapelet_based import MrSEQLClassifier
+from sktime.classification.shapelet_based import ShapeletTransformClassifier
+from sktime.classification.frequency_based import RandomIntervalSpectralForest
 from sktime.transformations.panel.rocket import Rocket
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -35,19 +49,8 @@ from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.pipeline import make_pipeline
-
-
-from sktime.classification.compose import TimeSeriesForestClassifier
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.classification.interval_based import TimeSeriesForest
-from sktime.classification.distance_based import ElasticEnsemble
-from sktime.classification.distance_based import ProximityForest
-from sktime.classification.distance_based import ProximityTree
-from sktime.classification.distance_based import ProximityStump
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
-import sktime.datasets.ucr_uea_dataset_names as dataset_lists
+import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = ["Tony Bagnall"]
 
@@ -60,44 +63,80 @@ generated in java
 
 """
 
+classifier_list = [
+    # Distance based
+    "ProximityForest",
+    "KNeighborsTimeSeriesClassifier",
+    "ElasticEnsemble",
+    "ShapeDTW",
+    # Dictionary based
+    "BOSS",
+    "ContractableBOSS",
+    "TemporalDictionaryEnsemble",
+    "WEASEL",
+    "MUSE",
+    # Interval based
+    "RandomIntervalSpectralForest",
+    "TimeSeriesForest",
+    "CanonicalIntervalForest",
+    # Shapelet based
+    "ShapeletTransformClassifier",
+    "ROCKET",
+    "MrSEQLClassifier",
+]
 
-def set_classifier(cls, resampleId):
+
+def set_classifier(cls, resampleId=None):
     """
-    Basic way of determining the classifier to build. To differentiate settings just
-    and another elif. So, for example, if you wanted tuned TSF, you just pass TuneTSF
-    and set up the tuning mechanism in the elif.
-    This may well get superceded, it is just how e have always done it
+    Basic way of creating the classifier to build using the default settings. This
+    set up is to help with batch jobs for multiple problems to facilitate easy
+    reproducability. You can set up bespoke classifier in many other ways.
+
     :param cls: String indicating which classifier you want
+    :param resampleId: classifier random seed
+
     :return: A classifier.
 
     """
-    if cls.lower() == "pf":
+    name = cls.lower();
+    # Distance based
+    if name == "pf" or name == "proximityforest":
         return ProximityForest(random_state=resampleId)
-    elif cls.lower() == "pt":
+    elif name == "pt" or name == "proximitytree":
         return ProximityTree(random_state=resampleId)
-    elif cls.lower() == "ps":
+    elif name == "ps" or name == "proximityStump":
         return ProximityStump(random_state=resampleId)
-    elif cls.lower() == "rise":
-        return RandomIntervalSpectralForest(random_state=resampleId)
-    elif cls.lower() == "tsf":
-        return TimeSeriesForest(random_state=resampleId)
-    elif cls.lower() == "cif":
-        return CanonicalIntervalForest(random_state=resampleId)
-    elif cls.lower() == "boss":
-        return BOSSEnsemble(random_state=resampleId)
-    elif cls.lower() == "cboss":
-        return ContractableBOSS(random_state=resampleId)
-    elif cls.lower() == "tde":
-        return TemporalDictionaryEnsemble(random_state=resampleId)
-    elif cls.lower() == "st":
-        return ShapeletTransformClassifier(time_contract_in_mins=1500)
-    elif cls.lower() == "dtwcv":
+    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
         return KNeighborsTimeSeriesClassifier(metric="dtwcv")
-    elif cls.lower() == "ee" or cls.lower() == "elasticensemble":
+    elif name == "ee" or name == "elasticensemble":
         return ElasticEnsemble()
-    elif cls.lower() == "tsf":
-        return TimeSeriesForestClassifier()
-    elif cls.lower() == "rocket":
+    elif name == "shapedtw":
+        return ShapeDTW()
+    # Dictionary based
+    elif name == "boss" or name == "bossensemble":
+        return BOSSEnsemble(random_state=resampleId)
+    elif name == "cboss" or name == "contractableboss":
+        return ContractableBOSS(random_state=resampleId)
+    elif name == "tde" or name == "temporaldictionaryensemble":
+        return TemporalDictionaryEnsemble(random_state=resampleId)
+    elif name == "weasel":
+        return WEASEL(random_state=resampleId)
+    elif name == "muse":
+        return MUSE(random_state=resampleId)
+    # Interval based
+    elif name == "rise" or name == "randomintervalspectralforest":
+        return RandomIntervalSpectralForest(random_state=resampleId)
+    elif name == "tsf" or name == "timeseriesforest":
+        return TimeSeriesForest(random_state=resampleId)
+    elif name == "cif" or name == "canonicalintervalforest":
+        return CanonicalIntervalForest(random_state=resampleId)
+    # Shapelet based
+    elif name == "stc" or name == "shapelettransformclassifier":
+        return ShapeletTransformClassifier(time_contract_in_mins=1500)
+    elif name == "mrseql":
+        return MrSEQLClassifier(seql_mode='fs', symrep=[
+            'sax', 'sfa'])
+    elif name == "rocket":
         rocket_pipeline = make_pipeline(
             Rocket(random_state=resampleId),
             RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
@@ -160,10 +199,10 @@ def run_experiment(
     results_path,
     cls_name,
     dataset,
-    classifier=None,
-    resampleID=0,
-    overwrite=False,
-    format=".ts",
+    classifier = None,
+    resampleID = 0,
+    overwrite = False,
+    format = ".ts",
     train_file=False,
 ):
     """
@@ -537,13 +576,14 @@ if __name__ == "__main__":
         #        results_dir = "/scratch/results"
         #         data_dir = "/bench/datasets/Univariate2018/"
         #         results_dir = "C:/Users/ajb/Dropbox/Turing Project/Results/"
+        print(" Local Run")
         data_dir = "C:/Code/sktime/sktime/datasets/data/"
         results_dir = "C:/Temp/"
         #        results_dir = "Z:/Results/sktime Bakeoff/"
-        dataset = "ItalyPowerDemand"
+        dataset = "Chinatown"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "CIF"
+        classifier = "mrseql"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
