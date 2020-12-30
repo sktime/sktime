@@ -18,7 +18,7 @@ expected_accuracy={
     "ShapeDTW": 0.0,
     "BOSS": 0.9037900874635568,
     "ContractableBOSS": 0.9416909620991254,
-    "TemporalDictionaryEnsemble": 0.9475218658892128
+    "TemporalDictionaryEnsemble": 0.9475218658892128,
     "WEASEL": 0.0,
     "MUSE": 0.0,
     "RandomIntervalSpectralForest": 0.9446064139941691,
