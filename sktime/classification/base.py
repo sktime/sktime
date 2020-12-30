@@ -11,8 +11,8 @@ from sktime.base import BaseEstimator
 from sktime.utils.validation.panel import check_X
 
 """
-Main list of classifiers extending this class. For clarity, some utility classifiers, 
-such as Proximity Stump, are not listed. 
+Main list of classifiers extending this class. For clarity, some utility classifiers,
+such as Proximity Stump, are not listed.
 """
 classifier_list = [
     # in classification/distance_based

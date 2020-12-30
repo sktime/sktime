@@ -22,7 +22,7 @@ expected_accuracy = {
     "WEASEL": 0.0,
     "MUSE": 0.0,
     "RandomIntervalSpectralForest": 0.9446064139941691,
-    "TimeSeriesForest": 0.0,
+    "TimeSeriesForest": 0.9708454810495627,
     "CanonicalIntervalForest": 0.9766763848396501,
     "ShapeletTransformClassifier": 0.0,
     "ROCKET": 0.0,
