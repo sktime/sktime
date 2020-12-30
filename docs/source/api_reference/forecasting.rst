@@ -72,6 +72,7 @@ ARIMA
     :template: class.rst
 
     AutoARIMA
+    ARIMA
 
 Theta
 -----
