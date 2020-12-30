@@ -132,8 +132,9 @@ def set_classifier(cls, resampleId=None):
         return CanonicalIntervalForest(random_state=resampleId)
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
-        return ShapeletTransformClassifier(random_state=resampleId,
-                                           time_contract_in_mins=1500)
+        return ShapeletTransformClassifier(
+            random_state=resampleId, time_contract_in_mins=1500
+        )
     elif name == "mrseql":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     elif name == "rocket":
