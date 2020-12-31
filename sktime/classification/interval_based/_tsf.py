@@ -130,7 +130,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not TimeSeriesForest._tags["multivariate"],
+            enforce_univariate=not TimeSeriesForest.capabilities["multivariate"],
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)
