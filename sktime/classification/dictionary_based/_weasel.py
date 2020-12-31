@@ -109,9 +109,7 @@ class WEASEL(BaseClassifier):
 
     """
     # Capability tags
-    _tags = {"multivariate": False,
-             "unequal_length": False,
-             "missing_values": False}
+    _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 
     def __init__(
         self,
