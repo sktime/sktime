@@ -570,9 +570,6 @@ if __name__ == "__main__":
         # preds = cls.predict(test_x)
         # ac = accuracy_score(test_y, preds)
         # assert abs(ac - expected_capabilities[name]) < 0.01
-
-
-
     #    test_loading()
     #    sys.exit()
     #    print('experimenting...')
