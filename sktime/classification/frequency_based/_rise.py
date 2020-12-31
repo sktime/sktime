@@ -140,7 +140,7 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
-        "missing_values": False
+        "missing_values": False,
     }
 
     # TO DO: handle missing values, unequal length series and multivariate

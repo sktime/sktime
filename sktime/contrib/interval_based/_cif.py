@@ -85,7 +85,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
-        "missing_values": False
+        "missing_values": False,
     }
 
     def __init__(
