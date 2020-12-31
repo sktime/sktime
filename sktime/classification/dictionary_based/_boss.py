@@ -77,6 +77,10 @@ class BOSSEnsemble(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
     classifiers/dictionary_based/BOSS.java
     """
+    # Capability tags
+    _tags = {"multivariate": False,
+             "unequal_length": False,
+             "missing_values": False}
 
     def __init__(
         self,

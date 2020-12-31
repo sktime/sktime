@@ -23,6 +23,8 @@ from sktime.transformations.panel.hog1d import HOG1DTransformer
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 
+__author__ = ["Vincent Nicholson"]
+
 
 class ShapeDTW(BaseClassifier):
 
@@ -105,9 +107,13 @@ class ShapeDTW(BaseClassifier):
     _____
     ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
         Pattern Recognition, 74, pp 171-184, 2018
-        http://www.sciencedirect.com/science/article/pii/S0031320317303710},
+        http://www.sciencedirect.com/science/article/pii/S0031320317303710,
 
     """
+    # Capability tags
+    _tags = {"multivariate": False,
+             "unequal_length": False,
+             "missing_values": False}
 
     def __init__(
         self,

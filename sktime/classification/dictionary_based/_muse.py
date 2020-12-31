@@ -89,6 +89,10 @@ class MUSE(BaseClassifier):
     classifiers/multivariate/WEASEL_MUSE.java
 
     """
+    # Capability tags
+    _tags = {"multivariate": True,
+             "unequal_length": False,
+             "missing_values": False}
 
     def __init__(
         self,
