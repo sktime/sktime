@@ -84,7 +84,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     Notes
     -----
     ..[1] Matthew Middlehurst, James Large, Gavin Cawley and Anthony Bagnall
-        "The Temporal Dictionary Ensemble {(TDE)} Classifier for Time Series
+        "The Temporal Dictionary Ensemble (TDE) Classifier for Time Series
         Classification",
             in proceedings of the European Conference on Machine Learning and
             Principles and Practice of Knowledge Discovery in Databases, 2020

@@ -102,25 +102,24 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
      Parameters
      ----------
-     n_estimators         : int, ensemble size, optional (default = 200)
-     random_state    : int, seed for random, optional (default to no seed,
-     I think!)
+     n_estimators    : int, ensemble size, optional (default = 200)
      min_interval    : int, minimum width of an interval, optional (default
      to 3)
      n_jobs          : int, optional (default=1)
          The number of jobs to run in parallel for both `fit` and `predict`.
          ``-1`` means using all processors.
+     random_state    : int, seed for random, optional (default = none)
 
      Attributes
      ----------
      n_classes    : int, extracted from the data
      num_atts     : int, extracted from the data
      n_intervals  : int, sqrt(num_atts)
-     classifiers    : array of shape = [n_estimators] of DecisionTree
+     classifiers  : array of shape = [n_estimators] of DecisionTree
      classifiers
-     intervals      : array of shape = [n_estimators][n_intervals][2] stores
+     intervals    : array of shape = [n_estimators][n_intervals][2] stores
      indexes of all start and end points for all classifiers
-     dim_to_use     : int, the column of the panda passed to use (can be
+     dim_to_use   : int, the column of the panda passed to use (can be
      passed a multidimensional problem, but will only use one)
 
      References
@@ -137,10 +136,10 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def __init__(
         self,
-        random_state=None,
         min_interval=3,
         n_estimators=200,
         n_jobs=1,
+        random_state=None,
     ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
