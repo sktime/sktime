@@ -29,7 +29,7 @@ class TestStats:
 # If the algorithm is changed or capabilities are altered, then this needs to be
 # verified and this file updated.
 expected_capabilities = {
-    "ProximityForest": TestStats(),
+    "ProximityForest": TestStats(unit_test_acc=0.8636363636363636),
     "KNeighborsTimeSeriesClassifier": TestStats(),
     "ElasticEnsemble": TestStats(),
     "ShapeDTW": TestStats(),
@@ -60,9 +60,12 @@ def test_classifiers_on_chinatown():
     for name in range(0, len(classifier_list)):
         cls = set_classifier(name)
         # Test capabilities match expected
-        assert cls.capabilities["multivariate"] == expected_capabilities[name].multivariate
-        assert cls.capabilities["unequal_length"] == expected_capabilities[name].unequal_length
-        assert cls.capabilities["missing_values"] == expected_capabilities[name].missing_values
+        assert cls.capabilities["multivariate"] == expected_capabilities[
+            name].multivariate
+        assert cls.capabilities["unequal_length"] == expected_capabilities[
+            name].unequal_length
+        assert cls.capabilities["missing_values"] == expected_capabilities[
+            name].missing_values
         # Test observed accuracy matches expected accuracy
         # cls.fit(train_x, train_y)
         # preds = cls.predict(test_x)

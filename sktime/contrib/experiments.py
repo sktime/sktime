@@ -584,7 +584,7 @@ if __name__ == "__main__":
         dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "ProximityForest"
+        classifier = "WEASEL"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
