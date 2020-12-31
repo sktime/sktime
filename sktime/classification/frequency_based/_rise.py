@@ -137,8 +137,11 @@ class RandomIntervalSpectralForest(ForestClassifier, BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {"multivariate": False, "unequal_length": False, "missing_values":
-                    False}
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False
+    }
 
     # TO DO: handle missing values, unequal length series and multivariate
     # problems

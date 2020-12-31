@@ -55,8 +55,11 @@ class ShapeletTransformClassifier(BaseClassifier):
     """
 
     # Capability tags
-    capabilities = {"multivariate": False, "unequal_length": False, "missing_values":
-                    False}
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False
+    }
 
     def __init__(self, time_contract_in_mins=300, n_estimators=500, random_state=None):
         self.time_contract_in_mins = time_contract_in_mins
