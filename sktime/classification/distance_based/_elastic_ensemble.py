@@ -77,6 +77,7 @@ class ElasticEnsemble(BaseClassifier):
 
 
     """
+    
     # Capability tags
     _tags = {"multivariate": False,
              "unequal_length": False,
