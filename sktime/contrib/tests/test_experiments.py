@@ -13,11 +13,11 @@ from sklearn.metrics import accuracy_score
 
 class TestStats:
     def __init__(
-            self,
-            chinatown_acc=0.0,
-            multivariate=False,
-            unequal_length=False,
-            missing_values=False
+        self,
+        chinatown_acc=0.0,
+        multivariate=False,
+        unequal_length=False,
+        missing_values=False
     ):
         self.chinatown_acc = chinatown_acc
         self.multivariate = multivariate
