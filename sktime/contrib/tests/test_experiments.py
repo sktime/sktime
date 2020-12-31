@@ -17,7 +17,7 @@ class TestStats:
         chinatown_acc=0.0,
         multivariate=False,
         unequal_length=False,
-        missing_values=False
+        missing_values=False,
     ):
         self.chinatown_acc = chinatown_acc
         self.multivariate = multivariate
