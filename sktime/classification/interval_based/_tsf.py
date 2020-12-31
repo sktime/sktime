@@ -127,7 +127,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             X,
             y,
             enforce_univariate=not TimeSeriesForest.multivariate,
-            coerce_to_numpy=True
+            coerce_to_numpy=True,
         )
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
