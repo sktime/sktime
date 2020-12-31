@@ -7,6 +7,8 @@ __all__ = ["CanonicalIntervalForest"]
 
 import numpy as np
 import math
+
+from scipy import signal
 from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import clone
@@ -95,6 +97,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         n_estimators=500,
         n_intervals=None,
         att_subsample_size=8,
+        use_transformation_intervals=False,
         random_state=None,
     ):
         super(CanonicalIntervalForest, self).__init__(
@@ -107,6 +110,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.min_interval = min_interval
         self.max_interval = max_interval
         self.att_subsample_size = att_subsample_size
+        self.use_transformation_intervals=use_transformation_intervals
 
         self.random_state = random_state
 
@@ -167,6 +171,10 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             self.max_interval = self.max_interval
         if self.max_interval < self.min_interval:
             self.max_interval = self.min_interval
+
+        if self.use_transformation_intervals:
+            X_p = signal.periodogram(X)
+            X_d = np.diff(X, 1)
 
         c22 = Catch22()
 
