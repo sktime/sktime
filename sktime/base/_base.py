@@ -64,8 +64,5 @@ class BaseEstimator(_BaseEstimator):
                 # (i.e. calling more tags on BaseEstimator multiple times)
                 more_tags = parent_class._tags
                 collected_tags.update(more_tags)
-            if hasattr(cls, "_tags"):
-                more_tags = cls._tags
-                collected_tags.update(more_tags)
 
         return collected_tags

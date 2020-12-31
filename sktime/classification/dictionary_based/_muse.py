@@ -91,7 +91,8 @@ class MUSE(BaseClassifier):
     """
 
     # Capability tags
-    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
+    capabilities = {"multivariate": True, "unequal_length": False, "missing_values":
+                    False}
 
     def __init__(
         self,

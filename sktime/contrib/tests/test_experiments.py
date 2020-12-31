@@ -60,9 +60,9 @@ def test_classifiers_on_chinatown():
     for name in range(0, len(classifier_list)):
         cls = set_classifier(name)
         # Test capabilities match expected
-        assert cls._tags["multivariate"] == expected_capabilities[name].multivariate
-        assert cls._tags["unequal_length"] == expected_capabilities[name].unequal_length
-        assert cls._tags["missing_values"] == expected_capabilities[name].missing_values
+        assert cls.capabilities["multivariate"] == expected_capabilities[name].multivariate
+        assert cls.capabilities["unequal_length"] == expected_capabilities[name].unequal_length
+        assert cls.capabilities["missing_values"] == expected_capabilities[name].missing_values
         # Test observed accuracy matches expected accuracy
         # cls.fit(train_x, train_y)
         # preds = cls.predict(test_x)
