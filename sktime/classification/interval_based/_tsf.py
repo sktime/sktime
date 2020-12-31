@@ -75,6 +75,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
      java/tsml/classifiers/interval_based/TSF.java
      Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
+
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 

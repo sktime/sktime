@@ -97,6 +97,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     metric_params   : dictionary for metric parameters: default = None
 
     """
+
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 

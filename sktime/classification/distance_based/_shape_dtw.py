@@ -110,6 +110,7 @@ class ShapeDTW(BaseClassifier):
         http://www.sciencedirect.com/science/article/pii/S0031320317303710,
 
     """
+
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 

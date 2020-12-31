@@ -1222,6 +1222,7 @@ class ProximityForest(BaseClassifier):
     classifiers/distance_based/proximity/ProximityForest.java
 
     """
+    
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 

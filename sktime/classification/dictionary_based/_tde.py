@@ -92,6 +92,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     tsml/classifiers/dictionary_based/TDE.java
 
     """
+
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 

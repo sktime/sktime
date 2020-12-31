@@ -108,6 +108,7 @@ class WEASEL(BaseClassifier):
     https://dl.acm.org/doi/10.1145/3132847.3132980
 
     """
+
     # Capability tags
     _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
 
