@@ -843,7 +843,7 @@ class ProximityStump(BaseClassifier):
                 distances.append(0)
             else:
                 distances.append(distance_measure(instance, exemplar))
-        return np.array(distances) 
+        return np.array(distances)
 
     def distance_to_exemplars(self, X):
         """
