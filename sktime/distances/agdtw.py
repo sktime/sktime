@@ -4,7 +4,7 @@ __email__ = "devaa@donnerluetjen.de"
 import numpy as np
 
 
-def agdtw_distance(first, second, **kwargs):
+def agdtw_distance(first, second, window=1):
     """
     idea and algorithm was taken from:
 
@@ -38,27 +38,35 @@ def agdtw_distance(first, second, **kwargs):
     }
     @param first: numpy array containing the first time series
     @param second: numpy array containing the second time series
+    @param window: float, representing the window width as ratio of the window
+    and the longer series
     @return: a float containing the kernel distance
     """
 
-    def warping_matrix(series_1, series_2):
+    def warping_matrix(series_1, series_2, window=1):
         """
-        Creates the warping matrix
+        Creates the warping matrix and while respecting a given window
         @param series_1: numpy array containing the first series
         @param series_2: numpy array containing the second series
+        @param window: float, representing the window width as ratio of the
+        window and the longer series
         @return: 2D numpy array containing the minimum squared distances
         """
         row_dim = len(series_1)
         col_dim = len(series_2)
         warp_matrix = np.full([row_dim, col_dim], np.inf)
         warp_matrix[0, 0] = 0
+        # 1 >= window >= 0
+        window = min(1.0, abs(window))
+        absolute_window_size = int(max(row_dim, col_dim) * window)
         for row in range(row_dim):
             for col in range(col_dim):
-                min_index = index_of_section_min(warp_matrix, (row, col))
-                min_dist_to_here = warp_matrix[min_index]
-                warp_matrix[row, col] = \
-                    (series_1[row] - series_2[col]) ** 2 \
-                    + min_dist_to_here
+                if abs(row - col) <= absolute_window_size:
+                    min_index = index_of_section_min(warp_matrix, (row, col))
+                    min_dist_to_here = warp_matrix[min_index]
+                    warp_matrix[row, col] = \
+                        (series_1[row] - series_2[col]) ** 2 \
+                        + min_dist_to_here
         return warp_matrix
 
     def euclidean_distance(x, y):
@@ -163,7 +171,7 @@ def agdtw_distance(first, second, **kwargs):
         kernel_distances = np.exp(-normalized_distances)
         return sum(kernel_distances)
 
-    warp_matrix = warping_matrix(first, second)
+    warp_matrix = warping_matrix(first, second, window)
     warp_path = warping_path(warp_matrix, first, second)
 
     return kernel_distance(warp_path)
