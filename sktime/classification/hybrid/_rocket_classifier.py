@@ -5,20 +5,14 @@
 __author__ = "Matthew Middlehurst"
 __all__ = ["ROCKETClassifier"]
 
-import math
-import time
-from collections import defaultdict
-
 import numpy as np
-from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
-from sktime.transformers.panel.rocket import Rocket
+from sktime.transformations.panel.rocket import Rocket
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -38,6 +32,9 @@ class ROCKETClassifier(BaseClassifier):
     -----
 
     """
+
+    # Capability tags
+    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
 
     def __init__(
         self,
@@ -90,7 +87,7 @@ class ROCKETClassifier(BaseClassifier):
                 )
                 rocket_pipeline.fit(X, y)
                 self.classifiers.append(rocket_pipeline)
-                self.weights.append(rocket_pipeline.steps[1].best_score_)
+                self.weights.append(rocket_pipeline.steps[1][1].best_score_)
                 self.weight_sum = self.weight_sum + self.weights[i]
         else:
             rocket_pipeline = make_pipeline(
@@ -132,6 +129,6 @@ class ROCKETClassifier(BaseClassifier):
             dists = np.zeros((X.shape[0], self.n_classes))
             preds = self.classifiers[0].predict(X)
             for i in range(0, X.shape[0]):
-                dists[i, preds[i]] = 1
+                dists[i, np.where(self.classes_ == preds[i])] = 1
 
         return dists
