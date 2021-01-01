@@ -77,7 +77,11 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
     """
 
     # Capability tags
-    _tags = {"multivariate": False, "unequal_length": False, "missing_values": False}
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -126,7 +130,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         X, y = check_X_y(
             X,
             y,
-            enforce_univariate=not TimeSeriesForest.multivariate,
+            enforce_univariate=not TimeSeriesForest.capabilities["multivariate"],
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)

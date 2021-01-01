@@ -89,7 +89,12 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     the dimension to extract from for each interval
     """
 
-    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,

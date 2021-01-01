@@ -269,7 +269,7 @@ def boss_benchmarking():
 
 
 distance_test = [
-    "Chinatown",
+    "UnitTest",
     "ItalyPowerDemand",
 ]
 

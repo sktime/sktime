@@ -96,7 +96,11 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     """
 
     # Capability tags
-    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -114,7 +118,6 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.randomly_selected_params = randomly_selected_params
-        self.bigrams = bigrams
         self.random_state = random_state
 
         self.classifiers = []

@@ -222,6 +222,13 @@ class MrSEQLClassifier(BaseClassifier):
 
     '''
 
+    # Capability tags
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False
+    }
+
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
 
         if 'sax' in symrep or 'sfa' in symrep:
