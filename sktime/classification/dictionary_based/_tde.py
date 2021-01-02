@@ -130,7 +130,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.randomly_selected_params = randomly_selected_params
-        self.bigrams=bigrams
+        self.bigrams = bigrams
         self.random_state = random_state
 
         # multivariate
@@ -429,17 +429,19 @@ class IndividualTDE(BaseClassifier):
 
             self.transformed_data = words
         else:
-            self.transformers.append(SFA(
-                word_length=self.word_length,
-                alphabet_size=self.alphabet_size,
-                window_size=self.window_size,
-                norm=self.norm,
-                levels=self.levels,
-                binning_method="information-gain" if self.igb else "equi-depth",
-                bigrams=self.bigrams,
-                remove_repeat_words=True,
-                save_words=False,
-            ))
+            self.transformers.append(
+                SFA(
+                    word_length=self.word_length,
+                    alphabet_size=self.alphabet_size,
+                    window_size=self.window_size,
+                    norm=self.norm,
+                    levels=self.levels,
+                    binning_method="information-gain" if self.igb else "equi-depth",
+                    bigrams=self.bigrams,
+                    remove_repeat_words=True,
+                    save_words=False,
+                )
+            )
             sfa = self.transformers[0].fit_transform(X, y)
             self.transformed_data = sfa[0]
 
@@ -496,7 +498,7 @@ class IndividualTDE(BaseClassifier):
 
         return dists
 
-    def select_dims(self, X ,y):
+    def select_dims(self, X, y):
         self.highest_dim_bit = (math.ceil(math.log2(self.n_dims))) + 1
         accs = []
         transformers = []
@@ -504,18 +506,20 @@ class IndividualTDE(BaseClassifier):
         # select dimensions based on reduced bag size accuracy
         for i in range(self.n_dims):
             self.dims.append(i)
-            transformers.append(SFA(
-                word_length=self.word_length,
-                alphabet_size=self.alphabet_size,
-                window_size=self.window_size,
-                norm=self.norm,
-                levels=self.levels,
-                binning_method="information-gain" if self.igb else "equi-depth",
-                bigrams=self.bigrams,
-                remove_repeat_words=True,
-                save_words=False,
-                save_binning_dft=True,
-            ))
+            transformers.append(
+                SFA(
+                    word_length=self.word_length,
+                    alphabet_size=self.alphabet_size,
+                    window_size=self.window_size,
+                    norm=self.norm,
+                    levels=self.levels,
+                    binning_method="information-gain" if self.igb else "equi-depth",
+                    bigrams=self.bigrams,
+                    remove_repeat_words=True,
+                    save_words=False,
+                    save_binning_dft=True,
+                )
+            )
 
             X_dim = X[:, i, :].reshape(self.n_instances, 1, self.series_length)
 

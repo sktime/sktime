@@ -157,7 +157,8 @@ class DrCIF(ForestClassifier, BaseClassifier):
 
         if self.n_intervals is None:
             self.n_intervals = 4 + int(
-                (math.sqrt(self.series_length) * math.sqrt(self.n_dims))/3)
+                (math.sqrt(self.series_length) * math.sqrt(self.n_dims)) / 3
+            )
         if self.n_intervals <= 0:
             self.n_intervals = 1
         if self.series_length < self.min_interval:
@@ -173,7 +174,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
         T = [X, X_p, X_d]
-        self.total_intervals = self.n_intervals*2 + int(self.n_intervals/2)
+        self.total_intervals = self.n_intervals * 2 + int(self.n_intervals / 2)
 
         self.intervals = np.zeros(
             (self.n_estimators, self.att_subsample_size * self.total_intervals, 2),
@@ -184,8 +185,10 @@ class DrCIF(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.total_intervals,
-                       self.n_instances),
+                shape=(
+                    self.att_subsample_size * self.total_intervals,
+                    self.n_instances,
+                ),
                 dtype=np.float32,
             )
 
@@ -196,8 +199,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
             j = 0
             for r in range(0, len(T)):
                 transform_length = T[r].shape[2]
-                transform_n_intervals = int(self.n_intervals/2) if r == 1 else \
-                    self.n_intervals
+                transform_n_intervals = (
+                    int(self.n_intervals/2) if r == 1 else self.n_intervals
+                )
 
                 # Find the random intervals for classifier i, transformation r
                 # and concatenate features
@@ -313,16 +317,19 @@ class DrCIF(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.total_intervals,
-                       n_test_instances),
+                shape=(
+                    self.att_subsample_size * self.total_intervals,
+                    n_test_instances,
+                ),
                 dtype=np.float32,
             )
 
             p = 0
             j = 0
             for r in range(0, len(T)):
-                transform_n_intervals = int(self.n_intervals / 2) if r == 1 else \
-                    self.n_intervals
+                transform_n_intervals = (
+                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
+                )
 
                 for _ in range(0, transform_n_intervals):
                     for a in range(0, self.att_subsample_size):
@@ -341,47 +348,79 @@ class DrCIF(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         if self.atts[i][a] == 23:
             # median
             return np.median(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 24:
             # std_dev
             return np.std(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 25:
             # slope
             return _slope(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 26:
             # iqr
             return stats.iqr(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 27:
             # min
             return np.min(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 28:
             # max
             return np.max(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         else:
             return c22._transform_single_feature(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 feature=a
             )

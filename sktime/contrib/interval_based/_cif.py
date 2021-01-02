@@ -161,7 +161,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.atts = []
 
         if self.n_intervals is None:
-            self.n_intervals = int(math.sqrt(self.series_length)*math.sqrt(self.n_dims))
+            self.n_intervals = int(
+                math.sqrt(self.series_length)*math.sqrt(self.n_dims)
+            )
         if self.n_intervals <= 0:
             self.n_intervals = 1
         if self.series_length < self.min_interval:
@@ -316,23 +318,39 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 23:
             # std_dev
             return np.std(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         elif self.atts[i][a] == 24:
             # slope
             return _slope(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 axis=1
             )
         else:
             return c22._transform_single_feature(
-                X[:, self.dims[i][j], self.intervals[i][j][0]:self.intervals[i][j][1]],
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                ],
                 feature=a
             )

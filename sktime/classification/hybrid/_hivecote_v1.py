@@ -13,8 +13,10 @@ from sklearn.utils.multiclass import class_distribution
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.dictionary_based import ContractableBOSS
-from sktime.classification.interval_based import TimeSeriesForest, \
-    RandomIntervalSpectralForest
+from sktime.classification.interval_based import (
+    TimeSeriesForest,
+    RandomIntervalSpectralForest,
+)
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.utils.validation.panel import check_X_y, check_X
 
@@ -62,8 +64,8 @@ class HIVECOTEV1(BaseClassifier):
     }
 
     def __init__(
-            self,
-            random_state=None,
+        self,
+        random_state=None,
     ):
         self.random_state = random_state
 
@@ -153,13 +155,21 @@ class HIVECOTEV1(BaseClassifier):
 
         dists = np.zeros((X.shape[0], self.n_classes))
 
-        dists = np.add(dists, self.stc.predict_proba(X) *
-                       (np.ones(self.n_classes) * self.stc_weight))
-        dists = np.add(dists, self.tsf.predict_proba(X) *
-                       (np.ones(self.n_classes) * self.tsf_weight))
-        dists = np.add(dists, self.rise.predict_proba(X) *
-                       (np.ones(self.n_classes) * self.rise_weight))
-        dists = np.add(dists, self.cboss.predict_proba(X) *
-                       (np.ones(self.n_classes) * self.cboss_weight))
+        dists = np.add(
+            dists,
+            self.stc.predict_proba(X) * (np.ones(self.n_classes) * self.stc_weight)
+                       )
+        dists = np.add(
+            dists,
+            self.tsf.predict_proba(X) * (np.ones(self.n_classes) * self.tsf_weight)
+        )
+        dists = np.add(
+            dists,
+            self.rise.predict_proba(X) * (np.ones(self.n_classes) * self.rise_weight)
+        )
+        dists = np.add(
+            dists,
+            self.cboss.predict_proba(X) * (np.ones(self.n_classes) * self.cboss_weight)
+        )
 
-        return dists/dists.sum(axis=1, keepdims=True)
+        return dists / dists.sum(axis=1, keepdims=True)

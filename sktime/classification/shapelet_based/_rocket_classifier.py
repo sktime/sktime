@@ -111,8 +111,9 @@ class ROCKETClassifier(BaseClassifier):
         if self.ensemble:
             for i in range(self.ensemble_size):
                 rocket_pipeline = make_pipeline(
-                    Rocket(num_kernels=self.num_kernels,
-                           random_state=self.random_state),
+                    Rocket(
+                        num_kernels=self.num_kernels, random_state=self.random_state
+                    ),
                     RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
                 )
                 rocket_pipeline.fit(X, y)
