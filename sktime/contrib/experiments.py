@@ -11,7 +11,6 @@ import os
 
 import sklearn.preprocessing
 import sklearn.utils
-from sklearn.linear_model import RidgeClassifierCV
 
 from sktime.classification.dictionary_based import (
     BOSSEnsemble,
@@ -28,12 +27,15 @@ from sktime.classification.distance_based import (
     KNeighborsTimeSeriesClassifier,
     ShapeDTW,
 )
-from sktime.classification.interval_based import TimeSeriesForest
-from sktime.contrib.interval_based import CanonicalIntervalForest
-from sktime.classification.shapelet_based import MrSEQLClassifier
+from sktime.classification.hybrid import HIVECOTEV1
+from sktime.classification.interval_based import TimeSeriesForest, \
+    RandomIntervalSpectralForest
+from sktime.contrib.hybrid._catch22_forest_classifier import Catch22ForestClassifier
+from sktime.contrib.interval_based import CanonicalIntervalForest, \
+    DrCIF
+from sktime.classification.shapelet_based import MrSEQLClassifier, ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
-from sktime.transformations.panel.rocket import Rocket
+
 
 os.environ["MKL_NUM_THREADS"] = "1"  # must be done before numpy import!!
 os.environ["NUMEXPR_NUM_THREADS"] = "1"  # must be done before numpy import!!
@@ -48,7 +50,6 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_predict
-from sklearn.pipeline import make_pipeline
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 import sktime.datasets.tsc_dataset_names as dataset_lists
 
@@ -130,6 +131,8 @@ def set_classifier(cls, resampleId=None):
         return TimeSeriesForest(random_state=resampleId)
     elif name == "cif" or name == "canonicalintervalforest":
         return CanonicalIntervalForest(random_state=resampleId)
+    elif name == "drcif":
+        return DrCIF(random_state=resampleId)
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
@@ -138,11 +141,12 @@ def set_classifier(cls, resampleId=None):
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
     elif name == "rocket":
-        rocket_pipeline = make_pipeline(
-            Rocket(random_state=resampleId),
-            RidgeClassifierCV(alphas=np.logspace(-3, 3, 10), normalize=True),
-        )
-        return rocket_pipeline
+        return ROCKETClassifier(random_state=resampleId)
+    # Hybrid
+    elif name == "catch22":
+        return Catch22ForestClassifier(random_state=resampleId)
+    elif name == "hivecotev1":
+        return HIVECOTEV1(random_state=resampleId)
     else:
         raise Exception("UNKNOWN CLASSIFIER")
 
@@ -529,7 +533,7 @@ def test_loading():
         print(testX.shape)
         print("Test Y shape :")
         print(testY.shape)
-    for i in range(16, len(mdataset_lists.ultivariate_datasets)):
+    for i in range(16, len(dataset_lists.multivariate)):
         data_dir = "E:/mtsc_ts/"
         dataset = dataset_lists.multivariate[i]
         print("Loading " + dataset + " in position " + str(i) + ".......")

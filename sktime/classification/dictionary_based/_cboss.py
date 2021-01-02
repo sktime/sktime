@@ -193,6 +193,7 @@ class ContractableBOSS(BaseClassifier):
             )
             boss.fit(X_subsample, y_subsample)
             boss._clean()
+            boss.subsample = subsample
 
             boss.accuracy = self._individual_train_acc(
                 boss, y_subsample, subsample_size, lowest_acc
@@ -258,18 +259,18 @@ class ContractableBOSS(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = np.ones(self.n_classes) * self.weight_sum
         for i in range(num_inst):
+            divisor = 0
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[
-                    self.class_dictionary.get(clf._train_predict(i), -1)
-                ] += self.weights[n]
+                if i in clf.subsample:
+                    sums[
+                        self.class_dictionary.get(clf._train_predict(i), -1)
+                    ] += self.weights[n]
+                    divisor += self.weights[n]
 
-            dists = sums / divisor
-            for n in range(self.n_classes):
-                results[i][n] = dists[n]
+            results[i] = sums / (np.ones(self.n_classes) * divisor)
 
         return results
 

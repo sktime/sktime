@@ -41,7 +41,7 @@
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(20)
 #
-#     # train c22f
+#     # train CIF
 #     cif = CanonicalIntervalForest(n_estimators=100, random_state=0)
 #     cif.fit(X_train.iloc[indices], y_train[indices])
 #

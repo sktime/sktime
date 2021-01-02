@@ -323,6 +323,7 @@ class IndividualBOSS(BaseClassifier):
         )
         self.transformed_data = []
         self.accuracy = 0
+        self.subsample = []
 
         self.class_vals = []
         self.num_classes = 0

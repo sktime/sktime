@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-""" Canonical Interval Forest Classifier (CIF).
+""" Diverse Representation Canonical Interval Forest Classifier (DrCIF).
 """
 
 __author__ = ["Matthew Middlehurst"]
-__all__ = ["DiverseRepresentationCanonicalIntervalForest"]
+__all__ = ["DrCIF"]
 
 import numpy as np
 import math
@@ -25,24 +25,18 @@ _check_soft_dependencies("catch22")
 from sktime.contrib.transformers.catch22_features import Catch22  # noqa: E402
 
 
-class DiverseRepresentationCanonicalIntervalForest(ForestClassifier, BaseClassifier):
-    """Canonical Interval Forest Classifier.
-
-    @article{middlehurst2020canonical,
-      title={The Canonical Interval Forest {(CIF)} Classifier for Time Series
-      Classification},
-      author={Middlehurst, Matthew and Large, James and Bagnall, Anthony},
-      journal={IEEE International Conference on Big Data},
-      year={2020}
-    }
+class DrCIF(ForestClassifier, BaseClassifier):
+    """Diverse Representation Canonical Interval Forest Classifier.
 
     Interval based forest making use of the catch22 feature set on randomly
-    selected intervals.
+    selected intervals on the base series, periodogram representation and
+    differences representation.
 
     Overview: Input n series length m
     for each tree
-        sample sqrt(m) intervals
+        sample 4 + (sqrt(m)*sqrt(d))/3 intervals per representation
         subsample att_subsample_size tsf/catch22 attributes randomly
+        randomly select dimension for each interval
         calculate attributes for each interval, concatenate to form new
         data set
         build decision tree on new data set
@@ -55,7 +49,7 @@ class DiverseRepresentationCanonicalIntervalForest(ForestClassifier, BaseClassif
 
     For the original Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
-    /tsml/classifiers/interval_based/CIF.java
+    /tsml/classifiers/interval_based/DrCIF.java
 
     !!!
     The catch22 package is currently unstable, results will differ between operating
@@ -91,7 +85,12 @@ class DiverseRepresentationCanonicalIntervalForest(ForestClassifier, BaseClassif
     the dimension to extract from for each interval
     """
 
-    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -102,7 +101,7 @@ class DiverseRepresentationCanonicalIntervalForest(ForestClassifier, BaseClassif
         att_subsample_size=10,
         random_state=None,
     ):
-        super(DiverseRepresentationCanonicalIntervalForest, self).__init__(
+        super(DrCIF, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
             n_estimators=n_estimators,
         )

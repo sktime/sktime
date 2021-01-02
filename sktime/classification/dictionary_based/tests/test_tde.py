@@ -69,7 +69,7 @@ def test_tde_on_basic_motions():
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(20)
 
-    # train c22f
+    # train TDE
     tde = TemporalDictionaryEnsemble(
         n_parameter_samples=50,
         max_ensemble_size=10,

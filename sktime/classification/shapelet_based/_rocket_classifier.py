@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+""" RandOm Convolutional KErnel Transform (ROCKET)
 """
 
 __author__ = "Matthew Middlehurst"
@@ -19,22 +19,50 @@ from sktime.utils.validation.panel import check_X_y
 
 class ROCKETClassifier(BaseClassifier):
     """
+    Classifier wrapped for the ROCKET transformer using RidgeClassifierCV as the
+    base classifier.
+    Allows the creation of an ensemble of ROCKET classifiers to allow for
+    generation of probabilities as the expense of scalability.
 
     Parameters
     ----------
+    num_kernels             : int, number of kernels for ROCKET transform
+    (default=10,000)
+    ensemble                : boolean, create ensemble of ROCKET's (default=False)
+    ensemble_size           : int, size of the ensemble (default=25)
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
     Attributes
     ----------
+    classifiers             : array of IndividualTDE classifiers
+    weights                 : weight of each classifier in the ensemble
+    weight_sum              : sum of all weights
+    n_classes               : extracted from the data
 
     Notes
     -----
+    @article{dempster_etal_2019,
+      author  = {Dempster, Angus and Petitjean, Francois and Webb,
+      Geoffrey I},
+      title   = {ROCKET: Exceptionally fast and accurate time series
+      classification using random convolutional kernels},
+      year    = {2019},
+      journal = {arXiv:1910.13051}
+    }
+
+    Java version
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/hybrids/ROCKETClassifier.java
 
     """
 
     # Capability tags
-    _tags = {"multivariate": True, "unequal_length": False, "missing_values": False}
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -60,6 +88,8 @@ class ROCKETClassifier(BaseClassifier):
 
     def fit(self, X, y):
         """
+        Build a single or ensemble of pipelines containing the ROCKET transformer and
+        RidgeClassifierCV classifier.
 
         Parameters
         ----------

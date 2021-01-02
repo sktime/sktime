@@ -19,7 +19,7 @@ from sktime.series_as_features.compose import FeatureUnion
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.utils.slope_and_trend import _slope
 import sktime.classification.interval_based._tsf as ib
-import sktime.classification.frequency_based._rise as fb
+import sktime.classification.interval_based._rise as fb
 import sktime.classification.dictionary_based._boss as db
 import sktime.classification.distance_based._time_series_neighbors as dist
 import sktime.contrib.experiments as exp

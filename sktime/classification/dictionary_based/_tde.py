@@ -26,7 +26,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     """
     Temporal Dictionary Ensemble (TDE) as described in [1].
 
-    Overview: Input n series length m
+    Overview: Input n series length m with d dimensions
     TDE searches k parameter values selected using a Gaussian processes
     regressor, evaluating each with a LOOCV. It then retains s
     ensemble members.
@@ -40,12 +40,13 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     for any combination, an individual TDE classifier slides a window of
     length w along the series. The w length window is shortened to
     an l length word through taking a Fourier transform and keeping the
-    first l/2 complex coefficients. These l
-    coefficients are then discretised into alpha possible values, to form a
-    word length l using breakpoints found using b. A histogram of words for
-    each series is formed and stored, using a spatial pyramid of h levels.
-    fit involves finding n histograms.
+    first l/2 complex coefficients. These lcoefficients are then discretised
+    into alpha possible values, to form a word length l using breakpoints
+    found using b. A histogram of words for each series is formed and stored,
+    using a spatial pyramid of h levels. For multivariate series, accuracy
+    from a reduced histogram is used to select dimensions.
 
+    fit involves finding n histograms.
     predict uses 1 nearest neighbour with a the histogram intersection
     distance function.
 
@@ -56,15 +57,23 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
     Parameters
     ----------
-    n_parameter_samples     : int, if search is randomised, number of
-    parameter combos to try (default=250)
-    max_ensemble_size       : int or None, retain a maximum number of
-    classifiers, even if within threshold, optional (default = 100)
-    time_limit              : time contract to limit build time in minutes
-    (default=0, no limit)
-    max_win_len_prop        : maximum window length as a proportion of
-    series length (default =1)
-    min_window              : minimum window size, (default=10)
+    n_parameter_samples     : int, number of parameter combos to try
+    (default=250)
+    max_ensemble_size       : int, maximum number of classifiers
+    (default=50)
+    time_limit              : int, time contract to limit build time in
+    minutes (default=0, no limit)
+    max_win_len_prop        : float between 0 and 1, maximum window length
+    as a proportion of series length (default=1)
+    min_window              : int, minimum window size (default=10)
+    randomly_selected_params: int, number of parameters randomly selected
+    before GP is used (default=50)
+    bigrams                 : boolean or None, whether to use bigrams
+    (default=None, true for univariate, false for multivariate)
+    dim_threshold           : float between 0 and 1, dimension accuracy
+    threshold for multivariate (default=0.85)
+    max_dims                : int, max number of dimensions for multivariate
+    (default=20)
     random_state            : int or None, seed for random, integer,
     optional (default to no seed)
 
@@ -73,11 +82,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     n_classes               : extracted from the data
     n_instances             : extracted from the data
     n_dims                  : extracted from the data
-    n_estimators            : The final number of classifiers used (
-    <=max_ensemble_size)
+    n_estimators            : The final number of classifiers used
+    (<=max_ensemble_size)
     series_length           : length of all series (assumed equal)
-    classifiers             : array of DecisionTree classifiers
+    classifiers             : array of IndividualTDE classifiers
     weights                 : weight of each classifier in the ensemble
+    weight_sum              : sum of all weights
     prev_parameters_x       : parameter value of previous classifiers for GP
     prev_parameters_y       : accuracy of previous classifiers for GP
 
@@ -111,6 +121,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         min_window=10,
         randomly_selected_params=50,
         bigrams=None,
+        dim_threshold=0.85,
+        max_dims=20,
         random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
@@ -118,7 +130,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
         self.randomly_selected_params = randomly_selected_params
+        self.bigrams=bigrams
         self.random_state = random_state
+
+        # multivariate
+        self.dim_threshold = dim_threshold
+        self.max_dims = max_dims
 
         self.classifiers = []
         self.weights = []
@@ -196,7 +213,10 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 use_bigrams = False
             else:
                 use_bigrams = True
+        else:
+            use_bigrams = self.bigrams
 
+        # use time limit or n_parameter_samples if limit is 0
         while (
             train_time < self.time_limit or num_classifiers < self.n_parameter_samples
         ) and len(possible_parameters) > 0:
@@ -220,9 +240,12 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 *parameters,
                 alphabet_size=self.alphabet_size,
                 bigrams=use_bigrams,
+                dim_threshold=self.dim_threshold,
+                max_dims=self.max_dims,
                 random_state=self.random_state
             )
             tde.fit(X_subsample, y_subsample)
+            tde.subsample = subsample
 
             tde.accuracy = self._individual_train_acc(
                 tde, y_subsample, subsample_size, lowest_acc
@@ -290,18 +313,18 @@ class TemporalDictionaryEnsemble(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = np.ones(self.n_classes) * np.sum(self.weights)
         for i in range(num_inst):
+            divisor = 0
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[
-                    self.class_dictionary.get(clf._train_predict(i), -1)
-                ] += self.weights[n]
+                if i in clf.subsample:
+                    sums[
+                        self.class_dictionary.get(clf._train_predict(i), -1)
+                    ] += self.weights[n]
+                    divisor += self.weights[n]
 
-            dists = sums / divisor
-            for n in range(self.n_classes):
-                results[i][n] = dists[n]
+            results[i] = sums / (np.ones(self.n_classes) * divisor)
 
         return results
 
@@ -357,6 +380,7 @@ class IndividualTDE(BaseClassifier):
         self.alphabet_size = alphabet_size
         self.bigrams = bigrams
 
+        # multivariate
         self.dim_threshold = dim_threshold
         self.max_dims = max_dims
 
@@ -365,6 +389,7 @@ class IndividualTDE(BaseClassifier):
         self.transformers = []
         self.transformed_data = []
         self.accuracy = 0
+        self.subsample = []
 
         self.n_instances = 0
         self.n_dims = 0
@@ -387,6 +412,7 @@ class IndividualTDE(BaseClassifier):
         for index, classVal in enumerate(self.classes_):
             self.class_dictionary[classVal] = index
 
+        # select dimensions using accuracy estimate if multivariate
         if self.n_dims > 1:
             self.dims, self.transformers = self.select_dims(X, y)
 

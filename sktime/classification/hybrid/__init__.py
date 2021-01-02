@@ -1,5 +1,5 @@
 __all__ = [
-    "ROCKETClassifier"
+    "HIVECOTEV1",
 ]
 
-from sktime.classification.hybrid._rocket_classifier import ROCKETClassifier
+from sktime.classification.hybrid._hivecote_v1 import HIVECOTEV1

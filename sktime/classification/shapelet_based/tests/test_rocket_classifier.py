@@ -2,7 +2,7 @@
 import numpy as np
 from numpy import testing
 
-from sktime.classification.hybrid import ROCKETClassifier
+from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.datasets import load_gunpoint, load_italy_power_demand, load_basic_motions
 
 
@@ -12,8 +12,8 @@ def test_rocket_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train TDE
-    rocket = ROCKETClassifier(random_state=0)
+    # train ROCKET
+    rocket = ROCKETClassifier(num_kernels=1000, random_state=0)
     rocket.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -27,9 +27,10 @@ def test_rocket_ensemble_on_gunpoint():
     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(10)
 
-    # train IndividualTDE
+    # train ROCKET ensemble
     rocket_e = ROCKETClassifier(
-        num_kernels=2000,
+        num_kernels=1000,
+        ensemble_size=10,
         ensemble=True,
         random_state=0,
     )
@@ -46,8 +47,8 @@ def test_rocket_on_power_demand():
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(100)
 
-    # train TDE
-    rocket = ROCKETClassifier(random_state=0)
+    # train ROCKET
+    rocket = ROCKETClassifier(num_kernels=1000, random_state=0)
     rocket.fit(X_train, y_train)
 
     score = rocket.score(X_test.iloc[indices], y_test[indices])
@@ -60,8 +61,8 @@ def test_rocket_on_basic_motions():
     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(20)
 
-    # train c22f
-    rocket = ROCKETClassifier(random_state=0)
+    # train ROCKET
+    rocket = ROCKETClassifier(num_kernels=1000, random_state=0)
     rocket.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same

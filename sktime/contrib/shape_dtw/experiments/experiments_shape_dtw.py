@@ -54,7 +54,7 @@ from statsmodels.tsa.stattools import acf
 
 import sktime.classification.compose._ensemble as ensemble
 import sktime.classification.dictionary_based._boss as db
-import sktime.classification.frequency_based._rise as fb
+import sktime.classification.interval_based._rise as fb
 import sktime.classification.interval_based._tsf as ib
 import sktime.classification.distance_based._elastic_ensemble as dist
 import sktime.classification.distance_based._time_series_neighbors as nn
@@ -64,12 +64,11 @@ from sktime.classification.distance_based._shape_dtw import ShapeDTW
 from sktime.utils.data_io import load_from_tsfile_to_dataframe as load_ts
 from sktime.transformations.panel.compose import make_row_transformer
 from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sklearn.preprocessing import StandardScaler
 
 from sktime.transformations.panel.reduce import Tabularizer
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import FeatureUnion
-from datasets.dataset_lists import dataset_lists
+import sktime.datasets.tsc_dataset_names as dataset_lists
 
 __author__ = "Anthony Bagnall"
 

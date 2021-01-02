@@ -41,6 +41,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     for each tree
         sample sqrt(m) intervals
         subsample att_subsample_size tsf/catch22 attributes randomly
+        randomly select dimension for each interval
         calculate attributes for each interval, concatenate to form new
         data set
         build decision tree on new data set
@@ -135,6 +136,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
         intervals and catch22/tsf summary features
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,

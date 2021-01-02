@@ -12,7 +12,7 @@
 #     X_test, y_test = load_gunpoint(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(10)
 #
-#     # train CIF
+#     # train DrCIF
 #     drcif = DiverseRepresentationCanonicalIntervalForest(
 #         n_estimators=100,
 #         random_state=0,
@@ -30,7 +30,7 @@
 #     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(100)
 #
-#     # train CIF
+#     # train DrCIF
 #     drcif = DiverseRepresentationCanonicalIntervalForest(
 #         n_estimators=100,
 #         random_state=0,
@@ -47,7 +47,7 @@
 #     X_test, y_test = load_basic_motions(split="test", return_X_y=True)
 #     indices = np.random.RandomState(0).permutation(20)
 #
-#     # train c22f
+#     # train DrCIF
 #     drcif = DiverseRepresentationCanonicalIntervalForest(
 #         n_estimators=100,
 #         random_state=0,
