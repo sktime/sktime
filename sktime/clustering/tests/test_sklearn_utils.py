@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-import sktime
-from sktime.utils.load_data import load_from_tsfile_to_dataframe
 from sktime.clustering.sklearn_utils import (
     convert_df_to_sklearn_format,
     Data_Frame,
@@ -45,12 +42,3 @@ def test_convert_df_to_learn_format(df: Data_Frame):
     assert isinstance(sklearn_data, Numpy_Array)
     for arr in sklearn_data:
         assert isinstance(arr, Numpy_Array)
-
-
-# print("=============== START ================")
-DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
-train_x, train_y = load_from_tsfile_to_dataframe(
-    os.path.join(DATA_PATH, "ArrowHead/ArrowHead_TRAIN.ts")
-)
-test_convert_df_to_learn_format(train_x)
-test_create_sklearn_k_means(train_x, train_y)
