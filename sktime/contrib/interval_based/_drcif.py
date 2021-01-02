@@ -22,7 +22,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 _check_soft_dependencies("catch22")
-from sktime.contrib.transformers.catch22_features import Catch22  # noqa: E402
+from sktime.contrib.transformations.catch22_features import Catch22  # noqa: E402
 
 
 class DrCIF(ForestClassifier, BaseClassifier):
