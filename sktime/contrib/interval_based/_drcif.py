@@ -351,7 +351,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -361,7 +361,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -371,7 +371,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -381,7 +381,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -391,7 +391,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -401,7 +401,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -411,7 +411,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 axis=1,
             )
@@ -420,7 +420,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
                 ],
                 feature=a,
             )
