@@ -162,7 +162,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         if self.n_intervals is None:
             self.n_intervals = int(
-                math.sqrt(self.series_length)*math.sqrt(self.n_dims)
+                math.sqrt(self.series_length) * math.sqrt(self.n_dims)
             )
         if self.n_intervals <= 0:
             self.n_intervals = 1
@@ -321,9 +321,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 23:
             # std_dev
@@ -331,9 +331,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 24:
             # slope
@@ -341,16 +341,16 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         else:
             return c22._transform_single_feature(
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                feature=a
+                feature=a,
             )

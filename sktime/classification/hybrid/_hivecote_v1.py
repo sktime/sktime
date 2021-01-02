@@ -157,19 +157,19 @@ class HIVECOTEV1(BaseClassifier):
 
         dists = np.add(
             dists,
-            self.stc.predict_proba(X) * (np.ones(self.n_classes) * self.stc_weight)
-                       )
-        dists = np.add(
-            dists,
-            self.tsf.predict_proba(X) * (np.ones(self.n_classes) * self.tsf_weight)
+            self.stc.predict_proba(X) * (np.ones(self.n_classes) * self.stc_weight),
         )
         dists = np.add(
             dists,
-            self.rise.predict_proba(X) * (np.ones(self.n_classes) * self.rise_weight)
+            self.tsf.predict_proba(X) * (np.ones(self.n_classes) * self.tsf_weight),
         )
         dists = np.add(
             dists,
-            self.cboss.predict_proba(X) * (np.ones(self.n_classes) * self.cboss_weight)
+            self.rise.predict_proba(X) * (np.ones(self.n_classes) * self.rise_weight),
+        )
+        dists = np.add(
+            dists,
+            self.cboss.predict_proba(X) * (np.ones(self.n_classes) * self.cboss_weight),
         )
 
         return dists / dists.sum(axis=1, keepdims=True)

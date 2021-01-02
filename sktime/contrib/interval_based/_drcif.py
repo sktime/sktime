@@ -200,7 +200,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
             for r in range(0, len(T)):
                 transform_length = T[r].shape[2]
                 transform_n_intervals = (
-                    int(self.n_intervals/2) if r == 1 else self.n_intervals
+                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
                 )
 
                 # Find the random intervals for classifier i, transformation r
@@ -351,9 +351,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         if self.atts[i][a] == 23:
             # median
@@ -361,9 +361,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 24:
             # std_dev
@@ -371,9 +371,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 25:
             # slope
@@ -381,9 +381,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 26:
             # iqr
@@ -391,9 +391,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 27:
             # min
@@ -401,9 +401,9 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         elif self.atts[i][a] == 28:
             # max
@@ -411,16 +411,16 @@ class DrCIF(ForestClassifier, BaseClassifier):
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                axis=1
+                axis=1,
             )
         else:
             return c22._transform_single_feature(
                 X[
                     :,
                     self.dims[i][j],
-                    self.intervals[i][j][0]:self.intervals[i][j][1]
+                    self.intervals[i][j][0]:self.intervals[i][j][1],
                 ],
-                feature=a
+                feature=a,
             )
