@@ -1031,9 +1031,7 @@ def generate_example_long_table(num_cases=50, series_len=20, num_dims=2):
     return df
 
 
-def generate_example_multi_index_dataframe(
-    n_instances=50, n_columns=3, n_timepoints=20
-):
+def make_multi_index_dataframe(n_instances=50, n_columns=3, n_timepoints=20):
     """Generates example multi-index DataFrame.
 
     Parameters
