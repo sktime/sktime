@@ -9,7 +9,7 @@ from sktime.utils.data_io import load_from_tsfile_to_dataframe
 from sktime.classification.base import classifier_list
 from sktime.contrib.experiments import set_classifier
 from sklearn.metrics import accuracy_score
-
+import sktime.datasets.base as sktime
 
 class TestStats:
     def __init__(
@@ -49,8 +49,7 @@ expected_capabilities = {
 
 # Test that the classifiers listed in classification.base all
 def test_classifiers_on_default_problem():
-    path = os.path.join(os.path.dirname(__file__), "datasets/data")
-
+    path = os.path.join(sktime.MODULE, "datasets/data")
     train_x, train_y = load_from_tsfile_to_dataframe(
         os.path.join(path, "UnitTest/UnitTest_TRAIN.ts")
     )
