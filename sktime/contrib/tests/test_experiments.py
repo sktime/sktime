@@ -11,6 +11,7 @@ from sktime.contrib.experiments import set_classifier
 from sklearn.metrics import accuracy_score
 import sktime.datasets.base as sktime
 
+
 class TestStats:
     def __init__(
         self,
