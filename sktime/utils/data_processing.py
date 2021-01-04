@@ -366,8 +366,11 @@ def from_nested_to_long(X):
         Long Pandas DataFrame
     """
 
-    long_df = from_nested_to_multi_index(X)
+    long_df = from_nested_to_multi_index(
+        X, instance_index="index", time_index="time_index"
+    )
     long_df.reset_index(inplace=True)
+    long_df = long_df.melt(id_vars=["index", "time_index"], var_name="column")
 
     # columns = []
     # for i in range(len(X.columns)):
@@ -378,6 +381,8 @@ def from_nested_to_long(X):
     #     df["time_index"] = df["variable"].str.split("__").str[1]
     #     df = df.drop(columns="variable")
     #     columns.append(df)
+
+    # long_df = pd.concat(columns)
     return long_df
 
 
@@ -623,6 +628,7 @@ def from_nested_to_multi_index(X, instance_index=None, time_index=None):
         instances.append(instance)
 
     X_mi = pd.concat(instances)
+    X_mi.columns = X.columns
 
     return X_mi
 
