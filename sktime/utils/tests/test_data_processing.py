@@ -6,7 +6,7 @@ from sktime.series_as_features.tests._config import N_COLUMNS
 from sktime.series_as_features.tests._config import N_INSTANCES
 from sktime.series_as_features.tests._config import N_TIMEPOINTS
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.data_io import generate_example_multi_index_dataframe
+from sktime.utils.data_io import make_multi_index_dataframe
 from sktime.utils.data_processing import from_3d_numpy_to_nested
 from sktime.utils.data_processing import from_nested_to_2d_array
 from sktime.utils.data_processing import from_nested_to_3d_numpy
@@ -93,7 +93,7 @@ def test_from_3d_numpy_to_2d_array(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_multi_index_to_3d_numpy(n_instances, n_columns, n_timepoints):
-    mi_df = generate_example_multi_index_dataframe(
+    mi_df = make_multi_index_dataframe(
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
 
@@ -133,7 +133,7 @@ def test_from_3d_numpy_to_multi_index(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_columns", N_COLUMNS)
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_multi_index_to_nested(n_instances, n_columns, n_timepoints):
-    mi_df = generate_example_multi_index_dataframe(
+    mi_df = make_multi_index_dataframe(
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
     nested_df = from_multi_index_to_nested(
@@ -170,7 +170,7 @@ def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
     zero_df = pd.DataFrame(np.zeros_like(nested))
     nested_heterogenous = pd.concat([zero_df, nested], axis=1)
 
-    mi_df = generate_example_multi_index_dataframe(
+    mi_df = make_multi_index_dataframe(
         n_instances=n_instances, n_timepoints=n_timepoints, n_columns=n_columns
     )
 
