@@ -45,16 +45,67 @@ def __check_shape(series: Series, max_length: int) -> Numpy_Array:
 
     Parameters
     ----------
-    arr: numpy array
-        Numpy array which is a given dimension sub series
+    series: Series
+        Pandas series that contains sub series i.e.
+        (series[series1, series2, ..., seriesn])
     max_length: int
         Integer that is the intended max length of each array. Needed
         so that the array can be padded to the correct legnth
     """
     for sub in series:
-        sub_series_len: int = len(sub)
+        sub_series_len: int = sub.shape[0]
         if sub_series_len != max_length:
-            raise Exception(
+            raise DataFormatError(
                 "Cannot convert df as not all \
                             series are equal length"
             )
+
+
+def __check_array_type(arr: Numpy_Array, arr_type: any):
+    """
+    Method that ensures the dtype of the numpy array is what is desired.
+    If it is not an error is thrown.
+
+    Parameters
+    ----------
+    arr: Numpy_Array
+        Array to check the type of
+    arr_type: any
+        Numpy array type
+
+    Retunrs
+    -------
+    boolean:
+        true if same data type, false if different datatypes
+    """
+    if arr.dtype == arr_type:
+        return True
+    raise DataFormatError("Numpy array is not of type", arr_type)
+
+
+class DataFormatError(Exception):
+    """
+    Exception class to informa the user about a formatting error related
+    to the array passed
+
+    Attributes
+    ---------
+    position: int
+        index position that the error was detected
+    message: str
+        String explanation of the error
+    """
+
+    def __init__(self, message: str, position: int = -1):
+        self.position = position
+        self.message = message
+        super().__init__(self.message)
+
+    def __str__(self) -> str:
+        if self.position != -1:
+            return (
+                "The array provided is formatted incorrectly due to "
+                f"{self.message}. \n\n The error was detected at index "
+                f"position: {self.position}"
+            )
+        return "The array provided is formatted incorrectly due to " f"{self.message}."
