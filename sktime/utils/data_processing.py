@@ -24,8 +24,26 @@ def _cell_is_series_or_array(cell):
     return isinstance(cell, (pd.Series, np.ndarray))
 
 
+def _nested_cell_mask(X):
+    return X.applymap(_cell_is_series_or_array)
+
+
 def are_columns_nested(X):
-    return X.applymap(_cell_is_series_or_array).any().values
+    """Checks whether any cells have nested structure in each DataFrame column.
+
+    Parameters
+    ----------
+    X : pd.DataFrame
+        DataFrame to check for nested data structures.
+
+    Returns
+    -------
+    any_nested : bool
+        If True, at least one column is nested.
+        If False, no nested columns.
+    """
+    any_nested = _nested_cell_mask(X).any().values
+    return any_nested
 
 
 def _nested_cell_timepoints(cell):
@@ -39,11 +57,11 @@ def _nested_cell_timepoints(cell):
 def _check_equal_index(X):
     """
     Check if all time-series for a given column in a
-    nested pandas DataFrame have the same index.
+    nested Pandas DataFrame have the same index.
 
     Parameters
     ----------
-    X : nested pandas DataFrame
+    X : nested pd.DataFrame
         Input dataframe with time-series in cells.
 
     Returns
@@ -95,28 +113,43 @@ def _check_equal_index(X):
 
 
 def from_3d_numpy_to_2d_array(X):
-    return X.reshape(X.shape[0], -1)
+    """Converts 3d NumPy array (n_instances, n_columns, n_timepoints) to
+    a 2d NumPy array with shape (n_instances, n_columns*n_timepoints)
+
+    Parameters
+    ----------
+    X : np.ndarray
+        The input 3d-NumPy array with shape
+        (n_instances, n_columns, n_timepoints)
+
+    Returns
+    -------
+    array_2d : np.ndarray
+        A 2d-NumPy array with shape (n_instances, n_columns*n_timepoints)
+    """
+    array_2d = X.reshape(X.shape[0], -1)
+    return array_2d
 
 
 def from_nested_to_2d_array(X, return_numpy=False):
-    """Convert nested pandas DataFrames or Series with numpy arrays or
-    pandas Series in cells into tabular
-    pandas DataFrame with primitives in cells, i.e. a data frame with the
+    """Convert nested Pandas DataFrame or Series with NumPy arrays or
+    Pandas Series in cells into tabular
+    Pandas DataFrame with primitives in cells, i.e. a data frame with the
     same number of rows as the input data and
     as many columns as there are observations in the nested series. Requires
     series to be have the same index.
 
     Parameters
     ----------
-    X : nested pandas DataFrame or nested Series
-    return_numpy : bool, optional (default=False)
-        - If True, returns a numpy array of the tabular data.
-        - If False, returns a pandas dataframe with row and column names.
+    X : nested pd.DataFrame or nested pd.Series
+    return_numpy : bool, default = False
+        - If True, returns a NumPy array of the tabular data.
+        - If False, returns a Pandas DataFrame with row and column names.
 
     Returns
     -------
      Xt : pandas DataFrame
-        Transformed dataframe in tabular format
+        Transformed DataFrame in tabular format
     """
 
     # TODO does not handle dataframes with nested series columns *and*
@@ -185,8 +218,8 @@ def from_nested_to_2d_array(X, return_numpy=False):
 def from_2d_array_to_nested(
     X, index=None, columns=None, time_index=None, cells_as_numpy=False
 ):
-    """Convert tabular pandas DataFrame with only primitives in cells into
-    nested pandas DataFrame with a single column.
+    """Convert tabular Pandas DataFrame with only primitives in cells into
+    nested Pandas DataFrame with a single column.
 
     Parameters
     ----------
@@ -196,16 +229,16 @@ def from_2d_array_to_nested(
         If True, then nested cells contain NumPy array
         If False, then nested cells contain Pandas Series
 
-    index : array-like, shape=[n_samples], optional (default=None)
-        Sample (row) index of transformed dataframe
+    index : array-like, shape=[n_samples], optional (default = None)
+        Sample (row) index of transformed DataFrame
 
-    time_index : array-like, shape=[n_obs], optional (default=None)
-        Time series index of transformed dataframe
+    time_index : array-like, shape=[n_obs], optional (default = None)
+        Time series index of transformed DataFrame
 
     Returns
     -------
-    Xt : pandas DataFrame
-        Transformed dataframe in nested format
+    Xt : pd.DataFrame
+        Transformed DataFrame in nested format
     """
 
     if (time_index is not None) and cells_as_numpy:
@@ -320,34 +353,37 @@ def _get_column_names(X):
 
 
 def from_nested_to_long(X):
-    """Convert nested dataframe to long dataframe
+    """Convert nested DataFrame to long DataFrame.
 
     Parameters
     ----------
     X : pd.DataFrame
-        nested dataframe
+        The nested DataFrame
 
     Returns
     -------
-    Xt : pd.DataFrame
-        long Pandas dataframe
+    long_df : pd.DataFrame
+        Long Pandas DataFrame
     """
-    columns = []
 
-    for i in range(len(X.columns)):
-        df = from_nested_to_2d_array(X.iloc[:, i])
-        df = df.reset_index()
-        df = df.melt(id_vars="index")
-        df["column"] = df["variable"].str.split("__").str[0]
-        df["time_index"] = df["variable"].str.split("__").str[1]
-        df = df.drop(columns="variable")
-        columns.append(df)
-    return pd.concat(columns)
+    long_df = from_nested_to_multi_index(X)
+    long_df.reset_index(inplace=True)
+
+    # columns = []
+    # for i in range(len(X.columns)):
+    #     df = from_nested_to_2d_array(X.iloc[:, i])
+    #     df = df.reset_index()
+    #     df = df.melt(id_vars="index")
+    #     df["column"] = df["variable"].str.split("__").str[0]
+    #     df["time_index"] = df["variable"].str.split("__").str[1]
+    #     df = df.drop(columns="variable")
+    #     columns.append(df)
+    return long_df
 
 
 def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
     """Convert panel data stored as Pandas multi-index DataFrame to
-    Numpy 3-dimensional array (n_instances, n_columns, n_timepoints).
+    Numpy 3-dimensional NumPy array (n_instances, n_columns, n_timepoints).
 
     Parameters
     ----------
@@ -515,6 +551,8 @@ def from_multi_index_to_nested(
 def from_nested_to_multi_index(X, instance_index=None, time_index=None):
     """Converts nested Pandas DataFrame (with time series as Pandas Series
     or NumPy array in cells) into multi-indexed Pandas DataFrame.
+
+    Can convert mixed nested and primitive DataFrame to multi-index DataFrame.
 
     Parameters
     ----------
@@ -695,11 +733,7 @@ def is_nested_dataframe(X):
     To allow for a mixture of nested and primitive columns types the
     the considers whether any column is a nested np.ndarray or pd.Series.
 
-    By checking whether the first row has a nested structure, this implicitly
-    assumes that any column with nested structure will have that structure
-    in the first row. This will be true if column contains a homogenous
-    nested structure and can be true if it contains a mix of nested and
-    primitive types, but happens to have a nested structure in the first row.
+    Column is consider nested if any cells in column have a nested structure.
 
     Parameters
     -----------
@@ -753,10 +787,11 @@ def nested_dataframes_equal(X1, X2):
 
     else:
         n_instances, n_columns = X1.shape
-        x1_nested_cell_mask = X1.applymap(_cell_is_series_or_array)
+        x1_nested_cell_mask = _nested_cell_mask(X1)
+        # Not reusing are_columns_nested to avoid repeating _nested_cell_mask
         x1_nested_col_mask = x1_nested_cell_mask.any().values
 
-        x2_nested_cell_mask = X2.applymap(_cell_is_series_or_array)
+        x2_nested_cell_mask = _nested_cell_mask(X2)
         # x2_nested_col_mask = x2_nested_cell_mask.any().values
 
         # If X1 and X2 do not have nested structure in same cells then
