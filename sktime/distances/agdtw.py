@@ -36,7 +36,7 @@ def agdtw_distance(first, second, window=1):
       biburl    = {https://dblp.org/rec/conf/iconip/XueZTWL17.bib},
       bibsource = {dblp computer science bibliography, https://dblp.org}
     }
-    
+
     @param first: numpy array containing the first time series
     @param second: numpy array containing the second time series
     @param window: float, representing the window width as ratio of the window
@@ -120,6 +120,14 @@ def warping_path(matrix, first, second):
 
 
 def dynamic_section(matrix, current_index=(0, 0)):
+    """
+    returns a section of the given matrix neighboring the current cell to
+    the left and above and below
+    @param matrix: a numpy array containing the original matrix
+    @param current_index: a tuple of integers representing the index of the
+    current cell into the matrix
+    @return: a numpy array containing the desired section
+    """
     section_org_row = max(current_index[0] - 1, 0)
     section_org_col = max(current_index[1] - 1, 0)
     section_end_row = min(current_index[0] + 1, matrix.shape[0])
