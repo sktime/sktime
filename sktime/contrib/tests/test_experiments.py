@@ -38,7 +38,7 @@ expected_capabilities = {
     "ContractableBOSS": TestStats(unit_test_acc=0.8636363636363636),
     "TemporalDictionaryEnsemble": TestStats(unit_test_acc=0.8636363636363636),
     "WEASEL": TestStats(unit_test_acc=0.7272727272727273),
-    "MUSE": TestStats(unit_test_acc=0.7272727272727273,multivariate=True),
+    "MUSE": TestStats(unit_test_acc=0.7272727272727273, multivariate=True),
     "RandomIntervalSpectralForest": TestStats(unit_test_acc=0.8636363636363636),
     "TimeSeriesForest": TestStats(unit_test_acc=0.9090909090909091),
     "CanonicalIntervalForest": TestStats(unit_test_acc=0.8636363636363636),

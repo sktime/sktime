@@ -555,31 +555,6 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-    # for name in range(0, len(classifier_list)):
-        # cls = set_classifier(classifier_list[name])
-        # Test capabilities match expected
-        # assert (
-        #         cls.capabilities["multivariate"] ==
-        #         expected_capabilities[name].multivariate
-        # )
-        # assert (
-        #         cls.capabilities["unequal_length"] ==
-        #         expected_capabilities[name].unequal_length
-        # )
-        # assert (
-        #         cls.capabilities["missing_values"] ==
-        #         expected_capabilities[name].missing_values
-        # )
-        # # Test observed accuracy matches expected accuracy
-        # cls.fit(train_x, train_y)
-        # preds = cls.predict(test_x)
-        # ac = accuracy_score(test_y, preds)
-        # assert abs(ac - expected_capabilities[name]) < 0.01
-    #    test_loading()
-    #    sys.exit()
-    #    print('experimenting...')
-    # Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset}
-    # -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = sys.argv[1]
