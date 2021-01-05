@@ -10,7 +10,7 @@ Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import numpy as np
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
 import esig  # noqa: E402
