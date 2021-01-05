@@ -404,7 +404,7 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
                 "If `fh` is given, `test_size` and `train_size` cannot "
                 "also be specified."
             )
-        return _split_by_fh(y, fh, X=X)
+        return _split_y_by_fh(y, fh, X=X)
     else:
         series = (y,) if X is None else (y, X)
         return _train_test_split(
@@ -416,7 +416,9 @@ def temporal_train_test_split(y, X=None, test_size=None, train_size=None, fh=Non
         )
 
 
-def _split_by_fh(y, fh, X=None):
+def _split_y_by_fh(y, fh, X=None):
+    """Helper function to split time series with forecasting horizon handling both
+    relative and absolute horizons"""
     if X is not None:
         check_equal_time_index(y, X)
     fh = check_fh(fh)
