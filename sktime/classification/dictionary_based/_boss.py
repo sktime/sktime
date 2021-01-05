@@ -272,7 +272,8 @@ class BOSSEnsemble(BaseClassifier):
 
         return results
 
-    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
+    @staticmethod
+    def _individual_train_acc(boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
