@@ -20,9 +20,10 @@ class KMeans(Cluster, KMeans):
         verbose=0,
         random_state=None,
         copy_x=True,
-        algorithm="auto"
+        algorithm="auto",
+        distance: distance_function
     ):
-        super().__init__(distance_function)
+        super().__init__(distance)
         KMeans.__init__(
             n_clusters=n_clusters,
             init=init,
