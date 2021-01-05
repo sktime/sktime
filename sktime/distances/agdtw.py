@@ -4,7 +4,7 @@ __email__ = "devaa@donnerluetjen.de"
 import numpy as np
 
 
-def agdtw_distance(first, second, window=1):
+def agdtw_distance(first, second, window=1, sigma=1.0):
     """
     idea and algorithm was taken from:
 
@@ -39,23 +39,24 @@ def agdtw_distance(first, second, window=1):
 
     @param first: numpy array containing the first time series
     @param second: numpy array containing the second time series
-    @param window: float, representing the window width as ratio of the window
+    @param window: float representing the window width as ratio of the window
     and the longer series
+    @param sigma: float representing the kernel parameter
     @return: a float containing the kernel distance
     """
 
     warp_matrix = warping_matrix(first, second, window)
     warp_path = warping_path(warp_matrix, first, second)
 
-    return kernel_distance(warp_path)
+    return kernel_distance(warp_path, sigma)
 
 
-def warping_matrix(series_1, series_2, window=1):
+def warping_matrix(series_1, series_2, window=1.0):
     """
-    Creates the warping matrix and while respecting a given window
+    Creates the warping matrix while respecting a given window
     @param series_1: numpy array containing the first series
     @param series_2: numpy array containing the second series
-    @param window: float, representing the window width as ratio of the
+    @param window: float representing the window width as ratio of the
     window and the longer series
     @return: 2D numpy array containing the minimum squared distances
     """
@@ -65,6 +66,7 @@ def warping_matrix(series_1, series_2, window=1):
     warp_matrix[0, 0] = 0
     # 1 >= window >= 0
     window = min(1.0, abs(window))
+    # working on indices requires absolute_window_size to be integer
     absolute_window_size = int(max(row_dim, col_dim) * window)
     for row in range(row_dim):
         for col in range(col_dim):
@@ -78,7 +80,8 @@ def warping_matrix(series_1, series_2, window=1):
 
 def euclidean_distance(x, y):
     """
-    Calculates the euclidean distance between of two univariate time series
+    Calculates the euclidean distance between two elements of two
+    univariate time series
     @param x: element from first series
     @param y: element from second series
     @return euclidean distance
@@ -93,9 +96,9 @@ def warping_path(matrix, first, second):
     @matrix: the warping matrix
     @first: numpy array containing the first time series
     @second: numpy array containing the second time series
-    @return: numpy array containing the warping path with element distances
+    @return: numpy array containing the warping path with euclidean distance
+    between the relevant elements in the form [dist_eu, i_s, j_s
     """
-
     matrix_dim = matrix.shape
     warp_path = np.full((sum(matrix_dim), 3),
                         np.NAN)  # initialize to max length warping path
@@ -178,24 +181,18 @@ def index_of_section_min(matrix, current_index=(0, 0)):
     return min_row, min_col  # point to minimum element from section
 
 
-def variance_of_warping_path(path):
-    """
-    calculate the variance needed for finding the kernel distance
-    @param path: numpy array containing the warping path
-    @return: float containing the variance
-    """
-    mean = sum(path[:, 0]) / len(path)
-    variance = sum((mean - path[:, 0]) ** 2) / len(path)
-    return variance
-
-
-def kernel_distance(path):
+def kernel_distance(path, sigma):
     """
     calculates the kernel distance by processing each individual distance
     along the warping path
-    @param path: numpy array containing the warping path
+    @param path: numpy array containing the warping path with euclidean
+    distance between the relevant elements in the form [dist_eu, i_s, j_s
+    @param sigma: float representing the kernel parameter
     @return: float containing the kernel distance
     """
-    normalized_distances = path[:, 0] ** 2 / variance_of_warping_path(path)
+    if sigma == 0:
+        raise ZeroDivisionError
+    euclidean_distances = path[:, 0]
+    normalized_distances = euclidean_distances ** 2 / (sigma ** 2)
     kernel_distances = np.exp(-normalized_distances)
     return sum(kernel_distances)
