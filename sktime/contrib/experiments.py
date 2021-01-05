@@ -108,12 +108,12 @@ def set_classifier(cls, resampleId=None):
         return ProximityTree(random_state=resampleId)
     elif name == "ps" or name == "proximityStump":
         return ProximityStump(random_state=resampleId)
-    elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
-        return KNeighborsTimeSeriesClassifier(metric="dtwcv")
-    elif name == "ee" or name == "elasticensemble":
-        return ElasticEnsemble()
-    elif name == "shapedtw":
-        return ShapeDTW()
+    # elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
+    #    return KNeighborsTimeSeriesClassifier(metric="dtwcv")
+    # elif name == "ee" or name == "elasticensemble":
+    #    return ElasticEnsemble()
+    # elif name == "shapedtw":
+    #    return ShapeDTW()
     # Dictionary based
     elif name == "boss" or name == "bossensemble":
         return BOSSEnsemble(random_state=resampleId)
@@ -137,7 +137,7 @@ def set_classifier(cls, resampleId=None):
     # Shapelet based
     elif name == "stc" or name == "shapelettransformclassifier":
         return ShapeletTransformClassifier(
-            random_state=resampleId, time_contract_in_mins=1500
+            random_state=resampleId, time_contract_in_mins=1
         )
     elif name == "mrseql" or name == "mrseqlclassifier":
         return MrSEQLClassifier(seql_mode="fs", symrep=["sax", "sfa"])
@@ -555,31 +555,6 @@ if __name__ == "__main__":
     """
     Example simple usage, with arguments input via script or hard coded for testing
     """
-    for name in range(0, len(classifier_list)):
-        cls = set_classifier(name)
-        # Test capabilities match expected
-        # assert (
-        #         cls.capabilities["multivariate"] ==
-        #         expected_capabilities[name].multivariate
-        # )
-        # assert (
-        #         cls.capabilities["unequal_length"] ==
-        #         expected_capabilities[name].unequal_length
-        # )
-        # assert (
-        #         cls.capabilities["missing_values"] ==
-        #         expected_capabilities[name].missing_values
-        # )
-        # # Test observed accuracy matches expected accuracy
-        # cls.fit(train_x, train_y)
-        # preds = cls.predict(test_x)
-        # ac = accuracy_score(test_y, preds)
-        # assert abs(ac - expected_capabilities[name]) < 0.01
-    #    test_loading()
-    #    sys.exit()
-    #    print('experimenting...')
-    # Input args -dp=${dataDir} -rp=${resultsDir} -cn=${classifier} -dn=${dataset}
-    # -f=\$LSB_JOBINDEX
     if sys.argv.__len__() > 1:  # cluster run, this is fragile
         print(sys.argv)
         data_dir = sys.argv[1]
@@ -608,7 +583,7 @@ if __name__ == "__main__":
         dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "WEASEL"
+        classifier = "KNeighborsTimeSeriesClassifier"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]

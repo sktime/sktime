@@ -17,9 +17,9 @@ such as Proximity Stump, are not listed.
 classifier_list = [
     # in classification/distance_based
     "ProximityForest",
-    "KNeighborsTimeSeriesClassifier",
-    "ElasticEnsemble",
-    "ShapeDTW",
+    # "KNeighborsTimeSeriesClassifier",
+    # "ElasticEnsemble",
+    # "ShapeDTW",
     # in classification/dictionary_based
     "BOSS",
     "ContractableBOSS",

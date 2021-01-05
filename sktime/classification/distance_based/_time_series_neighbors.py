@@ -98,7 +98,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     """
 
-    # Capability tags
+    # Capability tags describe what types of data the classifier can deal with
     capabilities = {
         "multivariate": False,
         "unequal_length": False,

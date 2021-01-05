@@ -65,6 +65,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
      indexes of all start and end points for all classifiers
      dim_to_use   : int, the column of the panda passed to use (can be
      passed a multidimensional problem, but will only use one)
+     classes_    : List of classes for a given problem
 
      References
      ----------
