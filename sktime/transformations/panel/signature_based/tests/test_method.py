@@ -5,7 +5,7 @@ from sktime.transformations.panel.signature_based import GeneralisedSignatureMet
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
-import esig
+import esig  # noqa: E402
 
 
 def test_generalised_signature_method():

@@ -186,8 +186,9 @@ class _Dyadic(_Window):
         max_depth = int(np.floor(np.log2(length)))
         if self.depth > max_depth:
             raise ValueError(
-                "Chosen dyadic depth is too high for the data length. We require depth <= {} for"
-                " length {}. Depth given is: {}.".format(max_depth, length, self.depth)
+                "Chosen dyadic depth is too high for the data length. "
+                "We require depth <= {} for length {}. "
+                "Depth given is: {}.".format(max_depth, length, self.depth)
             )
         return self.call(float(length))
 
