@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from sktime.transformers.panel.signature_based._augmentations import (
+from sktime.transformations.panel.signature_based._augmentations import (
     _AddTime,
     _BasePoint,
     _LeadLag,

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import pytest
-from sktime.transformers.panel.signature_based import GeneralisedSignatureMethod
-from sktime.utils.check_imports import _check_soft_dependencies
+from sktime.transformations.panel.signature_based import GeneralisedSignatureMethod
+from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
 import esig
