@@ -7,9 +7,6 @@ from sktime.transformers.panel.signature_based._compute import (
 from sktime.transformers.panel.signature_based._augmentations import (
     _make_augmentation_pipeline,
 )
-from sktime.transformers.panel.signature_based._rescaling import (
-    _TrickScaler,
-)
 from sktime.transformers.panel.signature_based._checks import (
     _handle_sktime_signatures,
 )
@@ -24,7 +21,6 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
 
     Parameters
     ----------
-    scaling: str, Method of scaling.
     augmentation_list: list of tuple of strings, List of augmentations to be
         applied before the signature transform is applied.
     window_name: str, The name of the window transform to apply.
@@ -47,7 +43,6 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
 
     def __init__(
         self,
-        scaling="stdsc",
         augmentation_list=("basepoint", "addtime"),
         window_name="dyadic",
         window_depth=3,
@@ -58,7 +53,6 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
         depth=4,
     ):
         super(GeneralisedSignatureMethod, self).__init__()
-        self.scaling = scaling
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -78,7 +72,6 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
 
     def setup_feature_pipeline(self):
         """ Sets up the signature method as an sklearn pipeline. """
-        scaling_step = _TrickScaler(scaling=self.scaling)
         augmentation_step = _make_augmentation_pipeline(self.augmentation_list)
         transform_step = _WindowSignatureTransform(
             window_name=self.window_name,
@@ -93,7 +86,6 @@ class GeneralisedSignatureMethod(_PanelToTabularTransformer):
         # The so-called 'signature method' as defined in the reference paper
         self.signature_method = Pipeline(
             [
-                ("scaling", scaling_step),
                 ("augmentations", augmentation_step),
                 ("window_and_transform", transform_step),
             ]
