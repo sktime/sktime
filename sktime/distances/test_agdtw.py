@@ -235,3 +235,22 @@ def test_kernel_distance_with_sigma_zero():
     sigma = 0.0
     with pytest.raises(ZeroDivisionError):
         agdtw.kernel_distance(sample_path, sigma)
+
+
+def test_kernel_distance_with_sigma_thirtythree():
+    import numpy as np
+    import sktime.distances.agdtw as agdtw
+    sample_path = np.array([
+        [1, 0, 0],
+        [3, 1, 1],
+        [3, 2, 2],
+        [5, 2, 3]
+    ])
+    sigma = 33
+    expected_result = \
+        np.exp(-(abs(1 / sigma) ** 2)) + \
+        np.exp(-(abs(3 / sigma) ** 2)) + \
+        np.exp(-(abs(3 / sigma) ** 2)) + \
+        np.exp(-(abs(5 / sigma) ** 2))
+    actual_result = agdtw.kernel_distance(sample_path, sigma)
+    assert expected_result == pytest.approx(actual_result)
