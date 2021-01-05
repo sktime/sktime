@@ -34,6 +34,11 @@ def test_airline_default():
 # allow.multiplicative.trend = TRUE)
 # components: "M" "M" "M" "TRUE"
 # discrepancy lies in damped (True in R but False in statsmodels)
+# Test failed on linux environment, fixed by fixing pandas==1.1.5 in #581
+# @pytest.mark.skipif(
+#     sys.platform == "linux",
+#     reason="Skip test due to unknown error on Linux with Python 3.7 and 3.8",
+# )
 def test_airline_allow_multiplicative_trend():
     fit_result_R = ["mul", "mul", "mul"]
 

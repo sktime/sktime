@@ -6,7 +6,7 @@ __all__ = []
 
 import pytest
 import pandas as pd
-from sktime.utils._testing import make_forecasting_problem
+from sktime.utils._testing.forecasting import make_forecasting_problem
 
 
 @pytest.mark.parametrize("n_timepoints", [3, 5])

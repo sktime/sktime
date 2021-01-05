@@ -7,14 +7,14 @@ __all__ = ["CanonicalIntervalForest"]
 
 import numpy as np
 import math
-from sklearn.ensemble.forest import ForestClassifier
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.utils.check_imports import _check_soft_dependencies
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
@@ -303,7 +303,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             )
         elif self.atts[i][a] == 24:
             # slope
-            return time_series_slope(
+            return _slope(
                 X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
             )
         else:

@@ -18,7 +18,7 @@ from sklearn.utils import check_random_state
 from joblib import Parallel, delayed
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
