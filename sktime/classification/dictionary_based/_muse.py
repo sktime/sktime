@@ -14,6 +14,7 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
+from sklearn.utils.multiclass import class_distribution
 
 # from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
@@ -135,6 +136,7 @@ class MUSE(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
+        self.classes_ = []
 
         super(MUSE, self).__init__()
 
@@ -154,6 +156,7 @@ class MUSE(BaseClassifier):
 
         X, y = check_X_y(X, y, coerce_to_pandas=True)
         y = np.asarray(y)
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
