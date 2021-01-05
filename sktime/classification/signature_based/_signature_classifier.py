@@ -48,7 +48,6 @@ class SignatureClassifier(BaseClassifier):
     ----------
     classifier: sklearn estimator, This should be any sklearn-type
         estimator. Defaults to RandomForestClassifier.
-    scaling: str, Method of scaling.
     augmentation_list: list of tuple of strings, List of augmentations to be
         applied before the signature transform is applied.
     window_name: str, The name of the window transform to apply.
@@ -75,7 +74,6 @@ class SignatureClassifier(BaseClassifier):
     def __init__(
         self,
         classifier=None,
-        scaling="stdsc",
         augmentation_list=("basepoint", "addtime"),
         window_name="dyadic",
         window_depth=3,
@@ -88,7 +86,6 @@ class SignatureClassifier(BaseClassifier):
     ):
         super(SignatureClassifier, self).__init__()
         self.classifier = classifier
-        self.scaling = scaling
         self.augmentation_list = augmentation_list
         self.window_name = window_name
         self.window_depth = window_depth
@@ -101,7 +98,6 @@ class SignatureClassifier(BaseClassifier):
         np.random.seed(random_state)
 
         self.signature_method = GeneralisedSignatureMethod(
-            scaling,
             augmentation_list,
             window_name,
             window_depth,

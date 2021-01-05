@@ -12,6 +12,7 @@ window types.
 Code based on window code written by Patrick Kidger.
 """
 import collections as co
+import numpy as np
 
 
 _Pair = co.namedtuple("Pair", ("start", "end"))
@@ -113,8 +114,10 @@ class _ExpandingSliding(_Window):
                 yield _Pair(start, end)
                 start += self.start_step
                 end += self.end_step
-
-        return [list(_call())]
+        windows = list(_call())
+        if len(windows) == 0:
+            raise ValueError('Length {} too short for given window parameters.'.format(length))
+        return [windows]
 
 
 class _Sliding(_ExpandingSliding):
@@ -177,6 +180,10 @@ class _Dyadic(_Window):
         self.depth = depth
 
     def __call__(self, length):
+        max_depth = int(np.floor(np.log2(length)))
+        if self.depth > max_depth:
+            raise ValueError("Chosen dyadic depth is too high for the data length. We require depth <= {} for"
+                             " length {}. Depth given is: {}.".format(max_depth, length, self.depth))
         return self.call(float(length))
 
     def call(self, length, _offset=0.0, _depth=0, _out=None):

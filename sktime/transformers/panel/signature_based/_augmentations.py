@@ -30,9 +30,10 @@ def _make_augmentation_pipeline(aug_list):
     """
     # Assertions
     types = [tuple, list, None, str]
-    assert any(
-        [type(aug_list) == t for t in types]
-    ), "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
+    if aug_list is not None:
+        assert any(
+            [type(aug_list) == t for t in types]
+        ), "`aug_list` must be one of {}. Got {}.".format(types, type(aug_list))
     aug_list = [aug_list] if isinstance(aug_list, str) else aug_list
 
     # Dictionary of augmentations
@@ -44,7 +45,10 @@ def _make_augmentation_pipeline(aug_list):
         "basepoint": _BasePoint(),
     }
 
-    pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
+    if aug_list is not None:
+        pipeline = Pipeline([(tfm_str, AUGMENTATIONS[tfm_str]) for tfm_str in aug_list])
+    else:
+        pipeline = None
 
     return pipeline
 

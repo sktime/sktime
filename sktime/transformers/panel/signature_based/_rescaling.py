@@ -10,78 +10,10 @@ Code for `rescale_path` and `rescale_signature` written by Patrick Kidger.
 """
 import math
 import numpy as np
-from sklearn.preprocessing import (
-    StandardScaler,
-    MinMaxScaler,
-    MaxAbsScaler,
-    FunctionTransformer,
-)
-from sktime.transformers.base import _SeriesToSeriesTransformer
 from sktime.utils.check_imports import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
 import esig  # noqa: E402
-
-
-class _TrickScaler(_SeriesToSeriesTransformer):
-    """Tricks an sklearn scaler so that it uses the correct dimensions.
-
-    This class was created out of a desire to use sklearn scaling functionality
-    on 3D tensors. Sklearn operates on a tensor of shape [N, C] and
-    normalises along the channel dimensions. To make this functionality work on
-    tensors of shape [N, L, C] we simply first stack the first two dimensions
-    to get shape [N * L, C], apply a scaling function and finally stack back
-    to shape [N, L, C].
-
-    Parameters
-    ----------
-    scaling : str, Scaling method, one of ['stdsc', 'maxabs', 'minmax', None].
-
-    # TODO allow scaling to be passed as an sklearn transformer.
-    """
-
-    def __init__(self, scaling):
-        self.scaling = scaling
-
-        # Checks
-        allowed_values = ["stdsc", "minmax", "maxabs", None]
-        if scaling not in allowed_values:
-            raise ValueError(
-                "scaling param {} not recognised. Must be one "
-                "of {}.".format(scaling, allowed_values)
-            )
-
-    def _trick(self, X):
-        return X.reshape(-1, X.shape[2])
-
-    def _untrick(self, X, shape):
-        return X.reshape(shape)
-
-    def fit(self, X, y=None):
-        # Setup the scaler
-        scaling = self.scaling
-        if scaling == "stdsc":
-            self.scaler = StandardScaler()
-        elif scaling == "maxabs":
-            self.scaler = MaxAbsScaler()
-        elif scaling == "minmax":
-            self.scaler = MinMaxScaler()
-        elif scaling is None:
-            self.scaler = FunctionTransformer(func=None)
-
-        self.scaler.fit(self._trick(X), y)
-        self._is_fitted = True
-        return self
-
-    def transform(self, X):
-        # Input checks
-        self.check_is_fitted()
-
-        # 3d -> 2d -> 2d_scaled -> 3d_scaled
-        X_tfm_2d = self.scaler.transform(self._trick(X))
-        X_tfm_3d = self._untrick(X_tfm_2d, X.shape)
-
-        return X_tfm_3d
 
 
 def _rescale_path(path, depth):
