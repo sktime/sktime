@@ -16,12 +16,12 @@ Forecasating is making forward temporal predictions based on past data. The simp
 
 Inputs.
 
-* Univariate time series, `y = y(0), y(1), y(2), ..., y(N)`
-* Forecasting horizon, `fh = N+1, N+2, ..., N+h`
+* Univariate time series, :math:`y = y(0), y(1), y(2), ..., y(N)`
+* Forecasting horizon, :math:`fh = N+1, N+2, ..., N+h`
 
 Output.
 
-* Predictions of `y` at the times in `fh`, `y_hat = y_hat(N+1), y_hat(N+2), ..., y_hat(N+h)`
+* Predictions of :math:`y` at the times in :math:`fh`, `\hat{y} = \hat{y}(N+1), \hat{y}(N+2), ..., \hat{y}(N+h)`
 
 Examples.
 
