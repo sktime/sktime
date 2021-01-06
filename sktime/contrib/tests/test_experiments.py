@@ -51,32 +51,32 @@ expected_capabilities = {
 # Test that the classifiers listed in classification.base all
 def test_classifiers_on_default_problem():
     path = os.path.join(sktime.MODULE, "datasets/data")
-    train_x, train_y = load_from_tsfile_to_dataframe(
-        os.path.join(path, "UnitTest/UnitTest_TRAIN.ts")
-    )
-    test_x, test_y = load_from_tsfile_to_dataframe(
-        os.path.join(path, "UnitTest/UnitTest_TEST.ts")
-    )
-    for name in range(0, len(classifier_list)):
-        cls = set_classifier(name)
-        # Test capabilities match expected
-        # assert (
-        #         cls.capabilities["multivariate"] ==
-        #         expected_capabilities[name].multivariate
-        # )
-        # assert (
-        #         cls.capabilities["unequal_length"] ==
-        #         expected_capabilities[name].unequal_length
-        # )
-        # assert (
-        #         cls.capabilities["missing_values"] ==
-        #         expected_capabilities[name].missing_values
-        # )
-        # # Test observed accuracy matches expected accuracy
-        # cls.fit(train_x, train_y)
-        # preds = cls.predict(test_x)
-        # ac = accuracy_score(test_y, preds)
-        # assert abs(ac - expected_capabilities[name]) < 0.01
+    # train_x, train_y = load_from_tsfile_to_dataframe(
+    #    os.path.join(path, "UnitTest/UnitTest_TRAIN.ts")
+    # )
+    # test_x, test_y = load_from_tsfile_to_dataframe(
+    #    os.path.join(path, "UnitTest/UnitTest_TEST.ts")
+    # )
+    # for name in range(0, len(classifier_list)):
+    #    cls = set_classifier(name)
+    # Test capabilities match expected
+    # assert (
+    #         cls.capabilities["multivariate"] ==
+    #         expected_capabilities[name].multivariate
+    # )
+    # assert (
+    #         cls.capabilities["unequal_length"] ==
+    #         expected_capabilities[name].unequal_length
+    # )
+    # assert (
+    #         cls.capabilities["missing_values"] ==
+    #         expected_capabilities[name].missing_values
+    # )
+    # # Test observed accuracy matches expected accuracy
+    # cls.fit(train_x, train_y)
+    # preds = cls.predict(test_x)
+    # ac = accuracy_score(test_y, preds)
+    # assert abs(ac - expected_capabilities[name]) < 0.01
 
 
 # def test_run_experiment_on_chinatown():
