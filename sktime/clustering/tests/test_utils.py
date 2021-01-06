@@ -12,16 +12,6 @@ from sktime.clustering.utils import (
     DataFormatError,
     Series,
 )
-from sklearn.cluster import KMeans
-
-
-def test_create_sklearn_k_means(df_x: Data_Frame, df_y: Data_Frame):
-    sklearn_train_data: SkLearn_Data = convert_df_to_sklearn_format(df_x)
-    km = KMeans(
-        n_clusters=3, init="random", n_init=10, max_iter=300, tol=1e-04, random_state=0
-    )
-    km.fit(sklearn_train_data)
-    # print(y_km)
 
 
 def test_convert_df_to_learn_format(df: Data_Frame):

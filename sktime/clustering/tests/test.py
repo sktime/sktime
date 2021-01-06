@@ -4,11 +4,12 @@ import sktime
 from sktime.utils.load_data import load_from_tsfile_to_dataframe
 from sktime.clustering.tests.test_utils import (
     test_convert_df_to_learn_format,
-    test_create_sklearn_k_means,
     test_check_shape,
 )
 from sktime.clustering.tests.test_cluster import test_cluster
-from sktime.clustering.tests.test_distances import test_distances
+from sktime.clustering.tests.partition_based.test_time_series_kmeans import (
+    test_time_series_kmeans,
+)
 
 # print("=============== START ================")
 DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
@@ -21,8 +22,7 @@ test_convert_df_to_learn_format(train_x)
 test_check_shape()
 
 # Basic cluster methods and classes
-test_distances(train_x)
 test_cluster(train_x)
 
 # Specific clustering algorithms
-test_create_sklearn_k_means(train_x, train_y)
+test_time_series_kmeans(train_x, train_y)

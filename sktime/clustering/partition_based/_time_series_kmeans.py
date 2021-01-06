@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-from sktime.clustering._cluster import Cluster, distance_function
+
+__author__ = "Christopher Holder"
+__all__ = ["Cluster"]
+
+
+from sktime.clustering._cluster import Cluster, distance_parameter
 from sklearn.cluster import KMeans
 
 
-class KMeans(Cluster, KMeans):
+class TimeSeriesKMeans(Cluster, KMeans):
     """
     Kmeans clustering algorithm that is built upon the scikit learns
     implementation
@@ -21,10 +26,11 @@ class KMeans(Cluster, KMeans):
         random_state=None,
         copy_x=True,
         algorithm="auto",
-        distance: distance_function
+        distance: distance_parameter = None
     ):
-        super().__init__(distance)
+        Cluster.__init__(self, distance=distance)
         KMeans.__init__(
+            self,
             n_clusters=n_clusters,
             init=init,
             n_init=n_init,

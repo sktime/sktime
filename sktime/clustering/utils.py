@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+
+__author__ = "Christopher Holder"
+__all__ = ["convert_df_to_sklearn_format"]
+
+
 from typing import List, Callable
 import numpy as np
 import pandas as pd
