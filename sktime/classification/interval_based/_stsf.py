@@ -65,7 +65,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
      java/tsml/classifiers/interval_based/STSF.java
     """
 
-    # Capability tags
+    # Capabilities: data types this classifier can handle
     capabilities = {
         "multivariate": False,
         "unequal_length": False,

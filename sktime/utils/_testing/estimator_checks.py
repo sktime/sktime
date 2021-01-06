@@ -135,7 +135,7 @@ def check_estimator_tags(Estimator):
     )
 
     if hasattr(Estimator, "_tags"):
-        tags = Estimator.capabilities
+        tags = Estimator._tags
         assert isinstance(tags, dict), f"_tags must be a dict, but found {type(tags)}"
         assert len(tags) > 0, "_tags is empty"
         assert all(

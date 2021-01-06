@@ -78,7 +78,7 @@ class BOSSEnsemble(BaseClassifier):
     classifiers/dictionary_based/BOSS.java
     """
 
-    # Capability tags
+    # Capabilities: data types this classifier can handle
     capabilities = {
         "multivariate": False,
         "unequal_length": False,

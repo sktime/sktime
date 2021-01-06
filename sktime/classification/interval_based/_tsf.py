@@ -77,7 +77,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
      Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
 
-    # Capability tags
+    # Capabilities: data types this classifier can handle
     capabilities = {
         "multivariate": False,
         "unequal_length": False,
