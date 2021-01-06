@@ -70,8 +70,8 @@ def test_index_of_section_min():
         [(1, 1), (2, 2)]
     ])
     for expected_indices, source_indices in test_range:
-        actual_indices = agdtw.index_of_section_min(test_matrix,
-                                                    tuple(source_indices))
+        actual_indices = agdtw.index_of_section_min_around(test_matrix,
+                                                           tuple(source_indices))
         assert (expected_indices == actual_indices).all(), \
             f'at source indices: {tuple(source_indices)}'
 

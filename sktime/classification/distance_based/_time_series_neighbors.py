@@ -36,6 +36,7 @@ from sktime.distances.elastic_cython import msm_distance
 from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
+from sktime.distances.agdtw import agdtw_distance
 
 from sktime.classification.base import BaseClassifier
 from sktime.distances.mpdist import mpdist
@@ -92,7 +93,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     or a callable function: default ==' uniform'
     algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
     ‘kd_tree’, ‘brute’}: default = 'brute'
-    metric          : distance measure for time series: {'dtw','ddtw',
+    metric          : distance measure for time series: {'dtw','ddtw', 'agdtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     metric_params   : dictionary for metric parameters: default = None
 
@@ -145,6 +146,12 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         # When mpdist is used, the subsequence length (parameter m) must be set
         # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
         # metric='mpdist', metric_params={'m':30})
+        elif metric == "agdtw":
+            metric = agdtw_distance
+        # When agdtw is used, the subsequence parameter window and
+        # the kernel parameter sigma can be set
+        # Example: knn_agdtw = KNeighborsTimeSeriesClassifier(
+        # metric='agdtw', metric_params={'window':1.0, 'sigma':1})
         else:
             if type(metric) is str:
                 raise ValueError(
@@ -153,7 +160,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                     "names from "
                     "[dtw,ddtw,"
                     "wdtw,"
-                    "wddtw,"
+                    "wddtw, agdtw"
                     "lcss,erp,"
                     "msm] or "
                     "please "

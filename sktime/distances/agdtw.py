@@ -71,7 +71,7 @@ def warping_matrix(series_1, series_2, window=1.0):
     for row in range(row_dim):
         for col in range(col_dim):
             if abs(row - col) <= absolute_window_size:
-                min_index = index_of_section_min(warp_matrix, (row, col))
+                min_index = index_of_section_min_around(warp_matrix, (row, col))
                 min_dist_to_here = warp_matrix[min_index]
                 warp_matrix[row, col] = \
                     (series_1[row] - series_2[col]) ** 2 + min_dist_to_here
@@ -116,7 +116,7 @@ def warping_path(matrix, first, second):
             break  # we're finished
 
         # point to min element
-        wm_index = index_of_section_min(matrix, wm_index)
+        wm_index = index_of_section_min_around(matrix, wm_index)
 
     # remove the remaining NANs
     return warp_path[np.logical_not(np.isnan(warp_path).any(axis=1))]
@@ -143,22 +143,21 @@ def dynamic_section(matrix, current_index=(0, 0)):
     return section
 
 
-def index_of_section_min(matrix, current_index=(0, 0)):
+def index_of_section_min_around(matrix, current_index=(0, 0)):
     """
-    Reads the values around the given source cell and returns an index to
+    Reads the values around the given current cell and returns an index to
     the minimum of these values. Respecting the boundaries of the
     original matrix the function evaluates the following values:
-    ... __________________
-    ... | value | value  | ...
-    ... | value | source | ...
-    ... | value | value  | ...
-        __________________
+    ... ___________________
+    ... | value | value   | ...
+    ... | value | current | ...
+    ... | value | value   | ...
+        ___________________
     ...
     @param matrix: numpy array containing the warping matrix
-    @param current_index: a tuple with the 2D index pointing to current
-    cell
+    @param current_index: tuple with the 2D index pointing to current cell
     @return: a tuple containing the index for the matrix pointing to the
-                minimum value within the given section
+             minimum value within the given section
     """
 
     # if at origin of matrix return (0, 0)
