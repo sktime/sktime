@@ -17,18 +17,19 @@ def test_y_proba_on_gunpoint():
     np.testing.assert_array_equal(actual, expected)
 
 
-def test_tde_on_power_demand():
+def test_stsf_on_power_demand():
     # load power demand data
     X_train, y_train = load_italy_power_demand(split="train", return_X_y=True)
     X_test, y_test = load_italy_power_demand(split="test", return_X_y=True)
     indices = np.random.RandomState(0).permutation(100)
 
-    # train TDE
+    # train STSF
     stsf = SupervisedTimeSeriesForest(random_state=0, n_estimators=50)
     stsf.fit(X_train, y_train)
 
     score = stsf.score(X_test.iloc[indices], y_test[indices])
     assert score >= 0.92
+
 
 # expected y_proba
 expected = np.array(

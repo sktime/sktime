@@ -70,7 +70,7 @@ from sktime.transformations.series.detrend import Detrender
 # The following estimators currently do not pass all unit tests or fail some of them
 # and are excluded until fixed.
 EXCLUDE_ESTIMATORS = [
-    "HIVECOTEV1"
+    "HIVECOTEV1",
     "ElasticEnsemble",
     "KNeighborsTimeSeriesClassifier",
     "ProximityForest",

@@ -205,9 +205,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X_d = np.diff(X, 1)
 
         y_probas = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._predict_proba_for_estimator)(
-                X, X_p, X_d, i
-            )
+            delayed(self._predict_proba_for_estimator)(X, X_p, X_d, i)
             for i in range(self.n_estimators)
         )
 
@@ -243,8 +241,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         Generate intervals using a recursive function and random split point.
         """
         n_instances, series_length = X.shape
-        split_point = series_length / 2 if series_length <= 8 \
+        split_point = (
+            series_length / 2
+            if series_length <= 8
             else rng.randint(4, series_length-4)
+        )
 
         cls, class_counts = np.unique(y, return_counts=True)
 
@@ -278,8 +279,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         return intervals
 
-    def _supervised_interval_search(self, X, y, function, function_intervals, classes,
-                                    class_counts, start, end):
+    def _supervised_interval_search(
+            self, X, y, function, function_intervals, classes, class_counts, start, end
+    ):
         """
         Recursive function for finding quality intervals for a feature
         using fisher score.
