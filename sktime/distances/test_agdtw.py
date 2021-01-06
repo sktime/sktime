@@ -4,6 +4,12 @@ __email__ = "devaa@donnerluetjen.de"
 import pytest
 
 
+"""
+run on commandline from root with:
+    pytest -vv sktime/distances/test_agdtw.py
+"""
+
+
 def pytest_assertrepr_compare(op, left, right):
     import numpy as np
     if op == '==' and (
