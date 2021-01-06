@@ -30,7 +30,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
      Overview: Input n series length m
      for each tree
          sample sqrt(m) intervals
-         find mean, sd and slope for each interval, concatenate to form new
+         find mean, std and slope for each interval, concatenate to form new
          data set
          build decision tree on new data set
      ensemble the trees with averaged probability estimates
@@ -120,7 +120,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         series_length] or shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed it
             must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
+            classification. TSF has no bespoke method for multivariate
             classification as yet.
         y : array-like, shape =  [n_instances]    The class labels.
 

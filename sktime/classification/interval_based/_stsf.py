@@ -25,31 +25,22 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
-    """Time series forest classifier.
+    """Supervised time series forest classifier.
 
     A time series forest is an ensemble of decision trees built on random intervals.
      Overview: Input n series length m
      for each tree
-         sample sqrt(m) intervals
-         find mean, sd and slope for each interval, concatenate to form new
-         data set
+         sample X using class-balanced bagging
+         sample intervals for all 3 representations and 7 features using supervised
+         method
+         find mean, median, std, slope, iqr, min and max using their corresponding
+         interval for each rperesentation, concatenate to form new data set
          build decision tree on new data set
      ensemble the trees with averaged probability estimates
-
-     This implementation deviates from the original in minor ways. It samples
-     intervals with replacement and does not use the splitting criteria tiny
-     refinement described in [1]. This is an intentionally stripped down, non
-     configurable version for use as a hive-cote component. For a configurable
-     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
-
-     TO DO: handle missing values, unequal length series and multivariate
-     problems
 
      Parameters
      ----------
      n_estimators    : int, ensemble size, optional (default = 200)
-     min_interval    : int, minimum width of an interval, optional (default
-     to 3)
      n_jobs          : int, optional (default=1)
          The number of jobs to run in parallel for both `fit` and `predict`.
          ``-1`` means using all processors.
@@ -58,23 +49,20 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
      Attributes
      ----------
      n_classes    : int, extracted from the data
-     num_atts     : int, extracted from the data
-     n_intervals  : int, sqrt(num_atts)
      classifiers  : array of shape = [n_estimators] of DecisionTree
      classifiers
-     intervals    : array of shape = [n_estimators][n_intervals][2] stores
-     indexes of all start and end points for all classifiers
-     dim_to_use   : int, the column of the panda passed to use (can be
-     passed a multidimensional problem, but will only use one)
+     intervals    : array of shape = [n_estimators][3][7][n_intervals][2] stores
+     indexes of all start and end points for all classifiers for each representaion
+     and feature
 
      References
      ----------
-     .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
-     classification and feature extraction",Information Sciences, 239, 2013
+     .. [1] Cabello, Nestor, et al. "Fast and Accurate Time Series Classification
+     Through Supervised Interval Search." IEEE ICDM 2020
+
      Java implementation
      https://github.com/uea-machine-learning/tsml/blob/master/src/main/
-     java/tsml/classifiers/interval_based/TSF.java
-     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
+     java/tsml/classifiers/interval_based/STSF.java
     """
 
     # Capability tags
@@ -86,7 +74,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def __init__(
         self,
-        n_estimators=200,
+        n_estimators=500,
         n_jobs=1,
         random_state=None,
     ):
@@ -103,7 +91,6 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         # The following set in method fit
         self.n_classes = 0
-        self.n_intervals = 0
         self.estimators_ = []
         self.intervals_ = []
         self.classes_ = []
@@ -112,7 +99,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         self._is_fitted = False
 
     def fit(self, X, y):
-        """Build a forest of trees from the training set (X, y) using random
+        """Build a forest of trees from the training set (X, y) using supervised
         intervals and summary features
         Parameters
         ----------
@@ -120,7 +107,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         series_length] or shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed it
             must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
+            classification. STSF has no bespoke method for multivariate
             classification as yet.
         y : array-like, shape =  [n_instances]    The class labels.
 
@@ -231,8 +218,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def _transform(self, X, intervals):
         """
-        Compute the mean, median, standard deviation, slope, iqr, min and max
-        for given intervals of input data X.
+        Compute the mean, median, standard deviation, slope, iqr, min and max using
+        intervals of input data X generated for each.
         """
         n_instances, _ = X.shape
         total_intervals = 0
@@ -253,7 +240,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def _get_intervals(self, X, y, rng):
         """
-        Generate random intervals for given parameters.
+        Generate intervals using a recursive function and random split point.
         """
         n_instances, series_length = X.shape
         split_point = series_length / 2 if series_length <= 8 \
@@ -293,6 +280,14 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
     def _supervised_interval_search(self, X, y, function, function_intervals, classes,
                                     class_counts, start, end):
+        """
+        Recursive function for finding quality intervals for a feature
+        using fisher score.
+        Given a start and end point the series is split in half and both intervals
+        are evaluated.
+        The half with the higher score is retained and used as the new start and end
+        for a recursive call.
+        """
         series_length = end - start
         if series_length < 4:
             return
@@ -333,7 +328,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
     def _fit_estimator(self, X, X_p, X_d, y, bag, i):
         """
         Fit an estimator - a clone of base_estimator - on input data (X, y)
-        transformed using the randomly generated intervals.
+        transformed using the supervised intervals for each feature and representation.
         """
         n_instances = bag.shape[0]
         bag = bag.astype(int)
@@ -391,6 +386,9 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
 
 def fisher_score(X, y, classes=None, class_counts=None):
+    """
+    Fisher score for feature selection.
+    """
     if classes is None or class_counts is None:
         classes, class_counts = np.unique(y, return_counts=True)
 

@@ -117,23 +117,23 @@ expected = np.array(
 )
 
 
-def print_array(array):
-    print('[')
-    for sub_array in array:
-        print('[')
-        for value in sub_array:
-            print(value.astype(str), end='')
-            print(', ')
-        print('],')
-    print(']')
-
-
-if __name__ == "__main__":
-    X, y = load_gunpoint(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.1, random_state=42
-    )
-    estimator = SupervisedTimeSeriesForest(random_state=42, n_estimators=20)
-    estimator.fit(X_train, y_train)
-    probas = estimator.predict_proba(X_test)
-    print_array(probas)
+# def print_array(array):
+#     print('[')
+#     for sub_array in array:
+#         print('[')
+#         for value in sub_array:
+#             print(value.astype(str), end='')
+#             print(', ')
+#         print('],')
+#     print(']')
+#
+#
+# if __name__ == "__main__":
+#     X, y = load_gunpoint(return_X_y=True)
+#     X_train, X_test, y_train, y_test = train_test_split(
+#         X, y, test_size=0.1, random_state=42
+#     )
+#     estimator = SupervisedTimeSeriesForest(random_state=42, n_estimators=20)
+#     estimator.fit(X_train, y_train)
+#     probas = estimator.predict_proba(X_test)
+#     print_array(probas)
