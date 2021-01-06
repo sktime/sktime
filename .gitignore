@@ -160,3 +160,4 @@ sktime/distances/elastic_cython.html
 *.html
 
 environment.yml
+/sktime/datasets/data/
