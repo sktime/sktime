@@ -190,7 +190,8 @@ def kernel_distance(path, sigma):
     @return: float containing the kernel distance
     """
     if sigma == 0:
-        raise ZeroDivisionError
+        raise ZeroDivisionError("The kernel parameter <sigma> must not be zero, "
+                                "since we're using it for a division.")
     euclidean_distances = path[:, 0]
     normalized_distances = euclidean_distances ** 2 / (sigma ** 2)
     kernel_distances = np.exp(-normalized_distances)
