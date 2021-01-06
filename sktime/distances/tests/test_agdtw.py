@@ -2,11 +2,13 @@ __author__ = "Ansgar Asseburg"
 __email__ = "devaa@donnerluetjen.de"
 
 import pytest
+from sktime.distances.tests._config import TEST_YS
 
 
 """
 run on commandline from root with:
-    pytest -vv sktime/distances/test_agdtw.py
+    ptw --runner "pytest sktime/distances/tests/test_agdtw.py" 
+        -- --last-failed --new-first
 """
 
 
@@ -260,3 +262,12 @@ def test_kernel_distance_with_sigma_thirtythree():
         np.exp(-(abs(5 / sigma) ** 2))
     actual_result = agdtw.kernel_distance(sample_path, sigma)
     assert expected_result == pytest.approx(actual_result)
+
+@pytest.mark.parametrize("series_1, series_2", TEST_YS)
+def test_agdtw_distance_returns_single_value(series_1, series_2):
+    import numpy as np
+    from numbers import Number
+    import sktime.distances.agdtw as agdtw
+
+    actual_result = agdtw.agdtw_distance(series_1, series_2)
+    assert isinstance(actual_result, Number)
