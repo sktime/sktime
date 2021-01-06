@@ -13,6 +13,7 @@ from joblib import delayed
 from scipy import stats, signal
 from sklearn.base import clone
 from sklearn.ensemble._forest import ForestClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
@@ -98,9 +99,10 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         self.n_estimators = n_estimators
         self.n_jobs = n_jobs
 
+        self.stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
+
         # The following set in method fit
         self.n_classes = 0
-        self.series_length = 0
         self.n_intervals = 0
         self.estimators_ = []
         self.intervals_ = []
@@ -133,7 +135,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
             coerce_to_numpy=True,
         )
         X = X.squeeze(1)
-        n_instances, self.series_length = X.shape
+        n_instances, _ = X.shape
 
         rng = check_random_state(self.random_state)
 
@@ -141,17 +143,18 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         self.n_classes = class_counts.shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
+        self.intervals_ = [[[] for _ in range(3)] for _ in range(self.n_estimators)]
+
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
 
-        balance_cases = np.narray([])
-        average = n_instances/self.n_classes
+        balance_cases = np.zeros(0, dtype=np.int32)
+        average = math.floor(n_instances / self.n_classes)
         for i, c in enumerate(cls):
             if class_counts[i] < average:
                 cls_idx = np.where(y == c)[0]
                 balance_cases = np.concatenate(
-                    rng.choice(cls_idx, size=class_counts[i]-average),
-                    balance_cases,
+                    (rng.choice(cls_idx, size=average-class_counts[i]), balance_cases)
                 )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -161,8 +164,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                 X_d,
                 y,
                 np.concatenate(
-                    rng.choice(n_instances, size=n_instances),
-                    balance_cases,
+                    (rng.choice(n_instances, size=n_instances), balance_cases)
                 ),
                 i,
             )
@@ -212,13 +214,6 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
-        _, series_length = X.shape
-        if series_length != self.series_length:
-            raise TypeError(
-                " ERROR number of attributes in the train does not match "
-                "that in the test data"
-            )
-
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
 
@@ -234,31 +229,25 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         )
         return output
 
-    @staticmethod
-    def _transform(X, intervals):
+    def _transform(self, X, intervals):
         """
         Compute the mean, median, standard deviation, slope, iqr, min and max
         for given intervals of input data X.
         """
         n_instances, _ = X.shape
-        n_intervals, _ = intervals.shape
-        transformed_x = np.empty(shape=(7 * n_intervals, n_instances), dtype=np.float32)
-        for j in range(n_intervals):
-            X_slice = X[:, intervals[j][0] : intervals[j][1]]
-            # mean
-            transformed_x[7 * j] = np.mean(X_slice, axis=1)
-            # median
-            transformed_x[7 * j + 1] = np.median(X_slice, axis=1)
-            # standard deviation
-            transformed_x[7 * j + 2] = np.std(X_slice, axis=1)
-            # slope
-            transformed_x[7 * j + 3] = _slope(X_slice, axis=1)
-            # interquartile range
-            transformed_x[7 * j + 4] = stats.iqr(X_slice, axis=1)
-            # min
-            transformed_x[7 * j + 5] = np.min(X_slice, axis=1)
-            # max
-            transformed_x[7 * j + 6] = np.max(X_slice, axis=1)
+        total_intervals = 0
+        for i in range(len(self.stats)):
+            total_intervals += len(intervals[i])
+        transformed_x = np.zeros((total_intervals, n_instances), dtype=np.float32)
+
+        p = 0
+        for i, f in enumerate(self.stats):
+            n_intervals = len(intervals[i])
+
+            for j in range(n_intervals):
+                X_slice = X[:, intervals[i][j][0] : intervals[i][j][1]]
+                transformed_x[p] = f(X_slice, axis=1)
+                p += 1
 
         return transformed_x.T
 
@@ -266,48 +255,156 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         """
         Generate random intervals for given parameters.
         """
-        intervals = np.zeros((n_intervals, 2), dtype=int)
-        for j in range(n_intervals):
-            intervals[j][0] = rng.randint(series_length - min_interval)
-            length = rng.randint(series_length - intervals[j][0] - 1)
-            if length < min_interval:
-                length = min_interval
-            intervals[j][1] = intervals[j][0] + length
+        n_instances, series_length = X.shape
+        split_point = series_length / 2 if series_length <= 8 \
+            else rng.randint(4, series_length-4)
+
+        cls, class_counts = np.unique(y, return_counts=True)
+
+        s = StandardScaler()
+        X_norm = s.fit_transform(X)
+
+        intervals = []
+        for function in self.stats:
+            function_intervals = []
+            self._supervised_interval_search(
+                X_norm,
+                y,
+                function,
+                function_intervals,
+                cls,
+                class_counts,
+                0,
+                split_point + 1,
+            )
+            self._supervised_interval_search(
+                X_norm,
+                y,
+                function,
+                function_intervals,
+                cls,
+                class_counts,
+                split_point + 1,
+                series_length,
+            )
+            intervals.append(function_intervals)
+
         return intervals
 
-    def _supervised_interval_search(self, ):
-        print(":)")
+    def _supervised_interval_search(self, X, y, function, function_intervals, classes,
+                                    class_counts, start, end):
+        series_length = end - start
+        if series_length < 4:
+            return
+
+        e = start + math.floor(series_length / 2)
+
+        X_l = function(X[:, start : e], axis=1)
+        X_r = function(X[:, e : end], axis=1)
+
+        s1 = fisher_score(X_l, y, classes, class_counts)
+        s2 = fisher_score(X_r, y, classes, class_counts)
+
+        if s2 < s1:
+            function_intervals.append([start, e])
+            self._supervised_interval_search(
+                X,
+                y,
+                function,
+                function_intervals,
+                classes,
+                class_counts,
+                start,
+                e,
+            )
+        else:
+            function_intervals.append([e, end])
+            self._supervised_interval_search(
+                X,
+                y,
+                function,
+                function_intervals,
+                classes,
+                class_counts,
+                e,
+                end,
+            )
 
     def _fit_estimator(self, X, X_p, X_d, y, bag, i):
         """
         Fit an estimator - a clone of base_estimator - on input data (X, y)
         transformed using the randomly generated intervals.
         """
+        n_instances = bag.shape[0]
+        bag = bag.astype(int)
+
         estimator = clone(self.base_estimator)
         estimator.set_params(random_state=self.random_state * 37 * i)
 
         rng = check_random_state(self.random_state * 37 * i)
-        transformed_x = self._transform(X[bag], self._get_intervals(X[bag], y, rng))
-        transformed_x_p = self._transform(
-            X_p[bag],
-            self._get_intervals(X_p[bag], y, rng),
-        )
-        transformed_x_d = self._transform(
-            X_d[bag],
-            self._get_intervals(X_d[bag], y, rng),
+        transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
+
+        self.intervals_[i][0] = self._get_intervals(X[bag], y[bag], rng)
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X[bag], self.intervals_[i][0])),
+            axis=1,
         )
 
-        return estimator.fit(transformed_x, y)
+        self.intervals_[i][1] = self._get_intervals(X_p[bag], y[bag], rng)
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X_p[bag], self.intervals_[i][1])),
+            axis=1,
+        )
+
+        self.intervals_[i][2] = self._get_intervals(X_d[bag], y[bag], rng)
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X_d[bag], self.intervals_[i][2])),
+            axis=1,
+        )
+
+        return estimator.fit(transformed_x, y[bag])
 
     def _predict_proba_for_estimator(self, X, X_p, X_d, i):
         """
         Find probability estimates for each class for all cases in X using
         given estimator and intervals.
         """
-        transformed_x = self._transform(X, self.intervals_[i][0])
-        transformed_x_p = self._transform(X_p, self.intervals_[i][1])
-        transformed_x_d = self._transform(X_d, self.intervals_[i][2])
+        n_instances, _ = X.shape
+        transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X, self.intervals_[i][0])),
+            axis=1,
+        )
 
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X_p, self.intervals_[i][1])),
+            axis=1,
+        )
+
+        transformed_x = np.concatenate(
+            (transformed_x, self._transform(X_d, self.intervals_[i][2])),
+            axis=1,
+        )
 
         return self.estimators_[i].predict_proba(transformed_x)
+
+
+def fisher_score(X, y, classes=None, class_counts=None):
+    if classes is None or class_counts is None:
+        classes, class_counts = np.unique(y, return_counts=True)
+
+    a = 0
+    b = 0
+
+    x_mean = np.mean(X)
+
+    for i, cls in enumerate(classes):
+        X_cls = X[np.where(y == cls)]
+        xy_mean = np.mean(X_cls)
+        xy_std = np.std(X_cls)
+
+        a += class_counts[i] * (xy_mean - x_mean) ** 2
+        b += class_counts[i] * xy_std ** 2
+
+    return 0 if b == 0 else a / b
