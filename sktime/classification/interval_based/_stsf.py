@@ -141,7 +141,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
             if class_counts[i] < average:
                 cls_idx = np.where(y == c)[0]
                 balance_cases = np.concatenate(
-                    (rng.choice(cls_idx, size=average-class_counts[i]), balance_cases)
+                    (rng.choice(cls_idx, size=average - class_counts[i]), balance_cases)
                 )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -244,7 +244,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         split_point = (
             series_length / 2
             if series_length <= 8
-            else rng.randint(4, series_length-4)
+            else rng.randint(4, series_length - 4)
         )
 
         cls, class_counts = np.unique(y, return_counts=True)
@@ -280,7 +280,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         return intervals
 
     def _supervised_interval_search(
-            self, X, y, function, function_intervals, classes, class_counts, start, end
+        self, X, y, function, function_intervals, classes, class_counts, start, end
     ):
         """
         Recursive function for finding quality intervals for a feature
@@ -296,8 +296,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
 
         e = start + math.floor(series_length / 2)
 
-        X_l = function(X[:, start : e], axis=1)
-        X_r = function(X[:, e : end], axis=1)
+        X_l = function(X[:, start:e], axis=1)
+        X_r = function(X[:, e:end], axis=1)
 
         s1 = fisher_score(X_l, y, classes, class_counts)
         s2 = fisher_score(X_r, y, classes, class_counts)
