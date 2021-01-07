@@ -183,12 +183,18 @@ If you want to exclude some line of code from being checked, you can add a `# no
 ### Unit testing
 We use [pytest](https://docs.pytest.org/en/latest/) for unit testing. To check if your code passes all tests locally, you need to install the development version of sktime and all extra dependencies.
 
-1.  Install the development version with all extra requirements from the root directory of sktime:
+1.  Install all extra requirements from the root directory of sktime:
 
     ```bash
     pip install -r build_tools/requirements.txt
     ```
 
+2. Install the development version of sktime:
+
+    ```bash
+    pip install -e .
+    ```
+    
     This installs an editable [development version](https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs) of sktime which will include the changes you make. For trouble shooting on different operating systems, please see our detailed [installation instructions](https://www.sktime.org/en/latest/installation.html).
 
 2.  To run all unit tests, run:
