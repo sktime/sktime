@@ -54,7 +54,7 @@ def _rescale_signature(signature, channels, depth):
     torch.Tensor:
         The signature with factorial depth scaling.
     """
-    if (esig.siglength(channels, depth) - 1) != signature.shape[-1]:
+    if (esig.sigdim(channels, depth) - 1) != signature.shape[-1]:
         raise ValueError(
             "Given a sigtensor with {} channels, a path with {} channels and "
             "a depth of {}, which are not consistent.".format(
