@@ -31,9 +31,9 @@ class TestStats:
 # verified and this file updated.
 expected_capabilities = {
     "ProximityForest": TestStats(unit_test_acc=0.8636363636363636),
-    "KNeighborsTimeSeriesClassifier": TestStats(),
-    "ElasticEnsemble": TestStats(),
-    "ShapeDTW": TestStats(),
+    "KNeighborsTimeSeriesClassifier": TestStats(unit_test_acc=0.8636363636363636),
+    "ElasticEnsemble": TestStats(unit_test_acc=0.8636363636363636),
+    "ShapeDTW": TestStats(unit_test_acc=0.8636363636363636),
     "BOSS": TestStats(unit_test_acc=0.7727272727272727),
     "ContractableBOSS": TestStats(unit_test_acc=0.8636363636363636),
     "TemporalDictionaryEnsemble": TestStats(unit_test_acc=0.8636363636363636),
@@ -43,7 +43,7 @@ expected_capabilities = {
     "TimeSeriesForest": TestStats(unit_test_acc=0.9090909090909091),
     "CanonicalIntervalForest": TestStats(unit_test_acc=0.8636363636363636),
     "ShapeletTransformClassifier": TestStats(unit_test_acc=0.8636363636363636),
-    # "ROCKET": TestStats(multivariate=True),
+    "ROCKET": TestStats(unit_test_acc=0.9090909090909091, multivariate=True),
     "MrSEQLClassifier": TestStats(unit_test_acc=0.8636363636363636),
 }
 

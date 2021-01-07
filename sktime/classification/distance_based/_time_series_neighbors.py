@@ -249,7 +249,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
 
-        fx = self._fit(X, y)
+        fx = self._fit(X, self._y)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp

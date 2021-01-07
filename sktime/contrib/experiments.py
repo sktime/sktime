@@ -110,10 +110,10 @@ def set_classifier(cls, resampleId=None):
         return ProximityStump(random_state=resampleId)
     elif name == "dtwcv" or name == "kneighborstimeseriesclassifier":
         return KNeighborsTimeSeriesClassifier(metric="dtw")
-    # elif name == "ee" or name == "elasticensemble":
-    #    return ElasticEnsemble()
-    # elif name == "shapedtw":
-    #    return ShapeDTW()
+    elif name == "ee" or name == "elasticensemble":
+        return ElasticEnsemble()
+    elif name == "shapedtw":
+        return ShapeDTW()
     # Dictionary based
     elif name == "boss" or name == "bossensemble":
         return BOSSEnsemble(random_state=resampleId)
@@ -583,7 +583,7 @@ if __name__ == "__main__":
         dataset = "UnitTest"
         trainX, trainY = load_ts(data_dir + dataset + "/" + dataset + "_TRAIN.ts")
         testX, testY = load_ts(data_dir + dataset + "/" + dataset + "_TEST.ts")
-        classifier = "KNeighborsTimeSeriesClassifier"
+        classifier = "ROCKET"
         resample = 0
         #         for i in range(0, len(univariate_datasets)):
         #             dataset = univariate_datasets[i]
