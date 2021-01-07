@@ -11,8 +11,6 @@ and methodologies described in the paper:
 # -*- coding: utf-8 -*-
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 
 from sktime.classification.base import BaseClassifier
