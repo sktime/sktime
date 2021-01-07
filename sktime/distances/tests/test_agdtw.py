@@ -2,7 +2,7 @@ __author__ = "Ansgar Asseburg"
 __email__ = "devaa@donnerluetjen.de"
 
 import pytest
-from sktime.distances.tests._config import TEST_YS
+import sktime.distances.tests._config as cfg
 
 
 """
@@ -231,7 +231,7 @@ def test_kernel_distance_with_sigma_one_half():
     assert expected_result == pytest.approx(actual_result)
 
 
-def test_kernel_distance_with_sigma_zero():
+def test_kernel_distance_throws_with_sigma_zero():
     import numpy as np
     import sktime.distances.agdtw as agdtw
     sample_path = np.array([
@@ -263,7 +263,17 @@ def test_kernel_distance_with_sigma_thirtythree():
     actual_result = agdtw.kernel_distance(sample_path, sigma)
     assert expected_result == pytest.approx(actual_result)
 
-@pytest.mark.parametrize("series_1, series_2", TEST_YS)
+
+@pytest.mark.parametrize("series_1, series_2", cfg.MULTIVARIATES)
+def test_agdtw_distance_throws_for_multivariates(series_1, series_2):
+    import numpy as np
+    import sktime.distances.agdtw as agdtw
+    with pytest.raises(ValueError) as e_info:
+        agdtw.agdtw_distance(series_1, series_2)
+    assert "univariate" in str(e_info.value)
+
+
+@pytest.mark.parametrize("series_1, series_2", cfg.UNIVARIATES)
 def test_agdtw_distance_returns_single_value(series_1, series_2):
     import numpy as np
     from numbers import Number

@@ -37,6 +37,7 @@ def agdtw_distance(first, second, window=1, sigma=1.0):
       bibsource = {dblp computer science bibliography, https://dblp.org}
     }
 
+    the method accepts two univariate time series
     @param first: numpy array containing the first time series
     @param second: numpy array containing the second time series
     @param window: float representing the window width as ratio of the window
@@ -44,6 +45,14 @@ def agdtw_distance(first, second, window=1, sigma=1.0):
     @param sigma: float representing the kernel parameter
     @return: a float containing the kernel distance
     """
+
+    # make sure time series are univariate
+    if first.shape[0] * second.shape[0] != 1:
+        raise ValueError("time series must be univariate!")
+
+    # reduce series to 1D arrays
+    first = first.squeeze()
+    second = second.squeeze()
 
     warp_matrix = warping_matrix(first, second, window)
     warp_path = warping_path(warp_matrix, first, second)
@@ -60,6 +69,7 @@ def warping_matrix(series_1, series_2, window=1.0):
     window and the longer series
     @return: 2D numpy array containing the minimum squared distances
     """
+    # FixMe: series are 3D arrays, thus length is 1
     row_dim = len(series_1)
     col_dim = len(series_2)
     warp_matrix = np.full([row_dim, col_dim], np.inf)
@@ -196,3 +206,17 @@ def kernel_distance(path, sigma):
     normalized_distances = euclidean_distances ** 2 / (sigma ** 2)
     kernel_distances = np.exp(-normalized_distances)
     return sum(kernel_distances)
+
+
+if __name__ == '__main__':
+    from sklearn.model_selection import train_test_split
+    from sktime.datasets import load_UCR_UEA_dataset
+    from sktime.classification.distance_based import \
+        KNeighborsTimeSeriesClassifier
+    X, y = load_UCR_UEA_dataset("SwedishLeaf", return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    knn = KNeighborsTimeSeriesClassifier(n_neighbors=1, metric="agdtw",
+                                         metric_params={'window': 1,
+                                                        'sigma': 1})
+    knn.fit(X_train, y_train)
+    knn.score(X_test, y_test)

@@ -3,21 +3,26 @@
 
 __author__ = ["Ansgar Asseburg"]
 __all__ = [
-    "TEST_YS",
-    "TEST_YS_ZERO",
+    "UNIVARIATES",
+    "MULTIVARIATES"
 ]
 
 import pandas as pd
 from sktime.utils._testing.series import _make_series
-
+from numpy import random as rd
 
 RANDOM_SEED = 42
-TEST_YS = [
-    [_make_series(n_timepoints=50, random_state=RANDOM_SEED),
-     _make_series(n_timepoints=60, random_state=RANDOM_SEED)],
-    [_make_series(n_timepoints=80, random_state=RANDOM_SEED),
-     _make_series(n_timepoints=50, random_state=RANDOM_SEED)]
+
+UNIVARIATES = [
+    [rd.uniform(50, 100, (1, rd.randint(50, 100))),
+     rd.uniform(50, 100, (1, rd.randint(50, 100)))],
+    [rd.uniform(-50, 100, (1, rd.randint(50, 100))),
+     rd.uniform(-50, 100, (1, rd.randint(50, 100)))]
 ]
 
-
-TEST_YS_ZERO = [pd.Series([0.0, 0.0, 0.0])]
+MULTIVARIATES = [
+    [rd.uniform(50, 100, (rd.randint(2, 10), rd.randint(50, 100))),
+     rd.uniform(50, 100, (rd.randint(2, 10), rd.randint(50, 100)))],
+    [rd.uniform(-50, 100, (rd.randint(2, 10), rd.randint(50, 100))),
+     rd.uniform(-50, 100, (rd.randint(2, 10), rd.randint(50, 100)))]
+]
