@@ -83,13 +83,13 @@ def plot_series(*series, labels=None, pred_int=None):
         if not type(index) is type(pred_int.index):  # noqa
             raise TypeError("Found series with different index types.")
         elif all([x in index for x in pred_int.index]):
-            plt.fill_between(
-                pred_int.index,
+            ax.fill_between(
+                np.argwhere(index.isin(pred_int.index)).ravel(),
                 pred_int.lower,
                 pred_int.upper,
                 alpha=0.3,
                 color=ax.get_lines()[-1].get_c(),
-                label="95% prediction intervals",
+                label="prediction intervals",
             )
         else:
             raise ValueError(
