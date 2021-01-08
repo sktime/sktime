@@ -90,12 +90,13 @@ def test_warping_matrix_with_window_1():
 
     series_1 = np.array([1, 2, 3, 4, 5])
     series_2 = np.array([1, 2, 3, 4, 5])
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
     expected_result = np.array([[0, 1, 5, 14, 30],
                                 [1, 0, 1, 5, 14],
                                 [5, 1, 0, 1, 5],
                                 [14, 5, 1, 0, 1],
                                 [30, 14, 5, 1, 0]])
-    actual_result = agdtw.warping_matrix(series_1, series_2)
+    actual_result = agdtw.warping_matrix(pairwise_distances)
 
     assert actual_result.shape == expected_result.shape
     assert (actual_result == expected_result).all()
@@ -107,12 +108,13 @@ def test_warping_matrix_with_window_a_quarter():
 
     series_1 = np.array([1, 2, 3, 4, 5])
     series_2 = np.array([1, 2, 3, 4, 5])
-    expected_result = np.array([[0, 1, np.inf, np.inf, np.inf],
-                                [1, 0, 1, np.inf, np.inf],
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
+    expected_result = np.array([[0, np.inf, np.inf, np.inf, np.inf],
+                                [np.inf, 0, 1, np.inf, np.inf],
                                 [np.inf, 1, 0, 1, np.inf],
                                 [np.inf, np.inf, 1, 0, 1],
                                 [np.inf, np.inf, np.inf, 1, 0]])
-    actual_result = agdtw.warping_matrix(series_1, series_2, window=.25)
+    actual_result = agdtw.warping_matrix(pairwise_distances, window=.25)
 
     assert actual_result.shape == expected_result.shape
     assert (actual_result == expected_result).all()
@@ -124,12 +126,13 @@ def test_warping_matrix_with_window_as_zero():
 
     series_1 = np.array([1, 2, 3, 4, 5])
     series_2 = np.array([1, 2, 3, 4, 5])
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
     expected_result = np.array([[0, np.inf, np.inf, np.inf, np.inf],
                                 [np.inf, 0, np.inf, np.inf, np.inf],
                                 [np.inf, np.inf, 0, np.inf, np.inf],
                                 [np.inf, np.inf, np.inf, 0, np.inf],
                                 [np.inf, np.inf, np.inf, np.inf, 0]])
-    actual_result = agdtw.warping_matrix(series_1, series_2, window=0)
+    actual_result = agdtw.warping_matrix(pairwise_distances, window=0)
 
     assert actual_result.shape == expected_result.shape
     assert (actual_result == expected_result).all()
@@ -141,15 +144,17 @@ def test_warping_path_with_symmetric_series():
 
     series_1 = np.array([1, 2, 3, 4, 5])
     series_2 = np.array([1, 2, 3, 4, 5])
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
     expected_result = np.array([
-        [0, 0, 0],
-        [0, 1, 1],
-        [0, 2, 2],
-        [0, 3, 3],
-        [0, 4, 4]
+        [0],
+        [0],
+        [0],
+        [0],
+        [0]
     ])
-    matrix = agdtw.warping_matrix(series_1, series_2)
-    actual_result = agdtw.warping_path(matrix, series_1, series_2)
+    matrix = agdtw.warping_matrix(pairwise_distances)
+    actual_result = agdtw.squared_euclidean_along_warp_path(matrix,
+                                                            pairwise_distances)
     assert (expected_result == actual_result).all()
 
 
@@ -159,17 +164,19 @@ def test_warping_path_with_longer_second_series():
 
     series_1 = np.array([1, 2, 3, 2, 2])
     series_2 = np.array([5, 7, 4, 4, 3, 2])
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
     expected_result = np.array([
-        [4, 0, 0],
-        [5, 1, 1],
-        [1, 2, 2],
-        [1, 2, 3],
-        [0, 2, 4],
-        [0, 3, 5],
-        [0, 4, 5]
+        [16],
+        [25],
+        [1],
+        [1],
+        [0],
+        [0],
+        [0]
     ])
-    matrix = agdtw.warping_matrix(series_1, series_2)
-    actual_result = agdtw.warping_path(matrix, series_1, series_2)
+    matrix = agdtw.warping_matrix(pairwise_distances)
+    actual_result = agdtw.squared_euclidean_along_warp_path(matrix,
+                                                            pairwise_distances)
     assert (expected_result == actual_result).all()
 
 
@@ -179,17 +186,19 @@ def test_warping_path_with_longer_first_series():
 
     series_2 = np.array([1, 2, 3, 2, 2])
     series_1 = np.array([5, 7, 4, 4, 3, 2])
+    pairwise_distances = agdtw.get_pairwise_distances(series_1, series_2)
     expected_result = np.array([
-        [4, 0, 0],
-        [5, 1, 1],
-        [1, 2, 2],
-        [1, 3, 2],
-        [0, 4, 2],
-        [0, 5, 3],
-        [0, 5, 4]
+        [16],
+        [25],
+        [1],
+        [1],
+        [0],
+        [0],
+        [0]
     ])
-    matrix = agdtw.warping_matrix(series_1, series_2)
-    actual_result = agdtw.warping_path(matrix, series_1, series_2)
+    matrix = agdtw.warping_matrix(pairwise_distances)
+    actual_result = agdtw.squared_euclidean_along_warp_path(matrix,
+                                                            pairwise_distances)
     assert (expected_result == actual_result).all()
 
 
@@ -197,17 +206,17 @@ def test_kernel_distance_with_sigma_1():
     import numpy as np
     import sktime.distances.agdtw as agdtw
     sample_path = np.array([
-        [1, 0, 0],
-        [3, 1, 1],
-        [3, 2, 2],
-        [5, 2, 3]
+        [1],
+        [4],
+        [4],
+        [25]
     ])
     sigma = 1.0
     expected_result = \
-        np.exp(-(abs(1 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(5 / sigma) ** 2))
+        np.exp(-1 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-25 / (sigma ** 2))
     actual_result = agdtw.kernel_distance(sample_path, sigma)
     assert expected_result == pytest.approx(actual_result)
 
@@ -216,17 +225,17 @@ def test_kernel_distance_with_sigma_one_half():
     import numpy as np
     import sktime.distances.agdtw as agdtw
     sample_path = np.array([
-        [1, 0, 0],
-        [3, 1, 1],
-        [3, 2, 2],
-        [5, 2, 3]
+        [1],
+        [4],
+        [4],
+        [25]
     ])
     sigma = .5
     expected_result = \
-        np.exp(-(abs(1 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(5 / sigma) ** 2))
+        np.exp(-1 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-25 / (sigma ** 2))
     actual_result = agdtw.kernel_distance(sample_path, sigma)
     assert expected_result == pytest.approx(actual_result)
 
@@ -235,10 +244,10 @@ def test_kernel_distance_throws_with_sigma_zero():
     import numpy as np
     import sktime.distances.agdtw as agdtw
     sample_path = np.array([
-        [1, 0, 0],
-        [3, 1, 1],
-        [3, 2, 2],
-        [5, 2, 3]
+        [1],
+        [4],
+        [4],
+        [25]
     ])
     sigma = 0.0
     with pytest.raises(ZeroDivisionError):
@@ -249,17 +258,17 @@ def test_kernel_distance_with_sigma_thirtythree():
     import numpy as np
     import sktime.distances.agdtw as agdtw
     sample_path = np.array([
-        [1, 0, 0],
-        [3, 1, 1],
-        [3, 2, 2],
-        [5, 2, 3]
+        [1],
+        [4],
+        [4],
+        [25]
     ])
     sigma = 33
     expected_result = \
-        np.exp(-(abs(1 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(3 / sigma) ** 2)) + \
-        np.exp(-(abs(5 / sigma) ** 2))
+        np.exp(-1 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-4 / (sigma ** 2)) + \
+        np.exp(-25 / (sigma ** 2))
     actual_result = agdtw.kernel_distance(sample_path, sigma)
     assert expected_result == pytest.approx(actual_result)
 
@@ -281,3 +290,14 @@ def test_agdtw_distance_returns_single_value(series_1, series_2):
 
     actual_result = agdtw.agdtw_distance(series_1, series_2)
     assert isinstance(actual_result, Number)
+
+
+@pytest.mark.parametrize("series_1, series_2, correct_result", cfg.SAMPLE)
+def test_agdtw_distance_returns_correct_result(series_1, series_2,
+                                               correct_result):
+    import numpy as np
+    from numbers import Number
+    import sktime.distances.agdtw as agdtw
+
+    actual_result = agdtw.agdtw_distance(series_1, series_2)
+    assert correct_result == pytest.approx(actual_result)
