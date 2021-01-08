@@ -27,11 +27,11 @@ def test_plot_series_temporal():
 
 def test_plot_series_integer():
     # Test numeric indices:
-    X = [float(x + random.randint(1, 10)) for x in range(0, 100)]
+    X = [x + random.randint(1, 10) for x in range(0, 100)]
     X = pd.Series(X)
     X.index = X.index.astype(int)
     X_test = [x for x in range(1, 21)]
     model = ThetaForecaster()
     model.fit(X, fh=20)
     y_pred, pred_int = model.predict(X_test, return_pred_int=True)
-    fig, ax = plot_series(X, y_pred, pred_int=pred_int)
+    fig, ax = plot_series(X, y_pred, labels=["y_train", "y_pred"], pred_int=pred_int)
