@@ -25,7 +25,7 @@ MIN_REQUIREMENTS = {
     "pandas": "1.1.0",
     "scikit-learn": "0.23.0",
     "statsmodels": "0.12.1",
-    "numba": "0.50.*",
+    "numba": "0.50",
 }
 EXTRAS_REQUIRE = {
     "all_extras": [
