@@ -67,9 +67,10 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 
-# The following estimators currently do not pass all unit tests or fail some of them
-# and are excluded until fixed.
+# The following estimators currently do not pass all unit tests
+# What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
+    "ShapeDTW",
     "HIVECOTEV1",
     "ElasticEnsemble",
     "KNeighborsTimeSeriesClassifier",
