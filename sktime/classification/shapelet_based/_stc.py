@@ -16,7 +16,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.utils.multiclass import class_distribution
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.shapelets import ContractedShapeletTransform
+from sktime.transformations.panel.shapelets import ContractedShapeletTransform
 from sktime.utils.validation.panel import check_X, check_X_y
 
 

@@ -78,6 +78,8 @@ Libraries
      - A Python library for detecting patterns and anomalies in massive datasets using the Matrix Profile
    * - `mcfly <https://mcfly.readthedocs.io/en/latest/>`_
      - Deep learning for time series classification with automated hyperparameter selection
+   * - `neuralprophet <https://github.com/ourownstory/neural_prophet>`_
+     - A Neural Network based model, inspired by Facebook Prophet and AR-Net, built on PyTorch
    * - `Nitime <https://github.com/nipy/nitime>`_
      - Time series analysis for neuroscience data
    * - `NoLiTSA <https://github.com/manu-mannattil/nolitsa>`_

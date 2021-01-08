@@ -23,10 +23,13 @@ having to install anything.
     examples/04_benchmarking.ipynb
     examples/feature_extraction_with_tsfresh.ipynb
     examples/shapelet_transform.ipynb
+    examples/interval_based_classification.ipynb
+    examples/catch22.ipynb
     examples/mrseql.ipynb
     examples/rocket.ipynb
     examples/plateau_finder.ipynb
     examples/loading_data.ipynb
+    examples/forecasting_with_hcrystalball.ipynb
     examples/dictionary_based_classification.ipynb
     examples/interpolation.ipynb
 

@@ -16,11 +16,11 @@ import pytest
 from sktime.series_as_features.tests._config import ACCEPTED_OUTPUT_TYPES
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests._config import NON_STATE_CHANGING_METHODS
-from sktime.transformers.base import _PanelToPanelTransformer
-from sktime.transformers.base import _PanelToTabularTransformer
+from sktime.transformations.base import _PanelToPanelTransformer
+from sktime.transformations.base import _PanelToTabularTransformer
 from sktime.utils import all_estimators
-from sktime.utils._testing import _construct_instance
-from sktime.utils._testing import _make_args
+from sktime.utils._testing.estimator_checks import _construct_instance
+from sktime.utils._testing.estimator_checks import _make_args
 
 CLASSIFIERS = all_estimators(
     "classifier", return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS
