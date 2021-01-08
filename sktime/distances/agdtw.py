@@ -69,7 +69,9 @@ def get_pairwise_distances(first, second):
     @return: np.array containing a matrix with pairwise squared euclidean
     distances
     """
-    return np.asarray([[(x1 - x2) ** 2 for x2 in second] for x1 in first])
+    # ToDo: try out which one is faster
+    return np.power(np.subtract.outer(first, second) ** 2, 2)
+    # return np.asarray([[(x1 - x2) ** 2 for x2 in second] for x1 in first])
 
 
 def warping_matrix(pairwise_distances, window=1.0):
@@ -247,19 +249,19 @@ def kernel_distance(squared_euclidean_distances, sigma):
 
 
 if __name__ == '__main__':
-    # from sklearn.model_selection import train_test_split
-    # from sktime.datasets import load_UCR_UEA_dataset
-    # from sktime.classification.distance_based import \
-    #     KNeighborsTimeSeriesClassifier
-    # X, y = load_UCR_UEA_dataset("SwedishLeaf", return_X_y=True)
-    # X_train, X_test, y_train, y_test = train_test_split(X, y)
-    # knn = KNeighborsTimeSeriesClassifier(n_neighbors=1, metric="agdtw",
-    #                                      metric_params={'window': 1,
-    #                                                     'sigma': 1})
-    # knn.fit(X_train, y_train)
-    # knn.score(X_test, y_test)
-    from numpy import random as rd
-
-    d = agdtw_distance(rd.uniform(50, 100, (1, rd.randint(50, 100))),
-                       rd.uniform(50, 100, (1, rd.randint(50, 100))))
-    print(d)
+    from sklearn.model_selection import train_test_split
+    from sktime.datasets import load_UCR_UEA_dataset
+    from sktime.classification.distance_based import \
+        KNeighborsTimeSeriesClassifier
+    X, y = load_UCR_UEA_dataset("SwedishLeaf", return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y)
+    knn = KNeighborsTimeSeriesClassifier(n_neighbors=1, metric="agdtw",
+                                         metric_params={'window': 1,
+                                                        'sigma': 1})
+    knn.fit(X_train, y_train)
+    knn.score(X_test, y_test)
+    # from numpy import random as rd
+    #
+    # d = agdtw_distance(rd.uniform(50, 100, (1, rd.randint(50, 100))),
+    #                    rd.uniform(50, 100, (1, rd.randint(50, 100))))
+    # print(d)
