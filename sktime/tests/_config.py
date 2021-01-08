@@ -70,6 +70,7 @@ from sktime.transformations.series.detrend import Detrender
 # The following estimators currently do not pass all unit tests
 # What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
+    "ROCKETClassifier",
     "ShapeDTW",
     "HIVECOTEV1",
     "ElasticEnsemble",

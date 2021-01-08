@@ -93,7 +93,7 @@ class MUSE(BaseClassifier):
 
     # Capabilities: data types this classifier can handle
     capabilities = {
-        "multivariate": False,
+        "multivariate": True,
         "unequal_length": False,
         "missing_values": False,
     }
