@@ -10,6 +10,7 @@ __all__ = [
     "from_2d_array_to_nested",
     "from_nested_to_3d_numpy",
     "from_nested_to_long",
+    "from_long_to_nested",
     "from_multi_index_to_3d_numpy",
     "from_3d_numpy_to_multi_index",
     "from_multi_index_to_nested",
@@ -352,13 +353,24 @@ def _get_column_names(X):
         return _make_column_names(X.shape[1])
 
 
-def from_nested_to_long(X):
+def from_nested_to_long(
+    X, instance_column_name=None, time_column_name=None, dimension_column_name=None
+):
     """Convert nested DataFrame to long DataFrame.
 
     Parameters
     ----------
     X : pd.DataFrame
         The nested DataFrame
+
+    instance_column_name : str
+        The name of column corresponding to the DataFrame's instances
+
+    time_column_name : str
+        The name of the column corresponding to the DataFrame's timepoints.
+
+    dimension_column_name : str
+        The name of the column corresponding to the DataFrame's dimensions.
 
     Returns
     -------
@@ -372,6 +384,18 @@ def from_nested_to_long(X):
     long_df.reset_index(inplace=True)
     long_df = long_df.melt(id_vars=["index", "time_index"], var_name="column")
 
+    col_rename_dict = {}
+    if instance_column_name is not None:
+        col_rename_dict["index"] = instance_column_name
+
+    if time_column_name is not None:
+        col_rename_dict["time_index"] = time_column_name
+
+    if dimension_column_name is not None:
+        col_rename_dict["column"] = dimension_column_name
+
+    if len(col_rename_dict) > 0:
+        long_df = long_df.rename(columns=col_rename_dict)
     # columns = []
     # for i in range(len(X.columns)):
     #     df = from_nested_to_2d_array(X.iloc[:, i])
@@ -384,6 +408,57 @@ def from_nested_to_long(X):
 
     # long_df = pd.concat(columns)
     return long_df
+
+
+def from_long_to_nested(long_dataframe):
+    # get distinct dimension ids
+    unique_dim_ids = long_dataframe.iloc[:, 1].unique()
+    num_dims = len(unique_dim_ids)
+
+    data_by_dim = []
+    indices = []
+
+    # get number of distinct cases (note: a case may have 1 or many dimensions)
+    unique_case_ids = long_dataframe.iloc[:, 0].unique()
+    # assume series are indexed from 0 to m-1 (can map to non-linear indices
+    # later if needed)
+
+    # init a list of size m for each d - to store the series data for m
+    # cases over d dimensions
+    # also, data may not be in order in long format so store index data for
+    # aligning output later
+    # (i.e. two stores required: one for reading id/timestamp and one for
+    # value)
+    for d in range(0, num_dims):
+        data_by_dim.append([])
+        indices.append([])
+        for _c in range(0, len(unique_case_ids)):
+            data_by_dim[d].append([])
+            indices[d].append([])
+
+    # go through every row in the dataframe
+    for i in range(0, len(long_dataframe)):
+        # extract the relevant data, catch cases where the dim id is not an
+        # int as it must be the class
+
+        row = long_dataframe.iloc[i]
+        case_id = int(row[0])
+        dim_id = int(row[1])
+        reading_id = int(row[2])
+        value = row[3]
+        data_by_dim[dim_id][case_id].append(value)
+        indices[dim_id][case_id].append(reading_id)
+
+    x_data = {}
+    for d in range(0, num_dims):
+        key = "dim_" + str(d)
+        dim_list = []
+        for i in range(0, len(unique_case_ids)):
+            temp = pd.Series(data_by_dim[d][i], indices[d][i])
+            dim_list.append(temp)
+        x_data[key] = pd.Series(dim_list)
+
+    return pd.DataFrame(x_data)
 
 
 def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
