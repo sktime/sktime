@@ -116,7 +116,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     ):
 
         self._cv_for_params = False
-        #TODO: add in capacity for euclidean
+        # TODO: add in capacity for euclidean
         # if metric != "euclidean":  # Euclidean will default to the base class distance
         if metric == "dtw":
             metric = dtw_distance

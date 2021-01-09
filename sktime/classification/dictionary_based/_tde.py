@@ -251,7 +251,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
                 max_dims=self.max_dims,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
             tde.fit(X_subsample, y_subsample)
             tde.subsample = subsample
