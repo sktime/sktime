@@ -78,6 +78,13 @@ class BOSSEnsemble(BaseClassifier):
     classifiers/dictionary_based/BOSS.java
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         threshold=0.92,
@@ -265,7 +272,8 @@ class BOSSEnsemble(BaseClassifier):
 
         return results
 
-    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
+    @staticmethod
+    def _individual_train_acc(boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
@@ -316,6 +324,7 @@ class IndividualBOSS(BaseClassifier):
         )
         self.transformed_data = []
         self.accuracy = 0
+        self.subsample = []
 
         self.class_vals = []
         self.num_classes = 0
@@ -327,7 +336,7 @@ class IndividualBOSS(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa[0]  # .iloc[:, 0]
+        self.transformed_data = sfa[0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -346,7 +355,7 @@ class IndividualBOSS(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags[0]  # .iloc[:, 0]
+        test_bags = test_bags[0]
 
         for test_bag in test_bags:
             best_dist = sys.float_info.max
@@ -400,7 +409,7 @@ class IndividualBOSS(BaseClassifier):
         )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
+        new_boss.transformed_data = sfa[0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes

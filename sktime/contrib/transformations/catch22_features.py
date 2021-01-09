@@ -51,6 +51,12 @@ class Catch22(_PanelToTabularTransformer):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/transformers/Catch22.java
 
+    !!!
+    The catch22 package is currently unstable, results will differ between operating
+    systems. MacOS is presumed to be the correct version, with only minor differences
+    for Windows.
+    !!!
+
     """
 
     def __init__(self):
@@ -94,7 +100,7 @@ class Catch22(_PanelToTabularTransformer):
         -------
         Numpy array containing a catch22 feature for each input series
         """
-        if isinstance(feature, int):
+        if isinstance(feature, int) or isinstance(feature, np.int32):
             if feature > 21 or feature < 0:
                 raise ValueError("Invalid catch22 feature ID")
         elif isinstance(feature, str):

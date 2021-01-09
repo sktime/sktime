@@ -78,6 +78,13 @@ class ElasticEnsemble(BaseClassifier):
 
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         distance_measures="all",
