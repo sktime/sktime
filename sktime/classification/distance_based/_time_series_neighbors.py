@@ -116,61 +116,49 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     ):
 
         self._cv_for_params = False
-        if metric != "euclidean":  # Euclidean will default to the base class distance
-            if metric == "dtw":
-                metric = dtw_distance
-            elif metric == "dtwcv":  # special case to force loocv grid search
-                # cv in training
-                if metric_params is not None:
-                    warnings.warn(
-                        "Warning: measure parameters have been specified for "
-                        "dtwcv. "
-                        "These will be ignored and parameter values will be "
-                        "found using LOOCV."
-                    )
-                metric = dtw_distance
-                self._cv_for_params = True
-                self._param_matrix = {
-                    "metric_params": [{"w": x / 100} for x in range(0, 100)]
-                }
-            elif metric == "ddtw":
-                metric = ddtw_distance
-            elif metric == "wdtw":
-                metric = wdtw_distance
-            elif metric == "wddtw":
-                metric = wddtw_distance
-            elif metric == "lcss":
-                metric = lcss_distance
-            elif metric == "erp":
-                metric = erp_distance
-            elif metric == "msm":
-                metric = msm_distance
-            elif metric == "twe":
-                metric = twe_distance
-            elif metric == "mpdist":
-                metric = mpdist
+        #TODO: add in capacity for euclidean
+        # if metric != "euclidean":  # Euclidean will default to the base class distance
+        if metric == "dtw":
+            metric = dtw_distance
+        elif metric == "dtwcv":  # special case to force loocv grid search
+            # cv in training
+            if metric_params is not None:
+                warnings.warn(
+                    "Warning: measure parameters have been specified for "
+                    "dtwcv. "
+                    "These will be ignored and parameter values will be "
+                    "found using LOOCV."
+                )
+            metric = dtw_distance
+            self._cv_for_params = True
+            self._param_matrix = {
+                "metric_params": [{"w": x / 100} for x in range(0, 100)]
+            }
+        elif metric == "ddtw":
+            metric = ddtw_distance
+        elif metric == "wdtw":
+            metric = wdtw_distance
+        elif metric == "wddtw":
+            metric = wddtw_distance
+        elif metric == "lcss":
+            metric = lcss_distance
+        elif metric == "erp":
+            metric = erp_distance
+        elif metric == "msm":
+            metric = msm_distance
+        elif metric == "twe":
+            metric = twe_distance
+        elif metric == "mpdist":
+            metric = mpdist
             # When mpdist is used, the subsequence length (parameter m) must be set
             # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
             # metric='mpdist', metric_params={'m':30})
-            else:
-                if type(metric) is str:
-                    raise ValueError(
-                        "Unrecognised distance measure: " + metric + ". Allowed "
-                                                                     "values are "
-                                                                     "names from "
-                                                                     "[dtw,ddtw,"
-                                                                     "wdtw,"
-                                                                     "wddtw,"
-                                                                     "lcss,erp,"
-                                                                     "msm] or "
-                                                                     "please "
-                                                                     "pass a "
-                                                                     "callable "
-                                                                     "distance "
-                                                                     "measure "
-                                                                     "into the "
-                                                                     "constuctor "
-                                                                     "directly."
+        else:
+            if type(metric) is str:
+                raise ValueError(
+                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "please pass a callable distance measure into the constuctor"
                 )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
