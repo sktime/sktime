@@ -185,7 +185,8 @@ class WEASEL(BaseClassifier):
 
         self.max_window = int(min(self.series_length, self.max_window))
         if self.min_window > self.max_window:
-            raise ValueError(f"Error in WEASEL, min_window ="
+            raise ValueError(
+                f"Error in WEASEL, min_window ="
                 f"{self.min_window} is bigger"
                 f" than max_window ={self.max_window},"
                 f" series length is {self.series_length}"

@@ -145,7 +145,8 @@ class BOSSEnsemble(BaseClassifier):
         if win_inc < 1:
             win_inc = 1
         if self.min_window > max_window + 1:
-            raise ValueError(f"Error in BOSSEnsemble, min_window ="
+            raise ValueError(
+                f"Error in BOSSEnsemble, min_window ="
                 f"{self.min_window} is bigger"
                 f" than max_window ={self.max_window},"
                 f" series length is {self.series_length}"
