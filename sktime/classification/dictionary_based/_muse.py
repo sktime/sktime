@@ -195,7 +195,7 @@ class MUSE(BaseClassifier):
                     f" try set min_window to be smaller than series length in "
                     f"the constructor, but the classifier may not work at "
                     f"all with very short series"
-            )
+                )
             self.window_sizes.append(
                 list(range(self.min_window, self.max_window, win_inc))
             )
