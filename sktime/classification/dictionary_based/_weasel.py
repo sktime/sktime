@@ -184,8 +184,17 @@ class WEASEL(BaseClassifier):
         win_inc = self.compute_window_inc()
 
         self.max_window = int(min(self.series_length, self.max_window))
-        self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
+        if self.min_window > self.max_window:
+            raise ValueError(f"Error in WEASEL, min_window ="
+                             f"{self.min_window} is bigger"
+                             f" than max_window ={self.max_window},"
+                             f" series length is {self.series_length}"
+                             f" try set min_window to be smaller than series length in "
+                             f"the constructor, but the classifier may not work at "
+                             f"all with very short series")
 
+
+        self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
         def _parallel_fit(

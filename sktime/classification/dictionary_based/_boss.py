@@ -139,14 +139,21 @@ class BOSSEnsemble(BaseClassifier):
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
+
         max_window = int(self.series_length * self.max_win_len_prop)
         win_inc = int((max_window - self.min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
+        if self.min_window > max_window + 1:
+            raise ValueError(f"Error in BOSSEnsemble, min_window ="
+                             f"{self.min_window} is bigger"
+                             f" than max_window ={max_window},"
+                             f" series length is {self.series_length}"
+                             f"the constructor, but the classifier may not work at "
+                             f"all with very short series")
 
         max_acc = -1
         min_max_acc = -1
-
         for normalise in self.norm_options:
             for win_size in range(self.min_window, max_window + 1, win_inc):
                 boss = IndividualBOSS(
@@ -232,7 +239,6 @@ class BOSSEnsemble(BaseClassifier):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += 1
-
         dists = sums / (np.ones(self.n_classes) * self.n_estimators)
 
         return dists

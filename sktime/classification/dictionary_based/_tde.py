@@ -205,6 +205,14 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.time_limit > 0:
             self.n_parameter_samples = 0
+        if self.min_window > max_window + 1:
+            raise ValueError(f"Error in TemporalDictionaryEnsemble, min_window ="
+                             f"{self.min_window} is bigger"
+                             f" than max_window ={max_window},"
+                             f" series length is {self.series_length}"
+                             f" try set min_window to be smaller than series length in "
+                             f"the constructor, but the classifier may not work at "
+                             f"all with very short series")
 
         rng = check_random_state(self.random_state)
 
