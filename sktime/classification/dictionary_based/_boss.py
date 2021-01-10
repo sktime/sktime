@@ -148,7 +148,7 @@ class BOSSEnsemble(BaseClassifier):
             raise ValueError(
                 f"Error in BOSSEnsemble, min_window ="
                 f"{self.min_window} is bigger"
-                f" than max_window ={self.max_window},"
+                f" than max_window ={max_window},"
                 f" series length is {self.series_length}"
                 f" try set min_window to be smaller than series length in "
                 f"the constructor, but the classifier may not work at "
