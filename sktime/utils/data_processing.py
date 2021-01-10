@@ -17,7 +17,6 @@ __all__ = [
     "from_nested_to_multi_index",
     "are_columns_nested",
     "is_nested_dataframe",
-    "nested_dataframes_equal",
 ]
 
 
@@ -375,7 +374,7 @@ def from_nested_to_long(
     Returns
     -------
     long_df : pd.DataFrame
-        Long Pandas DataFrame
+        Long pandas DataFrame
     """
 
     long_df = from_nested_to_multi_index(
@@ -396,69 +395,108 @@ def from_nested_to_long(
 
     if len(col_rename_dict) > 0:
         long_df = long_df.rename(columns=col_rename_dict)
-    # columns = []
-    # for i in range(len(X.columns)):
-    #     df = from_nested_to_2d_array(X.iloc[:, i])
-    #     df = df.reset_index()
-    #     df = df.melt(id_vars="index")
-    #     df["column"] = df["variable"].str.split("__").str[0]
-    #     df["time_index"] = df["variable"].str.split("__").str[1]
-    #     df = df.drop(columns="variable")
-    #     columns.append(df)
 
-    # long_df = pd.concat(columns)
     return long_df
 
 
-def from_long_to_nested(long_dataframe):
-    # get distinct dimension ids
-    unique_dim_ids = long_dataframe.iloc[:, 1].unique()
-    num_dims = len(unique_dim_ids)
+def from_long_to_nested(
+    X_long,
+    instance_column_name="case_id",
+    time_column_name="reading_id",
+    dimension_column_name="dim_id",
+    value_column_name="value",
+    column_names=None,
+):
+    """Convert long DataFrame to a nested DataFrame.
 
-    data_by_dim = []
-    indices = []
+    Parameters
+    ----------
+    X_long : pd.DataFrame
+        The long DataFrame
 
-    # get number of distinct cases (note: a case may have 1 or many dimensions)
-    unique_case_ids = long_dataframe.iloc[:, 0].unique()
-    # assume series are indexed from 0 to m-1 (can map to non-linear indices
-    # later if needed)
+    instance_column_name : str, default = 'case_id'
+        The name of column corresponding to the DataFrame's instances.
 
-    # init a list of size m for each d - to store the series data for m
-    # cases over d dimensions
-    # also, data may not be in order in long format so store index data for
-    # aligning output later
-    # (i.e. two stores required: one for reading id/timestamp and one for
-    # value)
-    for d in range(0, num_dims):
-        data_by_dim.append([])
-        indices.append([])
-        for _c in range(0, len(unique_case_ids)):
-            data_by_dim[d].append([])
-            indices[d].append([])
+    time_column_name : str, default = 'reading_id'
+        The name of the column corresponding to the DataFrame's timepoints.
 
-    # go through every row in the dataframe
-    for i in range(0, len(long_dataframe)):
-        # extract the relevant data, catch cases where the dim id is not an
-        # int as it must be the class
+    dimension_column_name : str, default = 'dim_id'
+        The name of the column corresponding to the DataFrame's dimensions.
 
-        row = long_dataframe.iloc[i]
-        case_id = int(row[0])
-        dim_id = int(row[1])
-        reading_id = int(row[2])
-        value = row[3]
-        data_by_dim[dim_id][case_id].append(value)
-        indices[dim_id][case_id].append(reading_id)
+    value_column_name : str, default = 'value'
+        The name of the column corresponding to the DataFrame's values.
 
-    x_data = {}
-    for d in range(0, num_dims):
-        key = "dim_" + str(d)
-        dim_list = []
-        for i in range(0, len(unique_case_ids)):
-            temp = pd.Series(data_by_dim[d][i], indices[d][i])
-            dim_list.append(temp)
-        x_data[key] = pd.Series(dim_list)
+    column_names : list, optional
+        Optional list of column names to use for nested DataFrame columns.
 
-    return pd.DataFrame(x_data)
+    Returns
+    -------
+    X_nested : pd.DataFrame
+        Nested pandas DataFrame
+    """
+
+    X_nested = X_long.pivot(
+        index=[instance_column_name, time_column_name],
+        columns=dimension_column_name,
+        values=value_column_name,
+    )
+    X_nested = from_multi_index_to_nested(X_nested, instance_index=instance_column_name)
+
+    n_columns = X_nested.shape[1]
+    if column_names is None:
+        X_nested.columns = _make_column_names(n_columns)
+
+    else:
+        X_nested.columns = column_names
+
+    # # get distinct dimension ids
+    # unique_dim_ids = long_dataframe.iloc[:, 1].unique()
+    # num_dims = len(unique_dim_ids)
+
+    # data_by_dim = []
+    # indices = []
+
+    # # get number of distinct cases (note: a case may have 1 or many dimensions)
+    # unique_case_ids = long_dataframe.iloc[:, 0].unique()
+    # # assume series are indexed from 0 to m-1 (can map to non-linear indices
+    # # later if needed)
+
+    # # init a list of size m for each d - to store the series data for m
+    # # cases over d dimensions
+    # # also, data may not be in order in long format so store index data for
+    # # aligning output later
+    # # (i.e. two stores required: one for reading id/timestamp and one for
+    # # value)
+    # for d in range(0, num_dims):
+    #     data_by_dim.append([])
+    #     indices.append([])
+    #     for _c in range(0, len(unique_case_ids)):
+    #         data_by_dim[d].append([])
+    #         indices[d].append([])
+
+    # # go through every row in the dataframe
+    # for i in range(0, len(long_dataframe)):
+    #     # extract the relevant data, catch cases where the dim id is not an
+    #     # int as it must be the class
+
+    #     row = long_dataframe.iloc[i]
+    #     case_id = int(row[0])
+    #     dim_id = int(row[1])
+    #     reading_id = int(row[2])
+    #     value = row[3]
+    #     data_by_dim[dim_id][case_id].append(value)
+    #     indices[dim_id][case_id].append(reading_id)
+
+    # x_data = {}
+    # for d in range(0, num_dims):
+    #     key = "dim_" + str(d)
+    #     dim_list = []
+    #     for i in range(0, len(unique_case_ids)):
+    #         temp = pd.Series(data_by_dim[d][i], indices[d][i])
+    #         dim_list.append(temp)
+    #     x_data[key] = pd.Series(dim_list)
+
+    return X_nested
 
 
 def from_multi_index_to_3d_numpy(X, instance_index=None, time_index=None):
@@ -593,7 +631,7 @@ def from_multi_index_to_nested(
         The nested version of the DataFrame
     """
     if instance_index is None:
-        raise ValueError("Supply a value for the instance_index_name parameter.")
+        raise ValueError("Supply a value for the instance_index parameter.")
 
     # get number of distinct cases (note: a case may have 1 or many dimensions)
     instance_idxs = multi_ind_dataframe.index.get_level_values(instance_index).unique()
@@ -840,124 +878,3 @@ def is_nested_dataframe(X):
         is_nested = are_columns_nested(X).any()
 
         return is_dataframe and is_nested
-
-
-def nested_dataframes_equal(X1, X2):
-    """Checks for equivalence betwween two DataFrames that contain potentially
-    nested columns (cells are nested pd.Series or np.ndarray)
-
-    Parameters
-    ----------
-    X1 : pd.DataFrame
-        First Pandas DataFrame to compare for equivalence
-
-    X2 : pd.DataFrame
-        Second Pandas DataFrame to compare for equivalence
-
-
-    Returns
-    -------
-    is_same : bool
-        Boolean indicator whether input DataFrames are the same
-
-    """
-    # DataFrames of different shapes cannot be equal
-    if X1.shape != X2.shape:
-        is_same = False
-        return is_same
-
-    else:
-        n_instances, n_columns = X1.shape
-        x1_nested_cell_mask = _nested_cell_mask(X1)
-        # Not reusing are_columns_nested to avoid repeating _nested_cell_mask
-        x1_nested_col_mask = x1_nested_cell_mask.any().values
-
-        x2_nested_cell_mask = _nested_cell_mask(X2)
-        # x2_nested_col_mask = x2_nested_cell_mask.any().values
-
-        # If X1 and X2 do not have nested structure in same cells then
-        # they are not equal
-        if not (x1_nested_cell_mask == x2_nested_cell_mask).values.all():
-            is_same = False
-            return is_same
-
-        # If X1 and X2 have nested structure in same cells we need to
-        # verify the values are equal in each column
-        else:
-            cell_value_is_same = np.zeros_like(X1, dtype=bool)
-            cell_index_is_same = np.zeros_like(X1, dtype=bool)
-            cell_is_same = np.zeros_like(X1, dtype=bool)
-
-            # Loop over columns and check if values are equal
-            for j, any_nested in enumerate(x1_nested_col_mask):
-                # Compare nested columns instance by instance
-                if any_nested:
-                    for i in range(n_instances):
-                        # Handle potential heterogenous nesting within column
-                        if x1_nested_cell_mask.iloc[i, j]:
-                            # See if index is the same
-                            x1_index = _get_index(X1.iloc[i, j])
-                            x2_index = _get_index(X2.iloc[i, j])
-                            if x1_index.shape != x2_index.shape:
-                                cell_index_is_same[i, j] = False
-
-                            else:
-                                cell_index_is_same[i, j] = (x1_index == x2_index).all()
-
-                        else:
-                            # Consider indices the same for non-nested cells
-                            cell_index_is_same[i, j] = True
-
-                        # Now check if values are equal
-                        x1_numeric = X1.iloc[i, j].dtype.kind in "biufc"
-                        x2_numeric = X2.iloc[i, j].dtype.kind in "biufc"
-                        # Nested columns must both be numeric to be same
-                        if x1_numeric != x2_numeric:
-                            cell_value_is_same[i, j] = False
-                            is_same = False
-                            return is_same
-
-                        elif x1_numeric and x2_numeric:
-                            if X1.iloc[i, j].shape != X2.iloc[i, j].shape:
-                                cell_value_is_same[i, j] = False
-                                is_same = False
-                                return is_same
-                            else:
-                                cell_value_is_same[i, j] = np.isclose(
-                                    X1.iloc[i, j], X2.iloc[i, j]
-                                ).all()
-
-                        else:
-                            cell_value_is_same[i, j] = (
-                                X1.iloc[i, j] == X2.iloc[i, j]
-                            ).all()
-
-                # Compare all instances in primitive columns at same time
-                else:
-                    # Consider indices to be equal
-                    # for entirely non-nested columns
-                    cell_index_is_same[:, j] = True
-
-                    # Now check the values of entirely non-nested columns
-                    x1_numeric = X1.iloc[:, j].dtype.kind in "biufc"
-                    x2_numeric = X2.iloc[:, j].dtype.kind in "biufc"
-
-                    # If nested column aren't both numeric they can't be same
-                    if x1_numeric != x2_numeric:
-                        cell_value_is_same[:, j] = False
-                        is_same = False
-                        return is_same
-
-                    elif x1_numeric and x2_numeric:
-                        cell_value_is_same[:, j] = np.isclose(
-                            X1.iloc[:, j], X2.iloc[:, j]
-                        ).all()
-
-                    else:
-                        cell_value_is_same[:, j] = (X1.loc[:, j] == X2.loc[:, j]).all()
-
-            # Now see if both cell values and indices are same
-            cell_is_same = cell_index_is_same * cell_value_is_same
-            is_same = cell_is_same.all()
-
-    return is_same
