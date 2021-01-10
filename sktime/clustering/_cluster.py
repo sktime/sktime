@@ -30,6 +30,7 @@ class Cluster:
 
     def __init__(
         self,
+        model: any,
         distance: distance_parameter = None,
     ) -> None:
         """
@@ -37,47 +38,47 @@ class Cluster:
 
         Parameters
         ----------
+        model: any
+            A clustering model
         distance: distance_parameter (distance_function | str)
             Distance function to be used in the clustering
             algorithm
         """
         self.__distance_metric: distance_parameter = distance
+        self.model = model
 
-    def fit(self, x, y):
+    def fit(self, X, y=None):
         """
         Fit is a method that fits the given model
         """
-        raise NotImplementedError("abstract method")
+        return self.model.fit(X, y)
 
     def fit_predict(self, X, y=None, sample_weight=None):
         """
         Compute cluster centers and predict cluster index for each sample
         """
-        raise NotImplementedError("abstract method")
+        numArgs: int = self.model.fit_predict.__code__.co_argcount
+        if numArgs > 3:
+            return self.model.fit_predict(X, y, sample_weight=sample_weight)
+        return self.model.fit_predict(X, y)
 
     def fit_transform(self, X, y=None, sample_weight=None):
         """
         Computer clustering and transform X to cluster-distance space
         """
-        raise NotImplementedError("abstract method")
+        return self.model.fit_transform(X, y, sample_weight=sample_weight)
 
     def predict(self, X, sample_weight=None):
         """
         Predict the closest cluster each sample in X belongs to
         """
-        raise NotImplementedError("abstract method")
+        return self.model.predict(X, sample_weight=sample_weight)
 
     def score(self, y=None, sample_weight=None):
         """
         Opposite of the value of X
         """
-        raise NotImplementedError("abstract method")
-
-    def __compute_distance(self):
-        """
-        Method that is called to compute the distance
-        """
-        pass
+        return self.model.score(y=y, sample_weight=sample_weight)
 
     @property
     def __distance_metric(self):

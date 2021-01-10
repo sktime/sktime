@@ -39,6 +39,7 @@ cdef inline int min_c_int(int a, int b): return a if a <= b else b
 def dtw_distance(np.ndarray[double, ndim=2] x, np.ndarray[double, ndim=2] y , double w = -1):
     # make sure x is shorter than y
     # if not permute
+    print("here")
     cdef np.ndarray[double, ndim=2] X = x
     cdef np.ndarray[double, ndim=2] Y = y
     cdef np.ndarray[double, ndim=2] t

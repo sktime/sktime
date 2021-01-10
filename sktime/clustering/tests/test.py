@@ -7,8 +7,17 @@ from sktime.clustering.tests.test_utils import (
     test_check_shape,
 )
 from sktime.clustering.tests.test_cluster import test_cluster
+from sktime.clustering.tests.partition_based.test_ts_affi_prop import (
+    test_time_series_affinity_propagation,
+)
 from sktime.clustering.tests.partition_based.test_time_series_kmeans import (
     test_time_series_kmeans,
+)
+from sktime.clustering.tests.density_based.test_time_series_mean_shift import (
+    test_time_series_mean_shift,
+)
+from sktime.clustering.tests.graph_theory_based.test_ts_spec_clus import (
+    test_time_series_spectral_clustering,
 )
 
 # print("=============== START ================")
@@ -26,3 +35,6 @@ test_cluster(train_x)
 
 # Specific clustering algorithms
 test_time_series_kmeans(train_x, train_y)
+test_time_series_affinity_propagation(train_x, train_y)
+test_time_series_mean_shift(train_x, train_y)
+test_time_series_spectral_clustering(train_x, train_y)
