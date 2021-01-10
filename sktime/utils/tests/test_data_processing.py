@@ -189,7 +189,7 @@ def test_is_nested_dataframe(n_instances, n_columns, n_timepoints):
 @pytest.mark.parametrize("n_timepoints", N_TIMEPOINTS)
 def test_from_2d_array_to_nested(n_instances, n_columns, n_timepoints):
     rng = np.random.default_rng()
-    X_2d = rng.standard_normal((50, 20))
+    X_2d = rng.standard_normal((n_instances, n_timepoints))
     nested_df = from_2d_array_to_nested(X_2d)
 
     assert is_nested_dataframe(nested_df)
