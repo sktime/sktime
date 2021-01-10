@@ -99,7 +99,7 @@ class WEASEL(BaseClassifier):
     Notes
     -----
 
-    ..[1]  Patrick Schäfer and Ulf Leser,      :
+    ..[1]  Patrick Schäfer and Ulf Leser,    :
     @inproceedings{schafer2017fast,
       title={Fast and Accurate Time Series Classification with WEASEL},
       author={Sch{\"a}fer, Patrick and Leser, Ulf},
