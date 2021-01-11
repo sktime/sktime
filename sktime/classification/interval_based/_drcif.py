@@ -113,6 +113,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
+        self.__n_intervals = n_intervals
         self.total_intervals = 0
         self.classifiers = []
         self.atts = []
@@ -150,25 +151,25 @@ class DrCIF(ForestClassifier, BaseClassifier):
         self.atts = []
 
         if self.n_intervals is None:
-            self.n_intervals = 4 + int(
+            self.__n_intervals = 4 + int(
                 (math.sqrt(self.series_length) * math.sqrt(self.n_dims)) / 3
             )
-        if self.n_intervals <= 0:
-            self.n_intervals = 1
+        if self.__n_intervals <= 0:
+            self.__n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
 
         if self.max_interval is None:
-            self.max_interval = self.series_length / 2
+            max_interval = self.series_length / 2
         else:
-            self.max_interval = self.max_interval
-        if self.max_interval < self.min_interval:
-            self.max_interval = self.min_interval
+            max_interval = self.max_interval
+        if max_interval < self.min_interval:
+            max_interval = self.min_interval
 
         _, X_p = signal.periodogram(X)
         X_d = np.diff(X, 1)
         T = [X, X_p, X_d]
-        self.total_intervals = self.n_intervals * 2 + int(self.n_intervals / 2)
+        self.total_intervals = self.__n_intervals * 2 + int(self.__n_intervals / 2)
 
         self.intervals = np.zeros(
             (self.n_estimators, self.att_subsample_size * self.total_intervals, 2),
@@ -194,7 +195,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
             for r in range(0, len(T)):
                 transform_length = T[r].shape[2]
                 transform_n_intervals = (
-                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
+                    int(self.__n_intervals / 2) if r == 1 else self.__n_intervals
                 )
 
                 # Find the random intervals for classifier i, transformation r
@@ -208,7 +209,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                         )
                         len_range = min(
                             transform_length - self.intervals[i][j][0],
-                            self.max_interval,
+                            max_interval,
                         )
                         length = (
                             rng.randint(0, len_range - self.min_interval)
@@ -220,7 +221,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
                             rng.randint(0, transform_length - self.min_interval)
                             + self.min_interval
                         )
-                        len_range = min(self.intervals[i][j][1], self.max_interval)
+                        len_range = min(self.intervals[i][j][1], max_interval)
                         length = (
                             rng.randint(0, len_range - self.min_interval)
                             + self.min_interval
@@ -322,7 +323,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
             j = 0
             for r in range(0, len(T)):
                 transform_n_intervals = (
-                    int(self.n_intervals / 2) if r == 1 else self.n_intervals
+                    int(self.__n_intervals / 2) if r == 1 else self.__n_intervals
                 )
 
                 for _ in range(0, transform_n_intervals):

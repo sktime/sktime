@@ -118,6 +118,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.n_instances = 0
         self.n_dims = 0
         self.series_length = 0
+        self.__n_intervals = n_intervals
         self.classifiers = []
         self.atts = []
         self.intervals = []
@@ -155,46 +156,46 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self.atts = []
 
         if self.n_intervals is None:
-            self.n_intervals = int(
+            self.__n_intervals = int(
                 math.sqrt(self.series_length) * math.sqrt(self.n_dims)
             )
-        if self.n_intervals <= 0:
-            self.n_intervals = 1
+        if self.__n_intervals <= 0:
+            self.__n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
         self.intervals = np.zeros(
-            (self.n_estimators, self.att_subsample_size * self.n_intervals, 2),
+            (self.n_estimators, self.att_subsample_size * self.__n_intervals, 2),
             dtype=int,
         )
 
         if self.max_interval is None:
-            self.max_interval = self.series_length / 2
+            max_interval = self.series_length / 2
         else:
-            self.max_interval = self.max_interval
-        if self.max_interval < self.min_interval:
-            self.max_interval = self.min_interval
+            max_interval = self.max_interval
+        if max_interval < self.min_interval:
+            max_interval = self.min_interval
 
         c22 = Catch22()
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.n_intervals, self.n_instances),
+                shape=(self.att_subsample_size * self.__n_intervals, self.n_instances),
                 dtype=np.float32,
             )
 
             self.atts.append(rng.choice(25, self.att_subsample_size, replace=False))
-            self.dims.append(rng.choice(self.n_dims, self.n_intervals))
+            self.dims.append(rng.choice(self.n_dims, self.__n_intervals))
 
             # Find the random intervals for classifier i and concatenate
             # features
-            for j in range(0, self.n_intervals):
+            for j in range(0, self.__n_intervals):
                 if rng.random() < 0.5:
                     self.intervals[i][j][0] = rng.randint(
                         0, self.series_length - self.min_interval
                     )
                     len_range = min(
                         self.series_length - self.intervals[i][j][0],
-                        self.max_interval,
+                        max_interval,
                     )
                     length = (
                         rng.randint(0, len_range - self.min_interval)
@@ -206,7 +207,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                         rng.randint(0, self.series_length - self.min_interval)
                         + self.min_interval
                     )
-                    len_range = min(self.intervals[i][j][1], self.max_interval)
+                    len_range = min(self.intervals[i][j][1], max_interval)
                     length = (
                         rng.randint(0, len_range - self.min_interval)
                         + self.min_interval
@@ -292,10 +293,10 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
 
         for i in range(0, self.n_estimators):
             transformed_x = np.empty(
-                shape=(self.att_subsample_size * self.n_intervals, n_test_instances),
+                shape=(self.att_subsample_size * self.__n_intervals, n_test_instances),
                 dtype=np.float32,
             )
-            for j in range(0, self.n_intervals):
+            for j in range(0, self.__n_intervals):
                 for a in range(0, self.att_subsample_size):
                     transformed_x[self.att_subsample_size * j + a] = self.__cif_feature(
                         X, i, j, a, c22

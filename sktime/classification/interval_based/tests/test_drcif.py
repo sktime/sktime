@@ -13,10 +13,7 @@ def test_drcif_on_gunpoint():
     indices = np.random.RandomState(0).permutation(10)
 
     # train DrCIF
-    drcif = DrCIF(
-        n_estimators=100,
-        random_state=0,
-    )
+    drcif = DrCIF(n_estimators=100, random_state=0)
     drcif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -31,10 +28,7 @@ def test_drcif_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train DrCIF
-    drcif = DrCIF(
-        n_estimators=100,
-        random_state=0,
-    )
+    drcif = DrCIF(n_estimators=100, random_state=0)
     drcif.fit(X_train, y_train)
 
     score = drcif.score(X_test.iloc[indices], y_test[indices])
@@ -48,10 +42,7 @@ def test_drcif_on_basic_motions():
     indices = np.random.RandomState(0).permutation(20)
 
     # train DrCIF
-    drcif = DrCIF(
-        n_estimators=100,
-        random_state=0,
-    )
+    drcif = DrCIF(n_estimators=100, random_state=0)
     drcif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
