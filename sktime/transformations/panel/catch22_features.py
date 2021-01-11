@@ -51,12 +51,6 @@ class Catch22(_PanelToTabularTransformer):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/transformers/Catch22.java
 
-    !!!
-    The catch22 package is currently unstable, results will differ between operating
-    systems. MacOS is presumed to be the correct version, with only minor differences
-    for Windows.
-    !!!
-
     """
 
     def __init__(self):
