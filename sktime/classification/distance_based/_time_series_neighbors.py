@@ -249,7 +249,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     def _more_tags(self):
         """Removes the need to pass y with _fit
         Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
-        so we can call fx = self._fit(X) and maintain backward compatibility. 
+        so we can call fx = self._fit(X) and maintain backward compatibility.
         """
         return {"requires_y": False}
 
