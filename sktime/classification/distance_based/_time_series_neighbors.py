@@ -98,6 +98,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         n_neighbors=1,
@@ -109,7 +116,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     ):
 
         self._cv_for_params = False
-
+        # TODO: add in capacity for euclidean
+        # if metric != "euclidean":  # Euclidean will default to the base class distance
         if metric == "dtw":
             metric = dtw_distance
         elif metric == "dtwcv":  # special case to force loocv grid search
@@ -142,28 +150,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             metric = twe_distance
         elif metric == "mpdist":
             metric = mpdist
-        # When mpdist is used, the subsequence length (parameter m) must be set
-        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-        # metric='mpdist', metric_params={'m':30})
+            # When mpdist is used, the subsequence length (parameter m) must be set
+            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
+            # metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed "
-                    "values are "
-                    "names from "
-                    "[dtw,ddtw,"
-                    "wdtw,"
-                    "wddtw,"
-                    "lcss,erp,"
-                    "msm] or "
-                    "please "
-                    "pass a "
-                    "callable "
-                    "distance "
-                    "measure "
-                    "into the "
-                    "constuctor "
-                    "directly."
+                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "please pass a callable distance measure into the constuctor"
                 )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
@@ -213,7 +208,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
                 warnings.warn(
-                    "A column-vector y was passed when a 1d array "
+                    "IN TS-KNN: A column-vector y was passed when a 1d array "
                     "was expected. Please change the shape of y to "
                     "(n_samples, ), for example using ravel().",
                     DataConversionWarning,
@@ -242,7 +237,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
 
-        fx = self._fit(X)
+        fx = self._fit(X, self._y)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp

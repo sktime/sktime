@@ -7,19 +7,20 @@ __all__ = ["CanonicalIntervalForest"]
 
 import numpy as np
 import math
-from sklearn.ensemble.forest import ForestClassifier
+
+from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import clone
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
-from sktime.utils.check_imports import _check_soft_dependencies
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.validation._dependencies import _check_soft_dependencies
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 _check_soft_dependencies("catch22")
-from sktime.contrib.transformers.catch22_features import Catch22  # noqa: E402
+from sktime.contrib.transformations.catch22_features import Catch22  # noqa: E402
 
 
 class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
@@ -40,6 +41,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     for each tree
         sample sqrt(m) intervals
         subsample att_subsample_size tsf/catch22 attributes randomly
+        randomly select dimension for each interval
         calculate attributes for each interval, concatenate to form new
         data set
         build decision tree on new data set
@@ -54,14 +56,20 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/interval_based/CIF.java
 
+    !!!
+    The catch22 package is currently unstable, results will differ between operating
+    systems. MacOS is presumed to be the correct version, with only minor differences
+    for Windows.
+    !!!
 
     Parameters
     ----------
-    n_estimators       : int, ensemble size, optional (default = 500)
-    random_state       : int, seed for random, optional (default to no seed,
-    I think!)
+    n_estimators       : int, ensemble size, optional (default to 500)
+    n_intervals         : int, number of intervals to extract, optional (default to
+    sqrt(series_length)*sqrt(n_dims))
+    random_state       : int, seed for random, optional (default to no seed)
     att_subsample_size : int, number of catch22/tsf attributes to subsample
-    per classifier
+    per classifier, optional (default to 8)
     min_interval       : int, minimum width of an interval, optional (default
     to 3)
     max_interval       : int, maximum width of an interval, optional (default
@@ -71,21 +79,30 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     ----------
     n_classes      : int, extracted from the data
     n_instances    : int, extracted from the data
+    n_dims         : int, extracted from the data
     series_length  : int, extracted from the data
-    n_intervals    : int, sqrt(series_length)
     classifiers    : array of shape = [n_estimators] of DecisionTree
-    self.atts      : array of shape = [n_estimators][att_subsample_size]
+    atts           : array of shape = [n_estimators][att_subsample_size]
     catch22/tsf attribute indexes for all classifiers
     intervals      : array of shape = [n_estimators][n_intervals][2] stores
     indexes of all start and end points for all classifiers
-
+    dims           : array of shape = [n_estimators][n_intervals] stores
+    the dimension to extract from for each interval
     """
+
+    # Capability tags
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
         min_interval=3,
         max_interval=None,
         n_estimators=500,
+        n_intervals=None,
         att_subsample_size=8,
         random_state=None,
     ):
@@ -95,6 +112,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         )
 
         self.n_estimators = n_estimators
+        self.n_intervals = n_intervals
         self.min_interval = min_interval
         self.max_interval = max_interval
         self.att_subsample_size = att_subsample_size
@@ -104,11 +122,12 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         # The following set in method fit
         self.n_classes = 0
         self.n_instances = 0
+        self.n_dims = 0
         self.series_length = 0
-        self.n_intervals = 0
         self.classifiers = []
         self.atts = []
         self.intervals = []
+        self.dims = []
         self.classes_ = []
 
         # We need to add is-fitted state when inheriting from scikit-learn
@@ -117,6 +136,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     def fit(self, X, y):
         """Build a forest of trees from the training set (X, y) using random
         intervals and catch22/tsf summary features
+
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_instances,
@@ -130,18 +150,21 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X, y = check_X_y(X, y, coerce_to_numpy=True)
 
         rng = check_random_state(self.random_state)
 
-        self.n_instances, _, self.series_length = X.shape
+        self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
         self.classifiers = []
         self.atts = []
 
-        self.n_intervals = int(math.sqrt(self.series_length))
-        if self.n_intervals == 0:
+        if self.n_intervals is None:
+            self.n_intervals = int(
+                math.sqrt(self.series_length) * math.sqrt(self.n_dims)
+            )
+        if self.n_intervals <= 0:
             self.n_intervals = 1
         if self.series_length < self.min_interval:
             self.min_interval = self.series_length
@@ -151,11 +174,11 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         )
 
         if self.max_interval is None:
-            max_interval_length = self.series_length / 2
-            if max_interval_length < self.min_interval:
-                max_interval_length = self.min_interval
+            self.max_interval = self.series_length / 2
         else:
-            max_interval_length = self.max_interval
+            self.max_interval = self.max_interval
+        if self.max_interval < self.min_interval:
+            self.max_interval = self.min_interval
 
         c22 = Catch22()
 
@@ -166,8 +189,9 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
             )
 
             self.atts.append(rng.choice(25, self.att_subsample_size, replace=False))
+            self.dims.append(rng.choice(self.n_dims, self.n_intervals))
 
-            # Find the random intervals for classifier i and concatentate
+            # Find the random intervals for classifier i and concatenate
             # features
             for j in range(0, self.n_intervals):
                 if rng.random() < 0.5:
@@ -176,7 +200,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                     )
                     len_range = min(
                         self.series_length - self.intervals[i][j][0],
-                        max_interval_length,
+                        self.max_interval,
                     )
                     length = (
                         rng.randint(0, len_range - self.min_interval)
@@ -188,7 +212,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
                         rng.randint(0, self.series_length - self.min_interval)
                         + self.min_interval
                     )
-                    len_range = min(self.intervals[i][j][1], max_interval_length)
+                    len_range = min(self.intervals[i][j][1], self.max_interval)
                     length = (
                         rng.randint(0, len_range - self.min_interval)
                         + self.min_interval
@@ -260,7 +284,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         probabilities
         """
         self.check_is_fitted()
-        X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
+        X = check_X(X, coerce_to_numpy=True)
 
         n_test_instances, _, series_length = X.shape
         if series_length != self.series_length:
@@ -294,19 +318,39 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         if self.atts[i][a] == 22:
             # mean
             return np.mean(
-                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
+                ],
+                axis=1,
             )
         elif self.atts[i][a] == 23:
             # std_dev
             return np.std(
-                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
+                ],
+                axis=1,
             )
         elif self.atts[i][a] == 24:
             # slope
-            return time_series_slope(
-                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], axis=1
+            return _slope(
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
+                ],
+                axis=1,
             )
         else:
             return c22._transform_single_feature(
-                X[:, 0, self.intervals[i][j][0] : self.intervals[i][j][1]], feature=a
+                X[
+                    :,
+                    self.dims[i][j],
+                    self.intervals[i][j][0] : self.intervals[i][j][1],
+                ],
+                feature=a,
             )

@@ -106,7 +106,8 @@
         "projectManagement",
         "question",
         "talk",
-        "mentoring"
+        "mentoring",
+        "video"
       ]
     },
     {
@@ -141,7 +142,8 @@
       "contributions": [
         "code",
         "doc",
-        "test"
+        "test",
+        "tutorial"
       ]
     },
     {
@@ -235,7 +237,8 @@
       "profile": "https://github.com/angus924",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "tutorial"
       ]
     },
     {
@@ -323,7 +326,9 @@
       "profile": "https://github.com/HYang1996",
       "contributions": [
         "code",
-        "test"
+        "test",
+        "doc",
+        "tutorial"
       ]
     },
     {
@@ -678,6 +683,18 @@
       ]
     },
     {
+      "login": "MichalChromcak",
+      "name": "Michal Chromcak",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/12393430?v=4",
+      "profile": "https://github.com/MichalChromcak",
+      "contributions": [
+        "code",
+        "doc",
+        "test",
+        "tutorial"
+      ]
+    },
+    {
       "login": "bmurdata",
       "name": "Brian Murphy",
       "avatar_url": "https://avatars2.githubusercontent.com/u/32182553?v=4",
@@ -692,6 +709,106 @@
       "avatar_url": "https://avatars3.githubusercontent.com/u/29356417?v=4",
       "profile": "https://github.com/raishubham1",
       "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ngupta23",
+      "name": "Nikhil Gupta",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/33585645?v=4",
+      "profile": "https://github.com/ngupta23",
+      "contributions": [
+        "code",
+        "bug",
+        "doc"
+      ]
+    },
+    {
+      "login": "aiwalter",
+      "name": "Martin Walter",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/29627036?v=4",
+      "profile": "https://www.linkedin.com/in/martin-walter-1a33b3114/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "Afzal-Ind",
+      "name": "Afzal",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
+      "profile": "https://github.com/Afzal-Ind",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "gracewgao",
+      "name": "Grace Gao",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/38268331?v=4",
+      "profile": "https://www.linkedin.com/in/gracewgao/",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "utsavcoding",
+      "name": "Utsav Kumar Tiwari",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/55446385?v=4",
+      "profile": "https://github.com/utsavcoding",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "tch",
+      "name": "Tomasz Chodakowski",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/184076?v=4",
+      "profile": "https://github.com/tch",
+      "contributions": [
+        "code",
+        "doc",
+        "bug"
+      ]
+    },
+    {
+      "login": "vnmabus",
+      "name": "Carlos Ramos Carreño",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2364173?v=4",
+      "profile": "https://github.com/vnmabus",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "lpantano",
+      "name": "Lorena Pantano",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/1621788?v=4",
+      "profile": "http://lpantano.github.io/",
+      "contributions": [
+        "ideas"
+      ]
+    },
+    {
+      "login": "KirstieJane",
+      "name": "Kirstie Whitaker",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/3626306?v=4",
+      "profile": "https://whitakerlab.github.io/",
+      "contributions": [
+        "ideas",
+        "fundingFinding"
+      ]
+    },
+    {
+      "login": "juanitorduz",
+      "name": "Juan Orduz",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/22996444?v=4",
+      "profile": "https://juanitorduz.github.io/",
+      "contributions": [
+        "tutorial",
         "doc"
       ]
     }

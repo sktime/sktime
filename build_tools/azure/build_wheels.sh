@@ -45,7 +45,7 @@ done
 # Install built wheel and test
 for PYTHON in "${PYTHON_VERSIONS[@]}"; do
   # Install from wheel
-  "${PYTHON}/pip" install --pre --no-index --find-links dist/ sktime
+  "${PYTHON}/pip" install --pre --no-index --no-deps --find-links dist/ sktime
 
   # Run tests
   "${PYTHON}/pytest" --showlocals --durations=20 --junitxml=junit/test-results.xml --cov=sktime --cov-report=xml --cov-report=html --pyargs sktime

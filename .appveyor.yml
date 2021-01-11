@@ -65,6 +65,7 @@ install:
 
   # Install requirements from inside conda environment
   - cmd: activate testenv
+  - cmd: conda install -c conda-forge "matplotlib>=3.3.2" "seaborn>=0.11.0" "tsfresh>=0.17.0" "hcrystalball>=0.1.9" "stumpy>=1.5.1" "fbprophet>=0.7.1" "numba>=0.50,<0.53" "numpy>=1.19" "pandas>=1.1.0,<1.2" "statsmodels>=0.12.1" "scikit-learn>=0.23.0" "scikit-posthocs>=0.6.5" pystan
   - cmd: pip install -r %REQUIREMENTS%
 
   # List installed environment
@@ -72,6 +73,10 @@ install:
   - cmd: conda list
 
   # Build wheels
+  # some packages (e.g. prophet, pystan) use different compilers during
+  # installation, so we here have to be more explicit about which compiler
+  # to use for sktime
+  - cmd: python setup.py build_ext --compiler=msvc
   - cmd: python setup.py bdist_wheel bdist_wininst
   - ps: ls dist  # list built artifacts
 

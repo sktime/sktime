@@ -30,13 +30,13 @@ def test_weights_for_airline_averaging():
             (
                 "holt",
                 ExponentialSmoothing(
-                    trend="add", damped=False, seasonal="multiplicative", sp=12
+                    trend="add", damped_trend=False, seasonal="multiplicative", sp=12
                 ),
             ),
             (
-                "damped",
+                "damped_trend",
                 ExponentialSmoothing(
-                    trend="add", damped=True, seasonal="multiplicative", sp=12
+                    trend="add", damped_trend=True, seasonal="multiplicative", sp=12
                 ),
             ),
         ]

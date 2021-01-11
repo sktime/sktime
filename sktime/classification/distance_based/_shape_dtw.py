@@ -3,43 +3,32 @@
 import numpy as np
 import pandas as pd
 from sktime.utils.validation.panel import check_X, check_X_y
-from sktime.utils.data_container import from_nested_to_2d_array
+from sktime.utils.data_processing import from_nested_to_2d_array
 
 # Tuning
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
 # Transforms
-from sktime.transformers.panel.segment import SlidingWindowSegmenter
-from sktime.transformers.panel.dictionary_based._paa import PAA
-from sktime.transformers.panel.dwt import DWTTransformer
-from sktime.transformers.panel.slope import SlopeTransformer
-from sktime.transformers.panel.summarize._extract import (
+from sktime.transformations.panel.segment import SlidingWindowSegmenter
+from sktime.transformations.panel.dictionary_based._paa import PAA
+from sktime.transformations.panel.dwt import DWTTransformer
+from sktime.transformations.panel.slope import SlopeTransformer
+from sktime.transformations.panel.summarize._extract import (
     DerivativeSlopeTransformer,
 )
-from sktime.transformers.panel.hog1d import HOG1DTransformer
+from sktime.transformations.panel.hog1d import HOG1DTransformer
 
 # Classifiers
 from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 
+__author__ = ["Vincent Nicholson"]
+
 
 class ShapeDTW(BaseClassifier):
 
     """
-    @article{ZHAO2018171,
-        title = {shapeDTW: Shape Dynamic Time Warping},
-        journal = {Pattern Recognition},
-        volume = {74},
-        pages = {171 - 184},
-        year = {2018},
-        issn = {0031-3203},
-        doi = {https://doi.org/10.1016/j.patcog.2017.09.020},
-        url = {http://www.sciencedirect.com/science/article/pii/S0031320317303710},
-        author = {Jiaping Zhao and Laurent Itti},
-        keywords = {Dynamic Time Warping, Sequence alignment,
-                    Time series classification}
-    }
 
     The ShapeDTW classifier works by initially extracting a set of subsequences
     describing local neighbourhoods around each data point in a time series.
@@ -113,7 +102,21 @@ class ShapeDTW(BaseClassifier):
 
     metric_params               : dictionary for metric parameters
                                   (default = None).
+
+    Notes
+    _____
+    ..[1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
+        Pattern Recognition, 74, pp 171-184, 2018
+        http://www.sciencedirect.com/science/article/pii/S0031320317303710,
+
     """
+
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
