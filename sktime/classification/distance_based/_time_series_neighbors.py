@@ -247,11 +247,11 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         return fx
 
     def _more_tags(self):
-        """ Removes the need to pass y with _fit
+        """Removes the need to pass y with _fit
         Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
         so we can call fx = self._fit(X) and maintain backward compatibility. 
         """
-        return {'requires_y': False}
+        return {"requires_y": False}
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
