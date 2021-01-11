@@ -116,7 +116,8 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     ):
 
         self._cv_for_params = False
-
+        # TODO: add in capacity for euclidean
+        # if metric != "euclidean":  # Euclidean will default to the base class distance
         if metric == "dtw":
             metric = dtw_distance
         elif metric == "dtwcv":  # special case to force loocv grid search
@@ -149,28 +150,15 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             metric = twe_distance
         elif metric == "mpdist":
             metric = mpdist
-        # When mpdist is used, the subsequence length (parameter m) must be set
-        # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
-        # metric='mpdist', metric_params={'m':30})
+            # When mpdist is used, the subsequence length (parameter m) must be set
+            # Example: knn_mpdist = KNeighborsTimeSeriesClassifier(
+            # metric='mpdist', metric_params={'m':30})
         else:
             if type(metric) is str:
                 raise ValueError(
-                    "Unrecognised distance measure: " + metric + ". Allowed "
-                    "values are "
-                    "names from "
-                    "[dtw,ddtw,"
-                    "wdtw,"
-                    "wddtw,"
-                    "lcss,erp,"
-                    "msm] or "
-                    "please "
-                    "pass a "
-                    "callable "
-                    "distance "
-                    "measure "
-                    "into the "
-                    "constuctor "
-                    "directly."
+                    "Unrecognised distance measure: " + metric + ". Allowed values "
+                    "are names from [dtw,ddtw,wdtw,wddtw,lcss,erp,msm] or "
+                    "please pass a callable distance measure into the constuctor"
                 )
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(

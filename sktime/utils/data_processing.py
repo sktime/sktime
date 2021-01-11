@@ -11,6 +11,7 @@ __all__ = [
     "from_nested_to_3d_numpy",
     "from_nested_to_long",
     "is_nested_dataframe",
+    "convert_from_dictionary",
 ]
 
 
@@ -210,6 +211,22 @@ def from_2d_array_to_nested(
     if columns is not None:
         Xt.columns = columns
     return Xt
+
+
+def convert_from_dictionary(ts_dict):
+    """
+    Simple conversion from a dictionary of each series, e.g. univariate
+        x = {
+            "Series1": [1.0,2.0,3.0,1.0,2.0],
+            "Series2": [3.0,2.0,1.0,3.0,2.0],
+        }
+    or multivariate, e.g.
+    to sktime panda format
+    TODO: Adapt for multivariate
+    """
+    panda = pd.DataFrame(ts_dict)
+    panda = panda.transpose()
+    return from_2d_array_to_nested(panda)
 
 
 def _concat_nested_arrays(arrs, return_arrays=False):

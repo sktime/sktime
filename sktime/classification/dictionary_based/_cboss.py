@@ -161,7 +161,16 @@ class ContractableBOSS(BaseClassifier):
         win_inc = int((max_window - self.min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-
+        if self.min_window > max_window + 1:
+            raise ValueError(
+                f"Error in ContractableBOSS, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={self.max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
         train_time = 0
@@ -189,7 +198,7 @@ class ContractableBOSS(BaseClassifier):
                 *parameters,
                 alphabet_size=self.alphabet_size,
                 save_words=False,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
             boss._clean()

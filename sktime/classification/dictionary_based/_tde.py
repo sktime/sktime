@@ -205,7 +205,16 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
         if self.time_limit > 0:
             self.n_parameter_samples = 0
-
+        if self.min_window > max_window + 1:
+            raise ValueError(
+                f"Error in TemporalDictionaryEnsemble, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={self.max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
         rng = check_random_state(self.random_state)
 
         if self.bigrams is None:
@@ -242,7 +251,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
                 bigrams=use_bigrams,
                 dim_threshold=self.dim_threshold,
                 max_dims=self.max_dims,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
             tde.fit(X_subsample, y_subsample)
             tde.subsample = subsample
