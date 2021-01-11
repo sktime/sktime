@@ -188,8 +188,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
         y = np.asarray(y)
         check_classification_targets(y)
-        print(f" dimensions of X are {X.shape}")
-        print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
