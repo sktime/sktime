@@ -2,8 +2,9 @@
 import numpy as np
 from numpy import testing
 
-from sktime.classification.hybrid._catch22_forest_classifier import \
+from sktime.classification.hybrid._catch22_forest_classifier import (
     Catch22ForestClassifier
+)
 from sktime.datasets import load_gunpoint, load_basic_motions
 
 
