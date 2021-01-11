@@ -98,6 +98,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         n_neighbors=1,
@@ -213,7 +220,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
                 warnings.warn(
-                    "A column-vector y was passed when a 1d array "
+                    "IN TS-KNN: A column-vector y was passed when a 1d array "
                     "was expected. Please change the shape of y to "
                     "(n_samples, ), for example using ravel().",
                     DataConversionWarning,
@@ -242,7 +249,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
 
-        fx = self._fit(X)
+        fx = self._fit(X, self._y)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp

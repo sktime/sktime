@@ -17,7 +17,7 @@ from sktime.classification.base import BaseClassifier
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.forecasting.arima import AutoARIMA
@@ -67,9 +67,12 @@ from sktime.transformations.series.acf import PartialAutoCorrelationTransformer
 from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.transformations.series.detrend import Detrender
 
-# The following estimators currently do not pass all unit tests or fail some of them
-# and are excluded until fixed.
+# The following estimators currently do not pass all unit tests
+# What do they fail? ShapeDTW fails on 3d_numpy_input test, not set up for that
 EXCLUDE_ESTIMATORS = [
+    "ROCKETClassifier",
+    "ShapeDTW",
+    "HIVECOTEV1",
     "ElasticEnsemble",
     "KNeighborsTimeSeriesClassifier",
     "ProximityForest",

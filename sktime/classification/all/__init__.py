@@ -37,7 +37,7 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.distance_based import ProximityForest
 from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
-from sktime.classification.frequency_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import TimeSeriesForest
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
