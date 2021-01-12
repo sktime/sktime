@@ -114,6 +114,18 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         metric_params=None,
         **kwargs
     ):
+        if algorithm == "kd_tree":
+            raise ValueError(
+                "KNeighborsTimeSeriesClassifier cannot work with kd_tree since kd_tree "
+                "cannot be used with a callable distance metric and we do not support "
+                "precalculated distances as yet."
+            )
+        if algorithm == "ball_tree":
+            raise ValueError(
+                "KNeighborsTimeSeriesClassifier cannot work with ball_tree since "
+                "ball_tree has a list of hard coded distances it can use, and cannot "
+                "work with 3-D arrays"
+            )
 
         self._cv_for_params = False
         # TODO: add in capacity for euclidean
