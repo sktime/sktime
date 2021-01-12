@@ -259,7 +259,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
         )
 
         output = np.sum(y_probas, axis=0) / (
-                np.ones(self.n_classes) * self.n_estimators
+            np.ones(self.n_classes) * self.n_estimators
         )
         return output
 
@@ -297,16 +297,16 @@ class DrCIF(ForestClassifier, BaseClassifier):
                     len_range = min(
                         transform_length - intervals[j][0],
                         self.__max_interval,
-                        )
+                    )
                     length = (
-                            rng.randint(0, len_range - self.min_interval)
-                            + self.min_interval
+                        rng.randint(0, len_range - self.min_interval)
+                        + self.min_interval
                     )
                     intervals[j][1] = intervals[j][0] + length
                 else:
                     intervals[j][1] = (
-                            rng.randint(0, transform_length - self.min_interval)
-                            + self.min_interval
+                        rng.randint(0, transform_length - self.min_interval)
+                        + self.min_interval
                     )
                     len_range = min(intervals[j][1], self.__max_interval)
                     length = (
@@ -319,11 +319,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
 
                 for a in range(0, self.att_subsample_size):
                     transformed_x[p] = self.__scif_feature(
-                        T[r],
-                        intervals[j],
-                        dims[j],
-                        atts[a],
-                        c22
+                        T[r], intervals[j], dims[j], atts[a], c22
                     )
                     p += 1
 
@@ -338,7 +334,7 @@ class DrCIF(ForestClassifier, BaseClassifier):
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(
-            self, X, X_p, X_d, classifier, intervals, dims, atts, test_size
+        self, X, X_p, X_d, classifier, intervals, dims, atts, test_size
     ):
         c22 = Catch22()
         T = [X, X_p, X_d]

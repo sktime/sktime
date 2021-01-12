@@ -355,7 +355,7 @@ class IndividualBOSS(BaseClassifier):
             remove_repeat_words=True,
             bigrams=False,
             save_words=save_words,
-            n_jobs=n_jobs
+            n_jobs=n_jobs,
         )
         self.transformed_data = []
         self.accuracy = 0

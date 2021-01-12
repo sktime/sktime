@@ -151,7 +151,6 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
 
-
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
@@ -254,7 +253,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         )
 
         output = np.sum(y_probas, axis=0) / (
-                np.ones(self.n_classes) * self.n_estimators
+            np.ones(self.n_classes) * self.n_estimators
         )
         return output
 
@@ -277,27 +276,23 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         # features
         for j in range(0, self.__n_intervals):
             if rng.random() < 0.5:
-                intervals[j][0] = rng.randint(
-                    0, self.series_length - self.min_interval
-                )
+                intervals[j][0] = rng.randint(0, self.series_length - self.min_interval)
                 len_range = min(
                     self.series_length - intervals[j][0],
                     self.__max_interval,
-                    )
+                )
                 length = (
-                        rng.randint(0, len_range - self.min_interval)
-                        + self.min_interval
+                    rng.randint(0, len_range - self.min_interval) + self.min_interval
                 )
                 intervals[j][1] = intervals[j][0] + length
             else:
                 intervals[j][1] = (
-                        rng.randint(0, self.series_length - self.min_interval)
-                        + self.min_interval
+                    rng.randint(0, self.series_length - self.min_interval)
+                    + self.min_interval
                 )
                 len_range = min(intervals[j][1], self.__max_interval)
                 length = (
-                    rng.randint(0, len_range - self.min_interval)
-                    + self.min_interval
+                    rng.randint(0, len_range - self.min_interval) + self.min_interval
                     if len_range - self.min_interval > 0
                     else self.min_interval
                 )
@@ -317,7 +312,7 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         return [tree, intervals, dims, atts]
 
     def _predict_proba_for_estimator(
-            self, X, classifier, intervals, dims, atts, test_size
+        self, X, classifier, intervals, dims, atts, test_size
     ):
         c22 = Catch22()
 
