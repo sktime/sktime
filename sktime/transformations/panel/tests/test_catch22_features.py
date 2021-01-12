@@ -17,7 +17,7 @@ def test_catch22_on_gunpoint():
 
     # assert transformed data is the same
     data = c22.transform(X_train.iloc[indices])
-    testing.assert_array_equal(data, catch22_gunpoint_data)
+    testing.assert_array_almost_equal(data, catch22_gunpoint_data)
 
 
 def test_catch22_single_feature_on_gunpoint():
@@ -31,7 +31,7 @@ def test_catch22_single_feature_on_gunpoint():
 
     # assert transformed data is the same
     data = c22._transform_single_feature(X_train.iloc[indices], 5)
-    testing.assert_array_equal(data, catch22_single_feature_gunpoint_data)
+    testing.assert_array_almost_equal(data, catch22_single_feature_gunpoint_data)
 
 
 def test_catch22_on_basic_motions():
@@ -45,7 +45,7 @@ def test_catch22_on_basic_motions():
 
     # assert transformed data is the same
     data = c22.transform(X_train.iloc[indices])
-    testing.assert_array_equal(data, catch22_basic_motions_data)
+    testing.assert_array_almost_equal(data, catch22_basic_motions_data)
 
 
 catch22_gunpoint_data = np.array(
