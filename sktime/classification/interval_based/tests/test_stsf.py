@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from sktime.classification.interval_based._stsf import SupervisedTimeSeriesForest
+from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 

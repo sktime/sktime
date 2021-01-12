@@ -12,7 +12,6 @@ from importlib import import_module
 
 SOFT_DEPENDENCIES = {
     "sktime.benchmarking.evaluation": ["matplotlib"],
-    "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.forecasting.all": ["pmdarima", "fbprophet", "tbats"],
     "sktime.forecasting.arima": ["pmdarima"],
     "sktime.forecasting.hcrystalball": ["hcrystalball"],
@@ -24,6 +23,7 @@ SOFT_DEPENDENCIES = {
     "sktime.classification.interval_based._cif": ["catch22"],
     "sktime.classification.interval_based._drcif": ["catch22"],
     "sktime.regression.all": ["tsfresh"],
+    "sktime.transformations.panel.tsfresh": ["tsfresh"],
     "sktime.transformations.panel.catch22_features": ["catch22"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
 }
