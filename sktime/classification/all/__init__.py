@@ -16,13 +16,10 @@ __all__ = [
     "ProximityForest",
     "ElasticEnsemble",
     "TimeSeriesForest",
-    "TimeSeriesForestClassifier",
     "RandomIntervalSpectralForest",
     "SupervisedTimeSeriesForest",
-    "CanonicalIntervalForest",
-    "DrCIF",
+    "TimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
-    "Catch22ForestClassifier",
     "pd",
     "np",
     "load_gunpoint",
@@ -45,14 +42,9 @@ from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.distance_based import ProximityForest
 from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
-from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier,
-)
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.interval_based import TimeSeriesForest
-from sktime.classification.interval_based._cif import CanonicalIntervalForest
-from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.shapelet_based import MrSEQLClassifier
 from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
