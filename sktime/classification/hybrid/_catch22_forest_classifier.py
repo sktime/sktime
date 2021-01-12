@@ -52,12 +52,6 @@ class Catch22ForestClassifier(BaseClassifier):
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/transformers/Catch22.java
 
-    !!!
-    The catch22 package is currently unstable, results will differ between operating
-    systems. MacOS is presumed to be the correct version, with only minor differences
-    for Windows.
-    !!!
-
     Parameters
     ----------
     n_estimators            : int, number of trees in the random forest
