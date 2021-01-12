@@ -361,8 +361,8 @@ class TemporalDictionaryEnsemble(BaseClassifier):
 
             results[i] = (
                 np.ones(self.n_classes) * (1 / self.n_classes)
-                if divisor == 0 else
-                sums / (np.ones(self.n_classes) * divisor)
+                if divisor == 0
+                else sums / (np.ones(self.n_classes) * divisor)
             )
 
         return results
