@@ -46,7 +46,7 @@ from sktime.classification.distance_based import ProximityForest
 from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
 from sktime.classification.hybrid._catch22_forest_classifier import (
-    Catch22ForestClassifier
+    Catch22ForestClassifier,
 )
 from sktime.classification.interval_based import RandomIntervalSpectralForest
 from sktime.classification.interval_based import SupervisedTimeSeriesForest
