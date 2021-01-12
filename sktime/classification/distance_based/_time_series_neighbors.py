@@ -188,8 +188,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=False, coerce_to_numpy=True)
         y = np.asarray(y)
         check_classification_targets(y)
-
-        # print(X)
         # if internal cv is desired, the relevant flag forces a grid search
         # to evaluate the possible values,
         # find the best, and then set this classifier's params to match
@@ -236,8 +234,9 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         else:
             temp = check_array.__code__
             check_array.__code__ = _check_array_ts.__code__
-
-        fx = self._fit(X, self._y)
+        #  this not fx = self._fit(X, self_y) in order to maintain backward
+        # compatibility with scikit learn 0.23, where _fit does not take an arg y
+        fx = self._fit(X)
 
         if hasattr(check_array, "__wrapped__"):
             check_array.__wrapped__.__code__ = temp
@@ -246,6 +245,13 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         self._is_fitted = True
         return fx
+
+    def _more_tags(self):
+        """Removes the need to pass y with _fit
+        Overrides the scikit learn (>0.23) base class setting where 'requires_y' is true
+        so we can call fx = self._fit(X) and maintain backward compatibility.
+        """
+        return {"requires_y": False}
 
     def kneighbors(self, X, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
