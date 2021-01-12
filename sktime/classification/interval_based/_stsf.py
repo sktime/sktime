@@ -345,10 +345,11 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         bag = bag.astype(int)
 
         estimator = clone(self.base_estimator)
-        r = None if self.random_state is None else self.random_state * 37 * idx
-        estimator.set_params(random_state=r)
+        rs = 5465 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        estimator.set_params(random_state=rs)
 
-        rng = check_random_state(r)
+        rng = check_random_state(rs)
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
         intervals = self._get_intervals(X[bag], y[bag], rng)

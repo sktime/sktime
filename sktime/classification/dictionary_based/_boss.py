@@ -11,6 +11,7 @@ import sys
 from itertools import compress
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import class_distribution
 
@@ -91,11 +92,14 @@ class BOSSEnsemble(BaseClassifier):
         max_ensemble_size=500,
         max_win_len_prop=1,
         min_window=10,
+        n_jobs=1,
         random_state=None,
     ):
         self.threshold = threshold
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
+
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
         self.classifiers = []
@@ -271,8 +275,15 @@ class BOSSEnsemble(BaseClassifier):
         for i in range(num_inst):
             sums = np.zeros(self.n_classes)
 
-            for clf in self.classifiers:
-                sums[self.class_dictionary.get(clf._train_predict(i), -1)] += 1
+            preds = Parallel(n_jobs=self.n_jobs)(
+                delayed(clf._train_predict)(
+                    i,
+                )
+                for clf in self.classifiers
+            )
+
+            for c in preds:
+                sums[self.class_dictionary.get(c, -1)] += 1
 
             dists = sums / divisor
             for n in range(self.n_classes):
@@ -280,19 +291,32 @@ class BOSSEnsemble(BaseClassifier):
 
         return results
 
-    @staticmethod
-    def _individual_train_acc(boss, y, train_size, lowest_acc):
+    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
-        for i in range(train_size):
-            if correct + train_size - i < required_correct:
-                return -1
+        if self.n_jobs > 1:
+            c = Parallel(n_jobs=self.n_jobs)(
+                delayed(boss._train_predict)(
+                    i,
+                )
+                for i in range(train_size)
+            )
 
-            c = boss._train_predict(i)
+            for i in range(train_size):
+                if correct + train_size - i < required_correct:
+                    return -1
+                elif c[i] == y[i]:
+                    correct += 1
+        else:
+            for i in range(train_size):
+                if correct + train_size - i < required_correct:
+                    return -1
 
-            if c == y[i]:
-                correct += 1
+                c = boss._train_predict(i)
+
+                if c == y[i]:
+                    correct += 1
 
         return correct / train_size
 
@@ -311,6 +335,7 @@ class IndividualBOSS(BaseClassifier):
         norm=False,
         alphabet_size=4,
         save_words=True,
+        n_jobs=1,
         random_state=None,
     ):
         self.window_size = window_size
@@ -319,6 +344,7 @@ class IndividualBOSS(BaseClassifier):
         self.alphabet_size = alphabet_size
 
         self.save_words = save_words
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
         self.transformer = SFA(
@@ -329,6 +355,7 @@ class IndividualBOSS(BaseClassifier):
             remove_repeat_words=True,
             bigrams=False,
             save_words=save_words,
+            n_jobs=n_jobs
         )
         self.transformed_data = []
         self.accuracy = 0
@@ -359,24 +386,15 @@ class IndividualBOSS(BaseClassifier):
         self.check_is_fitted()
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
 
-        rng = check_random_state(self.random_state)
-
-        classes = []
         test_bags = self.transformer.transform(X)
         test_bags = test_bags[0]
 
-        for test_bag in test_bags:
-            best_dist = sys.float_info.max
-            nn = None
-
-            for n, bag in enumerate(self.transformed_data):
-                dist = boss_distance(test_bag, bag, best_dist)
-
-                if dist < best_dist or (dist == best_dist and rng.random() < 0.5):
-                    best_dist = dist
-                    nn = self.class_vals[n]
-
-            classes.append(nn)
+        classes = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._test_nn)(
+                test_bag,
+            )
+            for test_bag in test_bags
+        )
 
         return np.array(classes)
 
@@ -388,6 +406,21 @@ class IndividualBOSS(BaseClassifier):
             dists[i, self.class_dictionary.get(preds[i])] += 1
 
         return dists
+
+    def _test_nn(self, test_bag):
+        rng = check_random_state(self.random_state)
+
+        best_dist = sys.float_info.max
+        nn = None
+
+        for n, bag in enumerate(self.transformed_data):
+            dist = boss_distance(test_bag, bag, best_dist)
+
+            if dist < best_dist or (dist == best_dist and rng.random() < 0.5):
+                best_dist = dist
+                nn = self.class_vals[n]
+
+        return nn
 
     def _train_predict(self, train_num):
         test_bag = self.transformed_data[train_num]

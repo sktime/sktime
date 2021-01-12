@@ -13,7 +13,7 @@ def test_drcif_on_gunpoint():
     indices = np.random.RandomState(0).permutation(10)
 
     # train DrCIF
-    drcif = DrCIF(n_estimators=100, random_state=0)
+    drcif = DrCIF(n_estimators=20, random_state=0)
     drcif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -28,7 +28,7 @@ def test_drcif_on_power_demand():
     indices = np.random.RandomState(0).permutation(100)
 
     # train DrCIF
-    drcif = DrCIF(n_estimators=100, random_state=0)
+    drcif = DrCIF(n_estimators=20, random_state=0)
     drcif.fit(X_train, y_train)
 
     score = drcif.score(X_test.iloc[indices], y_test[indices])
@@ -42,7 +42,7 @@ def test_drcif_on_basic_motions():
     indices = np.random.RandomState(0).permutation(20)
 
     # train DrCIF
-    drcif = DrCIF(n_estimators=100, random_state=0)
+    drcif = DrCIF(n_estimators=20, random_state=0)
     drcif.fit(X_train.iloc[indices], y_train[indices])
 
     # assert probabilities are the same
@@ -53,128 +53,128 @@ def test_drcif_on_basic_motions():
 drcif_gunpoint_probas = np.array(
     [
         [
+            0.25,
+            0.75,
+        ],
+        [
+            0.55,
+            0.45,
+        ],
+        [
+            0.4,
+            0.6,
+        ],
+        [
+            0.4,
+            0.6,
+        ],
+        [
+            0.1,
+            0.9,
+        ],
+        [
+            0.45,
+            0.55,
+        ],
+        [
             0.15,
             0.85,
         ],
         [
-            0.43,
-            0.57,
+            0.55,
+            0.45,
         ],
         [
-            0.61,
-            0.39,
+            0.6,
+            0.4,
         ],
         [
-            0.42,
-            0.58,
-        ],
-        [
-            0.11,
-            0.89,
-        ],
-        [
-            0.54,
-            0.46,
-        ],
-        [
-            0.31,
-            0.69,
-        ],
-        [
-            0.58,
-            0.42,
-        ],
-        [
-            0.58,
-            0.42,
-        ],
-        [
-            0.18,
-            0.82,
+            0.2,
+            0.8,
         ],
     ]
 )
 drcif_basic_motions_probas = np.array(
     [
         [
-            0.98,
-            0.02,
-        ],
-        [
-            0.01,
-            0.99,
-        ],
-        [
-            0.91,
-            0.09,
-        ],
-        [
-            0.04,
-            0.96,
-        ],
-        [
-            0.97,
-            0.03,
-        ],
-        [
-            0.96,
-            0.04,
-        ],
-        [
-            0.02,
-            0.98,
-        ],
-        [
-            0.98,
-            0.02,
-        ],
-        [
-            0.02,
-            0.98,
-        ],
-        [
-            0.04,
-            0.96,
+            0.9,
+            0.1,
         ],
         [
             0.0,
             1.0,
         ],
         [
-            0.99,
-            0.01,
+            0.9,
+            0.1,
         ],
         [
-            0.01,
-            0.99,
-        ],
-        [
-            0.01,
-            0.99,
+            0.0,
+            1.0,
         ],
         [
             0.95,
             0.05,
         ],
         [
-            0.96,
-            0.04,
+            0.95,
+            0.05,
         ],
         [
-            0.02,
-            0.98,
-        ],
-        [
-            0.12,
-            0.88,
-        ],
-        [
-            0.98,
-            0.02,
-        ],
-        [
-            1.0,
             0.0,
+            1.0,
+        ],
+        [
+            0.9,
+            0.1,
+        ],
+        [
+            0.05,
+            0.95,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.05,
+            0.95,
+        ],
+        [
+            0.95,
+            0.05,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.95,
+            0.05,
+        ],
+        [
+            0.95,
+            0.05,
+        ],
+        [
+            0.0,
+            1.0,
+        ],
+        [
+            0.1,
+            0.9,
+        ],
+        [
+            0.95,
+            0.05,
+        ],
+        [
+            0.95,
+            0.05,
         ],
     ]
 )
@@ -197,7 +197,7 @@ drcif_basic_motions_probas = np.array(
 #     indices = np.random.RandomState(0).permutation(10)
 #
 #     drcif_u = DrCIF(
-#         n_estimators=100,
+#         n_estimators=20,
 #         random_state=0,
 #     )
 #
@@ -210,7 +210,7 @@ drcif_basic_motions_probas = np.array(
 #     indices = np.random.RandomState(0).permutation(20)
 #
 #     drcif_m = DrCIF(
-#         n_estimators=100,
+#         n_estimators=20,
 #         random_state=0,
 #     )
 #

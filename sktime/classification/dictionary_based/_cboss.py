@@ -11,6 +11,7 @@ import math
 import time
 
 import numpy as np
+from joblib import Parallel, delayed
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils import check_random_state
 from sktime.classification.base import BaseClassifier
@@ -103,12 +104,15 @@ class ContractableBOSS(BaseClassifier):
         max_win_len_prop=1,
         time_limit=0.0,
         min_window=10,
+        n_jobs=1,
         random_state=None,
     ):
         self.n_parameter_samples = n_parameter_samples
         self.max_ensemble_size = max_ensemble_size
         self.max_win_len_prop = max_win_len_prop
         self.time_limit = time_limit
+
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
         self.classifiers = []
@@ -265,24 +269,6 @@ class ContractableBOSS(BaseClassifier):
 
         return min_acc, min_acc_idx
 
-    def _get_train_probs(self, X):
-        num_inst = X.shape[0]
-        results = np.zeros((num_inst, self.n_classes))
-        for i in range(num_inst):
-            divisor = 0
-            sums = np.zeros(self.n_classes)
-
-            for n, clf in enumerate(self.classifiers):
-                if i in clf.subsample:
-                    sums[
-                        self.class_dictionary.get(clf._train_predict(i), -1)
-                    ] += self.weights[n]
-                    divisor += self.weights[n]
-
-            results[i] = sums / (np.ones(self.n_classes) * divisor)
-
-        return results
-
     def _unique_parameters(self, max_window, win_inc):
         possible_parameters = [
             [win_size, word_len, normalise]
@@ -293,18 +279,61 @@ class ContractableBOSS(BaseClassifier):
 
         return possible_parameters
 
-    @staticmethod
-    def _individual_train_acc(boss, y, train_size, lowest_acc):
+    def _get_train_probs(self, X):
+        num_inst = X.shape[0]
+        results = np.zeros((num_inst, self.n_classes))
+        for i in range(num_inst):
+            divisor = 0
+            sums = np.zeros(self.n_classes)
+
+            cls_idx = []
+            for n, clf in enumerate(self.classifiers):
+                idx = np.where(clf.subsample == i)
+                if len(idx[0]) > 0:
+                    cls_idx.append([n, idx[0][0]])
+
+            preds = Parallel(n_jobs=self.n_jobs)(
+                delayed(self.classifiers[cls[0]]._train_predict)(
+                    cls[1],
+                )
+                for cls in cls_idx
+            )
+
+            for n, pred in enumerate(preds):
+                sums[
+                    self.class_dictionary.get(pred, -1)
+                ] += self.weights[cls_idx[n][0]]
+                divisor += self.weights[cls_idx[n][0]]
+
+            results[i] = np.ones(self.n_classes) * (1 / self.n_classes) if divisor == 0 else sums / (np.ones(self.n_classes) * divisor)
+
+        return results
+
+    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
-        for i in range(train_size):
-            if correct + train_size - i < required_correct:
-                return -1
+        if self.n_jobs > 1:
+            c = Parallel(n_jobs=self.n_jobs)(
+                delayed(boss._train_predict)(
+                    i,
+                )
+                for i in range(train_size)
+            )
 
-            c = boss._train_predict(i)
+            for i in range(train_size):
+                if correct + train_size - i < required_correct:
+                    return -1
+                elif c[i] == y[i]:
+                    correct += 1
+        else:
+            for i in range(train_size):
+                if correct + train_size - i < required_correct:
+                    return -1
 
-            if c == y[i]:
-                correct += 1
+                c = boss._train_predict(i)
+
+                if c == y[i]:
+                    correct += 1
 
         return correct / train_size
