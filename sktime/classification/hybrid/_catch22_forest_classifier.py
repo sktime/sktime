@@ -17,6 +17,7 @@ from sktime.utils.validation.panel import check_X
 _check_soft_dependencies("catch22")
 from catch22 import catch22_all  # noqa: E402
 
+
 class Catch22ForestClassifier(BaseClassifier):
     """Canonical Time-series Characteristics (catch22)
 

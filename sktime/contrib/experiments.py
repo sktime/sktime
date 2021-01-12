@@ -28,8 +28,9 @@ from sktime.classification.distance_based import (
     ShapeDTW,
 )
 from sktime.classification.hybrid import HIVECOTEV1
-from sktime.classification.hybrid._catch22_forest_classifier import \
-    Catch22ForestClassifier
+from sktime.classification.hybrid._catch22_forest_classifier import (
+    Catch22ForestClassifier,
+)
 from sktime.classification.interval_based import (
     TimeSeriesForest,
     RandomIntervalSpectralForest,
