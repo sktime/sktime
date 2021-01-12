@@ -89,6 +89,13 @@ class ContractableBOSS(BaseClassifier):
 
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         n_parameter_samples=250,
@@ -154,7 +161,16 @@ class ContractableBOSS(BaseClassifier):
         win_inc = int((max_window - self.min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-
+        if self.min_window > max_window + 1:
+            raise ValueError(
+                f"Error in ContractableBOSS, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={self.max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
         possible_parameters = self._unique_parameters(max_window, win_inc)
         num_classifiers = 0
         train_time = 0
@@ -175,17 +191,18 @@ class ContractableBOSS(BaseClassifier):
             )
 
             subsample = rng.choice(self.n_instances, size=subsample_size, replace=False)
-            X_subsample = X[subsample]  # .iloc[subsample, :]
+            X_subsample = X[subsample]
             y_subsample = y[subsample]
 
             boss = IndividualBOSS(
                 *parameters,
                 alphabet_size=self.alphabet_size,
                 save_words=False,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
             boss.fit(X_subsample, y_subsample)
             boss._clean()
+            boss.subsample = subsample
 
             boss.accuracy = self._individual_train_acc(
                 boss, y_subsample, subsample_size, lowest_acc
@@ -251,18 +268,18 @@ class ContractableBOSS(BaseClassifier):
     def _get_train_probs(self, X):
         num_inst = X.shape[0]
         results = np.zeros((num_inst, self.n_classes))
-        divisor = np.ones(self.n_classes) * self.weight_sum
         for i in range(num_inst):
+            divisor = 0
             sums = np.zeros(self.n_classes)
 
             for n, clf in enumerate(self.classifiers):
-                sums[
-                    self.class_dictionary.get(clf._train_predict(i), -1)
-                ] += self.weights[n]
+                if i in clf.subsample:
+                    sums[
+                        self.class_dictionary.get(clf._train_predict(i), -1)
+                    ] += self.weights[n]
+                    divisor += self.weights[n]
 
-            dists = sums / divisor
-            for n in range(self.n_classes):
-                results[i][n] = dists[n]
+            results[i] = sums / (np.ones(self.n_classes) * divisor)
 
         return results
 
@@ -276,7 +293,8 @@ class ContractableBOSS(BaseClassifier):
 
         return possible_parameters
 
-    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
+    @staticmethod
+    def _individual_train_acc(boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 

@@ -78,6 +78,13 @@ class BOSSEnsemble(BaseClassifier):
     classifiers/dictionary_based/BOSS.java
     """
 
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
+
     def __init__(
         self,
         threshold=0.92,
@@ -132,14 +139,23 @@ class BOSSEnsemble(BaseClassifier):
 
         # Window length parameter space dependent on series length
         max_window_searches = self.series_length / 4
+
         max_window = int(self.series_length * self.max_win_len_prop)
         win_inc = int((max_window - self.min_window) / max_window_searches)
         if win_inc < 1:
             win_inc = 1
-
+        if self.min_window > max_window + 1:
+            raise ValueError(
+                f"Error in BOSSEnsemble, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
         max_acc = -1
         min_max_acc = -1
-
         for normalise in self.norm_options:
             for win_size in range(self.min_window, max_window + 1, win_inc):
                 boss = IndividualBOSS(
@@ -225,7 +241,6 @@ class BOSSEnsemble(BaseClassifier):
             preds = clf.predict(X)
             for i in range(0, X.shape[0]):
                 sums[i, self.class_dictionary[preds[i]]] += 1
-
         dists = sums / (np.ones(self.n_classes) * self.n_estimators)
 
         return dists
@@ -265,7 +280,8 @@ class BOSSEnsemble(BaseClassifier):
 
         return results
 
-    def _individual_train_acc(self, boss, y, train_size, lowest_acc):
+    @staticmethod
+    def _individual_train_acc(boss, y, train_size, lowest_acc):
         correct = 0
         required_correct = int(lowest_acc * train_size)
 
@@ -316,6 +332,7 @@ class IndividualBOSS(BaseClassifier):
         )
         self.transformed_data = []
         self.accuracy = 0
+        self.subsample = []
 
         self.class_vals = []
         self.num_classes = 0
@@ -327,7 +344,7 @@ class IndividualBOSS(BaseClassifier):
         X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
 
         sfa = self.transformer.fit_transform(X)
-        self.transformed_data = sfa[0]  # .iloc[:, 0]
+        self.transformed_data = sfa[0]
 
         self.class_vals = y
         self.num_classes = np.unique(y).shape[0]
@@ -346,7 +363,7 @@ class IndividualBOSS(BaseClassifier):
 
         classes = []
         test_bags = self.transformer.transform(X)
-        test_bags = test_bags[0]  # .iloc[:, 0]
+        test_bags = test_bags[0]
 
         for test_bag in test_bags:
             best_dist = sys.float_info.max
@@ -400,7 +417,7 @@ class IndividualBOSS(BaseClassifier):
         )
         new_boss.transformer = self.transformer
         sfa = self.transformer._shorten_bags(word_len)
-        new_boss.transformed_data = sfa[0]  # .iloc[:, 0]
+        new_boss.transformed_data = sfa[0]
 
         new_boss.class_vals = self.class_vals
         new_boss.num_classes = self.num_classes
