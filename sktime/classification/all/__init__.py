@@ -5,18 +5,24 @@ __author__ = ["Markus Löning"]
 __all__ = [
     "ShapeletTransformClassifier",
     "MrSEQLClassifier",
+    "ROCKETClassifier",
     "BOSSEnsemble",
     "IndividualBOSS",
-    "KNeighborsTimeSeriesClassifier",
     "TemporalDictionaryEnsemble",
+    "IndividualTDE",
+    "KNeighborsTimeSeriesClassifier",
     "ProximityStump",
     "ProximityTree",
     "ProximityForest",
+    "ElasticEnsemble",
     "TimeSeriesForest",
     "TimeSeriesForestClassifier",
     "RandomIntervalSpectralForest",
+    "SupervisedTimeSeriesForest",
+    "CanonicalIntervalForest",
+    "DrCIF",
     "ColumnEnsembleClassifier",
-    "ElasticEnsemble",
+    "Catch22ForestClassifier",
     "pd",
     "np",
     "load_gunpoint",
@@ -30,16 +36,25 @@ import pandas as pd
 
 from sktime.classification.compose import ColumnEnsembleClassifier
 from sktime.classification.compose import TimeSeriesForestClassifier
-from sktime.classification.dictionary_based import BOSSEnsemble, IndividualBOSS
+from sktime.classification.dictionary_based import BOSSEnsemble
+from sktime.classification.dictionary_based import IndividualBOSS
+from sktime.classification.dictionary_based import IndividualTDE
 from sktime.classification.dictionary_based import TemporalDictionaryEnsemble
 from sktime.classification.distance_based import ElasticEnsemble
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.distance_based import ProximityForest
 from sktime.classification.distance_based import ProximityStump
 from sktime.classification.distance_based import ProximityTree
+from sktime.classification.hybrid._catch22_forest_classifier import (
+    Catch22ForestClassifier
+)
 from sktime.classification.interval_based import RandomIntervalSpectralForest
+from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.classification.interval_based import TimeSeriesForest
+from sktime.classification.interval_based._cif import CanonicalIntervalForest
+from sktime.classification.interval_based._drcif import DrCIF
 from sktime.classification.shapelet_based import MrSEQLClassifier
+from sktime.classification.shapelet_based import ROCKETClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import load_arrow_head
 from sktime.datasets import load_basic_motions
