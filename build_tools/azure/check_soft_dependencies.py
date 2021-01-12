@@ -19,8 +19,9 @@ SOFT_DEPENDENCIES = {
     "sktime.forecasting.tbats": ["tbats"],
     "sktime.forecasting.bats": ["tbats"],
     "sktime.forecasting.fbprophet": ["fbprophet"],
-    "sktime.classification.all": ["tsfresh"],
+    "sktime.classification.all": ["tsfresh", "catch22"],
     "sktime.regression.all": ["tsfresh"],
+    "sktime.transformations.panel.catch22_features": ["catch22"],
     "sktime.transformations.series.matrix_profile": ["stumpy"],
 }
 MODULES_TO_IGNORE = ("sktime.contrib", "sktime.utils._testing")

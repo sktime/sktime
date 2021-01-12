@@ -54,7 +54,7 @@ Simple (or first-degree) transformations:
 | Shapelet transform (contracted) | transformers.ContractedShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | Shapelet transform (random sampled) | transformers.RandomEnumerationShapeletTransform | @jasonlines| [ Hills et al (2014) - Classification of time series by shapelet transformation](https://link.springer.com/article/10.1007/s10618-013-0322-1) |
 | ROCKET | transformers.rocket.Rocket | @angus924 | [Dempser et al (2019) ROCKET: Exceptionally fast and accurate time series classification using random convolutional kernels](https://arxiv.org/abs/1910.13051) |
-| Canonical Time-series Characteristics  | contrib.transformers.catch22_features.Catch22 | @MatthewMiddlehurst  | [ Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
+| Canonical Time-series Characteristics  | transformers.catch22_features.Catch22 | @MatthewMiddlehurst  | [ Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
 
 #### Multivariate nested data frame to univariate nested data frame (n-mts-to-n-1-ts)
 
@@ -113,15 +113,18 @@ Paired (or second-degree) transformations:
 | Elastic Ensemble | classification.distance_based._elastic_ensemble.ElasticEnsemble | @jasonlines | [Lines, Bagnall (2015) - Time Series Classification with Ensembles of Elastic Distance Measures](https://link.springer.com/article/10.1007/s10618-014-0361-2) |
 | Proximity Forest | classification.distance_based._proximity_forest.ProximityForest | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
 | Proximity Stump | classification.distance_based._proximity_forest.ProximityStump | @goastler | [Lucas et al (2019) - Proximity Forest: an effective and scalable distance-based classifier for time series](https://link.springer.com/article/10.1007/s10618-019-00617-3) |
-| Random Interval Spectral Forest (RISE) | classification.frequency_based._rise.RandomIntervalSpectralForest | @TonyBagnall | [Lines et al (2018) - Time Series Classification with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based Ensembles](https://ieeexplore.ieee.org/document/7837946) |
+| Random Interval Spectral Forest (RISE) | classification.interval_based._rise.RandomIntervalSpectralForest | @TonyBagnall | [Lines et al (2018) - Time Series Classification with HIVE-COTE: The Hierarchical Vote Collective of Transformation-Based Ensembles](https://ieeexplore.ieee.org/document/7837946) |
 | Shapelet Transform Classifier | classification.shapelet_based._stc.ShapeletTransformClassifier | @TonyBagnall | [Hills et al (2014) - Classification of time series by shapelet transformation](https://ieeexplore.ieee.org/document/7837946) |
 | Time Series Forest | classification.interval_based._tsf.TimeSeriesForestClassifier | @TonyBagnall | [Deng et al (2013) - A Time Series Forest for Classification and Feature Extraction](https://www.sciencedirect.com/science/article/pii/S0020025513001473) |
 | Time Series k-NN | classification.distance_based._time_series_neighbors.KNeighborsTimeSeriesClassifier | @jasonlines |  |
 | Mr-SEQL | classification.shapelet_based.mrseql.mrseql.MrSEQLClassifier | @lnthach | [Interpretable Time Series Classification Using Linear Models and Multi-resolution Multi-domain Symbolic Representations](https://link.springer.com/article/10.1007/s10618-019-00633-3) |
 | ShapeDTW | classification.distance_based._shape_dtw.ShapeDTW | @Multivin12 | [shapeDTW: Shape Dynamic Time Warping](https://www.sciencedirect.com/science/article/pii/S0031320317303710?via%3Dihub) |
 | WEASEL | classification.dictionary_based._weasel.WEASEL | @patrickZIB | [Fast and Accurate Time Series Classification with WEASEL](https://dl.acm.org/doi/abs/10.1145/3132847.3132980) |
-| catch22 Forest Classifier | contrib.hybrid._catch22_forest_classifier.Catch22ForestClassifier | @MatthewMiddlehurst  | [Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
-| Canonical Interval Forest (CIF) | contrib.interval_based.cif._CanonicalIntervalForest | @MatthewMiddlehurst  | [Middlehurst et al (2020) - The Canonical Interval Forest (CIF) Classifier for Time Series Classification](https://arxiv.org/abs/2008.09172) |
+| catch22 Forest Classifier | classification.hybrid._catch22_forest_classifier.Catch22ForestClassifier | @MatthewMiddlehurst  | [Lubba et al (2019) - catch22: CAnonical Time-series CHaracteristics](https://link.springer.com/article/10.1007/s10618-019-00647-x) |
+| Canonical Interval Forest (CIF) | classification.interval_based._cif._CanonicalIntervalForest | @MatthewMiddlehurst  | [Middlehurst et al (2020) - The Canonical Interval Forest (CIF) Classifier for Time Series Classification](https://arxiv.org/abs/2008.09172) |
+| DrCIF | classification.interval_based._drcif._DrCIF | @MatthewMiddlehurst  |  |
+| Supervised Time Series Forest | classification.interval_based._stsf._SupervisedTimeSeriesForest | @MatthewMiddlehurst  |  |
+
 
 
 ### Multivariate time series classifiers
