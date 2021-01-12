@@ -21,7 +21,7 @@ from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
 
 _check_soft_dependencies("catch22")
-from sktime.transformations.panel.catch22_features import Catch22  # noqa: E402
+from sktime.contrib.transformations.catch22_features import Catch22  # noqa: E402
 
 
 class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
@@ -56,6 +56,12 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
     For the original Java version, see
     https://github.com/uea-machine-learning/tsml/blob/master/src/main/java
     /tsml/classifiers/interval_based/CIF.java
+
+    !!!
+    The catch22 package is currently unstable, results will differ between operating
+    systems. MacOS is presumed to be the correct version, with only minor differences
+    for Windows.
+    !!!
 
     Parameters
     ----------
