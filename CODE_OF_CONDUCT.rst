@@ -173,7 +173,7 @@ f.kiraly@ucl.ac.uk.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you do not feel comfortable contacting Dr Franz Király, please report
-an incident to Dr Anthony Bagnall.
+an incident to Martina Vilas who is not part of the core developer team.
 
 3.3 What to do if someone is in physical danger
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,14 +199,14 @@ respectful and not include any harassing behaviours.
 4.1 The Code of Conduct Committee
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The provisional Code of Conduct committee is:
+The Code of Conduct committee is:
 
 -  Dr Franz Király: f.kiraly@ucl.ac.uk
 -  Dr Anthony Bagnall: anthony.bagnall@uea.ac.uk
 -  Markus Löning: markus.loning@gmail.com
+-  Martina Vilas: martinagonzalezvilas@gmail.com (external member)
 
-As the community grows, we will seek to build a larger committee
-including members outside of the core development team.
+The first three members are part of sktime's core developer team. Martina Vilas is an external member. As the community grows, we will seek to build a more diverse committee.
 
 4.2 Urgent Situations: Acting Unilaterally
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -260,7 +260,7 @@ consensus of all members investigating the report in question. If the
 committee cannot reach consensus and deadlocks for over a week, Dr Franz
 Király, as lead investigator of the sktime project, will break the tie.
 If Dr Franz Király is unable to take part in the discussion due to a
-conflict of interest, Dr Tony Bagnall, as an external member of the Code
+conflict of interest, Dr Anthony Bagnall, as an external member of the Code
 of Conduct committee, will make the decision.
 
 Possible responses may include:
@@ -305,8 +305,8 @@ committee is not required to act on this feedback.
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In the event of any conflict of interest such that Dr Franz Király is
-not able to evaluate or enforce the reported violation, Dr Tony Bagnall
-will take Dr Franz Király's place.
+not able to evaluate or enforce the reported violation, Dr Anthony Bagnall
+will take Dr Franz Király's place if that resolves the conflict of interest. Otherwise Martina Vilas will take Dr Franz Király's place.
 
 5 Acknowledgements
 ------------------
