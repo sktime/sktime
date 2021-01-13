@@ -9,6 +9,9 @@
 .. |pypi| image:: https://img.shields.io/pypi/v/sktime?color=orange
 .. _pypi: https://pypi.org/project/sktime/
 
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/sktime
+.. _conda: https://anaconda.org/conda-forge/sktime
+
 .. |discord| image:: https://img.shields.io/static/v1?logo=discord&label=discord&message=chat&color=lightgreen
 .. _discord: https://discord.com/invite/gqSab2K
 
@@ -71,7 +74,7 @@ For deep learning, see our companion package: `sktime-dl <https://github.com/skt
    * - **Community**
      - |contributors|_ |gitter|_ |discord|_ |twitter|_
    * - **Code**
-     - |pypi|_ |python|_ |codestyle|_ |zenodo|_
+     - |pypi|_ |conda|_ |python|_ |codestyle|_ |zenodo|_
 
 
 Installation
