@@ -1,6 +1,6 @@
 catch22
 cython>=0.29.0
-esig<=0.8.2 --prefer-binary
+esig==0.6.31
 fbprophet>=0.7.1
 hcrystalball>=0.1.9
 matplotlib
