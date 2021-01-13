@@ -53,17 +53,6 @@ Distance-based
     ProximityTree
     ProximityStump
 
-Frequency-based
----------------
-
-.. currentmodule:: sktime.classification.frequency_based
-
-.. autosummary::
-    :toctree: modules/auto_generated/
-    :template: class.rst
-
-    RandomIntervalSpectralForest
-
 Interval-based
 --------------
 
