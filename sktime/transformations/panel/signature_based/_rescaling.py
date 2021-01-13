@@ -13,7 +13,7 @@ import numpy as np
 from sktime.utils.validation._dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("esig")
-import esig  # noqa: E402
+from esig import tosig  # noqa: E402
 
 
 def _rescale_path(path, depth):
@@ -54,7 +54,7 @@ def _rescale_signature(signature, channels, depth):
     torch.Tensor:
         The signature with factorial depth scaling.
     """
-    if (esig.sigdim(channels, depth) - 1) != signature.shape[-1]:
+    if (tosig.sigdim(channels, depth) - 1) != signature.shape[-1]:
         raise ValueError(
             "Given a sigtensor with {} channels, a path with {} channels and "
             "a depth of {}, which are not consistent.".format(
