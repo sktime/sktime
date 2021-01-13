@@ -5,7 +5,6 @@ import numpy as np
 from sktime.clustering.utils import (
     convert_df_to_sklearn_format,
     Data_Frame,
-    SkLearn_Data,
     Numpy_Array,
     __check_shape,
     __check_array_type,
@@ -15,7 +14,7 @@ from sktime.clustering.utils import (
 
 
 def test_convert_df_to_learn_format(df: Data_Frame):
-    sklearn_data: SkLearn_Data = convert_df_to_sklearn_format(df)
+    sklearn_data: Numpy_Array = convert_df_to_sklearn_format(df)
     assert isinstance(sklearn_data, Numpy_Array)
     for arr in sklearn_data:
         assert isinstance(arr, Numpy_Array)

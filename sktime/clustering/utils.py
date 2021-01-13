@@ -4,17 +4,20 @@ __author__ = "Christopher Holder"
 __all__ = ["convert_df_to_sklearn_format"]
 
 
-from typing import List, Callable
+from typing import Callable, List
 import numpy as np
-import pandas as pd
 
-Data_Frame = pd.DataFrame
-Series = pd.Series
-Numpy_Array = np.ndarray
-SkLearn_Data = List[List[float]]
+from sktime.clustering.types import (
+    Data_Frame,
+    Data_Parameter_Arr,
+    Numpy_Array,
+    Series,
+    Data_Parameter,
+    Tuple_Of_Numpy,
+)
 
 
-def convert_df_to_sklearn_format(df: Data_Frame) -> SkLearn_Data:
+def convert_df_to_sklearn_format(df: Data_Frame) -> Numpy_Array:
     """
     Method that is used to convert the sktime dataframe into a format that
     can be passed into sklearn algorithms
@@ -114,3 +117,43 @@ class DataFormatError(Exception):
                 f"position: {self.position}"
             )
         return "The array provided is formatted incorrectly due to " f"{self.message}."
+
+
+def check_data_parameters(data: Data_Parameter) -> Numpy_Array:
+    """
+    Method that is used to check the form of the data being passed and if
+    it is in the sktime dataframe, it is converted to a numpy
+
+    Parameters
+    ----------
+    data: Data_Parameter (numpy array or data frame)
+        Data being passed to the cluster model
+    """
+    if isinstance(data, Numpy_Array):
+        return data
+    elif isinstance(data, Data_Frame):
+        return convert_df_to_sklearn_format(data)
+    else:
+        raise ValueError(
+            "The data passsed must be either a numpy array \
+            or a data frame"
+        )
+
+
+def check_multiple_data_parameters(data_arr: Data_Parameter_Arr) -> Tuple_Of_Numpy:
+    """
+    Method used to check multiple data parameters
+
+    Parameters
+    ----------
+    data_arr: Data_Parameter_Arr
+        Array of Data_Parameters which are either numpy arrays or dataframes
+
+    Returns
+    -------
+    x1, x2,..., xn: Numpy_Array
+    """
+    data_vals: List[Numpy_Array] = []
+    for arr in data_arr:
+        data_vals.append(check_data_parameters(arr))
+    return tuple(data_vals)

@@ -4,8 +4,12 @@ __author__ = "Christopher Holder"
 __all__ = ["Cluster"]
 
 
-from typing import Callable, Union
-from sktime.clustering.utils import Numpy_Array
+from typing import List
+
+from sktime.clustering.utils import (
+    check_data_parameters,
+    check_multiple_data_parameters,
+)
 from sktime.distances.elastic_cython import ddtw_distance
 from sktime.distances.elastic_cython import dtw_distance
 from sktime.distances.elastic_cython import erp_distance
@@ -15,9 +19,11 @@ from sktime.distances.elastic_cython import twe_distance
 from sktime.distances.elastic_cython import wddtw_distance
 from sktime.distances.elastic_cython import wdtw_distance
 from sktime.distances.mpdist import mpdist
-
-distance_function = Callable[[Numpy_Array, Numpy_Array, float], Numpy_Array]
-distance_parameter = Union[distance_function, str]
+from sktime.clustering.types import (
+    Data_Parameter,
+    Metric_Parameter,
+    Metric_Function_Dict,
+)
 
 
 class Cluster:
@@ -26,12 +32,28 @@ class Cluster:
     the underlying sktime specific details so that new implementations can
     be used done quickly and efficiently. Additionally it seeks to make the
     use of the model as similar to the orginal design as possible
+
+    Attributes
+    ----------
+    __metric_dict: Metric_Function_Dict (dict[str, Metric_Function])
+        Dict that is used to get the appropriate metric function from a string
     """
+
+    __metric_dict: Metric_Function_Dict = {
+        "dtw": dtw_distance,
+        "ddtw": ddtw_distance,
+        "wdtw": wdtw_distance,
+        "wddtw": wddtw_distance,
+        "lcss": lcss_distance,
+        "erp": erp_distance,
+        "msm": msm_distance,
+        "twe": twe_distance,
+        "mpdist": mpdist,
+    }
 
     def __init__(
         self,
-        model: any,
-        distance: distance_parameter = None,
+        metric: Metric_Parameter = None,
     ) -> None:
         """
         Consturctor for a cluster algorithm.
@@ -40,110 +62,117 @@ class Cluster:
         ----------
         model: any
             A clustering model
-        distance: distance_parameter (distance_function | str)
-            Distance function to be used in the clustering
+        metric: Metric_Parameter (Metric_Function | str)
+            Metric function to be used in the clustering
             algorithm
         """
-        self.__distance_metric: distance_parameter = distance
-        self.model = model
+        self.cluster_metric: Metric_Parameter = metric
+        self.model = None
 
-    def fit(self, X, y=None):
+    def fit(self, X: Data_Parameter, y: Data_Parameter = None):
         """
         Fit is a method that fits the given model
         """
+        self.__check_model()
+        if y is not None:
+            X, y = check_multiple_data_parameters([X, y])
+        else:
+            X = check_data_parameters(X)
         return self.model.fit(X, y)
 
-    def fit_predict(self, X, y=None, sample_weight=None):
+    def fit_predict(
+        self, X: Data_Parameter, y: Data_Parameter = None, sample_weight=None
+    ):
         """
         Compute cluster centers and predict cluster index for each sample
         """
+        self.__check_model()
+        if y is not None:
+            X, y = check_multiple_data_parameters([X, y])
+        else:
+            X = check_data_parameters(X)
         numArgs: int = self.model.fit_predict.__code__.co_argcount
         if numArgs > 3:
             return self.model.fit_predict(X, y, sample_weight=sample_weight)
         return self.model.fit_predict(X, y)
 
-    def fit_transform(self, X, y=None, sample_weight=None):
+    def fit_transform(
+        self, X: Data_Parameter, y: Data_Parameter = None, sample_weight=None
+    ):
         """
         Computer clustering and transform X to cluster-distance space
         """
+        self.__check_model()
+        if y is not None:
+            X, y = check_multiple_data_parameters([X, y])
+        else:
+            X = check_data_parameters(X)
         return self.model.fit_transform(X, y, sample_weight=sample_weight)
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X: Data_Parameter, sample_weight=None):
         """
         Predict the closest cluster each sample in X belongs to
         """
+        self.__check_model()
+        X = check_data_parameters(X)
         return self.model.predict(X, sample_weight=sample_weight)
 
-    def score(self, y=None, sample_weight=None):
+    def score(self, y: Data_Parameter = None, sample_weight=None):
         """
         Opposite of the value of X
         """
+        self.__check_model()
+        y = check_data_parameters(y)
         return self.model.score(y=y, sample_weight=sample_weight)
 
-    @property
-    def __distance_metric(self):
+    def model_built_in_metrics(self) -> List[str]:
         """
-        Property for the distance_metric
-        """
-        return self.distance_metric
-
-    @__distance_metric.setter
-    def __distance_metric(self, distance: distance_parameter) -> None:
-        """
-        Setter method that is used to get the distance function from a string
-        parameter or determines if a custom distance has been passed
-
-        Parameters
-        ----------
-        distance: distance_function | str
-            A string which is then mapped to the appropriate distance function
-            or a custom distnace_function
+        Method intended to be overidden that returns a list of extra
 
         Returns
         -------
-        matric: distance_function
-            The distance function to be used with the given algorithm
+        arr: [str]
+            Array of string values of the extra metrics
         """
-        if type(distance) is not str:
-            distance = distance
-        else:
-            if distance == "dtw":
-                distance = dtw_distance
-            # elif distance == "dtwcv":  # special case to force loocv grid search
-            #     # cv in training
-            #     if distance_params is not None:
-            #         warnings.warn(
-            #             "Warning: measure parameters have been specified for "
-            #             "dtwcv. "
-            #             "These will be ignored and parameter values will be "
-            #             "found using LOOCV."
-            #         )
-            #     distance = dtw_distance
-            #     self._cv_for_params = True
-            #     self._param_matrix = {
-            #         "distance_params": [{"w": x / 100} for x in range(0, 100)]
-            #     }
-            elif distance == "ddtw":
-                distance = ddtw_distance
-            elif distance == "wdtw":
-                distance = wdtw_distance
-            elif distance == "wddtw":
-                distance = wddtw_distance
-            elif distance == "lcss":
-                distance = lcss_distance
-            elif distance == "erp":
-                distance = erp_distance
-            elif distance == "msm":
-                distance = msm_distance
-            elif distance == "twe":
-                distance = twe_distance
-            elif distance == "mpdist":
-                distance = mpdist
-            else:
+        return [""]
+
+    @property
+    def cluster_metric(self):
+        """
+        Property for the __metric
+        """
+        return self.__metric
+
+    @cluster_metric.setter
+    def cluster_metric(self, metric: Metric_Parameter) -> None:
+        """
+        Setter method that is used to get the metric function from a string
+        parameter or determines if a custom metric has been passed
+
+        Parameters
+        ----------
+        metric: Metric_Function | str
+            A string which is then mapped to the appropriate metric function
+            or a custom distnace_function
+        """
+        if type(metric) is str:
+            if metric in Cluster.__metric_dict:
+                metric = Cluster.__metric_dict[metric]
+            elif metric not in self.model_built_in_metrics():
                 raise ValueError(
-                    "Unrecognised distance measure: " + distance + ". Allowed "
+                    "Unrecognised distance measure: " + metric + ". Allowed "
                     "values are names from [dtw,ddtw, wdtw, wddtw, lcss,erp,"
                     "msm] or please pass a callable distance measure into"
                     "the constructor directly"
                 )
-        self.distance_metric = distance
+        self.__metric = metric
+
+    def __check_model(self):
+        """
+        Method used to check the model is set correctly
+        """
+        if self.model is None:
+            raise ValueError(
+                "No model has been supplied please set the model \
+                (self.model)"
+            )

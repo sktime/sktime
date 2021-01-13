@@ -1,60 +1,51 @@
 # -*- coding: utf-8 -*-
 import pytest
-from sktime.distances.elastic_cython import dtw_distance
-from sktime.clustering.utils import (
-    Data_Frame,
-)
+
 from sktime.clustering._cluster import Cluster
-from sklearn.cluster import KMeans
 
 
-def test_cluster(df_x: Data_Frame):
+def test_cluster():
     try:
-        Cluster(
-            model=KMeans(
-                n_clusters=3,
-                init="random",
-                n_init=10,
-                max_iter=300,
-                tol=1e-04,
-                random_state=0,
-            ),
-        )
+        Cluster(metric="dtw")
     except Exception:
-        pytest.fail("Failed to construct base Cluster with no parameters")
+        pytest.fail("Failed to construct base Cluster with dtw")
 
     try:
-        Cluster(
-            model=KMeans(
-                n_clusters=3,
-                init="random",
-                n_init=10,
-                max_iter=300,
-                tol=1e-04,
-                random_state=0,
-            ),
-            distance="dtw",
-        )
+        Cluster(metric="ddtw")
     except Exception:
-        pytest.fail("Failed to construct base Cluster with no parameters")
+        pytest.fail("Failed to construct base Cluster with ddtw")
 
     try:
-        Cluster(
-            model=KMeans(
-                n_clusters=3,
-                init="random",
-                n_init=10,
-                max_iter=300,
-                tol=1e-04,
-                random_state=0,
-            ),
-            distance=dtw_distance,
-        )
+        Cluster(metric="wdtw")
     except Exception:
-        pytest.fail("Failed to construct base Cluster with no parameters")
+        pytest.fail("Failed to construct base Cluster with wdtw")
 
-    # sklearn_train_data: SkLearn_Data = convert_df_to_sklearn_format(df_x)
-    # km = KMeans(
-    #     n_clusters=3, init="random", n_init=10, max_iter=300, tol=1e-04,
-    # random_state=0)
-    # km.fit(sklearn_train_data)
+    try:
+        Cluster(metric="wddtw")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with wddtw")
+
+    try:
+        Cluster(metric="lcss")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with lcss")
+
+    try:
+        Cluster(metric="erp")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with erp")
+
+    try:
+        Cluster(metric="msm")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with msm")
+
+    try:
+        Cluster(metric="twe")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with twe")
+
+    try:
+        Cluster(metric="mpdist")
+    except Exception:
+        pytest.fail("Failed to construct base Cluster with mpdist")

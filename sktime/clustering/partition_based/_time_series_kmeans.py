@@ -2,7 +2,7 @@
 
 __author__ = "Christopher Holder"
 
-from sktime.clustering._cluster import Cluster, distance_parameter
+from sktime.clustering._cluster import Cluster, Metric_Parameter
 from sklearn.cluster import KMeans
 
 
@@ -23,19 +23,22 @@ class TimeSeriesKMeans(Cluster):
         verbose=1,
         random_state=None,
         copy_x=True,
-        distance: distance_parameter = None
+        metric: Metric_Parameter = None
     ):
+        """
+        Constructor for TimeSeriesKMeans
+        """
         super().__init__(
-            model=KMeans(
-                n_clusters=n_clusters,
-                init=init,
-                n_init=n_init,
-                max_iter=max_iter,
-                tol=tol,
-                verbose=verbose,
-                random_state=random_state,
-                copy_x=copy_x,
-                algorithm="auto",
-            ),
-            distance=distance,
+            metric=metric,
+        )
+        self.model = KMeans(
+            n_clusters=n_clusters,
+            init=init,
+            n_init=n_init,
+            max_iter=max_iter,
+            tol=tol,
+            verbose=verbose,
+            random_state=random_state,
+            copy_x=copy_x,
+            algorithm="auto",
         )
