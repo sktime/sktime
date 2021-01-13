@@ -335,8 +335,7 @@ class Evaluator:
         )
 
         wilcoxon_df = pd.DataFrame()
-        values = np.array([])
-        prod = itertools.product(metrics_per_estimator_dataset.keys(), repeat=2)
+        prod = itertools.combinations(metrics_per_estimator_dataset.keys(), 2)
         for p in prod:
             estim_1 = p[0]
             estim_2 = p[1]
@@ -352,19 +351,8 @@ class Evaluator:
             }
 
             wilcoxon_df = wilcoxon_df.append(w_test, ignore_index=True)
-            values = np.append(values, w)
-            values = np.append(values, p_val)
 
-        index = wilcoxon_df["estimator_1"].unique()
-        values_names = ["statistic", "p_val"]
-        col_idx = pd.MultiIndex.from_product([index, values_names])
-        values_reshaped = values.reshape(len(index), len(values_names) * len(index))
-
-        values_df_multiindex = pd.DataFrame(
-            values_reshaped, index=index, columns=col_idx
-        )
-
-        return wilcoxon_df, values_df_multiindex
+        return wilcoxon_df
 
     def friedman_test(self, metric_name=None):
         """
@@ -416,6 +404,124 @@ class Evaluator:
         strategy_dict = strategy_dict.melt(var_name="groups", value_name="values")
         nemenyi = posthoc_nemenyi(strategy_dict, val_col="values", group_col="groups")
         return nemenyi
+
+    def fit_runtime(self, unit="s", train_or_test="test", cv_fold="all"):
+        """
+        Calculates the average time for fitting the strategy
+
+        Parameters
+        ----------
+        unit : string (must be either 's' for seconds, 'm' for minutes or 'h' for hours)
+            the unit in which the run time will be calculated
+
+        Returns
+        -------
+        run_times: Pandas DataFrame
+            average run times per estimator and strategy
+        """
+
+        # check input
+        if isinstance(cv_fold, int) and cv_fold >= 0:
+            cv_folds = [cv_fold]  # if single fold, make iterable
+        elif cv_fold == "all":
+            cv_folds = np.arange(self.results.cv.get_n_splits())
+            if len(cv_folds) == 0:
+                raise ValueError()
+        else:
+            raise ValueError(
+                f"`cv_fold` must be either positive integer (>=0) or 'all', "
+                f"but found: {type(cv_fold)}"
+            )
+
+        # load all predictions
+        run_times = pd.DataFrame(
+            columns=[
+                "strategy_name",
+                "dataset_name",
+                "fit_estimator_start_time",
+                "fit_estimator_end_time",
+                "cv_fold",
+            ]
+        )
+        for cv_fold in cv_folds:
+            for result in self.results.load_predictions(
+                cv_fold=cv_fold, train_or_test=train_or_test
+            ):
+                # unwrap result object
+                strategy_name = result.strategy_name
+                dataset_name = result.dataset_name
+                fit_estimator_start_time = result.fit_estimator_start_time
+                fit_estimator_end_time = result.fit_estimator_end_time
+                predict_estimator_start_time = result.predict_estimator_start_time
+                predict_estimator_end_time = result.predict_estimator_end_time
+                unwrapped = pd.DataFrame(
+                    {
+                        "strategy_name": [strategy_name],
+                        "dataset_name": [dataset_name],
+                        "fit_estimator_start_time": [fit_estimator_start_time],
+                        "fit_estimator_end_time": [fit_estimator_end_time],
+                        "predict_estimator_start_time": [predict_estimator_start_time],
+                        "predict_estimator_end_time": [predict_estimator_end_time],
+                        "cv_fold": [cv_fold],
+                    }
+                )
+                run_times = run_times.append(unwrapped, ignore_index=True)
+
+        # calculate run time difference
+        run_times["fit_runtime"] = (
+            run_times["fit_estimator_end_time"] - run_times["fit_estimator_start_time"]
+        ) / np.timedelta64(1, unit)
+        run_times["predict_runtime"] = (
+            run_times["predict_estimator_end_time"]
+            - run_times["predict_estimator_start_time"]
+        ) / np.timedelta64(1, unit)
+
+        return pd.pivot_table(
+            run_times,
+            index=["strategy_name", "dataset_name"],
+            values=["fit_runtime", "predict_runtime"],
+            aggfunc={"fit_runtime": np.average, "predict_runtime": np.average},
+        )
+        #         # compute metric
+        #         mean, stderr = metric.compute(y_true, y_pred)
+
+        #         # store results
+        #         metric_dict = {
+        #             "dataset": dataset_name,
+        #             "strategy": strategy_name,
+        #             "cv_fold": cv_fold,
+        #             self._get_column_name(metric.name, suffix="mean"): mean,
+        #             self._get_column_name(metric.name, suffix="stderr"): stderr,
+        #         }
+        #         self._metric_dicts.append(metric_dict)
+
+        # # update metrics dataframe with computed metrics
+        # metrics = pd.DataFrame(self._metric_dicts)
+        # self._metrics = self._metrics.merge(metrics, how="outer")
+
+        # # aggregate results
+        # # aggregate over cv folds
+        # metrics_by_strategy_dataset = (
+        #     self._metrics.groupby(["dataset", "strategy"], as_index=False)
+        #     .agg(np.mean)
+        #     .drop(columns="cv_fold")
+        # )
+        # self._metrics_by_strategy_dataset = self._metrics_by_strategy_dataset.merge(
+        #     metrics_by_strategy_dataset, how="outer"
+        # )
+        # # aggregate over cv folds and datasets
+        # metrics_by_strategy = metrics_by_strategy_dataset.groupby(
+        #     ["strategy"], as_index=False
+        # ).agg(np.mean)
+        # self._metrics_by_strategy = self._metrics_by_strategy.merge(
+        #     metrics_by_strategy, how="outer"
+        # )
+
+        # # append metric names
+        # self._metric_names.append(metric.name)
+
+        # # return aggregated results
+        # return self._metrics_by_strategy
 
     def plot_critical_difference_diagram(self, metric_name=None, alpha=0.1):
         """Plot critical difference diagrams
