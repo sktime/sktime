@@ -2,7 +2,7 @@
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from sktime.classification.interval_based._stsf import SupervisedTimeSeriesForest
+from sktime.classification.interval_based import SupervisedTimeSeriesForest
 from sktime.datasets import load_gunpoint, load_italy_power_demand
 
 
@@ -35,28 +35,20 @@ def test_stsf_on_power_demand():
 expected = np.array(
     [
         [
-            1.0,
-            0.0,
+            0.95,
+            0.05,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            1.0,
-            0.0,
+            0.95,
+            0.05,
         ],
         [
-            0.8,
-            0.2,
-        ],
-        [
-            0.0,
-            1.0,
-        ],
-        [
-            0.85,
-            0.15,
+            0.9,
+            0.1,
         ],
         [
             0.0,
@@ -67,6 +59,14 @@ expected = np.array(
             0.1,
         ],
         [
+            0.05,
+            0.95,
+        ],
+        [
+            1.0,
+            0.0,
+        ],
+        [
             1.0,
             0.0,
         ],
@@ -87,28 +87,28 @@ expected = np.array(
             0.0,
         ],
         [
-            0.0,
-            1.0,
+            0.15,
+            0.85,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            0.5,
-            0.5,
+            0.8,
+            0.2,
         ],
         [
             1.0,
             0.0,
         ],
         [
-            1.0,
-            0.0,
+            0.95,
+            0.05,
         ],
         [
-            0.0,
-            1.0,
+            0.05,
+            0.95,
         ],
         [
             0.0,

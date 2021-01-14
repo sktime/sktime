@@ -8,6 +8,7 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+from joblib import Parallel, delayed
 from numba import njit
 from sklearn.feature_selection import f_classif
 from sklearn.tree import DecisionTreeClassifier
@@ -118,6 +119,7 @@ class SFA(_PanelToPanelTransformer):
         save_words=False,
         save_binning_dft=False,
         return_pandas_data_series=False,
+        n_jobs=1,
     ):
         self.words = []
         self.breakpoints = []
@@ -162,6 +164,8 @@ class SFA(_PanelToPanelTransformer):
         self.n_instances = 0
         self.series_length = 0
         self.return_pandas_data_series = return_pandas_data_series
+
+        self.n_jobs = n_jobs
 
         super(SFA, self).__init__()
 
@@ -208,85 +212,89 @@ class SFA(_PanelToPanelTransformer):
         X = check_X(X, enforce_univariate=True, coerce_to_numpy=True)
         X = X.squeeze(1)
 
+        transform = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._transform_case)(
+                X,
+                i,
+                supplied_dft,
+            )
+            for i in range(X.shape[0])
+        )
+
+        dim, words = zip(*transform)
+        if self.save_words:
+            self.words = list(words)
         bags = pd.DataFrame() if self.return_pandas_data_series else [None]
-        dim = []
+        bags[0] = list(dim)
 
-        # reuse 'transformed' array
-        start_offset, length, end = self._mft_start_length_end(X[0, :])
-        transformed = np.zeros((end, length))
-        stds = np.zeros(end)
+        return bags
 
-        for i in range(X.shape[0]):
-            # reuse 'transformed' array
-            if supplied_dft is None:
-                dfts = self._mft(X[i, :], transformed, stds)
+    def _transform_case(self, X, i, supplied_dft):
+        if supplied_dft is None:
+            dfts = self._mft(X[i, :])
+        else:
+            dfts = supplied_dft[i]
+
+        bag = defaultdict(int)
+        # bag = Dict.empty(key_type=typeof((100,100.0)),
+        #                  value_type=types.float64) \
+        #     if self.levels > 1 else \
+        #     Dict.empty(key_type=types.int64, value_type=types.int64)
+
+        last_word = -1
+        repeat_words = 0
+        words = np.zeros(dfts.shape[0], dtype=np.int64)
+
+        for window in range(dfts.shape[0]):
+            word_raw = SFA._create_word(
+                dfts[window], self.word_length, self.alphabet_size, self.breakpoints
+            )
+            words[window] = word_raw
+
+            repeat_word = (
+                self._add_to_pyramid(
+                    bag, word_raw, last_word, window - int(repeat_words / 2)
+                )
+                if self.levels > 1
+                else self._add_to_bag(bag, word_raw, last_word, window)
+            )
+
+            if repeat_word:
+                repeat_words += 1
             else:
-                dfts = supplied_dft[i]
+                last_word = word_raw
+                repeat_words = 0
 
-            bag = defaultdict(int)
-            # bag = Dict.empty(key_type=typeof((100,100.0)),
-            #                  value_type=types.float64) \
-            #     if self.levels > 1 else \
-            #     Dict.empty(key_type=types.int64, value_type=types.int64)
-
-            last_word = -1
-            repeat_words = 0
-            words = np.zeros(dfts.shape[0], dtype=np.int64)
-
-            for window in range(dfts.shape[0]):
-                word_raw = SFA._create_word(
-                    dfts[window], self.word_length, self.alphabet_size, self.breakpoints
-                )
-                words[window] = word_raw
-
-                repeat_word = (
-                    self._add_to_pyramid(
-                        bag, word_raw, last_word, window - int(repeat_words / 2)
+            if self.bigrams:
+                if window - self.window_size >= 0:
+                    bigram = self.create_bigram_word(
+                        words[window - self.window_size],
+                        word_raw,
+                        self.word_length,
                     )
-                    if self.levels > 1
-                    else self._add_to_bag(bag, word_raw, last_word, window)
-                )
 
-                if repeat_word:
-                    repeat_words += 1
-                else:
-                    last_word = word_raw
-                    repeat_words = 0
+                    if self.levels > 1:
+                        bigram = (bigram, 0)
+                    bag[bigram] += 1
 
-                if self.bigrams:
-                    if window - self.window_size >= 0:
-                        bigram = self.create_bigram_word(
-                            words[window - self.window_size],
+            if self.skip_grams:
+                # creates skip-grams, skipping every (s-1)-th word in-between
+                for s in range(2, 4):
+                    if window - s * self.window_size >= 0:
+                        skip_gram = self.create_bigram_word(
+                            words[window - s * self.window_size],
                             word_raw,
                             self.word_length,
                         )
 
                         if self.levels > 1:
-                            bigram = (bigram, 0)
-                        bag[bigram] += 1
+                            skip_gram = (skip_gram, 0)
+                        bag[skip_gram] += 1
 
-                if self.skip_grams:
-                    # creates skip-grams, skipping every (s-1)-th word in-between
-                    for s in range(2, 4):
-                        if window - s * self.window_size >= 0:
-                            skip_gram = self.create_bigram_word(
-                                words[window - s * self.window_size],
-                                word_raw,
-                                self.word_length,
-                            )
-
-                            if self.levels > 1:
-                                skip_gram = (skip_gram, 0)
-                            bag[skip_gram] += 1
-
-            if self.save_words:
-                self.words.append(words)
-
-            dim.append(pd.Series(bag) if self.return_pandas_data_series else bag)
-
-        bags[0] = dim
-
-        return bags
+        return [
+            pd.Series(bag) if self.return_pandas_data_series else bag,
+            words if self.save_words else [],
+        ]
 
     def _binning(self, X, y=None):
         num_windows_per_inst = math.ceil(self.series_length / self.window_size)

@@ -144,7 +144,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                     (rng.choice(cls_idx, size=average - class_counts[i]), balance_cases)
                 )
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        fit = Parallel(n_jobs=self.n_jobs)(
             delayed(self._fit_estimator)(
                 X,
                 X_p,
@@ -157,6 +157,8 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
             )
             for i in range(self.n_estimators)
         )
+
+        self.estimators_, self.intervals_ = zip(*fit)
 
         self._is_fitted = True
         return self
@@ -205,7 +207,13 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         X_d = np.diff(X, 1)
 
         y_probas = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._predict_proba_for_estimator)(X, X_p, X_d, i)
+            delayed(self._predict_proba_for_estimator)(
+                X,
+                X_p,
+                X_d,
+                self.intervals_[i],
+                self.estimators_[i],
+            )
             for i in range(self.n_estimators)
         )
 
@@ -221,6 +229,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         """
         n_instances, _ = X.shape
         total_intervals = 0
+
         for i in range(len(self.stats)):
             total_intervals += len(intervals[i])
         transformed_x = np.zeros((total_intervals, n_instances), dtype=np.float32)
@@ -327,7 +336,7 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
                 end,
             )
 
-    def _fit_estimator(self, X, X_p, X_d, y, bag, i):
+    def _fit_estimator(self, X, X_p, X_d, y, bag, idx):
         """
         Fit an estimator - a clone of base_estimator - on input data (X, y)
         transformed using the supervised intervals for each feature and representation.
@@ -336,32 +345,37 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         bag = bag.astype(int)
 
         estimator = clone(self.base_estimator)
-        estimator.set_params(random_state=self.random_state * 37 * i)
+        rs = 5465 if self.random_state == 0 else self.random_state
+        rs = None if self.random_state is None else rs * 37 * (idx + 1)
+        estimator.set_params(random_state=rs)
 
-        rng = check_random_state(self.random_state * 37 * i)
+        rng = check_random_state(rs)
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
-        self.intervals_[i][0] = self._get_intervals(X[bag], y[bag], rng)
+        intervals = self._get_intervals(X[bag], y[bag], rng)
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X[bag], self.intervals_[i][0])),
+            (transformed_x, self._transform(X[bag], intervals)),
             axis=1,
         )
 
-        self.intervals_[i][1] = self._get_intervals(X_p[bag], y[bag], rng)
+        intervals_p = self._get_intervals(X_p[bag], y[bag], rng)
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X_p[bag], self.intervals_[i][1])),
+            (transformed_x, self._transform(X_p[bag], intervals_p)),
             axis=1,
         )
 
-        self.intervals_[i][2] = self._get_intervals(X_d[bag], y[bag], rng)
+        intervals_d = self._get_intervals(X_d[bag], y[bag], rng)
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X_d[bag], self.intervals_[i][2])),
+            (transformed_x, self._transform(X_d[bag], intervals_d)),
             axis=1,
         )
 
-        return estimator.fit(transformed_x, y[bag])
+        return [
+            estimator.fit(transformed_x, y[bag]),
+            [intervals, intervals_p, intervals_d],
+        ]
 
-    def _predict_proba_for_estimator(self, X, X_p, X_d, i):
+    def _predict_proba_for_estimator(self, X, X_p, X_d, intervals, estimator):
         """
         Find probability estimates for each class for all cases in X using
         given estimator and intervals.
@@ -370,21 +384,21 @@ class SupervisedTimeSeriesForest(ForestClassifier, BaseClassifier):
         transformed_x = np.zeros((n_instances, 0), dtype=np.float32)
 
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X, self.intervals_[i][0])),
+            (transformed_x, self._transform(X, intervals[0])),
             axis=1,
         )
 
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X_p, self.intervals_[i][1])),
+            (transformed_x, self._transform(X_p, intervals[1])),
             axis=1,
         )
 
         transformed_x = np.concatenate(
-            (transformed_x, self._transform(X_d, self.intervals_[i][2])),
+            (transformed_x, self._transform(X_d, intervals[2])),
             axis=1,
         )
 
-        return self.estimators_[i].predict_proba(transformed_x)
+        return estimator.predict_proba(transformed_x)
 
 
 def fisher_score(X, y, classes=None, class_counts=None):
