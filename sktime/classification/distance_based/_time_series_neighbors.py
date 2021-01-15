@@ -90,8 +90,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
     n_neighbors     : int, set k for knn (default =1)
     weights         : mechanism for weighting a vote: 'uniform', 'distance'
     or a callable function: default ==' uniform'
-    algorithm       : search method for neighbours {‘auto’, ‘ball_tree’,
-    ‘kd_tree’, ‘brute’}: default = 'brute'
     metric          : distance measure for time series: {'dtw','ddtw',
     'wdtw','lcss','erp','msm','twe'}: default ='dtw'
     metric_params   : dictionary for metric parameters: default = None
@@ -109,23 +107,10 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         self,
         n_neighbors=1,
         weights="uniform",
-        algorithm="brute",
         metric="dtw",
         metric_params=None,
         **kwargs
     ):
-        if algorithm == "kd_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with kd_tree since kd_tree "
-                "cannot be used with a callable distance metric and we do not support "
-                "precalculated distances as yet."
-            )
-        if algorithm == "ball_tree":
-            raise ValueError(
-                "KNeighborsTimeSeriesClassifier cannot work with ball_tree since "
-                "ball_tree has a list of hard coded distances it can use, and cannot "
-                "work with 3-D arrays"
-            )
 
         self._cv_for_params = False
         # TODO: add in capacity for euclidean
@@ -175,7 +160,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
 
         super(KNeighborsTimeSeriesClassifier, self).__init__(
             n_neighbors=n_neighbors,
-            algorithm=algorithm,
+            algorithm="brute",  # We cannot support the other options yet
             metric=metric,
             metric_params=metric_params,
             **kwargs
@@ -206,7 +191,7 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
         if self._cv_for_params:
             grid = GridSearchCV(
                 estimator=KNeighborsTimeSeriesClassifier(
-                    metric=self.metric, n_neighbors=1, algorithm="brute"
+                    metric=self.metric, n_neighbors=1,
                 ),
                 param_grid=self._param_matrix,
                 cv=LeaveOneOut(),
@@ -349,24 +334,6 @@ class KNeighborsTimeSeriesClassifier(_KNeighborsClassifier, BaseClassifier):
                 metric=self.effective_metric_,
                 n_jobs=n_jobs,
                 **kwds
-            )
-
-        elif self._fit_method in ["ball_tree", "kd_tree"]:
-            if issparse(X):
-                raise ValueError(
-                    "%s does not work with sparse matrices. Densify the data, "
-                    "or set algorithm='brute'" % self._fit_method
-                )
-            if LooseVersion(joblib_version) < LooseVersion("0.12"):
-                # Deal with change of API in joblib
-                delayed_query = delayed(self._tree.query, check_pickle=False)
-                parallel_kwargs = {"backend": "threading"}
-            else:
-                delayed_query = delayed(self._tree.query)
-                parallel_kwargs = {"prefer": "threads"}
-            result = Parallel(n_jobs, **parallel_kwargs)(
-                delayed_query(X[s], n_neighbors, return_distance)
-                for s in gen_even_slices(X.shape[0], n_jobs)
             )
         else:
             raise ValueError("internal: _fit_method not recognized")
