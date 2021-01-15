@@ -31,18 +31,11 @@ Examples.
 
 Example
 -------
-(Example about flights from tutorial)
-
+Predicting flights. See the `Tutorial on Forecasting <https://github.com/alan-turing-institute/sktime/blob/master/examples/01_forecasting.ipynb>`_.
 
 Algorithms included in sktime
 -----------------------------
-* Naive and seasonal naive
-* Trend
-* Exponential Smoothing
-* ARIMA
-* Theta
-* BATS and TBATS
-* fbProphet
+See the `API Reference <https://www.sktime.org/en/latest/api_reference.html#sktime-forecasting-time-series-forecasting>`_.
 
 Reductions included in sktime
 -----------------------------
@@ -61,4 +54,4 @@ Algorithms not included in sktime
 
 
 Further reading
-_______________
+---------------
