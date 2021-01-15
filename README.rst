@@ -86,6 +86,12 @@ The package is available via PyPI using:
 
     pip install sktime
 
+Alternatively, you can install it via conda:
+
+.. code-block:: bash
+
+    conda install -c conda-forge sktime
+
 The package is actively being developed and some features may
 not be stable yet.
 
