@@ -15,12 +15,17 @@ from sktime.clustering.tests.partition_based.test_time_series_kmeans import (
     test_time_series_kmeans,
 )
 
-# from sktime.clustering.tests.density_based.test_time_series_mean_shift import (
-#     test_time_series_mean_shift,
-# )
-# from sktime.clustering.tests.graph_theory_based.test_ts_spec_clus import (
-#     test_time_series_spectral_clustering,
-# )
+from sktime.clustering.tests.partition_based.test_ts_affi_prop import (
+    test_time_series_affinity_propagation,
+)
+
+from sktime.clustering.tests.density_based.test_ts_ms import (
+    test_time_series_mean_shift,
+)
+
+from sktime.clustering.tests.graph_theory_based.test_ts_spec_clus import (
+    test_time_series_spectral_clustering,
+)
 
 # print("=============== START ================")
 DATA_PATH = os.path.join(os.path.dirname(sktime.__file__), "datasets/data")
@@ -40,7 +45,11 @@ train_x, train_y = load_from_tsfile_to_dataframe(
 test_cluster()
 
 # Specific clustering algorithms
+# print("=========================Testing k means===========================")
 test_time_series_kmeans(train_x, train_y)
-# test_time_series_affinity_propagation(train_x, train_y)
-# test_time_series_mean_shift(train_x, train_y)
-# test_time_series_spectral_clustering(train_x, train_y)
+# print("=================Testing affinity propagation======================")
+test_time_series_affinity_propagation(train_x, train_y)
+# print("======================Testing mean shift===========================")
+test_time_series_mean_shift(train_x, train_y)
+# print("=============Testing spectral clustering===========================")
+test_time_series_spectral_clustering(train_x, train_y)

@@ -4,7 +4,8 @@ __author__ = "Christopher Holder"
 __all__ = ["TimeSeriesMeanShift"]
 
 
-from sktime.clustering._cluster import Cluster, distance_parameter
+from sktime.clustering._cluster import Cluster
+from sktime.clustering.types import Metric_Parameter
 from sklearn.cluster import MeanShift
 
 
@@ -23,17 +24,17 @@ class TimeSeriesMeanShift(Cluster):
         cluster_all: bool = True,
         n_jobs: int = None,
         max_iter: int = 300,
-        distance: distance_parameter = None,
+        metric: Metric_Parameter = None,
     ):
         super().__init__(
-            model=MeanShift(
-                bandwidth=bandwidth,
-                seeds=seeds,
-                bin_seeding=bin_seeding,
-                min_bin_freq=min_bin_freq,
-                cluster_all=cluster_all,
-                n_jobs=n_jobs,
-                max_iter=max_iter,
-            ),
-            distance=distance,
+            metric=metric,
+        )
+        self.model = MeanShift(
+            bandwidth=bandwidth,
+            seeds=seeds,
+            bin_seeding=bin_seeding,
+            min_bin_freq=min_bin_freq,
+            cluster_all=cluster_all,
+            n_jobs=n_jobs,
+            max_iter=max_iter,
         )

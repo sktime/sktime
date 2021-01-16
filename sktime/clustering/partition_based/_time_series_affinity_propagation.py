@@ -4,8 +4,9 @@ __author__ = "Christopher Holder"
 __all__ = ["Cluster"]
 
 
-from sktime.clustering._cluster import Cluster, distance_parameter
+from sktime.clustering._cluster import Cluster
 from sklearn.cluster import AffinityPropagation
+from sktime.clustering.types import Metric_Parameter
 
 
 class TimeSeriesAffinityPropagation(Cluster):
@@ -23,18 +24,17 @@ class TimeSeriesAffinityPropagation(Cluster):
         affinity: str = "euclidean",
         verbose: bool = False,
         random_state=0,
-        distance: distance_parameter = None,
+        metric: Metric_Parameter = None,
     ):
-        Cluster.__init__(
-            self,
-            model=AffinityPropagation(
-                damping=damping,
-                max_iter=max_iter,
-                copy=copy,
-                preference=preference,
-                affinity=affinity,
-                verbose=verbose,
-                random_state=random_state,
-            ),
-            distance=distance,
+        super().__init__(
+            metric=metric,
+        )
+        self.model = AffinityPropagation(
+            damping=damping,
+            max_iter=max_iter,
+            copy=copy,
+            preference=preference,
+            affinity=affinity,
+            verbose=verbose,
+            random_state=random_state,
         )

@@ -2,8 +2,23 @@
 
 __author__ = "Christopher Holder"
 
-from sktime.clustering._cluster import Cluster, Metric_Parameter
+from sktime.clustering._cluster import Cluster
+from sktime.clustering.types import Metric_Parameter
 from sklearn.cluster import KMeans
+
+
+def check_kmeans_parameters(
+    n_clusters, init, n_init, max_iter, tol, verbose, random_state, copy_x
+) -> tuple:
+    """
+    Method that is used to check the parameters passed to construct a sklearn
+    kmeans classier
+    """
+    if verbose is False:
+        verbose = 0
+    elif verbose is True:
+        verbose = 1
+    return (n_clusters, init, n_init, max_iter, tol, verbose, random_state, copy_x)
 
 
 class TimeSeriesKMeans(Cluster):
@@ -16,13 +31,13 @@ class TimeSeriesKMeans(Cluster):
         self,
         n_clusters=8,
         *,
-        init="k-means++",
-        n_init=10,
-        max_iter=300,
-        tol=1e-4,
-        verbose=1,
-        random_state=None,
-        copy_x=True,
+        init: str = "k-means++",
+        n_init: int = 10,
+        max_iter: int = 300,
+        tol: float = 1e-4,
+        verbose: bool = False,
+        random_state: any = None,
+        copy_x: bool = True,
         metric: Metric_Parameter = None
     ):
         """
@@ -31,7 +46,7 @@ class TimeSeriesKMeans(Cluster):
         super().__init__(
             metric=metric,
         )
-        self.model = KMeans(
+        params = check_kmeans_parameters(
             n_clusters=n_clusters,
             init=init,
             n_init=n_init,
@@ -40,5 +55,5 @@ class TimeSeriesKMeans(Cluster):
             verbose=verbose,
             random_state=random_state,
             copy_x=copy_x,
-            algorithm="auto",
         )
+        self.model = KMeans(*params)
