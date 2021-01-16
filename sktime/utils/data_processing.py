@@ -270,7 +270,7 @@ def from_2d_array_to_nested(
     return Xt
 
 
-_from_dictionary(ts_dict):
+def convert_from_dictionary(ts_dict):
     """
     Simple conversion from a dictionary of each series, e.g. univariate
         x = {
