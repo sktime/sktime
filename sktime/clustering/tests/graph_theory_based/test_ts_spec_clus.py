@@ -11,5 +11,5 @@ from sktime.clustering.utils import (
 
 def test_time_series_spectral_clustering(df_x: Data_Frame, df_y: Data_Frame):
     sklearn_train_data: Numpy_Array = convert_df_to_sklearn_format(df_x)
-    km = TimeSeriesSpectralClustering()
-    km.fit_predict(sklearn_train_data)
+    m = TimeSeriesSpectralClustering()
+    m.fit_predict(sklearn_train_data)

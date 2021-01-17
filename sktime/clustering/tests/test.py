@@ -14,17 +14,20 @@ from sktime.clustering.tests.test_cluster import test_cluster
 from sktime.clustering.tests.partition_based.test_time_series_kmeans import (
     test_time_series_kmeans,
 )
-
 from sktime.clustering.tests.partition_based.test_ts_affi_prop import (
     test_time_series_affinity_propagation,
 )
-
 from sktime.clustering.tests.density_based.test_ts_ms import (
     test_time_series_mean_shift,
 )
-
 from sktime.clustering.tests.graph_theory_based.test_ts_spec_clus import (
     test_time_series_spectral_clustering,
+)
+from sktime.clustering.tests.graph_theory_based.tset_ts_spec_biclust import (
+    test_time_series_spectral_biclustering,
+)
+from sktime.clustering.tests.graph_theory_based.tset_ts_spec_coclust import (
+    test_time_series_spectral_coclustering,
 )
 
 # print("=============== START ================")
@@ -53,3 +56,5 @@ test_time_series_affinity_propagation(train_x, train_y)
 test_time_series_mean_shift(train_x, train_y)
 # print("=============Testing spectral clustering===========================")
 test_time_series_spectral_clustering(train_x, train_y)
+test_time_series_spectral_biclustering(train_x, train_y)
+test_time_series_spectral_coclustering(train_x, train_y)
