@@ -18,127 +18,78 @@ from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.validation import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.time_series import time_series_slope
+from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
-
-
-def _transform(X, intervals):
-    """
-    Compute the mean, standard deviation and slope for given intervals
-    of input data X.
-    """
-    n_instances, _ = X.shape
-    n_intervals, _ = intervals.shape
-    transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
-    for j in range(n_intervals):
-        X_slice = X[:, intervals[j][0] : intervals[j][1]]
-        means = np.mean(X_slice, axis=1)
-        std_dev = np.std(X_slice, axis=1)
-        slope = time_series_slope(X_slice, axis=1)
-        transformed_x[3 * j] = means
-        transformed_x[3 * j + 1] = std_dev
-        transformed_x[3 * j + 2] = slope
-
-    return transformed_x.T
-
-
-def _get_intervals(n_intervals, min_interval, series_length, rng):
-    """
-    Generate random intervals for given parameters.
-    """
-    intervals = np.zeros((n_intervals, 2), dtype=int)
-    for j in range(n_intervals):
-        intervals[j][0] = rng.randint(series_length - min_interval)
-        length = rng.randint(series_length - intervals[j][0] - 1)
-        if length < min_interval:
-            length = min_interval
-        intervals[j][1] = intervals[j][0] + length
-    return intervals
-
-
-def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
-    """
-    Fit an estimator - a clone of base_estimator - on input data (X, y)
-    transformed using the randomly generated intervals.
-    """
-
-    estimator = clone(base_estimator)
-    estimator.set_params(random_state=random_state)
-
-    transformed_x = _transform(X, intervals)
-    return estimator.fit(transformed_x, y)
-
-
-def _predict_proba_for_estimator(X, estimator, intervals):
-    """
-    Find probability estimates for each class for all cases in X using
-    given estimator and intervals.
-    """
-    transformed_x = _transform(X, intervals)
-    return estimator.predict_proba(transformed_x)
 
 
 class TimeSeriesForest(ForestClassifier, BaseClassifier):
     """Time series forest classifier.
 
-   A time series forest is an ensemble of decision trees built on random intervals.
-    Overview: Input n series length m
-    for each tree
-        sample sqrt(m) intervals
-        find mean, sd and slope for each interval, concatenate to form new
-        data set
-        build decision tree on new data set
-    ensemble the trees with averaged probability estimates
+    A time series forest is an ensemble of decision trees built on random intervals.
+     Overview: Input n series length m
+     for each tree
+         sample sqrt(m) intervals
+         find mean, std and slope for each interval, concatenate to form new
+         data set
+         build decision tree on new data set
+     ensemble the trees with averaged probability estimates
 
-    This implementation deviates from the original in minor ways. It samples
-    intervals with replacement and does not use the splitting criteria tiny
-    refinement described in [1]. This is an intentionally stripped down, non configurable version for use as a hive-cote
-    component. For a configurable tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
+     This implementation deviates from the original in minor ways. It samples
+     intervals with replacement and does not use the splitting criteria tiny
+     refinement described in [1]. This is an intentionally stripped down, non
+     configurable version for use as a hive-cote component. For a configurable
+     tree based ensemble, see sktime.classifiers.ensemble.TimeSeriesForestClassifier
 
-    TO DO: handle missing values, unequal length series and multivariate
-    problems
+     TO DO: handle missing values, unequal length series and multivariate
+     problems
 
-    Parameters
-    ----------
-    n_estimators         : int, ensemble size, optional (default = 200)
-    random_state    : int, seed for random, optional (default to no seed,
-    I think!)
-    min_interval    : int, minimum width of an interval, optional (default
-    to 3)
-    n_jobs          : int, optional (default=1)
-        The number of jobs to run in parallel for both `fit` and `predict`.
-        ``-1`` means using all processors.
+     Parameters
+     ----------
+     n_estimators    : int, ensemble size, optional (default = 200)
+     min_interval    : int, minimum width of an interval, optional (default
+     to 3)
+     n_jobs          : int, optional (default=1)
+         The number of jobs to run in parallel for both `fit` and `predict`.
+         ``-1`` means using all processors.
+     random_state    : int, seed for random, optional (default = none)
 
-    Attributes
-    ----------
-    n_classes    : int, extracted from the data
-    num_atts     : int, extracted from the data
-    n_intervals  : int, sqrt(num_atts)
-    classifiers    : array of shape = [n_estimators] of DecisionTree
-    classifiers
-    intervals      : array of shape = [n_estimators][n_intervals][2] stores
-    indexes of all start and end points for all classifiers
-    dim_to_use     : int, the column of the panda passed to use (can be
-    passed a multidimensional problem, but will only use one)
+     Attributes
+     ----------
+     n_classes    : int, extracted from the data
+     num_atts     : int, extracted from the data
+     n_intervals  : int, sqrt(num_atts)
+     classifiers  : array of shape = [n_estimators] of DecisionTree
+     classifiers
+     intervals    : array of shape = [n_estimators][n_intervals][2] stores
+     indexes of all start and end points for all classifiers
+     dim_to_use   : int, the column of the panda passed to use (can be
+     passed a multidimensional problem, but will only use one)
+     classes_    : List of classes for a given problem
 
-    References
-    ----------
-    .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for classification and feature
-     extraction",Information Sciences, 239, 2013
-    Java implementation
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/interval_based/TSF.java
-    Arxiv version of the paper: https://arxiv.org/abs/1302.2277
-
-
+     References
+     ----------
+     .. [1] H.Deng, G.Runger, E.Tuv and M.Vladimir, "A time series forest for
+     classification and feature extraction",Information Sciences, 239, 2013
+     Java implementation
+     https://github.com/uea-machine-learning/tsml/blob/master/src/main/
+     java/tsml/classifiers/interval_based/TSF.java
+     Arxiv version of the paper: https://arxiv.org/abs/1302.2277
     """
+
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
-        random_state=None,
         min_interval=3,
         n_estimators=200,
         n_jobs=1,
+        random_state=None,
     ):
         super(TimeSeriesForest, self).__init__(
             base_estimator=DecisionTreeClassifier(criterion="entropy"),
@@ -169,7 +120,7 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         series_length] or shape = [n_instances,n_columns]
             The training input samples.  If a Pandas data frame is passed it
             must have a single column (i.e. univariate
-            classification. RISE has no bespoke method for multivariate
+            classification. TSF has no bespoke method for multivariate
             classification as yet.
         y : array-like, shape =  [n_instances]    The class labels.
 
@@ -177,7 +128,12 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, enforce_univariate=True, coerce_to_numpy=True)
+        X, y = check_X_y(
+            X,
+            y,
+            enforce_univariate=not TimeSeriesForest.capabilities["multivariate"],
+            coerce_to_numpy=True,
+        )
         X = X.squeeze(1)
         n_instances, self.series_length = X.shape
 
@@ -268,3 +224,59 @@ class TimeSeriesForest(ForestClassifier, BaseClassifier):
             np.ones(self.n_classes) * self.n_estimators
         )
         return output
+
+
+def _transform(X, intervals):
+    """
+    Compute the mean, standard deviation and slope for given intervals
+    of input data X.
+    """
+    n_instances, _ = X.shape
+    n_intervals, _ = intervals.shape
+    transformed_x = np.empty(shape=(3 * n_intervals, n_instances), dtype=np.float32)
+    for j in range(n_intervals):
+        X_slice = X[:, intervals[j][0] : intervals[j][1]]
+        means = np.mean(X_slice, axis=1)
+        std_dev = np.std(X_slice, axis=1)
+        slope = _slope(X_slice, axis=1)
+        transformed_x[3 * j] = means
+        transformed_x[3 * j + 1] = std_dev
+        transformed_x[3 * j + 2] = slope
+
+    return transformed_x.T
+
+
+def _get_intervals(n_intervals, min_interval, series_length, rng):
+    """
+    Generate random intervals for given parameters.
+    """
+    intervals = np.zeros((n_intervals, 2), dtype=int)
+    for j in range(n_intervals):
+        intervals[j][0] = rng.randint(series_length - min_interval)
+        length = rng.randint(series_length - intervals[j][0] - 1)
+        if length < min_interval:
+            length = min_interval
+        intervals[j][1] = intervals[j][0] + length
+    return intervals
+
+
+def _fit_estimator(X, y, base_estimator, intervals, random_state=None):
+    """
+    Fit an estimator - a clone of base_estimator - on input data (X, y)
+    transformed using the randomly generated intervals.
+    """
+
+    estimator = clone(base_estimator)
+    estimator.set_params(random_state=random_state)
+
+    transformed_x = _transform(X, intervals)
+    return estimator.fit(transformed_x, y)
+
+
+def _predict_proba_for_estimator(X, estimator, intervals):
+    """
+    Find probability estimates for each class for all cases in X using
+    given estimator and intervals.
+    """
+    transformed_x = _transform(X, intervals)
+    return estimator.predict_proba(transformed_x)

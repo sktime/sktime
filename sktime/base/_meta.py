@@ -63,9 +63,7 @@ class _HeterogenousMetaEstimator(BaseEstimator, metaclass=ABCMeta):
 
     def _check_names(self, names):
         if len(set(names)) != len(names):
-            raise ValueError(
-                "Names provided are not unique: " "{0!r}".format(list(names))
-            )
+            raise ValueError("Names provided are not unique: {0!r}".format(list(names)))
         invalid_names = set(names).intersection(self.get_params(deep=False))
         if invalid_names:
             raise ValueError(

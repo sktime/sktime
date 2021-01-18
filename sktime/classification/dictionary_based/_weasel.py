@@ -14,11 +14,12 @@ from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import check_random_state
+from sklearn.utils.multiclass import class_distribution
 
 from joblib import Parallel, delayed
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -93,10 +94,12 @@ class WEASEL(BaseClassifier):
     Attributes
     ----------
 
+     classes_    : List of classes for a given problem
+
     Notes
     -----
 
-    ..[1]  Patrick Schäfer and Ulf Leser,      :
+    ..[1]  Patrick Schäfer and Ulf Leser,    :
     @inproceedings{schafer2017fast,
       title={Fast and Accurate Time Series Classification with WEASEL},
       author={Sch{\"a}fer, Patrick and Leser, Ulf},
@@ -108,6 +111,13 @@ class WEASEL(BaseClassifier):
     https://dl.acm.org/doi/10.1145/3132847.3132980
 
     """
+
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -148,6 +158,7 @@ class WEASEL(BaseClassifier):
         self.SFA_transformers = []
         self.clf = None
         self.n_jobs = n_jobs
+        self.classes_ = []
 
         super(WEASEL, self).__init__()
 
@@ -168,12 +179,22 @@ class WEASEL(BaseClassifier):
 
         # Window length parameter space dependent on series length
         self.n_instances, self.series_length = X.shape[0], X.shape[-1]
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         win_inc = self.compute_window_inc()
 
         self.max_window = int(min(self.series_length, self.max_window))
+        if self.min_window > self.max_window:
+            raise ValueError(
+                f"Error in WEASEL, min_window ="
+                f"{self.min_window} is bigger"
+                f" than max_window ={self.max_window},"
+                f" series length is {self.series_length}"
+                f" try set min_window to be smaller than series length in "
+                f"the constructor, but the classifier may not work at "
+                f"all with very short series"
+            )
         self.window_sizes = list(range(self.min_window, self.max_window, win_inc))
-
         self.highest_bit = (math.ceil(math.log2(self.max_window))) + 1
 
         def _parallel_fit(

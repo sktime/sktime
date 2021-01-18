@@ -14,13 +14,14 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import chi2
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
+from sklearn.utils.multiclass import class_distribution
 
 # from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
-from sktime.utils.data_container import from_nested_to_3d_numpy
+from sktime.transformations.panel.dictionary_based import SFA
+from sktime.utils.data_processing import from_nested_to_3d_numpy
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -28,7 +29,8 @@ from sktime.utils.validation.panel import check_X_y
 class MUSE(BaseClassifier):
     """
     WEASEL+MUSE (MUltivariate Symbolic Extension)
-    MUSE: implementation of multivariate version of WEASEL, referred to as just MUSE from [1]
+    MUSE: implementation of multivariate version of WEASEL, referred to as
+    just MUSE from [1]
 
     Overview: Input n series length m
      WEASEL+MUSE is a multivariate  dictionary classifier that builds a
@@ -80,13 +82,21 @@ class MUSE(BaseClassifier):
 
     Notes
     -----
-    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification with WEASEL+MUSE",
-        in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
+    ..[1] Patrick Schäfer and Ulf Leser, "Multivariate time series classification
+    with WEASEL+MUSE",    in proc 3rd ECML/PKDD Workshop on AALTD}, 2018
     https://arxiv.org/abs/1711.11343
     Java version
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/multivariate/WEASEL_MUSE.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/
+    classifiers/multivariate/WEASEL_MUSE.java
 
     """
+
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": True,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,
@@ -126,6 +136,7 @@ class MUSE(BaseClassifier):
 
         self.SFA_transformers = []
         self.clf = None
+        self.classes_ = []
 
         super(MUSE, self).__init__()
 
@@ -145,6 +156,7 @@ class MUSE(BaseClassifier):
 
         X, y = check_X_y(X, y, coerce_to_pandas=True)
         y = np.asarray(y)
+        self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
 
         # add first order differences in each dimension to TS
         if self.use_first_order_differences:
@@ -174,6 +186,16 @@ class MUSE(BaseClassifier):
             win_inc = self.compute_window_inc(series_length)
 
             self.max_window = int(min(series_length, self.max_window))
+            if self.min_window > self.max_window:
+                raise ValueError(
+                    f"Error in MUSE, min_window ="
+                    f"{self.min_window} is bigger"
+                    f" than max_window ={self.max_window},"
+                    f" series length is {self.series_length}"
+                    f" try set min_window to be smaller than series length in "
+                    f"the constructor, but the classifier may not work at "
+                    f"all with very short series"
+                )
             self.window_sizes.append(
                 list(range(self.min_window, self.max_window, win_inc))
             )

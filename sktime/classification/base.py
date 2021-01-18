@@ -1,11 +1,40 @@
 # -*- coding: utf-8 -*-
-__all__ = ["BaseClassifier"]
+__all__ = [
+    "BaseClassifier",
+    "classifier_list",
+]
 __author__ = ["Markus Löning"]
 
-from sktime.base import BaseEstimator
+import numpy as np
 
-from sktime.utils import comparison
+from sktime.base import BaseEstimator
 from sktime.utils.validation.panel import check_X
+
+"""
+Main list of classifiers extending this class. For clarity, some utility classifiers,
+such as Proximity Stump, are not listed.
+"""
+classifier_list = [
+    # in classification/distance_based
+    "ProximityForest",
+    # "KNeighborsTimeSeriesClassifier",
+    # "ElasticEnsemble",
+    # "ShapeDTW",
+    # in classification/dictionary_based
+    "BOSS",
+    "ContractableBOSS",
+    "TemporalDictionaryEnsemble",
+    "WEASEL",
+    "MUSE",
+    # in classification/interval_based
+    "RandomIntervalSpectralForest",
+    "TimeSeriesForest",
+    "CanonicalIntervalForest",
+    # in classification/shapelet_based
+    "ShapeletTransformClassifier",
+    "ROCKET",
+    "MrSEQLClassifier",
+]
 
 
 class BaseClassifier(BaseEstimator):
@@ -39,7 +68,7 @@ class BaseClassifier(BaseEstimator):
         predictions = []
         for instance_index in range(0, X.shape[0]):
             distribution = distributions[instance_index]
-            prediction = comparison.arg_max(distribution, self.random_state)
+            prediction = np.argmax(distribution)
             predictions.append(prediction)
         predictions = self.label_encoder.inverse_transform(predictions)
         return predictions

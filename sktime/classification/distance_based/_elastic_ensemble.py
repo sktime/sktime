@@ -30,7 +30,7 @@ from sktime.distances.elastic_cython import lcss_distance as lcss_c
 from sktime.distances.elastic_cython import msm_distance as msm_c
 from sktime.distances.elastic_cython import wddtw_distance as wddtw_c
 from sktime.distances.elastic_cython import wdtw_distance as wdtw_c
-from sktime.transformers.panel.summarize import DerivativeSlopeTransformer
+from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 from sktime.utils.validation.panel import check_X
 from sktime.utils.validation.panel import check_X_y
 
@@ -67,14 +67,23 @@ class ElasticEnsemble(BaseClassifier):
 
     Notes
     _____
-    ..[1] Jason Lines and Anthony Bagnall, "Time Series Classification with Ensembles of Elastic Distance
+    ..[1] Jason Lines and Anthony Bagnall, "Time Series Classification with Ensembles
+    of Elastic Distance
       Measures", Data Mining and Knowledge Discovery, 29(3), 2015
     https://link.springer.com/article/10.1007/s10618-014-0361-2
     For the original Java version, see
-    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/tsml/classifiers/distance_based/ElasticEnsemble.java
+    https://github.com/uea-machine-learning/tsml/blob/master/src/main/java/
+    tsml/classifiers/distance_based/ElasticEnsemble.java
 
 
     """
+
+    # Capabilities: data types this classifier can handle
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False,
+    }
 
     def __init__(
         self,

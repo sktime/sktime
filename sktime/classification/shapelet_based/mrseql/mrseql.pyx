@@ -2,7 +2,7 @@ STUFF = "Hi"
 
 from sktime.utils.validation.panel import check_X, check_X_y
 from sktime.classification.base import BaseClassifier
-from sktime.transformers.panel.dictionary_based import SFA
+from sktime.transformations.panel.dictionary_based import SFA
 from sklearn.linear_model import LogisticRegression
 import pandas as pd
 import numpy as np
@@ -221,6 +221,13 @@ class MrSEQLClassifier(BaseClassifier):
     custom_config   : dict, customized parameters for the symbolic transformation. If defined, symrep will be ignored.
 
     '''
+
+    # Capability tags
+    capabilities = {
+        "multivariate": False,
+        "unequal_length": False,
+        "missing_values": False
+    }
 
     def __init__(self, seql_mode='fs', symrep=('sax'), custom_config=None):
 
