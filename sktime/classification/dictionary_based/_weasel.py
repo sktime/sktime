@@ -27,18 +27,8 @@ from sktime.utils.validation.panel import check_X_y
 
 
 class WEASEL(BaseClassifier):
-    """Word ExtrAction for time SEries cLassification (WEASEL)
-
-    WEASEL: implementation of WEASEL from Schäfer:
-    @inproceedings{schafer2017fast,
-      title={Fast and Accurate Time Series Classification with WEASEL},
-      author={Sch{\"a}fer, Patrick and Leser, Ulf},
-      booktitle={Proceedings of the 2017 ACM on Conference on Information and
-                 Knowledge Management},
-      pages={637--646},
-      year={2017}
-    }
-    https://dl.acm.org/doi/10.1145/3132847.3132980
+    """
+    Word ExtrAction for time SEries cLassification (WEASEL) from [1].
 
     # Overview: Input n series length m
     # WEASEL is a dictionary classifier that builds a bag-of-patterns using SFA
@@ -103,6 +93,19 @@ class WEASEL(BaseClassifier):
     Attributes
     ----------
 
+    Notes
+    -----
+
+    ..[1]  Patrick Schäfer and Ulf Leser,      :
+    @inproceedings{schafer2017fast,
+      title={Fast and Accurate Time Series Classification with WEASEL},
+      author={Sch{\"a}fer, Patrick and Leser, Ulf},
+      booktitle={Proceedings of the 2017 ACM on Conference on Information and
+                 Knowledge Management},
+      pages={637--646},
+      year={2017}
+    }
+    https://dl.acm.org/doi/10.1145/3132847.3132980
 
     """
 
