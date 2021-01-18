@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Christopher Holder"
+__all__ = ["TimeSeriesKMeans"]
 
 from sktime.clustering._cluster import Cluster
 from sktime.clustering.types import Metric_Parameter

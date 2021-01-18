@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 __author__ = "Christopher Holder"
-__all__ = ["Cluster"]
+__all__ = ["TimeSeriesAffinityPropagation"]
 
 
 from sktime.clustering._cluster import Cluster
@@ -11,8 +11,7 @@ from sktime.clustering.types import Metric_Parameter
 
 class TimeSeriesAffinityPropagation(Cluster):
     """
-    Kmeans clustering algorithm that is built upon the scikit learns
-    implementation
+    Time series affinity propagation clustering class
     """
 
     def __init__(
