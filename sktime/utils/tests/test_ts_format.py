@@ -206,6 +206,3 @@ def test_csv_to_ts_format():
     finally:
         os.remove("./tst.ts")
         os.remove(path)
-
-
-test_csv_to_ts_format()
