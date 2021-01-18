@@ -7,15 +7,11 @@ __author__ = "Jason Lines"
 __all__ = ["KNeighborsTimeSeriesClassifier"]
 
 import warnings
-from distutils.version import LooseVersion
 from functools import partial
 
 import numpy as np
-from joblib import Parallel
-from joblib import delayed
 from joblib import effective_n_jobs
 from scipy import stats
-from scipy.sparse import issparse
 from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import pairwise_distances_chunked
 from sklearn.model_selection import GridSearchCV
@@ -23,8 +19,6 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.neighbors import KNeighborsClassifier as _KNeighborsClassifier
 from sklearn.neighbors._base import _check_weights
 from sklearn.neighbors._base import _get_weights
-from sklearn.utils import gen_even_slices
-from sklearn.utils._joblib import __version__ as joblib_version
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import check_array

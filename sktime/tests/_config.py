@@ -177,7 +177,7 @@ ESTIMATOR_TEST_PARAMS = {
         "min_shapelet_length": 3,
         "max_shapelet_length": 4,
     },
-ROCKETClassifier: {"num_kernels": 100},
+    ROCKETClassifier: {"num_kernels": 100},
     TSFreshFeatureExtractor: {"disable_progressbar": True, "show_warnings": False},
     TSFreshRelevantFeatureExtractor: {
         "disable_progressbar": True,

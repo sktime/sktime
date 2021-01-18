@@ -150,8 +150,6 @@ class CanonicalIntervalForest(ForestClassifier, BaseClassifier):
         self : object
         """
         X, y = check_X_y(X, y, coerce_to_numpy=True)
-
-
         self.n_instances, self.n_dims, self.series_length = X.shape
         self.n_classes = np.unique(y).shape[0]
         self.classes_ = class_distribution(np.asarray(y).reshape(-1, 1))[0][0]
