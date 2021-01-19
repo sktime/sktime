@@ -831,6 +831,61 @@
         "tutorial",
         "doc"
       ]
+    },
+    {
+      "login": "dhirschfeld",
+      "name": "Dave Hirschfeld",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/881019?v=4",
+      "profile": "https://dhirschfeld.github.io/",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "xuyxu",
+      "name": "Yi-Xuan Xu",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/22359569?v=4",
+      "profile": "https://github.com/xuyxu",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "afzal442",
+      "name": "Afzal",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/11625672?v=4",
+      "profile": "https://github.com/afzal442",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "vincent-nich12",
+      "name": "vincent-nich12",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/36476633?v=4",
+      "profile": "https://github.com/vincent-nich12",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "hamzahiqb",
+      "name": "hamzahiqb",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/10302415?v=4",
+      "profile": "https://github.com/hamzahiqb",
+      "contributions": [
+        "infra"
+      ]
+    },
+    {
+      "login": "Hephaest",
+      "name": "Miao Cai",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/37981444?v=4",
+      "profile": "https://github.com/Hephaest",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "projectName": "sktime",
